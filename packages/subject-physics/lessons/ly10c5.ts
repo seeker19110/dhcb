@@ -247,7 +247,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0 },
             { atMs: 2000, dx: 120 },
-            { atMs: 4000, dx: 180 },
+            { atMs: 4000, dx: 150 },
           ],
         },
         {
@@ -262,7 +262,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0 },
             { atMs: 2000, dx: 0 },
-            { atMs: 4000, dx: 60 },
+            { atMs: 4000, dx: 30 },
           ],
         },
         {
@@ -291,9 +291,9 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           strokeWidth: 3,
           opacity: 0,
           keyframes: [
-            { atMs: 0, opacity: 0, dx: 0 },
-            { atMs: 2100, opacity: 1, dx: 0 },
-            { atMs: 4000, opacity: 1, dx: 60 },
+            { atMs: 2000, opacity: 0, dx: 0 },
+            { atMs: 2100, opacity: 1 },
+            { atMs: 4000, dx: 30 },
           ],
         },
         {
@@ -460,7 +460,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           kind: 'line',
           id: 'cong-1',
           x1: 110,
-          y1: 100,
+          y1: 86,
           x2: 110,
           y2: 140,
           stroke: 'warn',
@@ -471,7 +471,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           kind: 'line',
           id: 'cong-2',
           x1: 320,
-          y1: 100,
+          y1: 86,
           x2: 320,
           y2: 140,
           stroke: 'warn',
@@ -490,7 +490,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0 },
             { atMs: 2000, dx: 130 },
-            { atMs: 5000, dx: 195 },
+            { atMs: 5000, dx: 227.5 },
           ],
         },
         {
@@ -505,7 +505,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0 },
             { atMs: 2000, dx: 0 },
-            { atMs: 5000, dx: 65 },
+            { atMs: 5000, dx: 97.5 },
           ],
         },
         {
@@ -537,8 +537,8 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0, opacity: 0 },
             { atMs: 2000, dx: 0, opacity: 0 },
-            { atMs: 2200, dx: 5, opacity: 1 },
-            { atMs: 5000, dx: 65, opacity: 1 },
+            { atMs: 2200, dx: 6.5, opacity: 1 },
+            { atMs: 5000, dx: 97.5, opacity: 1 },
           ],
         },
         {
@@ -550,6 +550,11 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           size: 13,
           anchor: 'middle',
           fill: 'surface',
+          keyframes: [
+            { atMs: 0, dx: 0 },
+            { atMs: 2000, dx: 130 },
+            { atMs: 5000, dx: 227.5 },
+          ],
         },
         {
           kind: 'label',
@@ -560,12 +565,17 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           size: 13,
           anchor: 'middle',
           fill: 'surface',
+          keyframes: [
+            { atMs: 0, dx: 0 },
+            { atMs: 2000, dx: 0 },
+            { atMs: 5000, dx: 97.5 },
+          ],
         },
         {
           kind: 'label',
           id: 'nhan-cong1',
           x: 108,
-          y: 92,
+          y: 80,
           text: 'cổng 1',
           size: 11,
           anchor: 'end',
@@ -575,7 +585,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           kind: 'label',
           id: 'nhan-cong2',
           x: 322,
-          y: 92,
+          y: 80,
           text: 'cổng 2',
           size: 11,
           anchor: 'start',

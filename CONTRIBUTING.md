@@ -1,4 +1,4 @@
-# Đóng góp cho donghanh
+# Đóng góp cho dhcb
 
 Mọi thay đổi đi theo một luồng duy nhất: **Idea → Spec → Issue → Branch → Pull request → CI/Review → Merge → Release → Observe**.
 

@@ -1,6 +1,6 @@
 # 0334 — 2026-09-15 — S09-1: version đơn điệu + idempotency cho đồng bộ tiến độ (server)
 
-- **PR:** [#940](https://github.com/seeker19110/donghanh/pull/940) (nhánh `claude/laughing-babbage-o25bls-s09-1`)
+- **PR:** [#940](https://github.com/seeker19110/dhcb/pull/940) (nhánh `claude/laughing-babbage-o25bls-s09-1`)
 - **Đặc tả:** `docs/specs/2026-09-15-learning-ux-s09-dong-bo-version-retry-xung-dot.md` (S09-1, AC-1…AC-7) — Approved for implementation, §7 chốt theo cột "Đề xuất của AI".
 - **Phạm vi:** **chỉ SERVER**, 0 thay đổi giao diện, tương thích client cũ 100%. Outbox/retry/hai tab ở client là S09-2; `ConflictRecord` + hộp thoại là S09-3.
 

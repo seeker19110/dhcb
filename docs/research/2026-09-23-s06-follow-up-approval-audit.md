@@ -10,7 +10,7 @@ Ngày 2026-09-23. Base: `422c9134` từ origin/main. Trạng thái:
 - Thay đổi spec tại `62eb7143` (#1131) duyệt riêng **S08 Approved for
   implementation**. §2 S06 vẫn là hợp đồng dự kiến; chưa có quyết định duyệt
   triển khai S06 follow-up trong lịch sử file đã kiểm.
-- [PR #1122](https://github.com/seeker19110/donghanh/pull/1122) đã merge ngày
+- [PR #1122](https://github.com/seeker19110/dhcb/pull/1122) đã merge ngày
   2026-09-23. Chính mô tả PR ghi spec Draft cho milestone rộng và giới hạn đây là
   sửa lỗi hiện hữu. Merge source và CI xanh không thay thế quyết định duyệt spec.
 - Goal vẫn ghi **PARTIAL #1122 MERGED**. Không đổi thành COMPLETE.

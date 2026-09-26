@@ -1,6 +1,6 @@
 # 0350 — 2026-09-16 — Ổn định ba ca E2E flaky khi dev server nguội
 
-- **PR:** [#982](https://github.com/seeker19110/donghanh/pull/982)
+- **PR:** [#982](https://github.com/seeker19110/dhcb/pull/982)
 - **Nhánh:** `claude/laughing-babbage-o25bls-fix-flaky-e2e`
 - **Loại:** trả nợ kỹ thuật (không đổi hành vi sản phẩm)
 

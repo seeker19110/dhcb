@@ -4,7 +4,7 @@
 
 **Ngày:** 2026-09-15
 
-**PR:** [#936](https://github.com/seeker19110/donghanh/pull/936)
+**PR:** [#936](https://github.com/seeker19110/dhcb/pull/936)
 
 ## Tóm tắt
 

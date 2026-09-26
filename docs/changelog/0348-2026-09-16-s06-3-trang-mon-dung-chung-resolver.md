@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị                                                                             |
 | ---------- | ----------------------------------------------------------------------------------- |
-| PR         | [#963](https://github.com/seeker19110/donghanh/pull/963)                            |
+| PR         | [#963](https://github.com/seeker19110/dhcb/pull/963)                                |
 | Đặc tả     | `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 3 (AC-18, AC-19) |
 | Goal       | `docs/goals/2026-09-15-learning-ux.md` dòng S06-3                                   |
 | Nền        | S06-1 (#941) adapter + resolver · S06-2 (#952) thẻ "Hôm nay" · S08-1 (#932) phiên   |

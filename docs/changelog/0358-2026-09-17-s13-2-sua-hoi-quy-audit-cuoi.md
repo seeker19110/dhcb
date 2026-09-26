@@ -1,7 +1,7 @@
 # 0358 — S13-2: sửa hồi quy audit cuối goal learning-ux tìm ra
 
 - **Ngày:** 2026-09-17
-- **PR:** [#995](https://github.com/seeker19110/donghanh/pull/995)
+- **PR:** [#995](https://github.com/seeker19110/dhcb/pull/995)
 - **Spec:** [`docs/specs/2026-09-15-learning-ux-s13-responsive-theme-hieu-nang-rollout.md`](../specs/2026-09-15-learning-ux-s13-responsive-theme-hieu-nang-rollout.md) §④ S13-2 (AC-9 → AC-12) — Approved for implementation
 - **Base:** `main` `eaefb183` (sau #992)
 - **Phạm vi:** AC-9 · AC-10 · AC-11 · AC-12 + hai nợ S13-1 (#987). **AC-8 KHÔNG thuộc PR

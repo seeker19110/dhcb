@@ -1,10 +1,10 @@
 # TRAPS.md — bẫy đã mắc trong repo này
 
-> Sổ bẫy ĐÃ MẮC THẬT của dự án `donghanh`, không phải danh sách "nên tránh" chung chung. Mỗi
+> Sổ bẫy ĐÃ MẮC THẬT của dự án `dhcb`, không phải danh sách "nên tránh" chung chung. Mỗi
 > mục có ngày + PR/changelog + cách rà + cổng/quy ước chốt chặn. Khác `docs/adr/` (ghi **quyết
 > định** kiến trúc): file này ghi **lỗi đã xảy ra**. Ý tưởng mượn từ repo khung
 > `seeker19110/project-template` (đọc 2026-09-12), điều chỉnh cho đúng quy ước thật của
-> `donghanh`.
+> `dhcb`.
 >
 > Cách dùng: gặp lỗi lạ → tìm khuôn khớp ở đây trước khi đọc code từ đầu. Sửa xong → thêm mục
 > mới nếu là khuôn mới, hoặc thêm ngày/PR vào mục cũ nếu là **tái phát**.
@@ -460,6 +460,58 @@ hình đi qua ba trạng thái (`toan10-c7-b2`), chữ dài hơn `viewBoxWidth` 
 Cổng cho lớp lỗi này: `npm run shots:lesson-anim` (chụp 5 mốc × mọi hoạt ảnh một môn, thoát 1
 nếu có hoạt ảnh không chạy) rồi NGƯỜI đọc từng dải ảnh — chưa có máy nào chấm được "nhãn có đi
 theo hình không".
+
+**Bốn bẫy nữa lộ ra khi rà mắt 73 hoạt ảnh Vật lí (2026-09-26, `docs/changelog/0457-*.md`)** —
+58/73 hoạt ảnh phải sửa, ~20 sai KIẾN THỨC, mọi cổng vẫn xanh:
+
+1. **`closed: true` vẽ bằng `<polyline>` KHÔNG có cạnh khép.** `<polyline>` chỉ tô kín phần
+   fill, không bao giờ vẽ nét từ điểm cuối về điểm đầu → 19 hình ở cả 4 môn thiếu đúng một cạnh
+   (vòng benzen hở, mạch điện hở, đáy hình chóp thiếu cạnh). Sửa ở renderer: `closed` → `<polygon>`.
+   Cổng: ca "đường khép kín (`closed`) vẽ bằng <polygon>" trong `LessonAnimation.test.tsx`.
+2. **Trục y SVG hướng XUỐNG — chiều quay đọc theo trục toán học thì ngược trên màn hình.**
+   `ly12-c3-b14` mô tả "ngược chiều kim đồng hồ" (đúng quy tắc nắm tay phải) nhưng bốn mũi tên
+   khai theo trực giác y-hướng-lên nên trên màn hình chạy CÙNG chiều kim đồng hồ: dạy sai quy tắc
+   nắm tay phải. Không máy nào bắt được; cách rà: với mọi hoạt ảnh có lời "chiều kim đồng hồ",
+   "lên/xuống", "trái/phải", đọc CHIỀU trên ẢNH CHỤP rồi đối chiếu câu mô tả, không đọc toạ độ.
+   Cùng họ lỗi: electron vẽ cùng chiều I ở dây dưới, dòng qua R đi ngược vòng dòng, từ thông hai
+   nhánh lõi thép cùng chiều, B song song F trong loa — đều là lỗi "chiều" chỉ thấy khi nhìn ảnh.
+3. **Chữ "×"/"⊗" làm ký hiệu từ trường bị vẽ ĐÈ lên hình động** vì renderer luôn vẽ nhãn SAU
+   hình (để halo che đường). Ký hiệu nền phải vẽ bằng hình (hai nét, vòng tròn) đặt ĐẦU danh sách.
+4. **Bẫy thứ ba ở trên (xoay/co quanh tâm) nay có lối ra:** khai `origin` cho hình — mũi tên lực
+   dài dần từ điểm đặt, cột năng lượng mọc từ chân, vật quay quanh tâm quỹ đạo bằng một `rotate`
+   (chính xác, thay cho mô phỏng nhiều mốc `dx/dy`). Cổng: ca "co giãn/xoay quanh `origin`".
+
+Công cụ: `npm run shots:lesson-anim` nay in thêm dòng ⚠ hình học ở mỗi mốc (chữ tràn/đè/bị gạch,
+chấm/mũi tên ra khung). **Bẫy trong chính công cụ đo** (đã mắc khi viết): đọc `durationMs` từ
+`document.querySelector('style')` lấy nhầm thẻ `<style>` theme đầu trang → mặc định 1000 ms, đo
+mãi giây đầu của mọi hoạt ảnh mà vẫn in "sạch". Đọc từ spec, và ném lỗi khi thiếu thay vì mặc định.
+
+**Hai bẫy nữa lộ ra khi rà mắt 56 hoạt ảnh Hoá (2026-09-26, `docs/changelog/0459-*.md`):**
+
+1. **Để CSS tự điền phần mốc người soạn không khai là dạy SAI theo ba cách.** Bộ vẽ từng đổi thẳng
+   từng mốc sang `@keyframes`. (a) Mốc thiếu `dx/dy` được điền `translate(0, 0)`, nên hình "đứng
+   yên rồi mờ đi" lại trượt về chỗ cũ. (b) CSS bỏ qua mốc thiếu `opacity` khi nội suy, nên hình
+   "tới nơi mới mờ" lại mờ dần suốt đường đi. (c) Thiếu mốc 0% hoặc 100% thì CSS lấy trạng thái nền,
+   nên hình "ẩn tới giây 3" lại hiện từ đầu, còn chấm đồ thị trượt thẳng về điểm đầu ở cuối vòng.
+   Zod không bắt được vì dữ liệu hợp lệ; test chuỗi CSS cũ cũng không bắt được vì nó chỉ đọc lại
+   đúng những gì người soạn khai. Máy so cách hiểu cũ và mới: 40 hoạt ảnh chạy khác người soạn
+   định (4 Lí, 6 Hoá, 26 Sinh, 4 Lập trình). Sửa ở bộ vẽ: hàm thuần `giaiMoc`
+   (`packages/core-ui/animationKeyframes.ts`) giải mốc thành trạng thái ĐẦY ĐỦ trước khi sinh CSS.
+   Luật ghi trong `AnimationKeyframeSchema`: thuộc tính không khai thì giữ giá trị mốc trước; trước
+   mốc đầu và sau mốc cuối giữ trạng thái đầu/cuối; opacity ban đầu là opacity tĩnh. Cổng:
+   `animationKeyframes.test.ts` và ca "CSS in đủ mọi thuộc tính ở mọi mốc, kể cả 0% và 100%" trong
+   `LessonAnimation.test.tsx`. Đã tự kiểm không xanh giả: bỏ phần "giữ giá trị mốc trước" thì 3 ca
+   đỏ. **Hệ quả khi soạn:** muốn hình hiện đột ngột ở giây 2 thì khai hai mốc sát nhau:
+   `{ atMs: 1900, opacity: 0 }` rồi `{ atMs: 2000, opacity: 1 }`. Chỉ khai mốc 0 với opacity 0 rồi
+   mốc 2000 với opacity 1 là hình mờ dần hiện ra suốt 2 giây. Lỗi này đã gặp ở `ly10-c5-b29`: mũi
+   tên động lượng "sau va chạm" hiện dần từ trước va chạm.
+2. **Bình HỞ MIỆNG vẽ bằng `rect` (hoặc đường khép kín) thành bình CÓ NẮP.** `rect` luôn vẽ cạnh
+   trên. Ống nghiệm, cốc, bình tam giác ở 10 bài Hoá trông như lọ đậy kín, kể cả cốc có cầu muối
+   cắm vào. Không máy nào bắt được. Cách rà: liệt kê `rect` có `stroke` và cao ≥ 36 đơn vị rồi xem
+   ảnh (script tạm đã dùng: lọc `kind === 'rect' && stroke && h >= 36`). Cách vẽ đúng: `polyline`
+   KHÔNG `closed`, đi từ mép miệng trái xuống đáy (bo góc hoặc nửa vòng tròn) rồi lên mép miệng phải.
+   Chất lỏng bên trong vẫn là một hình tô màu riêng. Ngoại lệ có chủ đích: ấm đun (có nắp thật),
+   bình khí kín ở bài Lí.
 
 ## 11. `vi.mock` KHÔNG áp cho các `import()` động chạy ĐỒNG THỜI — chỉ lượt đầu nhận mock
 

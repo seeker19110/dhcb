@@ -1,6 +1,6 @@
 # 0350 — 2026-09-16 — Tiêu đề dính của `Modal` không còn che dòng đầu nội dung
 
-- **PR:** [#973](https://github.com/seeker19110/donghanh/pull/973)
+- **PR:** [#973](https://github.com/seeker19110/dhcb/pull/973)
 - **Nhánh:** `claude/laughing-babbage-o25bls-fix-modal`
 - **Loại:** trả nợ kỹ thuật (sửa gốc thay cho hai miếng vá cục bộ)
 

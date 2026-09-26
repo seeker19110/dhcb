@@ -80,7 +80,7 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
           kind: 'label',
           id: 'ten-duong',
           x: 330,
-          y: 176,
+          y: 158,
           text: 'đường đẳng nhiệt (T không đổi)',
           size: 12,
           anchor: 'middle',
@@ -111,8 +111,8 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         {
           kind: 'label',
           id: 'nhan-dau',
-          x: 368,
-          y: 180,
+          x: 370,
+          y: 176,
           text: 'V = 8 · p = 3',
           size: 12,
           anchor: 'start',
@@ -310,11 +310,39 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         {
           kind: 'label',
           id: 'bay',
-          x: 240,
-          y: 102,
-          text: 'Đường cong là hypebol, KHÔNG phải đường thẳng dốc xuống',
+          x: 160,
+          y: 104,
+          text: 'Đường cong là hypebol,',
           size: 12,
-          anchor: 'middle',
+          anchor: 'start',
+          fill: 'muted',
+          keyframes: [
+            {
+              atMs: 0,
+              opacity: 0,
+            },
+            {
+              atMs: 2599,
+              opacity: 0,
+            },
+            {
+              atMs: 2900,
+              opacity: 1,
+            },
+            {
+              atMs: 6000,
+              opacity: 1,
+            },
+          ],
+        },
+        {
+          kind: 'label',
+          id: 'bay-2',
+          x: 160,
+          y: 120,
+          text: 'KHÔNG phải đường thẳng dốc xuống',
+          size: 12,
+          anchor: 'start',
           fill: 'muted',
           keyframes: [
             {
@@ -546,7 +574,7 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
           kind: 'label',
           id: 'n1',
           x: 135,
-          y: 124,
+          y: 144,
           text: '1',
           size: 14,
           anchor: 'end',
@@ -655,11 +683,11 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         {
           kind: 'label',
           id: 'b1',
-          x: 250,
+          x: 80,
           y: 55,
           text: '1→2 đẳng nhiệt: T = 300 K, p·V = 24 giữ nguyên',
           size: 12,
-          anchor: 'middle',
+          anchor: 'start',
           fill: 'primary',
           keyframes: [
             {
@@ -683,11 +711,11 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         {
           kind: 'label',
           id: 'b2',
-          x: 250,
+          x: 80,
           y: 74,
-          text: '2→3 đẳng áp: p = 4 atm, V giảm 3 lần nên T giảm 3 lần (300 → 100 K)',
+          text: '2→3 đẳng áp (p = 4 atm): V giảm 3 lần, T từ 300 xuống 100 K',
           size: 12,
-          anchor: 'middle',
+          anchor: 'start',
           fill: 'primary',
           keyframes: [
             {
@@ -711,11 +739,11 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         {
           kind: 'label',
           id: 'b3',
-          x: 250,
+          x: 80,
           y: 93,
-          text: '3→1 đẳng tích: V = 2 lít, p tăng 3 lần nên T tăng lại 300 K',
+          text: '3→1 đẳng tích (V = 2 lít): p tăng 3 lần, T trở lại 300 K',
           size: 12,
-          anchor: 'middle',
+          anchor: 'start',
           fill: 'primary',
           keyframes: [
             {
@@ -740,7 +768,7 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
           kind: 'label',
           id: 'bt',
           x: 250,
-          y: 116,
+          y: 113,
           text: 'Trọn một vòng: p·V/T = 0,08 ở CẢ BA trạng thái',
           size: 13,
           anchor: 'middle',
@@ -1601,21 +1629,21 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         {
           kind: 'label',
           id: 'kl1',
-          x: 372,
-          y: 120,
+          x: 436,
+          y: 112,
           text: 'Áp suất',
           size: 13,
-          anchor: 'middle',
+          anchor: 'end',
           fill: 'neutral',
         },
         {
           kind: 'label',
           id: 'kl2',
-          x: 372,
-          y: 138,
+          x: 436,
+          y: 132,
           text: 'lên thành bình',
           size: 12,
-          anchor: 'middle',
+          anchor: 'end',
           fill: 'muted',
         },
         {

@@ -37,10 +37,10 @@ khảo: `docs/README.md`.
 chín nhất (A1→C2, 3 chế độ, hai chiều A/B); môn Lập trình có xương sống P1–P6 + 14 hướng chuyên
 sâu + khoá ngắn + lộ trình mục tiêu; **[2026-09-20] ba trụ Sự nghiệp · Khởi nghiệp · Đời sống
 ĐÃ GỠ HẲN khỏi giao diện, trụ Công việc đổi tên thành "Ghi chú" (`/ghi-chu`) và nối nội dung
-vào ngữ cảnh Companion** (changelog 0389); **[2026-09-20, PR [#1063](https://github.com/seeker19110/donghanh/pull/1063), `docs/changelog/0389-2026-09-20-header-trang-chu-theo-sidebar-go-studio-switcher.md`]
+vào ngữ cảnh Companion** (changelog 0389); **[2026-09-20, PR [#1063](https://github.com/seeker19110/dhcb/pull/1063), `docs/changelog/0389-2026-09-20-header-trang-chu-theo-sidebar-go-studio-switcher.md`]
 nút "Trang chủ" ở header desktop nay ẩn khi sidebar mở rộng (đỡ trùng nút "Trang chủ" của sidebar),
 hiện lại khi sidebar thu gọn/không có; gỡ hẳn dropdown "Studio" ở header (đã trùng mục "Góc học
-tập"/"Sự nghiệp & Đời sống" ở sidebar và mục "Không gian" ở trang Hồ sơ)**; **[2026-09-20, PR [#1064](https://github.com/seeker19110/donghanh/pull/1064), `docs/changelog/0390-*.md`] `PageShell` thêm biến thể bề rộng `fluid` (Home/Dashboard tận
+tập"/"Sự nghiệp & Đời sống" ở sidebar và mục "Không gian" ở trang Hồ sơ)**; **[2026-09-20, PR [#1064](https://github.com/seeker19110/dhcb/pull/1064), `docs/changelog/0390-*.md`] `PageShell` thêm biến thể bề rộng `fluid` (Home/Dashboard tận
 dụng khoảng trống khi sidebar desktop thu gọn, đo 1152px → 1336px @1440px); ~57 trang dùng
 `PageHeader` trong thân trang đã chuyển tiêu đề lên thanh header (`Layout title=`), xoá subtitle,
 giữ `h1 sr-only` cho trình đọc màn hình; lịch hoạt động Dashboard đổi mặc định thành MỞ SẴN. Đợt
@@ -169,7 +169,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).
   S01–S04 và S08 đã có source trên `main`; S06 phần cổng, S07a mở zoom và S11a sửa deep-link
   cũng đã merge. **S05 source kỹ thuật** (builder điền từ dùng chung runtime + audit,
-  `docs/changelog/0432-*.md`) đã làm; review chuyên gia 20 câu/chiều + Product vẫn WAITING. [#1137](https://github.com/seeker19110/donghanh/pull/1137) đạt quality/e2e
+  `docs/changelog/0432-*.md`) đã làm; review chuyên gia 20 câu/chiều + Product vẫn WAITING. [#1137](https://github.com/seeker19110/dhcb/pull/1137) đạt quality/e2e
   trước merge; CI trên merge commit còn chạy lúc cập nhật. S04/S08 vẫn thiếu bằng chứng
   screen reader/thiết bị thật; S04 còn thiếu zoom/microphone thật. S06/S07 partial theo
   [audit S06](docs/research/2026-09-23-s06-follow-up-approval-audit.md) và
@@ -289,25 +289,25 @@ thi lại nhiều lần, người đang thi dở lúc deploy, giới hạn lư�
 
 ### Ưu tiên 1c — GÓC HỌC TẬP (đặc tả `docs/specs/2026-09-15-goc-hoc-tap-architecture.md`)
 
-| Slice | Việc                                                                                    | Trạng thái                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ----- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0S    | Đặc tả + goal                                                                           | ✅ đã merge (`docs/changelog/0323-2026-09-15-goc-hoc-tap-spec.md`)                                                                                                                                                                                                                                                                                                                                                                        |
-| 01    | Đổi tên không gian + URL `/goc-hoc-tap` + alias tương thích                             | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0324-*.md`)                                                                                                                                                                                                                                                                                                                                                                                           |
-| 02    | Tiếng Anh thành một MÔN ngang hàng, bỏ entry cấp không gian                             | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0326-*.md`; đặc tả `docs/specs/2026-09-15-goc-hoc-tap-02-tieng-anh-la-mot-mon.md`)                                                                                                                                                                                                                                                                                                                    |
-| 03    | Công cụ tiếng Anh nằm trong môn, công cụ chung có ngữ cảnh môn                          | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0327-*.md`; đặc tả `docs/specs/2026-09-15-goc-hoc-tap-03-04-cong-cu-theo-mon-va-bo-mac-dinh-english.md`)                                                                                                                                                                                                                                                                                              |
-| 04    | Nền tảng không mặc định tiếng Anh (`english.isDefault`)                                 | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0327-*.md`, cùng đặc tả với 03)                                                                                                                                                                                                                                                                                                                                                                       |
-| S07   | Mục lục môn/khoá độc lập shellbar (hợp đồng `OutlineNode` + adapter 3 môn + rail/panel) | ✅ **ĐÃ THI HÀNH đủ 3 slice** — đặc tả `docs/specs/2026-09-15-goc-hoc-tap-07-muc-luc-mon-khoa.md` **Approved** (Q1–Q5 theo cột đề xuất). S07-1 hợp đồng `OutlineNode` + 3 adapter (`docs/changelog/0330-*.md`); S07-2 rail/panel Lập trình + STEM (`0335-*.md`); S07-3 mục lục cấp CEFR môn Tiếng Anh (`0342-*.md`)                                                                                                                       |
-| S08-1 | Khung phiên học `LearningSession` + hook resume cùng thiết bị (0 đổi giao diện)         | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0331-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s08-khung-phien-resume.md` §9 mục 1). Tiếp theo: S08-2 (bài Lập trình, chờ S07-2) và S08-3 (STEM + CEFR)                                                                                                                                                                                                                                        |
-| S08-2 | Nháp code + bước đang học của bài Lập trình sống qua reload (cùng thiết bị)             | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0343-*.md`; đặc tả §9 mục 2, PR [#961](https://github.com/seeker19110/donghanh/pull/961)). Còn lại của S08: S08-3 phần STEM đã thi hành (`docs/changelog/0347-*.md`, PR [#962](https://github.com/seeker19110/donghanh/pull/962)); phần tab học CEFR (AC-18/AC-19) đã làm ở S08-4 (`docs/changelog/0354-*.md`, PR [#985](https://github.com/seeker19110/donghanh/pull/985)) — **S08 xong cả 4 slice** |
-| S06-1 | Hợp đồng `TodayPlan`/`ResumePoint` + resolver "Hôm nay" (0 đổi giao diện)               | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0337-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 1). Tiếp theo: S06-2 thẻ "Hôm nay" ở Trang chủ, S06-3 trang môn dùng chung resolver                                                                                                                                                                                                                             |
-| S06-2 | Thẻ "Hôm nay" một CTA học tiếp ở Trang chủ                                              | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0338-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 2). `TodayCard` thay khối "Kế hoạch hôm nay" của `HomeAiBriefingCard` (hai lối `/lo-trinh-hoc` hard-code đã gỡ). S06-3 đã thi hành                                                                                                                                                                              |
-| S06-3 | Trang môn dùng chung resolver "học tiếp" (Home · EnglishHome · ProgrammingHome)         | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0348-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 3, PR [#964](https://github.com/seeker19110/donghanh/pull/964)). `pickNextLesson` không còn trong `apps/dhcb/src/pages/`; `CefrLevelPage:621` giữ `findNextStep` (bước trong MỘT cấp đã mở — cách dùng khác). Hết slice S06. Tiếp theo theo thứ tự chốt: S05                                                    |
+| Slice | Việc                                                                                    | Trạng thái                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0S    | Đặc tả + goal                                                                           | ✅ đã merge (`docs/changelog/0323-2026-09-15-goc-hoc-tap-spec.md`)                                                                                                                                                                                                                                                                                                                                                            |
+| 01    | Đổi tên không gian + URL `/goc-hoc-tap` + alias tương thích                             | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0324-*.md`)                                                                                                                                                                                                                                                                                                                                                                               |
+| 02    | Tiếng Anh thành một MÔN ngang hàng, bỏ entry cấp không gian                             | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0326-*.md`; đặc tả `docs/specs/2026-09-15-goc-hoc-tap-02-tieng-anh-la-mot-mon.md`)                                                                                                                                                                                                                                                                                                        |
+| 03    | Công cụ tiếng Anh nằm trong môn, công cụ chung có ngữ cảnh môn                          | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0327-*.md`; đặc tả `docs/specs/2026-09-15-goc-hoc-tap-03-04-cong-cu-theo-mon-va-bo-mac-dinh-english.md`)                                                                                                                                                                                                                                                                                  |
+| 04    | Nền tảng không mặc định tiếng Anh (`english.isDefault`)                                 | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0327-*.md`, cùng đặc tả với 03)                                                                                                                                                                                                                                                                                                                                                           |
+| S07   | Mục lục môn/khoá độc lập shellbar (hợp đồng `OutlineNode` + adapter 3 môn + rail/panel) | ✅ **ĐÃ THI HÀNH đủ 3 slice** — đặc tả `docs/specs/2026-09-15-goc-hoc-tap-07-muc-luc-mon-khoa.md` **Approved** (Q1–Q5 theo cột đề xuất). S07-1 hợp đồng `OutlineNode` + 3 adapter (`docs/changelog/0330-*.md`); S07-2 rail/panel Lập trình + STEM (`0335-*.md`); S07-3 mục lục cấp CEFR môn Tiếng Anh (`0342-*.md`)                                                                                                           |
+| S08-1 | Khung phiên học `LearningSession` + hook resume cùng thiết bị (0 đổi giao diện)         | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0331-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s08-khung-phien-resume.md` §9 mục 1). Tiếp theo: S08-2 (bài Lập trình, chờ S07-2) và S08-3 (STEM + CEFR)                                                                                                                                                                                                                            |
+| S08-2 | Nháp code + bước đang học của bài Lập trình sống qua reload (cùng thiết bị)             | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0343-*.md`; đặc tả §9 mục 2, PR [#961](https://github.com/seeker19110/dhcb/pull/961)). Còn lại của S08: S08-3 phần STEM đã thi hành (`docs/changelog/0347-*.md`, PR [#962](https://github.com/seeker19110/dhcb/pull/962)); phần tab học CEFR (AC-18/AC-19) đã làm ở S08-4 (`docs/changelog/0354-*.md`, PR [#985](https://github.com/seeker19110/dhcb/pull/985)) — **S08 xong cả 4 slice** |
+| S06-1 | Hợp đồng `TodayPlan`/`ResumePoint` + resolver "Hôm nay" (0 đổi giao diện)               | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0337-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 1). Tiếp theo: S06-2 thẻ "Hôm nay" ở Trang chủ, S06-3 trang môn dùng chung resolver                                                                                                                                                                                                                 |
+| S06-2 | Thẻ "Hôm nay" một CTA học tiếp ở Trang chủ                                              | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0338-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 2). `TodayCard` thay khối "Kế hoạch hôm nay" của `HomeAiBriefingCard` (hai lối `/lo-trinh-hoc` hard-code đã gỡ). S06-3 đã thi hành                                                                                                                                                                  |
+| S06-3 | Trang môn dùng chung resolver "học tiếp" (Home · EnglishHome · ProgrammingHome)         | ✅ **ĐÃ THI HÀNH** (`docs/changelog/0348-*.md`; đặc tả `docs/specs/2026-09-15-learning-ux-s06-hom-nay-hoc-tiep.md` §9 mục 3, PR [#964](https://github.com/seeker19110/dhcb/pull/964)). `pickNextLesson` không còn trong `apps/dhcb/src/pages/`; `CefrLevelPage:621` giữ `findNextStep` (bước trong MỘT cấp đã mở — cách dùng khác). Hết slice S06. Tiếp theo theo thứ tự chốt: S05                                            |
 
 **S11 (completion evidence) — ĐÃ DUYỆT và ĐANG THI HÀNH.** S11-1 (nền tảng: hợp đồng
 `packages/core-contracts/completionEvidence.ts`, bảng luật `packages/core-learner/completionRules.ts`,
 migration `0081` hai bảng `platform.completion_evidence`/`completion_state`, endpoint
 `POST | GET /api/learning/evidence` server chấm LẠI trả lời thô) đã làm — `docs/changelog/0333-*.md`.
-**S11-2 ĐÃ THI HÀNH** (`docs/changelog/0348-*.md`, PR [#964](https://github.com/seeker19110/donghanh/pull/964)):
+**S11-2 ĐÃ THI HÀNH** (`docs/changelog/0348-*.md`, PR [#964](https://github.com/seeker19110/dhcb/pull/964)):
 nút "Nộp bài tự kiểm tra" ở `StemLessonView`, `apps/dhcb/src/lib/stemEvidence.ts`, evidence khách
 `guest_*` + merge khi đăng nhập (server chấm lại từ trả lời thô), hàng đợi gửi lại cùng thiết bị.
 **S11-3 ĐÃ THI HÀNH — S11 KHÉP LẠI ĐỦ BA SLICE** (`docs/changelog/0351-*.md`): màn kết quả dùng chung
@@ -324,14 +324,14 @@ còn rỗng: S11-3 cố ý KHÔNG gọi `addStemLessonCardsToSrs` (đặc tả S
 chừa prop `reviewSlot` của `ActivityResult`; việc nối dây là của S12 và chỉ khi
 `ketQua.kind === 'server' && evidence.passed`.
 
-**S12-3 (tiến độ theo môn) — ĐANG MỞ PR [#983](https://github.com/seeker19110/donghanh/pull/983)**
+**S12-3 (tiến độ theo môn) — ĐANG MỞ PR [#983](https://github.com/seeker19110/dhcb/pull/983)**
 (`docs/changelog/0353-2026-09-16-s12-3-tien-do-theo-mon.md`): `/tien-do` có khối "Tiến độ theo môn"
 đứng đầu nội dung, số đếm CHỈ từ cây mục lục S07 qua `apps/dhcb/src/lib/progressSummary.ts` (thuần)
 và `apps/dhcb/src/lib/subjectProgressBoard.ts` (dựng cây 6 môn bằng `import()` động). Môn chưa có
 bằng chứng hiện CHỮ "chưa đo được", không quy về 0. StatCard tiếng Anh cũ giữ nguyên (quyết định Q6:
 THÊM, không thay). Không migration. **S12 khép lại đủ ba slice.**
 
-**S12-2 (sổ lỗi có bằng chứng) — ĐANG MỞ PR [#981](https://github.com/seeker19110/donghanh/pull/981)** (`docs/changelog/0352-2026-09-16-s12-2-so-loi-co-bang-chung.md`).
+**S12-2 (sổ lỗi có bằng chứng) — ĐANG MỞ PR [#981](https://github.com/seeker19110/dhcb/pull/981)** (`docs/changelog/0352-2026-09-16-s12-2-so-loi-co-bang-chung.md`).
 Migration **`0084_mistakes_evidence.sql`** (3 cột nullable trên `english.mistakes`, lũy đẳng, không
 đổi `unique (user_id, dedupe_key)`); `GET /api/learning/evidence?include=attempts`; sổ lỗi STEM là
 **hàm thuần đọc từ evidence S11**, KHÔNG có bảng lỗi thứ hai; `MistakeBank` có bộ lọc môn + nhãn "có
@@ -696,6 +696,16 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 > để lần sau khỏi phải đi kiểm lại từ đầu.
 
 ### A. CÒN PHẢI LÀM
+
+- **[2026-09-26] Repo GitHub đã đổi tên `donghanh` → `dhcb`: đổi remote ở các chỗ NGOÀI repo.**
+  Trong repo đã đổi hết (changelog `0458`). GitHub đang tự chuyển hướng tên cũ nên chưa có gì
+  gãy, nhưng chuyển hướng mất ngay nếu sau này tài khoản `seeker19110` tạo repo mới tên
+  `donghanh`. Ba chỗ cần tự làm:
+  (1) VPS: `cd /var/www/dhcb && git remote set-url origin https://github.com/seeker19110/dhcb.git && git remote -v`;
+  (2) bản clone trên máy cá nhân: cùng lệnh `git remote set-url` trong thư mục clone;
+  (3) Claude Code on the web: phiên mới chọn repo `seeker19110/dhcb`. Phiên cũ vẫn khai tên
+  `donghanh`; gọi API vẫn chạy nhờ chuyển hướng, nhưng đăng ký theo dõi PR bằng tên mới bị từ
+  chối trong phiên cũ.
 
 - **[2026-09-12 · GĐ1 · ĐÃ XONG]** Export CSV sao lưu gói người đang trả tiền trên DB
   PRODUCTION trước khi merge PR #886 — đã chạy trên VPS: `COPY 27` dòng
@@ -1122,9 +1132,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   CSS, `TRAPS.md` mục 10), kiểm bằng 55 khung hình theo thời gian. **Rà mắt Toán xong
   (2026-09-22, `docs/changelog/0408-*.md`):** 34/34 hoạt ảnh Toán soi 5 mốc thời gian bằng
   `npm run shots:lesson-anim`, sửa 17 hoạt ảnh (4 sai nội dung, 13 nhãn đè/cắt/chồng lớp), soi lại đủ.
-  **Còn thiếu:** cấu trúc animation cho môn Anh (chưa thiết kế), và 3 animation Vật lý/Hoá/Sinh
-  vì ba môn chưa nối vào `apps/` (khi nối thì chạy script trên với `--subject`, cần mở rộng
-  `napHoatAnh`). Đặc tả: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`.
+  **Rà mắt Vật lí xong (2026-09-26, `docs/changelog/0457-*.md`):** 73/73 hoạt ảnh soi 5 mốc +
+  máy kiểm hình học mới trong `shots:lesson-anim`; sửa 58 (khoảng 20 sai KIẾN THỨC, có
+  chiều đường sức quanh dây thẳng bị đảo) + 3 lỗi renderer (`closed` thiếu cạnh khép ở 19 hình
+  cả 4 môn, thêm `origin` cho xoay/co, bỏ halo chữ trên nền màu). **Rà mắt Hoá xong (2026-09-26,
+  `docs/changelog/0459-*.md`):** 56/56 soi 5 mốc, sửa 54 (khoảng 25 sai KIẾN THỨC, có SO₄²⁻ "bị oxi
+  hoá ở anode" trong cả lí thuyết bài điện phân) + bộ vẽ đọc mốc đúng ý người soạn (`giaiMoc`: giữ
+  giá trị mốc trước, giữ trạng thái đầu/cuối — 40 hoạt ảnh ở 4 môn từng chạy sai) + `scaleX/scaleY`.
+  **Còn thiếu:** rà mắt Sinh (64) hoạt ảnh — PR kế tiếp; cấu trúc animation cho môn Anh (chưa thiết
+  kế).
+  Đặc tả: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`.
 - ✅ **[2026-09-20 — PR #1061 → ĐÓNG 2026-09-25, `docs/changelog/0447-*.md`] Ảnh Tầng 8b cho sửa
   tương phản CompanionVoice đã chụp và xem bằng mắt.** Ảnh 390/1440 × blue-sky/dark-blue × 3 studio
   cho thấy: trước sửa, 3 thẻ nền tối có chữ gần như không đọc được; sau sửa, chữ đọc được. Quét axe

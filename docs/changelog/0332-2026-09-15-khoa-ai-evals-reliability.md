@@ -1,6 +1,6 @@
 # 0332 — 2026-09-15 — Khoá AI Evals & Reliability Engineer
 
-**PR:** [#936](https://github.com/seeker19110/donghanh/pull/936)
+**PR:** [#936](https://github.com/seeker19110/dhcb/pull/936)
 
 **Đặc tả:** `docs/specs/2026-09-15-khoa-ai-evals-reliability.md` (Approved for implementation).
 

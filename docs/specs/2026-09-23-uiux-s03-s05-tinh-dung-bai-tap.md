@@ -45,13 +45,13 @@ Các test S04 mới trong `proof` là deliverable implementation, chưa tồn t�
 ở PR docs. `ai_calls` mô tả đường gọi hiện hữu (cache TTS, lượt do server kiểm soát),
 không hứa mọi kết quả AI được cache và không cấp quyền gọi provider trong test.
 
-| Thuộc tính     | Giá trị                                                                                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Goal           | [UI/UX và sư phạm](../goals/2026-09-23-uiux-su-pham.md), M1/S03–S05                                                                                           |
-| Trạng thái     | S03 đã merge #1121; S04 đã triển khai; S05 **Approved for technical implementation** sau PR bổ sung này, nghiệm thu chuyên môn WAITING tại §4                 |
-| Baseline       | Main `bec484dff7129145c531cacbb321d2942ed07b7a` gồm #1128 đã merge; baseline audit gốc `1d9e247e`                                                             |
-| Review         | [Review S04/S05](2026-09-23-uiux-s04-s05-review.md), [#1128](https://github.com/seeker19110/donghanh/pull/1128); tích hợp và đối chiếu source ngày 2026-09-23 |
-| Cách giao việc | Ba slice, ba PR riêng; S05 phụ thuộc S04; không sửa đồng thời các mode Practice                                                                               |
+| Thuộc tính     | Giá trị                                                                                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Goal           | [UI/UX và sư phạm](../goals/2026-09-23-uiux-su-pham.md), M1/S03–S05                                                                                       |
+| Trạng thái     | S03 đã merge #1121; S04 đã triển khai; S05 **Approved for technical implementation** sau PR bổ sung này, nghiệm thu chuyên môn WAITING tại §4             |
+| Baseline       | Main `bec484dff7129145c531cacbb321d2942ed07b7a` gồm #1128 đã merge; baseline audit gốc `1d9e247e`                                                         |
+| Review         | [Review S04/S05](2026-09-23-uiux-s04-s05-review.md), [#1128](https://github.com/seeker19110/dhcb/pull/1128); tích hợp và đối chiếu source ngày 2026-09-23 |
+| Cách giao việc | Ba slice, ba PR riêng; S05 phụ thuộc S04; không sửa đồng thời các mode Practice                                                                           |
 
 ## 1. Outcome và giới hạn chung
 

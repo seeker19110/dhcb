@@ -12,6 +12,7 @@
 //      khổ ngang theo chiều dài màn hình dựng đứng, nên chữ về lại đúng cỡ kể cả khi khoá xoay.
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react'
 import { boCucXemLon, chuQuaNho } from './lessonAnimationZoom.js'
+import { giaiMoc } from './animationKeyframes.js'
 import type {
   AnimationColorRole,
   AnimationKeyframe,
@@ -35,7 +36,8 @@ function color(role: AnimationColorRole | undefined, fallback: string): string {
   return role ? COLOR_BY_ROLE[role] : fallback
 }
 
-/** Tâm hình — mọi phép xoay/phóng đều quanh tâm để hoạt ảnh không "trôi" khỏi vị trí. */
+/** Tâm hình — gốc mặc định của phép xoay/phóng khi hình không khai `origin`, để hoạt ảnh không
+ *  "trôi" khỏi vị trí. Hình cần gốc khác (đuôi mũi tên, chân cột, điểm treo) thì khai `origin`. */
 function centerOf(shape: AnimationShape): { cx: number; cy: number } {
   switch (shape.kind) {
     case 'circle':
@@ -58,6 +60,11 @@ function centerOf(shape: AnimationShape): { cx: number; cy: number } {
   }
 }
 
+/** Làm tròn tích số thực (0,1 × 3 = 0,30000000000000004) để CSS sinh ra đọc được và ổn định. */
+function gon(x: number): number {
+  return Math.round(x * 10_000) / 10_000
+}
+
 /** Dựng @keyframes CSS từ danh sách mốc thời gian. Chỉ sinh transform + opacity —
  *  hai thuộc tính trình duyệt chạy được trên luồng hợp thành, không gây reflow. */
 function keyframesCss(
@@ -65,15 +72,18 @@ function keyframesCss(
   frames: AnimationKeyframe[],
   durationMs: number,
   center: { cx: number; cy: number },
+  opacityTinh: number | undefined,
 ): string {
-  const sorted = [...frames].sort((a, b) => a.atMs - b.atMs)
-  const steps = sorted.map((f) => {
-    const pct = durationMs === 0 ? 0 : (f.atMs / durationMs) * 100
-    const parts = [`translate(${f.dx ?? 0}px, ${f.dy ?? 0}px)`]
-    if (f.rotate !== undefined) parts.push(`rotate(${f.rotate}deg)`)
-    if (f.scale !== undefined) parts.push(`scale(${f.scale})`)
-    const opacity = f.opacity === undefined ? '' : ` opacity: ${f.opacity};`
-    return `  ${pct.toFixed(3)}% { transform-origin: ${center.cx}px ${center.cy}px; transform: ${parts.join(' ')};${opacity} }`
+  const coOpacity = frames.some((f) => f.opacity !== undefined)
+  const steps = giaiMoc(frames, durationMs, opacityTinh).map((m) => {
+    const pct = durationMs === 0 ? 0 : (m.atMs / durationMs) * 100
+    // Đủ ba hàm ở MỌI mốc để trình duyệt nội suy từng con số. Hai mốc có danh sách hàm khác nhau
+    // thì trình duyệt phải nội suy qua ma trận, và phép xoay có thể đi đường tắt ngược chiều.
+    const sx = gon(m.scale * m.scaleX)
+    const sy = gon(m.scale * m.scaleY)
+    const transform = `translate(${m.dx}px, ${m.dy}px) rotate(${m.rotate}deg) scale(${sx}, ${sy})`
+    const opacity = coOpacity ? ` opacity: ${m.opacity};` : ''
+    return `  ${pct.toFixed(3)}% { transform-origin: ${center.cx}px ${center.cy}px; transform: ${transform};${opacity} }`
   })
   return `@keyframes ${name} {\n${steps.join('\n')}\n}`
 }
@@ -129,14 +139,17 @@ function Shape({ shape }: { shape: AnimationShape }) {
           markerEnd={`url(#dhcb-arrowhead-${shape.stroke ?? 'neutral'})`}
         />
       )
-    case 'polyline':
-      return (
-        <polyline
-          {...common}
-          points={shape.points.map((p) => `${p[0]},${p[1]}`).join(' ')}
-          fill={shape.closed ? color(shape.fill, 'none') : 'none'}
-        />
+    case 'polyline': {
+      const points = shape.points.map((p) => `${p[0]},${p[1]}`).join(' ')
+      // `closed` PHẢI vẽ bằng <polygon>: <polyline> không bao giờ vẽ cạnh nối điểm cuối về điểm
+      // đầu (chỉ phần tô là khép). Bẫy đã mắc thật (rà 2026-09-26): 19 hình khép kín ở cả 4 môn
+      // thiếu đúng một cạnh — vòng benzen hở, mạch điện hở, đường chạy vòng sân thiếu cạnh trái.
+      return shape.closed ? (
+        <polygon {...common} points={points} fill={color(shape.fill, 'none')} />
+      ) : (
+        <polyline {...common} points={points} fill="none" />
       )
+    }
     case 'label':
       return (
         <text
@@ -146,7 +159,10 @@ function Shape({ shape }: { shape: AnimationShape }) {
           fontSize={shape.size ?? 14}
           textAnchor={shape.anchor ?? 'start'}
           fill={color(shape.fill, 'rgb(var(--text-primary))')}
-          stroke="rgb(var(--surface-card))"
+          // Viền (halo) cùng màu nền giúp chữ nổi trên đường/hình. Riêng chữ màu `surface` là chữ
+          // đặt TRÊN một hình tô màu (nhãn trong điện trở, trong quả cầu): viền cùng màu với chữ chỉ
+          // làm nét dính vào nhau ("R = 6 Ω" thành một khối) — bỏ viền.
+          stroke={shape.fill === 'surface' ? 'none' : 'rgb(var(--surface-card))'}
           strokeWidth={3}
           strokeDasharray="none"
           paintOrder="stroke fill"
@@ -373,7 +389,10 @@ export function LessonAnimation({ spec, className }: LessonAnimationProps) {
       if (!shape.keyframes || shape.keyframes.length === 0) continue
       const name = `dhcbAnim${uid}${shape.id.replace(/[^a-zA-Z0-9]/g, '')}`
       names.set(shape.id, name)
-      blocks.push(keyframesCss(name, shape.keyframes, spec.durationMs, centerOf(shape)))
+      // Gốc xoay/co giãn: `origin` nếu hình có khai (đuôi mũi tên, chân cột, điểm treo…), không
+      // thì tâm hình như trước — hoạt ảnh cũ không đổi.
+      const goc = shape.origin ? { cx: shape.origin[0], cy: shape.origin[1] } : centerOf(shape)
+      blocks.push(keyframesCss(name, shape.keyframes, spec.durationMs, goc, shape.opacity))
     }
     return { css: blocks.join('\n'), animNames: names }
   }, [spec, uid])

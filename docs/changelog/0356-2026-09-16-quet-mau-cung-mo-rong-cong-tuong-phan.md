@@ -1,7 +1,7 @@
 # 0356 — Quét màu cứng toàn repo + mở rộng cổng tương phản sang thang `zinc`
 
 - **Ngày:** 2026-09-16
-- **PR:** [#992](https://github.com/seeker19110/donghanh/pull/992)
+- **PR:** [#992](https://github.com/seeker19110/dhcb/pull/992)
 - **Bối cảnh:** hai đợt liên tiếp (#981, #984) bị cổng a11y E2E bắt lỗi tương phản do màu
   Tailwind, tức là bắt **sau khi đã lên PR**. Việc này đi tìm phần còn sót và biến nó thành
   cổng tĩnh chặn từ `npm test`.

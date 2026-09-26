@@ -1,6 +1,6 @@
 # 0320 — 2026-09-15 — Danh mục môn học: lỗi tải nói thật, chống ghi đè khi đổi bộ lọc
 
-**PR:** [#922](https://github.com/seeker19110/donghanh/pull/922) · **Nhánh:** `claude/confident-dirac-sw9dgt` · **Base:** `main` `2719790` (sau #921).
+**PR:** [#922](https://github.com/seeker19110/dhcb/pull/922) · **Nhánh:** `claude/confident-dirac-sw9dgt` · **Base:** `main` `2719790` (sau #921).
 
 Slice **S03-1** của [GOAL-2026-0915-LEARNING-UX](../goals/2026-09-15-learning-ux.md), theo
 [đặc tả nền §④ B](../specs/2026-09-15-learning-ux-foundation.md) — nhóm "Subjects phân biệt

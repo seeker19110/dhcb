@@ -1,6 +1,6 @@
 # 0318 — 2026-09-15 — Đặc tả nền nâng trải nghiệm học
 
-**PR:** [#920](https://github.com/seeker19110/donghanh/pull/920) · **Nhánh:** `codex/learning-ux-01-spec` · **Base:** `45195feb` (#919).
+**PR:** [#920](https://github.com/seeker19110/dhcb/pull/920) · **Nhánh:** `codex/learning-ux-01-spec` · **Base:** `45195feb` (#919).
 
 ## Thay đổi
 

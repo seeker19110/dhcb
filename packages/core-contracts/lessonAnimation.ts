@@ -24,7 +24,13 @@ export const AnimationColorRoleSchema = z.enum([
 export type AnimationColorRole = z.infer<typeof AnimationColorRoleSchema>
 
 /** Một mốc thời gian của hình: chỉ biến đổi hình học + độ mờ, không đổi cấu trúc.
- *  Giới hạn này giữ hoạt ảnh chạy bằng CSS transform (mượt, không layout reflow). */
+ *  Giới hạn này giữ hoạt ảnh chạy bằng CSS transform (mượt, không layout reflow).
+ *
+ *  Luật đọc mốc (bộ vẽ thi hành ở `packages/core-ui/animationKeyframes.ts`):
+ *  - thuộc tính không khai ở một mốc thì GIỮ giá trị mốc trước — `{ atMs: 2400, opacity: 0 }`
+ *    sau `{ atMs: 2000, dx: 96 }` nghĩa là đứng ở dx = 96 rồi mờ đi, không trượt về 0;
+ *  - trước mốc đầu, hình giữ trạng thái mốc đầu; sau mốc cuối, giữ trạng thái mốc cuối;
+ *  - opacity trước lần khai đầu tiên là `opacity` tĩnh của hình (mặc định 1). */
 export const AnimationKeyframeSchema = z
   .object({
     /** Mốc thời gian tính từ đầu hoạt ảnh (ms). */
@@ -32,10 +38,15 @@ export const AnimationKeyframeSchema = z
     /** Tịnh tiến theo trục x/y, đơn vị toạ độ viewBox. */
     dx: z.number().optional(),
     dy: z.number().optional(),
-    /** Xoay quanh tâm hình (độ). */
+    /** Xoay (độ) quanh `origin` của hình nếu có khai, không thì quanh tâm hình. */
     rotate: z.number().optional(),
-    /** Phóng to/thu nhỏ quanh tâm hình. */
+    /** Phóng to/thu nhỏ quanh `origin` của hình nếu có khai, không thì quanh tâm hình. */
     scale: z.number().positive().max(20).optional(),
+    /** Co giãn riêng một trục (nhân thêm vào `scale`), cũng quanh `origin`. Dành cho thứ chỉ lớn
+     *  theo một chiều: cột nhiệt kế dâng, chất lỏng đầy dần, thanh số liệu mọc lên. Muốn "mọc từ
+     *  số 0" thì dùng số dương rất nhỏ như 0,01 (schema không nhận 0). */
+    scaleX: z.number().positive().max(20).optional(),
+    scaleY: z.number().positive().max(20).optional(),
     opacity: z.number().min(0).max(1).optional(),
   })
   .strict()
@@ -49,6 +60,13 @@ const styleFields = {
   dash: z.string().max(20).optional(),
   opacity: z.number().min(0).max(1).optional(),
   keyframes: z.array(AnimationKeyframeSchema).max(20).optional(),
+  /**
+   * Điểm gốc của `rotate`/`scale` trong keyframes, theo toạ độ viewBox. Bỏ trống = tâm hình.
+   * Vì sao cần (2026-09-26): chỉ co giãn/xoay quanh TÂM thì mũi tên lực "dài dần" bị tách khỏi
+   * điểm đặt, cột năng lượng "cao dần" bị nhấc khỏi mặt đất, con lắc/bán kính quay quanh trung
+   * điểm của chính nó. Khai `origin` = đuôi mũi tên, chân cột, điểm treo thì hình đúng nghĩa.
+   */
+  origin: z.tuple([z.number().min(-2000).max(4000), z.number().min(-2000).max(4000)]).optional(),
 }
 
 /** Hình vẽ trong một cảnh. Bộ hình cố tình HẸP — đủ vẽ mọi minh hoạ STEM phổ thông
@@ -108,6 +126,8 @@ export const AnimationShapeSchema = z.discriminatedUnion('kind', [
         .array(z.tuple([z.number(), z.number()]))
         .min(2)
         .max(400),
+      /** Khép kín: vẽ cả cạnh nối điểm cuối về điểm đầu (đa giác — vòng benzen, mạch điện,
+       *  miền nghiệm). Không cần lặp lại điểm đầu ở cuối danh sách. */
       closed: z.boolean().optional(),
       ...styleFields,
     })

@@ -1,7 +1,7 @@
 # 0355 — S13-1: công cụ chụp sáu màn mẫu + cổng bố cục 4 bề rộng
 
 - **Ngày:** 2026-09-16
-- **PR:** [#987](https://github.com/seeker19110/donghanh/pull/987)
+- **PR:** [#987](https://github.com/seeker19110/dhcb/pull/987)
 - **Spec:** [`docs/specs/2026-09-15-learning-ux-s13-responsive-theme-hieu-nang-rollout.md`](../specs/2026-09-15-learning-ux-s13-responsive-theme-hieu-nang-rollout.md) §④ S13-1 (AC-1 → AC-7) — Approved for implementation
 - **Base:** `main` `82ed2e88`
 

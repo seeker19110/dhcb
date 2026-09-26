@@ -53,7 +53,7 @@ Nguyên tắc rút ra (và đối chiếu chuẩn ngành):
 ## 3. Cây thư mục đích (điều chỉnh platform-first so với đặc tả cải tổ cũ)
 
 ```
-donghanh/
+dhcb/
 ├─ apps/
 │  ├─ dhcb/                        # ✅ App nền tảng (đổi tên từ english, PR-S2b)
 │  │  └─ src/

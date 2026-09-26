@@ -1,6 +1,6 @@
 # feat(programming): nội dung học THẬT cho chặng S1 hướng Web (2026-08-27)
 
-**PR:** [#716](https://github.com/seeker19110/donghanh/pull/716) · **Nhánh:** `claude/thuc-thi-chang-s1-dkp8vw`
+**PR:** [#716](https://github.com/seeker19110/dhcb/pull/716) · **Nhánh:** `claude/thuc-thi-chang-s1-dkp8vw`
 
 ## Bối cảnh
 

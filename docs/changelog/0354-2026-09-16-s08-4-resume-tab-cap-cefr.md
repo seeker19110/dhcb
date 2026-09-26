@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị                                                                               |
 | ---------- | ------------------------------------------------------------------------------------- |
-| PR         | [#985](https://github.com/seeker19110/donghanh/pull/985)                              |
+| PR         | [#985](https://github.com/seeker19110/dhcb/pull/985)                                  |
 | Đặc tả     | `docs/specs/2026-09-15-learning-ux-s08-khung-phien-resume.md` §9 mục 3 (AC-18, AC-19) |
 | Goal       | `docs/goals/2026-09-15-learning-ux.md` dòng S08-4                                     |
 | Nền        | S08-1 (#932) khung phiên · S08-3 (#962) đã hoãn đúng hai AC này vì đụng S07-3         |

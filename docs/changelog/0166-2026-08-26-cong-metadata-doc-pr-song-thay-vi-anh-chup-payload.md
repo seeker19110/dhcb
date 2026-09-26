@@ -20,7 +20,7 @@ Nhưng cổng vẫn đỏ sau đó, kể cả ở run tạo lúc 16:24:20 — t�
 mô tả sống qua API xác nhận nó CÓ cụm chữ đó:
 
 ```
-GET /repos/seeker19110/donghanh/pulls/703
+GET /repos/seeker19110/dhcb/pulls/703
 updated_at: 2026-08-26T16:08:36Z
 có cụm "Approved for implementation"? True
 ```

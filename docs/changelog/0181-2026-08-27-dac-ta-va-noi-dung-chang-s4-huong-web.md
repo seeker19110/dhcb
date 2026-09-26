@@ -1,6 +1,6 @@
 # docs+feat(programming): đặc tả chặng S4 cho 13 hướng + nội dung học THẬT cho `web-s4` (2026-08-27)
 
-**PR:** [#720](https://github.com/seeker19110/donghanh/pull/720) · **Nhánh:** `claude/spec-s4-13-huong-t559fn`
+**PR:** [#720](https://github.com/seeker19110/dhcb/pull/720) · **Nhánh:** `claude/spec-s4-13-huong-t559fn`
 
 ## Bối cảnh
 

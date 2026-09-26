@@ -7,7 +7,7 @@
 `*.{js,cjs,mjs,json,css,md,html,yml,yaml}`. Thư mục `e2e/**/*.ts` không khớp glob nào cả — file
 Playwright mới/sửa có thể lọt qua cả eslint lẫn prettier lúc commit.
 
-Bằng chứng thật: PR seeker19110/donghanh#742 (khoá học Git & GitHub thực hành, PR 3/4) thêm
+Bằng chứng thật: PR seeker19110/dhcb#742 (khoá học Git & GitHub thực hành, PR 3/4) thêm
 `e2e/programming-course.spec.ts`, lint-staged không báo gì lúc commit, nhưng CI job
 "Type + Lint + Format" đỏ vì `prettier --check .` phát hiện file chưa format đúng — phải sửa và
 push lại riêng ở một commit sau.

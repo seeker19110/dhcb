@@ -1,6 +1,6 @@
 # Review S08: phản hồi quiz và ownership focus
 
-- Ngày: 2026-09-23. Base: `b0c424c0`. PR: [#1129](https://github.com/seeker19110/donghanh/pull/1129).
+- Ngày: 2026-09-23. Base: `b0c424c0`. PR: [#1129](https://github.com/seeker19110/dhcb/pull/1129).
 - Đã rà ExamQuestionCard, QuizTab, ba caller, hook keyboard và E2E hiện hữu.
 - Thêm `docs/specs/2026-09-23-uiux-s08-review-contract.md`: năm phát hiện,
   state table live region/focus, ranh giới caller/shared hook, ma trận kiểm chứng.

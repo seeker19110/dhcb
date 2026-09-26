@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị                                                                               |
 | ---------- | ------------------------------------------------------------------------------------- |
-| PR         | [#962](https://github.com/seeker19110/donghanh/pull/962)                              |
+| PR         | [#962](https://github.com/seeker19110/dhcb/pull/962)                                  |
 | Đặc tả     | `docs/specs/2026-09-15-learning-ux-s08-khung-phien-resume.md` §9 mục 3 (AC-16, AC-17) |
 | Goal       | `docs/goals/2026-09-15-learning-ux.md` dòng S08-3                                     |
 | Nền        | S08-1 (#932) — `learningSession.ts` + `useLearningSession.ts` đã có trên `main`       |

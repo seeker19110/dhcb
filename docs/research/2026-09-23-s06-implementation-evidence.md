@@ -68,7 +68,7 @@ rollback bằng revert bốn file của slice này, đồng thời ghi nhận l�
 ## Kiểm tra CI PR #1122 ngày 23/09
 
 Đã fetch/reconcile `origin/codex/uiux-accessibility`; HEAD `9d020f4a`, không conflict.
-Run [35853132839](https://github.com/seeker19110/donghanh/actions/runs/35853132839)
+Run [35853132839](https://github.com/seeker19110/dhcb/actions/runs/35853132839)
 fail Type/Lint/Format tại **TypeScript**: assertion Playwright `toBeDefined()` không
 thu hẹp kiểu `rule`/`rule.nodes[0]` dưới `noUncheckedIndexedAccess`. Sửa bằng guard
 throw nếu fixture không tạo violation có node; không ép kiểu hoặc bỏ kiểm tra.

@@ -1,6 +1,6 @@
 # 0342 — 2026-09-16 — S05-2: một nguồn danh mục môn cho hub và app
 
-- **PR:** [#953](https://github.com/seeker19110/donghanh/pull/953)
+- **PR:** [#953](https://github.com/seeker19110/dhcb/pull/953)
 - **Spec:** `docs/specs/2026-09-15-learning-ux-s05-bat-dau-theo-y-dinh.md` §9 mục 2 (AC-15 → AC-20)
 - **Trạng thái đặc tả:** Approved for implementation (chủ dự án chốt 2026-09-15)
 

@@ -1,6 +1,6 @@
 # 0349 — 2026-09-16 — Bỏ ký tự NUL trong `contentFingerprint`
 
-- **PR:** [#966](https://github.com/seeker19110/donghanh/pull/966)
+- **PR:** [#966](https://github.com/seeker19110/dhcb/pull/966)
 - **Nhánh:** `claude/laughing-babbage-o25bls-fix-nul`
 - **Loại:** trả nợ kỹ thuật (không đổi hành vi)
 

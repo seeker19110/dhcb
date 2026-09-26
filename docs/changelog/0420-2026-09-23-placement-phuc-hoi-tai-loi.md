@@ -1,7 +1,7 @@
 # 0420 — Khôi phục bài xếp lớp sau lỗi tải câu hỏi
 
 - Ngày: 2026-09-23.
-- Base: `1d9e247e`; PR [#1120](https://github.com/seeker19110/donghanh/pull/1120), hiện có base `main` sau khi PR tài liệu [#1119](https://github.com/seeker19110/donghanh/pull/1119) đã merge; source S01 chưa merge/deploy.
+- Base: `1d9e247e`; PR [#1120](https://github.com/seeker19110/dhcb/pull/1120), hiện có base `main` sau khi PR tài liệu [#1119](https://github.com/seeker19110/dhcb/pull/1119) đã merge; source S01 chưa merge/deploy.
 - Goal: [UI/UX và sư phạm](../goals/2026-09-23-uiux-su-pham.md), S01/F1.
 
 ## Thay đổi

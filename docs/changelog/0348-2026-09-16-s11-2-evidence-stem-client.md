@@ -2,7 +2,7 @@
 
 | Thuộc tính | Giá trị                                                                                |
 | ---------- | -------------------------------------------------------------------------------------- |
-| PR         | [#964](https://github.com/seeker19110/donghanh/pull/964)                               |
+| PR         | [#964](https://github.com/seeker19110/dhcb/pull/964)                                   |
 | Đặc tả     | `docs/specs/2026-09-15-learning-ux-s11-completion-evidence.md` §9 mục 2 (AC-9…AC-13)   |
 | Goal       | `docs/goals/2026-09-15-learning-ux.md` dòng S11                                        |
 | Nền        | S11-1 (#935) hợp đồng + migration `0081` + `POST /api/learning/evidence`; S08-3 (#962) |

@@ -279,7 +279,7 @@ REDIS_URL=redis://:mat-khau-redis-that-cua-ban@127.0.0.1:6379
 
 ```bash
 cd /var/www
-git clone https://github.com/seeker19110/donghanh.git dhcb
+git clone https://github.com/seeker19110/dhcb.git dhcb
 cd dhcb
 
 mkdir -p logs uploads

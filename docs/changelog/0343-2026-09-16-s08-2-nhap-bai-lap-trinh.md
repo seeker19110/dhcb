@@ -1,7 +1,7 @@
 # 0343 — S08-2: nháp code và bước đang học sống qua reload ở bài Lập trình
 
 - **Ngày:** 2026-09-16
-- **PR:** [#961](https://github.com/seeker19110/donghanh/pull/961)
+- **PR:** [#961](https://github.com/seeker19110/dhcb/pull/961)
 - **Đặc tả:** [`docs/specs/2026-09-15-learning-ux-s08-khung-phien-resume.md`](../specs/2026-09-15-learning-ux-s08-khung-phien-resume.md) (Approved for implementation) — slice S08-2, AC-11…AC-15, AC-20.
 
 ## Việc đã làm

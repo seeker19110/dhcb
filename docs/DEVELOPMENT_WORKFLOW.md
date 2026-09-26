@@ -1,6 +1,6 @@
 # Quy trình phát triển từ ý tưởng đến sản phẩm
 
-Đây là nguồn sự thật cho cách đưa một thay đổi của **donghanh** từ ý tưởng đến production.
+Đây là nguồn sự thật cho cách đưa một thay đổi của **dhcb** từ ý tưởng đến production.
 Mục tiêu là thay đổi nhỏ, truy vết được, có bằng chứng kiểm thử và rollback được.
 
 > **Cổng bắt buộc cho tính năng:** nghiên cứu và viết đặc tả chi tiết trước khi code. Không tạo

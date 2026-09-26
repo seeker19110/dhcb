@@ -146,6 +146,67 @@ describe('LessonAnimation', () => {
     expect(moDiChuyen).toMatch(/opacity="0.4"/)
   })
 
+  // Bẫy 2026-09-26: CSS tự lấy trạng thái nền cho 0%/100% còn thiếu và bỏ qua mốc thiếu opacity.
+  // Luật đọc mốc nằm ở animationKeyframes.ts; ca này canh bộ vẽ thật sự in đủ mọi mốc ra CSS.
+  it('CSS in đủ mọi thuộc tính ở mọi mốc, kể cả 0% và 100% mà người soạn không khai', () => {
+    const an: Spec = {
+      ...spec,
+      shapes: [
+        {
+          kind: 'circle',
+          id: 'hien-tre',
+          cx: 10,
+          cy: 10,
+          r: 3,
+          keyframes: [
+            { atMs: 500, opacity: 0 },
+            { atMs: 1000, dx: 40, opacity: 1 },
+            { atMs: 1500, rotate: 90 },
+          ],
+        },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={an} />)
+    const khoi = /@keyframes dhcbAnim[^{]*hientre \{([^]*?)\n\}/.exec(h)?.[1] ?? ''
+    const buoc = khoi.split('\n').filter((d) => d.includes('%'))
+    expect(buoc.map((d) => d.trim().split(' ')[0])).toEqual([
+      '0.000%',
+      '25.000%',
+      '50.000%',
+      '75.000%',
+      '100.000%',
+    ])
+    // Trước mốc đầu: đứng ẩn ở chỗ cũ. Mốc 75%: giữ dx = 40 và opacity 1 của mốc trước.
+    expect(buoc[0]).toContain('translate(0px, 0px) rotate(0deg) scale(1, 1); opacity: 0;')
+    expect(buoc[3]).toContain('translate(40px, 0px) rotate(90deg) scale(1, 1); opacity: 1;')
+    expect(buoc[4]).toContain('translate(40px, 0px) rotate(90deg) scale(1, 1); opacity: 1;')
+  })
+
+  it('scaleX/scaleY co giãn một trục quanh `origin`, nhân thêm vào `scale`', () => {
+    const an: Spec = {
+      ...spec,
+      shapes: [
+        {
+          kind: 'rect',
+          id: 'cot-dang',
+          x: 10,
+          y: 20,
+          w: 8,
+          h: 60,
+          origin: [14, 80],
+          keyframes: [
+            { atMs: 0, scaleY: 0.01 },
+            { atMs: 2000, scaleY: 1, scale: 0.5 },
+          ],
+        },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={an} />)
+    // Chân cột (14, 80) đứng yên, cột chỉ dâng theo chiều dọc.
+    expect(h).toMatch(/cotdang[^}]*transform-origin: 14px 80px[^}]*scale\(1, 0\.01\)/)
+    expect(h).toContain('scale(0.5, 0.5)')
+  })
+
   it('mốc thời gian đổi thành phần trăm đúng theo durationMs', () => {
     const h = html()
     expect(h).toContain('0.000%')
@@ -160,6 +221,95 @@ describe('LessonAnimation', () => {
 
   it('in lời dẫn theo thời gian thành danh sách đọc được', () => {
     expect(html()).toContain('Thả đồng thời hai vật.')
+  })
+
+  it('co giãn/xoay quanh `origin` nếu hình có khai, không thì quanh tâm hình (như cũ)', () => {
+    const coGoc: Spec = {
+      ...spec,
+      shapes: [
+        {
+          kind: 'arrow',
+          id: 'luc-can',
+          x1: 50,
+          y1: 80,
+          x2: 50,
+          y2: 20,
+          origin: [50, 80],
+          keyframes: [
+            { atMs: 0, scale: 0.2 },
+            { atMs: 2000, scale: 1 },
+          ],
+        },
+        {
+          kind: 'arrow',
+          id: 'khong-goc',
+          x1: 100,
+          y1: 80,
+          x2: 100,
+          y2: 20,
+          keyframes: [
+            { atMs: 0, scale: 0.2 },
+            { atMs: 2000, scale: 1 },
+          ],
+        },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={coGoc} />)
+    // Đuôi mũi tên đứng yên khi mũi tên dài ra → gốc ở (50, 80), không phải tâm (50, 50).
+    expect(h).toMatch(/luccan[^}]*transform-origin: 50px 80px/)
+    expect(h).toMatch(/khonggoc[^}]*transform-origin: 100px 50px/)
+  })
+
+  it('đường khép kín (`closed`) vẽ bằng <polygon> để có cả cạnh cuối → đầu', () => {
+    // <polyline> không bao giờ vẽ cạnh nối điểm cuối về điểm đầu: vòng benzen từng hở một cạnh.
+    const khep: Spec = {
+      ...spec,
+      shapes: [
+        {
+          kind: 'polyline',
+          id: 'luc-giac',
+          points: [
+            [10, 0],
+            [20, 5],
+            [20, 15],
+            [10, 20],
+            [0, 15],
+            [0, 5],
+          ],
+          closed: true,
+          stroke: 'primary',
+        },
+        {
+          kind: 'polyline',
+          id: 'do-thi',
+          points: [
+            [0, 0],
+            [10, 10],
+          ],
+          stroke: 'primary',
+        },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={khep} />)
+    expect(h).toContain('<polygon')
+    expect(h).toContain('points="10,0 20,5 20,15 10,20 0,15 0,5"')
+    // Đường hở (đồ thị) vẫn là polyline, không bị tô.
+    expect(h).toMatch(/<polyline[^>]*points="0,0 10,10"[^>]*fill="none"/)
+    expect(h.match(/<polygon/g)).toHaveLength(1)
+  })
+
+  it('chữ màu `surface` (đặt trên hình tô màu) không có viền; chữ thường vẫn có viền nền', () => {
+    const chu: Spec = {
+      ...spec,
+      shapes: [
+        { kind: 'rect', id: 'dien-tro', x: 0, y: 0, w: 60, h: 30, fill: 'accent' },
+        { kind: 'label', id: 'trong', x: 30, y: 20, text: 'R = 6 Ω', fill: 'surface' },
+        { kind: 'label', id: 'ngoai', x: 30, y: 60, text: 'toả nhiệt', fill: 'muted' },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={chu} />)
+    expect(h).toMatch(/<text[^>]*stroke="none"[^>]*>R = 6 Ω<\/text>/)
+    expect(h).toMatch(/<text[^>]*stroke="rgb\(var\(--surface-card\)\)"[^>]*>toả nhiệt<\/text>/)
   })
 
   it('hoạt ảnh không lặp thì khai iteration-count là 1', () => {

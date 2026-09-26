@@ -1,6 +1,6 @@
 # 0236 — 2026-09-02 — Breadcrumb: phủ nốt môn Lập trình và các trụ
 
-PR: [#819](https://github.com/seeker19110/donghanh/pull/819) · Nhánh: `claude/breadcrumb-lap-trinh-tru-701l36`
+PR: [#819](https://github.com/seeker19110/dhcb/pull/819) · Nhánh: `claude/breadcrumb-lap-trinh-tru-701l36`
 
 ## Việc đã làm
 

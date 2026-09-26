@@ -331,7 +331,7 @@ truoc-khi-xoa-20260821.sql.gz`), xác nhận 0 kết nối đang dùng
   lỗi.
 
   Còn lại **2 chỗ chưa đổi**, không thuộc hạ tầng vận hành nên chưa cần gấp: (1) tên GitHub repo
-  `seeker19110/english-tutor` trong `docs/CODEX_CLOUD_SETUP.md` (khác `seeker19110/donghanh`
+  `seeker19110/english-tutor` trong `docs/CODEX_CLOUD_SETUP.md` (khác `seeker19110/dhcb`
   đang dùng thật — có thể là repo cũ trước khi đổi tên, cần người dùng xác nhận có còn dùng
   không); (2) tên gọi dự án "english-tutor" trong `docs/MASTER_SPEC.md` dòng mở đầu (mang tính mô
   tả lịch sử dự án, không phải định danh hạ tầng).

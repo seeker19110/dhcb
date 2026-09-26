@@ -1,7 +1,7 @@
 # feat(programming): nội dung học THẬT cho chặng S1 hướng Kiến trúc (2026-08-27)
 
 **PR:** chưa mở (phiên chính quyết định) · **Nhánh:** `claude/chang-s1-architecture` — nối tiếp
-[#716](https://github.com/seeker19110/donghanh/pull/716) và dựng trên nhánh của PR đó.
+[#716](https://github.com/seeker19110/dhcb/pull/716) và dựng trên nhánh của PR đó.
 
 ## Bối cảnh
 
