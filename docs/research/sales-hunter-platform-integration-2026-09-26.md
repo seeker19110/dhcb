@@ -1,13 +1,28 @@
 # Sales-Hunter platform entry — specification
 
-Status: draft for review. Owner request: integrate Sales-Hunter into donghanhcungban.org.
+Status: **Approved for implementation** — chủ dự án duyệt trong phiên ngày 2026-09-27
+("Sửa rồi tích hợp"), kèm các điều chỉnh phạm vi ở mục "Điều chỉnh khi duyệt" bên dưới.
+Owner request: integrate Sales-Hunter into donghanhcungban.org.
 Related accepted Sales ADR: seeker19110/Sales-Hunter/docs/adr/0002-platform-subdomain-dhcb.md.
-This branch proposes the frontend implementation alongside the spec; it is not merged or
-represented as an already approved/deployed new feature.
+Việc merge PR này KHÔNG có nghĩa là Sales đã triển khai hay mở truy cập: cờ build vẫn tắt.
+
+## Điều chỉnh khi duyệt (2026-09-27)
+
+Bản đầu gắn khối vào `main.tsx`, nên nó hiện ở cuối **mọi** trang và làm đỏ E2E ở 4/6 mảnh
+(AAA trang Vật lí, ma trận S07 reflow/44px, bố cục English 320/390px). Khi duyệt đã chốt:
+
+- Khối chỉ đặt ở **trang chủ** (`apps/dhcb/src/pages/core/Home.tsx`), cuối luồng chính, cùng kiểu
+  thẻ với "Bộ môn & không gian"; không trang nào khác có nó.
+- Chỉ hiện khi giao diện là tiếng Việt: khối chưa có bản tiếng Anh cho chiều B.
+- Màu dùng thang `zinc`/`white` đã map token theme; chữ nội dung đạt AAA ở 3 theme.
+- Bỏ `lazy()` riêng (khối ~50 dòng, đã nằm trong chunk lười của trang chủ); vẫn giữ error
+  boundary để lỗi của khối không làm sập trang.
+- Cổng: `e2e/sales-hunter-entry.spec.ts` (mở bằng bàn phím, AA + AAA × 3 theme, không có link
+  khi cờ tắt, không lọt sang trang khác).
 
 ## Scope
 
-Add an independent, accessible product entry after the existing application content on the
+Add an independent, accessible product entry at the end of the home page main column on the
 main DHCB hostname. Do not restore removed Career/Startup/Life studios, alter router paths,
 modify auth/billing/mastery, or embed an operator dashboard iframe. Sales stays a separate
 Python application and independent deployment at sales.donghanhcungban.org.
