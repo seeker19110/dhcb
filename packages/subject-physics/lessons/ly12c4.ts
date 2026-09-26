@@ -1731,9 +1731,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 1000, opacity: 1 },
-            { atMs: 1100, opacity: 0.15 },
+            { atMs: 900, opacity: 1 },
+            { atMs: 1000, opacity: 0.15 },
           ],
         },
         {
@@ -1744,9 +1743,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 2000, opacity: 1 },
-            { atMs: 2100, opacity: 0.15 },
+            { atMs: 1900, opacity: 1 },
+            { atMs: 2000, opacity: 0.15 },
           ],
         },
         {
@@ -1757,9 +1755,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 1000, opacity: 1 },
-            { atMs: 1100, opacity: 0.15 },
+            { atMs: 900, opacity: 1 },
+            { atMs: 1000, opacity: 0.15 },
           ],
         },
         {
@@ -1770,9 +1767,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 3000, opacity: 1 },
-            { atMs: 3100, opacity: 0.15 },
+            { atMs: 2900, opacity: 1 },
+            { atMs: 3000, opacity: 0.15 },
           ],
         },
         {
@@ -1783,9 +1779,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 1000, opacity: 1 },
-            { atMs: 1100, opacity: 0.15 },
+            { atMs: 900, opacity: 1 },
+            { atMs: 1000, opacity: 0.15 },
           ],
         },
         {
@@ -1796,9 +1791,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 2000, opacity: 1 },
-            { atMs: 2100, opacity: 0.15 },
+            { atMs: 1900, opacity: 1 },
+            { atMs: 2000, opacity: 0.15 },
           ],
         },
         {
@@ -1809,9 +1803,8 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
           r: 6,
           fill: 'accent',
           keyframes: [
-            { atMs: 0, opacity: 1 },
-            { atMs: 1000, opacity: 1 },
-            { atMs: 1100, opacity: 0.15 },
+            { atMs: 900, opacity: 1 },
+            { atMs: 1000, opacity: 0.15 },
           ],
         },
         { kind: 'circle', id: 'hat-con-8', cx: 356, cy: 122, r: 6, fill: 'accent' },

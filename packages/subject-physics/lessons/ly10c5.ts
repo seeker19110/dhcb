@@ -247,7 +247,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0 },
             { atMs: 2000, dx: 120 },
-            { atMs: 4000, dx: 180 },
+            { atMs: 4000, dx: 150 },
           ],
         },
         {
@@ -262,7 +262,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           keyframes: [
             { atMs: 0, dx: 0 },
             { atMs: 2000, dx: 0 },
-            { atMs: 4000, dx: 60 },
+            { atMs: 4000, dx: 30 },
           ],
         },
         {
@@ -291,9 +291,9 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
           strokeWidth: 3,
           opacity: 0,
           keyframes: [
-            { atMs: 0, opacity: 0, dx: 0 },
-            { atMs: 2100, opacity: 1, dx: 0 },
-            { atMs: 4000, opacity: 1, dx: 60 },
+            { atMs: 2000, opacity: 0, dx: 0 },
+            { atMs: 2100, opacity: 1 },
+            { atMs: 4000, dx: 30 },
           ],
         },
         {

@@ -486,6 +486,33 @@ chấm/mũi tên ra khung). **Bẫy trong chính công cụ đo** (đã mắc kh
 `document.querySelector('style')` lấy nhầm thẻ `<style>` theme đầu trang → mặc định 1000 ms, đo
 mãi giây đầu của mọi hoạt ảnh mà vẫn in "sạch". Đọc từ spec, và ném lỗi khi thiếu thay vì mặc định.
 
+**Hai bẫy nữa lộ ra khi rà mắt 56 hoạt ảnh Hoá (2026-09-26, `docs/changelog/0459-*.md`):**
+
+1. **Để CSS tự điền phần mốc người soạn không khai là dạy SAI theo ba cách.** Bộ vẽ từng đổi thẳng
+   từng mốc sang `@keyframes`. (a) Mốc thiếu `dx/dy` được điền `translate(0, 0)`, nên hình "đứng
+   yên rồi mờ đi" lại trượt về chỗ cũ. (b) CSS bỏ qua mốc thiếu `opacity` khi nội suy, nên hình
+   "tới nơi mới mờ" lại mờ dần suốt đường đi. (c) Thiếu mốc 0% hoặc 100% thì CSS lấy trạng thái nền,
+   nên hình "ẩn tới giây 3" lại hiện từ đầu, còn chấm đồ thị trượt thẳng về điểm đầu ở cuối vòng.
+   Zod không bắt được vì dữ liệu hợp lệ; test chuỗi CSS cũ cũng không bắt được vì nó chỉ đọc lại
+   đúng những gì người soạn khai. Máy so cách hiểu cũ và mới: 40 hoạt ảnh chạy khác người soạn
+   định (4 Lí, 6 Hoá, 26 Sinh, 4 Lập trình). Sửa ở bộ vẽ: hàm thuần `giaiMoc`
+   (`packages/core-ui/animationKeyframes.ts`) giải mốc thành trạng thái ĐẦY ĐỦ trước khi sinh CSS.
+   Luật ghi trong `AnimationKeyframeSchema`: thuộc tính không khai thì giữ giá trị mốc trước; trước
+   mốc đầu và sau mốc cuối giữ trạng thái đầu/cuối; opacity ban đầu là opacity tĩnh. Cổng:
+   `animationKeyframes.test.ts` và ca "CSS in đủ mọi thuộc tính ở mọi mốc, kể cả 0% và 100%" trong
+   `LessonAnimation.test.tsx`. Đã tự kiểm không xanh giả: bỏ phần "giữ giá trị mốc trước" thì 3 ca
+   đỏ. **Hệ quả khi soạn:** muốn hình hiện đột ngột ở giây 2 thì khai hai mốc sát nhau:
+   `{ atMs: 1900, opacity: 0 }` rồi `{ atMs: 2000, opacity: 1 }`. Chỉ khai mốc 0 với opacity 0 rồi
+   mốc 2000 với opacity 1 là hình mờ dần hiện ra suốt 2 giây. Lỗi này đã gặp ở `ly10-c5-b29`: mũi
+   tên động lượng "sau va chạm" hiện dần từ trước va chạm.
+2. **Bình HỞ MIỆNG vẽ bằng `rect` (hoặc đường khép kín) thành bình CÓ NẮP.** `rect` luôn vẽ cạnh
+   trên. Ống nghiệm, cốc, bình tam giác ở 10 bài Hoá trông như lọ đậy kín, kể cả cốc có cầu muối
+   cắm vào. Không máy nào bắt được. Cách rà: liệt kê `rect` có `stroke` và cao ≥ 36 đơn vị rồi xem
+   ảnh (script tạm đã dùng: lọc `kind === 'rect' && stroke && h >= 36`). Cách vẽ đúng: `polyline`
+   KHÔNG `closed`, đi từ mép miệng trái xuống đáy (bo góc hoặc nửa vòng tròn) rồi lên mép miệng phải.
+   Chất lỏng bên trong vẫn là một hình tô màu riêng. Ngoại lệ có chủ đích: ấm đun (có nắp thật),
+   bình khí kín ở bài Lí.
+
 ## 11. `vi.mock` KHÔNG áp cho các `import()` động chạy ĐỒNG THỜI — chỉ lượt đầu nhận mock
 
 **Ngày/PR:** 2026-09-22, `docs/changelog/0411-*.md` (test cho `apps/dhcb/src/lib/subjectProgressBoard.ts`).

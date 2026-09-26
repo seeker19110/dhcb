@@ -24,7 +24,13 @@ export const AnimationColorRoleSchema = z.enum([
 export type AnimationColorRole = z.infer<typeof AnimationColorRoleSchema>
 
 /** Một mốc thời gian của hình: chỉ biến đổi hình học + độ mờ, không đổi cấu trúc.
- *  Giới hạn này giữ hoạt ảnh chạy bằng CSS transform (mượt, không layout reflow). */
+ *  Giới hạn này giữ hoạt ảnh chạy bằng CSS transform (mượt, không layout reflow).
+ *
+ *  Luật đọc mốc (bộ vẽ thi hành ở `packages/core-ui/animationKeyframes.ts`):
+ *  - thuộc tính không khai ở một mốc thì GIỮ giá trị mốc trước — `{ atMs: 2400, opacity: 0 }`
+ *    sau `{ atMs: 2000, dx: 96 }` nghĩa là đứng ở dx = 96 rồi mờ đi, không trượt về 0;
+ *  - trước mốc đầu, hình giữ trạng thái mốc đầu; sau mốc cuối, giữ trạng thái mốc cuối;
+ *  - opacity trước lần khai đầu tiên là `opacity` tĩnh của hình (mặc định 1). */
 export const AnimationKeyframeSchema = z
   .object({
     /** Mốc thời gian tính từ đầu hoạt ảnh (ms). */
@@ -36,6 +42,11 @@ export const AnimationKeyframeSchema = z
     rotate: z.number().optional(),
     /** Phóng to/thu nhỏ quanh `origin` của hình nếu có khai, không thì quanh tâm hình. */
     scale: z.number().positive().max(20).optional(),
+    /** Co giãn riêng một trục (nhân thêm vào `scale`), cũng quanh `origin`. Dành cho thứ chỉ lớn
+     *  theo một chiều: cột nhiệt kế dâng, chất lỏng đầy dần, thanh số liệu mọc lên. Muốn "mọc từ
+     *  số 0" thì dùng số dương rất nhỏ như 0,01 (schema không nhận 0). */
+    scaleX: z.number().positive().max(20).optional(),
+    scaleY: z.number().positive().max(20).optional(),
     opacity: z.number().min(0).max(1).optional(),
   })
   .strict()

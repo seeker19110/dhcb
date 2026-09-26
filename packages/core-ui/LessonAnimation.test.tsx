@@ -146,6 +146,67 @@ describe('LessonAnimation', () => {
     expect(moDiChuyen).toMatch(/opacity="0.4"/)
   })
 
+  // Bẫy 2026-09-26: CSS tự lấy trạng thái nền cho 0%/100% còn thiếu và bỏ qua mốc thiếu opacity.
+  // Luật đọc mốc nằm ở animationKeyframes.ts; ca này canh bộ vẽ thật sự in đủ mọi mốc ra CSS.
+  it('CSS in đủ mọi thuộc tính ở mọi mốc, kể cả 0% và 100% mà người soạn không khai', () => {
+    const an: Spec = {
+      ...spec,
+      shapes: [
+        {
+          kind: 'circle',
+          id: 'hien-tre',
+          cx: 10,
+          cy: 10,
+          r: 3,
+          keyframes: [
+            { atMs: 500, opacity: 0 },
+            { atMs: 1000, dx: 40, opacity: 1 },
+            { atMs: 1500, rotate: 90 },
+          ],
+        },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={an} />)
+    const khoi = /@keyframes dhcbAnim[^{]*hientre \{([^]*?)\n\}/.exec(h)?.[1] ?? ''
+    const buoc = khoi.split('\n').filter((d) => d.includes('%'))
+    expect(buoc.map((d) => d.trim().split(' ')[0])).toEqual([
+      '0.000%',
+      '25.000%',
+      '50.000%',
+      '75.000%',
+      '100.000%',
+    ])
+    // Trước mốc đầu: đứng ẩn ở chỗ cũ. Mốc 75%: giữ dx = 40 và opacity 1 của mốc trước.
+    expect(buoc[0]).toContain('translate(0px, 0px) rotate(0deg) scale(1, 1); opacity: 0;')
+    expect(buoc[3]).toContain('translate(40px, 0px) rotate(90deg) scale(1, 1); opacity: 1;')
+    expect(buoc[4]).toContain('translate(40px, 0px) rotate(90deg) scale(1, 1); opacity: 1;')
+  })
+
+  it('scaleX/scaleY co giãn một trục quanh `origin`, nhân thêm vào `scale`', () => {
+    const an: Spec = {
+      ...spec,
+      shapes: [
+        {
+          kind: 'rect',
+          id: 'cot-dang',
+          x: 10,
+          y: 20,
+          w: 8,
+          h: 60,
+          origin: [14, 80],
+          keyframes: [
+            { atMs: 0, scaleY: 0.01 },
+            { atMs: 2000, scaleY: 1, scale: 0.5 },
+          ],
+        },
+      ],
+    }
+    const h = renderToStaticMarkup(<LessonAnimation spec={an} />)
+    // Chân cột (14, 80) đứng yên, cột chỉ dâng theo chiều dọc.
+    expect(h).toMatch(/cotdang[^}]*transform-origin: 14px 80px[^}]*scale\(1, 0\.01\)/)
+    expect(h).toContain('scale(0.5, 0.5)')
+  })
+
   it('mốc thời gian đổi thành phần trăm đúng theo durationMs', () => {
     const h = html()
     expect(h).toContain('0.000%')

@@ -1135,8 +1135,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   **Rà mắt Vật lí xong (2026-09-26, `docs/changelog/0457-*.md`):** 73/73 hoạt ảnh soi 5 mốc +
   máy kiểm hình học mới trong `shots:lesson-anim`; sửa 58 (khoảng 20 sai KIẾN THỨC, có
   chiều đường sức quanh dây thẳng bị đảo) + 3 lỗi renderer (`closed` thiếu cạnh khép ở 19 hình
-  cả 4 môn, thêm `origin` cho xoay/co, bỏ halo chữ trên nền màu). **Còn thiếu:** rà mắt Hoá (56)
-  và Sinh (64) hoạt ảnh — làm ở các PR kế tiếp; cấu trúc animation cho môn Anh (chưa thiết kế).
+  cả 4 môn, thêm `origin` cho xoay/co, bỏ halo chữ trên nền màu). **Rà mắt Hoá xong (2026-09-26,
+  `docs/changelog/0459-*.md`):** 56/56 soi 5 mốc, sửa 54 (khoảng 25 sai KIẾN THỨC, có SO₄²⁻ "bị oxi
+  hoá ở anode" trong cả lí thuyết bài điện phân) + bộ vẽ đọc mốc đúng ý người soạn (`giaiMoc`: giữ
+  giá trị mốc trước, giữ trạng thái đầu/cuối — 40 hoạt ảnh ở 4 môn từng chạy sai) + `scaleX/scaleY`.
+  **Còn thiếu:** rà mắt Sinh (64) hoạt ảnh — PR kế tiếp; cấu trúc animation cho môn Anh (chưa thiết
+  kế).
   Đặc tả: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`.
 - ✅ **[2026-09-20 — PR #1061 → ĐÓNG 2026-09-25, `docs/changelog/0447-*.md`] Ảnh Tầng 8b cho sửa
   tương phản CompanionVoice đã chụp và xem bằng mắt.** Ảnh 390/1440 × blue-sky/dark-blue × 3 studio
