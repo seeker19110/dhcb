@@ -11,8 +11,8 @@ Việc merge PR này KHÔNG có nghĩa là Sales đã triển khai hay mở truy
 Bản đầu gắn khối vào `main.tsx`, nên nó hiện ở cuối **mọi** trang và làm đỏ E2E ở 4/6 mảnh
 (AAA trang Vật lí, ma trận S07 reflow/44px, bố cục English 320/390px). Khi duyệt đã chốt:
 
-- Khối chỉ đặt ở **trang chủ** (`apps/dhcb/src/pages/core/Home.tsx`), cuối luồng chính, cùng kiểu
-  thẻ với "Bộ môn & không gian"; không trang nào khác có nó.
+- Khối chỉ đặt ở **trang chủ** (`apps/dhcb/src/pages/core/Home.tsx`): desktop ở rail phụ (giữ ngân
+  sách chiều cao 1459px của cổng UX-R2), mobile cuối luồng chính; không trang nào khác có nó.
 - Chỉ hiện khi giao diện là tiếng Việt: khối chưa có bản tiếng Anh cho chiều B.
 - Màu dùng thang `zinc`/`white` đã map token theme; chữ nội dung đạt AAA ở 3 theme.
 - Bỏ `lazy()` riêng (khối ~50 dòng, đã nằm trong chunk lười của trang chủ); vẫn giữ error
@@ -22,7 +22,7 @@ Bản đầu gắn khối vào `main.tsx`, nên nó hiện ở cuối **mọi** 
 
 ## Scope
 
-Add an independent, accessible product entry at the end of the home page main column on the
+Add an independent, accessible product entry on the home page (desktop side rail, mobile end of main column) on the
 main DHCB hostname. Do not restore removed Career/Startup/Life studios, alter router paths,
 modify auth/billing/mastery, or embed an operator dashboard iframe. Sales stays a separate
 Python application and independent deployment at sales.donghanhcungban.org.

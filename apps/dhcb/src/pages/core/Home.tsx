@@ -372,6 +372,12 @@ export default function Home() {
     </div>
   )
 
+  // Lối vào Sales-Hunter (ứng dụng RIÊNG, không chung phiên/dữ liệu) chỉ đặt ở trang chủ — không
+  // gắn vào mọi trang (PR #1183). Desktop: nằm ở rail phụ (sticky, tự cuộn) để không phá ngân
+  // sách chiều cao 1459px của cổng UX-R2; mobile: cuối luồng chính. Chỉ hiện với giao diện tiếng
+  // Việt vì khối chưa có bản tiếng Anh cho chiều B.
+  const salesHunterNode = vi ? <SalesHunterSlot /> : null
+
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
       <Layout title={T.greeting} back={false} />
@@ -400,10 +406,7 @@ export default function Home() {
               {spacesSection}
               {!isDesktop && progressHistory}
               {!isDesktop && homeBannerNode}
-              {/* Lối vào Sales-Hunter (ứng dụng RIÊNG, không chung phiên/dữ liệu) chỉ đặt ở
-                  trang chủ, đứng cuối luồng chính — không gắn vào mọi trang (PR #1183). Chỉ
-                  hiện với giao diện tiếng Việt: khối chưa có bản tiếng Anh cho chiều B. */}
-              {vi && <SalesHunterSlot />}
+              {!isDesktop && salesHunterNode}
             </div>
           </div>
           {isDesktop && (
@@ -415,6 +418,7 @@ export default function Home() {
                 {weekRhythmModel && <WeekRhythm model={weekRhythmModel} />}
                 {progressHistory}
                 {homeBannerNode}
+                {salesHunterNode}
               </div>
             </aside>
           )}
