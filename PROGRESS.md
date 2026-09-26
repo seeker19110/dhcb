@@ -697,6 +697,12 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-09-27] Bật lối vào Sales-Hunter trên trang chủ — CHỈ sau khi Sales nghiệm thu.** PR
+  [#1183](https://github.com/seeker19110/dhcb/pull/1183) (changelog `0460`) đã đặt khối ở trang
+  chủ, mặc định "Chưa mở truy cập". Thứ tự: phía Sales (repo Sales-Hunter) làm xong
+  staging/HTTPS/Access/backup-restore → thêm `VITE_SALES_HUNTER_PILOT_ENABLED=true` vào `.env`
+  build trên VPS → deploy lại. Tắt: bỏ cờ rồi build lại; thu hồi quyền phải làm ở Access/Sales.
+
 - **[2026-09-26] Repo GitHub đã đổi tên `donghanh` → `dhcb`: đổi remote ở các chỗ NGOÀI repo.**
   Trong repo đã đổi hết (changelog `0458`). GitHub đang tự chuyển hướng tên cũ nên chưa có gì
   gãy, nhưng chuyển hướng mất ngay nếu sau này tài khoản `seeker19110` tạo repo mới tên

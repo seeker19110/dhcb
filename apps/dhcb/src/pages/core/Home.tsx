@@ -16,6 +16,7 @@ import HomeUniversalAiBar from '../../components/Home/HomeUniversalAiBar.js'
 import SubjectSpaceList from '../../components/Home/SubjectSpaceList.js'
 import GuestHome from '../../components/Home/GuestHome.js'
 import WeekRhythm from '../../components/Home/WeekRhythm.js'
+import SalesHunterSlot from '../../components/SalesHunterSlot.js'
 import { usePageTitle } from '../../lib/usePageTitle'
 import { duongDanGhiChu, duongDanGhiChuKanban } from '../../lib/domainRoutes'
 import { useLang } from '../../context/useLang'
@@ -371,6 +372,12 @@ export default function Home() {
     </div>
   )
 
+  // Lối vào Sales-Hunter (ứng dụng RIÊNG, không chung phiên/dữ liệu) chỉ đặt ở trang chủ — không
+  // gắn vào mọi trang (PR #1183). Desktop: nằm ở rail phụ (sticky, tự cuộn) để không phá ngân
+  // sách chiều cao 1459px của cổng UX-R2; mobile: cuối luồng chính. Chỉ hiện với giao diện tiếng
+  // Việt vì khối chưa có bản tiếng Anh cho chiều B.
+  const salesHunterNode = vi ? <SalesHunterSlot /> : null
+
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
       <Layout title={T.greeting} back={false} />
@@ -399,6 +406,7 @@ export default function Home() {
               {spacesSection}
               {!isDesktop && progressHistory}
               {!isDesktop && homeBannerNode}
+              {!isDesktop && salesHunterNode}
             </div>
           </div>
           {isDesktop && (
@@ -410,6 +418,7 @@ export default function Home() {
                 {weekRhythmModel && <WeekRhythm model={weekRhythmModel} />}
                 {progressHistory}
                 {homeBannerNode}
+                {salesHunterNode}
               </div>
             </aside>
           )}
