@@ -40,7 +40,7 @@ export default function SalesHunterEntry({
               Mở Sales-Hunter — tab mới
             </a>
           ) : (
-            <p className="mt-3 text-sm font-semibold text-white">
+            <p className="mt-3 text-sm font-semibold text-white read-measure">
               Chưa mở truy cập — đang chuẩn bị thử nghiệm có kiểm soát.
             </p>
           )}

@@ -24,6 +24,8 @@ rớt ma trận S07 (reflow/44px ở 768px), vỡ bố cục English 320/390px. 
 - Đổi sang kiểu thẻ của trang chủ; chữ nội dung `text-zinc-200` đạt AAA ở 3 theme.
 - Bỏ `lazy()` + `Suspense` riêng: nó làm test `Home.test.tsx` đỏ ngẫu nhiên (2/13 ca, đo 3 lượt)
   do render lệch nhịp. Giữ error boundary. Chạy lại 5 lượt: 43/43 xanh cả 5.
+- Dòng "Chưa mở truy cập" thiếu `read-measure` nên dài 100 ký tự/dòng ở 768px, vượt trần 3 đoạn
+  của cổng `learning-ux-layout.spec.ts` (CI đỏ lần hai). Đã thêm; cổng xanh.
 - Đánh lại số changelog `0457` → `0460` (trùng số với đợt hoạt ảnh Vật lí).
 
 ## Bằng chứng
