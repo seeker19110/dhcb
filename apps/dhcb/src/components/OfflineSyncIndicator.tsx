@@ -6,9 +6,9 @@
 // "N mục chờ đồng bộ" là số thật, và có thêm trạng thái "hết phiên đăng nhập" — trước đây người
 // dùng không bao giờ biết vì sao dữ liệu không lên được server.
 import { useState, useEffect } from 'react'
-import { WifiOff, RefreshCw, CheckCircle2, LogIn } from 'lucide-react'
+import { WifiOff, RefreshCw, CheckCircle2, LogIn, PauseCircle } from 'lucide-react'
 import { useAuth } from '../context/useAuth'
-import { isBlockedByAuth, pending, subscribe } from '../lib/syncOutbox'
+import { isBlockedByAuth, isGradingUnavailable, pending, subscribe } from '../lib/syncOutbox'
 
 export default function OfflineSyncIndicator() {
   const { user } = useAuth()
@@ -18,6 +18,7 @@ export default function OfflineSyncIndicator() {
   )
   const [pendingCount, setPendingCount] = useState(0)
   const [needsLogin, setNeedsLogin] = useState(false)
+  const [gradingPaused, setGradingPaused] = useState(false)
   const [justSynced, setJustSynced] = useState(false)
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function OfflineSyncIndicator() {
       const offline = typeof navigator !== 'undefined' ? !navigator.onLine : false
       setPendingCount(count)
       setNeedsLogin(blocked)
+      setGradingPaused(isGradingUnavailable(uid))
       if (count > 0 && (blocked || offline)) biKet = true
       if (previous > 0 && count === 0) {
         if (biKet) {
@@ -82,7 +84,7 @@ export default function OfflineSyncIndicator() {
   // `scripts/fixed-color-contrast-audit.ts` chỉ nhận ra "nền đặc" khi không có phần trăm mờ.
   const tone = !isOnline
     ? 'bg-amber-950 border-amber-600/50 text-amber-200'
-    : needsLogin
+    : needsLogin || gradingPaused
       ? 'bg-amber-950 border-amber-600/50 text-amber-200'
       : justSynced
         ? 'bg-emerald-950 border-emerald-600/50 text-emerald-200'
@@ -114,6 +116,8 @@ export default function OfflineSyncIndicator() {
             <WifiOff className="w-4 h-4 shrink-0" />
           ) : needsLogin ? (
             <LogIn className="w-4 h-4 shrink-0" />
+          ) : gradingPaused ? (
+            <PauseCircle className="w-4 h-4 shrink-0" />
           ) : justSynced ? (
             <CheckCircle2 className="w-4 h-4 shrink-0" />
           ) : (
@@ -128,6 +132,11 @@ export default function OfflineSyncIndicator() {
               </span>
             ) : needsLogin ? (
               <span>{pendingCount} mục chờ đồng bộ — đăng nhập lại để gửi lên</span>
+            ) : gradingPaused ? (
+              <span>
+                Chấm bài đang bảo trì. Mã bài được giữ trên thiết bị, chưa xác nhận hoàn thành. Bạn
+                vẫn có thể chạy thử.
+              </span>
             ) : justSynced ? (
               <span>Đã đồng bộ dữ liệu học tập thành công!</span>
             ) : (

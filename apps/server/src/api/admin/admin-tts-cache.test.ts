@@ -14,9 +14,8 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: vi.fn(),
 }))
 
-vi.mock('@dhcb/core-auth/authService', () => ({ getUserById: vi.fn() }))
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (e?: string) => e === 'admin@example.com',
+  isAdminUser: (userId?: string) => userId === 'a1',
 }))
 vi.mock('@dhcb/core-ai/fileStorage', () => ({
   getR2PublicBaseUrl: vi.fn(() => 'https://pub-abc.r2.dev'),
@@ -25,16 +24,13 @@ vi.mock('@dhcb/core-ai/ttsCacheAudit', () => ({ runTtsCacheAudit: vi.fn() }))
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { validateAuth, checkRateLimit } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
 import { getR2PublicBaseUrl } from '@dhcb/core-ai/fileStorage'
 import { runTtsCacheAudit } from '@dhcb/core-ai/ttsCacheAudit'
 
-type UserInfo = Awaited<ReturnType<typeof getUserById>>
 const queryMock = getPgPool().query as unknown as ReturnType<typeof vi.fn>
 
 function asAdmin() {
   vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-  vi.mocked(getUserById).mockResolvedValueOnce({ id: 'a1', email: 'admin@example.com' } as UserInfo)
 }
 
 describe('/api/admin-tts-cache', () => {
@@ -50,10 +46,7 @@ describe('/api/admin-tts-cache', () => {
 
   it('đăng nhập nhưng KHÔNG phải admin → 403', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u9' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'u9',
-      email: 'ai-do@example.com',
-    } as UserInfo)
+
     const res = await handler(new Request('http://localhost/api/admin-tts-cache'))
     expect(res.status).toBe(403)
   })

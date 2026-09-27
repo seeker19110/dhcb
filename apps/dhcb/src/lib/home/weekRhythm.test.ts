@@ -100,6 +100,26 @@ describe('buildWeekRhythm', () => {
     expect(m.latestBadge).toBeUndefined()
   })
 
+  it('payout share/streak bị tắt không được tính nhầm thành nhiệm vụ đã hoàn thành', () => {
+    const model = buildWeekRhythm(
+      base({
+        quests: {
+          share: { cooldownDays: 7, rewardDays: 0, canClaim: false },
+          streak: { current: 8, required: 5, rewardDays: 0, cooldownDays: 7, canClaim: false },
+          cefrExams: [{ level: 'A1', passed: true, claimed: true, rewardDays: 3 }],
+          referral: {
+            code: 'x',
+            rewardedCount: 0,
+            pendingCount: 0,
+            maxRewarded: 10,
+            rewardDays: 7,
+          },
+        },
+      }),
+    )
+    expect(model.quests).toEqual({ done: 1, total: 1 })
+  })
+
   it('có huy hiệu mới → giữ nguyên id/label', () => {
     const m = buildWeekRhythm(base({ latestBadge: { id: 'streak_7', label: 'Chuỗi 7 ngày' } }))
     expect(m.latestBadge).toEqual({ id: 'streak_7', label: 'Chuỗi 7 ngày' })

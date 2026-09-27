@@ -9,12 +9,8 @@ vi.mock('@dhcb/core-auth/security', () => ({
   validateAuth: async () => authState.user,
   logSecurityEvent: () => {},
 }))
-const emailState: { email: string | undefined } = { email: 'admin@x.com' }
-vi.mock('@dhcb/core-auth/authService', () => ({
-  getUserById: async () => ({ id: 'user-1', email: emailState.email }),
-}))
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (email: string | null | undefined) => email === 'admin@x.com',
+  isAdminUser: (userId: string | null | undefined) => userId === 'user-1',
 }))
 
 const getAllMock = vi.fn()
@@ -22,14 +18,14 @@ const upsertMock = vi.fn()
 vi.mock('../_lib/achievementRewards.js', () => ({
   getAllRewardConfigs: () => getAllMock(),
   upsertRewardConfig: (id: string, patch: unknown) => upsertMock(id, patch),
-  ACHIEVEMENT_IDS: ['streak_7', 'vocab_100'],
+  ACHIEVEMENT_IDS: ['streak_7', 'vocab_100', 'cefr_a1'],
+  supportsPaidReward: (id: string) => id.startsWith('cefr_'),
 }))
 
 import handler from './admin-achievement-rewards.js'
 
 beforeEach(() => {
   authState.user = { userId: 'user-1' }
-  emailState.email = 'admin@x.com'
   getAllMock.mockReset()
   upsertMock.mockReset()
 })
@@ -42,7 +38,7 @@ describe('quyền truy cập', () => {
   })
 
   it('không phải admin → 403', async () => {
-    emailState.email = 'user@x.com'
+    authState.user = { userId: 'non-admin' }
     const res = await handler(new Request('http://localhost/api/admin-achievement-rewards'))
     expect(res.status).toBe(403)
   })
@@ -84,13 +80,25 @@ describe('PUT /api/admin-achievement-rewards', () => {
     expect(upsertMock).not.toHaveBeenCalled()
   })
 
+  it.each([{ enabled: true }, { rewardDays: 1 }])(
+    'không bật thưởng từ huy hiệu thiếu bằng chứng tin cậy %#',
+    async (patch) => {
+      const res = await handler(putRequest({ achievementId: 'streak_7', ...patch }))
+      expect(res.status).toBe(400)
+      expect(await res.json()).toEqual({
+        error: 'Chỉ huy hiệu CEFR đã xác minh được hỗ trợ thưởng VIP.',
+      })
+      expect(upsertMock).not.toHaveBeenCalled()
+    },
+  )
+
   it('body hợp lệ → gọi upsertRewardConfig đúng tham số, trả ok', async () => {
     const res = await handler(
-      putRequest({ achievementId: 'streak_7', enabled: false, rewardPlan: 'vip', rewardDays: 5 }),
+      putRequest({ achievementId: 'cefr_a1', enabled: false, rewardPlan: 'vip', rewardDays: 5 }),
     )
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true })
-    expect(upsertMock).toHaveBeenCalledWith('streak_7', {
+    expect(upsertMock).toHaveBeenCalledWith('cefr_a1', {
       enabled: false,
       rewardPlan: 'vip',
       rewardDays: 5,

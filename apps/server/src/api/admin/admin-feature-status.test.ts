@@ -19,7 +19,7 @@ vi.mock('@dhcb/core-auth/authService', () => ({
 }))
 
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (e?: string) => e === 'admin@example.com',
+  isAdminUser: (userId?: string) => userId === 'a1',
 }))
 
 vi.mock('../_lib/featureStatusChecks.js', () => ({
@@ -43,6 +43,7 @@ describe('/api/admin-feature-status', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getUserById).mockReset()
     delete process.env.FEATURE_STATUS_CRON_KEY
   })
 
@@ -81,7 +82,7 @@ describe('/api/admin-feature-status', () => {
   })
 
   it('GET từ chối người dùng không phải admin (403)', async () => {
-    vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
+    vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u1' })
     vi.mocked(getUserById).mockResolvedValueOnce({
       id: 'a1',
       email: 'user@example.com',
@@ -160,7 +161,7 @@ describe('/api/admin-feature-status', () => {
   })
 
   it('POST từ chối người đăng nhập nhưng không phải admin (403)', async () => {
-    vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
+    vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u1' })
     vi.mocked(getUserById).mockResolvedValueOnce({
       id: 'a1',
       email: 'user@example.com',

@@ -4,9 +4,9 @@
 //
 // 4 nhiệm vụ hiện có, xếp theo ĐỘ TIN CẬY xác minh (server tự tính, không phụ thuộc lời khai
 // client) từ THẤP → CAO:
-//   1. "Chia sẻ công khai" — YẾU NHẤT, xem cảnh báo ở dưới.
+//   1. "Chia sẻ công khai" — chưa có bằng chứng tin cậy, tắt thưởng VIP.
 //   2. "Học liên tiếp N ngày" — server tự đếm từ `free_daily_credit` (ghi bởi
-//      grant_daily_bonus_rolling khi phát hiện học thật, không phải lời khai client).
+//      grant_daily_bonus_rolling từ tiến độ client) chỉ để hiển thị, tắt thưởng VIP.
 //   3. "Thi đạt cấp CEFR" — chỉ đọc kết quả từ kho chấm thi của server; kết quả tự khai
 //      qua /api/progress không đủ thẩm quyền để cấp thưởng VIP.
 //   4. "Mời bạn xác thực email" — đã có sẵn từ trước (api/_lib/referral.ts), CHỈ gộp số liệu
@@ -21,27 +21,24 @@ import { getReferralStats, type ReferralStats } from './referral.js'
 export type ClaimQuestResult = { ok: true; rewardDays: number } | { ok: false; message: string }
 
 // ── 1. Chia sẻ công khai ─────────────────────────────────────────────────────────────────
-// CẢNH BÁO (nhắc lại từ migration 0021): Web Share API phía client KHÔNG cho server biết
-// người dùng có thật sự đăng công khai hay không — chỉ biết họ đã mở hộp thoại chia sẻ và
-// không huỷ (xem src/components/ShareResultCard.tsx). Rate-limit 1 lần/7 ngày là lớp phòng
-// thủ DUY NHẤT. Chấp nhận rủi ro ở quy mô hiện tại (giá trị thưởng thấp). Nếu phát hiện lạm
-// dụng: cân nhắc thêm device_hash (giống referral, migration 0008) hoặc đổi thưởng phi tiền tệ.
+// Web Share API không chứng minh bài đã đăng; không cấp entitlement từ client click.
 export const SHARE_QUEST_KEY = 'share_public'
-export const SHARE_QUEST_REWARD_DAYS = 1
+export const SHARE_QUEST_REWARD_DAYS = 0
 export const SHARE_QUEST_COOLDOWN_DAYS = 7
 
 export async function claimShareQuest(userId: string): Promise<ClaimQuestResult> {
-  return claimGeneric(userId, SHARE_QUEST_KEY, SHARE_QUEST_COOLDOWN_DAYS, SHARE_QUEST_REWARD_DAYS)
+  void userId // Giữ hợp đồng API cho các client hiện hành; không đọc/ghi quyền lợi.
+  return { ok: false, message: 'Chia sẻ hiện không có thưởng VIP vì chưa xác minh được bài đăng.' }
 }
 
 // ── 2. Học liên tiếp N ngày ──────────────────────────────────────────────────────────────
 // Đếm streak NGAY TỪ SERVER dựa trên `free_daily_credit.bonus_earned` — bảng này được ghi
 // bởi api/progress.ts MỖI KHI phát hiện tiến độ học THẬT SỰ tăng lên (learned/hard/cefrGrammar/
 // cefrDialogues dài ra so với bản lưu trước), áp dụng cho MỌI gói (không riêng Free) — nên
-// dùng được làm tín hiệu "có học thật hôm nay" đáng tin cậy cho mọi user.
+// giữ làm tín hiệu hiển thị thói quen, KHÔNG có thẩm quyền cấp VIP.
 export const STREAK_QUEST_KEY = 'streak_5'
 export const STREAK_QUEST_REQUIRED_DAYS = 5
-export const STREAK_QUEST_REWARD_DAYS = 1
+export const STREAK_QUEST_REWARD_DAYS = 0
 export const STREAK_QUEST_COOLDOWN_DAYS = 7
 
 export async function getCurrentStreak(userId: string, lookbackDays = 30): Promise<number> {
@@ -64,23 +61,10 @@ export async function getCurrentStreak(userId: string, lookbackDays = 30): Promi
 }
 
 export async function claimStreakQuest(userId: string): Promise<ClaimQuestResult> {
-  try {
-    const streak = await getCurrentStreak(userId)
-    if (streak < STREAK_QUEST_REQUIRED_DAYS) {
-      return {
-        ok: false,
-        message: `Cần học liên tiếp ${STREAK_QUEST_REQUIRED_DAYS} ngày — hiện bạn đang có streak ${streak} ngày.`,
-      }
-    }
-    return claimGeneric(
-      userId,
-      STREAK_QUEST_KEY,
-      STREAK_QUEST_COOLDOWN_DAYS,
-      STREAK_QUEST_REWARD_DAYS,
-    )
-  } catch (err) {
-    console.error('[quests] claimStreakQuest lỗi:', err)
-    return { ok: false, message: 'Có lỗi xảy ra, thử lại sau nhé.' }
+  void userId // Giữ hợp đồng API cho các client hiện hành; chỉ còn hiển thị streak.
+  return {
+    ok: false,
+    message: 'Chuỗi ngày học vẫn được ghi nhận; thưởng VIP đang chờ bằng chứng học đã xác minh.',
   }
 }
 
@@ -207,16 +191,14 @@ export async function getQuestsStatus(userId: string): Promise<QuestsStatus> {
     share: {
       cooldownDays: SHARE_QUEST_COOLDOWN_DAYS,
       rewardDays: SHARE_QUEST_REWARD_DAYS,
-      canClaim: canClaim(SHARE_QUEST_KEY, SHARE_QUEST_COOLDOWN_DAYS),
+      canClaim: false,
     },
     streak: {
       current: streak,
       required: STREAK_QUEST_REQUIRED_DAYS,
       rewardDays: STREAK_QUEST_REWARD_DAYS,
       cooldownDays: STREAK_QUEST_COOLDOWN_DAYS,
-      canClaim:
-        streak >= STREAK_QUEST_REQUIRED_DAYS &&
-        canClaim(STREAK_QUEST_KEY, STREAK_QUEST_COOLDOWN_DAYS),
+      canClaim: false,
     },
     cefrExams: CEFR_EXAM_LEVELS.map((level) => ({
       level,

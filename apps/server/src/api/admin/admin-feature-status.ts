@@ -18,7 +18,7 @@ import {
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { runAllFeatureChecks, summarizeOverallStatus } from '../_lib/featureStatusChecks.js'
 
@@ -39,8 +39,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'GET') {
     const auth = await validateAuth(req)
     if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
-    const admin = await getUserById(auth.userId)
-    if (!isAdminEmail(admin?.email)) {
+    if (!isAdminUser(auth.userId)) {
       logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-feature-status' })
       return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
     }
@@ -67,11 +66,11 @@ export default async function handler(req: Request): Promise<Response> {
     } else {
       const auth = await validateAuth(req)
       if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
-      const admin = await getUserById(auth.userId)
-      if (!isAdminEmail(admin?.email)) {
+      if (!isAdminUser(auth.userId)) {
         logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-feature-status' })
         return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
       }
+      const admin = await getUserById(auth.userId)
       triggeredBy = 'manual'
       triggeredByEmail = admin?.email ?? null
     }

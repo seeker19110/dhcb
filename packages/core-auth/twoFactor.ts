@@ -83,14 +83,17 @@ interface TwoFactorRow {
  * `decryptUserField` trả nguyên văn khi giá trị CHƯA mã hoá, nên bản ghi tạo trước khi bật mã hoá
  * vẫn dùng được bình thường và không cần dừng dịch vụ để viết lại dữ liệu.
  */
-async function readRow(pool: Pool, userId: string): Promise<TwoFactorRow | null> {
+async function readRow(
+  pool: Pool,
+  userId: string,
+): Promise<(TwoFactorRow & { storedSecret: string }) | null> {
   const { rows } = await pool.query<TwoFactorRow>(
     'select secret, enabled_at, last_used_step from public.user_2fa where user_id = $1',
     [userId],
   )
   const row = rows[0]
   if (!row) return null
-  return { ...row, secret: await decryptUserField(userId, row.secret) }
+  return { ...row, storedSecret: row.secret, secret: await decryptUserField(userId, row.secret) }
 }
 
 export async function getTwoFactorStatus(pool: Pool, userId: string): Promise<TwoFactorStatus> {
@@ -195,12 +198,16 @@ export async function verifyTwoFactor(
   const lastStep = row.last_used_step == null ? null : Number(row.last_used_step)
   const totp = await verifyTotpCode(row.secret, code, { lastUsedStep: lastStep })
   if (totp.valid) {
-    // Ghi lại bước vừa dùng NGAY — đây là thứ chặn dùng lại chính mã đó.
-    await pool.query('update public.user_2fa set last_used_step = $2 where user_id = $1', [
-      userId,
-      totp.timeStep,
-    ])
-    return { ok: true, usedRecoveryCode: false }
+    // CAS tại DB: hai request đọc cùng last_used_step chỉ một request được tiêu mã.
+    const consumed = await pool.query(
+      `update public.user_2fa set last_used_step = $2
+       where user_id = $1 and enabled_at is not null and secret = $3
+         and (last_used_step is null or last_used_step < $2)`,
+      [userId, totp.timeStep, row.storedSecret],
+    )
+    return consumed.rowCount === 1
+      ? { ok: true, usedRecoveryCode: false }
+      : { ok: false, reason: 'invalid' }
   }
 
   return consumeRecoveryCode(pool, userId, code)

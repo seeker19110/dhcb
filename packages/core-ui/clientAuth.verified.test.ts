@@ -5,7 +5,7 @@ const profile = { id: 'u1', email: 'u@example.com', name: 'An', plan: 'free', on
 describe('getCurrentUserVerified', () => {
   beforeEach(() => {
     localStorage.clear()
-    localStorage.setItem('gsa_session_token_v1', 'token')
+    localStorage.setItem('gsa_session_present_v1', 'session:fixture')
   })
   afterEach(() => {
     vi.unstubAllGlobals()
@@ -26,7 +26,7 @@ describe('getCurrentUserVerified', () => {
       vi.fn(async () => new Response('', { status })),
     )
     await expect(getCurrentUserVerified()).rejects.toBeInstanceOf(SessionVerificationError)
-    expect(localStorage.getItem('gsa_session_token_v1')).toBe('token')
+    expect(localStorage.getItem('gsa_session_present_v1')).toBe('session:fixture')
   })
   it.each([
     {},

@@ -22,12 +22,8 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: vi.fn(),
 }))
 
-vi.mock('@dhcb/core-auth/authService', () => ({
-  getUserById: vi.fn(),
-}))
-
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (e?: string) => e === 'admin@example.com',
+  isAdminUser: (userId?: string) => userId === 'a1',
 }))
 
 vi.mock('@dhcb/core-billing/planGrant', () => ({
@@ -36,10 +32,7 @@ vi.mock('@dhcb/core-billing/planGrant', () => ({
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { validateAuth, checkRateLimit } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
-
-type UserInfo = Awaited<ReturnType<typeof getUserById>>
 
 describe('/api/admin-payments', () => {
   const queryMock = getPgPool().query as unknown as ReturnType<typeof vi.fn>
@@ -58,10 +51,7 @@ describe('/api/admin-payments', () => {
 
   it('từ chối người dùng không phải admin (403)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'u1',
-      email: 'user@example.com',
-    } as UserInfo)
+
     const req = new Request('http://localhost/api/admin-payments')
     const res = await handler(req)
     expect(res.status).toBe(403)
@@ -69,10 +59,7 @@ describe('/api/admin-payments', () => {
 
   it('trả danh sách đơn cho admin (GET 200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({
       rows: [{ id: 'p1', paymentCode: 'DHCB1234', status: 'pending' }],
     })
@@ -86,10 +73,7 @@ describe('/api/admin-payments', () => {
 
   it('GET với ?q=search_term → lọc đơn theo payment_code hoặc email', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({
       rows: [{ id: 'p2', paymentCode: 'DHCB5678', status: 'pending' }],
     })
@@ -106,10 +90,7 @@ describe('/api/admin-payments', () => {
 
   it('POST manual-match: happy path → cấp gói thành công (200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     // 1) Tìm user bằng email
     queryMock.mockResolvedValueOnce({ rows: [{ id: 'u99' }] })
     // 2) Đọc đơn thanh toán
@@ -137,10 +118,7 @@ describe('/api/admin-payments', () => {
 
   it('POST manual-match: email không tồn tại → 404', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     // Tìm user bằng email → không có kết quả
     queryMock.mockResolvedValueOnce({ rows: [] })
 
@@ -161,10 +139,7 @@ describe('/api/admin-payments', () => {
 
   it('POST manual-match: đơn đã paid → 400', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     // 1) Tìm user bằng email
     queryMock.mockResolvedValueOnce({ rows: [{ id: 'u99' }] })
     // 2) Đọc đơn thanh toán → đã paid
@@ -204,10 +179,7 @@ describe('/api/admin-payments', () => {
 
   it('method lạ (DELETE) → 405', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     const res = await handler(
       new Request('http://localhost/api/admin-payments', { method: 'DELETE' }),
     )
@@ -241,7 +213,7 @@ describe('manual-match — nguyên tử, đồng thời và retry', () => {
     lockTail = Promise.resolve()
     transactions.clear()
     vi.mocked(validateAuth).mockResolvedValue({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValue({ id: 'a1', email: 'admin@example.com' } as UserInfo)
+
     vi.mocked(getPgPool().query).mockReset()
     vi.mocked(getPgPool().query).mockImplementation(async () => ({
       rows: [{ id: 'u99' }],

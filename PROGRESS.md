@@ -8,6 +8,12 @@
 
 ## Giai đoạn hiện tại
 
+**Bản vá bảo mật 2026-09-27 đã qua unit/build, chờ E2E và phát hành:** nhánh local
+`fix/security-audit-20260927`, chưa merge/deploy. Trạng thái duy nhất tại
+[goal bảo mật](docs/goals/security-audit-20260927.md); thay đổi tương thích và công việc
+vận hành tại [runbook](docs/security-rollout-2026-09-27.md). Các grader thiếu cách ly tạm
+đóng; chỉ mở lại sau khi có ranh giới thực thi an toàn. Quyền admin cần `ADMIN_USER_IDS`.
+
 **Nhật ký từng đợt việc nay nằm ở `docs/changelog/` — mỗi đợt MỘT FILE riêng.**
 
 Xem nhanh: `npm run changelog` (in 10 đợt gần nhất) · `npm run changelog -- 30` (30 đợt) ·

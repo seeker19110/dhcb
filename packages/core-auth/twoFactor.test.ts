@@ -49,6 +49,7 @@ function on(match: string, fn: Handler) {
 beforeEach(() => {
   handlers = []
   seen.length = 0
+  on('set last_used_step', () => ({ rows: [], rowCount: 1 }))
 })
 
 const SECRET = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
@@ -206,6 +207,40 @@ describe('verifyTwoFactor', () => {
     const res = await verifyTwoFactor(pool, USER, await validCode())
     expect(res).toEqual({ ok: true, usedRecoveryCode: false })
     expect(seen.some((q) => q.sql.includes('set last_used_step'))).toBe(true)
+  })
+
+  it('hai request TOTP đọc cùng trạng thái → chỉ một lần thành công, retry bị chặn', async () => {
+    stub2fa({ enabled_at: new Date(), last_used_step: null })
+    let consumedStep: number | null = null
+    on('set last_used_step', (params) => {
+      const step = Number(params[1])
+      if (consumedStep != null && consumedStep >= step) return { rows: [], rowCount: 0 }
+      consumedStep = step
+      return { rows: [], rowCount: 1 }
+    })
+    const code = await validCode()
+    const results = await Promise.all([
+      verifyTwoFactor(pool, USER, code),
+      verifyTwoFactor(pool, USER, code),
+    ])
+    expect(results.filter((r) => r.ok)).toHaveLength(1)
+    expect(results.filter((r) => !r.ok)).toEqual([{ ok: false, reason: 'invalid' }])
+    expect(await verifyTwoFactor(pool, USER, code)).toEqual({ ok: false, reason: 'invalid' })
+    const update = seen.find((q) => q.sql.includes('set last_used_step'))
+    expect(update?.sql).toContain('last_used_step < $2')
+    expect(update?.sql).toContain('enabled_at is not null')
+    expect(update?.sql).toContain('secret = $3')
+    expect(update?.params[2]).toBe(SECRET)
+  })
+
+  it('TOTP đúng nhưng DB không tiêu được mã → từ chối, không mở cửa sổ nâng quyền', async () => {
+    stub2fa({ enabled_at: new Date(), last_used_step: null })
+    on('set last_used_step', () => ({ rows: [], rowCount: 0 }))
+    expect(await verifyTwoFactor(pool, USER, await validCode())).toEqual({
+      ok: false,
+      reason: 'invalid',
+    })
+    expect(seen.some((q) => q.sql.includes('set used_at'))).toBe(false)
   })
 
   it('DÙNG LẠI đúng mã đó → bị từ chối', async () => {

@@ -18,6 +18,8 @@ vi.mock('../../_lib/cefrAssessment.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../_lib/cefrAssessment.js')>()),
   assessCefr: vi.fn(),
 }))
+vi.mock('../../_lib/referral.js', () => ({ rewardReferralIfEligible: vi.fn(async () => {}) }))
+import { rewardReferralIfEligible } from '../../_lib/referral.js'
 const pool = new Pool()
 const startRequest = { action: 'start', level: 'A1', isA: true }
 const grade = {
@@ -94,10 +96,24 @@ describe('POST /api/cefr-assessment', () => {
     const submission = { action: 'submit', attemptId: randomUUID(), answers: ['x'] }
     expect((await handler(request(startRequest))).status).toBe(200)
     expect(assessCefr).toHaveBeenLastCalledWith(pool, 'authenticated-user', startRequest)
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
     const res = await handler(request(submission))
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual(grade)
     expect(assessCefr).toHaveBeenLastCalledWith(pool, 'authenticated-user', submission)
+    expect(rewardReferralIfEligible).toHaveBeenCalledWith('authenticated-user')
+    expect(vi.mocked(assessCefr).mock.invocationCallOrder[1]).toBeLessThan(
+      vi.mocked(rewardReferralIfEligible).mock.invocationCallOrder[0]!,
+    )
+  })
+
+  it('bài chưa đạt không kích hoạt thưởng', async () => {
+    vi.mocked(assessCefr).mockResolvedValue({ ...grade, passed: false })
+    const res = await handler(
+      request({ action: 'submit', attemptId: randomUUID(), answers: ['x'] }),
+    )
+    expect(res.status).toBe(200)
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
   it.each([400, 403, 409, 410])('lỗi nghiệp vụ %s giữ đúng status', async (status) => {
@@ -112,5 +128,6 @@ describe('POST /api/cefr-assessment', () => {
     const res = await handler(request())
     expect(res.status).toBe(503)
     expect(await res.text()).not.toContain('sensitive')
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 })

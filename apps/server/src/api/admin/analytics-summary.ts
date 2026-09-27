@@ -3,7 +3,7 @@
 // đường ĐỌC cần quyền admin — gộp chung 1 file dễ lẫn giữa "ai cũng ghi được" và "chỉ admin xem
 // được".
 //
-// GET /api/analytics-summary?days=14  (cần đăng nhập — cookie, user phải nằm trong ADMIN_EMAILS)
+// GET /api/analytics-summary?days=14  (cần đăng nhập — cookie, user phải nằm trong ADMIN_USER_IDS)
 // Trả về: tổng số theo event trong N ngày gần nhất + số liệu theo ngày cho biểu đồ đơn giản.
 //
 // [2026-09-06] Ba bước phễu `signup` · `first_session_done` · `day2_return` KHÔNG còn là sự kiện
@@ -23,8 +23,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
 const DEFAULT_DAYS = 14
@@ -135,8 +134,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const user = await getUserById(auth.userId)
-  if (!isAdminEmail(user?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/analytics-summary' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }

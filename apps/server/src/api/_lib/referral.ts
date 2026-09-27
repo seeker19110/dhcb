@@ -1,11 +1,11 @@
 // api/_lib/referral.ts — Logic mời bạn dùng chung: sinh mã, ghi nhận lời mời, và TRAO THƯỞNG
-// khi người được mời hoàn thành phiên học thật (gọi từ api/history.ts).
-//
-// Vì sao tách khỏi api/referral.ts: điểm trao thưởng nằm ở luồng lưu lịch sử học
-// (api/history.ts), không phải ở endpoint referral — 2 nơi cùng dùng nên logic phải ở 1 chỗ.
+// khi có bằng chứng đạt bài do SERVER chấm và email đã xác minh. Lịch sử do client
+// tự gửi lên không có thẩm quyền cấp VIP.
 
 import { randomInt } from 'node:crypto'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
+import { readVerifiedCefrExams } from './cefrAssessment.js'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 import { logSecurityEvent } from '@dhcb/core-auth/security'
 
@@ -115,77 +115,89 @@ export async function claimReferral(
 }
 
 /**
- * Trao thưởng cho lượt mời của `refereeId` nếu đủ điều kiện. Gọi khi người này vừa HOÀN THÀNH
- * 1 phiên học thật (api/history.ts). An toàn khi gọi nhiều lần — chỉ thưởng đúng 1 lần.
- *
- * Không throw ra ngoài: đây là tác dụng phụ của luồng lưu lịch sử học, lỗi thưởng KHÔNG được
- * làm hỏng việc lưu bài học của người dùng.
+ * Chỉ xét thưởng SAU khi giao dịch bằng chứng chấm bài đã commit. Tự kiểm lại bằng chứng
+ * trong DB để không phụ thuộc nơi gọi. Lỗi thưởng không làm mất bài đã lưu; retry an toàn.
  */
 export async function rewardReferralIfEligible(refereeId: string): Promise<void> {
   try {
-    const pool = getPgPool()
-
-    // ĐIỀU KIỆN TIÊN QUYẾT: người được mời phải XÁC THỰC EMAIL. Đây là hàng rào chính chống
-    // email giả/dùng-một-lần để cày thưởng — mạnh hơn dấu vân tay thiết bị nhiều, vì kẻ gian
-    // phải sở hữu thật một hộp thư nhận được mã cho MỖI tài khoản.
-    // Chưa xác thực thì KHÔNG thưởng, nhưng cũng KHÔNG xoá lời mời: xác thực xong, lần học
-    // tiếp theo sẽ được thưởng bình thường.
-    const { rows: verifiedRows } = await pool.query<{ email_verified: Date | null }>(
-      'select email_verified from public.users where id = $1',
-      [refereeId],
-    )
-    if (verifiedRows[0]?.email_verified == null) return
-
-    // Đánh dấu đã thưởng TRƯỚC KHI cấp gói, và chỉ khi đang còn chưa thưởng (rewarded_at is
-    // null). Đây là chốt chống trao thưởng 2 lần khi 2 request song song cùng lúc hoàn thành
-    // phiên học: chỉ đúng 1 request nhận được rowCount = 1.
-    const { rows } = await pool.query<{ referrer_id: string; device_hash: string | null }>(
-      `update public.referrals set rewarded_at = now()
-       where referee_id = $1 and rewarded_at is null
-       returning referrer_id, device_hash`,
-      [refereeId],
-    )
-    const referrerId = rows[0]?.referrer_id
-    if (!referrerId) return // Không có lời mời, hoặc đã thưởng rồi.
-    const deviceHash = rows[0]?.device_hash ?? null
-
-    // Chống cày thưởng trên CÙNG MỘT MÁY: nếu thiết bị này đã từng được thưởng cho một lượt
-    // mời khác thì không thưởng nữa. Xem giới hạn của mã thiết bị ở src/lib/deviceId.ts —
-    // đây là hàng rào chi phí, không phải bảo mật tuyệt đối.
-    let deviceAlreadyRewarded = false
-    if (deviceHash) {
-      const { rows: deviceRows } = await pool.query<{ count: string }>(
-        `select count(*) as count from public.referrals
-         where device_hash = $1 and rewarded_at is not null and referee_id <> $2`,
-        [deviceHash, refereeId],
+    await withTransaction(getPgPool(), async (client) => {
+      const { rows: verifiedRows } = await client.query<{ email_verified: Date | null }>(
+        'select email_verified from public.users where id = $1 for share',
+        [refereeId],
       )
-      deviceAlreadyRewarded = Number(deviceRows[0]?.count ?? 0) > 0
-    }
+      if (verifiedRows[0]?.email_verified == null) return
 
-    if (deviceAlreadyRewarded) {
-      // KHÔNG khoá tài khoản, KHÔNG chặn học — chỉ không trao thưởng lượt này. Máy dùng chung
-      // (gia đình, phòng máy trường, quán net) rất phổ biến với học sinh nên phải xử nhẹ tay.
-      logSecurityEvent('REFERRAL_DEVICE_REUSED', 'system', { referrerId, refereeId })
-      return
-    }
+      const { rows: evidenceRows } = await client.query<{ eligible: boolean }>(
+        `select exists (
+           select 1 from platform.completion_evidence
+           where user_id = $1 and evidence_kind = 'server_graded'
+             and activity_kind = 'stem_lesson_check' and passed = true and total > 0
+         ) as eligible`,
+        [refereeId],
+      )
+      if (evidenceRows[0]?.eligible !== true) {
+        const exams = await readVerifiedCefrExams(client, refereeId)
+        if (!Object.values(exams).some((exam) => exam.passed)) return
+      }
 
-    // Trần chống lạm dụng: đếm số lượt ĐÃ thưởng của người mời (kể cả lượt vừa đánh dấu).
-    const { rows: countRows } = await pool.query<{ count: string }>(
-      'select count(*) as count from public.referrals where referrer_id = $1 and rewarded_at is not null',
-      [referrerId],
-    )
-    const rewardedCount = Number(countRows[0]?.count ?? 0)
+      // Khoá lượt mời trước khi kiểm rewarded_at: retry/song song chỉ một giao dịch được cấp.
+      const { rows } = await client.query<{
+        referrer_id: string
+        device_hash: string | null
+        rewarded_at: Date | null
+      }>(
+        `select referrer_id, device_hash, rewarded_at from public.referrals
+         where referee_id = $1 for update`,
+        [refereeId],
+      )
+      const referral = rows[0]
+      if (!referral || referral.rewarded_at != null) return
+      const referrerId = referral.referrer_id
 
-    // Người ĐƯỢC MỜI luôn được thưởng (họ không kiểm soát được việc người mời đã mời bao nhiêu).
-    await grantPlanDays(refereeId, 'vip', REFERRAL_REWARD_DAYS)
+      // Cùng thiết bị ở các referrer khác nhau vẫn phải tuần tự. Mọi giao dịch lấy khoá
+      // theo cùng thứ tự: lượt mời → thiết bị → người mời → các profile sắp theo ID.
+      if (referral.device_hash) {
+        await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `referral:device:${referral.device_hash}`,
+        ])
+        const { rows: deviceRows } = await client.query<{ count: string }>(
+          `select count(*) as count from public.referrals
+           where device_hash = $1 and rewarded_at is not null and referee_id <> $2`,
+          [referral.device_hash, refereeId],
+        )
+        if (Number(deviceRows[0]?.count ?? 0) > 0) {
+          logSecurityEvent('REFERRAL_DEVICE_REUSED', 'system', { referrerId, refereeId })
+          return // Chưa cấp quyền thì KHÔNG đánh dấu rewarded_at.
+        }
+      }
 
-    if (rewardedCount <= MAX_REWARDED_REFERRALS) {
-      await grantPlanDays(referrerId, 'vip', REFERRAL_REWARD_DAYS)
-    } else {
-      logSecurityEvent('REFERRAL_CAP_REACHED', 'system', { referrerId, rewardedCount })
-    }
+      await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+        `referral:referrer:${referrerId}`,
+      ])
+      const { rows: countRows } = await client.query<{ count: string }>(
+        `select count(*) as count from public.referrals
+         where referrer_id = $1 and rewarded_at is not null`,
+        [referrerId],
+      )
+      const rewardedCount = Number(countRows[0]?.count ?? 0)
+      // Giữ chính sách: vượt trần người mời thì người được mời vẫn nhận phần của mình.
+      const recipients =
+        rewardedCount < MAX_REWARDED_REFERRALS ? [referrerId, refereeId] : [refereeId]
+      const now = new Date()
+      // grantPlanDays giữ khoá profile tới cuối transaction; thứ tự ổn định tránh deadlock
+      // khi hai người mời chéo nhau. Cả hai lần cấp đều dùng CHÍNH PoolClient này.
+      for (const userId of recipients.sort()) {
+        await grantPlanDays(userId, 'vip', REFERRAL_REWARD_DAYS, now, client)
+      }
+      await client.query(
+        'update public.referrals set rewarded_at = now() where referee_id = $1 and rewarded_at is null',
+        [refereeId],
+      )
+      if (rewardedCount >= MAX_REWARDED_REFERRALS) {
+        logSecurityEvent('REFERRAL_CAP_REACHED', 'system', { referrerId, rewardedCount })
+      }
+    })
   } catch (err) {
-    // Nuốt lỗi có chủ đích — xem chú thích ở đầu hàm.
     console.error('[referral] Lỗi khi trao thưởng:', err)
   }
 }

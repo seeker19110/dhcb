@@ -11,19 +11,14 @@
 import { loadCurriculum, getTodayBatch } from './curriculum'
 import { getLearnedWords } from './vocab'
 import { getCachedOnboarding } from './onboarding'
-import { getAccessToken } from '@core/authHeader'
+import { getStoredToken, getAuthHeader } from '@core/authHeader'
 import { getVoicePref } from './tts'
 import { audioCacheKey, getAudioBuffer, setAudioBuffer } from './audioCache'
 import { preloadFlags } from './preloadState'
 
 // ── Tải + giải mã 1 audio rồi lưu vào IndexedDB ──────────────────────────────
 // Nếu đã có trong IndexedDB thì bỏ qua (không tải lại).
-async function prefetchAudio(
-  text: string,
-  lang: string,
-  voice: string,
-  token: string,
-): Promise<void> {
+async function prefetchAudio(text: string, lang: string, voice: string): Promise<void> {
   if (!text.trim()) return
   const key = audioCacheKey(text, lang, voice)
 
@@ -33,7 +28,7 @@ async function prefetchAudio(
   try {
     const res = await fetch('/api/tts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ text, lang, voice }),
     })
     if (!res.ok) return
@@ -88,8 +83,8 @@ export async function preloadLearnData(userId: string): Promise<void> {
   // Tải toàn bộ từ điển (data, không audio) — cần cho lộ trình học.
   await loadCurriculum()
 
-  // Lấy JWT để gọi /api/tts
-  const token = await getAccessToken()
+  // Chỉ nạp trước audio khi giao diện đã xác nhận phiên cookie.
+  const token = getStoredToken()
   if (!token) {
     preloadFlags.learn = false
     return
@@ -102,8 +97,8 @@ export async function preloadLearnData(userId: string): Promise<void> {
   void (async () => {
     for (const entry of todayWords) {
       await Promise.all([
-        prefetchAudio(entry.word, 'en-US', voice, token),
-        entry.ex_en ? prefetchAudio(entry.ex_en, 'en-US', voice, token) : Promise.resolve(),
+        prefetchAudio(entry.word, 'en-US', voice),
+        entry.ex_en ? prefetchAudio(entry.ex_en, 'en-US', voice) : Promise.resolve(),
       ])
       await sleep(80)
     }

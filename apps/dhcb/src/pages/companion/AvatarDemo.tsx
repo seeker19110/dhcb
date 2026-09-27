@@ -14,7 +14,7 @@ import {
   type Viseme,
   type VisemeFrame,
 } from '../../lib/viseme'
-import { getAccessToken } from '@core/authHeader'
+import { getStoredToken, getAuthHeader } from '@core/authHeader'
 import { useToast } from '@core/ToastProvider'
 
 const DEMO_SENTENCE = 'Hello, how are you today? I am your English tutor.'
@@ -23,11 +23,11 @@ const DEMO_SENTENCE = 'Hello, how are you today? I am your English tutor.'
 // cài eSpeak-ng hoặc lỗi mạng, để dùng fallbackWordVisemes() (đếm nguyên âm chữ viết) thay thế.
 async function fetchWordVisemes(text: string): Promise<Viseme[][] | null> {
   try {
-    const token = await getAccessToken()
+    const token = getStoredToken()
     if (!token) return null
     const res = await fetch('/api/avatar-visemes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ text, lang: 'en-US' }),
     })
     if (!res.ok) return null

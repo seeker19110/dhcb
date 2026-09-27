@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import {
+  isValidNewPassword,
   login,
   register,
   loginWithGoogle,
@@ -109,6 +110,10 @@ export default function HubLogin() {
     setLoading(true)
     try {
       if (mode === 'register') {
+        if (!isValidNewPassword(password)) {
+          setError('Mật khẩu tối thiểu 15 ký tự, tối đa 72 byte UTF-8')
+          return
+        }
         if (!name.trim()) {
           setError('Vui lòng nhập họ và tên của bạn.')
           return
@@ -381,14 +386,14 @@ export default function HubLogin() {
                 <input
                   id="hub-password"
                   name="password"
+                  minLength={mode === 'register' ? 15 : 1}
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mật khẩu (tối thiểu 6 ký tự)"
+                  placeholder={mode === 'register' ? 'Mật khẩu (ít nhất 15 ký tự)' : 'Mật khẩu'}
                   /* pr-12: chừa chỗ cho nút hiện/ẩn mật khẩu nay rộng 44px (tap-44). */
                   className={`${inputCls} pr-12`}
                   required
-                  minLength={6}
                 />
                 <button
                   type="button"

@@ -26,6 +26,9 @@ import { getSpecStageDetail } from '@dhcb/subject-programming/specializations/st
 import { checkLevelWriteAllowed } from '@dhcb/subject-programming/levelLockServer'
 import {
   isServerRegradableLesson,
+  assertServerRegradeAvailable,
+  GradingUnavailableError,
+  MAX_SUBMISSION_CODE_LENGTH,
   regradeSubmission,
   type RegradeResult,
 } from '@dhcb/subject-programming/completionSandboxServer'
@@ -48,7 +51,7 @@ const UpdateSchema = z
     status: z.enum(['in_progress', 'completed']),
     /** ADR-0007 + ADR-0008: code Make — BẮT BUỘC khi báo 'completed' một bài thuộc phạm vi
      *  chấm-lại-ở-server (isServerRegradableLesson), bỏ qua với bài khác. */
-    code: z.string().max(4000).optional(),
+    code: z.string().max(MAX_SUBMISSION_CODE_LENGTH).optional(),
   })
   .strict()
 
@@ -58,6 +61,10 @@ const UpdateSchema = z
  * Dạng cũ `{ lessonId, status }` vẫn hợp lệ (client chưa cập nhật không bị gãy).
  */
 const MAX_BATCH_ITEMS = 50
+// Đồng bộ tối đa 50 dòng vẫn giữ nguyên; việc chấm có ngân sách nhỏ riêng để một
+// request không nhân tải 50 lần. Client cần chia batch hoàn thành thành các nhóm ≤ 5.
+const MAX_REGRADES_PER_REQUEST = 5
+const MAX_REGRADE_TEST_CASES_PER_REQUEST = 25
 const BatchSchema = z
   .object({
     attemptId: z.string().min(8).max(64),
@@ -68,7 +75,7 @@ const BatchSchema = z
             lessonId: UpdateSchema.shape.lessonId,
             status: z.enum(['in_progress', 'completed']),
             clientUpdatedAt: z.string().datetime(),
-            code: z.string().max(4000).optional(),
+            code: z.string().max(MAX_SUBMISSION_CODE_LENGTH).optional(),
           })
           .strict(),
       )
@@ -220,57 +227,6 @@ export default async function handler(req: Request): Promise<Response> {
       }
     }
 
-    // CHẤM LẠI Ở SERVER TRƯỚC KHI GHI 'completed' (ADR-0007, docs/adr/0007-completion-evidence-
-    // sandbox-lap-trinh.md). Client chỉ chấm bằng Pyodide trong Web Worker rồi tự báo hoàn
-    // thành — sửa được qua DevTools. Bài thuộc phạm vi `isServerRegradableLesson` (ADR-0008:
-    // bài xương sống P1–P6 + 7 khoá ngắn Python + Kotlin/Swift/bash/git/hermes/vibe/openclaw)
-    // báo 'completed' PHẢI kèm code và phải đạt HẾT test-case khi chấm lại trên server
-    // (test-case đọc từ registry server, không tin dữ liệu client gửi).
-    for (const item of items) {
-      if (item.status !== 'completed' || !isServerRegradableLesson(item.lessonId)) continue
-      if (!item.code || item.code.trim().length === 0) {
-        return jsonResponse(
-          { error: `Bài "${item.lessonId}" cần gửi kèm code để chấm lại ở server` },
-          400,
-          headers,
-        )
-      }
-      let regrade: RegradeResult
-      try {
-        // Dispatcher tự chọn luồng: Python → tiến trình con python3; Kotlin/bash/git/hermes/
-        // vibe/openclaw → gọi thẳng trình thông dịch thuần (ADR-0008 B2); JS/TS/html/dom/fetch
-        // → `node:vm` context tối giản (ADR-0008 B3, nhánh async nên phải `await`).
-        regrade = await regradeSubmission(item.lessonId, item.code)
-      } catch (err) {
-        console.error('[programming-progress] lỗi chấm lại ở server:', err)
-        return jsonResponse({ error: 'Không chấm lại được bài — thử lại sau' }, 500, headers)
-      }
-      if (!regrade.passed) {
-        // Rate-limit CHỈ đếm lượt NỘP SAI liên tiếp (không đếm lượt đạt) — chặn spam CPU do
-        // dò đáp án bằng thử liên tục, không phạt học viên đang luyện tập bình thường.
-        // Ngưỡng 5 lần nộp sai/phút/bài: mỗi lượt chấm tốn tới ~10s (timeout cứng) nên 5
-        // lần/phút đã rộng hơn nhiều số lượt một người thật gõ tay kịp gửi, nhưng đủ thoáng để
-        // không chặn oan người đang sửa lỗi từng chút một.
-        const okRate = await checkRateLimit(
-          `${auth.userId}:${item.lessonId}`,
-          5,
-          'programming-regrade-fail',
-        )
-        if (!okRate) {
-          return jsonResponse(
-            { error: 'Nộp bài sai quá nhiều lần liên tiếp trong 1 phút — nghỉ chút rồi thử lại' },
-            429,
-            { ...headers, 'Retry-After': '60' },
-          )
-        }
-        return jsonResponse(
-          { error: `Bài "${item.lessonId}" chưa đạt hết test-case khi chấm lại ở server` },
-          400,
-          headers,
-        )
-      }
-    }
-
     // SIẾT KHOÁ BẬC P1→P6 Ở SERVER (2026-09-19, dọn nợ kỹ thuật ghi ở PROGRESS.md — luật này
     // trước đây chỉ tính ở client `programmingLevelLock.ts`, sửa localStorage/gõ thẳng URL vẫn
     // ghi được tiến độ bậc chưa mở). CHỈ chặn GHI TIẾN ĐỘ của bài xương sống — nội dung bài học
@@ -281,9 +237,9 @@ export default async function handler(req: Request): Promise<Response> {
         'select lesson_id, status from programming.lesson_progress where user_id = $1',
         [auth.userId],
       )
-      // Mô phỏng TUẦN TỰ trong cùng batch: một batch có thể vừa hoàn thành đủ bài P(n) vừa ghi
-      // bài P(n+1) — mở khoá phải phản ánh ngay các mục ĐÃ QUA trong cùng lượt gửi, không chỉ
-      // trạng thái đã lưu trước đó.
+      // Tiền kiểm TUẦN TỰ trước mọi lượt chấm. Chỉ dùng trạng thái dự kiến trong
+      // bộ nhớ: toàn bộ batch phải qua chấm trước transaction, nên completed tự khai
+      // không bao giờ mở khoá bậc nếu bất kỳ bài nào thiếu code/tạm dừng/chấm sai.
       const completedLessonIds = new Set(
         existing.rows.filter((r) => r.status === 'completed').map((r) => r.lesson_id),
       )
@@ -306,9 +262,91 @@ export default async function handler(req: Request): Promise<Response> {
             headers,
           )
         }
-        // Ghi nhận mục này ĐÃ QUA để các mục sau trong cùng batch thấy đúng trạng thái mới nhất.
+        // Chỉ dự kiến kết quả; chưa ghi DB hoặc chạy code học viên.
         everEnteredLessonIds.add(item.lessonId)
         if (item.status === 'completed') completedLessonIds.add(item.lessonId)
+      }
+    }
+
+    const regradeItems = items.filter(
+      (item) => item.status === 'completed' && isServerRegradableLesson(item.lessonId),
+    )
+    const testCaseCount = regradeItems.reduce(
+      (count, item) => count + (getLesson(item.lessonId)?.make.testCases.length ?? 0),
+      0,
+    )
+    if (
+      regradeItems.length > MAX_REGRADES_PER_REQUEST ||
+      testCaseCount > MAX_REGRADE_TEST_CASES_PER_REQUEST
+    ) {
+      return jsonResponse(
+        {
+          error: 'Một lần gửi chỉ chấm tối đa 5 bài và 25 test-case — hãy chia nhỏ lần gửi',
+          code: 'PROGRAMMING_GRADING_BATCH_LIMIT',
+        },
+        413,
+        headers,
+      )
+    }
+
+    // Kiểm TOÀN BỘ batch trước khi chạy bài đầu: engine tạm dừng hoặc thiếu code
+    // ở mục sau không được khiến server đã tiêu tốn công chấm các mục trước.
+    for (const item of regradeItems) {
+      try {
+        assertServerRegradeAvailable(item.lessonId)
+      } catch (err) {
+        if (!(err instanceof GradingUnavailableError)) throw err
+        return jsonResponse({ error: err.message, code: err.code }, 503, headers)
+      }
+      if (!item.code || item.code.trim().length === 0) {
+        return jsonResponse(
+          { error: `Bài "${item.lessonId}" cần gửi kèm code để chấm lại ở server` },
+          400,
+          headers,
+        )
+      }
+    }
+
+    // Admission đếm MỌI lượt nộp (cả đúng/sai), TRƯỚC khi chấm. Bucket cũ chỉ
+    // đếm sau khi chạy nên lượt thứ 6 vẫn tiêu CPU; không dùng cách đó nữa.
+    // 5/bài/phút + 30/người/phút, chia sẻ Redis qua checkRateLimit. Giữ chỗ cả
+    // batch trước khi chạy, không hoàn lượt khi batch sau đó thất bại (bảo thủ).
+    for (const item of regradeItems) {
+      const admittedUser = await checkRateLimit(auth.userId, 30, 'programming-regrade-user')
+      const admittedLesson =
+        admittedUser &&
+        (await checkRateLimit(
+          `${auth.userId}:${item.lessonId}`,
+          5,
+          'programming-regrade-admission',
+        ))
+      if (!admittedLesson) {
+        return jsonResponse(
+          { error: 'Đã hết lượt nộp bài trong 1 phút — nghỉ chút rồi thử lại' },
+          429,
+          { ...headers, 'Retry-After': '60' },
+        )
+      }
+    }
+
+    for (const item of regradeItems) {
+      let regrade: RegradeResult
+      try {
+        regrade = await regradeSubmission(item.lessonId, item.code!)
+      } catch (err) {
+        // Dispatcher vẫn cưỡng chế chính sách dù có caller bỏ qua bước tiền kiểm.
+        if (err instanceof GradingUnavailableError) {
+          return jsonResponse({ error: err.message, code: err.code }, 503, headers)
+        }
+        console.error('[programming-progress] lỗi chấm lại ở server:', err)
+        return jsonResponse({ error: 'Không chấm lại được bài — thử lại sau' }, 500, headers)
+      }
+      if (!regrade.passed) {
+        return jsonResponse(
+          { error: `Bài "${item.lessonId}" chưa đạt hết test-case khi chấm lại ở server` },
+          400,
+          headers,
+        )
       }
     }
 

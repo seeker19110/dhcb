@@ -1,20 +1,5 @@
-// packages/core-auth/sessionCookie.ts — Cookie phiên đăng nhập, SONG SONG với Bearer token
-// (Bước 3 kế hoạch quản lý user đa lĩnh vực — docs/adr/0002-quan-ly-nguoi-dung.md).
-//
-// LÝ DO: Bearer/`localStorage` bị cô lập theo origin — đăng nhập ở `en-vi.` xong sang
-// `math.` (subdomain môn học tiếp theo) phải đăng nhập lại. Cookie `Domain=.donghanhcungban.org`
-// dùng chung cho MỌI subdomain vì tất cả đi qua 1 tiến trình Express (ADR-0001 "mức 2").
-//
-// CÁCH LÀM: dual-accept, KHÔNG thay Bearer. `packages/core-auth/auth.ts` gắn thêm Set-Cookie
-// mỗi lần tạo/thu hồi session; `security.ts#validateAuth` đọc Authorization trước, thiếu mới
-// thử cookie. Client hiện tại (apps/dhcb/src/lib/auth.ts) không cần đổi gì — cookie chỉ
-// được trình duyệt tự lưu, mở đường cho app con sau này xác thực thẳng bằng cookie mà không
-// cần chia sẻ token qua code.
-//
-// AN TOÀN CSRF: `SameSite=Lax` không gửi kèm cookie khi request là POST/fetch từ site khác
-// (chỉ gửi ở điều hướng GET cấp cao nhất) — mọi endpoint đổi trạng thái ở đây đều là POST JSON
-// nên rủi ro CSRF qua cookie này thấp, nhưng KHÔNG tuyệt đối như Bearer thuần (client tự gắn
-// header, trình duyệt không tự động gửi). Giữ Bearer làm cơ chế chính vì lý do đó.
+// Cookie phiên HttpOnly; JavaScript trình duyệt không nhận thông tin xác thực.
+// Request sửa dữ liệu bằng cookie còn cần Origin tin cậy tại bộ chuyển đổi API.
 
 import { SESSION_TTL_MS } from './authService.js'
 
@@ -28,7 +13,7 @@ export const SESSION_COOKIE_NAME = 'session_token'
 // giữa các case, và về nguyên tắc process.env có thể đổi runtime nếu process manager reload.
 function getCookieDomain(reqHost?: string): string {
   if (process.env.COOKIE_DOMAIN) return process.env.COOKIE_DOMAIN
-  if (reqHost && reqHost.includes('donghanhcungban.com')) {
+  if (reqHost && /^(?:[a-z0-9-]+\.)*donghanhcungban\.com(?::[0-9]+)?$/i.test(reqHost)) {
     return '.donghanhcungban.com'
   }
   return '.donghanhcungban.org'
@@ -77,7 +62,11 @@ export function readSessionCookie(req: Request): string | null {
     if (eq === -1) continue
     const name = pair.slice(0, eq).trim()
     if (name === SESSION_COOKIE_NAME) {
-      return decodeURIComponent(pair.slice(eq + 1).trim())
+      try {
+        return decodeURIComponent(pair.slice(eq + 1).trim())
+      } catch {
+        return null
+      }
     }
   }
   return null

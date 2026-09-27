@@ -3,7 +3,7 @@
 // chỉ để hiển thị UI ngay, không phải chỗ quyết định cấp thưởng) — giống cách quests.ts/
 // achievements.ts đã tách ở dự án này.
 
-import { getAuthHeader } from '@core/authHeader'
+import { getAuthHeader, getStoredToken } from '@core/authHeader'
 
 export interface AchievementRewardStatus {
   id: string
@@ -15,7 +15,7 @@ export interface AchievementRewardStatus {
 export async function fetchAchievementRewards(): Promise<AchievementRewardStatus[] | null> {
   try {
     const headers = getAuthHeader()
-    if (!headers.Authorization) return null
+    if (!getStoredToken()) return null
     const res = await fetch('/api/achievements', { headers })
     if (!res.ok) return null
     const data = (await res.json()) as { items: AchievementRewardStatus[] }
@@ -32,7 +32,7 @@ export async function claimAchievementReward(
 ): Promise<{ rewardDays: number; rewardPlan: 'pro' | 'vip' } | null> {
   try {
     const headers = getAuthHeader()
-    if (!headers.Authorization) return null
+    if (!getStoredToken()) return null
     const res = await fetch('/api/achievements', {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...headers },

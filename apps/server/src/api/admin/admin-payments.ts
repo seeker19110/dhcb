@@ -13,8 +13,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
@@ -47,8 +46,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const admin = await getUserById(auth.userId)
-  if (!isAdminEmail(admin?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-payments' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }

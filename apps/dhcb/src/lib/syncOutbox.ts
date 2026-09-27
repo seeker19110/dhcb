@@ -38,6 +38,7 @@ export {
   handlers,
   registerKindHandler,
   isBlockedByAuth,
+  isGradingUnavailable,
   subscribe,
   getSyncVersion,
   setSyncVersion,
@@ -54,6 +55,7 @@ import {
   notify,
   pending,
   readEntries,
+  splitProgrammingEntry,
   writeEntries,
   type FlushResult,
   type OutboxEntry,
@@ -72,8 +74,8 @@ const inFlight = new Map<string, Promise<FlushResult>>()
  * Xếp một thay đổi vào hàng đợi của `uid`.
  *
  * `english` chỉ giữ ĐÚNG MỘT mục (bản chụp toàn bộ localStorage — xếp thêm là thừa).
- * `programming` gộp các mục theo `lessonId` vào MỘT batch (≤ 50 mục/lần gửi, đúng hợp đồng
- * server §③.3). `evidence` mỗi bằng chứng một mục (server S11 tự dedupe theo `attemptId` riêng).
+ * `programming` gộp theo `lessonId`, chia batch ≤ 50 mục và ≤ 5 lượt chấm.
+ * Không cắt bỏ mục cũ khi học offline nhiều bài. `evidence` mỗi bằng chứng một mục (server S11 tự dedupe theo `attemptId` riêng).
  */
 export function enqueue(uid: string, kind: OutboxKind, payload: unknown = null): void {
   if (!uid || isGuestId(uid)) return // khách: localStorage LÀ nguồn sự thật, không có gì để gửi
@@ -98,27 +100,41 @@ export function enqueue(uid: string, kind: OutboxKind, payload: unknown = null):
   } else if (kind === 'programming') {
     const items = normalizeProgrammingItems(payload)
     if (items.length === 0) return
-    const existing = entries.find((e) => e.kind === 'programming')
-    if (existing) {
-      const merged = mergeProgrammingItems(
-        normalizeProgrammingItems(existing.payload),
-        items,
-      ).slice(-50)
-      existing.payload = merged
-      // Payload ĐỔI → phải sinh `attemptId` mới, nếu không server sẽ trả lại biên nhận cũ và
-      // bài vừa thêm biến mất (bất biến AC-11).
-      const hash = hashPayload('programming', merged)
-      if (hash !== existing.payloadHash) {
-        existing.payloadHash = hash
-        existing.attemptId = newAttemptId()
+    for (const item of items) {
+      // Ưu tiên đúng bài đã xếp; không nhập bài mới vào mục đang chờ bảo trì.
+      const existing =
+        entries.find(
+          (entry) =>
+            entry.kind === 'programming' &&
+            normalizeProgrammingItems(entry.payload).some((old) => old.lessonId === item.lessonId),
+        ) ??
+        entries.find(
+          (entry) =>
+            entry.kind === 'programming' &&
+            !entry.lastError &&
+            normalizeProgrammingItems(entry.payload).length < 50 &&
+            (item.status !== 'completed' ||
+              normalizeProgrammingItems(entry.payload).filter((old) => old.status === 'completed')
+                .length < 5),
+        )
+      if (!existing) {
+        entries.push(makeEntry(uid, 'programming', [item], now))
+        continue
       }
+      const merged = mergeProgrammingItems(normalizeProgrammingItems(existing.payload), [item])
+      const hash = hashPayload('programming', merged)
+      if (hash === existing.payloadHash) continue // cùng bài không được tự mở lại vòng retry bảo trì
+      existing.payload = merged
+      existing.payloadHash = hash
+      existing.attemptId = newAttemptId()
       existing.nextAt = 0
       existing.tries = 0
-      writeEntries(uid, entries)
-    } else {
-      entries.push(makeEntry(uid, 'programming', items.slice(-50), now))
-      writeEntries(uid, entries)
+      delete existing.lastError
     }
+    writeEntries(
+      uid,
+      entries.flatMap((entry) => splitProgrammingEntry(entry)),
+    )
   } else {
     entries.push(makeEntry(uid, kind, payload, now))
     writeEntries(uid, entries)
@@ -161,7 +177,12 @@ function mergeProgrammingItems(a: ProgrammingItem[], b: ProgrammingItem[]): Prog
   const out = new Map<string, ProgrammingItem>()
   for (const item of [...a, ...b]) {
     const prev = out.get(item.lessonId)
-    if (!prev || prev.status !== 'completed') out.set(item.lessonId, item)
+    if (
+      !prev ||
+      prev.status !== 'completed' ||
+      (item.status === 'completed' && item.clientUpdatedAt >= prev.clientUpdatedAt)
+    )
+      out.set(item.lessonId, item)
   }
   return [...out.values()]
 }
@@ -212,6 +233,10 @@ export function flush(uid: string, opts: { resetBackoff?: boolean } = {}): Promi
 }
 
 async function runFlush(uid: string, resetBackoff: boolean): Promise<FlushResult> {
+  // Di trú hàng đã lưu bởi phiên bản cũ (từng có tới 50 completion/batch).
+  const before = readEntries(uid)
+  const split = before.flatMap((entry) => splitProgrammingEntry(entry))
+  if (split.length !== before.length) writeEntries(uid, split)
   if (resetBackoff) {
     const entries = readEntries(uid)
     let changed = false

@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/memoryPalaceApi.ts — Client API cho Spatial Memory Palace.
 import type {
   MemoryPalaceRoom,
@@ -8,10 +9,9 @@ import type {
 } from '@dhcb/core-contracts/memoryPalace'
 
 export async function fetchMemoryPalaceState(): Promise<MemoryPalaceState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/memory-palace', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -33,12 +33,11 @@ export async function createMemoryPalaceRoomApi(params: {
     category: 'c1_c2_vocab' | 'stem_formula' | 'argument_fallacy' | 'life_wisdom'
   }>
 }): Promise<MemoryPalaceRoom> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/memory-palace?action=create_room', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })
@@ -59,12 +58,11 @@ export async function verifyLocusRecallApi(params: {
   result: LocusRecallResult
   updatedLocus: LocusAnchor
 }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/memory-palace?action=verify_recall', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })

@@ -32,10 +32,10 @@ describe('packages/core-ui/clientAuth.ts', () => {
         'https://en-vi.donghanhcungban.org/learning-path',
       )
       expect(getSafeRedirectUrl('https://math.donghanhcungban.org/')).toBe(
-        'https://math.donghanhcungban.org/',
+        'https://www.donghanhcungban.org/',
       )
       expect(getSafeRedirectUrl('https://en-vi.donghanhcungban.com/test')).toBe(
-        'https://en-vi.donghanhcungban.com/test',
+        'https://www.donghanhcungban.org/',
       )
     })
 
@@ -80,12 +80,12 @@ describe('packages/core-ui/clientAuth.ts', () => {
       }
       vi.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: 'mock-token-xyz', user: mockUser }),
+        json: async () => ({ authenticated: true, user: mockUser }),
       } as unknown as Response)
 
       const user = await register('test@example.com', 'User 1', 'password123')
       expect(user).toEqual(mockUser)
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('mock-token-xyz')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
     })
 
     it('login trả về null khi thất bại', async () => {
@@ -101,26 +101,26 @@ describe('packages/core-ui/clientAuth.ts', () => {
 
     it('logout gọi API và xóa stored token', async () => {
       const { logout } = await import('./clientAuth.js')
-      localStorage.setItem('gsa_session_token_v1', 'existing-token')
+      localStorage.setItem('gsa_session_present_v1', 'session:fixture')
       vi.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true }),
       } as unknown as Response)
 
       await logout()
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
     it('getCurrentUser trả về null khi không có token', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.removeItem('gsa_session_token_v1')
+      localStorage.removeItem('gsa_session_present_v1')
       const user = await getCurrentUser()
       expect(user).toBeNull()
     })
 
     it('getCurrentUser xóa token khi nhận 401', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.setItem('gsa_session_token_v1', 'expired-token')
+      localStorage.setItem('gsa_session_present_v1', 'session:fixture')
       vi.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -128,17 +128,17 @@ describe('packages/core-ui/clientAuth.ts', () => {
 
       const user = await getCurrentUser()
       expect(user).toBeNull()
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
     it('getCurrentUser trả user hợp lệ khi token đúng', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.setItem('gsa_session_token_v1', 'valid-token')
+      localStorage.setItem('gsa_session_present_v1', 'session:fixture')
       const mockProfile = {
         id: 'u-valid',
         email: 'valid@example.com',
         name: 'Valid User',
-        plan: 'pro',
+        plan: 'vip',
         onboarded: true,
         emailVerified: true,
         isAdmin: false,
@@ -150,7 +150,7 @@ describe('packages/core-ui/clientAuth.ts', () => {
 
       const user = await getCurrentUser()
       expect(user?.id).toBe('u-valid')
-      expect(user?.plan).toBe('pro')
+      expect(user?.plan).toBe('vip')
     })
   })
 
@@ -173,7 +173,8 @@ describe('packages/core-ui/clientAuth.ts', () => {
 
     it('handleOAuthRedirectCallback xử lý access_token từ hash thành công', async () => {
       const { handleOAuthRedirectCallback } = await import('./clientAuth.js')
-      window.location.hash = '#access_token=google-oauth-token-123'
+      sessionStorage.setItem('oauth_state_google', 'state-test')
+      window.location.hash = '#access_token=google-oauth-token-123&state=state-test'
       const mockUser = {
         id: 'u-google',
         email: 'google@gmail.com',
@@ -184,12 +185,12 @@ describe('packages/core-ui/clientAuth.ts', () => {
       }
       vi.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: 'session-jwt', user: mockUser }),
+        json: async () => ({ authenticated: true, user: mockUser }),
       } as unknown as Response)
 
       const user = await handleOAuthRedirectCallback()
       expect(user?.email).toBe('google@gmail.com')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('session-jwt')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
     })
 
     // TEST CANH GÁC (audit 2026-08-28, F7): `state` của OAuth là token chống CSRF nên phải sinh
@@ -222,7 +223,7 @@ describe('packages/core-ui/clientAuth.ts', () => {
     // theo origin) để biết đã đăng nhập chưa, nên người dùng bị hiện thành khách dù phiên còn.
     it('localStorage rỗng nhưng cookie còn hiệu lực → nhận phiên và LƯU cờ cho origin này', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.removeItem('gsa_session_token_v1')
+      localStorage.removeItem('gsa_session_present_v1')
       const mockUser = {
         id: 'u-1',
         email: 'a@b.c',
@@ -236,7 +237,7 @@ describe('packages/core-ui/clientAuth.ts', () => {
         // 1) POST session-from-cookie → trả token + user
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ token: 'token-tu-cookie', user: mockUser }),
+          json: async () => ({ authenticated: true, user: mockUser }),
         } as unknown as Response)
         // 2) GET ?action=me bằng token vừa nhận
         .mockResolvedValueOnce({
@@ -249,7 +250,7 @@ describe('packages/core-ui/clientAuth.ts', () => {
       expect(user?.email).toBe('a@b.c')
       // PHẢI lưu lại: cloud.ts/challengeCloud.ts/tutorFeedback.ts kiểm getStoredToken()
       // để quyết định có đồng bộ hay không.
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('token-tu-cookie')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
 
       const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
       expect(url).toBe('/api/auth')
@@ -261,26 +262,26 @@ describe('packages/core-ui/clientAuth.ts', () => {
 
     it('localStorage rỗng và KHÔNG có cookie hợp lệ → null, không gọi thêm ?action=me', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.removeItem('gsa_session_token_v1')
+      localStorage.removeItem('gsa_session_present_v1')
       const fetchSpy = vi
         .spyOn(global, 'fetch')
         .mockResolvedValueOnce({ ok: false, status: 401 } as unknown as Response)
 
       expect(await getCurrentUser()).toBeNull()
       expect(fetchSpy).toHaveBeenCalledTimes(1)
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
     it('mất mạng lúc đổi cookie → null chứ KHÔNG ném lỗi (AuthProvider vẫn dựng được UI)', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.removeItem('gsa_session_token_v1')
+      localStorage.removeItem('gsa_session_present_v1')
       vi.spyOn(global, 'fetch').mockRejectedValueOnce(new Error('network down'))
       await expect(getCurrentUser()).resolves.toBeNull()
     })
 
     it('ĐÃ có cờ trong localStorage → KHÔNG gọi session-from-cookie (không thêm vòng mạng)', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
-      localStorage.setItem('gsa_session_token_v1', 'token-san-co')
+      localStorage.setItem('gsa_session_present_v1', 'session:fixture')
       const mockUser = {
         id: 'u-2',
         email: 'c@d.e',
@@ -373,7 +374,7 @@ describe('loginWithGoogle — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)
     }
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: 'g3-sess', user: mockUser }),
+      json: async () => ({ authenticated: true, user: mockUser }),
     } as unknown as Response)
     const { loginWithGoogle } = await import('./clientAuth.js')
     try {
@@ -403,7 +404,7 @@ describe('loginWithGoogle — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)
     }
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: 'g-sess', user: mockUser }),
+      json: async () => ({ authenticated: true, user: mockUser }),
     } as unknown as Response)
     const { loginWithGoogle } = await import('./clientAuth.js')
     const promise = loginWithGoogle()
@@ -502,7 +503,7 @@ describe('loginWithGoogleRedirect — nhánh còn thiếu (Đợt 2 coverage 202
     expect(() => loginWithGoogleRedirect()).toThrow('Thiếu VITE_GOOGLE_CLIENT_ID')
   })
 
-  it('sessionStorage.setItem ném lỗi (chế độ ẩn danh nghiêm ngặt) → vẫn điều hướng bình thường', async () => {
+  it('sessionStorage bị chặn → dừng trước OAuth vì không giữ được state', async () => {
     vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'g-redirect')
     // sessionStorage của happy-dom là Proxy tự cài đặt get/set — vi.spyOn trên instance
     // KHÔNG chặn được lời gọi setItem (set trap của happy-dom bỏ qua ghi đè thuộc tính đã có
@@ -516,9 +517,10 @@ describe('loginWithGoogleRedirect — nhánh còn thiếu (Đợt 2 coverage 202
     })
     const { loginWithGoogleRedirect } = await import('./clientAuth.js')
     try {
-      expect(() => loginWithGoogleRedirect()).not.toThrow()
+      const previousUrl = window.location.href
+      expect(() => loginWithGoogleRedirect()).toThrow('Không lưu được trạng thái bảo mật OAuth')
       expect(setItemCalled).toBe(true)
-      expect(window.location.href).toContain('accounts.google.com/o/oauth2/v2/auth')
+      expect(window.location.href).toBe(previousUrl)
     } finally {
       vi.unstubAllGlobals()
       vi.unstubAllEnvs()
@@ -539,7 +541,8 @@ describe('handleOAuthRedirectCallback — nhánh còn thiếu (Đợt 2 coverage
 
   it('có access_token nhưng callAuthApi trả null → null', async () => {
     const { handleOAuthRedirectCallback } = await import('./clientAuth.js')
-    window.location.hash = '#access_token=tok-that-bai'
+    sessionStorage.setItem('oauth_state_google', 'state-test')
+    window.location.hash = '#access_token=tok-that-bai&state=state-test'
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: false,
       status: 401,
@@ -550,7 +553,8 @@ describe('handleOAuthRedirectCallback — nhánh còn thiếu (Đợt 2 coverage
 
   it('callAuthApi ném lỗi (mất mạng) → null, không crash', async () => {
     const { handleOAuthRedirectCallback } = await import('./clientAuth.js')
-    window.location.hash = '#access_token=tok-mang-loi'
+    sessionStorage.setItem('oauth_state_google', 'state-test')
+    window.location.hash = '#access_token=tok-mang-loi&state=state-test'
     vi.spyOn(global, 'fetch').mockRejectedValueOnce(new Error('network down'))
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const user = await handleOAuthRedirectCallback()
@@ -588,7 +592,7 @@ describe('loginWithFacebook — nhánh còn thiếu (Đợt 2 coverage 2026-09-0
     }
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: 'fb-sess', user: mockUser }),
+      json: async () => ({ authenticated: true, user: mockUser }),
     } as unknown as Response)
     const { loginWithFacebook } = await import('./clientAuth.js')
     try {
@@ -653,7 +657,7 @@ describe('loginWithApple — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)'
       return {
         ok: true,
         json: async () => ({
-          token: 'apple-sess',
+          authenticated: true,
           user: {
             id: 'ap1',
             email: 'a@icloud.com',
@@ -685,7 +689,7 @@ describe('loginWithApple — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)'
       return {
         ok: true,
         json: async () => ({
-          token: 'apple-sess-2',
+          authenticated: true,
           user: {
             id: 'ap2',
             email: 'a2@icloud.com',
@@ -750,7 +754,7 @@ describe('loginWithMicrosoft — nhánh còn thiếu (Đợt 2 coverage 2026-09-
     }
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: 'ms-sess', user: mockUser }),
+      json: async () => ({ authenticated: true, user: mockUser }),
     } as unknown as Response)
     const { loginWithMicrosoft } = await import('./clientAuth.js')
     try {
@@ -778,7 +782,7 @@ describe('loginWithMicrosoft — nhánh còn thiếu (Đợt 2 coverage 2026-09-
 describe('getCurrentUser / adoptSessionFromCookie — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)', () => {
   it('cookie trả ok nhưng thiếu token/user (dữ liệu bất thường) → null', async () => {
     const { getCurrentUser } = await import('./clientAuth.js')
-    localStorage.removeItem('gsa_session_token_v1')
+    localStorage.removeItem('gsa_session_present_v1')
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
       json: async () => ({}),
@@ -789,7 +793,7 @@ describe('getCurrentUser / adoptSessionFromCookie — nhánh còn thiếu (Đợ
 
   it('nhận phiên từ cookie nhưng localStorage bị chặn ĐỌC LẠI (ẩn danh nghiêm ngặt) → vẫn trả user vừa nhận, không gọi thêm ?action=me', async () => {
     const { getCurrentUser } = await import('./clientAuth.js')
-    localStorage.removeItem('gsa_session_token_v1')
+    localStorage.removeItem('gsa_session_present_v1')
     const mockUser = {
       id: 'u-priv',
       email: 'priv@x.com',
@@ -800,7 +804,7 @@ describe('getCurrentUser / adoptSessionFromCookie — nhánh còn thiếu (Đợ
     }
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: 'tok-priv', user: mockUser }),
+      json: async () => ({ authenticated: true, user: mockUser }),
     } as unknown as Response)
     const getItemSpy = vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
       throw new Error('localStorage bị chặn')
@@ -857,14 +861,14 @@ describe('preloadOAuthProviders — nhánh còn thiếu (Đợt 2 coverage 2026-
 describe('register / login — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)', () => {
   it('register: email đã tồn tại (callAuthApi trả null) → null, không lưu token', async () => {
     const { register } = await import('./clientAuth.js')
-    localStorage.removeItem('gsa_session_token_v1')
+    localStorage.removeItem('gsa_session_present_v1')
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: false,
       status: 409,
     } as unknown as Response)
     const user = await register('trung@example.com', 'Trùng', 'MatKhau123')
     expect(user).toBeNull()
-    expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+    expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
   })
 
   it('login: đúng thông tin → lưu token và trả user', async () => {
@@ -879,10 +883,84 @@ describe('register / login — nhánh còn thiếu (Đợt 2 coverage 2026-09-05
     }
     vi.spyOn(global, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ token: 'login-token', user: mockUser }),
+      json: async () => ({ authenticated: true, user: mockUser }),
     } as unknown as Response)
     const user = await login('login@example.com', 'MatKhau123')
     expect(user).toEqual(mockUser)
-    expect(localStorage.getItem('gsa_session_token_v1')).toBe('login-token')
+    expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
   })
+})
+
+describe('chuyển hướng giới hạn origin', () => {
+  afterEach(() => vi.unstubAllEnvs())
+  it.each([
+    '/\\outside.example/path',
+    '/%5Coutside.example',
+    '//outside.example',
+    '/%2foutside.example',
+    '/a/..//outside.example',
+    '/a/%2e%2e//outside.example',
+    'https://user@www.donghanhcungban.org/',
+    'https://user:pass@www.donghanhcungban.org/',
+    'http://www.donghanhcungban.org/',
+    'ftp://www.donghanhcungban.org/',
+    'https://unconfigured.donghanhcungban.org/',
+    'https://donghanhcungban.com/',
+    'https://www.donghanhcungban.org:8443/',
+    'https://www.donghanhcungban.org./',
+    'https://www.donghanhcungban.org/\n',
+    '/%0a/path',
+    '/%00/path',
+    '/bad%encoding',
+    'http://localhost:9999/',
+    'http://sub.localhost:5173/',
+  ])('từ chối URL không đáng tin %j', (value) => {
+    expect(getSafeRedirectUrl(value, '/safe')).toBe('/safe')
+  })
+  it('production không cho phép loopback kể cả port dev', () => {
+    vi.stubEnv('DEV', false)
+    expect(getSafeRedirectUrl('http://localhost:5173/', '/safe')).toBe('/safe')
+    expect(getSafeRedirectUrl('http://127.0.0.1:3000/', '/safe')).toBe('/safe')
+  })
+  it('chuẩn hóa đường dẫn hợp lệ mà giữ origin nội bộ', () => {
+    expect(getSafeRedirectUrl('/a/../profile?tab=account')).toBe('/profile?tab=account')
+    expect(getSafeRedirectUrl('https://WWW.DONGHANHCUNGBAN.ORG:443/profile')).toBe(
+      'https://www.donghanhcungban.org/profile',
+    )
+  })
+})
+
+describe('OAuth redirect state chống login CSRF', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    sessionStorage.clear()
+  })
+  it.each([null, 'wrong-state'])(
+    'từ chối state thiếu/sai, không đổi token thành phiên',
+    async (state) => {
+      const { handleOAuthRedirectCallback } = await import('./clientAuth.js')
+      sessionStorage.setItem('oauth_state_google', 'expected-state')
+      window.location.hash = `#access_token=provider-token${state ? `&state=${state}` : ''}`
+      const fetchSpy = vi.spyOn(global, 'fetch')
+      fetchSpy.mockClear()
+      expect(await handleOAuthRedirectCallback()).toBeNull()
+      expect(fetchSpy).not.toHaveBeenCalled()
+      expect(sessionStorage.getItem('oauth_state_google')).toBeNull()
+      expect(window.location.hash).toBe('')
+    },
+  )
+})
+
+it.each([
+  ['x'.repeat(14), false],
+  ['x'.repeat(15), true],
+  ['x'.repeat(72), true],
+  ['x'.repeat(73), false],
+  ['ấ'.repeat(24), true],
+  ['ấ'.repeat(25), false],
+  ['🙂'.repeat(14), false],
+  ['🙂'.repeat(15), true],
+])('mật khẩu UI khớp giới hạn server (%s)', async (password, valid) => {
+  const { isValidNewPassword } = await import('./clientAuth.js')
+  expect(isValidNewPassword(password as string)).toBe(valid)
 })

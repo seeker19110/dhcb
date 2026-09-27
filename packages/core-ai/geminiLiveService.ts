@@ -42,8 +42,10 @@ export class GeminiLiveSession extends EventEmitter {
   public readonly config: GeminiLiveSessionConfig
   private status: GeminiLiveStatus = 'idle'
   private timer: NodeJS.Timeout | null = null
+  private idleTimer: NodeJS.Timeout | null = null
   private isDestroyed: boolean = false
   private upstream: WebSocket | null = null
+  private providerStarted = false
 
   constructor(
     rawConfig: Partial<GeminiLiveSessionConfig> & { sessionId: string; personId: string },
@@ -56,13 +58,18 @@ export class GeminiLiveSession extends EventEmitter {
     return this.status
   }
 
+  public hasProviderStarted(): boolean {
+    return this.providerStarted
+  }
+
   public start(): void {
-    if (this.isDestroyed) return
+    if (this.isDestroyed || this.status !== 'idle') return
     this.status = 'connecting'
 
     this.timer = setTimeout(() => {
       this.close('Session time limit exceeded')
     }, this.config.maxDurationSeconds * 1000)
+    this.resetIdleTimer()
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
@@ -85,6 +92,7 @@ export class GeminiLiveSession extends EventEmitter {
     const model = process.env.GEMINI_LIVE_MODEL || this.config.model
     const url = `${geminiLiveWsBase()}?key=${encodeURIComponent(apiKey)}`
     const ws = webSocketFactory(url)
+    this.providerStarted = true
     this.upstream = ws
 
     ws.on('open', () => {
@@ -108,15 +116,17 @@ export class GeminiLiveSession extends EventEmitter {
 
     ws.on('message', (raw) => this.handleUpstreamMessage(raw))
 
-    ws.on('error', (err) => {
+    ws.on('error', () => {
       this.status = 'error'
       this.emitPacket({
         type: 'error',
         sessionId: this.config.sessionId,
-        errorMessage: `Gemini Live upstream error: ${String(err)}`,
+        // Lỗi ws có thể chứa URL kèm API key; không phản chiếu chi tiết provider cho client.
+        errorMessage: 'Gemini Live tạm thời không khả dụng.',
         timestamp: Date.now(),
         schemaVersion: GEMINI_LIVE_VERSION,
       })
+      this.close('Upstream connection failed')
     })
 
     ws.on('close', () => {
@@ -203,6 +213,7 @@ export class GeminiLiveSession extends EventEmitter {
     const base64 = typeof pcmChunk === 'string' ? pcmChunk : pcmChunk.toString('base64')
 
     if (this.upstream && this.upstream.readyState === WebSocket.OPEN) {
+      this.resetIdleTimer()
       this.status = 'user_speaking'
       this.upstream.send(
         JSON.stringify({
@@ -212,6 +223,12 @@ export class GeminiLiveSession extends EventEmitter {
         }),
       )
     }
+  }
+
+  private resetIdleTimer(): void {
+    if (this.idleTimer) clearTimeout(this.idleTimer)
+    this.idleTimer = setTimeout(() => this.close('Session idle timeout'), 60_000)
+    this.idleTimer.unref()
   }
 
   /** Client báo đã ngắt lời AI (barge-in phía UI) — Live API tự phát hiện qua VAD, đây chỉ cập nhật trạng thái local. */
@@ -236,9 +253,15 @@ export class GeminiLiveSession extends EventEmitter {
       clearTimeout(this.timer)
       this.timer = null
     }
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer)
+      this.idleTimer = null
+    }
 
     if (this.upstream) {
       this.upstream.removeAllListeners()
+      // ws CONNECTING phát error bất đồng bộ khi close(); giữ listener để không crash process.
+      this.upstream.on('error', () => {})
       if (
         this.upstream.readyState === WebSocket.OPEN ||
         this.upstream.readyState === WebSocket.CONNECTING
@@ -255,7 +278,7 @@ export class GeminiLiveSession extends EventEmitter {
       timestamp: Date.now(),
       schemaVersion: GEMINI_LIVE_VERSION,
     })
-
+    this.emit('closed')
     this.removeAllListeners()
   }
 
@@ -271,8 +294,16 @@ const activeLiveSessions = new Map<string, GeminiLiveSession>()
 export function createGeminiLiveSession(
   config: Partial<GeminiLiveSessionConfig> & { sessionId: string; personId: string },
 ): GeminiLiveSession {
+  if (activeLiveSessions.has(config.sessionId)) {
+    throw new Error('Session ID already exists')
+  }
   const session = new GeminiLiveSession(config)
   activeLiveSessions.set(config.sessionId, session)
+  session.once('closed', () => {
+    if (activeLiveSessions.get(config.sessionId) === session) {
+      activeLiveSessions.delete(config.sessionId)
+    }
+  })
   return session
 }
 

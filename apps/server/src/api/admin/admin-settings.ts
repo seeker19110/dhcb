@@ -1,9 +1,9 @@
-// api/admin-settings.ts — Cho ADMIN (xác thực qua ADMIN_EMAILS, xem _lib/adminAuth.ts) đọc/sửa
+// api/admin-settings.ts — Cho ADMIN (xác thực qua ADMIN_USER_IDS, xem _lib/adminAuth.ts) đọc/sửa
 // hạn mức lượt dùng AI theo gói (free/pro/vip) + mốc khuyến mãi, lưu trong bảng app_settings
 // (postgres/migrations/0001_app_settings.sql) — thay vì phải sửa code + deploy lại mỗi lần
 // đổi số. Không CHECK constraint DB nào khác bị ảnh hưởng.
 //
-// GET  /api/admin-settings   (cần đăng nhập — cookie, user phải nằm trong ADMIN_EMAILS)
+// GET  /api/admin-settings   (cần đăng nhập — cookie, user phải nằm trong ADMIN_USER_IDS)
 // POST /api/admin-settings   body: { limits: {free:{...},pro:{...},vip:{...}}, promoUntil: string|null }
 
 import { z } from 'zod'
@@ -15,8 +15,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { getAppSettings, invalidateSettingsCache } from '@dhcb/core-db/settings'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
@@ -58,8 +57,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const user = await getUserById(auth.userId)
-  if (!isAdminEmail(user?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-settings' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }

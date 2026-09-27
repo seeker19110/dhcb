@@ -1,6 +1,6 @@
 // api/hub-stats.ts — Thống kê và trạng thái phiên cho trang chủ apps/hub.
 // BẢO MẬT & RIÊNG TƯ:
-// - CHỈ ADMIN (xác thực qua cookie session + isAdminEmail) mới xem được số lượng người dùng thật
+// - CHỈ ADMIN (xác thực qua cookie session + isAdminUser) mới xem được số lượng người dùng thật
 //   (totalUsers) và tổng lượt học (totalEnglishSessions).
 // - Người dùng thông thường hoặc khách vãng lai: API KHÔNG trả về 2 trường nhạy cảm này (ẩn hoàn toàn).
 // - Trả kèm trạng thái `loggedIn: boolean` và `userName: string` để trang chủ hiển thị link
@@ -17,7 +17,7 @@ import {
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
 interface AdminHubStats {
@@ -80,7 +80,7 @@ export default async function handler(req: Request): Promise<Response> {
           auth.userId,
         ]),
       ])
-      isAdmin = isAdminEmail(user?.email)
+      isAdmin = isAdminUser(auth.userId)
       userName = profileRes.rows[0]?.name || user?.email?.split('@')[0] || ''
     } catch {
       // Fail-open: vẫn coi như đã đăng nhập nhưng không phải admin nếu DB lỗi tạm thời

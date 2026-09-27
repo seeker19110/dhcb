@@ -6,7 +6,7 @@ import { Flame, GraduationCap, Share2, Loader2, Check } from 'lucide-react'
 import ShareResultCard from './ShareResultCard'
 import LoadError from './LoadError'
 import { useToast } from '@core/ToastProvider'
-import { getAuthHeader } from '@core/authHeader'
+import { getStoredToken } from '@core/authHeader'
 import { getStreak } from '../lib/storage'
 import { getLearnedCount } from '../lib/vocab'
 import { buildProgressShareContent } from '../lib/shareContent'
@@ -64,7 +64,7 @@ export default function QuestsPanel({ isA, userId }: { isA: boolean; userId?: st
     setLoading(true)
     const result = await fetchQuestsStatus()
     setStatus(result)
-    setLoadError(result === null && Boolean(getAuthHeader().Authorization))
+    setLoadError(result === null && Boolean(getStoredToken()))
     setLoading(false)
   }
 
@@ -74,7 +74,7 @@ export default function QuestsPanel({ isA, userId }: { isA: boolean; userId?: st
     const initialLoad = async () => {
       const result = await fetchQuestsStatus()
       setStatus(result)
-      setLoadError(result === null && Boolean(getAuthHeader().Authorization))
+      setLoadError(result === null && Boolean(getStoredToken()))
       setLoading(false)
     }
     void initialLoad()
@@ -165,9 +165,13 @@ export default function QuestsPanel({ isA, userId }: { isA: boolean; userId?: st
         icon={Flame}
         title={isA ? 'Học liên tiếp 5 ngày' : 'Learn 5 days in a row'}
         description={
-          isA
-            ? `Streak hiện tại: ${status.streak.current}/${status.streak.required} ngày. Thưởng +${status.streak.rewardDays} ngày Pro, nhận lại được mỗi ${status.streak.cooldownDays} ngày.`
-            : `Current streak: ${status.streak.current}/${status.streak.required} days. +${status.streak.rewardDays} day of Pro, repeatable every ${status.streak.cooldownDays} days.`
+          status.streak.rewardDays <= 0
+            ? isA
+              ? `Chuỗi ngày học của bạn: ${status.streak.current} ngày. Mục này hiện không có thưởng VIP.`
+              : `Your learning streak: ${status.streak.current} days. This activity currently has no VIP reward.`
+            : isA
+              ? `Streak hiện tại: ${status.streak.current}/${status.streak.required} ngày. Thưởng +${status.streak.rewardDays} ngày VIP, nhận lại được mỗi ${status.streak.cooldownDays} ngày.`
+              : `Current streak: ${status.streak.current}/${status.streak.required} days. +${status.streak.rewardDays} day of VIP, repeatable every ${status.streak.cooldownDays} days.`
         }
         status={status.streak.canClaim ? 'ready' : 'locked'}
         action={
@@ -215,12 +219,16 @@ export default function QuestsPanel({ isA, userId }: { isA: boolean; userId?: st
         icon={Share2}
         title={isA ? 'Chia sẻ công khai' : 'Share publicly'}
         description={
-          isA
-            ? `Bấm nút chia sẻ bên dưới và chọn nơi chia sẻ để nhận +${status.share.rewardDays} ngày Pro. Nhận lại được mỗi ${status.share.cooldownDays} ngày.`
-            : `Tap the share button below and pick where to share to get +${status.share.rewardDays} day of Pro. Repeatable every ${status.share.cooldownDays} days.`
+          status.share.rewardDays <= 0
+            ? isA
+              ? 'Bạn vẫn có thể chia sẻ kết quả học tập. Mục này hiện không có thưởng VIP.'
+              : 'You can still share your learning progress. This activity currently has no VIP reward.'
+            : isA
+              ? `Bấm nút chia sẻ bên dưới và chọn nơi chia sẻ để nhận +${status.share.rewardDays} ngày VIP. Nhận lại được mỗi ${status.share.cooldownDays} ngày.`
+              : `Tap the share button below and pick where to share to get +${status.share.rewardDays} day of VIP. Repeatable every ${status.share.cooldownDays} days.`
         }
         status={status.share.canClaim ? 'ready' : 'locked'}
-        action={status.share.canClaim ? <ShareResultCard {...shareContent} isA={isA} /> : undefined}
+        action={<ShareResultCard {...shareContent} isA={isA} />}
       />
     </div>
   )

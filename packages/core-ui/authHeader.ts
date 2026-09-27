@@ -1,46 +1,51 @@
-// src/lib/authHeader.ts — Lấy session token hiện tại để gửi kèm request lên server.
-// Giai đoạn B: token tự phát hành (xem api/auth.ts), lưu trong localStorage — thay
-// Supabase access_token trước đây.
-
+// Phiên được xác thực duy nhất bằng cookie HttpOnly. localStorage chỉ chứa cờ UI
+// không bí mật, thay đổi theo lần đăng nhập để bỏ kết quả bất đồng bộ từ phiên cũ.
 import { getGuestHeader } from './guestId.js'
 
-const TOKEN_KEY = 'gsa_session_token_v1'
+const LEGACY_TOKEN_KEY = 'gsa_session_token_v1'
+export const SESSION_MARKER_KEY = 'gsa_session_present_v1'
 
+/** Tên cũ giữ tương thích với các caller kiểm sự hiện diện phiên; KHÔNG trả secret. */
 export function getStoredToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    const legacy = localStorage.getItem(LEGACY_TOKEN_KEY)
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
+    let marker = localStorage.getItem(SESSION_MARKER_KEY)
+    if (legacy && !marker) {
+      marker = `session:${crypto.randomUUID()}`
+      localStorage.setItem(SESSION_MARKER_KEY, marker)
+    }
+    return marker?.startsWith('session:') ? marker : null
   } catch {
-    return null // localStorage bị chặn (chế độ ẩn danh nghiêm ngặt) — coi như chưa đăng nhập
+    return null
   }
 }
 
-export function setStoredToken(token: string): void {
+/** Chỉ lưu cờ không bí mật; bỏ qua đối số token của caller phiên bản cũ. */
+export function setStoredToken(legacyToken?: string): void {
+  void legacyToken
   try {
-    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
+    localStorage.setItem(SESSION_MARKER_KEY, `session:${crypto.randomUUID()}`)
   } catch {
-    /* bỏ qua — chỉ ảnh hưởng persist qua lần tải lại, không chặn phiên hiện tại */
+    /* Cookie vẫn hoạt động khi localStorage bị chặn. */
   }
 }
 
 export function clearStoredToken(): void {
   try {
-    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
+    localStorage.removeItem(SESSION_MARKER_KEY)
   } catch {
     /* ignore */
   }
 }
 
-export function getAccessToken(): string | undefined {
-  return getStoredToken() ?? undefined
+/** Cookie HttpOnly không được đọc hay chuyển thành bearer token. */
+export function getAccessToken(): undefined {
+  return undefined
 }
 
-// Header sẵn sàng spread vào fetch({ headers: { ...getAuthHeader() } }).
-//
-// [2026-09-15 — chế độ Khách] Chưa đăng nhập thì KHÔNG còn trả về rỗng nữa mà gửi danh tính
-// khách ẩn danh (`X-Guest-Id`). Nhờ vậy 3 endpoint AI/audio có nhánh dùng thử giới hạn nhận
-// diện được "cùng một trình duyệt" mà không cần tài khoản. Mọi endpoint khác vẫn trả 401 y như
-// cũ — chúng không đọc header này. Đường ĐÃ đăng nhập không đổi gì: có token thì chỉ gửi token.
 export function getAuthHeader(): Record<string, string> {
-  const token = getStoredToken()
-  return token ? { Authorization: `Bearer ${token}` } : getGuestHeader()
+  return getStoredToken() ? {} : getGuestHeader()
 }

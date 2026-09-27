@@ -34,13 +34,17 @@ import {
   findOrCreateAppleUser,
   findOrCreateMicrosoftUser,
   hashSessionToken,
+  OAuthAccountLinkRequiredError,
 } from './authService.js'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 const mockedGetPool = vi.mocked(getPgPool)
 
 function mockPool(queryImpl: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>) {
-  return { query: vi.fn(queryImpl) } as unknown as ReturnType<typeof getPgPool>
+  const query = vi.fn(queryImpl)
+  return { query, connect: async () => ({ query, release: vi.fn() }) } as unknown as ReturnType<
+    typeof getPgPool
+  >
 }
 
 // Bốn describe dưới đây (hashPassword/verifyPassword, createUserWithPassword,
@@ -519,7 +523,7 @@ describe('verifyMicrosoftIdToken', () => {
 
 // ── findOrCreate*User (dùng chung findOrCreateOAuthUser, tra cứu qua bảng `identities` — 0034,
 // Bước 6 đã bỏ 4 cột google_id/facebook_id/apple_id/microsoft_id cũ trên `users`) ──
-describe('findOrCreate*User (Facebook/Apple/Microsoft — liên kết tài khoản qua email)', () => {
+describe('findOrCreate*User — không tự liên kết tài khoản qua email', () => {
   beforeEach(() => vi.restoreAllMocks())
 
   it('findOrCreateGoogleUser: đã có identity → trả user cũ, isNew=false', async () => {
@@ -534,7 +538,12 @@ describe('findOrCreate*User (Facebook/Apple/Microsoft — liên kết tài kho�
     expect(result).toEqual({ user: { id: 'u1', email: 'a@b.com' }, isNew: false })
   })
 
-  it('findOrCreateFacebookUser: chưa có identity nhưng email đã tồn tại → LIÊN KẾT (ghi identities), isNew=false', async () => {
+  it.each([
+    ['Google', findOrCreateGoogleUser],
+    ['Facebook', findOrCreateFacebookUser],
+    ['Apple', findOrCreateAppleUser],
+    ['Microsoft', findOrCreateMicrosoftUser],
+  ])('%s: identity mới không chiếm tài khoản đã có cùng email', async (_provider, findUser) => {
     const calls: string[] = []
     mockedGetPool.mockReturnValue(
       mockPool(async (sql) => {
@@ -545,9 +554,10 @@ describe('findOrCreate*User (Facebook/Apple/Microsoft — liên kết tài kho�
         return { rows: [] }
       }),
     )
-    const result = await findOrCreateFacebookUser('fb1', 'old@b.com')
-    expect(result).toEqual({ user: { id: 'u2', email: 'old@b.com' }, isNew: false })
-    expect(calls.some((sql) => sql.startsWith('insert into public.identities'))).toBe(true)
+    await expect(findUser('new-sub', 'old@b.com')).rejects.toBeInstanceOf(
+      OAuthAccountLinkRequiredError,
+    )
+    expect(calls.some((sql) => sql.startsWith('insert'))).toBe(false)
   })
 
   it('findOrCreateAppleUser: email HOÀN TOÀN mới → tạo user mới + ghi identities, isNew=true', async () => {
@@ -565,6 +575,67 @@ describe('findOrCreate*User (Facebook/Apple/Microsoft — liên kết tài kho�
     expect(result).toEqual({ user: { id: 'u3', email: 'moi@b.com' }, isNew: true })
     expect(calls.some((sql) => sql.startsWith('insert into public.identities'))).toBe(true)
   })
+
+  it.each([
+    ['Google', findOrCreateGoogleUser],
+    ['Facebook', findOrCreateFacebookUser],
+    ['Apple', findOrCreateAppleUser],
+    ['Microsoft', findOrCreateMicrosoftUser],
+  ])(
+    '%s: identity đã liên kết vẫn đăng nhập được khi email claim thay đổi',
+    async (_provider, findUser) => {
+      const pool = mockPool(async () => ({ rows: [{ id: 'existing', email: 'old@example.com' }] }))
+      mockedGetPool.mockReturnValue(pool)
+      expect(await findUser('linked-sub', 'new@example.com')).toEqual({
+        user: { id: 'existing', email: 'old@example.com' },
+        isNew: false,
+      })
+      expect(pool.query).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it('tạo identity lỗi → rollback user mới và không phát tài khoản mồ côi', async () => {
+    const calls: string[] = []
+    const failure = new Error('identity write failed')
+    mockedGetPool.mockReturnValue(
+      mockPool(async (sql) => {
+        calls.push(sql)
+        if (sql.startsWith('insert into public.users'))
+          return { rows: [{ id: 'new', email: 'new@example.com' }] }
+        if (sql.startsWith('insert into public.identities')) throw failure
+        return { rows: [] }
+      }),
+    )
+    await expect(findOrCreateGoogleUser('sub', 'new@example.com')).rejects.toBe(failure)
+    expect(calls).toContain('begin')
+    expect(calls).toContain('rollback')
+    expect(calls).not.toContain('commit')
+  })
+
+  it.each([false, true])(
+    'đua unique email: chỉ phục hồi khi identity chính xác tồn tại (%s)',
+    async (identityExists) => {
+      let conflict = false
+      mockedGetPool.mockReturnValue(
+        mockPool(async (sql) => {
+          if (sql.startsWith('insert into public.users')) {
+            conflict = true
+            throw Object.assign(new Error('duplicate'), { code: '23505' })
+          }
+          if (sql.includes('join public.identities') && conflict && identityExists)
+            return { rows: [{ id: 'winner', email: 'same@example.com' }] }
+          return { rows: [] }
+        }),
+      )
+      const result = findOrCreateGoogleUser('sub', 'same@example.com')
+      if (identityExists)
+        expect(await result).toEqual({
+          user: { id: 'winner', email: 'same@example.com' },
+          isNew: false,
+        })
+      else await expect(result).rejects.toBeInstanceOf(OAuthAccountLinkRequiredError)
+    },
+  )
 
   it('Microsoft chưa có identity → từ chối tạo/liên kết bằng email mutable', async () => {
     mockedGetPool.mockReturnValue(

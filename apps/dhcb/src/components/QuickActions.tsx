@@ -17,7 +17,6 @@ import {
   unsubscribePush,
   type PushActionResult,
 } from '../lib/pushNotif'
-import { getAccessToken } from '@core/authHeader'
 import { useAuth } from '../context/useAuth'
 import { useLang } from '../context/useLang'
 import { useDialogBehavior } from './useDialogBehavior'
@@ -135,11 +134,10 @@ function QuickActionsForUser({ userId }: { userId: string }) {
     // focus không rơi về body trong lúc promise đang chạy.
     if (!restoreFocusOnSuccess) setPushIssue(null)
     try {
-      const token = (await getAccessToken()) ?? ''
       const result =
         operation === 'subscribe'
-          ? await subscribePush(token, localHourToUtc(remindHour))
-          : await unsubscribePush(token)
+          ? await subscribePush(localHourToUtc(remindHour))
+          : await unsubscribePush()
       applyPushResult(result, operation)
       if (restoreFocusOnSuccess && result.status === 'success') {
         setFocusRevision((revision) => revision + 1)

@@ -116,3 +116,35 @@ describe('OfflineSyncIndicator', () => {
     expect(container.textContent).toContain('1 mục chờ đồng bộ')
   })
 })
+
+it('chấm bài bảo trì: báo giữ code, chưa xác nhận hoàn thành, không hiện vòng quay', async () => {
+  registerKindHandler('programming', {
+    buildRequest: (_uid, entry) => ({
+      url: '/api/programming/progress',
+      body: { attemptId: entry.attemptId, items: entry.payload },
+    }),
+  })
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ code: 'PROGRAMMING_GRADING_UNAVAILABLE' }), { status: 503 }),
+    ),
+  )
+  enqueue(UID, 'programming', [
+    {
+      lessonId: 'p1-u1-l1',
+      status: 'completed',
+      code: 'print(1)',
+      clientUpdatedAt: '2026-09-27T00:00:00Z',
+    },
+  ])
+  await act(async () => {
+    await flush(UID)
+  })
+  await mount()
+  expect(container.textContent).toContain('Chấm bài đang bảo trì')
+  expect(container.textContent).toContain('Mã bài được giữ trên thiết bị, chưa xác nhận hoàn thành')
+  expect(container.querySelector('.animate-spin')).toBeNull()
+  expect(container.querySelector('[role="status"]')).not.toBeNull()
+})

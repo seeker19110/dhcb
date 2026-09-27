@@ -14,11 +14,11 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import {
   getAllRewardConfigs,
   upsertRewardConfig,
+  supportsPaidReward,
   ACHIEVEMENT_IDS,
 } from '../_lib/achievementRewards.js'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
@@ -44,8 +44,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const admin = await getUserById(auth.userId)
-  if (!isAdminEmail(admin?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-achievement-rewards' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }
@@ -63,6 +62,13 @@ export default async function handler(req: Request): Promise<Response> {
     if (!parsed.ok)
       return jsonResponse({ error: parsed.error.message }, parsed.error.status, allHeaders)
     const { achievementId, enabled, rewardPlan, rewardDays } = parsed.data
+    if (!supportsPaidReward(achievementId) && (enabled === true || (rewardDays ?? 0) > 0)) {
+      return jsonResponse(
+        { error: 'Chỉ huy hiệu CEFR đã xác minh được hỗ trợ thưởng VIP.' },
+        400,
+        allHeaders,
+      )
+    }
 
     await upsertRewardConfig(achievementId, { enabled, rewardPlan, rewardDays })
     logSecurityEvent('ADMIN_ACHIEVEMENT_REWARD_UPDATE', clientIp, { achievementId })

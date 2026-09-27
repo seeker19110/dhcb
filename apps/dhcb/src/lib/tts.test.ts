@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 vi.mock('@core/authHeader', () => ({
-  getAccessToken: vi.fn().mockResolvedValue('fake-token'),
+  getStoredToken: vi.fn().mockReturnValue('session:fake'),
+  getAuthHeader: vi.fn(() => ({})),
 }))
 
 // getAudioEntry là vi.fn() (không phải arrow async cố định) để từng test tự đổi hành vi
@@ -48,11 +49,11 @@ beforeEach(async () => {
   vi.stubGlobal('Audio', FakeAudio)
   stubUrl()
   // `restoreAllMocks()` (dùng ở describe "ensureAudioBuffer" bên dưới) xoá luôn
-  // implementation của getAccessToken (vi.fn() từ vi.mock factory) — không chỉ các
+  // implementation của getStoredToken (vi.fn() từ vi.mock factory) — không chỉ các
   // spy tạo bằng vi.spyOn. Đặt lại giá trị mặc định mỗi test để các describe SAU đó
   // không bị "ăn theo" trạng thái đã bị restore của describe trước.
-  const { getAccessToken } = await import('@core/authHeader')
-  vi.mocked(getAccessToken).mockResolvedValue('fake-token')
+  const { getStoredToken } = await import('@core/authHeader')
+  vi.mocked(getStoredToken).mockReturnValue('session:fake')
 })
 
 describe('speak() — 2 lời gọi chồng nhau qua nút loa khác nhau (không qua playAudioUrl)', () => {
@@ -321,9 +322,9 @@ describe('ensureAudioBuffer / ensureAudioWithTimeline — đường gọi /api/t
     await expect(ensureAudioBuffer('Fail me', 'en-US', 'Kore')).rejects.toThrow('TTS API lỗi: 500')
   })
 
-  it('chưa đăng nhập (getAccessToken trả null) → ném lỗi rõ ràng', async () => {
-    const { getAccessToken } = await import('@core/authHeader')
-    vi.mocked(getAccessToken).mockResolvedValueOnce(null as unknown as string)
+  it('chưa đăng nhập (getStoredToken trả null) → ném lỗi rõ ràng', async () => {
+    const { getStoredToken } = await import('@core/authHeader')
+    vi.mocked(getStoredToken).mockReturnValueOnce(null)
     const { ensureAudioBuffer } = await import('./tts')
     await expect(ensureAudioBuffer('Not logged in', 'en-US', 'Kore')).rejects.toThrow(
       'Chưa đăng nhập',

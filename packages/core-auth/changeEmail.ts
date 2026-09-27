@@ -11,6 +11,7 @@
 //   • Email mới luôn về trạng thái CHƯA xác thực, kèm gửi mã mới.
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import { verifyPassword } from './authService.js'
 import { sendVerificationCode } from './emailVerification.js'
 import type { MailStatus } from '@dhcb/core-http/mailer'
@@ -31,36 +32,40 @@ export async function changeEmail(
   const pool = getPgPool()
   const newEmail = rawNewEmail.trim().toLowerCase()
 
-  const { rows } = await pool.query<{ email: string; password_hash: string | null }>(
-    'select email, password_hash from public.users where id = $1',
-    [userId],
-  )
-  const user = rows[0]
-  if (!user) return { ok: false, reason: 'user_not_found' }
-  if (user.email.toLowerCase() === newEmail) return { ok: false, reason: 'same_email' }
-
-  // Tài khoản có mật khẩu thì phải xác nhận bằng mật khẩu (xem chú thích bảo mật ở đầu file).
-  if (user.password_hash) {
-    if (!password) return { ok: false, reason: 'password_required' }
-    if (!(await verifyPassword(password, user.password_hash))) {
-      return { ok: false, reason: 'wrong_password' }
-    }
-  }
-
   try {
-    // Đổi email + ĐẶT LẠI trạng thái xác thực. Email mới chưa được chứng minh là của họ.
-    await pool.query('update public.users set email = $1, email_verified = null where id = $2', [
-      newEmail,
-      userId,
-    ])
+    const changed = await withTransaction(
+      pool,
+      async (client): Promise<ChangeEmailResult | null> => {
+        // Cùng thứ tự khóa với gửi/kiểm mã: luôn khóa users trước email_verifications.
+        const { rows } = await client.query<{ email: string; password_hash: string | null }>(
+          'select email, password_hash from public.users where id = $1 for update',
+          [userId],
+        )
+        const user = rows[0]
+        if (!user) return { ok: false, reason: 'user_not_found' }
+        if (user.email.toLowerCase() === newEmail) return { ok: false, reason: 'same_email' }
+
+        if (user.password_hash) {
+          if (!password) return { ok: false, reason: 'password_required' }
+          if (!(await verifyPassword(password, user.password_hash))) {
+            return { ok: false, reason: 'wrong_password' }
+          }
+        }
+
+        await client.query(
+          'update public.users set email = $1, email_verified = null where id = $2',
+          [newEmail, userId],
+        )
+        // Đổi địa chỉ và hủy mã cũ là nguyên tử: mã hộp thư cũ không xác thực được địa chỉ mới.
+        await client.query('delete from public.email_verifications where user_id = $1', [userId])
+        return null
+      },
+    )
+    if (changed) return changed
   } catch (err) {
-    // 23505 = unique_violation trên users.email — email đã có người dùng.
     if ((err as { code?: string }).code === '23505') return { ok: false, reason: 'email_taken' }
     throw err
   }
-
-  // Xoá mã cũ (gắn với email cũ) để không ai xác thực email mới bằng mã đã gửi tới hộp thư cũ.
-  await pool.query('delete from public.email_verifications where user_id = $1', [userId])
 
   const sent = await sendVerificationCode(userId)
   return { ok: true, mail: sent.ok ? sent.mail : 'error' }

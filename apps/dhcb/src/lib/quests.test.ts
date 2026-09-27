@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 // Mock getAuthHeader — kiểm soát trạng thái đăng nhập theo từng test.
 vi.mock('@core/authHeader', () => ({
   getAuthHeader: vi.fn(),
+  getStoredToken: () => (getAuthHeader().Authorization ? 'session:fixture' : null),
 }))
 
 import { getAuthHeader } from '@core/authHeader'

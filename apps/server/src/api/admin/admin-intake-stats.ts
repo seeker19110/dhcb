@@ -22,8 +22,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { getIntakeStats } from '@dhcb/core-personal/intakeService'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
@@ -50,8 +49,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const user = await getUserById(auth.userId)
-  if (!isAdminEmail(user?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-intake-stats' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }

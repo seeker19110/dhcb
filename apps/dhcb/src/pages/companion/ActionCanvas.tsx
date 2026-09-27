@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 import { useEffect, useState } from 'react'
 import { usePageTitle } from '../../lib/usePageTitle'
 import Layout from '../../components/Layout'
@@ -94,9 +95,7 @@ export default function ActionCanvas() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: localStorage.getItem('gsa_session_token_v1')
-            ? 'Bearer ' + localStorage.getItem('gsa_session_token_v1')
-            : '',
+          ...getAuthHeader(),
         },
         body: JSON.stringify({}),
       })

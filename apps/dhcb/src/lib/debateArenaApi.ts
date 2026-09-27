@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/debateArenaApi.ts — Client API cho Đấu trường Tranh biện AI V5.
 import type {
   DebateSessionConfig,
@@ -14,10 +15,9 @@ export async function fetchDebateTopics(): Promise<
     difficulty: 'intermediate_b2' | 'advanced_c1' | 'mastery_c2'
   }>
 > {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/debate-arena', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -32,12 +32,11 @@ export async function fetchDebateTopics(): Promise<
 export async function createDebateSessionApi(
   config: DebateSessionConfig,
 ): Promise<DebateSessionState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/debate-arena?action=create_session', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ config }),
   })
@@ -55,12 +54,11 @@ export async function submitDebateTurnApi(params: { sessionId: string; content: 
   aiTurn: DebateTurn
   session: DebateSessionState
 }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/debate-arena?action=submit_turn', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })
@@ -74,12 +72,11 @@ export async function submitDebateTurnApi(params: { sessionId: string; content: 
 }
 
 export async function evaluateDebateMatchApi(sessionId: string): Promise<DebateRubricScore> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/debate-arena?action=evaluate_match', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ sessionId }),
   })

@@ -8,7 +8,7 @@ describe('lifeSynthesisApi', () => {
   })
 
   it('fetches life synthesis report successfully', async () => {
-    localStorage.setItem('gsa_session_token_v1', 'mock-token')
+    localStorage.setItem('gsa_session_present_v1', 'session:fixture')
     const mockReport = {
       schemaVersion: 'v5.4.0',
       holisticAlignmentScore: 88,
@@ -25,7 +25,7 @@ describe('lifeSynthesisApi', () => {
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/life-synthesis?timeframe=weekly',
       expect.objectContaining({
-        headers: { Authorization: 'Bearer mock-token' },
+        headers: {},
       }),
     )
   })

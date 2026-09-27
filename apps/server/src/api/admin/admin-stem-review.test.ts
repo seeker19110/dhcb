@@ -17,12 +17,8 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: (type: string, _ip: string, chiTiet: unknown) =>
     securityEvents.push({ type, chiTiet }),
 }))
-const emailState: { email: string | undefined } = { email: 'admin@x.com' }
-vi.mock('@dhcb/core-auth/authService', () => ({
-  getUserById: async () => ({ id: 'user-1', email: emailState.email }),
-}))
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (email: string | null | undefined) => email === 'admin@x.com',
+  isAdminUser: (userId: string | null | undefined) => userId === 'user-1',
 }))
 
 import handler from './admin-stem-review.js'
@@ -64,7 +60,6 @@ beforeEach(() => {
   query.mockResolvedValue({ rows: [] })
   mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
   authState.user = { userId: 'user-1' }
-  emailState.email = 'admin@x.com'
   rateLimitState.ok = true
   securityEvents.length = 0
 })
@@ -78,7 +73,7 @@ describe('chặn quyền', () => {
   })
 
   it('token người thường → 403 và có ghi log bảo mật', async () => {
-    emailState.email = 'nguoihoc@x.com'
+    authState.user = { userId: 'non-admin' }
     for (const method of ['GET', 'POST'] as const) {
       securityEvents.length = 0
       const res = await handler(method === 'GET' ? req('GET') : req('POST', thanHopLe))

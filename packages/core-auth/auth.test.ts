@@ -46,7 +46,13 @@ vi.mock('./authService.js', async (importOriginal) => {
   return {
     ...authService,
     MicrosoftAccountLinkRequiredError: actual.MicrosoftAccountLinkRequiredError,
+    OAuthAccountLinkRequiredError: actual.OAuthAccountLinkRequiredError,
   }
+})
+
+vi.mock('@dhcb/core-http/http', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dhcb/core-http/http')>()
+  return { ...actual, jsonResponse: vi.fn(actual.jsonResponse) }
 })
 
 vi.mock('./emailVerification.js', () => ({
@@ -55,7 +61,7 @@ vi.mock('./emailVerification.js', () => ({
   isEmailVerified: vi.fn(async () => false),
 }))
 
-vi.mock('./adminAuth.js', () => ({ isAdminEmail: () => false }))
+vi.mock('./adminAuth.js', () => ({ isAdminUser: () => false }))
 
 const trial = vi.hoisted(() => ({ grantSignupTrial: vi.fn(async () => true) }))
 vi.mock('./trial.js', () => ({ ...trial, SIGNUP_TRIAL_DAYS: 14 }))
@@ -67,7 +73,9 @@ vi.mock('./passwordReset.js', () => ({
 }))
 
 import handler from './auth.js'
-import { MicrosoftAccountLinkRequiredError } from './authService.js'
+import { MicrosoftAccountLinkRequiredError, OAuthAccountLinkRequiredError } from './authService.js'
+import { resetPassword } from './passwordReset.js'
+import { jsonResponse } from '@dhcb/core-http/http'
 
 function makeRequest(body: unknown): Request {
   return new Request('http://localhost/api/auth', {
@@ -104,7 +112,8 @@ describe('/api/auth — action google (One Tap idToken)', () => {
     const resp = await handler(makeRequest({ action: 'google', idToken: 'x'.repeat(20) }))
     expect(resp.status).toBe(200)
     const data = (await resp.json()) as { token: string; signupTrialGranted: boolean }
-    expect(data.token).toBe('session-token-abc')
+    expect(data).not.toHaveProperty('token')
+    expect(data).toHaveProperty('authenticated', true)
     expect(data.signupTrialGranted).toBe(false)
     expect(trial.grantSignupTrial).not.toHaveBeenCalled()
   })
@@ -175,7 +184,12 @@ describe('/api/auth — action register/login (đối chiếu hành vi trước 
     authService.createUserWithPassword.mockResolvedValue({ id: 'user-4', email: 'e@f.com' })
 
     const resp = await handler(
-      makeRequest({ action: 'register', email: 'e@f.com', name: 'E', password: 'abcdef' }),
+      makeRequest({
+        action: 'register',
+        email: 'e@f.com',
+        name: 'E',
+        password: 'a-strong-password',
+      }),
     )
     expect(resp.status).toBe(200)
     const data = (await resp.json()) as { signupTrialGranted?: boolean }
@@ -187,7 +201,12 @@ describe('/api/auth — action register/login (đối chiếu hành vi trước 
     authService.createUserWithPassword.mockResolvedValue(null)
 
     const resp = await handler(
-      makeRequest({ action: 'register', email: 'e@f.com', name: 'E', password: 'abcdef' }),
+      makeRequest({
+        action: 'register',
+        email: 'e@f.com',
+        name: 'E',
+        password: 'a-strong-password',
+      }),
     )
     expect(resp.status).toBe(409)
   })
@@ -204,10 +223,7 @@ describe('/api/auth — action register/login (đối chiếu hành vi trước 
 })
 
 describe('/api/auth — action session-from-cookie (đăng nhập nối tiếp giữa các subdomain)', () => {
-  // Token trả về KHÔNG phải chứng chỉ xác thực: từ Bước 6, validateAuth chỉ đọc cookie
-  // `session_token` và bỏ qua header Authorization. Cookie có Domain=.donghanhcungban.org nên
-  // API trên subdomain mới vốn đã gọi được; endpoint này chỉ nạp lại CỜ đã-đăng-nhập mà giao
-  // diện đọc từ localStorage (cô lập theo origin).
+  // Cookie SSO là nguồn xác thực; JSON chỉ trả cờ không bí mật cho giao diện.
   // happy-dom (môi trường test) CHẶN set header "Cookie" qua `new Request(...)` — đó là
   // forbidden header name theo spec fetch, giống trình duyệt thật. Node thật (server.ts chạy
   // undici) KHÔNG chặn vì đây không phải script trong trang. Giả một Request tối giản, đúng
@@ -229,7 +245,7 @@ describe('/api/auth — action session-from-cookie (đăng nhập nối tiếp g
     } as unknown as Request
   }
 
-  it('cookie hợp lệ → trả ĐÚNG token trong cookie, KHÔNG tạo phiên mới', async () => {
+  it('cookie hợp lệ → chỉ trả trạng thái và hồ sơ, KHÔNG tạo phiên mới', async () => {
     authService.validateSessionToken.mockResolvedValue({ userId: 'user-1' })
     authService.getUserById.mockResolvedValue({ id: 'user-1', email: 'a@b.c' })
 
@@ -237,7 +253,8 @@ describe('/api/auth — action session-from-cookie (đăng nhập nối tiếp g
     expect(resp.status).toBe(200)
     const body = (await resp.json()) as { token: string; user: { email: string } }
 
-    expect(body.token).toBe('token-abc')
+    expect(body).not.toHaveProperty('token')
+    expect(body).toHaveProperty('authenticated', true)
     expect(body.user.email).toBe('a@b.c')
     // Bất biến: không sinh thêm bản ghi phiên, không kéo dài hạn — cookie CHÍNH LÀ token.
     expect(authService.createSession).not.toHaveBeenCalled()
@@ -449,7 +466,7 @@ describe('/api/auth — method/route không hợp lệ', () => {
   })
 })
 
-it('Microsoft chưa liên kết → 403 rõ ràng, không tạo phiên/trial', async () => {
+it('Microsoft chưa liên kết → 409 rõ ràng, không tạo phiên/trial', async () => {
   authService.verifyMicrosoftIdToken.mockResolvedValue({
     microsoftId: 'new',
     email: 'victim@example.com',
@@ -457,8 +474,159 @@ it('Microsoft chưa liên kết → 403 rõ ràng, không tạo phiên/trial', a
   })
   authService.findOrCreateMicrosoftUser.mockRejectedValue(new MicrosoftAccountLinkRequiredError())
   const response = await handler(makeRequest({ action: 'microsoft', idToken: 'token-for-test' }))
-  expect(response.status).toBe(403)
-  expect(await response.json()).toMatchObject({ code: 'MICROSOFT_ACCOUNT_LINK_REQUIRED' })
+  expect(response.status).toBe(409)
+  expect(await response.json()).toMatchObject({ code: 'OAUTH_ACCOUNT_LINK_REQUIRED' })
   expect(authService.createSession).not.toHaveBeenCalled()
   expect(trial.grantSignupTrial).not.toHaveBeenCalled()
+})
+
+describe('hợp đồng phiên cookie không lộ secret', () => {
+  it.each(['register', 'login', 'google', 'google-token', 'facebook', 'apple', 'microsoft'])(
+    '%s: secret chỉ nằm trong Set-Cookie HttpOnly, JSON không chứa token',
+    async (action) => {
+      const user = { id: 'user-secret', email: 'user@example.com' }
+      authService.createUserWithPassword.mockResolvedValue(user)
+      authService.verifyUserPassword.mockResolvedValue(user)
+      const info = {
+        googleId: 'g',
+        facebookId: 'f',
+        appleId: 'a',
+        microsoftId: 'm',
+        ...user,
+        name: 'Test',
+      }
+      for (const verify of [
+        authService.verifyGoogleIdToken,
+        authService.verifyGoogleAccessToken,
+        authService.verifyFacebookAccessToken,
+        authService.verifyAppleIdToken,
+        authService.verifyMicrosoftIdToken,
+      ])
+        verify.mockResolvedValue(info)
+      for (const find of [
+        authService.findOrCreateGoogleUser,
+        authService.findOrCreateFacebookUser,
+        authService.findOrCreateAppleUser,
+        authService.findOrCreateMicrosoftUser,
+      ])
+        find.mockResolvedValue({ user, isNew: false })
+      const response = await handler(
+        makeRequest({
+          action,
+          email: user.email,
+          name: 'Test',
+          password: 'a-strong-password',
+          idToken: 'provider-token-long',
+          accessToken: 'provider-token-long',
+        }),
+      )
+      expect(response.status).toBe(200)
+      const body = await response.json()
+      expect(body).toMatchObject({ authenticated: true, user })
+      expect(body).not.toHaveProperty('token')
+      expect(JSON.stringify(body)).not.toContain('session-token-abc')
+      // happy-dom lọc Set-Cookie khỏi Response; kiểm header tại ranh giới tạo response.
+      const headers = vi.mocked(jsonResponse).mock.calls.at(-1)?.[2]
+      expect(headers).toMatchObject({
+        'Set-Cookie': expect.stringContaining('session_token=session-token-abc'),
+      })
+      expect(headers).toMatchObject({ 'Set-Cookie': expect.stringContaining('HttpOnly') })
+    },
+  )
+
+  it.each(['google', 'google-token', 'facebook', 'apple'])(
+    '%s: cần liên kết danh tính → 409, không tạo phiên hay cấp trial',
+    async (action) => {
+      const info = {
+        googleId: 'g',
+        facebookId: 'f',
+        appleId: 'a',
+        email: 'user@example.com',
+        name: 'Test',
+      }
+      for (const verify of [
+        authService.verifyGoogleIdToken,
+        authService.verifyGoogleAccessToken,
+        authService.verifyFacebookAccessToken,
+        authService.verifyAppleIdToken,
+      ])
+        verify.mockResolvedValue(info)
+      for (const find of [
+        authService.findOrCreateGoogleUser,
+        authService.findOrCreateFacebookUser,
+        authService.findOrCreateAppleUser,
+      ])
+        find.mockRejectedValue(new OAuthAccountLinkRequiredError())
+      const response = await handler(
+        makeRequest({ action, idToken: 'provider-token-long', accessToken: 'provider-token-long' }),
+      )
+      expect(response.status).toBe(409)
+      expect(await response.json()).toMatchObject({ code: 'OAUTH_ACCOUNT_LINK_REQUIRED' })
+      expect(authService.createSession).not.toHaveBeenCalled()
+      expect(trial.grantSignupTrial).not.toHaveBeenCalled()
+    },
+  )
+})
+
+describe('mật khẩu mới: tối thiểu 15 ký tự, tối đa 72 byte UTF-8', () => {
+  it.each(['short', 'x'.repeat(14), 'x'.repeat(73), 'ấ'.repeat(25), '🙂'.repeat(14)])(
+    'đăng ký/đặt lại từ chối giá trị không đạt chính sách (%s)',
+    async (password) => {
+      for (const body of [
+        { action: 'register', email: 'test@example.com', name: 'Test', password },
+        { action: 'reset-password', token: 'reset-token-long-enough', newPassword: password },
+      ]) {
+        const response = await handler(makeRequest(body))
+        expect(response.status).toBe(400)
+      }
+      expect(authService.createUserWithPassword).not.toHaveBeenCalled()
+      expect(resetPassword).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each(['x'.repeat(15), 'x'.repeat(72), 'ấ'.repeat(24), '🙂'.repeat(15)])(
+    'chấp nhận đúng biên UTF-8 mà không cắt mật khẩu',
+    async (password) => {
+      authService.createUserWithPassword.mockResolvedValue({
+        id: 'user-new',
+        email: 'test@example.com',
+      })
+      vi.mocked(resetPassword).mockResolvedValue({ ok: true })
+      expect(
+        (
+          await handler(
+            makeRequest({ action: 'register', email: 'test@example.com', name: 'Test', password }),
+          )
+        ).status,
+      ).toBe(200)
+      expect(authService.createUserWithPassword).toHaveBeenCalledWith('test@example.com', password)
+      expect(
+        (
+          await handler(
+            makeRequest({
+              action: 'reset-password',
+              token: 'reset-token-long-enough',
+              newPassword: password,
+            }),
+          )
+        ).status,
+      ).toBe(200)
+      expect(resetPassword).toHaveBeenCalledWith('reset-token-long-enough', password)
+    },
+  )
+
+  it('mật khẩu tài khoản cũ vẫn đăng nhập được', async () => {
+    authService.verifyUserPassword.mockResolvedValue({
+      id: 'legacy-user',
+      email: 'legacy@example.com',
+    })
+    expect(
+      (
+        await handler(
+          makeRequest({ action: 'login', email: 'legacy@example.com', password: 'short' }),
+        )
+      ).status,
+    ).toBe(200)
+    expect(authService.verifyUserPassword).toHaveBeenCalledWith('legacy@example.com', 'short')
+  })
 })

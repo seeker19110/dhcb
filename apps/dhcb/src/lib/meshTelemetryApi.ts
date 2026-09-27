@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/meshTelemetryApi.ts — Client API giao tiếp WebSocket Mesh & Realtime Telemetry.
 import { RealtimeSessionTelemetry, AiProviderType } from '@dhcb/core-contracts/meshTelemetry'
 
@@ -11,10 +12,9 @@ export async function fetchMeshTelemetry(): Promise<{
   telemetry: RealtimeSessionTelemetry
   meshStatus: MeshStatusSummary
 }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/mesh-telemetry', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -32,12 +32,11 @@ export async function recordLiveSessionMetric(params: {
   provider?: AiProviderType
   latencyMs?: number
 }): Promise<RealtimeSessionTelemetry> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/mesh-telemetry?action=record_metric', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })
@@ -51,12 +50,11 @@ export async function recordLiveSessionMetric(params: {
 }
 
 export async function resetSessionBudget(costCapUsd: number): Promise<RealtimeSessionTelemetry> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/mesh-telemetry?action=reset_budget', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ costCapUsd }),
   })

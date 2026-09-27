@@ -8,15 +8,16 @@
 //  7. Vượt trần 10 lượt → người MỜI hết được thưởng, người ĐƯỢC MỜI vẫn được.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { Pool, Client, type PoolClient } from 'pg'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 vi.mock('@dhcb/core-auth/security', () => ({ logSecurityEvent: () => {} }))
 const granted: { calls: { userId: string; days: number }[] } = { calls: [] }
 vi.mock('@dhcb/core-billing/planGrant', () => ({
-  grantPlanDays: async (userId: string, _plan: string, days: number) => {
+  grantPlanDays: vi.fn(async (userId: string, _plan: string, days: number) => {
     granted.calls.push({ userId, days })
-    return { plan: 'pro', planExpiresAt: new Date() }
-  },
+    return { plan: 'vip', planExpiresAt: new Date() }
+  }),
 }))
 
 import {
@@ -28,6 +29,7 @@ import {
   REFERRAL_REWARD_DAYS,
 } from './referral'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 
 const mockedGetPool = vi.mocked(getPgPool)
 const query = vi.fn()
@@ -74,51 +76,247 @@ describe('claimReferral', () => {
   })
 })
 
-describe('rewardReferralIfEligible', () => {
-  it('CHƯA xác thực email → không thưởng ai cả', async () => {
-    query.mockResolvedValueOnce({ rows: [{ email_verified: null }] })
-    await rewardReferralIfEligible('u2')
-    expect(granted.calls).toEqual([])
+// Fake DB giữ khoá tới commit/rollback, cô lập thay đổi để kiểm nguyên tử và race thật sự.
+describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng thời', () => {
+  type Referral = { referrer_id: string; device_hash: string | null; rewarded_at: Date | null }
+  const referrals = new Map<string, Referral>()
+  const balances = new Map<string, number>()
+  const locks = new Map<string, Promise<void>>()
+  const states = new Map<
+    unknown,
+    {
+      days: Map<string, number>
+      reward: string | null
+      acquire: (key: string) => Promise<void>
+      recipients: string[]
+    }
+  >()
+  let verified: boolean
+  let graded: boolean
+  let cefrPassed: boolean
+  let failGrantFor: string | null
+  let failCommit: boolean
+  let clients: PoolClient[]
+
+  beforeEach(() => {
+    referrals.clear()
+    balances.clear()
+    locks.clear()
+    states.clear()
+    verified = true
+    graded = true
+    cefrPassed = false
+    failGrantFor = null
+    failCommit = false
+    clients = []
+    referrals.set('u2', { referrer_id: 'u1', device_hash: null, rewarded_at: null })
+    const connect = vi.fn(async () => {
+      const releases: (() => void)[] = []
+      const held = new Set<string>()
+      const acquire = async (key: string) => {
+        if (held.has(key)) return
+        const previous = locks.get(key) ?? Promise.resolve()
+        locks.set(
+          key,
+          new Promise<void>((resolve) => {
+            releases.push(resolve)
+          }),
+        )
+        await previous
+        held.add(key)
+      }
+      const finish = () => releases.splice(0).forEach((release) => release())
+      const state = {
+        days: new Map<string, number>(),
+        reward: null as string | null,
+        acquire,
+        recipients: [] as string[],
+      }
+      const transactionQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+        if (sql === 'begin') return { rows: [] }
+        if (sql === 'rollback') {
+          finish()
+          return { rows: [] }
+        }
+        if (sql === 'commit') {
+          if (failCommit) {
+            failCommit = false
+            throw new Error('commit failed')
+          }
+          state.days.forEach((days, id) => balances.set(id, (balances.get(id) ?? 0) + days))
+          if (state.reward) referrals.get(state.reward)!.rewarded_at = new Date()
+          finish()
+          return { rows: [] }
+        }
+        if (sql.includes('select email_verified'))
+          return { rows: [{ email_verified: verified ? new Date() : null }] }
+        if (sql.includes('platform.completion_evidence')) {
+          expect(sql).toContain("evidence_kind = 'server_graded'")
+          expect(sql).toContain("activity_kind = 'stem_lesson_check'")
+          expect(sql).toContain('passed = true and total > 0')
+          return { rows: [{ eligible: graded }] }
+        }
+        if (sql.includes('platform.feature_state'))
+          return {
+            rows: [
+              {
+                cefr_exams: cefrPassed
+                  ? { A1: { passed: true, bestPct: 80, attempts: 1, lastAt: '2026-09-27' } }
+                  : {},
+              },
+            ],
+          }
+        if (sql.includes('for update')) {
+          await acquire(`row:${String(params[0])}`)
+          const referral = referrals.get(String(params[0]))
+          return { rows: referral ? [{ ...referral }] : [] }
+        }
+        if (sql.includes('pg_advisory_xact_lock')) {
+          await acquire(String(params[0]))
+          return { rows: [] }
+        }
+        if (sql.includes('device_hash = $1')) {
+          expect(held.has(`referral:device:${String(params[0])}`)).toBe(true)
+          return {
+            rows: [
+              {
+                count: String(
+                  [...referrals].filter(
+                    ([id, row]) =>
+                      id !== params[1] && row.device_hash === params[0] && row.rewarded_at,
+                  ).length,
+                ),
+              },
+            ],
+          }
+        }
+        if (sql.includes('count(*)')) {
+          expect(held.has(`referral:referrer:${String(params[0])}`)).toBe(true)
+          return {
+            rows: [
+              {
+                count: String(
+                  [...referrals.values()].filter(
+                    (row) => row.referrer_id === params[0] && row.rewarded_at,
+                  ).length,
+                ),
+              },
+            ],
+          }
+        }
+        if (sql.startsWith('update public.referrals')) {
+          state.reward = String(params[0])
+          return { rows: [], rowCount: 1 }
+        }
+        throw new Error(`Unexpected SQL: ${sql}`)
+      })
+      const client = Object.assign(new Client(), {
+        query: transactionQuery,
+        release: vi.fn(finish),
+      })
+      states.set(client, state)
+      clients.push(client)
+      return client
+    })
+    mockedGetPool.mockReturnValue(Object.assign(new Pool(), { query, connect }))
+    vi.mocked(grantPlanDays).mockReset()
+    vi.mocked(grantPlanDays).mockImplementation(async (userId, _plan, days, _now, client) => {
+      const state = states.get(client)
+      expect(state).toBeDefined() // Bắt mọi lần cấp ngoài transaction.
+      if (!state) throw new Error('grant outside transaction')
+      state.recipients.push(userId)
+      expect(state.recipients).toEqual([...state.recipients].sort())
+      await state.acquire(`profile:${userId}`)
+      if (failGrantFor === userId) {
+        failGrantFor = null
+        throw new Error('grant failed')
+      }
+      state.days.set(userId, (state.days.get(userId) ?? 0) + days)
+      return { plan: 'vip', planExpiresAt: new Date() }
+    })
   })
 
-  it('không có lời mời nào → không thưởng', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [{ email_verified: new Date() }] })
-      .mockResolvedValueOnce({ rows: [] })
+  it('chưa xác minh email không thưởng dù bài đã được server chấm', async () => {
+    verified = false
     await rewardReferralIfEligible('u2')
-    expect(granted.calls).toEqual([])
+    expect(balances.size).toBe(0)
+    expect(referrals.get('u2')?.rewarded_at).toBeNull()
   })
 
-  it('đủ điều kiện → thưởng CẢ HAI bên', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [{ email_verified: new Date() }] })
-      .mockResolvedValueOnce({ rows: [{ referrer_id: 'u1', device_hash: null }] })
-      .mockResolvedValueOnce({ rows: [{ count: '1' }] })
+  it('chỉ có lịch sử tự khai / bài chưa đạt thì không thưởng', async () => {
+    graded = false
     await rewardReferralIfEligible('u2')
-    expect(granted.calls.map((c) => c.userId).sort()).toEqual(['u1', 'u2'])
+    expect(balances.size).toBe(0)
+    expect(referrals.get('u2')?.rewarded_at).toBeNull()
+    expect(query).not.toHaveBeenCalled() // Tất cả đọc/ghi dùng client giao dịch.
   })
 
-  it('thiết bị đã được thưởng lượt khác → KHÔNG thưởng (nhưng không khoá tài khoản)', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [{ email_verified: new Date() }] })
-      .mockResolvedValueOnce({ rows: [{ referrer_id: 'u1', device_hash: 'd1' }] })
-      .mockResolvedValueOnce({ rows: [{ count: '1' }] }) // thiết bị d1 đã có lượt thưởng
+  it('CEFR được server xác minh cũng đủ bằng chứng', async () => {
+    graded = false
+    cefrPassed = true
     await rewardReferralIfEligible('u2')
-    expect(granted.calls).toEqual([])
+    expect(balances.get('u1')).toBe(REFERRAL_REWARD_DAYS)
+    expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
   })
 
-  it('vượt trần: người ĐƯỢC MỜI vẫn được thưởng, người MỜI thì không', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [{ email_verified: new Date() }] })
-      .mockResolvedValueOnce({ rows: [{ referrer_id: 'u1', device_hash: null }] })
-      .mockResolvedValueOnce({ rows: [{ count: String(MAX_REWARDED_REFERRALS + 5) }] })
+  it('không có lời mời thì không thưởng', async () => {
+    referrals.clear()
     await rewardReferralIfEligible('u2')
-    expect(granted.calls.map((c) => c.userId)).toEqual(['u2'])
+    expect(balances.size).toBe(0)
   })
 
-  it('lỗi DB không được ném ra ngoài (không làm hỏng việc lưu bài học)', async () => {
-    query.mockRejectedValueOnce(new Error('db down'))
-    await expect(rewardReferralIfEligible('u2')).resolves.toBeUndefined()
+  it('hai lần hoàn thành đồng thời và retry chỉ cấp mỗi bên một lần', async () => {
+    await Promise.all([rewardReferralIfEligible('u2'), rewardReferralIfEligible('u2')])
+    await rewardReferralIfEligible('u2')
+    expect(balances.get('u1')).toBe(REFERRAL_REWARD_DAYS)
+    expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
+    expect(referrals.get('u2')?.rewarded_at).toBeInstanceOf(Date)
+    expect(clients.every((client) => vi.mocked(client.release).mock.calls.length === 1)).toBe(true)
+  })
+
+  it.each(['u1', 'u2', 'commit'])(
+    'lỗi %s rollback cả hai gói và rewarded_at; retry khôi phục đủ',
+    async (failedStep) => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      try {
+        failGrantFor = failedStep === 'commit' ? null : failedStep
+        failCommit = failedStep === 'commit'
+        await rewardReferralIfEligible('u2')
+        expect(balances.size).toBe(0)
+        expect(referrals.get('u2')?.rewarded_at).toBeNull()
+        await rewardReferralIfEligible('u2')
+        expect(balances.get('u1')).toBe(REFERRAL_REWARD_DAYS)
+        expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
+      } finally {
+        spy.mockRestore()
+      }
+    },
+  )
+
+  it('cùng thiết bị, khác người mời, chạy đồng thời vẫn chỉ một lượt thưởng', async () => {
+    referrals.get('u2')!.device_hash = 'shared-device'
+    referrals.set('u4', { referrer_id: 'u3', device_hash: 'shared-device', rewarded_at: null })
+    await Promise.all([rewardReferralIfEligible('u2'), rewardReferralIfEligible('u4')])
+    expect([...referrals.values()].filter((row) => row.rewarded_at)).toHaveLength(1)
+    expect([...balances.values()].reduce((a, b) => a + b, 0)).toBe(2 * REFERRAL_REWARD_DAYS)
+  })
+
+  it('hai lượt đồng thời ở sát trần chỉ cộng người mời đúng một lần', async () => {
+    for (let i = 0; i < MAX_REWARDED_REFERRALS - 1; i++) {
+      referrals.set(`old-${i}`, { referrer_id: 'u1', device_hash: null, rewarded_at: new Date() })
+    }
+    referrals.set('u3', { referrer_id: 'u1', device_hash: null, rewarded_at: null })
+    await Promise.all([rewardReferralIfEligible('u2'), rewardReferralIfEligible('u3')])
+    expect(balances.get('u1')).toBe(REFERRAL_REWARD_DAYS)
+    expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
+    expect(balances.get('u3')).toBe(REFERRAL_REWARD_DAYS)
+  })
+
+  it('mời chéo khóa profile cùng thứ tự ID và hoàn thành cả hai giao dịch', async () => {
+    referrals.set('u1', { referrer_id: 'u2', device_hash: null, rewarded_at: null })
+    await Promise.all([rewardReferralIfEligible('u1'), rewardReferralIfEligible('u2')])
+    expect(balances.get('u1')).toBe(2 * REFERRAL_REWARD_DAYS)
+    expect(balances.get('u2')).toBe(2 * REFERRAL_REWARD_DAYS)
   })
 })
 

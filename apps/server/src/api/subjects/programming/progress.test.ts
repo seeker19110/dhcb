@@ -2,24 +2,35 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const authState: { user: { userId: string } | null } = { user: { userId: 'user-1' } }
 let rateLimitOk = true
+const rateLimit = vi.hoisted(() => vi.fn())
 
 vi.mock('@dhcb/core-auth/security', () => ({
   getCorsHeaders: () => ({}),
   SECURITY_HEADERS: {},
-  checkRateLimit: async () => rateLimitOk,
+  checkRateLimit: rateLimit,
   validateAuth: async () => authState.user,
   logSecurityEvent: () => {},
 }))
 
-// ADR-0007: giả lập module chấm-lại-ở-server — test file này lo luật ROUTE (khoá bậc/receipt/
-// batch), KHÔNG lo chạy python3 thật (đó là việc của completionSandboxServer.test.ts riêng).
-// Mặc định KHÔNG bài nào thuộc phạm vi chấm-lại → mọi test 'completed' cũ giữ nguyên hành vi.
-const regradeState = vi.hoisted(() => ({ regradable: false, passed: true }))
-vi.mock('@dhcb/subject-programming/completionSandboxServer', () => ({
-  isServerRegradableLesson: () => regradeState.regradable,
-  // ADR-0008 B3: dispatcher thật nay là ASYNC — mock cũng phải trả Promise để route đúng hành vi.
-  regradeSubmission: () => Promise.resolve({ passed: regradeState.passed, results: [] }),
-}))
+// Giả lập kết quả chạy để kiểm tiền kiểm/rate admission, dùng chính sách thật ở
+// các ca containment. Spy bảo đảm request bị từ chối KHÔNG gọi grader.
+const regradeState = vi.hoisted(() => ({ regradable: false, passed: true, realPolicy: false }))
+const regrade = vi.hoisted(() => vi.fn())
+const assertAvailable = vi.hoisted(() => vi.fn())
+vi.mock('@dhcb/subject-programming/completionSandboxServer', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@dhcb/subject-programming/completionSandboxServer')>()
+  return {
+    ...actual,
+    isServerRegradableLesson: (id: string) =>
+      regradeState.realPolicy ? actual.isServerRegradableLesson(id) : regradeState.regradable,
+    assertServerRegradeAvailable: (id: string) => {
+      assertAvailable(id)
+      if (regradeState.realPolicy) actual.assertServerRegradeAvailable(id)
+    },
+    regradeSubmission: regrade,
+  }
+})
 
 const query = vi.hoisted(() => vi.fn())
 const release = vi.hoisted(() => vi.fn())
@@ -37,6 +48,7 @@ function sqlCalls(): { sql: string; params: unknown[] }[] {
 }
 
 import handler from './progress.js'
+import { GradingUnavailableError } from '@dhcb/subject-programming/completionSandboxServer'
 
 function req(method: string, body?: unknown) {
   return new Request('http://localhost/api/programming/progress', {
@@ -51,6 +63,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
+  rateLimit.mockImplementation(async () => rateLimitOk)
+  regrade.mockImplementation(async () => ({ passed: regradeState.passed, results: [] }))
+  regradeState.realPolicy = false
   regradeState.regradable = false
   regradeState.passed = true
   query.mockResolvedValue({ rows: [] })
@@ -354,5 +369,235 @@ describe('/api/programming/progress — batch, version, replay (S09-1)', () => {
     const res = await handler(req('GET'))
     expect(res.status).toBe(429)
     expect(res.headers.get('Retry-After')).toBe('60')
+  })
+})
+
+describe('/api/programming/progress — chặn thực thi trước admission', () => {
+  const batch = (
+    items: Array<{ lessonId: string; status: 'completed' | 'in_progress'; code?: string }>,
+  ) => ({
+    attemptId: 'audit-admission-batch',
+    items: items.map((item) => ({ ...item, clientUpdatedAt: '2026-09-27T00:00:00.000Z' })),
+  })
+  const completion = { lessonId: 'git-u2-l1', status: 'completed', code: '# harmless' } as const
+  const noWrites = () =>
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('insert into'))).toBe(false)
+
+  it('bậc chưa mở → 403 trước kiểm engine và trước grader', async () => {
+    regradeState.regradable = true
+    const response = await handler(
+      req('POST', { lessonId: 'p2-u1-l1', status: 'completed', code: 'print(1)' }),
+    )
+    expect(response.status).toBe(403)
+    expect(assertAvailable).not.toHaveBeenCalled()
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it('mục sau bị khoá bậc → không chấm mục trước dù mục đó hợp lệ', async () => {
+    regradeState.regradable = true
+    const response = await handler(
+      req(
+        'POST',
+        batch([completion, { lessonId: 'p2-u1-l1', status: 'completed', code: 'print(1)' }]),
+      ),
+    )
+    expect(response.status).toBe(403)
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it.each([undefined, 'print(1)'])(
+    'Python tạm dừng → 503 rõ ràng kể cả code=%s; không fallback',
+    async (code) => {
+      regradeState.realPolicy = true
+      const response = await handler(
+        req('POST', { lessonId: 'p1-u1-l1', status: 'completed', code }),
+      )
+      expect(response.status).toBe(503)
+      expect(await response.json()).toMatchObject({
+        code: 'PROGRAMMING_GRADING_UNAVAILABLE',
+        error: expect.stringContaining('chưa được ghi nhận'),
+      })
+      expect(regrade).not.toHaveBeenCalled()
+      noWrites()
+    },
+  )
+
+  it('mục sau dùng engine tạm dừng → không chấm hoặc ghi mục mô phỏng phía trước', async () => {
+    regradeState.realPolicy = true
+    const response = await handler(
+      req(
+        'POST',
+        batch([completion, { lessonId: 'p1-u1-l1', status: 'completed', code: 'print(1)' }]),
+      ),
+    )
+    expect(response.status).toBe(503)
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it('engine tạm dừng vẫn đọc tiến độ và ghi in_progress được', async () => {
+    regradeState.realPolicy = true
+    expect((await handler(req('GET'))).status).toBe(200)
+    expect(
+      (await handler(req('POST', { lessonId: 'p1-u1-l1', status: 'in_progress' }))).status,
+    ).toBe(200)
+    expect(assertAvailable).not.toHaveBeenCalled()
+    expect(regrade).not.toHaveBeenCalled()
+  })
+
+  it('mục sau thiếu code → 400 trước khi chấm mục trước', async () => {
+    regradeState.realPolicy = true
+    const response = await handler(
+      req('POST', batch([completion, { lessonId: 'hermes-u1-l1', status: 'completed' }])),
+    )
+    expect(response.status).toBe(400)
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it('typed error từ dispatcher cũng trả 503 và không ghi completed', async () => {
+    regradeState.realPolicy = true
+    regrade.mockRejectedValueOnce(new GradingUnavailableError())
+    const response = await handler(req('POST', completion))
+    expect(response.status).toBe(503)
+    expect(await response.json()).toHaveProperty('code', 'PROGRAMMING_GRADING_UNAVAILABLE')
+    noWrites()
+  })
+
+  it('quá 5 bài cần chấm → 413 trước mọi grader', async () => {
+    regradeState.realPolicy = true
+    const response = await handler(req('POST', batch(Array.from({ length: 6 }, () => completion))))
+    expect(response.status).toBe(413)
+    expect(await response.json()).toHaveProperty('code', 'PROGRAMMING_GRADING_BATCH_LIMIT')
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it('quá 25 test-case cũng chặn trước grader dù chỉ có 3 bài', async () => {
+    regradeState.regradable = true
+    query.mockImplementation(async (sql: string) => ({
+      rows: sql.includes('select plan,')
+        ? [{ plan: 'vip', plan_expires_at: new Date('2100-01-01') }]
+        : [],
+    }))
+    const response = await handler(
+      req(
+        'POST',
+        batch(
+          Array.from(
+            { length: 3 },
+            () => ({ lessonId: 'p6-u1-l3', status: 'completed', code: 'print(1)' }) as const,
+          ),
+        ),
+      ),
+    )
+    expect(response.status).toBe(413)
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it('batch 50 dòng in_progress vẫn đồng bộ, không tiêu hạn mức chấm', async () => {
+    regradeState.realPolicy = true
+    const response = await handler(
+      req(
+        'POST',
+        batch(
+          Array.from(
+            { length: 50 },
+            () => ({ lessonId: 'p1-u1-l1', status: 'in_progress' }) as const,
+          ),
+        ),
+      ),
+    )
+    expect(response.status).toBe(200)
+    expect(regrade).not.toHaveBeenCalled()
+    expect(rateLimit).toHaveBeenCalledTimes(1)
+  })
+
+  it('hết admission bài sau trong batch → không chạy grader bài trước', async () => {
+    regradeState.realPolicy = true
+    rateLimit.mockImplementation(
+      async (key: string, _limit: number, bucket: string) =>
+        !(bucket === 'programming-regrade-admission' && key.endsWith(':hermes-u1-l1')),
+    )
+    const response = await handler(
+      req(
+        'POST',
+        batch([completion, { lessonId: 'hermes-u1-l1', status: 'completed', code: '# harmless' }]),
+      ),
+    )
+    expect(response.status).toBe(429)
+    expect(response.headers.get('Retry-After')).toBe('60')
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it.each([false, true])(
+    'sau 5 lượt passed=%s, lượt thứ 6/7 bị chặn trước chấm',
+    async (passed) => {
+      regradeState.realPolicy = true
+      regradeState.passed = passed
+      const counts = new Map<string, number>()
+      rateLimit.mockImplementation(async (key: string, limit: number, bucket: string) => {
+        const id = `${bucket}:${key}`
+        const count = (counts.get(id) ?? 0) + 1
+        counts.set(id, count)
+        return count <= limit
+      })
+      const responses: number[] = []
+      for (let i = 0; i < 7; i++) responses.push((await handler(req('POST', completion))).status)
+      expect(responses).toEqual([...Array<number>(5).fill(passed ? 200 : 400), 429, 429])
+      expect(regrade).toHaveBeenCalledTimes(5)
+      expect(rateLimit).toHaveBeenCalledWith('user-1:git-u2-l1', 5, 'programming-regrade-admission')
+      expect(rateLimit).toHaveBeenCalledWith('user-1', 30, 'programming-regrade-user')
+    },
+  )
+
+  it('6 request đồng thời: admission cho tối đa 5 grader', async () => {
+    regradeState.realPolicy = true
+    regradeState.passed = false
+    let lessonCount = 0
+    rateLimit.mockImplementation(
+      async (_key: string, _limit: number, bucket: string) =>
+        bucket !== 'programming-regrade-admission' || ++lessonCount <= 5,
+    )
+    const responses = await Promise.all(
+      Array.from({ length: 6 }, () => handler(req('POST', completion))),
+    )
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      400, 400, 400, 400, 400, 429,
+    ])
+    expect(regrade).toHaveBeenCalledTimes(5)
+    noWrites()
+  })
+
+  it('hết admission theo người → 429 dù bài chưa hết lượt', async () => {
+    regradeState.realPolicy = true
+    rateLimit.mockImplementation(
+      async (_key: string, _limit: number, bucket: string) => bucket !== 'programming-regrade-user',
+    )
+    const response = await handler(req('POST', completion))
+    expect(response.status).toBe(429)
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
+  })
+
+  it('receipt cũ vẫn replay dù engine hiện đã tạm dừng; không chấm/ghi lại', async () => {
+    regradeState.realPolicy = true
+    query.mockImplementation(async (sql: string) => ({
+      rows: sql.includes('select endpoint, response')
+        ? [{ endpoint: 'programming-progress', response: { ok: true, lessons: [] } }]
+        : [],
+    }))
+    const response = await handler(
+      req('POST', batch([{ lessonId: 'p1-u1-l1', status: 'completed', code: 'print(1)' }])),
+    )
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ ok: true, replayed: true })
+    expect(assertAvailable).not.toHaveBeenCalled()
+    expect(regrade).not.toHaveBeenCalled()
+    noWrites()
   })
 })

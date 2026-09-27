@@ -1,10 +1,10 @@
-// api/admin-price-promo.ts — Cho ADMIN (xác thực qua ADMIN_EMAILS, xem _lib/adminAuth.ts)
+// api/admin-price-promo.ts — Cho ADMIN (xác thực qua ADMIN_USER_IDS, xem _lib/adminAuth.ts)
 // đọc/sửa khuyến mãi % áp dụng cho TOÀN BỘ gói/chu kỳ cùng lúc, lưu trong bảng price_promo
 // (postgres/migrations/0026_price_promo.sql). Khác plan_prices.sale_price_vnd (giá tuyệt đối
 // riêng từng dòng, không có admin API). Đổi ở đây có hiệu lực gần như ngay (cache 30s), không
 // cần deploy — xem api/_lib/pricePromo.ts.
 //
-// GET  /api/admin-price-promo   (cần đăng nhập — cookie, user phải nằm trong ADMIN_EMAILS)
+// GET  /api/admin-price-promo   (cần đăng nhập — cookie, user phải nằm trong ADMIN_USER_IDS)
 // POST /api/admin-price-promo   body: { percent: number, startsAt: string|null, endsAt: string|null }
 
 import { z } from 'zod'
@@ -16,8 +16,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { getPricePromo, invalidatePricePromoCache } from '@dhcb/core-billing/pricePromo'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
@@ -59,8 +58,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const user = await getUserById(auth.userId)
-  if (!isAdminEmail(user?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-price-promo' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }

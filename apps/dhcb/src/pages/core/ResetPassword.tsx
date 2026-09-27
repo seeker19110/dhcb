@@ -1,3 +1,4 @@
+import { isValidNewPassword } from '@core/clientAuth'
 // src/pages/ResetPassword.tsx — Trang đích của link "Đặt mật khẩu mới" gửi qua email
 // (xem api/_lib/passwordReset.ts). Route /reset-password?token=... KHÔNG cần đăng nhập.
 import { useState } from 'react'
@@ -39,8 +40,12 @@ export default function ResetPassword() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (password.length < 6) {
-      setError(isA ? 'Mật khẩu tối thiểu 6 ký tự' : 'Password must be at least 6 characters')
+    if (!isValidNewPassword(password)) {
+      setError(
+        isA
+          ? 'Mật khẩu tối thiểu 15 ký tự, tối đa 72 byte UTF-8'
+          : 'Password must be at least 15 characters and at most 72 UTF-8 bytes',
+      )
       return
     }
     setLoading(true)
@@ -115,9 +120,11 @@ export default function ResetPassword() {
               type={showPw ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={isA ? 'Mật khẩu mới' : 'New password'}
+              placeholder={
+                isA ? 'Mật khẩu mới (ít nhất 15 ký tự)' : 'New password (at least 15 characters)'
+              }
               aria-label={isA ? 'Mật khẩu mới' : 'New password'}
-              minLength={6}
+              minLength={15}
               // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
               // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
               // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
