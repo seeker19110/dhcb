@@ -147,7 +147,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "autoprefixer": "^10.6.1",
     "cli-progress": "^3.12.0",
-    "dotenv": "^18.0.2",
+    "dotenv": "^18.0.3",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -159,7 +159,7 @@
     "lint-staged": "^17.5.1",
     "pdf-lib": "^1.17.1",
     "postcss": "^8.5.28",
-    "prettier": "^3.9.8",
+    "prettier": "^3.9.9",
     "rollup-plugin-visualizer": "^7.1.1",
     "sharp": "^0.35.4",
     "size-limit": "^14.0.0",
@@ -167,7 +167,7 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript-eslint": "^8.70.1",
-    "vite": "^8.3.0",
+    "vite": "^8.3.1",
     "vite-plugin-compression": "^0.5.1",
     "vitest": "^5.0.0"
   }
