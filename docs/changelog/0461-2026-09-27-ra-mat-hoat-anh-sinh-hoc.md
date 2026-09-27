@@ -78,6 +78,10 @@ xuống y = 38.
   và mô tả dài quá 800 ký tự.
 - `npm run typecheck` 0 lỗi, `eslint` 0 cảnh báo.
 - Chụp lại đủ 64 bài: cảnh báo máy 6/64. Đã xem lại bằng mắt từng bài vừa sửa.
+- CI lần đầu đỏ ở `a11y AAA: khối duyệt trong bài học (admin)` (trang `sinh12-c1-b1`): hai dòng
+  nhãn "chạc chữ Y" cách nhau 14 đơn vị nên khung bao giao nhau, cổng không đo được tương phản qua
+  halo. Tái hiện ở máy (3/3 theme đỏ), tách thành ba dòng cách nhau 18 đơn vị, đo halo ở 390px và
+  1440px đều đạt ≥ 7,7:1, ca AAA và a11y của bài xanh. Ghi thành bẫy số 15 ở `TRAPS.md`.
 
 ## Chưa làm
 
