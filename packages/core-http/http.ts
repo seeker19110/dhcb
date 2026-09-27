@@ -39,24 +39,29 @@ export function internalErrorResponse(
 // tiếp vào `/api/app-settings` (giới hạn 30/phút) với `X-Forwarded-For` ngẫu nhiên → 40 lần
 // 200, KHÔNG một 429 nào.
 //
-// Thứ tự đọc mới, từ đáng tin nhất xuống:
-//   1. `CF-Connecting-IP` — Cloudflare GHI ĐÈ header này ở biên (không nối như nginx), nên
-//      client không tự khai được khi đi qua CF. Dự án đang chạy sau Cloudflare (xác nhận
-//      2026-08-26: response có `server: cloudflare` + `cf-ray`).
-//   2. `X-Real-IP` — nginx đặt `= $remote_addr`, cũng là GHI ĐÈ.
+// Thứ tự đọc, từ đáng tin nhất xuống:
+//   1. `X-Real-IP` — nginx GHI ĐÈ bằng `$remote_addr` ở mọi `location` proxy. Với
+//      `cloudflare-realip.conf` đã áp trên VPS (2026-08-26), `$remote_addr` CHÍNH LÀ ip thật của
+//      trình duyệt: request đến từ dải IP Cloudflare thì nginx lấy `CF-Connecting-IP`, còn request
+//      gọi thẳng vào IP VPS thì giữ nguyên ip TCP của kẻ gọi. Client không tự khai được.
+//   2. `CF-Connecting-IP` — chỉ dùng khi thiếu `X-Real-IP` (chạy không có nginx phía trước).
 //   3. `X-Forwarded-For` phần tử **CUỐI** — phần do proxy gần nhất nối vào, không phải phần
 //      client khai. Chỉ dùng khi hai header trên vắng mặt.
 //
-// ⚠️ GIỚI HẠN CÒN LẠI — cần lớp thứ hai ở nginx: ai gọi THẲNG vào IP VPS (bỏ qua Cloudflare)
-// vẫn tự đặt được `CF-Connecting-IP`. Bịt bằng `nginx/cloudflare-realip.conf`
-// (`scripts/update-cloudflare-ips.sh`) để chỉ nhận header đó từ đúng dải IP Cloudflare, hoặc
-// chặn firewall mọi kết nối không đến từ CF. Xem docs/cloudflare-setup.md.
+// [2026-09-27] SỬA LỖ HỔNG THẬT: bản trước đọc `CF-Connecting-IP` TRƯỚC `X-Real-IP`, với niềm tin
+// rằng `cloudflare-realip.conf` "chỉ nhận header đó từ đúng dải IP Cloudflare". Sai: module
+// `real_ip` của nginx chỉ đổi biến `$remote_addr`, KHÔNG xoá/ghi đè header `CF-Connecting-IP`
+// client gửi lên — nginx vẫn chuyển nguyên header đó cho Express. Ai gọi thẳng vào IP VPS (bỏ
+// qua Cloudflare) kèm `CF-Connecting-IP: <ngẫu nhiên>` là có bộ đếm rate limit mới mỗi request:
+// dò mật khẩu/mã 2FA không giới hạn, dùng AI của khách không giới hạn. Bài thử A/B ngày
+// 2026-08-26 đi QUA Cloudflare (CF tự ghi đè header) nên không bắt được đường này.
+// `nginx/en-vi.conf` nay cũng ghi đè `CF-Connecting-IP` + `X-Forwarded-For` (lớp thứ hai).
 export function getClientIp(req: Request): string {
-  const cfIp = req.headers.get('cf-connecting-ip')?.trim()
-  if (cfIp) return cfIp
-
   const realIp = req.headers.get('x-real-ip')?.trim()
   if (realIp) return realIp
+
+  const cfIp = req.headers.get('cf-connecting-ip')?.trim()
+  if (cfIp) return cfIp
 
   // Phần tử CUỐI, không phải đầu — xem giải thích ở trên.
   const forwarded = req.headers.get('x-forwarded-for')

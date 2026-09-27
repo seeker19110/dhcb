@@ -7,22 +7,32 @@ import { getClientIp } from './http.js'
 const req = (headers: Record<string, string>) => new Request('https://x.test/', { headers })
 
 describe('getClientIp', () => {
-  it('ưu tiên CF-Connecting-IP — Cloudflare GHI ĐÈ header này ở biên', () => {
+  it('ưu tiên X-Real-IP — nginx GHI ĐÈ bằng $remote_addr (đã qua real_ip của Cloudflare)', () => {
     expect(
       getClientIp(
         req({
           'cf-connecting-ip': '203.0.113.7',
-          'x-real-ip': '10.0.0.1',
-          'x-forwarded-for': '1.2.3.4, 10.0.0.1',
+          'x-real-ip': '198.51.100.20',
+          'x-forwarded-for': '1.2.3.4, 198.51.100.20',
         }),
       ),
-    ).toBe('203.0.113.7')
+    ).toBe('198.51.100.20')
   })
 
-  it('không có CF thì dùng X-Real-IP (nginx đặt = $remote_addr, cũng là ghi đè)', () => {
+  it('CHẶN HỒI QUY 2026-09-27: gọi thẳng IP VPS kèm CF-Connecting-IP giả không né được bộ đếm', () => {
+    // Kẻ tấn công bỏ qua Cloudflare: nginx không tin header CF (ip nguồn không thuộc dải CF) nên
+    // X-Real-IP = ip TCP thật của kẻ đó, nhưng header CF-Connecting-IP tự khai vẫn tới Express.
+    const attackerIp = '192.0.2.66'
+    const a = getClientIp(req({ 'cf-connecting-ip': '10.0.0.1', 'x-real-ip': attackerIp }))
+    const b = getClientIp(req({ 'cf-connecting-ip': '10.9.9.9', 'x-real-ip': attackerIp }))
+    expect(a).toBe(attackerIp)
+    expect(b).toBe(attackerIp)
+  })
+
+  it('không có X-Real-IP (không có nginx phía trước) thì mới dùng CF-Connecting-IP', () => {
     expect(
-      getClientIp(req({ 'x-real-ip': '10.0.0.1', 'x-forwarded-for': '1.2.3.4, 10.0.0.1' })),
-    ).toBe('10.0.0.1')
+      getClientIp(req({ 'cf-connecting-ip': '203.0.113.7', 'x-forwarded-for': '1.2.3.4' })),
+    ).toBe('203.0.113.7')
   })
 
   it('CHẶN HỒI QUY: XFF lấy phần tử CUỐI, không phải phần client tự khai ở đầu', () => {

@@ -1,6 +1,7 @@
 // api/_lib/security.ts — Middleware bảo mật dùng chung cho tất cả API endpoints
 // Import file này ở đầu mỗi handler để có CORS, rate limit, auth validation, v.v.
 
+import { isIPv6 } from 'node:net'
 import { Redis } from 'ioredis'
 import { validateSessionToken } from './authService.js'
 import { readSessionCookie } from './sessionCookie.js'
@@ -58,6 +59,16 @@ export function isTrustedMutation(req: Request): boolean {
   // Trình duyệt có phiên phải gửi Origin. Webhook/server không dùng cookie
   // vẫn được đi đến handler để xác thực bằng khóa riêng.
   return !readSessionCookie(req)
+}
+
+/**
+ * Cổng Origin cho WebSocket upgrade (chống Cross-Site WebSocket Hijacking). Trình duyệt LUÔN gửi
+ * `Origin` khi mở WebSocket, và cookie phiên đi kèm tự động — thiếu cổng này thì một trang khác
+ * cùng site (vd `sales.donghanhcungban.org`, ứng dụng riêng) mở được kết nối nhân danh người
+ * dùng đang đăng nhập. Cùng danh sách tin cậy với CORS/CSRF của HTTP (vá 2026-09-27).
+ */
+export function isAllowedWebSocketOrigin(origin: string | string[] | undefined): boolean {
+  return typeof origin === 'string' && isAllowedOrigin(origin)
 }
 
 export function getCorsHeaders(req: Request): Record<string, string> {
@@ -269,6 +280,59 @@ export async function reportRedisStatusAtStartup(
   )
 }
 
+// ── Chủ thể đếm: gom IPv6 theo dải /64 ─────────────────────────────────────────
+// [2026-09-27] Một thuê bao IPv6 (nhà mạng, VPS) được cấp NGUYÊN dải /64 = 2^64 địa chỉ, đổi
+// địa chỉ trong dải là miễn phí. Đếm theo từng địa chỉ /128 thì mỗi request một bộ đếm mới →
+// né sạch mọi giới hạn theo IP (dò mật khẩu, lượt thử AI của khách). /64 là đơn vị nhỏ nhất
+// nhà mạng giao cho một khách hàng (RFC 6177), nên đếm theo /64 ≈ đếm theo "một người/một nhà".
+// Chuỗi không phải IPv6 (IPv4, userId, 'unknown') giữ nguyên.
+
+/** Tách IPv6 (đã bỏ zone `%eth0`) thành đúng 8 nhóm 16 bit; null nếu không đọc được. */
+function ipv6Groups(address: string): number[] | null {
+  let text = address.split('%')[0] ?? ''
+  // Đuôi IPv4 nhúng (vd ::ffff:1.2.3.4) → đổi thành 2 nhóm hex.
+  const lastColon = text.lastIndexOf(':')
+  const tail = text.slice(lastColon + 1)
+  if (tail.includes('.')) {
+    const octets = tail.split('.').map(Number)
+    if (octets.length !== 4 || octets.some((o) => !Number.isInteger(o) || o < 0 || o > 255)) {
+      return null
+    }
+    const [a = 0, b = 0, c = 0, d = 0] = octets
+    text = `${text.slice(0, lastColon + 1)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`
+  }
+  const halves = text.split('::')
+  if (halves.length > 2) return null
+  const parse = (part: string | undefined) =>
+    part ? part.split(':').map((g) => Number.parseInt(g, 16)) : []
+  const head = parse(halves[0])
+  const rest = parse(halves[1])
+  const missing = 8 - head.length - rest.length
+  if (halves.length === 1 ? missing !== 0 : missing < 0) return null
+  const groups = [...head, ...Array<number>(Math.max(0, missing)).fill(0), ...rest]
+  return groups.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff) ? groups : null
+}
+
+/**
+ * Chủ thể dùng làm khoá đếm rate limit/hạn mức: IPv6 → dải /64 của nó (`2001:db8:1:2::/64`),
+ * IPv4-mapped (`::ffff:1.2.3.4`) → chính IPv4 đó, mọi chuỗi khác giữ nguyên.
+ */
+export function rateLimitSubject(subject: string): string {
+  if (!isIPv6(subject)) return subject
+  const groups = ipv6Groups(subject)
+  if (!groups) return subject
+  const isV4Mapped = groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff
+  if (isV4Mapped) {
+    const hi = groups[6] ?? 0
+    const lo = groups[7] ?? 0
+    return `${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`
+  }
+  return `${groups
+    .slice(0, 4)
+    .map((g) => g.toString(16))
+    .join(':')}::/64`
+}
+
 // Trả về true nếu được phép, false nếu vượt quá giới hạn.
 // `bucket` cho phép một IP có NHIỀU bộ đếm riêng biệt — ví dụ tách "tổng số request"
 // (kể cả cache HIT, rất rẻ) với "số lần tạo audio mới" (cache MISS, tốn tiền Google TTS).
@@ -279,7 +343,7 @@ export async function checkRateLimit(
   maxPerMin = 60,
   bucket = 'default',
 ): Promise<boolean> {
-  const key = `${bucket}:${ip}`
+  const key = `${bucket}:${rateLimitSubject(ip)}`
 
   const redis = getRedis()
   // CHỈ dùng khi kết nối đã sẵn sàng. `enableOfflineQueue: false` nghĩa là gọi lệnh lúc client
@@ -329,13 +393,21 @@ function pruneDailyCounters(now: number): void {
   for (const [key, entry] of dailyCounterMap) if (now > entry.resetAt) dailyCounterMap.delete(key)
 }
 
-/** Tăng bộ đếm ngày của `key`; trả `true` nếu VẪN trong hạn mức (đã tính lượt vừa dùng). */
-export async function consumeDailyCounter(key: string, limit: number): Promise<boolean> {
+/**
+ * Tăng bộ đếm `key` trong một cửa sổ `windowMs` (tính từ lượt ĐẦU, không gia hạn mỗi lần gọi);
+ * trả `true` nếu VẪN trong hạn mức (đã tính lượt vừa dùng). Dùng chung cho hạn mức ngày của
+ * khách và giới hạn thử sai theo TÀI KHOẢN (đăng nhập, mã 2FA — vá 2026-09-27).
+ */
+export async function consumeWindowCounter(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<boolean> {
   if (limit <= 0) return false
   const redis = getRedis()
   if (redis && redis.status === 'ready') {
     try {
-      const count = (await redis.eval(DAILY_COUNTER_LUA, 1, key, String(DAY_MS))) as number
+      const count = (await redis.eval(DAILY_COUNTER_LUA, 1, key, String(windowMs))) as number
       noteRedisRecovered()
       return count <= limit
     } catch (err) {
@@ -348,11 +420,30 @@ export async function consumeDailyCounter(key: string, limit: number): Promise<b
   pruneDailyCounters(now)
   const entry = dailyCounterMap.get(key)
   if (!entry || now > entry.resetAt) {
-    dailyCounterMap.set(key, { count: 1, resetAt: now + DAY_MS })
+    dailyCounterMap.set(key, { count: 1, resetAt: now + windowMs })
     return true
   }
   entry.count += 1
   return entry.count <= limit
+}
+
+/** Tăng bộ đếm ngày của `key`; trả `true` nếu VẪN trong hạn mức (đã tính lượt vừa dùng). */
+export async function consumeDailyCounter(key: string, limit: number): Promise<boolean> {
+  return consumeWindowCounter(key, limit, DAY_MS)
+}
+
+/** Xoá hẳn bộ đếm `key` (vd đăng nhập đúng thì xoá số lần thử). Nuốt mọi lỗi. */
+export async function resetCounter(key: string): Promise<void> {
+  const redis = getRedis()
+  if (redis && redis.status === 'ready') {
+    try {
+      await redis.del(key)
+      return
+    } catch (err) {
+      noteRedisDegraded(err)
+    }
+  }
+  dailyCounterMap.delete(key)
 }
 
 /** Trả lại 1 lượt đã trừ (nhà cung cấp lỗi). Nuốt mọi lỗi — không bao giờ làm vỡ luồng trả lỗi. */

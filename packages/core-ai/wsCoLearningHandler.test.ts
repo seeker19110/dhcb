@@ -26,7 +26,10 @@ vi.mock('ws', async () => {
     },
   }
 })
-vi.mock('@dhcb/core-auth/security', () => ({ validateAuth: vi.fn() }))
+vi.mock('@dhcb/core-auth/security', () => ({
+  validateAuth: vi.fn(async () => ({ userId: 'authenticated-user' })),
+  isAllowedWebSocketOrigin: (origin: unknown) => origin === 'https://en-vi.donghanhcungban.org',
+}))
 vi.mock('./audioCoLearningService.js', () => ({
   processAudioChunk: vi.fn(),
   requestAiSocraticHint: vi.fn().mockResolvedValue(null),
@@ -152,4 +155,24 @@ describe('wsCoLearningHandler', () => {
     expect(processAudioChunk).not.toHaveBeenCalled()
     expect(requestAiSocraticHint).not.toHaveBeenCalled()
   })
+})
+
+describe('wsCoLearningHandler — chống chiếm phiên WebSocket (vá 2026-09-27)', () => {
+  it.each([undefined, 'https://sales.donghanhcungban.org', 'https://evil.test'])(
+    'upgrade từ Origin %s → 403, không kiểm phiên',
+    async (origin) => {
+      const httpServer = new EventEmitter()
+      attachCoLearningWebSocketServer(httpServer as never)
+      const socket = { write: vi.fn(), destroy: vi.fn() }
+      httpServer.emit(
+        'upgrade',
+        { url: WS_CO_LEARNING_PATH, headers: { cookie: 'session_token=x', origin } },
+        socket,
+        Buffer.alloc(0),
+      )
+      await new Promise((r) => setTimeout(r, 0))
+      expect(socket.write).toHaveBeenCalledWith(expect.stringContaining('403'))
+      expect(socket.destroy).toHaveBeenCalled()
+    },
+  )
 })

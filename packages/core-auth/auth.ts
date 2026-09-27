@@ -14,6 +14,7 @@
 // POST /api/auth  body { action: 'logout' }               (cần đăng nhập — cookie)
 // GET  /api/auth?action=me                                 (cần đăng nhập — cookie)
 
+import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import {
   createUserWithPassword,
@@ -39,6 +40,8 @@ import {
   getCorsHeaders,
   SECURITY_HEADERS,
   checkRateLimit,
+  consumeWindowCounter,
+  resetCounter,
   validateAuth,
   logSecurityEvent,
 } from './security.js'
@@ -203,6 +206,20 @@ async function oauthLoginResponse(
   }
 }
 
+// ── Giới hạn thử mật khẩu theo TÀI KHOẢN (vá 2026-09-27) ─────────────────────────────────
+// Rate limit theo IP (10/phút) một mình không đủ: kẻ có nhiều IP (botnet, cả dải IPv6) dò MỘT
+// tài khoản song song từ mọi nơi. Bộ đếm này theo email: tối đa 10 lần thử / 15 phút, đăng nhập
+// đúng thì xoá. Áp cho cả email CHƯA đăng ký (khoá theo chuỗi email) nên không lộ email nào có
+// thật. Bị chặn thì vẫn còn đăng nhập Google/Facebook/Apple/Microsoft và "Quên mật khẩu".
+export const LOGIN_ACCOUNT_MAX_ATTEMPTS = 10
+export const LOGIN_ACCOUNT_WINDOW_MS = 15 * 60_000
+
+/** Khoá đếm theo email đã chuẩn hoá — băm để Redis không giữ email dạng rõ. */
+export function loginAccountKey(email: string): string {
+  const digest = createHash('sha256').update(email.trim().toLowerCase()).digest('hex')
+  return `login-acct:${digest}`
+}
+
 export default async function handler(req: Request): Promise<Response> {
   const allHeaders = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: allHeaders })
@@ -306,11 +323,26 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (result.data.action === 'login') {
     const { email, password } = result.data
+    const accountKey = loginAccountKey(email)
+    if (
+      !(await consumeWindowCounter(accountKey, LOGIN_ACCOUNT_MAX_ATTEMPTS, LOGIN_ACCOUNT_WINDOW_MS))
+    ) {
+      logSecurityEvent('LOGIN_ACCOUNT_THROTTLED', clientIp, { email })
+      return jsonResponse(
+        {
+          error:
+            'Tài khoản này đã thử sai mật khẩu quá nhiều lần. Thử lại sau 15 phút, hoặc dùng "Quên mật khẩu".',
+        },
+        429,
+        { ...allHeaders, 'Retry-After': String(LOGIN_ACCOUNT_WINDOW_MS / 1000) },
+      )
+    }
     const user = await verifyUserPassword(email, password)
     if (!user) {
       logSecurityEvent('LOGIN_FAILED', clientIp, { email })
       return jsonResponse({ error: 'Email hoặc mật khẩu không đúng' }, 401, allHeaders)
     }
+    await resetCounter(accountKey)
     const profile = await ensureProfileRow(user.id, user.email.split('@')[0] ?? user.email)
     const token = await createSession(user.id)
     return jsonResponse(authResponse(user, profile), 200, withCookie(token))

@@ -18,7 +18,7 @@
 // Đặt ở `core-auth` chứ không phải `core-billing` là CÓ CHỦ Ý: `core-auth` đã phụ thuộc
 // `core-billing` (auth.ts/trial.ts), nên để ngược lại sẽ tạo vòng phụ thuộc giữa hai gói và
 // `tsc -b` (project references) từ chối biên dịch.
-import { consumeDailyCounter, releaseDailyCounter } from './security.js'
+import { consumeDailyCounter, rateLimitSubject, releaseDailyCounter } from './security.js'
 
 /** Số lượt AI/ngày cho MỘT trình duyệt khách. Thấp hơn nhiều hạn mức Free (30). */
 export const GUEST_DAILY_TRIAL = 3
@@ -34,8 +34,9 @@ function guestKeyOf(guestKey: string): string {
   return `guest-trial:id:${guestKey}`
 }
 
+// IPv6 gom theo /64 (xem rateLimitSubject): đổi địa chỉ trong dải không được thêm lượt thử.
 function ipKeyOf(ip: string): string {
-  return `guest-trial:ip:${ip}`
+  return `guest-trial:ip:${rateLimitSubject(ip)}`
 }
 
 export interface GuestTrialGate {

@@ -9,7 +9,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const consume = vi.fn()
 const release = vi.fn()
-vi.mock('./security.js', () => ({
+vi.mock('./security.js', async (importOriginal) => ({
+  // Bản THẬT của hàm chuẩn hoá khoá — test dưới cần thấy IPv6 được gom theo /64.
+  rateLimitSubject: (await importOriginal<typeof import('./security.js')>()).rateLimitSubject,
   consumeDailyCounter: consume,
   releaseDailyCounter: release,
 }))
@@ -76,5 +78,16 @@ describe('refundGuestTrial', () => {
   it('IP rỗng → chỉ hoàn tầng id', async () => {
     await refundGuestTrial('guest_a', '')
     expect(release).toHaveBeenCalledExactlyOnceWith('guest-trial:id:guest_a')
+  })
+})
+
+describe('khoá IP gom IPv6 theo /64 (vá 2026-09-27)', () => {
+  it('hai địa chỉ khác nhau trong CÙNG dải /64 dùng CHUNG bộ đếm IP', async () => {
+    await checkAndConsumeGuestTrial('guest_aaaaaaaaaa', '2001:db8:1:2::1')
+    await checkAndConsumeGuestTrial('guest_bbbbbbbbbb', '2001:db8:1:2:ffff:ffff:ffff:fffe')
+    const ipKeys = consume.mock.calls
+      .map(([key]) => String(key))
+      .filter((key) => key.startsWith('guest-trial:ip:'))
+    expect(ipKeys).toEqual(['guest-trial:ip:2001:db8:1:2::/64', 'guest-trial:ip:2001:db8:1:2::/64'])
   })
 })

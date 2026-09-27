@@ -10,7 +10,7 @@
 
 import type { Server as HttpServer, IncomingMessage } from 'node:http'
 import { WebSocketServer, WebSocket, type RawData } from 'ws'
-import { validateAuth } from '@dhcb/core-auth/security'
+import { checkRateLimit, isAllowedWebSocketOrigin, validateAuth } from '@dhcb/core-auth/security'
 import {
   WsLocationClientEventSchema,
   type WsLocationServerEvent,
@@ -19,6 +19,13 @@ import { publish, subscribeChannel } from '@dhcb/core-chat/redisChat'
 import { getActiveMembership, getSessionState, recordPosition } from './locationService.js'
 
 const WS_PATH = '/ws/location'
+
+// Trần MỘT khung WebSocket: sự kiện vị trí chỉ vài trăm byte. Không đặt thì thư viện `ws` nhận
+// tới 100 MiB/khung (vá 2026-09-27).
+export const LOCATION_WS_MAX_PAYLOAD = 16 * 1024
+// Mỗi sự kiện vị trí = một lần GHI Postgres + phát Redis. Cùng trần với REST /api/location
+// (120/phút) nhưng đếm theo NGƯỜI DÙNG — trước đây đường WS không có giới hạn nào.
+export const LOCATION_WS_EVENTS_PER_MIN = 120
 
 function sessionChannel(sessionId: string): string {
   return `loc:session:${sessionId}`
@@ -80,11 +87,17 @@ async function authenticateUpgrade(req: IncomingMessage): Promise<{ userId: stri
 }
 
 export function attachLocationWebSocketServer(server: HttpServer): void {
-  const wss = new WebSocketServer({ noServer: true })
+  const wss = new WebSocketServer({ noServer: true, maxPayload: LOCATION_WS_MAX_PAYLOAD })
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url ?? '', 'http://localhost')
     if (url.pathname !== WS_PATH) return
+    // Chống Cross-Site WebSocket Hijacking: chỉ nhận upgrade từ origin tin cậy (vá 2026-09-27).
+    if (!isAllowedWebSocketOrigin(req.headers.origin)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
+      socket.destroy()
+      return
+    }
 
     authenticateUpgrade(req)
       .then((auth) => {
@@ -133,6 +146,11 @@ async function handleClientEvent(
   const event = WsLocationClientEventSchema.safeParse(parsed)
   if (!event.success) {
     send(ws, { type: 'error', message: 'Sự kiện không hợp lệ' })
+    return
+  }
+
+  if (!(await checkRateLimit(userId, LOCATION_WS_EVENTS_PER_MIN, 'location-ws'))) {
+    send(ws, { type: 'error', message: 'Gửi vị trí quá dày — chờ chút nhé' })
     return
   }
 

@@ -3,10 +3,14 @@
 
 import type { Server as HttpServer, IncomingMessage } from 'node:http'
 import { WebSocketServer, WebSocket } from 'ws'
-import { validateAuth } from '@dhcb/core-auth/security'
+import { isAllowedWebSocketOrigin, validateAuth } from '@dhcb/core-auth/security'
 import { RealtimeVoiceSession, type VoiceSessionEvent } from './realtimeVoiceService.js'
 
 export const WS_VOICE_PATH = '/ws/voice-companion'
+
+// Trần MỘT khung WebSocket: khúc PCM16 ~100 ms chỉ vài KB (base64 thêm ~33%). Không đặt thì thư
+// viện `ws` nhận tới 100 MiB/khung (vá 2026-09-27).
+export const VOICE_WS_MAX_PAYLOAD = 256 * 1024
 
 export interface WsVoiceClientMessage {
   type: 'voice:start' | 'voice:audio_chunk' | 'voice:transcript' | 'voice:interrupt' | 'voice:stop'
@@ -33,11 +37,17 @@ export function _resetWsVoiceHandlerStateForTests(): void {
 
 /** Gắn WebSocket server đàm thoại giọng nói vào httpServer */
 export function attachVoiceWebSocketServer(server: HttpServer): void {
-  const wss = new WebSocketServer({ noServer: true })
+  const wss = new WebSocketServer({ noServer: true, maxPayload: VOICE_WS_MAX_PAYLOAD })
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url ?? '', 'http://localhost')
     if (url.pathname !== WS_VOICE_PATH) return // Nhường các WebSocket route khác như /ws/chat
+    // Chống Cross-Site WebSocket Hijacking: chỉ nhận upgrade từ origin tin cậy (vá 2026-09-27).
+    if (!isAllowedWebSocketOrigin(req.headers.origin)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
+      socket.destroy()
+      return
+    }
 
     authenticateUpgrade(req)
       .then((auth) => {

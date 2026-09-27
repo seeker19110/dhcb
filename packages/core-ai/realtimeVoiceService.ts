@@ -44,6 +44,11 @@ export function calculatePcmRms(pcmData: Buffer | Uint8Array): number {
   return Math.sqrt(sumSquares / int16Array.length)
 }
 
+// Trần bộ đệm âm thanh người dùng trong MỘT phiên: ~40 giây PCM16 24 kHz mono. Trước bản vá
+// 2026-09-27 mảng này chỉ lớn lên suốt 10 phút phiên (không ai tiêu thụ), nên một client gửi dồn
+// dập là làm tràn RAM worker. Vượt trần thì bỏ các khúc CŨ NHẤT, giữ phần mới nhất.
+export const MAX_VOICE_BUFFER_BYTES = 2 * 1024 * 1024
+
 export class RealtimeVoiceSession {
   public readonly sessionId: string
   public readonly userId: string
@@ -54,6 +59,7 @@ export class RealtimeVoiceSession {
   private startTime: number = 0
   private listeners: Set<VoiceEventHandler> = new Set()
   private audioBuffer: Buffer[] = []
+  private audioBufferBytes = 0
   private isDestroyed: boolean = false
 
   constructor(config: VoiceSessionConfig) {
@@ -122,7 +128,9 @@ export class RealtimeVoiceSession {
       this.state = 'interrupted'
       this.emit({ type: 'interrupted' })
       this.setState('listening')
-      this.audioBuffer = [chunk]
+      this.audioBuffer = []
+      this.audioBufferBytes = 0
+      this.appendAudio(chunk)
       return
     }
 
@@ -131,7 +139,26 @@ export class RealtimeVoiceSession {
     }
 
     if (this.state === 'listening') {
-      this.audioBuffer.push(chunk)
+      this.appendAudio(chunk)
+    }
+  }
+
+  /** Số byte âm thanh đang giữ (để test/giám sát trần bộ đệm). */
+  public getBufferedAudioBytes(): number {
+    return this.audioBufferBytes
+  }
+
+  private appendAudio(chunk: Buffer): void {
+    // Một khúc to hơn cả trần → chỉ giữ phần đuôi vừa trần.
+    const piece =
+      chunk.length > MAX_VOICE_BUFFER_BYTES
+        ? chunk.subarray(chunk.length - MAX_VOICE_BUFFER_BYTES)
+        : chunk
+    this.audioBuffer.push(piece)
+    this.audioBufferBytes += piece.length
+    while (this.audioBufferBytes > MAX_VOICE_BUFFER_BYTES && this.audioBuffer.length > 1) {
+      const oldest = this.audioBuffer.shift()
+      this.audioBufferBytes -= oldest?.length ?? 0
     }
   }
 
@@ -171,6 +198,7 @@ export class RealtimeVoiceSession {
     if (this.isDestroyed) return
     this.state = 'idle'
     this.audioBuffer = []
+    this.audioBufferBytes = 0
     this.emit({ type: 'session_ended' })
     this.isDestroyed = true
     this.listeners.clear()

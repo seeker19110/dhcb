@@ -4,10 +4,21 @@
 //        action="unsubscribe" → xóa subscription
 //        action="send-daily"  → gửi push cho tất cả users (gọi từ cron, cần CRON_SECRET)
 
+import { createHash, timingSafeEqual } from 'node:crypto'
 import webpush from 'web-push'
-import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
-import { getCorsHeaders, SECURITY_HEADERS, validateAuth } from '@dhcb/core-auth/security'
+import {
+  isAllowedPushEndpoint,
+  PushSubscriptionSchema,
+} from '@dhcb/core-contracts/pushSubscription'
+import {
+  getCorsHeaders,
+  SECURITY_HEADERS,
+  checkRateLimit,
+  logSecurityEvent,
+  validateAuth,
+} from '@dhcb/core-auth/security'
+import { getClientIp } from '@dhcb/core-http/http'
 import { validateBody } from '@dhcb/core-http/validation'
 import { vnDateStr, addDays } from '@dhcb/core-db/date'
 import {
@@ -17,16 +28,23 @@ import {
   type ReminderMessage,
 } from '../_lib/reminderContent.js'
 
-// Chỉ validate phần `subscription` (bắt buộc + đúng kiểu dữ liệu) — action/remindHour/hour/secret
-// giữ nguyên cách kiểm tra tay hiện có (vốn đã an toàn: có typeof guard trước khi dùng).
+// Chỉ validate phần `subscription` (bắt buộc + đúng kiểu dữ liệu + trần độ dài) — action/
+// remindHour/hour/secret giữ nguyên cách kiểm tra tay hiện có (có typeof guard trước khi dùng).
 // Lỗi field nào cũng trả về CÙNG 1 message (giữ đúng hành vi cũ) — xem nơi gọi bên dưới.
-const SubscriptionSchema = z.object({
-  endpoint: z.string().min(1),
-  keys: z.object({
-    p256dh: z.string().min(1),
-    auth: z.string().min(1),
-  }),
-})
+// Host của `endpoint` kiểm riêng (isAllowedPushEndpoint) khi ĐĂNG KÝ và khi GỬI — chống SSRF,
+// xem packages/core-contracts/pushSubscription.ts.
+const SubscriptionSchema = PushSubscriptionSchema
+
+// Khoá VAPID public của cặp khoá có private key TỪNG BỊ COMMIT vào lịch sử git public (commit
+// f6e0caa7, 2026-06-21 — gỡ khỏi script ngày 2026-06-27 nhưng KHÔNG xoay khoá). Ai có private key
+// ký được yêu cầu push nhân danh server. Server còn dùng cặp này thì phải xoay (docs/changelog/0465).
+export const LEAKED_VAPID_PUBLIC_KEYS: readonly string[] = [
+  'BP9nog6CutVAu3TM4KyU87JCZMydVmAgAu-tzPUWMd2uztQ1sfkPvoenQ6m6xMxKJ4cQUeAUPLUfHXjvR5Xog10',
+]
+
+export function isLeakedVapidPublicKey(publicKey: string | undefined): boolean {
+  return !!publicKey && LEAKED_VAPID_PUBLIC_KEYS.includes(publicKey.trim())
+}
 
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY ?? ''
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY ?? ''
@@ -241,6 +259,11 @@ export async function sendReminders(
         skipped++
         return
       }
+      // Dòng cũ lưu từ trước bản vá 2026-09-27 có thể trỏ tới host bất kỳ — không bao giờ gửi.
+      if (!isAllowedPushEndpoint(row.endpoint)) {
+        skipped++
+        return
+      }
       try {
         const msg = reminderMessages.get(row.user_id)
         await webpush.sendNotification(
@@ -270,11 +293,33 @@ export async function sendReminders(
   return { sent, skipped, expired: expired.length }
 }
 
+/**
+ * So `secret` client gửi với CRON_SECRET theo thời gian HẰNG (băm SHA-256 trước để hai buffer
+ * luôn cùng độ dài như timingSafeEqual yêu cầu). Thiếu CRON_SECRET → luôn từ chối.
+ */
+export function cronSecretMatches(provided: unknown): boolean {
+  const secret = process.env.CRON_SECRET
+  if (!secret || typeof provided !== 'string' || !provided) return false
+  const digest = (value: string) => createHash('sha256').update(value).digest()
+  return timingSafeEqual(digest(provided), digest(secret))
+}
+
 export default async function handler(req: Request): Promise<Response> {
   const cors = getCorsHeaders(req)
   const headers = { ...cors, ...SECURITY_HEADERS, 'Content-Type': 'application/json' }
 
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
+
+  // Endpoint này trước đây KHÔNG có rate limit nào, dù có action cầm CRON_SECRET (xoá TOÀN BỘ
+  // subscription) — không có trần thì dò khoá bao nhiêu lần cũng được (vá 2026-09-27).
+  const clientIp = getClientIp(req)
+  if (!(await checkRateLimit(clientIp, 30, 'push'))) {
+    logSecurityEvent('RATE_LIMIT_EXCEEDED', clientIp, { path: '/api/push' })
+    return new Response(JSON.stringify({ error: 'Quá nhiều yêu cầu — thử lại sau 1 phút' }), {
+      status: 429,
+      headers,
+    })
+  }
 
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
     return new Response(JSON.stringify({ error: 'Push chưa được cấu hình (thiếu VAPID keys)' }), {
@@ -315,6 +360,20 @@ export default async function handler(req: Request): Promise<Response> {
     const pool = getPgPool()
 
     if (action === 'subscribe') {
+      if (!isAllowedPushEndpoint(sub.endpoint)) {
+        // Chỉ ghi HOST vào log (URL đầy đủ chứa token của dịch vụ push).
+        let host = 'không đọc được'
+        try {
+          host = new URL(sub.endpoint).host
+        } catch {
+          // giữ nhãn mặc định
+        }
+        console.warn(`[push] Từ chối endpoint ngoài danh sách dịch vụ push: ${host}`)
+        return new Response(JSON.stringify({ error: 'Dịch vụ push không được hỗ trợ' }), {
+          status: 400,
+          headers,
+        })
+      }
       // Lưu subscription — bước này KHÔNG được lỗi.
       const rh = body.remindHour
       const remindHour = typeof rh === 'number' && rh >= 0 && rh <= 23 ? Math.round(rh) : null
@@ -328,8 +387,12 @@ export default async function handler(req: Request): Promise<Response> {
           [auth.userId, sub.endpoint, sub.keys.p256dh, sub.keys.auth, remindHour],
         )
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        return new Response(JSON.stringify({ error: message }), { status: 500, headers })
+        // Không trả thông điệp lỗi CSDL cho client (lộ cấu trúc bảng/ràng buộc).
+        console.error('[push] Lỗi lưu/xoá subscription:', err)
+        return new Response(JSON.stringify({ error: 'Internal server error' }), {
+          status: 500,
+          headers,
+        })
       }
       return new Response(JSON.stringify({ ok: true }), { headers })
     } else {
@@ -339,8 +402,12 @@ export default async function handler(req: Request): Promise<Response> {
           [auth.userId, sub.endpoint],
         )
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        return new Response(JSON.stringify({ error: message }), { status: 500, headers })
+        // Không trả thông điệp lỗi CSDL cho client (lộ cấu trúc bảng/ràng buộc).
+        console.error('[push] Lỗi lưu/xoá subscription:', err)
+        return new Response(JSON.stringify({ error: 'Internal server error' }), {
+          status: 500,
+          headers,
+        })
       }
       return new Response(JSON.stringify({ ok: true }), { headers })
     }
@@ -350,9 +417,8 @@ export default async function handler(req: Request): Promise<Response> {
   // body.hour (UTC 0–23): giờ cần gửi; nếu không truyền → dùng giờ UTC hiện tại.
   // Chỉ nhắc người CHƯA học hôm nay (xem sendReminders).
   if (action === 'send-daily') {
-    const secret = process.env.CRON_SECRET
     // Bắt buộc phải có CRON_SECRET — nếu chưa cấu hình thì từ chối luôn
-    if (!secret || body.secret !== secret) {
+    if (!cronSecretMatches(body.secret)) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers })
     }
 
@@ -366,8 +432,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   // ── Xóa toàn bộ push subscriptions (admin, cần CRON_SECRET) ─────────────
   if (action === 'clear-all') {
-    const secret = process.env.CRON_SECRET
-    if (!secret || body.secret !== secret) {
+    if (!cronSecretMatches(body.secret)) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers })
     }
     const pool = getPgPool()
@@ -376,8 +441,11 @@ export default async function handler(req: Request): Promise<Response> {
       const result = await pool.query('delete from public.push_subscriptions')
       deleted = result.rowCount ?? 0
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      return new Response(JSON.stringify({ error: message }), { status: 500, headers })
+      console.error('[push] Lỗi xoá toàn bộ subscription:', err)
+      return new Response(JSON.stringify({ error: 'Internal server error' }), {
+        status: 500,
+        headers,
+      })
     }
     return new Response(JSON.stringify({ ok: true, deleted }), { headers })
   }

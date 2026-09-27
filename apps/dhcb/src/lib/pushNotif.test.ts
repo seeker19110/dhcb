@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { subscribePush, unsubscribePush } from './pushNotif'
+import { isDifferentServerKey, subscribePush, unsubscribePush } from './pushNotif'
 
 const subscription = {
   toJSON: vi.fn(() => ({ endpoint: 'https://push.example/sub', keys: { p256dh: 'p', auth: 'a' } })),
@@ -93,6 +93,47 @@ describe('subscribePush', () => {
     await expect(subscribePush(11)).resolves.toEqual({ status: 'success' })
   })
 
+  it('subscription cũ gắn khoá VAPID KHÁC (server đã xoay khoá) → huỷ rồi đăng ký lại', async () => {
+    // publicKey 'AQ' = đúng 1 byte 0x01; subscription cũ gắn khoá 0x02.
+    const oldSub = {
+      ...subscription,
+      options: { applicationServerKey: new Uint8Array([2]).buffer, userVisibleOnly: true },
+      unsubscribe: vi.fn().mockResolvedValue(true),
+    } as unknown as PushSubscription
+    pushManager.getSubscription = vi.fn().mockResolvedValue(oldSub)
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ publicKey: 'AQ' }))
+        .mockResolvedValueOnce(response({ ok: true })),
+    )
+
+    await expect(subscribePush(11)).resolves.toEqual({ status: 'success' })
+    expect(oldSub.unsubscribe).toHaveBeenCalledTimes(1)
+    expect(pushManager.subscribe).toHaveBeenCalledTimes(1)
+  })
+
+  it('subscription gắn ĐÚNG khoá hiện tại → dùng lại, không đăng ký mới', async () => {
+    const sameSub = {
+      ...subscription,
+      options: { applicationServerKey: new Uint8Array([1]).buffer, userVisibleOnly: true },
+      unsubscribe: vi.fn().mockResolvedValue(true),
+    } as unknown as PushSubscription
+    pushManager.getSubscription = vi.fn().mockResolvedValue(sameSub)
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ publicKey: 'AQ' }))
+        .mockResolvedValueOnce(response({ ok: true })),
+    )
+
+    await expect(subscribePush(11)).resolves.toEqual({ status: 'success' })
+    expect(sameSub.unsubscribe).not.toHaveBeenCalled()
+    expect(pushManager.subscribe).not.toHaveBeenCalled()
+  })
+
   it('trả failed khi chưa cập nhật browser và VAPID request thất bại', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({}, false)))
 
@@ -125,5 +166,17 @@ describe('unsubscribePush', () => {
 
     await expect(unsubscribePush()).resolves.toEqual({ status: 'success' })
     expect(subscription.unsubscribe).toHaveBeenCalledOnce()
+  })
+})
+
+describe('isDifferentServerKey', () => {
+  it('không biết khoá cũ (trình duyệt cũ) → coi như giống, giữ subscription', () => {
+    expect(isDifferentServerKey(null, new Uint8Array([1]))).toBe(false)
+    expect(isDifferentServerKey(undefined, new Uint8Array([1]))).toBe(false)
+  })
+  it('so từng byte, khác độ dài cũng là khác', () => {
+    expect(isDifferentServerKey(new Uint8Array([1, 2]).buffer, new Uint8Array([1, 2]))).toBe(false)
+    expect(isDifferentServerKey(new Uint8Array([1, 3]).buffer, new Uint8Array([1, 2]))).toBe(true)
+    expect(isDifferentServerKey(new Uint8Array([1]).buffer, new Uint8Array([1, 2]))).toBe(true)
   })
 })

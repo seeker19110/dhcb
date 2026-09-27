@@ -58,6 +58,14 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
+// Hash giả (cùng BCRYPT_ROUNDS với hash thật) chỉ để cân thời gian cho nhánh "không có user".
+// Tạo lười một lần/tiến trình — không ai biết mật khẩu gốc vì nó được sinh ngẫu nhiên.
+let timingEqualizerHashPromise: Promise<string> | null = null
+function timingEqualizerHash(): Promise<string> {
+  timingEqualizerHashPromise ??= hashPassword(randomBytes(32).toString('hex'))
+  return timingEqualizerHashPromise
+}
+
 // Tạo user email/password mới. Trả `null` nếu email đã tồn tại (unique_violation, code 23505).
 export async function createUserWithPassword(
   email: string,
@@ -91,7 +99,13 @@ export async function verifyUserPassword(
     [email.toLowerCase().trim()],
   )
   const user = rows[0]
-  if (!user?.password_hash) return null
+  if (!user?.password_hash) {
+    // Vẫn chạy bcrypt với hash giả CÙNG độ khó: nếu trả về ngay thì email CHƯA đăng ký phản hồi
+    // nhanh hơn hẳn email CÓ THẬT (bcrypt ~100ms) → dò được email nào có tài khoản dù thông báo
+    // lỗi đã giống nhau (vá 2026-09-27).
+    await verifyPassword(password, await timingEqualizerHash())
+    return null
+  }
   const ok = await verifyPassword(password, user.password_hash)
   return ok ? { id: user.id, email: user.email } : null
 }

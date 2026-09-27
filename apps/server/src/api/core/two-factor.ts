@@ -17,6 +17,8 @@ import {
   getCorsHeaders,
   SECURITY_HEADERS,
   checkRateLimit,
+  consumeWindowCounter,
+  resetCounter,
   validateAuth,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
@@ -49,6 +51,18 @@ const BodySchema = z.union([
   }),
   z.object({ action: z.literal('regenerate-recovery'), code: CodeSchema }),
 ])
+
+// ── Giới hạn thử mã theo NGƯỜI DÙNG (vá 2026-09-27) ─────────────────────────────────────
+// Rate limit theo IP ở trên không đủ: 2FA bảo vệ đúng tình huống kẻ khác đã có PHIÊN của nạn
+// nhân (cookie bị đánh cắp), và kẻ đó thừa sức xoay nhiều IP để dò 10^6 mã. Đếm theo userId:
+// tối đa 10 lần nhập mã / 15 phút (~1.000 lần/ngày → xác suất trúng ~0,3%/ngày thay vì chắc
+// chắn trúng). Nhập đúng thì xoá bộ đếm.
+export const TWO_FACTOR_USER_MAX_ATTEMPTS = 10
+export const TWO_FACTOR_USER_WINDOW_MS = 15 * 60_000
+
+export function twoFactorUserKey(userId: string): string {
+  return `2fa-user:${userId}`
+}
 
 export default async function handler(req: Request): Promise<Response> {
   const allHeaders = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -83,6 +97,23 @@ export default async function handler(req: Request): Promise<Response> {
 
   const body = result.data
 
+  // Mọi hành động trừ 'setup' đều nhận một mã → trừ lượt thử TRƯỚC khi kiểm mã.
+  const attemptKey = twoFactorUserKey(auth.userId)
+  if (
+    body.action !== 'setup' &&
+    !(await consumeWindowCounter(
+      attemptKey,
+      TWO_FACTOR_USER_MAX_ATTEMPTS,
+      TWO_FACTOR_USER_WINDOW_MS,
+    ))
+  ) {
+    logSecurityEvent('TWO_FACTOR_USER_THROTTLED', clientIp, { userId: auth.userId })
+    return jsonResponse({ error: 'Nhập sai mã quá nhiều lần — chờ 15 phút rồi thử lại' }, 429, {
+      ...allHeaders,
+      'Retry-After': String(TWO_FACTOR_USER_WINDOW_MS / 1000),
+    })
+  }
+
   if (body.action === 'setup') {
     // Nhãn hiện trong app xác thực. Dùng email cho người dùng nhận ra tài khoản nào khi họ có
     // nhiều tài khoản; không có email thì rơi về id.
@@ -108,6 +139,7 @@ export default async function handler(req: Request): Promise<Response> {
       logSecurityEvent('AUTH_FAILURE', clientIp, { path: '/api/two-factor', action: 'confirm' })
       return jsonResponse({ error: res.reason }, 400, allHeaders)
     }
+    await resetCounter(attemptKey)
     // Bật xong thì mở luôn cửa sổ nâng quyền — người vừa chứng minh có thiết bị, bắt nhập lại
     // ngay là phiền vô ích.
     const raw = readSessionCookie(req)
@@ -125,6 +157,7 @@ export default async function handler(req: Request): Promise<Response> {
       allHeaders,
     )
   }
+  await resetCounter(attemptKey)
 
   if (body.action === 'verify') {
     const raw = readSessionCookie(req)

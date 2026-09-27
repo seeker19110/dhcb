@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   RealtimeVoiceSession,
+  MAX_VOICE_BUFFER_BYTES,
   calculatePcmRms,
   type VoiceSessionEvent,
 } from './realtimeVoiceService.js'
@@ -138,5 +139,31 @@ describe('realtimeVoiceService', () => {
 
     session.handleUserAudioChunk(chunk)
     expect(events.some((e) => e.type === 'error')).toBe(true)
+  })
+})
+
+describe('RealtimeVoiceSession — trần bộ đệm âm thanh (vá 2026-09-27)', () => {
+  it('gửi dồn dập bao nhiêu cũng không vượt MAX_VOICE_BUFFER_BYTES, giữ phần MỚI nhất', () => {
+    const session = new RealtimeVoiceSession({ sessionId: 's', userId: 'u' })
+    session.start()
+    const quiet = Buffer.alloc(64 * 1024) // PCM im lặng: không kích hoạt barge-in
+    for (let i = 0; i < 100; i++) session.handleUserAudioChunk(quiet)
+    expect(session.getBufferedAudioBytes()).toBeLessThanOrEqual(MAX_VOICE_BUFFER_BYTES)
+    expect(session.getBufferedAudioBytes()).toBeGreaterThan(MAX_VOICE_BUFFER_BYTES / 2)
+  })
+
+  it('một khúc to hơn cả trần → chỉ giữ phần đuôi vừa trần', () => {
+    const session = new RealtimeVoiceSession({ sessionId: 's', userId: 'u' })
+    session.start()
+    session.handleUserAudioChunk(Buffer.alloc(MAX_VOICE_BUFFER_BYTES * 3))
+    expect(session.getBufferedAudioBytes()).toBe(MAX_VOICE_BUFFER_BYTES)
+  })
+
+  it('destroy() giải phóng bộ đệm', () => {
+    const session = new RealtimeVoiceSession({ sessionId: 's', userId: 'u' })
+    session.start()
+    session.handleUserAudioChunk(Buffer.alloc(1024))
+    session.destroy()
+    expect(session.getBufferedAudioBytes()).toBe(0)
   })
 })

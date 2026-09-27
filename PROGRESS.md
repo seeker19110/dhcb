@@ -8,11 +8,13 @@
 
 ## Giai đoạn hiện tại
 
-**Bản vá bảo mật 2026-09-27 đã qua unit/build, chờ E2E và phát hành:** nhánh local
-`fix/security-audit-20260927`, chưa merge/deploy. Trạng thái duy nhất tại
-[goal bảo mật](docs/goals/security-audit-20260927.md); thay đổi tương thích và công việc
-vận hành tại [runbook](docs/security-rollout-2026-09-27.md). Các grader thiếu cách ly tạm
-đóng; chỉ mở lại sau khi có ranh giới thực thi an toàn. Quyền admin cần `ADMIN_USER_IDS`.
+**Hai đợt vá bảo mật 2026-09-27.** Đợt `0464` đã merge (#1190) và **đã deploy** (workflow
+Deploy run 1142, 08:34 UTC) — điều kiện vận hành (`ADMIN_USER_IDS`, `ALLOWED_ORIGINS`, Redis)
+ở [runbook](docs/security-rollout-2026-09-27.md), trạng thái ở
+[goal bảo mật](docs/goals/security-audit-20260927.md). Đợt `0465` (PR #1191, audit lần hai) vá
+tiếp 7 lỗ hổng còn sót — xem `docs/changelog/0465-*.md`; **ba việc tay trên VPS** ở mục "Cần
+làm tay" A (xoay khoá VAPID đã lộ, áp nginx mới, firewall chỉ cho Cloudflare). Các grader thiếu
+cách ly vẫn tạm đóng; chỉ mở lại sau khi có ranh giới thực thi an toàn.
 
 **Nhật ký từng đợt việc nay nằm ở `docs/changelog/` — mỗi đợt MỘT FILE riêng.**
 
@@ -703,11 +705,30 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-09-27 · audit bảo mật lần hai, changelog `0465`] BA việc tay trên VPS — làm NGAY sau khi
+  PR vá merge + deploy xong** (code đã vá, nhưng ba chỗ này nằm ngoài repo):
+  1. **Xoay khoá VAPID (khoá cũ đã lộ trong lịch sử git public).** Trên VPS:
+     `node -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"` → thay
+     `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` trong `/var/www/dhcb/.env` → `pm2 reload dhcb`. Người
+     dùng bật lại "Nhắc học" một lần là client tự đăng ký lại. Kiểm: log khởi động KHÔNG còn dòng
+     `🔴 [security] VAPID key đang dùng là cặp khoá ĐÃ LỘ`.
+  2. **Áp `nginx/en-vi.conf` mới** (ghi đè `CF-Connecting-IP`/`X-Forwarded-For`):
+     `sudo cp /var/www/dhcb/nginx/en-vi.conf /etc/nginx/sites-available/donghanhcungban && sudo nginx -t && sudo systemctl reload nginx`.
+     Lớp app đã tự vá (đọc `X-Real-IP` trước) nên đây là lớp thứ hai, không gấp bằng mục 1.
+  3. **Chỉ cho Cloudflare vào cổng 80/443** (`ufw` theo dải `https://www.cloudflare.com/ips/`,
+     giữ cổng 22). Trước bản vá, IP thật của VPS có thể đã lộ qua lỗ SSRF Web Push, nên "gọi
+     thẳng vào IP gốc" không còn là giả định. Xem `docs/cloudflare-setup.md` mục cuối.
+
 - **[2026-09-27] Bật lối vào Sales-Hunter trên trang chủ — CHỈ sau khi Sales nghiệm thu.** PR
   [#1183](https://github.com/seeker19110/dhcb/pull/1183) (changelog `0460`) đã đặt khối ở trang
   chủ, mặc định "Chưa mở truy cập". Thứ tự: phía Sales (repo Sales-Hunter) làm xong
   staging/HTTPS/Access/backup-restore → thêm `VITE_SALES_HUNTER_PILOT_ENABLED=true` vào `.env`
   build trên VPS → deploy lại. Tắt: bỏ cờ rồi build lại; thu hồi quyền phải làm ở Access/Sales.
+  ⚠️ **Cookie phiên DHCB (`Domain=.donghanhcungban.org`) được trình duyệt gửi kèm MỌI request tới
+  `sales.donghanhcungban.org`** (audit 0465). Trước khi bật cờ: hoặc đưa Sales sang tên miền
+  riêng, hoặc cấu hình biên của Sales xoá header `Cookie: session_token=…` trước khi vào ứng
+  dụng — nếu không, log/lỗi của Sales là nơi rò phiên đăng nhập DHCB. WebSocket DHCB đã chặn
+  Origin `sales.*` từ 0465.
 
 - **[2026-09-26] Repo GitHub đã đổi tên `donghanh` → `dhcb`: đổi remote ở các chỗ NGOÀI repo.**
   Trong repo đã đổi hết (changelog `0458`). GitHub đang tự chuyển hướng tên cũ nên chưa có gì
@@ -764,8 +785,9 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `.env` của VPS; cả ba mục dưới đây đều "thiếu thì tính năng tự tắt", không làm vỡ app):
   - `GROQ_API_KEY` (hoặc `OPENAI_API_KEY`) — cần cho STT (`/api/stt`). Thiếu thì luyện nói rơi
     về Web Speech API dự phòng.
-  - `ADMIN_EMAILS` — xác thực trang `/admin-settings` (`packages/core-auth/adminAuth.ts`).
-    Thiếu thì không ai vào được trang quản trị. Mẫu ở `.env.example` dòng 207.
+  - `ADMIN_USER_IDS` — danh sách UUID (`public.users.id`) được vào trang quản trị
+    (`packages/core-auth/adminAuth.ts`). Từ đợt `0464` KHÔNG còn cấp quyền theo `ADMIN_EMAILS`.
+    Thiếu thì không ai vào được trang quản trị.
   - `AZURE_SPEECH_KEY`/`AZURE_SPEECH_REGION` — **TÙY CHỌN**, chỉ cần khi muốn bật chấm phát âm
     chi tiết qua Azure. Tạo resource "Speech service" (free tier F0, 5h audio/tháng) ở Azure
     Portal → Keys and Endpoint. Thiếu thì `/api/pronounce-assess` trả "chưa cấu hình" và client
@@ -1041,6 +1063,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   Actions mới biết production bị "đứng" so với `main`. Chưa làm — để mở nếu thấy cần.
 
 ## Nợ kỹ thuật còn mở
+
+- 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt
+  vá 7 lỗ hổng.** (1) **Kênh vị trí thu hồi chậm**: người đã RỜI chuyến mà giữ socket mở vẫn
+  nhận vị trí của thành viên còn lại tới khi socket gửi sự kiện kế tiếp (fan-out ở
+  `packages/core-location/wsLocation.ts` không kiểm lại quyền) — cần đẩy sự kiện thu hồi khi rời
+  chuyến. (2) **`/ws/voice-companion` và `/ws/co-learning-room` không có client nào gọi** — đã
+  siết Origin/kích thước, chủ dự án quyết gỡ hay giữ. (3) **`appleboy/ssh-action@v1.2.5`** (cầm
+  SSH key VPS) ghim theo tag, không theo commit SHA như mọi action khác trong repo. (4) Chưa quét
+  được trang production từ phiên AI (proxy chặn domain) — bài thử "gọi thẳng IP gốc với
+  `CF-Connecting-IP` giả" nên chạy tay sau khi deploy, cách làm ở `docs/cloudflare-setup.md`.
 
 - 🟡 **[2026-09-22 — đợt React 19 + Tailwind 4, `docs/changelog/0415-*.md`] Sáu nợ sau đợt nâng
   framework.** (1) ✅ **ẢNH TẦNG 8B ĐÃ CHỤP VÀ ĐỐI CHIẾU — tìm ra một hồi quy CSS THẬT, đã vá

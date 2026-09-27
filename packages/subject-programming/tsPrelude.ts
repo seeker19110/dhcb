@@ -64,6 +64,13 @@ function taoOptions(ts: TsCompiler): TS.CompilerOptions {
     // skipLibCheck: chỉ soi code học viên, không soi lại bộ lib chuẩn (nhanh hơn nhiều).
     skipLibCheck: true,
     noEmit: false,
+    // AN TOÀN (vá 2026-09-27): bài làm là MỘT file độc lập, không bao giờ cần file khác.
+    // noResolve: bỏ qua `/// <reference path>` và `import` — trước đây học viên viết
+    //   `/// <reference path="/var/www/…/x.ts" />` là server đọc file thật trên đĩa (dò được file
+    //   nào tồn tại qua lỗi TS6053, và mỗi file lớn nằm lại vĩnh viễn trong bộ nhớ đệm bên dưới).
+    // types: []: không tự nạp các gói @types trong node_modules của server.
+    noResolve: true,
+    types: [],
   }
 }
 
@@ -75,30 +82,63 @@ function taoOptions(ts: TsCompiler): TS.CompilerOptions {
 //
 // Đây không phải tối ưu sớm: chính chỗ này đã làm cổng CI hết giờ (mỗi bài học một lượt tsc),
 // và trên server nó là CPU tiêu tốn cho MỖI lần học viên bấm "Chấm bài".
+//
+// Bộ nhớ này CHỈ giữ file trong thư mục lib chuẩn của gói typescript (một tập hữu hạn ~100
+// file) — mọi đường dẫn khác bị host từ chối trước khi đọc đĩa. Trước bản vá 2026-09-27 nó giữ
+// MỌI file từng được tham chiếu, nên chính học viên quyết định nó phình tới đâu (~10 MB heap
+// cho mỗi file .d.ts lớn, không bao giờ giải phóng) → worker bị PM2 giết vì quá RAM.
 const boNhoLib = new Map<string, TS.SourceFile | undefined>()
-let hostDungChung: TS.CompilerHost | null = null
+let hostDungChung: { host: TS.CompilerHost; thuMucLib: string } | null = null
 
-function layHost(ts: TsCompiler, options: TS.CompilerOptions): TS.CompilerHost {
+/** Thư mục chứa lib.*.d.ts của chính gói typescript (đường dẫn đã chuẩn hoá dấu '/'). */
+function timThuMucLib(goc: TS.CompilerHost, options: TS.CompilerOptions): string {
+  const tuHost = goc.getDefaultLibLocation?.()
+  if (tuHost) return tuHost.replace(/\\/g, '/').replace(/\/+$/, '')
+  const fileLib = goc.getDefaultLibFileName(options).replace(/\\/g, '/')
+  return fileLib.slice(0, fileLib.lastIndexOf('/'))
+}
+
+/** `ten` có phải một file lib chuẩn nằm TRỰC TIẾP trong thư mục lib không (không `..`, không thư mục con). */
+function laFileLib(ten: string, thuMucLib: string): boolean {
+  const chuan = ten.replace(/\\/g, '/')
+  if (!chuan.startsWith(thuMucLib + '/')) return false
+  const phanSau = chuan.slice(thuMucLib.length + 1)
+  return phanSau.length > 0 && !phanSau.includes('/') && !phanSau.includes('..')
+}
+
+function layHost(
+  ts: TsCompiler,
+  options: TS.CompilerOptions,
+): { host: TS.CompilerHost; thuMucLib: string } {
   if (hostDungChung) return hostDungChung
   const goc = ts.createCompilerHost(options)
-  hostDungChung = {
+  const thuMucLib = timThuMucLib(goc, options)
+  const host: TS.CompilerHost = {
     ...goc,
     getSourceFile: (ten, ...rest) => {
+      if (!laFileLib(ten, thuMucLib)) return undefined
       const san = boNhoLib.get(ten)
       if (san !== undefined) return san
       const tep = goc.getSourceFile(ten, ...rest)
       boNhoLib.set(ten, tep)
       return tep
     },
+    fileExists: (ten) => laFileLib(ten, thuMucLib) && goc.fileExists(ten),
+    readFile: (ten) => (laFileLib(ten, thuMucLib) ? goc.readFile(ten) : undefined),
+    // Không liệt kê/duyệt thư mục nào của server (tự dò @types, typeRoots…).
+    directoryExists: (ten) => ten.replace(/\\/g, '/').replace(/\/+$/, '') === thuMucLib,
+    getDirectories: () => [],
+    realpath: (ten) => ten,
     writeFile: () => {},
   }
+  hostDungChung = { host, thuMucLib }
   return hostDungChung
 }
 
 export function kiemTraTypeScript(code: string, ts: TsCompiler): KetQuaKiemTs {
   const options = taoOptions(ts)
   const sourceFile = ts.createSourceFile(TEN_FILE_TS, code, ts.ScriptTarget.ES2020, true)
-  const hostGoc = layHost(ts, options)
+  const { host: hostGoc } = layHost(ts, options)
   const host: TS.CompilerHost = {
     ...hostGoc,
     getSourceFile: (ten, ...rest) =>
