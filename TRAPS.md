@@ -652,3 +652,23 @@ hơn khi hình bị thu nhỏ.
 **Cổng chốt chặn:** cổng AAA chỉ quét trang bài `sinh12-c1-b1` (và các trang trong danh sách của
 `e2e/a11y-aaa.spec.ts`), không quét mọi hoạt ảnh. Đề xuất: cho máy kiểm hình học của
 `scripts/shots-lesson-animations.ts` cảnh báo khi khung bao hai nhãn giao nhau.
+
+## 16. Tin rằng `real_ip` của nginx "lọc" header IP → rate limit né được bằng cách gọi thẳng IP gốc
+
+**Ngày/PR:** 2026-09-27, changelog `0465` (audit bảo mật lần hai). Lỗ hổng sống từ 2026-08-26
+(changelog `0154`/`0155`) tới khi được vá.
+
+**Khuôn lỗi:** tài liệu và comment tin `cloudflare-realip.conf` "chỉ nhận `CF-Connecting-IP` từ
+đúng dải IP Cloudflare", nên app đọc header đó TRƯỚC `X-Real-IP`. Thực tế module `real_ip` chỉ
+đổi biến `$remote_addr`; header client gửi lên vẫn được nginx chuyển NGUYÊN cho upstream. Ai gọi
+thẳng vào IP VPS (cổng 443 mở cho mọi IP) kèm `CF-Connecting-IP` ngẫu nhiên là mỗi request một
+bộ đếm rate limit mới. Bài thử A/B lúc đó đi QUA Cloudflare — CF tự ghi đè header — nên xanh giả.
+
+**Cách rà:** với mọi header IP app đọc, hỏi "client có tự gửi header này tới được app không khi
+đi ĐƯỜNG KHÁC edge?" Kiểm bằng `curl --resolve <domain>:443:<IP_VPS> -H 'CF-Connecting-IP: …'`,
+không bằng request đi qua CF. Module nào chỉ đổi BIẾN nginx (`real_ip`, `map`) thì không đổi
+HEADER gửi upstream — muốn chắc phải `proxy_set_header` ghi đè.
+
+**Cổng chốt chặn:** `scripts/nginx-proxy-headers.test.ts` (mọi `location` có `proxy_pass` phải
+ghi đè `X-Real-IP`/`CF-Connecting-IP`/`X-Forwarded-For` bằng `$remote_addr`) +
+`packages/core-http/http.test.ts` ca "gọi thẳng IP VPS kèm CF-Connecting-IP giả".

@@ -111,9 +111,9 @@ afterEach(async () => {
 })
 
 describe('Gemini Live WS — hàng rào truy cập và chi phí', () => {
-  it('rate limit theo IP đã xác minh ở proxy, không gộp mọi user vào IP Nginx', async () => {
+  it('rate limit theo IP nginx đã xác minh (X-Real-IP), không theo CF-Connecting-IP tự khai', async () => {
     expect(
-      await connect(origin, { 'cf-connecting-ip': '203.0.113.9', 'x-real-ip': '10.0.0.1' }),
+      await connect(origin, { 'cf-connecting-ip': '10.0.0.1', 'x-real-ip': '203.0.113.9' }),
     ).toBeInstanceOf(WebSocket)
     expect(checkRateLimit).toHaveBeenCalledWith('203.0.113.9', 10, 'gemini-live-upgrade')
     expect(checkRateLimit).toHaveBeenCalledWith('user-1', 5, 'gemini-live-user')

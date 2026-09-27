@@ -114,10 +114,31 @@ sudo nginx -t && sudo systemctl reload nginx
    (40/40 lần `200`, không một `429`). Nếu cả hai đều toàn `200` ⇒ rate limit không chạy chút
    nào, vấn đề còn lớn hơn.
 
-   Lớp bảo vệ nằm ở **hai chỗ, cần cả hai**: `getClientIp()` đọc `CF-Connecting-IP` trước
-   (`packages/core-http/http.ts`), VÀ nginx chỉ nhận header đó từ đúng dải IP Cloudflare
-   (`include /etc/nginx/cloudflare-realip.conf`). Thiếu lớp nginx thì ai gọi thẳng vào IP VPS
-   vẫn tự đặt được `CF-Connecting-IP`.
+   Hai bài trên đi QUA Cloudflare — CF tự ghi đè `CF-Connecting-IP` nên chúng KHÔNG thử được
+   đường nguy hiểm nhất: **gọi thẳng vào IP VPS**, bỏ qua CF. Bài C (chạy từ máy bất kỳ, thay
+   `<IP_VPS>`):
+
+   ```bash
+   # C. 40 request thẳng vào origin, mỗi lần một CF-Connecting-IP giả khác nhau.
+   for i in $(seq 1 40); do
+     curl -sk -o /dev/null -w "%{http_code} " --resolve en-vi.donghanhcungban.org:443:<IP_VPS> \
+       -H "CF-Connecting-IP: 10.0.$((RANDOM%255)).$((RANDOM%255))" \
+       https://en-vi.donghanhcungban.org/api/app-settings
+   done; echo
+   ```
+
+   Phải thấy `429` sau khoảng 30 request (hoặc toàn lỗi kết nối nếu firewall đã chỉ cho CF vào —
+   càng tốt). Toàn `200` ⇒ rate limit bị né.
+
+   **Lớp bảo vệ — đính chính 2026-09-27 (changelog 0465):** bản trước của tài liệu này nói
+   `cloudflare-realip.conf` "chỉ nhận header đó từ đúng dải IP Cloudflare". **Sai.** Module
+   `real_ip` chỉ đổi biến `$remote_addr`, KHÔNG xoá header client tự gửi — nginx vẫn chuyển
+   nguyên `CF-Connecting-IP` giả tới Express, và app khi đó đọc header này TRƯỚC, nên bài C từng
+   né được hoàn toàn. Nay có ba lớp: (1) `getClientIp()` đọc `X-Real-IP` trước — nginx luôn ghi
+   đè = `$remote_addr` đã qua `real_ip`; (2) `nginx/en-vi.conf` ghi đè cả `CF-Connecting-IP` lẫn
+   `X-Forwarded-For` bằng `$remote_addr` ở mọi `location` proxy (test canh
+   `scripts/nginx-proxy-headers.test.ts`); (3) firewall chỉ cho dải IP Cloudflare vào 80/443
+   (mục cuối).
 
 ## Cách hoàn tác (nếu có sự cố)
 
@@ -131,8 +152,10 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## (Tùy chọn, nâng cao) Chặn truy cập thẳng vào IP VPS
 
-Có thể giới hạn firewall VPS chỉ nhận traffic từ dải IP Cloudflare trên cổng
-80/443 để thêm 1 lớp bảo vệ — không bắt buộc vì `cloudflare-realip.conf` đã tự
-chống giả mạo IP. **Rủi ro:** nếu sau này tắt Cloudflare Proxy mà quên gỡ rule
+**Khuyến nghị làm (nâng từ "tùy chọn" ngày 2026-09-27):** giới hạn firewall VPS chỉ nhận
+traffic từ dải IP Cloudflare trên cổng 80/443. `cloudflare-realip.conf` KHÔNG tự chống giả mạo
+IP (xem đính chính ở mục kiểm chứng trên), và trước bản vá 0465 IP thật của VPS có thể đã lộ qua
+lỗ SSRF Web Push — nên kẻ gọi thẳng vào origin là khả năng thật, không phải giả định.
+**Rủi ro:** nếu sau này tắt Cloudflare Proxy mà quên gỡ rule
 firewall, site sẽ không truy cập được — luôn giữ port 22 (SSH) mở để không tự
 khóa mình ngoài VPS.
