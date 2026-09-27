@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   getCorsHeaders,
   checkRateLimit,
+  consumeWindowCounter,
+  resetCounter,
+  rateLimitSubject,
+  isAllowedWebSocketOrigin,
   warnIfClusterWithoutRedis,
   validateAuth,
   validateContentType,
@@ -93,6 +97,94 @@ describe('checkRateLimit (fallback Map in-memory khi không có REDIS_URL)', () 
     expect(await checkRateLimit(ip, 1, 'win')).toBe(false)
     vi.advanceTimersByTime(61_000)
     expect(await checkRateLimit(ip, 1, 'win')).toBe(true) // cửa sổ mới
+  })
+})
+
+describe('rateLimitSubject — gom IPv6 theo /64 (vá 2026-09-27)', () => {
+  it.each([
+    ['2001:db8:abcd:12::1', '2001:db8:abcd:12::/64'],
+    ['2001:0db8:abcd:0012:ffff:ffff:ffff:ffff', '2001:db8:abcd:12::/64'],
+    ['2001:DB8:ABCD:12:1:2:3:4', '2001:db8:abcd:12::/64'],
+    ['fe80::1%eth0', 'fe80:0:0:0::/64'],
+    ['::1', '0:0:0:0::/64'],
+    ['2001:db8::', '2001:db8:0:0::/64'],
+  ])('%s → %s', (input, expected) => {
+    expect(rateLimitSubject(input)).toBe(expected)
+  })
+
+  it('IPv4-mapped IPv6 → chính IPv4 đó (cùng bộ đếm với IPv4 thuần)', () => {
+    expect(rateLimitSubject('::ffff:203.0.113.7')).toBe('203.0.113.7')
+    expect(rateLimitSubject('::ffff:cb00:7107')).toBe('203.0.113.7')
+  })
+
+  it.each(['203.0.113.7', 'unknown', '6f1c2d3e-aaaa-bbbb-cccc-1234567890ab', 'user-1', ''])(
+    'không phải IPv6 → giữ nguyên: %s',
+    (input) => {
+      expect(rateLimitSubject(input)).toBe(input)
+    },
+  )
+
+  it('checkRateLimit: đổi địa chỉ trong cùng /64 KHÔNG được thêm lượt', async () => {
+    delete process.env.REDIS_URL
+    const prefix = `2001:db8:${Math.floor(Math.random() * 0xffff).toString(16)}:7`
+    expect(await checkRateLimit(`${prefix}::1`, 2, 'v6')).toBe(true)
+    expect(await checkRateLimit(`${prefix}::2`, 2, 'v6')).toBe(true)
+    expect(await checkRateLimit(`${prefix}:dead:beef:1:2`, 2, 'v6')).toBe(false)
+    // Dải /64 khác thì là chủ thể khác.
+    expect(await checkRateLimit(`${prefix.slice(0, -1)}8::1`, 2, 'v6')).toBe(true)
+  })
+})
+
+describe('isAllowedWebSocketOrigin (chống Cross-Site WebSocket Hijacking — 2026-09-27)', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('production: chỉ nhận origin trong danh sách, chặn subdomain lạ và thiếu Origin', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('ALLOWED_ORIGINS', undefined)
+    expect(isAllowedWebSocketOrigin('https://en-vi.donghanhcungban.org')).toBe(true)
+    expect(isAllowedWebSocketOrigin('https://sales.donghanhcungban.org')).toBe(false)
+    expect(isAllowedWebSocketOrigin('https://evil.test')).toBe(false)
+    expect(isAllowedWebSocketOrigin('null')).toBe(false)
+    expect(isAllowedWebSocketOrigin(undefined)).toBe(false)
+    expect(isAllowedWebSocketOrigin(['https://en-vi.donghanhcungban.org'])).toBe(false)
+  })
+
+  it('dev (không ALLOWED_ORIGINS): chỉ localhost', () => {
+    vi.stubEnv('NODE_ENV', 'test')
+    vi.stubEnv('VERCEL_ENV', undefined)
+    vi.stubEnv('ALLOWED_ORIGINS', undefined)
+    expect(isAllowedWebSocketOrigin('http://localhost:5173')).toBe(true)
+    expect(isAllowedWebSocketOrigin('https://en-vi.donghanhcungban.org')).toBe(false)
+  })
+})
+
+describe('consumeWindowCounter + resetCounter (fallback Map)', () => {
+  beforeEach(() => {
+    delete process.env.REDIS_URL
+    vi.useRealTimers()
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('chặn sau `limit` lượt trong cửa sổ, mở lại khi hết cửa sổ', async () => {
+    vi.useFakeTimers()
+    const key = 'win-' + Math.random()
+    expect(await consumeWindowCounter(key, 2, 15 * 60_000)).toBe(true)
+    expect(await consumeWindowCounter(key, 2, 15 * 60_000)).toBe(true)
+    expect(await consumeWindowCounter(key, 2, 15 * 60_000)).toBe(false)
+    vi.advanceTimersByTime(15 * 60_000 + 1)
+    expect(await consumeWindowCounter(key, 2, 15 * 60_000)).toBe(true)
+  })
+
+  it('resetCounter xoá hẳn số lượt đã đếm', async () => {
+    const key = 'reset-' + Math.random()
+    expect(await consumeWindowCounter(key, 1, 60_000)).toBe(true)
+    expect(await consumeWindowCounter(key, 1, 60_000)).toBe(false)
+    await resetCounter(key)
+    expect(await consumeWindowCounter(key, 1, 60_000)).toBe(true)
+  })
+
+  it('limit <= 0 → luôn chặn', async () => {
+    expect(await consumeWindowCounter('zero-' + Math.random(), 0, 60_000)).toBe(false)
   })
 })
 

@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createHash } from 'node:crypto'
 import { getPgPool } from '@dhcb/core-db/pgPool'
@@ -182,6 +183,16 @@ describe('verifyUserPassword', { timeout: 10000 }, () => {
   it('email KHÔNG tồn tại → null (không phân biệt với sai mật khẩu)', async () => {
     mockedGetPool.mockReturnValue(mockPool(async () => ({ rows: [] })))
     expect(await verifyUserPassword('khong-co@example.com', 'x')).toBeNull()
+  })
+
+  it('CHẶN HỒI QUY 2026-09-27: email không tồn tại VẪN chạy bcrypt (không lộ email qua thời gian)', async () => {
+    const compare = vi.spyOn(bcrypt, 'compare')
+    mockedGetPool.mockReturnValue(mockPool(async () => ({ rows: [] })))
+    expect(await verifyUserPassword('khong-co@example.com', 'x')).toBeNull()
+    expect(compare).toHaveBeenCalledTimes(1)
+    // Hash giả phải cùng độ khó với hash thật, không thì vẫn chênh thời gian.
+    const dummyHash = String(compare.mock.calls[0]?.[1])
+    expect(bcrypt.getRounds(dummyHash)).toBe(bcrypt.getRounds(await hashPassword('x')))
   })
 
   it('user chỉ đăng nhập OAuth, chưa từng đặt mật khẩu (password_hash null) → null', async () => {

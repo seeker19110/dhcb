@@ -5,10 +5,18 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+const accountCounter = vi.hoisted(() => ({
+  consumeWindowCounter: vi.fn<(key: string, limit: number, windowMs: number) => Promise<boolean>>(
+    async () => true,
+  ),
+  resetCounter: vi.fn<(key: string) => Promise<void>>(async () => undefined),
+}))
 vi.mock('./security.js', () => ({
   getCorsHeaders: () => ({}),
   SECURITY_HEADERS: {},
   checkRateLimit: async () => true,
+  consumeWindowCounter: accountCounter.consumeWindowCounter,
+  resetCounter: accountCounter.resetCounter,
   validateAuth: async (req: Request) => {
     const header = req.headers.get('Authorization')
     if (header === 'Bearer valid-token') return { userId: 'user-1' }
@@ -72,7 +80,11 @@ vi.mock('./passwordReset.js', () => ({
   resetPassword: vi.fn(),
 }))
 
-import handler from './auth.js'
+import handler, {
+  loginAccountKey,
+  LOGIN_ACCOUNT_MAX_ATTEMPTS,
+  LOGIN_ACCOUNT_WINDOW_MS,
+} from './auth.js'
 import { MicrosoftAccountLinkRequiredError, OAuthAccountLinkRequiredError } from './authService.js'
 import { resetPassword } from './passwordReset.js'
 import { jsonResponse } from '@dhcb/core-http/http'
@@ -87,6 +99,7 @@ function makeRequest(body: unknown): Request {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  accountCounter.consumeWindowCounter.mockResolvedValue(true)
   authService.createSession.mockResolvedValue('session-token-abc')
   authService.ensureProfileRow.mockImplementation(async (_userId: string, name: string) => ({
     plan: 'free' as const,
@@ -219,6 +232,46 @@ describe('/api/auth — action register/login (đối chiếu hành vi trước 
     )
     expect(resp.status).toBe(401)
     expect(authService.createSession).not.toHaveBeenCalled()
+    // Sai thì KHÔNG xoá bộ đếm theo tài khoản.
+    expect(accountCounter.resetCounter).not.toHaveBeenCalled()
+  })
+
+  it('CHẶN HỒI QUY 2026-09-27: quá số lần thử theo TÀI KHOẢN → 429, KHÔNG kiểm mật khẩu', async () => {
+    accountCounter.consumeWindowCounter.mockResolvedValue(false)
+    authService.verifyUserPassword.mockResolvedValue({ id: 'u1', email: 'e@f.com' })
+
+    const resp = await handler(
+      makeRequest({ action: 'login', email: 'e@f.com', password: 'right-password' }),
+    )
+    expect(resp.status).toBe(429)
+    expect(resp.headers.get('Retry-After')).toBe(String(LOGIN_ACCOUNT_WINDOW_MS / 1000))
+    // Không được chạy bcrypt/không cấp phiên khi đã khoá — kể cả mật khẩu đúng.
+    expect(authService.verifyUserPassword).not.toHaveBeenCalled()
+    expect(authService.createSession).not.toHaveBeenCalled()
+  })
+
+  it('bộ đếm theo email đã chuẩn hoá (hoa/thường, khoảng trắng) và không chứa email dạng rõ', async () => {
+    authService.verifyUserPassword.mockResolvedValue(null)
+    await handler(makeRequest({ action: 'login', email: ' E@F.com ', password: 'x' }))
+    await handler(makeRequest({ action: 'login', email: 'e@f.com', password: 'y' }))
+    const keys = accountCounter.consumeWindowCounter.mock.calls.map((call) => call[0])
+    expect(keys[0]).toBe(keys[1])
+    expect(keys[0]).toBe(loginAccountKey('e@f.com'))
+    expect(keys[0]).not.toContain('e@f.com')
+    expect(accountCounter.consumeWindowCounter).toHaveBeenCalledWith(
+      loginAccountKey('e@f.com'),
+      LOGIN_ACCOUNT_MAX_ATTEMPTS,
+      LOGIN_ACCOUNT_WINDOW_MS,
+    )
+  })
+
+  it('đăng nhập đúng → xoá bộ đếm của tài khoản đó', async () => {
+    authService.verifyUserPassword.mockResolvedValue({ id: 'u1', email: 'e@f.com' })
+    const resp = await handler(
+      makeRequest({ action: 'login', email: 'e@f.com', password: 'right-password' }),
+    )
+    expect(resp.status).toBe(200)
+    expect(accountCounter.resetCounter).toHaveBeenCalledWith(loginAccountKey('e@f.com'))
   })
 })
 

@@ -30,7 +30,8 @@ export default async function handler(req: Request): Promise<Response> {
   // Rate limiting — stricter for export (heavy query)
   const url = new URL(req.url)
   const action = url.searchParams.get('action')
-  const rateLimitKey = action === 'export' ? `persons-export-${clientIp}` : `persons-${clientIp}`
+  // Tên bucket KHÔNG chứa IP: IP là chủ thể đếm, checkRateLimit tự gom IPv6 theo /64.
+  const rateLimitKey = action === 'export' ? 'persons-export' : 'persons'
   const rateLimitMax = action === 'export' ? 2 : 30 // export: 2/min, normal: 30/min
 
   if (!(await checkRateLimit(clientIp, rateLimitMax, rateLimitKey))) {

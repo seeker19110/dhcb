@@ -3,12 +3,21 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 const authState: { user: { userId: string } | null } = { user: { userId: 'user-1' } }
 let rateLimitOk = true
+let userAttemptOk = true
+const counter = vi.hoisted(() => ({ consumed: [] as unknown[][], reset: [] as string[] }))
 const securityEvents: { type: string; meta: unknown }[] = []
 
 vi.mock('@dhcb/core-auth/security', () => ({
   getCorsHeaders: () => ({}),
   SECURITY_HEADERS: {},
   checkRateLimit: async () => rateLimitOk,
+  consumeWindowCounter: async (...args: unknown[]) => {
+    counter.consumed.push(args)
+    return userAttemptOk
+  },
+  resetCounter: async (key: string) => {
+    counter.reset.push(key)
+  },
   validateAuth: async () => authState.user,
   logSecurityEvent: (type: string, _ip: string, meta: unknown) =>
     securityEvents.push({ type, meta }),
@@ -33,7 +42,11 @@ const svc = vi.hoisted(() => ({
 vi.mock('@dhcb/core-auth/twoFactor', () => svc)
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 
-import handler from './two-factor.js'
+import handler, {
+  twoFactorUserKey,
+  TWO_FACTOR_USER_MAX_ATTEMPTS,
+  TWO_FACTOR_USER_WINDOW_MS,
+} from './two-factor.js'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 
 const query = vi.fn()
@@ -41,6 +54,9 @@ const query = vi.fn()
 beforeEach(() => {
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
+  userAttemptOk = true
+  counter.consumed.length = 0
+  counter.reset.length = 0
   cookieToken = 'raw-session'
   passwordOk = true
   securityEvents.length = 0
@@ -216,5 +232,41 @@ describe('regenerate-recovery', () => {
       (await handler(post({ action: 'regenerate-recovery', code: '0' + '00000' }))).status,
     ).toBe(401)
     expect(svc.regenerateRecoveryCodes).not.toHaveBeenCalled()
+  })
+})
+
+describe('giới hạn thử mã theo NGƯỜI DÙNG (vá 2026-09-27)', () => {
+  it.each(['verify', 'confirm', 'regenerate-recovery'] as const)(
+    '%s: hết lượt theo userId → 429, KHÔNG kiểm mã',
+    async (action) => {
+      userAttemptOk = false
+      const resp = await handler(post({ action, code: '123456' }))
+      expect(resp.status).toBe(429)
+      expect(resp.headers.get('Retry-After')).toBe(String(TWO_FACTOR_USER_WINDOW_MS / 1000))
+      expect(svc.verifyTwoFactor).not.toHaveBeenCalled()
+      expect(svc.confirmTwoFactorSetup).not.toHaveBeenCalled()
+      expect(securityEvents.map((e) => e.type)).toContain('TWO_FACTOR_USER_THROTTLED')
+    },
+  )
+
+  it('đếm theo userId với đúng ngưỡng/cửa sổ — đổi IP không thoát được', async () => {
+    svc.verifyTwoFactor.mockResolvedValue({ ok: false, reason: 'invalid' })
+    await handler(post({ action: 'verify', code: '000000' }))
+    expect(counter.consumed).toEqual([
+      [twoFactorUserKey('user-1'), TWO_FACTOR_USER_MAX_ATTEMPTS, TWO_FACTOR_USER_WINDOW_MS],
+    ])
+    expect(counter.reset).toEqual([]) // sai mã → không xoá bộ đếm
+  })
+
+  it('nhập đúng mã → xoá bộ đếm', async () => {
+    const resp = await handler(post({ action: 'verify', code: '123456' }))
+    expect(resp.status).toBe(200)
+    expect(counter.reset).toEqual([twoFactorUserKey('user-1')])
+  })
+
+  it("'setup' không nhận mã nên không trừ lượt", async () => {
+    svc.startTwoFactorSetup.mockResolvedValue({ secret: 's', otpauthUrl: 'otpauth://x' })
+    await handler(post({ action: 'setup' }))
+    expect(counter.consumed).toEqual([])
   })
 })
