@@ -513,6 +513,24 @@ mãi giây đầu của mọi hoạt ảnh mà vẫn in "sạch". Đọc từ sp
    Chất lỏng bên trong vẫn là một hình tô màu riêng. Ngoại lệ có chủ đích: ấm đun (có nắp thật),
    bình khí kín ở bài Lí.
 
+**Ba bẫy nữa lộ ra khi rà mắt 64 hoạt ảnh Sinh (2026-09-27, `docs/changelog/0461-*.md`)** —
+47/64 phải sửa, mọi cổng vẫn xanh:
+
+1. **Hoạt ảnh gắn NHẦM BÀI.** `sinh10-c8-b26` (thực hành virus + nuôi cấy mô) mang hoạt ảnh "dòng
+   năng lượng" của một bài khác. Zod, test và máy kiểm hình học đều chỉ nhìn dữ liệu của chính
+   hoạt ảnh, không đối chiếu với bài. Cách rà: in `bai.title` cạnh `animation.title` của mọi bài
+   một môn rồi đọc lướt cả danh sách (một lệnh `tsx` vài dòng); cặp nào không cùng chủ đề là lộ.
+2. **Số liệu đồ thị gõ tay lệch thang trục.** Vạch "20 °C" đặt ở khoảng 15 °C, đường về 0 không đúng
+   ở điểm gây chết (`sinh12-c8-b25`); đường S nằm TRÊN đường J ở đoạn đầu (`sinh12-c8-b26`); mô tả
+   nói "sau đúng một thế hệ" nhưng đường phẳng từ thế hệ 0 (`sinh12-c3-b15`). Mắt người thấy "đường
+   cong trông hợp lí" nên bỏ qua. Cách làm đúng: sinh toạ độ bằng CÔNG THỨC và hàm đổi thang
+   (`x = 62 + T·390/45`, logistic cùng `r` với hàm mũ), rồi đặt vạch, nhãn bằng cùng hàm đó.
+3. **Hình sinh học "đủ số lượng" nhưng sai cấu trúc.** 2n = 4 vẽ bốn nhiễm sắc thể bốn cỡ (không có
+   cặp tương đồng nào); nhiễm sắc thể KÉP vẽ như đơn; nhãn 3′/5′ làm mạch "liên tục" thành gián
+   đoạn và mũi tên hướng chạc chỉ ngược; máu nghèo O₂ tô đỏ. Cách rà: trước khi xem ảnh, viết ra quy
+   ước cấu trúc mà hình phải giữ (cặp tương đồng cùng cỡ khác màu, chiều 5′→3′ ngược chiều mạch
+   khuôn, đỏ = giàu O₂) rồi soát từng hình theo đúng danh sách đó.
+
 ## 11. `vi.mock` KHÔNG áp cho các `import()` động chạy ĐỒNG THỜI — chỉ lượt đầu nhận mock
 
 **Ngày/PR:** 2026-09-22, `docs/changelog/0411-*.md` (test cho `apps/dhcb/src/lib/subjectProgressBoard.ts`).
