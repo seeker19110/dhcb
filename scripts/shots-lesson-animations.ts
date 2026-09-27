@@ -9,7 +9,7 @@
  * mở bằng Chromium, đặt `currentTime` của mọi animation về 5 mốc 2/25/50/75/98% `durationMs`
  * (kỹ thuật đáng tin — đổi `animation-delay` âm trên animation đã paused cho ảnh sai giả ở mốc
  * gần cuối, xem `TRAPS.md` mục 10), rồi ghép 5 khung thành một dải `montage/<id>.png` để đọc.
- * Ảnh ghi RA NGOÀI REPO (mặc định `/tmp/shots/lesson-animations/<môn>/`) — repo giữ 0 file PNG.
+ * Ảnh ghi RA NGOÀI REPO (mặc định `<thư mục tạm của HĐH>/shots/lesson-animations/<môn>/`) — repo giữ 0 file PNG.
  *
  * Ở mỗi mốc còn chạy `kiemHinhHoc` (thêm 2026-09-26, đợt rà Lí `docs/changelog/0457-*.md`): in
  * dòng ⚠ khi chữ tràn khung, chữ đè chữ, đường/mũi tên gạch qua chữ, chấm đè chữ, chấm hay mũi
@@ -23,7 +23,9 @@ import { chromium } from '@playwright/test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
+import { pathToFileURL } from 'node:url'
 import type { LessonAnimation as LessonAnimationSpec } from '@dhcb/core-contracts/lessonAnimation'
 
 // `scripts/` được typecheck bởi tsconfig.api.json (không bật --jsx, loại trừ core-ui) nên không
@@ -201,7 +203,10 @@ function kiemHinhHoc(): string[] {
 
 async function main() {
   const subject = doiSo('subject', 'math')
-  const out = doiSo('out', `/tmp/shots/lesson-animations/${subject}`)
+  // `tmpdir()` + `resolve` thay cho `/tmp` viết cứng, `pathToFileURL` thay cho ghép chuỗi
+  // `file://`: trên Windows `/tmp/...` ghi ra thư mục `tmp` ở gốc ổ đĩa nhưng URL
+  // `file:///tmp/...` không trỏ tới đó, script gãy ở hoạt ảnh đầu (ERR_FILE_NOT_FOUND).
+  const out = resolve(doiSo('out', join(tmpdir(), 'shots', 'lesson-animations', subject)))
   const only = doiSo('only', '').split(',').filter(Boolean)
   const themeCss = readFileSync('packages/core-ui/theme.css', 'utf8')
   const { LessonAnimation } = (await import(RENDERER_MODULE)) as {
@@ -225,7 +230,7 @@ async function main() {
   for (const { id, spec } of danhSach) {
     const htmlPath = join(out, `${id}.html`)
     writeFileSync(htmlPath, trangHtml(LessonAnimation, spec, themeCss))
-    await page.goto(`file://${htmlPath}`)
+    await page.goto(pathToFileURL(htmlPath).href)
     const soAnim = await page.evaluate(() =>
       [...document.querySelectorAll("[data-animated='true']")].reduce(
         (n, g) => n + g.getAnimations().length,
@@ -260,7 +265,7 @@ async function main() {
       `<html><body style="margin:0;padding:6px;background:#fff"><div style="font:bold 15px sans-serif;margin-bottom:4px">${id} — ${spec.title}</div><div style="display:flex;gap:4px">${khung}</div></body></html>`,
     )
     await page.setViewportSize({ width: 1900, height: 600 })
-    await page.goto(`file://${montagePath}`)
+    await page.goto(pathToFileURL(montagePath).href)
     await page.locator('body').screenshot({ path: join(out, 'montage', `${id}.png`) })
     await page.setViewportSize({ width: 760, height: 900 })
     if (soAnim === 0) dungYen += 1
