@@ -28,15 +28,15 @@ Mốc nền: main `896626a58b8f6f9640d5af875c7cb19cbe036c98`, PR #1189 đã merg
 
 ## 3. Milestones và slices
 
-| ID  | Outcome/AC                                                      | State   | Evidence                                          |
-| --- | --------------------------------------------------------------- | ------- | ------------------------------------------------- |
-| S1  | Chặn grader không cách ly; gate trước compute; giữ outbox       | DONE    | completionSandboxServer/progress/syncOutbox tests |
-| S2  | Admin ID; OAuth không auto-link; cookie-only; email/TOTP atomic | DONE    | core-auth và admin tests                          |
-| S3  | Gemini owner/quota; TTS paid miss quota + breaker               | DONE    | core-ai và gemini-live tests                      |
-| S4  | Chỉ bằng chứng tin cậy cấp VIP; referral atomic                 | DONE    | rewards/history/evidence tests                    |
-| S5  | CSRF trung tâm; Redis production đóng khi lỗi; runbook          | DONE    | security/browser/redis và routes.csrf tests       |
-| S6  | Local gates và review diff                                      | DONE    | Build/typecheck/lint/unit PASS; E2E chờ Chromium  |
-| S7  | Review, CI, rollout và smoke staging/production                 | WAITING | Cần quyền phát hành và môi trường                 |
+| ID  | Outcome/AC                                                      | State   | Evidence                                                                                  |
+| --- | --------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------- |
+| S1  | Chặn grader không cách ly; gate trước compute; giữ outbox       | DONE    | completionSandboxServer/progress/syncOutbox tests                                         |
+| S2  | Admin ID; OAuth không auto-link; cookie-only; email/TOTP atomic | DONE    | core-auth và admin tests                                                                  |
+| S3  | Gemini owner/quota; TTS paid miss quota + breaker               | DONE    | core-ai và gemini-live tests                                                              |
+| S4  | Chỉ bằng chứng tin cậy cấp VIP; referral atomic                 | DONE    | rewards/history/evidence tests                                                            |
+| S5  | CSRF trung tâm; Redis production đóng khi lỗi; runbook          | DONE    | security/browser/redis và routes.csrf tests                                               |
+| S6  | Local gates và review diff                                      | DONE    | Build/typecheck/lint/unit PASS; E2E chờ Chromium                                          |
+| S7  | Review, CI, rollout và smoke staging/production                 | PARTIAL | Merge #1190; Deploy run 1142 (2026-09-27 08:34 UTC) thành công; smoke production chưa ghi |
 
 ## 4. Risk register
 
