@@ -83,10 +83,13 @@ export interface FillBlankBuildResult {
   questions: FillBlankQuestion[]
   rejections: FillBlankRejection[]
   counts: Record<FillBlankReason | 'accepted', number>
+  /** Số entry đã xét; khi có maxQuestions, phần còn lại chưa được kiểm tra. */
   total: number
 }
 
 export interface FillBlankBuildOptions {
+  /** Dừng khi đủ câu hợp lệ cho phiên học; bỏ trống để audit toàn bộ pool. */
+  maxQuestions?: number
   /** Định danh từng entry; mặc định `pool#<vị trí>` (id phiên, không dùng xuyên phiên). */
   refs?: readonly string[]
   /** Hạt giống cho thứ tự distractor/options — cùng seed + pool thì cùng kết quả. */
@@ -345,6 +348,9 @@ export function buildFillBlankQuestions(
 ): FillBlankBuildResult {
   const refs = options.refs ?? pool.map((_, i) => `pool#${i}`)
   if (refs.length !== pool.length) throw new Error('refs phải cùng độ dài với pool')
+  const maxQuestions = options.maxQuestions ?? Infinity
+  if (maxQuestions !== Infinity && (!Number.isInteger(maxQuestions) || maxQuestions < 0))
+    throw new Error('maxQuestions phải là số nguyên không âm')
   const seed = options.seed ?? ''
   const rank = options.rank ?? fnvRank
 
@@ -363,6 +369,8 @@ export function buildFillBlankQuestions(
     }
   })
 
+  const uniqueLabelKeys = new Set(labelPool.map((c) => c.key))
+
   const counts = Object.fromEntries(
     [...FILL_BLANK_REASONS, 'accepted'].map((k) => [k, 0]),
   ) as FillBlankBuildResult['counts']
@@ -373,7 +381,8 @@ export function buildFillBlankQuestions(
     rejections.push({ ref, reason })
   }
 
-  pool.forEach((raw, i) => {
+  let total = 0
+  const inspect = (raw: unknown, i: number) => {
     const ref = refs[i]!
     const matched = matchEntry(raw, direction)
     if (matched.kind === 'rejected') return reject(ref, matched.reason)
@@ -383,6 +392,9 @@ export function buildFillBlankQuestions(
     // Loại mọi nhãn/form của entry nguồn và chính đáp án, rồi khử trùng theo khoá fold.
     const banned = new Set(targetLabels(entry, direction).map(foldLabel))
     banned.add(foldLabel(answer))
+    let available = uniqueLabelKeys.size
+    for (const key of banned) if (uniqueLabelKeys.has(key)) available--
+    if (available < DISTRACTOR_COUNT) return reject(ref, 'insufficient_distractors')
     // Khoá = rankKey(seed, direction, ref, c.ref), ghép chuỗi trước cho nhanh (audit ~12k × 12k).
     const keyHead = rankKey(seed, direction, ref).slice(0, -1) + ','
     const picked = pickDistractors(labelPool, ref, banned, (c) => rank(keyHead + c.refJson + ']'))
@@ -419,7 +431,11 @@ export function buildFillBlankQuestions(
     if (!questionIsValid(question)) return reject(ref, 'invariant_failed')
     counts.accepted++
     questions.push(question)
-  })
+  }
+  for (let i = 0; i < pool.length && questions.length < maxQuestions; i++) {
+    total++
+    inspect(pool[i], i)
+  }
 
-  return { questions, rejections, counts, total: pool.length }
+  return { questions, rejections, counts, total }
 }

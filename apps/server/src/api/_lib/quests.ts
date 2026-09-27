@@ -7,13 +7,13 @@
 //   1. "Chia sẻ công khai" — YẾU NHẤT, xem cảnh báo ở dưới.
 //   2. "Học liên tiếp N ngày" — server tự đếm từ `free_daily_credit` (ghi bởi
 //      grant_daily_bonus_rolling khi phát hiện học thật, không phải lời khai client).
-//   3. "Thi đạt cấp CEFR" — đọc `learning_progress.cefr_exams` (client gửi kết quả thi lên
-//      qua /api/progress, cùng mức tin cậy với luật MỞ KHOÁ CẤP TIẾP THEO app đã dùng từ
-//      trước — không phải lỗ hổng MỚI do nhiệm vụ này tạo ra).
+//   3. "Thi đạt cấp CEFR" — chỉ đọc kết quả từ kho chấm thi của server; kết quả tự khai
+//      qua /api/progress không đủ thẩm quyền để cấp thưởng VIP.
 //   4. "Mời bạn xác thực email" — đã có sẵn từ trước (api/_lib/referral.ts), CHỈ gộp số liệu
 //      vào GET /api/quests để hiện chung 1 nơi, không đổi logic thưởng đã có.
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 import { vnDateStr, addDays } from '@dhcb/core-db/date'
 import { getReferralStats, type ReferralStats } from './referral.js'
@@ -100,8 +100,11 @@ function cefrExamQuestKey(level: CefrExamLevel): string {
 
 async function readCefrExamsPassed(userId: string): Promise<Set<string>> {
   const pool = getPgPool()
-  const { rows } = await pool.query<{ cefr_exams: Record<string, { passed?: boolean }> | null }>(
-    'select cefr_exams from english.learning_progress where user_id = $1',
+  const { rows } = await pool.query<{
+    cefr_exams: Record<string, { passed?: boolean }> | null
+  }>(
+    `select state->'exams' as cefr_exams from platform.feature_state
+     where user_id = $1 and feature = 'cefr_assessment_v1'`,
     [userId],
   )
   const exams = rows[0]?.cefr_exams ?? {}
@@ -140,21 +143,23 @@ async function claimGeneric(
 ): Promise<ClaimQuestResult> {
   try {
     const pool = getPgPool()
-    const { rows } = await pool.query<{ claim_quest_if_ready: boolean }>(
-      'select public.claim_quest_if_ready($1, $2, $3) as claim_quest_if_ready',
-      [userId, questKey, cooldownDays],
-    )
-    if (!rows[0]?.claim_quest_if_ready) {
-      return {
-        ok: false,
-        message:
-          cooldownDays >= 3650
-            ? 'Bạn đã nhận thưởng nhiệm vụ này rồi.'
-            : `Bạn đã nhận thưởng rồi — quay lại sau ${cooldownDays} ngày kể từ lần trước nhé.`,
+    return await withTransaction(pool, async (client): Promise<ClaimQuestResult> => {
+      const { rows } = await client.query<{ claim_quest_if_ready: boolean }>(
+        'select public.claim_quest_if_ready($1, $2, $3) as claim_quest_if_ready',
+        [userId, questKey, cooldownDays],
+      )
+      if (!rows[0]?.claim_quest_if_ready) {
+        return {
+          ok: false,
+          message:
+            cooldownDays >= 3650
+              ? 'Bạn đã nhận thưởng nhiệm vụ này rồi.'
+              : `Bạn đã nhận thưởng rồi — quay lại sau ${cooldownDays} ngày kể từ lần trước nhé.`,
+        }
       }
-    }
-    await grantPlanDays(userId, 'vip', rewardDays)
-    return { ok: true, rewardDays }
+      await grantPlanDays(userId, 'vip', rewardDays, new Date(), client)
+      return { ok: true, rewardDays }
+    })
   } catch (err) {
     console.error('[quests] claimGeneric lỗi:', err)
     return { ok: false, message: 'Có lỗi xảy ra, thử lại sau nhé.' }

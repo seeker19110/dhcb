@@ -12,7 +12,12 @@ import { CEFR_LEVELS } from '../data/cefr'
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
 const mocks = vi.hoisted(() => ({
   card: null as ComponentProps<typeof ExamQuestionCard> | null,
-  save: vi.fn(() => ({ passed: false })),
+  save: vi.fn(async () => ({
+    passed: false,
+    pct: 0,
+    result: { bestPct: 0 },
+    correctAnswers: ['yes', 'yes'],
+  })),
   placementSave: vi.fn(),
   sound: vi.fn(),
 }))
@@ -40,6 +45,20 @@ vi.mock('../lib/achievements', () => ({
 vi.mock('../data/dialoguesLoader', () => ({ getDialogues: async () => [] }))
 vi.mock('../lib/curriculum', () => ({ getLevelWords: () => [] }))
 vi.mock('../lib/vocab', () => ({ getLearnedWords: () => new Set() }))
+vi.mock('../lib/cefrAssessmentApi', () => ({
+  startCefrAssessment: async () => ({
+    attemptId: 'attempt-1',
+    questions: questions().map(({ key, part, promptKind, prompt, options }) => ({
+      key,
+      part,
+      promptKind,
+      prompt,
+      options,
+    })),
+  }),
+  submitCefrAssessment: mocks.save,
+}))
+vi.mock('../lib/progressSync', () => ({ pullProgress: async () => {}, pushProgress: () => {} }))
 vi.mock('../lib/cefrExam', async (original) => ({
   ...(await original<typeof import('../lib/cefrExam')>()),
   buildExam: () => questions(),
@@ -156,7 +175,8 @@ describe('S08 caller guards and focus', () => {
       } while (kind === 'placement' && !mocks.placementSave.mock.calls.length && rounds < 6)
       expect(document.activeElement?.tagName).toBe('H2')
       expect(container.contains(document.activeElement)).toBe(true)
-      if (kind === 'exam') expect(mocks.save).toHaveBeenCalledExactlyOnceWith('u1', 'A1', 0)
+      if (kind === 'exam')
+        expect(mocks.save).toHaveBeenCalledExactlyOnceWith('attempt-1', ['no', 'no'])
       if (kind === 'placement') expect(mocks.placementSave).toHaveBeenCalledTimes(1)
       if (kind === 'listening') expect(mocks.sound).toHaveBeenCalledTimes(2)
       if (kind !== 'placement') {

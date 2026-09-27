@@ -18,6 +18,7 @@ import {
   confirmTwoFactorSetup,
   disableTwoFactor,
   regenerateRecoveryCodes,
+  verifyTwoFactor,
   type TwoFactorStatus,
 } from '../lib/twoFactorApi'
 
@@ -116,6 +117,24 @@ export default function TwoFactorSection({ isA }: { isA: boolean }) {
     setStep('idle')
     void refresh()
     toast.success(isA ? 'Đã tắt xác thực hai bước' : 'Two-factor authentication is off')
+  }
+
+  async function handleVerify() {
+    if (!code.trim()) return
+    setBusy(true)
+    const result = await verifyTwoFactor(code.trim())
+    setBusy(false)
+    if (!result.ok) {
+      toast.error(result.error)
+      return
+    }
+    setCode('')
+    void refresh()
+    toast.success(
+      isA
+        ? 'Đã xác minh. Bạn có thể xem và xuất dữ liệu riêng tư trong 15 phút.'
+        : 'Verified. You can view and export private data for 15 minutes.',
+    )
   }
 
   async function handleRegenerate() {
@@ -342,6 +361,19 @@ export default function TwoFactorSection({ isA }: { isA: boolean }) {
                 className="w-full tap-44 rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-base text-white placeholder:text-zinc-500"
               />
 
+              <p className="text-xs text-zinc-300">
+                {isA
+                  ? 'Xác minh để xem hoặc xuất dữ liệu riêng tư trong 15 phút.'
+                  : 'Verify to view or export private data for 15 minutes.'}
+              </p>
+              <Button
+                onClick={() => void handleVerify()}
+                disabled={busy || !code.trim()}
+                loading={busy}
+                fullWidth
+              >
+                {isA ? 'Xác minh truy cập dữ liệu riêng tư' : 'Verify private data access'}
+              </Button>
               <button
                 type="button"
                 onClick={() => void handleRegenerate()}

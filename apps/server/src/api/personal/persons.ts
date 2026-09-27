@@ -8,6 +8,8 @@
 // client (CLAUDE.md mục 4.2).
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
+import { readSessionCookie } from '@dhcb/core-auth/sessionCookie'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -40,6 +42,33 @@ export default async function handler(req: Request): Promise<Response> {
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
   const pool = getPgPool()
+  const userId = auth.userId
+
+  // Hồ sơ ẩn cần bật 2FA và xác minh lại đúng phiên hiện tại; đọc/xoá dữ liệu thường vẫn mở.
+  async function requirePrivateRead(): Promise<Response | null> {
+    const status = await getTwoFactorStatus(pool, userId)
+    if (!status.enabled) {
+      return jsonResponse(
+        {
+          error: 'Bật xác thực hai bước để xem dữ liệu riêng tư.',
+          code: 'TWO_FACTOR_SETUP_REQUIRED',
+        },
+        403,
+        allHeaders,
+      )
+    }
+    if (!(await hasStepUp(pool, userId, readSessionCookie(req)))) {
+      return jsonResponse(
+        {
+          error: 'Xác minh lại bằng mã hai bước để xem dữ liệu riêng tư.',
+          code: 'STEP_UP_REQUIRED',
+        },
+        403,
+        allHeaders,
+      )
+    }
+    return null
+  }
 
   // ── GET /api/persons ──────────────────────────────────────────────────────
   if (req.method === 'GET' && !action) {
@@ -50,6 +79,8 @@ export default async function handler(req: Request): Promise<Response> {
   // ── GET /api/persons?action=export ────────────────────────────────────────
   if (req.method === 'GET' && action === 'export') {
     const person = await getOrCreatePerson(pool, auth.userId)
+    const denied = await requirePrivateRead()
+    if (denied) return denied
     const exportData = await exportPersonData(pool, person.id)
     return jsonResponse(exportData, 200, allHeaders)
   }

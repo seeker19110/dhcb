@@ -81,3 +81,41 @@ export const NeuralCurriculumStateSchema = z
   .strict()
 
 export type NeuralCurriculumState = z.infer<typeof NeuralCurriculumStateSchema>
+
+// Chỉ nhận đáp án; đúng/sai và tiến độ do máy chủ quyết định.
+export const NeuralDrillSubmissionSchema = z
+  .object({
+    moduleId: UuidSchema,
+    answers: z
+      .array(
+        z
+          .object({
+            drillId: UuidSchema,
+            answer: z.string().min(1).max(200),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(20),
+  })
+  .strict()
+export type NeuralDrillSubmission = z.infer<typeof NeuralDrillSubmissionSchema>
+
+export const NeuralDrillReviewSchema = z
+  .object({
+    masteryDelta: z.number().int(),
+    nextIntervalDays: z.number().int().min(1).max(30),
+    correctCount: z.number().int().nonnegative(),
+    total: z.number().int().positive(),
+    recorded: z.boolean(),
+  })
+  .strict()
+export type NeuralDrillReview = z.infer<typeof NeuralDrillReviewSchema>
+
+export const GenerateNeuralModuleSchema = z
+  .object({
+    topicOrKeyword: z.string().trim().min(1).max(100).default('Giao Tiếp & Đàm Thoại'),
+    targetDomain: z.enum(['learning', 'career', 'work', 'startup', 'life']).default('learning'),
+    cefrLevel: CefrLevelSchema.default('B2'),
+  })
+  .strict()

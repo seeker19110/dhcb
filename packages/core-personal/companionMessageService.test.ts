@@ -121,3 +121,22 @@ describe('hằng số ngân sách', () => {
     expect(COMPANION_HISTORY_TURNS).toBeLessThanOrEqual(20)
   })
 })
+
+it('scope miền provider không lấy transcript miền khác hoặc thiếu miền', async () => {
+  const pool = mockPool([])
+  await listRecentCompanionMessages(pool, PERSON, 10, 'learning')
+  expect(vi.mocked(pool.query).mock.calls[0]![0]).toContain('and domain = $3')
+  expect(vi.mocked(pool.query).mock.calls[0]![1]).toEqual([PERSON, 10, 'learning'])
+})
+
+it('lọc nhạy cảm tại SQL trước limit để lịch sử thường không bị bản T2 che mất', async () => {
+  const pool = mockPool([])
+  await listRecentCompanionMessages(pool, PERSON, 50, undefined, 'personal')
+  expect(vi.mocked(pool.query).mock.calls[0]![0]).toContain('sensitivity = any($3::text[])')
+  expect(vi.mocked(pool.query).mock.calls[0]![1]).toEqual([PERSON, 50, ['public', 'personal']])
+})
+
+it('transcript cũ thiếu classification mặc định sensitive', async () => {
+  const pool = mockPool([row()])
+  expect((await listRecentCompanionMessages(pool, PERSON))[0]?.sensitivity).toBe('sensitive')
+})

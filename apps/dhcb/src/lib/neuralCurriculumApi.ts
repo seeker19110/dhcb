@@ -1,5 +1,13 @@
 // apps/dhcb/src/lib/neuralCurriculumApi.ts — Client API giao tiếp Lộ trình Vi mô Thần kinh.
-import { NeuralCurriculumState, MicroCurriculumModule } from '@dhcb/core-contracts/neuralCurriculum'
+import {
+  type NeuralCurriculumState,
+  type MicroCurriculumModule,
+  type NeuralDrillSubmission,
+  NeuralCurriculumStateSchema,
+  MicroCurriculumModuleSchema,
+  NeuralDrillReviewSchema,
+  type NeuralDrillReview,
+} from '@dhcb/core-contracts/neuralCurriculum'
 
 export async function fetchNeuralCurriculum(): Promise<NeuralCurriculumState> {
   const token = localStorage.getItem('gsa_session_token_v1')
@@ -14,7 +22,7 @@ export async function fetchNeuralCurriculum(): Promise<NeuralCurriculumState> {
   }
 
   const data = await res.json()
-  return data.state
+  return NeuralCurriculumStateSchema.parse(data.state)
 }
 
 export async function generateMicroModule(params: {
@@ -36,13 +44,17 @@ export async function generateMicroModule(params: {
     throw new Error(`Lỗi tạo bài học vi mô: ${res.status}`)
   }
 
-  return await res.json()
+  const data = await res.json()
+  return {
+    module: MicroCurriculumModuleSchema.parse(data.module),
+    state: NeuralCurriculumStateSchema.parse(data.state),
+  }
 }
 
-export async function completeDrill(params: {
-  isCorrect: boolean
-  previousInterval?: number
-}): Promise<{ masteryDelta: number; nextIntervalDays: number }> {
+export async function completeDrill(params: NeuralDrillSubmission): Promise<{
+  review: NeuralDrillReview
+  state: NeuralCurriculumState
+}> {
   const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/neural-curriculum?action=complete_drill', {
     method: 'POST',
@@ -58,5 +70,8 @@ export async function completeDrill(params: {
   }
 
   const data = await res.json()
-  return data.review
+  return {
+    review: NeuralDrillReviewSchema.parse(data.review),
+    state: NeuralCurriculumStateSchema.parse(data.state),
+  }
 }

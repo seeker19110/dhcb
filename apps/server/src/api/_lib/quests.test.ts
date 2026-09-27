@@ -1,3 +1,4 @@
+import { Pool, Client } from 'pg'
 // Test nhiệm vụ "Chia sẻ công khai" — trọng tâm: KHÔNG cấp được 2 lần trong cùng cửa sổ hồi
 // (7 ngày), đây là chỗ đụng tiền thật (grantPlanDays).
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -5,10 +6,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 const granted: { calls: { userId: string; plan: string; days: number }[] } = { calls: [] }
 vi.mock('@dhcb/core-billing/planGrant', () => ({
-  grantPlanDays: async (userId: string, plan: string, days: number) => {
+  grantPlanDays: vi.fn(async (userId: string, plan: string, days: number) => {
     granted.calls.push({ userId, plan, days })
     return { plan, planExpiresAt: new Date() }
-  },
+  }),
 }))
 
 vi.mock('./referral.js', () => ({
@@ -36,13 +37,24 @@ import {
 } from './quests'
 import { vnDateStr, addDays } from '@dhcb/core-db/date'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 
 const mockedGetPool = vi.mocked(getPgPool)
 const query = vi.fn()
 
 beforeEach(() => {
   query.mockReset()
-  mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+  const client = Object.assign(new Client(), {
+    query: vi.fn((sql: string, params?: unknown[]) =>
+      ['begin', 'commit', 'rollback'].includes(sql)
+        ? Promise.resolve({ rows: [] })
+        : query(sql, params),
+    ),
+    release: vi.fn(),
+  })
+  mockedGetPool.mockReturnValue(
+    Object.assign(new Pool(), { query, connect: vi.fn(async () => client) }),
+  )
   granted.calls = []
 })
 
@@ -133,13 +145,29 @@ describe('claimCefrExamQuest', () => {
   })
 
   it('đã thi đạt cấp → cấp thưởng', async () => {
-    query.mockResolvedValueOnce({ rows: [{ cefr_exams: { A1: { passed: true } } }] })
+    query.mockResolvedValueOnce({
+      rows: [{ cefr_exams: { A1: { passed: true } } }],
+    })
     query.mockResolvedValueOnce({ rows: [{ claim_quest_if_ready: true }] })
     const r = await claimCefrExamQuest('u1', 'A1')
     expect(r).toEqual({ ok: true, rewardDays: CEFR_EXAM_QUEST_REWARD_DAYS })
   })
 
-  it('learning_progress chưa có dòng nào → coi như chưa đạt, không throw', async () => {
+  it('không đọc kết quả tự khai trong learning_progress để cấp VIP', async () => {
+    query.mockImplementation((sql: string) =>
+      Promise.resolve({
+        rows: sql.includes('english.learning_progress')
+          ? [{ cefr_exams: { A1: { passed: true } } }]
+          : [],
+      }),
+    )
+    expect((await claimCefrExamQuest('u1', 'A1')).ok).toBe(false)
+    expect(granted.calls).toEqual([])
+    expect(query).toHaveBeenCalledTimes(1)
+    expect(query.mock.calls[0]?.[0]).toContain("feature = 'cefr_assessment_v1'")
+  })
+
+  it('kho chấm thi server chưa có dòng nào → coi như chưa đạt, không throw', async () => {
     query.mockResolvedValueOnce({ rows: [] })
     const r = await claimCefrExamQuest('u1', 'A1')
     expect(r.ok).toBe(false)
@@ -153,8 +181,10 @@ describe('getQuestsStatus', () => {
       if (sql.includes('from public.quest_claims')) return Promise.resolve({ rows: [] })
       if (sql.includes('from public.free_daily_credit'))
         return Promise.resolve({ rows: [{ day: today }] })
-      if (sql.includes('from english.learning_progress'))
-        return Promise.resolve({ rows: [{ cefr_exams: { A1: { passed: true } } }] })
+      if (sql.includes('from platform.feature_state'))
+        return Promise.resolve({
+          rows: [{ cefr_exams: { A1: { passed: true } } }],
+        })
       return Promise.resolve({ rows: [] })
     })
     const status = await getQuestsStatus('u1')
@@ -163,5 +193,83 @@ describe('getQuestsStatus', () => {
     expect(status.cefrExams.find((e) => e.level === 'A2')?.passed).toBe(false)
     expect(status.referral.code).toBe('ABC123')
     expect(status.share.rewardDays).toBe(SHARE_QUEST_REWARD_DAYS)
+  })
+})
+
+describe('nhận thưởng — nguyên tử và đồng thời', () => {
+  let claimed: boolean
+  let grantedDays: number
+  let failGrant: boolean
+  let lockTail: Promise<void>
+  const transactions = new Map<unknown, { days: number }>()
+
+  beforeEach(() => {
+    claimed = false
+    grantedDays = 0
+    failGrant = false
+    lockTail = Promise.resolve()
+    transactions.clear()
+    const connect = vi.fn(async () => {
+      let unlock: (() => void) | undefined
+      let stagedClaimed = false
+      const staged = { days: 0 }
+      const query = vi.fn(async (sql: string) => {
+        if (sql.includes('claim_quest_if_ready')) {
+          const previous = lockTail
+          lockTail = new Promise<void>((resolve) => {
+            unlock = resolve
+          })
+          await previous
+          const allowed = !claimed
+          stagedClaimed = true
+          return { rows: [{ claim_quest_if_ready: allowed }] }
+        }
+        if (sql === 'commit') {
+          claimed = stagedClaimed
+          grantedDays += staged.days
+          unlock?.()
+        }
+        if (sql === 'rollback') unlock?.()
+        return { rows: [] }
+      })
+      const client = Object.assign(new Client(), { query, release: vi.fn() })
+      transactions.set(client, staged)
+      return client
+    })
+    mockedGetPool.mockReturnValue(Object.assign(new Pool(), { connect }))
+    vi.mocked(grantPlanDays).mockImplementation(async (_userId, _plan, days, _now, client) => {
+      const staged = transactions.get(client)
+      expect(staged).toBeDefined()
+      if (failGrant) {
+        failGrant = false
+        throw new Error('grant failed')
+      }
+      if (staged) staged.days += days
+      return { plan: 'vip', planExpiresAt: null }
+    })
+  })
+
+  it('hai yêu cầu đồng thời chỉ một lần nhận và cấp thưởng', async () => {
+    const results = await Promise.all([claimShareQuest('u1'), claimShareQuest('u1')])
+    expect(results.filter((result) => result.ok)).toHaveLength(1)
+    expect(claimed).toBe(true)
+    expect(grantedDays).toBe(SHARE_QUEST_REWARD_DAYS)
+  })
+
+  it('grant thất bại rollback claim, retry còn nhận được thưởng', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      failGrant = true
+      expect((await claimShareQuest('u1')).ok).toBe(false)
+      expect(claimed).toBe(false)
+      expect(grantedDays).toBe(0)
+      expect((await claimShareQuest('u1')).ok).toBe(true)
+      expect(claimed).toBe(true)
+      expect(grantedDays).toBe(SHARE_QUEST_REWARD_DAYS)
+      expect((await claimShareQuest('u1')).ok).toBe(false)
+      expect(grantedDays).toBe(SHARE_QUEST_REWARD_DAYS)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })

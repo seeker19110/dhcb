@@ -236,6 +236,28 @@ describe('ingestMemory', () => {
     expect(evaluation.outcome).toBe('MERGE')
     expect(record.status).toBe('merged')
   })
+
+  it('merge nâng mức bảo vệ theo candidate và không hạ mức đang lưu trong cùng UPDATE', async () => {
+    const pool = mockPool(async (sql: string) => {
+      if (sql.includes('select')) return { rows: [memoryRow()] }
+      if (sql.includes('update personal.memory_records')) {
+        return { rows: [memoryRow({ sensitivity: 'sensitive', status: 'merged' })] }
+      }
+      return { rows: [] }
+    })
+    const { record } = await ingestMemory(pool, PERSON, {
+      namespace: 'semantic',
+      content: 'User prefers concise feedback about private health',
+      provenance: 'user_declared',
+      sensitivity: 'sensitive',
+    })
+    const client = await pool.connect()
+    expect(client.query).toHaveBeenCalledWith(
+      expect.stringMatching(/sensitivity = .*\[\s*greatest\(/s),
+      ['User prefers concise feedback about private health', RECORD_ID, PERSON, 'sensitive'],
+    )
+    expect(record.sensitivity).toBe('sensitive')
+  })
 })
 
 describe('getMemoryRecord and listMemoryRecords', () => {

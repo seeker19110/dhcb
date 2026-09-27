@@ -643,6 +643,22 @@ describe('synthesizeCompanionReply with shared AI models', () => {
     delete process.env.GROQ_API_KEY
   })
 
+  it('nguồn không phải transcript không được trở thành assistant message dù giả provenance', async () => {
+    process.env.GROQ_API_KEY = 'test-groq-key'
+    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValueOnce({
+      kind: 'success',
+      text: 'Xin chào',
+      latencyMs: 1,
+    })
+    await synthesizeCompanionReply('Xin chào', 'general_conversation', 'learning', [], {
+      ...sampleContext,
+      items: [{ ...sampleContext.items[0]!, provenance: 'companion_message:companion:learning' }],
+    })
+    const messages = chatProvidersMock.callGroqChatWithKeyPool.mock.calls[0]![2]
+    expect(messages).toEqual([{ role: 'user', content: '' }])
+    delete process.env.GROQ_API_KEY
+  })
+
   it('fallback sang Anthropic khi Groq lỗi và có ANTHROPIC_API_KEY', async () => {
     process.env.GROQ_API_KEY = 'test-groq-key'
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
@@ -853,6 +869,28 @@ describe('executeCompanionTurn — TRÍ NHỚ hội thoại (vá lỗi "không n
   })
 
   it('GỬI lịch sử vào prompt LLM, đúng thứ tự cũ → mới, trước tin nhắn hiện tại', async () => {
+    contextEngineMock.buildContextPackage.mockResolvedValue({
+      items: [
+        {
+          sourceType: 'current_request',
+          content: 'tôi là ai',
+          provenance: 'user_input:current_turn',
+        },
+        {
+          sourceType: 'recent_episodic_context',
+          content: 'Tôi là Kẻ Tìm Kiếm',
+          provenance: 'companion_message:user:personal',
+        },
+        {
+          sourceType: 'recent_episodic_context',
+          content: 'Mình đã ghi nhận',
+          provenance: 'companion_message:companion:personal',
+        },
+      ],
+      tokenBudget: 2000,
+      tokenUsed: 50,
+    })
+
     const { pool: livePool } = poolWithHistory([
       historyRow({ id: 'b', role: 'companion', content: 'Mình đã ghi nhận' }),
       historyRow({ id: 'a', role: 'user', content: 'Tôi là Kẻ Tìm Kiếm' }),
@@ -934,4 +972,92 @@ describe('executeCompanionTurn — TRÍ NHỚ hội thoại (vá lỗi "không n
     expect(res.reply).toBe('Ừ, mình nhớ bạn là Kẻ Tìm Kiếm.')
     delete process.env.GROQ_API_KEY
   })
+})
+
+it('runtime không nạp transcript ngoài ContextPackage đã lọc', async () => {
+  const query = vi.fn(async (sql: string) => {
+    void sql
+    return { rows: [] }
+  })
+  await executeCompanionTurn({ query } as unknown as Pool, {
+    personId: PERSON_ID,
+    userMessage: 'hello',
+    targetDomain: 'life',
+  })
+  expect(
+    query.mock.calls.filter(
+      ([sql]) => String(sql).includes('select') && String(sql).includes('companion_messages'),
+    ),
+  ).toHaveLength(0)
+  expect(contextEngineMock.buildContextPackage).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ includeCompanionHistory: true, domain: 'life' }),
+  )
+})
+
+it('provider chỉ nhận nội dung đã nằm trong budget, không gửi lại raw request', async () => {
+  process.env.GROQ_API_KEY = 'test-groq-key'
+  chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValue({ kind: 'success', text: 'ok' })
+  contextEngineMock.buildContextPackage.mockResolvedValue({
+    id: CTX_ID,
+    personId: PERSON_ID,
+    requestId: 'budget',
+    items: [
+      { sourceType: 'current_request', content: 'cut', provenance: 'user_input:current_turn' },
+    ],
+    tokenBudget: 1,
+    tokenUsed: 1,
+    schemaVersion: 1,
+    createdAt: new Date().toISOString(),
+  })
+  await executeCompanionTurn(pool, {
+    personId: PERSON_ID,
+    userMessage: 'cut RAW_SECRET_OUTSIDE_BUDGET',
+    targetDomain: 'learning',
+    tokenBudget: 1,
+  })
+  expect(chatProvidersMock.callGroqChatWithKeyPool.mock.calls[0]![2]).toEqual([
+    { role: 'user', content: 'cut' },
+  ])
+  expect(chatProvidersMock.callGroqChatWithKeyPool.mock.calls[0]![1]).not.toContain(
+    'RAW_SECRET_OUTSIDE_BUDGET',
+  )
+  delete process.env.GROQ_API_KEY
+})
+
+it('cả hai vế transcript kế thừa sensitivity từ context T2 đã đọc', async () => {
+  contextEngineMock.buildContextPackage.mockResolvedValue({
+    items: [
+      {
+        sourceType: 'recent_episodic_context',
+        content: 'T2',
+        sensitivity: 'sensitive',
+        provenance: 'companion_message:companion:life',
+      },
+    ],
+    tokenBudget: 100,
+    tokenUsed: 1,
+  })
+  const query = vi.fn(async () => ({
+    rows: [
+      {
+        id: SOURCE_ID,
+        role: 'user',
+        content: 'hello',
+        domain: 'life',
+        intent: null,
+        created_at: new Date(),
+      },
+    ],
+  }))
+  await executeCompanionTurn({ query } as unknown as Pool, {
+    personId: PERSON_ID,
+    userMessage: 'hello',
+    targetDomain: 'life',
+    maxSensitivity: 'sensitive',
+  })
+  for (const call of vi.mocked(query).mock.calls as unknown[][]) {
+    if (String(call[0]).includes('insert into personal.companion_messages'))
+      expect((call[1] as unknown[])[5]).toBe('sensitive')
+  }
 })

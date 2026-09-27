@@ -2,6 +2,8 @@
 // personId luôn suy từ token xác thực, không nhận từ client.
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
+import { readSessionCookie } from '@dhcb/core-auth/sessionCookie'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -12,6 +14,7 @@ import {
 import { getOrCreatePerson } from '@dhcb/core-personal/personService'
 import {
   evaluateMemoryCandidate,
+  getMemoryRecord,
   ingestMemory,
   listMemoryRecords,
   expireMemoryRecord,
@@ -83,6 +86,33 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const pool = getPgPool()
+  const userId = auth.userId
+
+  // Hồ sơ ẩn cần bật 2FA và xác minh lại đúng phiên hiện tại; đọc/xoá dữ liệu thường vẫn mở.
+  async function requirePrivateRead(): Promise<Response | null> {
+    const status = await getTwoFactorStatus(pool, userId)
+    if (!status.enabled) {
+      return jsonResponse(
+        {
+          error: 'Bật xác thực hai bước để xem dữ liệu riêng tư.',
+          code: 'TWO_FACTOR_SETUP_REQUIRED',
+        },
+        403,
+        headers,
+      )
+    }
+    if (!(await hasStepUp(pool, userId, readSessionCookie(req)))) {
+      return jsonResponse(
+        {
+          error: 'Xác minh lại bằng mã hai bước để xem dữ liệu riêng tư.',
+          code: 'STEP_UP_REQUIRED',
+        },
+        403,
+        headers,
+      )
+    }
+    return null
+  }
   const person = await getOrCreatePerson(pool, auth.userId)
 
   try {
@@ -100,6 +130,14 @@ export default async function handler(req: Request): Promise<Response> {
 
       const includeExpired = url.searchParams.get('includeExpired') === 'true'
       const records = await listMemoryRecords(pool, person.id, { namespace, includeExpired })
+      if (
+        records.some(
+          (record) => record.sensitivity === 'sensitive' || record.sensitivity === 'restricted',
+        )
+      ) {
+        const denied = await requirePrivateRead()
+        if (denied) return denied
+      }
       return jsonResponse({ records }, 200, headers)
     }
 
@@ -109,10 +147,24 @@ export default async function handler(req: Request): Promise<Response> {
 
       if (body.data.action === 'evaluate') {
         const evaluation = await evaluateMemoryCandidate(pool, person.id, body.data.candidate)
+        if (evaluation.existingRecordId) {
+          const existing = await getMemoryRecord(pool, person.id, evaluation.existingRecordId)
+          if (
+            existing &&
+            (existing.sensitivity === 'sensitive' || existing.sensitivity === 'restricted')
+          ) {
+            const denied = await requirePrivateRead()
+            if (denied) return denied
+          }
+        }
         return jsonResponse({ evaluation }, 200, headers)
       }
 
       const result = await ingestMemory(pool, person.id, body.data.candidate, `user:${auth.userId}`)
+      if (result.record.sensitivity === 'sensitive' || result.record.sensitivity === 'restricted') {
+        const denied = await requirePrivateRead()
+        if (denied) return denied
+      }
       return jsonResponse(result, 201, headers)
     }
 
@@ -127,7 +179,12 @@ export default async function handler(req: Request): Promise<Response> {
         body.data.expectedVersion,
         `user:${auth.userId}`,
       )
-      return jsonResponse({ record }, 200, headers)
+      // Expire là thao tác xóa của chính chủ: không ép 2FA, cũng không đọc ngược nội dung T2.
+      const visibleRecord =
+        record.sensitivity === 'sensitive' || record.sensitivity === 'restricted'
+          ? { id: record.id, status: record.status }
+          : record
+      return jsonResponse({ record: visibleRecord }, 200, headers)
     }
 
     if (req.method === 'DELETE') {

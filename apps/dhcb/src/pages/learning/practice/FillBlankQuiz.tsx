@@ -27,9 +27,12 @@ export function FillBlankQuiz({
   // Seed cố định suốt phiên: bốn options giữ nguyên khi đổi ngôn ngữ UI hoặc render lại.
   const [seed] = useState(() => Math.random().toString(36).slice(2))
   const items = useMemo(() => {
-    const { questions } = buildFillBlankQuestions(pool, isA ? 'A' : 'B', { seed })
-    // Trộn và cắt SAU khi validate: câu lỗi đứng đầu pool không chiếm chỗ câu tốt.
-    return shuffle(questions).slice(0, SESSION_SIZE)
+    const { questions } = buildFillBlankQuestions(shuffle(pool), isA ? 'A' : 'B', {
+      seed,
+      maxQuestions: SESSION_SIZE,
+    })
+    // Duyệt pool đã trộn đến khi đủ câu hợp lệ; không dựng hàng nghìn câu rồi bỏ đi.
+    return questions
   }, [pool, isA, seed])
   const [idx, setIdx] = useState(0)
   const [score, setScore] = useState(0)

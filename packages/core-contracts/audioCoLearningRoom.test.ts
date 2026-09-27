@@ -210,3 +210,18 @@ describe('audioCoLearningRoom contracts', () => {
     })
   })
 })
+
+describe('giới hạn audio payload', () => {
+  it.each(['A'.repeat(90_000), 'không-phải-base64!'])(
+    'từ chối chunk quá lớn hoặc sai encoding',
+    (audioBase64) => {
+      expect(
+        WsCoLearningClientMessageSchema.safeParse({
+          type: 'audio_chunk',
+          roomId: 'room-test',
+          audioBase64,
+        }).success,
+      ).toBe(false)
+    },
+  )
+})

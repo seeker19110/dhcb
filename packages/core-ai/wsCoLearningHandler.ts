@@ -8,14 +8,15 @@ import {
   joinAudioRoom,
   leaveAudioRoom,
   setMemberMuted,
-  broadcastAiSocraticHint,
-  generateAiSocraticHint,
+  requestAiSocraticHint,
   subscribeToRoomEvents,
   getAudioRoom,
   type AudioRoomEventHandler,
 } from './audioCoLearningService.js'
 import {
   WsCoLearningClientMessageSchema,
+  MAX_AUDIO_CHUNK_BYTES,
+  MAX_CO_LEARNING_MESSAGE_BYTES,
   type WsCoLearningClientMessage,
 } from '@dhcb/core-contracts/audioCoLearningRoom'
 
@@ -51,7 +52,7 @@ export function _resetWsCoLearningHandlerStateForTests(): void {
 
 /** Gắn WebSocket server phòng học nhóm âm thanh vào httpServer */
 export function attachCoLearningWebSocketServer(server: HttpServer): void {
-  const wss = new WebSocketServer({ noServer: true })
+  const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_CO_LEARNING_MESSAGE_BYTES })
 
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url ?? '', 'http://localhost')
@@ -94,6 +95,7 @@ export function attachCoLearningWebSocketServer(server: HttpServer): void {
           // Xử lý audio binary trực tiếp
           if (session.currentRoomId) {
             const buf = Buffer.from(rawData as Buffer)
+            if (buf.length > MAX_AUDIO_CHUNK_BYTES) return
             const b64 = buf.toString('base64')
             const { relayTo, shouldTriggerAiModerator } = processAudioChunk({
               roomId: session.currentRoomId,
@@ -121,15 +123,8 @@ export function attachCoLearningWebSocketServer(server: HttpServer): void {
             }
 
             if (shouldTriggerAiModerator) {
-              const room = getAudioRoom(session.currentRoomId)
-              if (room) {
-                const roomId = session.currentRoomId
-                // KHÔNG await trong luồng relay audio — chờ AI sẽ làm nghẽn tiếng nói cả phòng.
-                // Sinh xong mới phát, kèm cờ isFallback nếu là câu mẫu.
-                void generateAiSocraticHint(room.topic).then(({ hint, isFallback }) => {
-                  broadcastAiSocraticHint(roomId, hint, 'probing_reasons', isFallback)
-                })
-              }
+              // Không chặn luồng relay; service giữ khóa và kiểm hạn mức trước gọi provider.
+              void requestAiSocraticHint(session.currentRoomId, session.userId, 'probing_reasons')
             }
           }
           return
@@ -226,13 +221,7 @@ export function attachCoLearningWebSocketServer(server: HttpServer): void {
               }
 
               if (shouldTriggerAiModerator) {
-                const room = getAudioRoom(msg.roomId)
-                if (room) {
-                  const roomId = msg.roomId
-                  void generateAiSocraticHint(room.topic).then(({ hint, isFallback }) => {
-                    broadcastAiSocraticHint(roomId, hint, 'probing_assumptions', isFallback)
-                  })
-                }
+                void requestAiSocraticHint(msg.roomId, session.userId, 'probing_assumptions')
               }
             }
             break
@@ -275,15 +264,7 @@ export function attachCoLearningWebSocketServer(server: HttpServer): void {
 
           case 'request_ai_hint': {
             if (session.currentRoomId === msg.roomId) {
-              const room = getAudioRoom(msg.roomId)
-              if (room) {
-                const contextStr = msg.context ? ` (Ngữ cảnh: "${msg.context}")` : ''
-                broadcastAiSocraticHint(
-                  msg.roomId,
-                  `Gợi ý Socratic cho phòng "${room.topic}"${contextStr}: Hãy thử phân tích từ góc nhìn cơ bản nhất trước.`,
-                  'clarification',
-                )
-              }
+              void requestAiSocraticHint(msg.roomId, session.userId, 'clarification', 'manual')
             }
             break
           }

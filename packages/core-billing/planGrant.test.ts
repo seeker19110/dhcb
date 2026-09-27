@@ -1,3 +1,4 @@
+import { Pool, Client } from 'pg'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
@@ -105,47 +106,117 @@ describe('computePlanGrant — cấp gói TRONG lúc khuyến mãi (2026-07-26):
   })
 })
 
-// grantPlanDays: đọc trạng thái hiện tại từ DB, tính bằng computePlanGrant rồi ghi lại.
-describe('grantPlanDays', () => {
-  const mockedGetPool = vi.mocked(getPgPool)
-  const mockedGetSettings = vi.mocked(getAppSettings)
-  const query = vi.fn()
+// Mô hình transaction/khóa dòng: đọc chỉ thấy dữ liệu commit, khóa giữ tới commit/rollback.
+describe('grantPlanDays — transaction và cộng dồn đồng thời', () => {
+  type Profile = { plan: string; plan_expires_at: Date | null }
+  let profile: Profile | undefined
+  let lockTail: Promise<void>
+  let failWrite: boolean
+  const traces: string[][] = []
 
   beforeEach(() => {
-    query.mockReset()
-    mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
-    mockedGetSettings.mockResolvedValue({ promoUntil: null } as Awaited<
+    profile = undefined
+    lockTail = Promise.resolve()
+    failWrite = false
+    traces.length = 0
+    vi.mocked(getAppSettings).mockResolvedValue({ promoUntil: null } as Awaited<
       ReturnType<typeof getAppSettings>
     >)
+    const connect = vi.fn(async () => {
+      let unlock: (() => void) | undefined
+      let staged: Profile | undefined
+      const trace: string[] = []
+      traces.push(trace)
+      const lock = async () => {
+        if (unlock) return
+        const previous = lockTail
+        lockTail = new Promise<void>((resolve) => {
+          unlock = resolve
+        })
+        await previous
+        staged = profile ? { ...profile } : undefined
+      }
+      const query = vi.fn(async (sql: string, params?: unknown[]) => {
+        trace.push(sql)
+        if (sql === 'commit') {
+          profile = staged
+          unlock?.()
+        } else if (sql === 'rollback') {
+          unlock?.()
+        } else if (sql.includes('on conflict (id) do nothing')) {
+          await lock()
+          staged ??= { plan: 'free', plan_expires_at: null }
+        } else if (sql.startsWith('select plan')) {
+          expect(sql).toContain('for update')
+          await lock()
+          return { rows: staged ? [{ ...staged }] : [] }
+        } else if (sql.includes('do update')) {
+          if (failWrite) {
+            failWrite = false
+            throw new Error('write failed')
+          }
+          expect(unlock).toBeDefined()
+          staged = { plan: String(params?.[1]), plan_expires_at: params?.[2] as Date }
+        }
+        return { rows: [] }
+      })
+      return Object.assign(new Client(), { query, release: vi.fn() })
+    })
+    vi.mocked(getPgPool).mockReturnValue(Object.assign(new Pool(), { connect }))
   })
 
-  it('user chưa có hồ sơ (không có dòng) → cấp mới từ free, ghi upsert xuống DB', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [] }) // select profiles
-      .mockResolvedValueOnce({ rows: [] }) // insert/upsert
-    const result = await grantPlanDays('u1', 'vip', 7, NOW)
-    expect(result.plan).toBe('vip')
-    expect(result.planExpiresAt?.getTime()).toBe(daysFromNow(7).getTime())
-    // Câu upsert thứ 2 phải nhận đúng userId + gói + hạn vừa tính.
-    const upsertArgs = query.mock.calls[1]?.[1] as unknown[]
-    expect(upsertArgs).toEqual(['u1', 'vip', result.planExpiresAt])
+  it.each([false, true])(
+    'hai lần cấp đồng thời không mất ngày (profile tồn tại: %s)',
+    async (exists) => {
+      if (exists) profile = { plan: 'vip', plan_expires_at: daysFromNow(5) }
+      await Promise.all([grantPlanDays('u1', 'vip', 7, NOW), grantPlanDays('u1', 'vip', 3, NOW)])
+      expect(profile?.plan_expires_at?.getTime()).toBe(daysFromNow(exists ? 15 : 10).getTime())
+      expect(traces).toHaveLength(2)
+      for (const trace of traces) {
+        expect(trace[0]).toBe('begin')
+        expect(trace.at(-1)).toBe('commit')
+      }
+    },
+  )
+
+  it('lỗi ghi rollback rồi retry chỉ cấp một lần', async () => {
+    failWrite = true
+    await expect(grantPlanDays('u1', 'vip', 7, NOW)).rejects.toThrow('write failed')
+    expect(profile).toBeUndefined()
+    expect(traces[0]?.at(-1)).toBe('rollback')
+    await grantPlanDays('u1', 'vip', 7, NOW)
+    expect(profile?.plan_expires_at?.getTime()).toBe(daysFromNow(7).getTime())
   })
 
-  it('có khuyến mãi đang chạy (từ getAppSettings) → neo hạn theo promoUntil', async () => {
-    const promoUntil = daysFromNow(20)
-    mockedGetSettings.mockResolvedValue({ promoUntil } as unknown as Awaited<
-      ReturnType<typeof getAppSettings>
-    >)
-    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] })
-    const result = await grantPlanDays('u1', 'vip', 7, NOW)
-    expect(result.planExpiresAt?.getTime()).toBe(promoUntil.getTime() + 7 * MS_DAY)
+  it('giữ gói vĩnh viễn', async () => {
+    profile = { plan: 'vip', plan_expires_at: null }
+    expect(await grantPlanDays('u1', 'vip', 7, NOW)).toEqual({ plan: 'vip', planExpiresAt: null })
   })
 
-  it('user đang có gói VIP còn hạn → cộng dồn đúng số ngày', async () => {
-    query
-      .mockResolvedValueOnce({ rows: [{ plan: 'vip', plan_expires_at: daysFromNow(5) }] })
-      .mockResolvedValueOnce({ rows: [] })
+  it('khuyến mãi neo hạn theo promoUntil', async () => {
+    vi.mocked(getAppSettings).mockResolvedValue({
+      promoUntil: daysFromNow(20).toISOString(),
+    } as Awaited<ReturnType<typeof getAppSettings>>)
     const result = await grantPlanDays('u1', 'vip', 7, NOW)
-    expect(result.planExpiresAt?.getTime()).toBe(daysFromNow(12).getTime())
+    expect(result.planExpiresAt?.getTime()).toBe(daysFromNow(27).getTime())
+  })
+
+  it('không đọc được khuyến mãi thì không ghi cấp gói với hạn sai', async () => {
+    vi.mocked(getAppSettings).mockRejectedValueOnce(new Error('settings unavailable'))
+    await expect(grantPlanDays('u1', 'vip', 7, NOW)).rejects.toThrow('settings unavailable')
+    expect(profile).toBeUndefined()
+    expect(traces).toHaveLength(0)
+  })
+
+  it('client của caller giữ quyền commit/rollback', async () => {
+    const client = await getPgPool().connect()
+    await client.query('begin')
+    await grantPlanDays('u1', 'vip', 7, NOW, client)
+    expect(getAppSettings).toHaveBeenLastCalledWith({ requireAvailable: true, runner: client })
+    expect(profile).toBeUndefined()
+    expect(traces[0]?.filter((sql) => sql === 'begin')).toHaveLength(1)
+    await client.query('rollback')
+    expect(profile).toBeUndefined()
+    client.release()
   })
 })

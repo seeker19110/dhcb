@@ -1,10 +1,10 @@
 // ──────────────────────────────────────────────────────────────────────
 // BÀI THI CUỐI CẤP — màn thi toàn màn hình (1 câu/màn)
 //
-// Dựng đề xáo trộn 4 phần (Từ vựng · Ngữ pháp · Nghe · Đọc hiểu) từ kho của
+// Máy chủ dựng đề xáo trộn 4 phần (Từ vựng · Ngữ pháp · Nghe · Đọc hiểu) từ kho của
 // cấp (lib/cefrExam.ts buildExam). Đạt ≥70% → "qua cấp" (lưu kết quả, mở khóa
 // cấp sau ở computeLockedMap). Trượt → xem câu sai + mở lại bài ngữ pháp + thi lại
-// (đề MỚI). Kết quả lưu Supabase qua saveExamAttempt.
+// (đề MỚI). Máy chủ chấm và lưu biên nhận trước khi cấp quyền.
 //
 // Điều kiện DỰ THI do trang cấp (CefrLevelPage) kiểm tra trước khi cho vào đây.
 // ──────────────────────────────────────────────────────────────────────
@@ -13,25 +13,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { GraduationCap, RotateCcw, ArrowLeft } from 'lucide-react'
 import type { CefrLevel } from '../data/cefr'
 import type { AgeGroup } from '../types'
-import type { Dialogue } from '../data/dialogues'
 import type { AccentClasses } from '../lib/cefrAccent'
-import { getDialogues } from '../data/dialoguesLoader'
-import { getLevelWords } from '../lib/curriculum'
-import { getLearnedWords } from '../lib/vocab'
 import { stopSpeaking, speak } from '../lib/tts'
-import {
-  buildExam,
-  scoreExam,
-  saveExamAttempt,
-  levelGrammarSources,
-  EXAM_PASS_PCT,
-  type ExamQuestion,
-} from '../lib/cefrExam'
+import { scoreExam, EXAM_PASS_PCT, type ExamQuestion } from '../lib/cefrExam'
 import ExamQuestionCard from './ExamQuestionCard'
 import { PART_META } from '../lib/examParts'
 import { checkNewAchievements, achievementMessage } from '../lib/achievements'
 import { useToast } from '@core/ToastProvider'
-import { pushProgressAsync } from '../lib/progressSync'
+import { pullProgress } from '../lib/progressSync'
+import { startCefrAssessment, submitCefrAssessment } from '../lib/cefrAssessmentApi'
 import { claimCefrExamQuest } from '../lib/quests'
 
 export default function CefrExam({
@@ -41,7 +31,6 @@ export default function CefrExam({
   accent,
   onClose,
   onOpenLesson,
-  ageGroup,
 }: {
   uid: string
   isA: boolean
@@ -53,14 +42,18 @@ export default function CefrExam({
 }) {
   const toast = useToast()
 
-  const grammarSources = useMemo(() => levelGrammarSources(level), [level])
-
   // Bộ đếm để dựng lại đề MỚI mỗi lần "Thi lại".
   const [attempt, setAttempt] = useState(0)
-  const [questions, setQuestions] = useState<ExamQuestion[] | null>(null)
+  const [questions, setQuestions] = useState<
+    (Omit<ExamQuestion, 'correct'> & { correct?: string })[] | null
+  >(null)
   const [current, setCurrent] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [answers, setAnswers] = useState<boolean[]>([])
+  const [attemptId, setAttemptId] = useState('')
+  const [chosen, setChosen] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [savedPct, setSavedPct] = useState<number | null>(null)
 
@@ -69,27 +62,26 @@ export default function CefrExam({
   // set-state-in-effect (không còn effect setState đồng bộ như trước).
   useEffect(() => {
     let alive = true
-    Promise.all(level.units.map((u) => getDialogues(u.id))).then((lists) => {
-      if (!alive) return
-      const dialogues: Dialogue[] = lists.flat()
-      const qs = buildExam({
-        isA,
-        words: getLevelWords(level.id, ageGroup),
-        learned: getLearnedWords(uid),
-        grammar: grammarSources,
-        dialogues,
+    startCefrAssessment(level.id, isA)
+      .then((exam) => {
+        if (!alive) return
+        setAttemptId(exam.attemptId)
+        setQuestions(exam.questions)
+        setCurrent(0)
+        setSelected(null)
+        setAnswers([])
+        setChosen([])
+        setError(null)
+        setDone(false)
+        setSavedPct(null)
       })
-      setQuestions(qs)
-      setCurrent(0)
-      setSelected(null)
-      setAnswers([])
-      setDone(false)
-      setSavedPct(null)
-    })
+      .catch((cause: unknown) => {
+        if (alive) setError(cause instanceof Error ? cause.message : 'Chưa tải được đề thi')
+      })
     return () => {
       alive = false
     }
-  }, [level, attempt, isA, uid, ageGroup, grammarSources])
+  }, [level.id, attempt, isA])
 
   const q = questions?.[current]
   const steps = useMemo(
@@ -118,6 +110,25 @@ export default function CefrExam({
     return () => stopSpeaking()
   }, [q, done])
 
+  if (error && !questions) {
+    return (
+      <div role="alert" className="glass rounded-xl p-6 space-y-3 text-zinc-300">
+        <p>{error}</p>
+        <button
+          className="tap-44 underline"
+          onClick={() => {
+            setError(null)
+            setAttempt((a) => a + 1)
+          }}
+        >
+          {isA ? 'Thử lại' : 'Try again'}
+        </button>
+        <button className="tap-44 underline ml-4" onClick={onClose}>
+          {isA ? 'Quay lại' : 'Back'}
+        </button>
+      </div>
+    )
+  }
   if (questions == null) {
     return (
       <div className="glass rounded-xl p-8 text-center animate-fade-in">
@@ -158,39 +169,56 @@ export default function CefrExam({
     setSelected(opt)
   }
 
-  function next() {
-    if (done || !q || !questions || selected === null || steps.advanced.has(current)) return
-    steps.advanced.add(current)
-    const ok = selected === q.correct
-    const newAnswers = [...answers, ok]
-    setAnswers(newAnswers)
-    if (current + 1 >= questions.length) {
-      // Chấm điểm + lưu kết quả (giữ điểm cao nhất, đồng bộ Supabase).
-      const correct = newAnswers.filter(Boolean).length
-      const s = scoreExam(correct, questions.length)
-      const attemptResult = saveExamAttempt(uid, level.id, s.pct)
-      setSavedPct(s.pct)
+  async function submit(allAnswers: string[]) {
+    if (submitting || !attemptId || !questions) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const grade = await submitCefrAssessment(attemptId, allAnswers)
+      setQuestions(
+        questions.map((question, i) => ({ ...question, correct: grade.correctAnswers[i] })),
+      )
+      setAnswers(grade.correctAnswers.map((answer, i) => answer === allAnswers[i]))
+      setSavedPct(grade.result.bestPct)
+      try {
+        // Chỉ cache phản hồi vừa được máy chủ chấm, không tính quyền từ điểm trình duyệt.
+        localStorage.setItem(`et_cefr_unlocked_${uid}`, JSON.stringify(grade.cefrUnlocked))
+        const key = `et_cefr_exams_${uid}`
+        const old: unknown = JSON.parse(localStorage.getItem(key) ?? '{}')
+        const map = typeof old === 'object' && old && !Array.isArray(old) ? old : {}
+        localStorage.setItem(key, JSON.stringify({ ...map, [level.id]: grade.result }))
+      } catch {
+        /* Cache lỗi không làm mất bài thi đã lưu trên máy chủ. */
+      }
       setDone(true)
       stopSpeaking()
-      // Huy hiệu "Qua cấp X" (② M2) — kiểm tra sau khi lưu kết quả thi.
+      // Đồng bộ kết quả đã chấm; lỗi đồng bộ không làm mất receipt bài nộp trên server.
+      await pullProgress(uid).catch(() => undefined)
       for (const a of checkNewAchievements(uid)) toast.success(achievementMessage(a, isA))
-      // Nhiệm vụ "Thi đạt cấp CEFR" (+1 ngày Pro) — server tự đọc lại learning_progress để xác
-      // minh, nên phải CHỜ đẩy xong tiến độ mới nhất lên trước khi gọi claim (saveExamAttempt
-      // chỉ bắn-rồi-quên qua pushProgress ở trên, không đủ để chắc server đã có dữ liệu mới).
-      // Không chặn UI — chạy nền, chỉ báo nếu thành công.
-      if (attemptResult.passed) {
-        void (async () => {
-          await pushProgressAsync(uid)
-          const days = await claimCefrExamQuest(level.id)
-          if (days) {
-            toast.success(
-              isA
-                ? `Chúc mừng qua cấp ${level.id}! Tặng thêm ${days} ngày dùng gói VIP 🎁`
-                : `Congrats on passing ${level.id}! Here's ${days} extra day of Pro on us 🎁`,
-            )
-          }
-        })()
+      if (grade.passed) {
+        const days = await claimCefrExamQuest(level.id).catch(() => 0)
+        if (days)
+          toast.success(
+            isA
+              ? `Chúc mừng qua cấp ${level.id}! Tặng ${days} ngày VIP.`
+              : `Passed ${level.id}! ${days} VIP days added.`,
+          )
       }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Chưa nộp được bài thi')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function next() {
+    if (done || submitting || !q || !questions || selected === null || steps.advanced.has(current))
+      return
+    steps.advanced.add(current)
+    const newAnswers = [...chosen, selected]
+    setChosen(newAnswers)
+    if (current + 1 >= questions.length) {
+      void submit(newAnswers)
     } else {
       setCurrent((c) => c + 1)
       setSelected(null)
@@ -237,7 +265,7 @@ export default function CefrExam({
             </p>
           )}
           {savedPct != null && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-300">
               {isA ? `Điểm cao nhất đã lưu: ${savedPct}%` : `Best score saved: ${savedPct}%`}
             </p>
           )}
@@ -322,6 +350,19 @@ export default function CefrExam({
         />
       </div>
 
+      {submitting && (
+        <p role="status" className="text-zinc-300">
+          {isA ? 'Đang chấm và lưu bài thi…' : 'Grading and saving…'}
+        </p>
+      )}
+      {error && (
+        <div role="alert" className="text-zinc-300">
+          <p>{error}</p>
+          <button className="tap-44 underline" onClick={() => void submit(chosen)}>
+            {isA ? 'Nộp lại bài' : 'Retry submission'}
+          </button>
+        </div>
+      )}
       <ExamQuestionCard
         q={q}
         isA={isA}

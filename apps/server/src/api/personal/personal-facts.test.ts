@@ -12,6 +12,9 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
+const twoFactor = vi.hoisted(() => ({ getTwoFactorStatus: vi.fn(), hasStepUp: vi.fn() }))
+vi.mock('@dhcb/core-auth/twoFactor', () => twoFactor)
+
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
 
 const getOrCreatePerson = vi.fn()
@@ -44,6 +47,10 @@ const PERSON = {
 const FACT = { id: FACT_ID, personId: PERSON_ID, namespace: 'profile', key: 'city' }
 
 beforeEach(() => {
+  twoFactor.getTwoFactorStatus.mockReset()
+  twoFactor.hasStepUp.mockReset()
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+  twoFactor.hasStepUp.mockResolvedValue(true)
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   for (const m of [
@@ -268,4 +275,44 @@ describe('DELETE', () => {
       expiresAt: expires,
     })
   })
+})
+
+describe('hồ sơ riêng tư yêu cầu xác minh hai bước', () => {
+  it('chưa bật 2FA → yêu cầu thiết lập, không trả dữ liệu', async () => {
+    listFacts.mockResolvedValue([{ ...FACT, origin: 'derived', sensitivity: 'personal' }])
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+    const response = await handler(req('GET'))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'TWO_FACTOR_SETUP_REQUIRED' })
+    expect(exportPersonData).not.toHaveBeenCalled()
+  })
+  it('phiên chưa xác minh/hết hạn → STEP_UP_REQUIRED', async () => {
+    listFacts.mockResolvedValue([{ ...FACT, origin: 'derived', sensitivity: 'personal' }])
+    twoFactor.hasStepUp.mockResolvedValue(false)
+    const response = await handler(req('GET'))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'STEP_UP_REQUIRED' })
+    expect(exportPersonData).not.toHaveBeenCalled()
+  })
+  it('phiên đã xác minh → đọc thành công', async () => {
+    listFacts.mockResolvedValue([{ ...FACT, origin: 'derived', sensitivity: 'personal' }])
+    expect((await handler(req('GET'))).status).toBe(200)
+  })
+  it('danh tính/dữ liệu thường không bị ép bật 2FA', async () => {
+    listFacts.mockResolvedValue([{ ...FACT, origin: 'user_declared', sensitivity: 'personal' }])
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+    expect((await handler(req('GET'))).status).toBe(200)
+    expect(twoFactor.getTwoFactorStatus).not.toHaveBeenCalled()
+  })
+})
+
+it('không hạ sensitivity qua PATCH rồi đọc lại T2', async () => {
+  listFacts.mockResolvedValue([{ ...FACT, sensitivity: 'sensitive', value: 'SECRET' }])
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+  const response = await handler(
+    req('PATCH', `?id=${FACT_ID}`, { value: null, sensitivity: 'personal' }),
+  )
+  expect(response.status).toBe(403)
+  expect(correctFact).not.toHaveBeenCalled()
+  expect(await response.text()).not.toContain('SECRET')
 })

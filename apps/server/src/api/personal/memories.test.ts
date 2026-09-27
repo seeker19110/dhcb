@@ -12,6 +12,9 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
+const twoFactor = vi.hoisted(() => ({ getTwoFactorStatus: vi.fn(), hasStepUp: vi.fn() }))
+vi.mock('@dhcb/core-auth/twoFactor', () => twoFactor)
+
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
 
 const getOrCreatePerson = vi.fn()
@@ -21,6 +24,7 @@ vi.mock('@dhcb/core-personal/personService', () => ({
 
 const service = vi.hoisted(() => ({
   evaluateMemoryCandidate: vi.fn(),
+  getMemoryRecord: vi.fn(),
   ingestMemory: vi.fn(),
   listMemoryRecords: vi.fn(),
   expireMemoryRecord: vi.fn(),
@@ -46,10 +50,15 @@ function req(method: string, query = '', body?: unknown) {
 }
 
 beforeEach(() => {
+  twoFactor.getTwoFactorStatus.mockReset()
+  twoFactor.hasStepUp.mockReset()
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+  twoFactor.hasStepUp.mockResolvedValue(true)
   vi.clearAllMocks()
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   getOrCreatePerson.mockResolvedValue({ id: PERSON })
+  service.getMemoryRecord.mockResolvedValue(null)
   service.listMemoryRecords.mockResolvedValue([])
   service.evaluateMemoryCandidate.mockResolvedValue({ outcome: 'ACCEPT', reason: 'ok' })
   service.ingestMemory.mockResolvedValue({
@@ -174,4 +183,68 @@ describe('PATCH /api/memories and DELETE /api/memories', () => {
       'user:user-1',
     )
   })
+})
+
+describe('hồ sơ riêng tư yêu cầu xác minh hai bước', () => {
+  it('chưa bật 2FA → yêu cầu thiết lập, không trả dữ liệu', async () => {
+    service.listMemoryRecords.mockResolvedValue([{ id: RECORD_ID, sensitivity: 'sensitive' }])
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+    const response = await handler(req('GET'))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'TWO_FACTOR_SETUP_REQUIRED' })
+  })
+  it('phiên chưa xác minh/hết hạn → STEP_UP_REQUIRED', async () => {
+    service.listMemoryRecords.mockResolvedValue([{ id: RECORD_ID, sensitivity: 'sensitive' }])
+    twoFactor.hasStepUp.mockResolvedValue(false)
+    const response = await handler(req('GET'))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'STEP_UP_REQUIRED' })
+  })
+  it('phiên đã xác minh → đọc thành công', async () => {
+    service.listMemoryRecords.mockResolvedValue([{ id: RECORD_ID, sensitivity: 'sensitive' }])
+    expect((await handler(req('GET'))).status).toBe(200)
+  })
+  it('danh tính/dữ liệu thường không bị ép bật 2FA', async () => {
+    service.listMemoryRecords.mockResolvedValue([{ id: RECORD_ID, sensitivity: 'personal' }])
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+    expect((await handler(req('GET'))).status).toBe(200)
+    expect(twoFactor.getTwoFactorStatus).not.toHaveBeenCalled()
+  })
+})
+
+it('evaluate MERGE không đọc vòng qua mergedContent của memory T2', async () => {
+  service.evaluateMemoryCandidate.mockResolvedValue({
+    outcome: 'MERGE',
+    existingRecordId: RECORD_ID,
+    mergedContent: 'SECRET',
+  })
+  service.getMemoryRecord.mockResolvedValue({ id: RECORD_ID, sensitivity: 'sensitive' })
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+  const response = await handler(
+    req('POST', '', {
+      action: 'evaluate',
+      candidate: {
+        namespace: 'semantic',
+        content: 'hello',
+        provenance: 'user',
+        sensitivity: 'personal',
+      },
+    }),
+  )
+  expect(response.status).toBe(403)
+  expect(await response.text()).not.toContain('SECRET')
+})
+
+it('expire T2 vẫn được phép nhưng response không đọc lại nội dung', async () => {
+  service.expireMemoryRecord.mockResolvedValue({
+    id: RECORD_ID,
+    status: 'expired',
+    sensitivity: 'sensitive',
+    content: 'SECRET',
+  })
+  const response = await handler(
+    req('PATCH', '', { id: RECORD_ID, action: 'expire', expectedVersion: 1 }),
+  )
+  expect(response.status).toBe(200)
+  expect(await response.json()).toEqual({ record: { id: RECORD_ID, status: 'expired' } })
 })

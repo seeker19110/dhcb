@@ -45,12 +45,71 @@ describe('settings — getAppSettings', () => {
     expect(res.promoUntil).toBeNull()
   })
 
-  it('DB ném lỗi → fallback fail-open về giá trị mặc định', async () => {
+  it('DB ném lỗi → fallback chỉ để hiển thị', async () => {
     queryMock.mockRejectedValue(new Error('connection timeout'))
 
     const res = await getAppSettings()
     expect(res.limits.free).toBe(30)
     expect(res.limits.vip).toBe(300)
+  })
+})
+
+describe('settings — cổng chi phí', () => {
+  it('không cho fallback hiển thị đầu độc cache authoritative', async () => {
+    queryMock.mockResolvedValue({ rows: [] })
+    await getAppSettings()
+    await expect(getAppSettings({ requireAvailable: true })).rejects.toThrow()
+    expect(queryMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('từ chối khi DB lỗi và cho retry sau khi DB phục hồi', async () => {
+    queryMock.mockRejectedValueOnce(new Error('offline'))
+    await expect(getAppSettings({ requireAvailable: true })).rejects.toThrow('offline')
+    queryMock.mockResolvedValue({
+      rows: [
+        {
+          pro_daily_limit: 30,
+          vip_daily_limit: 300,
+          promo_until: null,
+          ai_circuit_breaker: true,
+          updated_at: new Date(),
+        },
+      ],
+    })
+    expect((await getAppSettings({ requireAvailable: true })).aiCircuitBreaker).toBe(true)
+  })
+
+  it('đọc cùng runner transaction, không dùng hoặc làm bẩn cache ngoài transaction', async () => {
+    const row = {
+      pro_daily_limit: 30,
+      vip_daily_limit: 300,
+      promo_until: null,
+      ai_circuit_breaker: false,
+      updated_at: new Date(),
+    }
+    queryMock.mockResolvedValue({ rows: [row] })
+    await getAppSettings()
+    const runner = {
+      query: vi.fn().mockResolvedValue({ rows: [{ ...row, vip_daily_limit: 900 }] }),
+    }
+    expect((await getAppSettings({ requireAvailable: true, runner })).limits.vip).toBe(900)
+    expect(runner.query).toHaveBeenCalledTimes(1)
+    expect((await getAppSettings()).limits.vip).toBe(300)
+    expect(queryMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('không mặc định cầu dao tắt khi cột cấu hình bị thiếu', async () => {
+    queryMock.mockResolvedValue({
+      rows: [
+        {
+          pro_daily_limit: 30,
+          vip_daily_limit: 300,
+          promo_until: null,
+          updated_at: new Date(),
+        },
+      ],
+    })
+    await expect(getAppSettings({ requireAvailable: true })).rejects.toThrow()
   })
 })
 

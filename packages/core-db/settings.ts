@@ -2,6 +2,8 @@
 // /api/admin-settings (bảng public.app_settings, 1 dòng duy nhất id=1). Cache trong bộ
 // nhớ tiến trình (TTL ngắn) để không tra DB ở MỌI request tính lượt/giọng — usage.ts và
 // promo.ts nằm trên đường nóng nhất của app (gọi ở mọi request Chat/Speaking/TTS...).
+import { z } from 'zod'
+import type { PoolClient } from 'pg'
 import { getPgPool } from './pgPool.js'
 
 export interface AppSettings {
@@ -31,13 +33,13 @@ export interface AppSettings {
   updatedAt: string
 }
 
-// Mặc định dùng khi DB CHƯA có dòng cấu hình hoặc query lỗi (fail-open, giống mọi nơi khác
-// trong app — không để lỗi hạ tầng làm vỡ luồng chính) — PHẢI khớp giá trị seed trong
+// Mặc định CHỈ để hiển thị khi không đọc được cấu hình. Cổng chi phí dùng
+// requireAvailable và từ chối khi thiếu cấu hình. Các giá trị PHẢI khớp seed trong
 // postgres/migrations/0016_daily_total_limit.sql (cột pro_daily_limit 30/ngày — nay là hạn mức
 // Free, VIP 300/ngày, đều là TỔNG).
 // promoUntil = null CÓ CHỦ Ý: nếu DB lỗi/mất dòng cấu hình mà mặc định vẫn bật khuyến mãi
 // thì hệ thống tự nâng gói cho toàn bộ user → phát sinh chi phí AI/TTS ngoài kiểm soát.
-// Fail-open ở đây chỉ áp dụng cho HẠN MỨC (vẫn cho dùng), KHÔNG áp dụng cho khuyến mãi.
+// Không dùng fallback hiển thị này để cho phép gọi provider.
 const DEFAULT_SETTINGS: AppSettings = {
   limits: { free: 30, vip: 300 },
   promoUntil: null,
@@ -46,14 +48,15 @@ const DEFAULT_SETTINGS: AppSettings = {
   updatedAt: '1970-01-01T00:00:00.000Z',
 }
 
-interface AppSettingsRow {
-  pro_daily_limit: number
-  vip_daily_limit: number
-  promo_until: Date | null
-  ai_circuit_breaker: boolean
-  leaderboard_enabled: boolean
-  updated_at: Date
-}
+const AppSettingsRowSchema = z.object({
+  pro_daily_limit: z.number().int().nonnegative(),
+  vip_daily_limit: z.number().int().nonnegative(),
+  promo_until: z.coerce.date().nullable(),
+  ai_circuit_breaker: z.boolean(),
+  leaderboard_enabled: z.boolean().default(false),
+  updated_at: z.coerce.date(),
+})
+type AppSettingsRow = z.infer<typeof AppSettingsRowSchema>
 
 function rowToSettings(row: AppSettingsRow): AppSettings {
   return {
@@ -69,19 +72,24 @@ function rowToSettings(row: AppSettingsRow): AppSettings {
 const CACHE_TTL_MS = 30_000 // 30s — admin đổi cấu hình có hiệu lực gần như ngay, không cần restart
 let cache: { value: AppSettings; fetchedAt: number } | null = null
 
-export async function getAppSettings(): Promise<AppSettings> {
-  if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return cache.value
+export async function getAppSettings(
+  options: { requireAvailable?: boolean; runner?: Pick<PoolClient, 'query'> } = {},
+): Promise<AppSettings> {
+  if (!options.runner && cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return cache.value
 
   try {
-    const pool = getPgPool()
+    const pool = options.runner ?? getPgPool()
     const { rows } = await pool.query<AppSettingsRow>(
       'select * from public.app_settings where id = 1',
     )
-    const value = rows[0] ? rowToSettings(rows[0]) : DEFAULT_SETTINGS
-    cache = { value, fetchedAt: Date.now() }
+    if (!rows[0]) throw new Error('app_settings chưa được cấu hình')
+    const value = rowToSettings(AppSettingsRowSchema.parse(rows[0]))
+    // Không chia sẻ cấu hình chưa commit với request ngoài transaction.
+    if (!options.runner) cache = { value, fetchedAt: Date.now() }
     return value
   } catch (err) {
-    console.warn('[settings] Đọc app_settings lỗi → dùng mặc định (fail-open):', err)
+    if (options.requireAvailable) throw err
+    console.warn('[settings] Không đọc được app_settings → dùng mặc định hiển thị:', err)
     return DEFAULT_SETTINGS
   }
 }

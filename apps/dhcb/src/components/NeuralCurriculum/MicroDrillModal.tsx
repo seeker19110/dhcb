@@ -1,13 +1,17 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useDialogBehavior } from '../useDialogBehavior'
-import { MicroDrillQuestion } from '@dhcb/core-contracts/neuralCurriculum'
+import {
+  MicroDrillQuestion,
+  type NeuralDrillSubmission,
+  type NeuralDrillReview,
+} from '@dhcb/core-contracts/neuralCurriculum'
 import { Zap, CheckCircle2, XCircle, X, ArrowRight, Trophy } from 'lucide-react'
 
 interface MicroDrillModalProps {
   isOpen: boolean
   onClose: () => void
   drills: MicroDrillQuestion[]
-  onComplete: (isCorrect: boolean) => Promise<void>
+  onComplete: (answers: NeuralDrillSubmission['answers']) => Promise<NeuralDrillReview>
 }
 
 export default function MicroDrillModal({
@@ -21,16 +25,26 @@ export default function MicroDrillModal({
   const [isAnswered, setIsAnswered] = useState(false)
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
+  const [answers, setAnswers] = useState<NeuralDrillSubmission['answers']>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [review, setReview] = useState<NeuralDrillReview | null>(null)
+  const submissionVersion = useRef(0)
 
   // Đóng = trả bài luyện về trạng thái đầu rồi mới gọi onClose (giữ nguyên hành vi cũ
   // của nút X). Khai báo TRƯỚC early-return để hook hộp thoại dùng được — nhờ vậy phím
   // Escape và bấm ra nền cũng reset y hệt bấm X.
   const handleReset = useCallback(() => {
+    submissionVersion.current++
+    setSaving(false)
     setCurrentIndex(0)
     setSelectedOption(null)
     setIsAnswered(false)
     setScore(0)
     setFinished(false)
+    setAnswers([])
+    setError('')
+    setReview(null)
     onClose()
   }, [onClose])
 
@@ -42,6 +56,7 @@ export default function MicroDrillModal({
 
   const handleOptionClick = (option: string) => {
     if (isAnswered || !currentDrill) return
+    setAnswers((previous) => [...previous, { drillId: currentDrill.id, answer: option }])
     setSelectedOption(option)
     setIsAnswered(true)
     const correct = option.toLowerCase() === currentDrill.correctAnswer.toLowerCase()
@@ -53,8 +68,22 @@ export default function MicroDrillModal({
   const handleNext = async () => {
     const isLast = currentIndex >= drills.length - 1
     if (isLast) {
-      setFinished(true)
-      await onComplete(score >= Math.ceil(drills.length / 2))
+      if (saving) return
+      const version = ++submissionVersion.current
+      setSaving(true)
+      setError('')
+      try {
+        const result = await onComplete(answers)
+        if (version !== submissionVersion.current) return
+        setReview(result)
+        setFinished(true)
+      } catch {
+        if (version === submissionVersion.current) {
+          setError('Chưa lưu được bài luyện. Bấm Hoàn tất để thử lại.')
+        }
+      } finally {
+        if (version === submissionVersion.current) setSaving(false)
+      }
     } else {
       setCurrentIndex((i) => i + 1)
       setSelectedOption(null)
@@ -148,6 +177,11 @@ export default function MicroDrillModal({
               })}
             </div>
 
+            {error && (
+              <p role="alert" className="text-sm text-zinc-100">
+                {error}
+              </p>
+            )}
             {isAnswered && (
               <div className="rounded-xl bg-sky-950/30 border border-sky-500/30 p-3 flex flex-col gap-2 animate-fade-in">
                 <p className="text-xs text-sky-200 theme-light:text-sky-900 font-medium">
@@ -156,9 +190,16 @@ export default function MicroDrillModal({
                 <button
                   type="button"
                   onClick={handleNext}
+                  disabled={saving}
                   className="self-end flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-sky-500 text-zinc-950 hover:bg-sky-400 transition shadow-lg"
                 >
-                  <span>{currentIndex < drills.length - 1 ? 'Câu tiếp theo' : 'Hoàn tất'}</span>
+                  <span>
+                    {saving
+                      ? 'Đang lưu…'
+                      : currentIndex < drills.length - 1
+                        ? 'Câu tiếp theo'
+                        : 'Hoàn tất'}
+                  </span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -174,7 +215,8 @@ export default function MicroDrillModal({
                 Hoàn Tất Bài Luyện Vi Mô!
               </h3>
               <p className="text-xs text-zinc-400 mt-1">
-                Bạn đã trả lời đúng {score} / {drills.length} câu. Điểm Mastery đã được cập nhật!
+                Bạn đã trả lời đúng {review?.correctCount ?? score} / {drills.length} câu.{' '}
+                {review?.recorded ? 'Kết quả đã được lưu.' : 'Đã ôn lại bài; điểm không cộng lặp.'}
               </p>
             </div>
             <button

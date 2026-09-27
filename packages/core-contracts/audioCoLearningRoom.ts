@@ -4,6 +4,15 @@ import { z } from 'zod'
 
 export const AUDIO_CO_LEARNING_VERSION = 'v7.1.0'
 
+// Tối đa 2 giây PCM 16 kHz/16 bit mỗi chunk; giới hạn trước khi decode/relay.
+export const MAX_AUDIO_CHUNK_BYTES = 64_000
+export const MAX_CO_LEARNING_MESSAGE_BYTES = 96_000
+export const AudioChunkBase64Schema = z
+  .string()
+  .min(1)
+  .max(Math.ceil(MAX_AUDIO_CHUNK_BYTES / 3) * 4)
+  .regex(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/)
+
 // ─── Trạng thái thành viên trong phòng âm thanh ───────────────────────────────
 export const AudioRoomMemberStateSchema = z.enum([
   'connecting',
@@ -94,7 +103,7 @@ export const WsCoLearningClientMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('audio_chunk'),
     roomId: z.string().min(1),
-    audioBase64: z.string().min(1), // PCM 16kHz 16-bit base64
+    audioBase64: AudioChunkBase64Schema, // PCM 16kHz 16-bit base64
     audioLevel: z.number().min(0).max(1).optional(),
   }),
   z.object({
@@ -114,3 +123,6 @@ export const WsCoLearningClientMessageSchema = z.discriminatedUnion('type', [
   }),
 ])
 export type WsCoLearningClientMessage = z.infer<typeof WsCoLearningClientMessageSchema>
+
+// REST chỉ nhận định danh phòng; nội dung gợi ý luôn do server tạo.
+export const AudioRoomHintRequestSchema = z.object({ roomId: z.string().min(1).max(128) })

@@ -11,6 +11,7 @@
 
 import type { Pool, PoolClient } from 'pg'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import { resolvePlan, type Plan } from './plan.js'
 import { getAppSettings } from '@dhcb/core-db/settings'
 
@@ -82,8 +83,8 @@ export function computePlanGrant(
  * Ghi kết quả cấp gói xuống DB (đọc trạng thái hiện tại → tính → ghi).
  * Trả về gói/hạn SAU KHI cấp.
  *
- * `runner` mặc định là pool dùng chung (hành vi cũ, không đổi cho các nơi gọi hiện có: referral,
- * admin-grant-plan, quests, trial, achievement rewards). Truyền vào một `PoolClient` đang ở giữa
+ * Khi nhận pool, hàm tự mở transaction và khóa dòng profile trước khi cộng ngày.
+ * Truyền vào một `PoolClient` đang ở giữa
  * transaction (từ `withTransaction()`, `packages/core-db/transaction.ts`) khi việc cấp gói này
  * PHẢI atomic cùng một thao tác ghi DB khác — ví dụ `payment-webhook.ts` cần cập nhật
  * `payments.status='paid'` và cấp gói cùng thành công/thất bại, không được để lệch nhau.
@@ -95,25 +96,37 @@ export async function grantPlanDays(
   now: Date = new Date(),
   runner: Pool | PoolClient = getPgPool(),
 ): Promise<PlanGrantResult> {
-  const { rows } = await runner.query<{ plan: string | null; plan_expires_at: Date | null }>(
-    'select plan, plan_expires_at from public.profiles where id = $1',
-    [userId],
-  )
-  const { promoUntil } = await getAppSettings()
-  const next = computePlanGrant(
-    rows[0]?.plan,
-    rows[0]?.plan_expires_at,
-    grantPlan,
-    days,
-    now,
-    promoUntil,
-  )
+  const { promoUntil } = await getAppSettings({
+    requireAvailable: true,
+    ...('release' in runner ? { runner } : {}),
+  })
+  const grant = async (client: PoolClient): Promise<PlanGrantResult> => {
+    // Tạo hàng trước khi khóa: hai lần cấp đồng thời vẫn tuần tự khi user chưa có profile.
+    await client.query(
+      `insert into public.profiles (id, plan) values ($1, 'free')
+       on conflict (id) do nothing`,
+      [userId],
+    )
+    const { rows } = await client.query<{ plan: string | null; plan_expires_at: Date | null }>(
+      'select plan, plan_expires_at from public.profiles where id = $1 for update',
+      [userId],
+    )
+    const next = computePlanGrant(
+      rows[0]?.plan,
+      rows[0]?.plan_expires_at,
+      grantPlan,
+      days,
+      now,
+      promoUntil,
+    )
 
-  await runner.query(
-    `insert into public.profiles (id, plan, plan_expires_at)
+    await client.query(
+      `insert into public.profiles (id, plan, plan_expires_at)
      values ($1, $2, $3)
      on conflict (id) do update set plan = excluded.plan, plan_expires_at = excluded.plan_expires_at`,
-    [userId, next.plan, next.planExpiresAt],
-  )
-  return next
+      [userId, next.plan, next.planExpiresAt],
+    )
+    return next
+  }
+  return 'release' in runner ? grant(runner) : withTransaction(runner, grant)
 }

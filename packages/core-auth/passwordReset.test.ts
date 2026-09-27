@@ -30,8 +30,13 @@ const query = vi.fn()
 beforeEach(() => {
   mailCalls.length = 0
   query.mockReset()
-  query.mockResolvedValue({ rows: [] })
-  mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+  query.mockImplementation(async (sql: string) => ({
+    rows: sql.startsWith('update public.password_resets') ? [{ user_id: 'u1' }] : [],
+  }))
+  mockedGetPool.mockReturnValue({
+    query,
+    connect: async () => ({ query, release: vi.fn() }),
+  } as unknown as ReturnType<typeof getPgPool>)
   // Timer giả cho các test requestPasswordReset — hàm này ép sàn thời gian 400ms (chống dò
   // email qua độ trễ phản hồi), test thật sẽ mất ~400ms/case nếu dùng timer thật x9 case.
   vi.useFakeTimers()
@@ -169,5 +174,43 @@ describe('resetPassword', () => {
     )
     expect(revoke).toBeDefined()
     expect((revoke?.[1] as unknown[])[0]).toBe('u1')
+  })
+})
+
+describe('resetPassword — nguyên tử và dùng một lần', () => {
+  const record = { id: 'r1', user_id: 'u1', expires_at: new Date('2099-01-01'), used_at: null }
+
+  it('hai lần dùng đồng thời chỉ một lần đổi mật khẩu', async () => {
+    let consumed = false
+    query.mockImplementation(async (sql: string) => {
+      if (sql.startsWith('select')) return { rows: [record] }
+      if (sql.startsWith('update public.password_resets')) {
+        expect(sql).toContain('used_at is null and expires_at > now()')
+        if (consumed) return { rows: [] }
+        consumed = true
+        return { rows: [{ user_id: 'u1' }] }
+      }
+      return { rows: [] }
+    })
+    const results = await Promise.all([
+      resetPassword('same', 'first'),
+      resetPassword('same', 'second'),
+    ])
+    expect(results.filter((result) => result.ok)).toHaveLength(1)
+    expect(
+      query.mock.calls.filter(([sql]) => String(sql).startsWith('update public.users')),
+    ).toHaveLength(1)
+  })
+
+  it('thu hồi phiên thất bại phải rollback, không commit lần tiêu thụ token', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.startsWith('select')) return { rows: [record] }
+      if (sql.startsWith('update public.password_resets')) return { rows: [{ user_id: 'u1' }] }
+      if (sql.startsWith('delete from public.sessions')) throw new Error('session delete failed')
+      return { rows: [] }
+    })
+    await expect(resetPassword('same', 'first')).rejects.toThrow('session delete failed')
+    expect(query.mock.calls.map(([sql]) => sql)).toContain('rollback')
+    expect(query.mock.calls.map(([sql]) => sql)).not.toContain('commit')
   })
 })

@@ -12,6 +12,9 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
+const twoFactor = vi.hoisted(() => ({ getTwoFactorStatus: vi.fn(), hasStepUp: vi.fn() }))
+vi.mock('@dhcb/core-auth/twoFactor', () => twoFactor)
+
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
 
 const getOrCreatePerson = vi.fn()
@@ -39,6 +42,8 @@ function req(method: string, body?: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+  twoFactor.hasStepUp.mockResolvedValue(false)
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   getOrCreatePerson.mockResolvedValue({ id: PERSON })
@@ -107,5 +112,30 @@ describe('POST /api/context-package', () => {
   it('rejects missing purpose with 400', async () => {
     const res = await handler(req('POST', { requestText: 'hello' }))
     expect(res.status).toBe(400)
+  })
+})
+
+describe('không đọc vòng qua context-package để bỏ cổng 2FA', () => {
+  beforeEach(() => {
+    buildContextPackage.mockResolvedValue({
+      items: [{ sensitivity: 'sensitive', content: 'HIDDEN_PROFILE' }],
+    })
+  })
+  it('chưa bật 2FA bị từ chối trước khi trả T2', async () => {
+    const response = await handler(req('POST', { requestText: 'hi', purpose: 'chat' }))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'TWO_FACTOR_SETUP_REQUIRED' })
+  })
+  it('đã bật nhưng chưa step-up bị từ chối', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+    const response = await handler(req('POST', { requestText: 'hi', purpose: 'chat' }))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'STEP_UP_REQUIRED' })
+  })
+  it('phiên đã step-up được đọc context chính chủ', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+    twoFactor.hasStepUp.mockResolvedValue(true)
+    const response = await handler(req('POST', { requestText: 'hi', purpose: 'chat' }))
+    expect(response.status).toBe(200)
   })
 })

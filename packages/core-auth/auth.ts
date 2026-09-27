@@ -27,6 +27,7 @@ import {
   findOrCreateAppleUser,
   verifyMicrosoftIdToken,
   findOrCreateMicrosoftUser,
+  MicrosoftAccountLinkRequiredError,
   createSession,
   revokeSession,
   ensureProfileRow,
@@ -361,9 +362,20 @@ export default async function handler(req: Request): Promise<Response> {
   if (result.data.action === 'microsoft') {
     const info = await verifyMicrosoftIdToken(result.data.idToken)
     if (!info) return jsonResponse({ error: 'Microsoft token không hợp lệ' }, 401, allHeaders)
-    const { user, isNew } = await findOrCreateMicrosoftUser(info.microsoftId, info.email)
-    const body = await oauthLoginResponse(user, isNew, info.name)
-    return jsonResponse(body, 200, withCookie(body.token))
+    try {
+      const { user, isNew } = await findOrCreateMicrosoftUser(info.microsoftId, info.email)
+      const body = await oauthLoginResponse(user, isNew, info.name)
+      return jsonResponse(body, 200, withCookie(body.token))
+    } catch (error) {
+      if (error instanceof MicrosoftAccountLinkRequiredError) {
+        return jsonResponse(
+          { error: error.message, code: 'MICROSOFT_ACCOUNT_LINK_REQUIRED' },
+          403,
+          allHeaders,
+        )
+      }
+      throw error
+    }
   }
 
   // ── Xác thực email (chống email giả cày thưởng mời bạn) ────────────────────

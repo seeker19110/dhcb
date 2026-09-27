@@ -86,6 +86,7 @@ describe('Rate limit và method not allowed', () => {
 
 describe('GET /api/progress — đọc tiến độ học', () => {
   it('không có dữ liệu tiến độ → trả body null', async () => {
+    query.mockResolvedValue({ rows: [] })
     query.mockResolvedValueOnce({ rows: [] })
     const req = new Request('http://localhost/api/progress', {
       method: 'GET',
@@ -100,6 +101,7 @@ describe('GET /api/progress — đọc tiến độ học', () => {
   // GĐ2a: `cefrUnlocked` KHÔNG còn là cột đọc thẳng — server tính lại mỗi lượt đọc từ gói +
   // cefr_exams + grandfather, nên response không phản chiếu giá trị rác trong cột nữa.
   it('có dữ liệu tiến độ → trả camelCase response', async () => {
+    query.mockResolvedValue({ rows: [] })
     query.mockResolvedValueOnce({
       rows: [
         {
@@ -132,7 +134,7 @@ describe('GET /api/progress — đọc tiến độ học', () => {
       cefrDialogues: ['d1'],
       // 'u1' là giá trị client cũ tự khai — server BỎ QUA; A1 luôn mở, A2 nhờ grandfather.
       cefrUnlocked: ['A1', 'A2'],
-      cefrExams: { e1: { score: 90 } },
+      cefrExams: {},
       placement: { cefr: 'A2' },
       weeklyGoal: { target: 10 },
       achievements: ['first_word'],
@@ -203,6 +205,19 @@ describe('POST /api/progress — cefrUnlocked do SERVER tính, không nhận t�
     grandfathered?: string[]
   }) {
     query.mockImplementation(async (sql: string) => {
+      if (sql.includes('platform.feature_state'))
+        return {
+          rows: [
+            {
+              cefr_exams: Object.fromEntries(
+                Object.entries(options.exams ?? {}).map(([key, value]) => [
+                  key,
+                  { bestPct: 0, attempts: 1, lastAt: '2026-09-27', ...(value as object) },
+                ]),
+              ),
+            },
+          ],
+        }
       if (sql.includes('select plan, plan_expires_at'))
         return {
           rows: [{ plan: options.plan ?? 'free', plan_expires_at: options.planExpiresAt ?? null }],
@@ -712,5 +727,40 @@ describe('POST /api/progress — version, xung đột, replay (S09-1)', () => {
     expect(resp.status).toBe(429)
     expect(resp.headers.get('Retry-After')).toBe('60')
     expect(query).not.toHaveBeenCalled()
+  })
+})
+
+describe('CEFR chỉ cấp quyền từ sổ chấm thi máy chủ', () => {
+  it('đọc được kết quả đã chấm dù chưa có hàng tiến độ legacy', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('platform.feature_state'))
+        return {
+          rows: [
+            {
+              cefr_exams: { A1: { passed: true, bestPct: 90, attempts: 1, lastAt: '2026-09-27' } },
+            },
+          ],
+        }
+      return { rows: [] }
+    })
+    const response = await handler(new Request('http://localhost/api/progress'))
+    expect((await response.json()).cefrUnlocked).toEqual(['A1', 'A2'])
+  })
+  it('từ chối passed và marker tự khai kể cả từ dữ liệu legacy trong DB', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return {
+          rows: [
+            { ...EMPTY_PROGRESS_ROW, cefr_exams: { A1: { passed: true, serverVerified: true } } },
+          ],
+        }
+      return { rows: [] }
+    })
+    const response = await handler(
+      makeRequest({ cefrExams: { A1: { passed: true, serverVerified: true, bestPct: 100 } } }),
+    )
+    expect((await response.json()).cefrUnlocked).toEqual(['A1'])
+    const saved = findCall('insert into english.learning_progress')!
+    expect(JSON.parse((saved[1] as unknown[])[7] as string)).toEqual({})
   })
 })

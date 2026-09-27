@@ -4,6 +4,7 @@
 // Trước đây hội thoại chỉ sống trong bộ nhớ trình duyệt nên đóng trang là mất, và LLM chỉ nhận
 // đúng một tin nhắn mỗi lượt. File này là nơi DUY NHẤT chạm vào bảng đó.
 import type { Pool, PoolClient } from 'pg'
+import { SensitivitySchema, type Sensitivity } from '@dhcb/core-contracts/personalFact'
 
 /** Giới hạn cứng số tin nạp vào prompt gửi LLM — mỗi tin thêm vào là thêm tiền token mỗi lượt. */
 export const COMPANION_HISTORY_TURNS = 10
@@ -19,6 +20,7 @@ export interface CompanionMessage {
   content: string
   domain?: string
   intent?: string
+  sensitivity?: Sensitivity
   createdAt: string
 }
 
@@ -29,9 +31,10 @@ interface MessageRow {
   domain: string | null
   intent: string | null
   created_at: Date
+  sensitivity?: string
 }
 
-const MESSAGE_COLUMNS = 'id, role, content, domain, intent, created_at'
+const MESSAGE_COLUMNS = 'id, role, content, domain, intent, created_at, sensitivity'
 
 function toMessage(row: MessageRow): CompanionMessage {
   return {
@@ -43,6 +46,7 @@ function toMessage(row: MessageRow): CompanionMessage {
     ...(row.domain ? { domain: row.domain } : {}),
     ...(row.intent ? { intent: row.intent } : {}),
     createdAt: row.created_at.toISOString(),
+    sensitivity: SensitivitySchema.safeParse(row.sensitivity).data ?? 'sensitive',
   }
 }
 
@@ -52,6 +56,7 @@ export interface AppendCompanionMessageInput {
   content: string
   domain?: string
   intent?: string
+  sensitivity?: Sensitivity
 }
 
 /**
@@ -70,10 +75,17 @@ export async function appendCompanionMessage(
   }
 
   const res = await runner.query<MessageRow>(
-    `insert into personal.companion_messages (person_id, role, content, domain, intent)
-     values ($1, $2, $3, $4, $5)
+    `insert into personal.companion_messages (person_id, role, content, domain, intent, sensitivity)
+     values ($1, $2, $3, $4, $5, $6)
      returning ${MESSAGE_COLUMNS}`,
-    [input.personId, input.role, content, input.domain ?? null, input.intent ?? null],
+    [
+      input.personId,
+      input.role,
+      content,
+      input.domain ?? null,
+      input.intent ?? null,
+      input.sensitivity ?? 'sensitive',
+    ],
   )
   const row = res.rows[0]
   if (!row) throw new Error('Không ghi được tin nhắn Companion')
@@ -88,14 +100,27 @@ export async function listRecentCompanionMessages(
   runner: Pick<Pool | PoolClient, 'query'>,
   personId: string,
   limit = COMPANION_HISTORY_PAGE_SIZE,
+  domain?: string,
+  maxSensitivity?: Sensitivity,
 ): Promise<CompanionMessage[]> {
   const safeLimit = Math.min(200, Math.max(1, Math.trunc(limit)))
+  const params: unknown[] = [personId, safeLimit]
+  const conditions = ['person_id = $1']
+  if (domain !== undefined) {
+    params.push(domain)
+    conditions.push(`domain = $${params.length}`)
+  }
+  if (maxSensitivity !== undefined) {
+    const levels: Sensitivity[] = ['public', 'personal', 'sensitive', 'restricted']
+    params.push(levels.slice(0, levels.indexOf(maxSensitivity) + 1))
+    conditions.push(`sensitivity = any($${params.length}::text[])`)
+  }
   const res = await runner.query<MessageRow>(
     `select ${MESSAGE_COLUMNS} from personal.companion_messages
-     where person_id = $1
+     where ${conditions.join(' and ')}
      order by created_at desc, id desc
      limit $2`,
-    [personId, safeLimit],
+    params,
   )
   return res.rows.map(toMessage).reverse()
 }

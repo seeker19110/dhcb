@@ -21,6 +21,7 @@ import intakeHandler from './api/personal/intake.js'
 import learnerIntentHandler from './api/personal/learner-intent.js'
 import adminIntakeStatsHandler from './api/admin/admin-intake-stats.js'
 import progressHandler from './api/core/progress.js'
+import cefrAssessmentHandler from './api/subjects/english/cefr-assessment.js'
 import usageSummaryHandler from './api/core/usage-summary.js'
 import historyHandler from './api/core/history.js'
 import challengeHandler from './api/subjects/english/challenge.js'
@@ -236,6 +237,7 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/learner-intent', wrapEdge(learnerIntentHandler))
   app.all('/api/admin-intake-stats', wrapEdge(adminIntakeStatsHandler))
   app.all('/api/progress', wrapEdge(progressHandler))
+  app.all('/api/cefr-assessment', wrapEdge(cefrAssessmentHandler))
   app.all('/api/usage-summary', wrapEdge(usageSummaryHandler))
   app.all('/api/history', wrapEdge(historyHandler))
   app.all('/api/challenge', wrapEdge(challengeHandler))

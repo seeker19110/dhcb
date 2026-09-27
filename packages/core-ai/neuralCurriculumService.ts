@@ -5,6 +5,7 @@ import {
   MicroDrillQuestion,
   NeuralCurriculumState,
   NEURAL_CURRICULUM_VERSION,
+  type NeuralDrillSubmission,
 } from '@dhcb/core-contracts/neuralCurriculum'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
 
@@ -81,7 +82,7 @@ export class NeuralCurriculumService {
         type: 'verb_noun',
         strength: 90,
         exampleSentenceEn:
-          'Mastering English gives professionals a competitive edge in global recruitment.',
+          'Professionals gain a competitive edge by mastering English for global recruitment.',
         exampleSentenceVi:
           'Làm chủ tiếng Anh mang lại cho người đi làm lợi thế cạnh tranh khi tuyển dụng quốc tế.',
         domain,
@@ -103,6 +104,23 @@ export class NeuralCurriculumService {
         relatedWords: ['drive', 'innovation', 'technology'],
       },
     ]
+  }
+
+  /** Chấm đủ mỗi câu đúng một lần, đối chiếu câu hỏi thuộc module do server tạo. */
+  static gradeDrill(
+    module: MicroCurriculumModule,
+    answers: NeuralDrillSubmission['answers'],
+  ): number | null {
+    if (answers.length !== module.drills.length) return null
+    const byId = new Map(answers.map((answer) => [answer.drillId, answer.answer]))
+    if (byId.size !== answers.length) return null
+    let correct = 0
+    for (const drill of module.drills) {
+      const answer = byId.get(drill.id)
+      if (answer === undefined || !drill.options.includes(answer)) return null
+      if (answer === drill.correctAnswer) correct++
+    }
+    return correct
   }
 
   /**
@@ -139,7 +157,7 @@ export class NeuralCurriculumService {
       personId,
       activeModuleId: defaultModule.moduleId,
       modules: [defaultModule],
-      masteryScore: 70,
+      masteryScore: 0,
       schemaVersion: NEURAL_CURRICULUM_VERSION,
       createdAt: now,
       updatedAt: now,
