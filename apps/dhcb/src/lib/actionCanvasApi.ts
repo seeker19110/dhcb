@@ -1,11 +1,11 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/actionCanvasApi.ts — Client API giao tiếp Action Canvas V4.2.
 import { ActionCanvasState } from '@dhcb/core-contracts/actionCanvas'
 
 export async function fetchActionCanvas(): Promise<ActionCanvasState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/action-canvas', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -18,12 +18,11 @@ export async function fetchActionCanvas(): Promise<ActionCanvasState> {
 }
 
 export async function saveActionCanvas(canvas: ActionCanvasState): Promise<ActionCanvasState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/action-canvas', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(canvas),
   })
@@ -37,12 +36,11 @@ export async function saveActionCanvas(canvas: ActionCanvasState): Promise<Actio
 }
 
 export async function synthesizeGoalCanvas(goalPrompt: string): Promise<ActionCanvasState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/action-canvas?action=synthesize', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ goalPrompt }),
   })
@@ -56,12 +54,11 @@ export async function synthesizeGoalCanvas(goalPrompt: string): Promise<ActionCa
 }
 
 export async function exportCanvasMarkdown(): Promise<{ markdown: string; title: string }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/action-canvas?action=export', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({}),
   })

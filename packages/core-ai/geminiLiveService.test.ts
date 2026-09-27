@@ -46,8 +46,48 @@ describe('geminiLiveService', () => {
   })
 
   afterEach(() => {
-    process.env.GEMINI_API_KEY = originalKey
+    _resetGeminiLiveServiceStateForTests()
+    vi.useRealTimers()
+    if (originalKey === undefined) delete process.env.GEMINI_API_KEY
+    else process.env.GEMINI_API_KEY = originalKey
     _setWebSocketFactoryForTests(null)
+  })
+
+  it('ID trùng không ghi đè phiên đang mở của người khác', () => {
+    const owner = createGeminiLiveSession({ sessionId: 'same-id', personId: 'owner' })
+    expect(() => createGeminiLiveSession({ sessionId: 'same-id', personId: 'attacker' })).toThrow(
+      'Session ID already exists',
+    )
+    expect(getGeminiLiveSession('same-id')).toBe(owner)
+  })
+
+  it('start gọi lặp không mở thêm upstream và timeout tự dọn registry', () => {
+    vi.useFakeTimers()
+    const factory = vi.fn(() => fakeSocket as never)
+    _setWebSocketFactoryForTests(factory)
+    const session = createGeminiLiveSession({
+      sessionId: 'idempotent-start',
+      personId: 'owner',
+      maxDurationSeconds: 30,
+    })
+    session.start()
+    session.start()
+    expect(factory).toHaveBeenCalledOnce()
+    vi.advanceTimersByTime(30_000)
+    expect(session.getStatus()).toBe('closed')
+    expect(getGeminiLiveSession('idempotent-start')).toBeUndefined()
+  })
+
+  it('lỗi upstream không đưa URL/API key vào packet và dọn phiên', () => {
+    const session = createGeminiLiveSession({ sessionId: 'error-cleanup', personId: 'owner' })
+    const packets: unknown[] = []
+    session.on('packet', (packet) => packets.push(packet))
+    session.start()
+    fakeSocket.emit('error', new Error('wss://provider?key=SECRET'))
+    expect(JSON.stringify(packets)).not.toContain('SECRET')
+    expect(session.getStatus()).toBe('closed')
+    expect(getGeminiLiveSession('error-cleanup')).toBeUndefined()
+    expect(() => fakeSocket.emit('error', new Error('late closing error'))).not.toThrow()
   })
 
   it('should connect to upstream and reach active status after setupComplete', () => {

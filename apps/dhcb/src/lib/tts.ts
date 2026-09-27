@@ -1,10 +1,10 @@
 // Text-to-Speech — gọi Google TTS qua /api/tts (server-side, có cache dùng chung)
 // Audio cache được MÃ HÓA AES-256-GCM (lưu local VPS hoặc Cloudflare R2 tùy STORAGE_DRIVER):
 // ai có link cũng không nghe được nội dung nếu chưa đăng nhập — server chỉ trả khoá giải mã
-// (key_b64/iv_b64) cho request có Bearer token hợp lệ, gửi qua header Authorization: Bearer <token>.
+// (key_b64/iv_b64) cho request có phiên cookie HttpOnly hợp lệ.
 // Fallback về Web Speech API nếu /api/tts lỗi (mất mạng, server timeout, chưa đăng nhập...).
 
-import { getAccessToken } from '@core/authHeader'
+import { getStoredToken, getAuthHeader } from '@core/authHeader'
 import { audioCacheKey, getAudioEntry, setAudioBuffer } from './audioCache'
 import { touchSettingsUpdated } from './storage'
 import type { VisemeFrame } from './viseme'
@@ -467,7 +467,7 @@ export async function ensureAudioWithTimeline(
   if (running) return running
 
   const job = (async () => {
-    const token = await getAccessToken()
+    const token = getStoredToken()
     if (!token) throw new Error('Chưa đăng nhập — không gọi được /api/tts')
 
     const callTts = () =>
@@ -475,7 +475,7 @@ export async function ensureAudioWithTimeline(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...getAuthHeader(),
         },
         body: JSON.stringify({ text, lang, voice }),
       })

@@ -11,8 +11,7 @@ import {
   logSecurityEvent,
   pingRedis,
 } from '@dhcb/core-auth/security'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
-import { getUserById } from '@dhcb/core-auth/authService'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
 export interface DeepHealthCheckResult {
@@ -151,8 +150,7 @@ export default async function handler(req: Request): Promise<Response> {
   // admin — trước đây lộ công khai (vá 2026-08-23, đề xuất N1 mục B2). Uptime monitor bên
   // ngoài không đăng nhập vẫn dùng được: nhận status + đúng mã 200/503, không kèm nội tình.
   const auth = await validateAuth(req)
-  const user = auth ? await getUserById(auth.userId) : null
-  if (!isAdminEmail(user?.email)) {
+  if (!isAdminUser(auth?.userId)) {
     return jsonResponse(
       { status: result.status, timestamp: result.timestamp },
       statusCode,

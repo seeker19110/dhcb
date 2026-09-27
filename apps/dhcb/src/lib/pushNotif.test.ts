@@ -53,7 +53,7 @@ describe('subscribePush', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(subscribePush('token', 11)).resolves.toEqual({ status: 'denied' })
+    await expect(subscribePush(11)).resolves.toEqual({ status: 'denied' })
     expect(fetchMock).not.toHaveBeenCalled()
     expect(Notification.requestPermission).not.toHaveBeenCalled()
   })
@@ -62,7 +62,7 @@ describe('subscribePush', () => {
     vi.spyOn(Notification, 'requestPermission').mockResolvedValue('denied')
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ publicKey: 'AQ' })))
 
-    await expect(subscribePush('token', 11)).resolves.toEqual({ status: 'denied' })
+    await expect(subscribePush(11)).resolves.toEqual({ status: 'denied' })
   })
 
   it('trả partial khi browser đã đăng ký nhưng server thất bại', async () => {
@@ -74,7 +74,7 @@ describe('subscribePush', () => {
         .mockResolvedValueOnce(response({}, false)),
     )
 
-    await expect(subscribePush('token', 11)).resolves.toEqual({
+    await expect(subscribePush(11)).resolves.toEqual({
       status: 'partial',
       serverUpdated: false,
       browserUpdated: true,
@@ -90,13 +90,13 @@ describe('subscribePush', () => {
         .mockResolvedValueOnce(response({ ok: true })),
     )
 
-    await expect(subscribePush('token', 11)).resolves.toEqual({ status: 'success' })
+    await expect(subscribePush(11)).resolves.toEqual({ status: 'success' })
   })
 
   it('trả failed khi chưa cập nhật browser và VAPID request thất bại', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({}, false)))
 
-    await expect(subscribePush('token', 11)).resolves.toEqual({ status: 'failed' })
+    await expect(subscribePush(11)).resolves.toEqual({ status: 'failed' })
     expect(pushManager.getSubscription).not.toHaveBeenCalled()
   })
 })
@@ -105,7 +105,7 @@ describe('unsubscribePush', () => {
   it('giữ browser subscription khi server chưa xác nhận', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({}, false)))
 
-    await expect(unsubscribePush('token')).resolves.toEqual({ status: 'failed' })
+    await expect(unsubscribePush()).resolves.toEqual({ status: 'failed' })
     expect(subscription.unsubscribe).not.toHaveBeenCalled()
   })
 
@@ -113,7 +113,7 @@ describe('unsubscribePush', () => {
     subscription.unsubscribe = vi.fn().mockRejectedValue(new Error('browser failure'))
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ ok: true })))
 
-    await expect(unsubscribePush('token')).resolves.toEqual({
+    await expect(unsubscribePush()).resolves.toEqual({
       status: 'partial',
       serverUpdated: true,
       browserUpdated: false,
@@ -123,7 +123,7 @@ describe('unsubscribePush', () => {
   it('trả success khi server xác nhận rồi browser unsubscribe hoàn tất', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ ok: true })))
 
-    await expect(unsubscribePush('token')).resolves.toEqual({ status: 'success' })
+    await expect(unsubscribePush()).resolves.toEqual({ status: 'success' })
     expect(subscription.unsubscribe).toHaveBeenCalledOnce()
   })
 })

@@ -1,5 +1,5 @@
 // Test src/lib/auth.ts — client đăng nhập/đăng ký, gọi /api/auth qua fetch.
-// Mock fetch toàn cục + mock localStorage (qua @core/authHeader) để kiểm luồng lưu/xoá token.
+// Mock fetch toàn cục + mock localStorage (qua @core/authHeader) để kiểm luồng lưu/xoá cờ phiên không bí mật.
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 
@@ -8,21 +8,23 @@ describe('src/lib/auth.ts', () => {
 
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
     vi.restoreAllMocks()
   })
 
   describe('login', () => {
-    it('đăng nhập thành công → lưu token vào localStorage, trả user', async () => {
+    it('đăng nhập thành công → chỉ lưu cờ phiên vào localStorage, trả user', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({
-          token: 'tok-abc',
+          authenticated: true,
           user: {
             id: 'u1',
             email: 'a@b.com',
@@ -38,41 +40,44 @@ describe('src/lib/auth.ts', () => {
       const user = await login('a@b.com', '123456')
 
       expect(user?.email).toBe('a@b.com')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('tok-abc')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
+      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/auth',
         expect.objectContaining({
           method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'login', email: 'a@b.com', password: '123456' }),
         }),
       )
     })
 
-    it('sai mật khẩu (resp không ok) → trả null, KHÔNG lưu token', async () => {
+    it('sai mật khẩu (resp không ok) → trả null, KHÔNG lưu cờ phiên', async () => {
       fetchMock.mockResolvedValue({ ok: false, json: async () => ({ error: 'sai' }) })
       const { login } = await import('./auth')
 
       const user = await login('a@b.com', 'wrong')
 
       expect(user).toBeNull()
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
-    it('lỗi mạng (fetch reject) → ném lỗi ra ngoài, không lưu token', async () => {
+    it('lỗi mạng (fetch reject) → ném lỗi ra ngoài, không lưu cờ phiên', async () => {
       fetchMock.mockRejectedValue(new Error('network down'))
       const { login } = await import('./auth')
 
       await expect(login('a@b.com', '123456')).rejects.toThrow('network down')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
   })
 
   describe('register', () => {
-    it('đăng ký thành công → lưu token, trả user', async () => {
+    it('đăng ký thành công → lưu cờ phiên, trả user', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({
-          token: 'tok-new',
+          authenticated: true,
           user: {
             id: 'u2',
             email: 'new@b.com',
@@ -85,39 +90,40 @@ describe('src/lib/auth.ts', () => {
       })
       const { register } = await import('./auth')
 
-      const user = await register('new@b.com', 'New', '123456')
+      const user = await register('new@b.com', 'New', 'a-strong-password')
 
       expect(user?.id).toBe('u2')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('tok-new')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
+      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
     })
 
     it('email đã tồn tại (resp không ok) → trả null', async () => {
       fetchMock.mockResolvedValue({ ok: false, json: async () => ({ error: 'trùng' }) })
       const { register } = await import('./auth')
 
-      expect(await register('a@b.com', 'A', '123456')).toBeNull()
+      expect(await register('a@b.com', 'A', 'a-strong-password')).toBeNull()
     })
   })
 
   describe('logout', () => {
-    it('xoá token khỏi localStorage kể cả khi API logout lỗi', async () => {
-      localStorage.setItem('gsa_session_token_v1', 'tok-cu')
+    it('xoá cờ phiên khỏi localStorage kể cả khi API logout lỗi', async () => {
+      localStorage.setItem('gsa_session_present_v1', 'session:tok-cu')
       fetchMock.mockRejectedValue(new Error('mạng lỗi'))
       const { logout } = await import('./auth')
 
       await logout()
 
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
-    it('gọi API logout thành công → vẫn xoá token', async () => {
-      localStorage.setItem('gsa_session_token_v1', 'tok-cu')
+    it('gọi API logout thành công → vẫn xoá cờ phiên', async () => {
+      localStorage.setItem('gsa_session_present_v1', 'session:tok-cu')
       fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true }) })
       const { logout } = await import('./auth')
 
       await logout()
 
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
   })
 
@@ -140,8 +146,8 @@ describe('src/lib/auth.ts', () => {
       expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('action=me'))).toBe(false)
     })
 
-    it('có token, server trả 200 → trả profile kèm createdAt', async () => {
-      localStorage.setItem('gsa_session_token_v1', 'tok-abc')
+    it('có cờ phiên, server trả 200 → trả profile kèm createdAt', async () => {
+      localStorage.setItem('gsa_session_present_v1', 'session:tok-abc')
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -160,12 +166,12 @@ describe('src/lib/auth.ts', () => {
       expect(typeof user?.createdAt).toBe('number')
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/auth?action=me',
-        expect.objectContaining({ headers: { Authorization: 'Bearer tok-abc' } }),
+        expect.objectContaining({ headers: {}, credentials: 'include' }),
       )
     })
 
-    it('token hết hạn (server trả 401) → xoá token, trả null', async () => {
-      localStorage.setItem('gsa_session_token_v1', 'tok-het-han')
+    it('cookie hết hạn (server trả 401) → xoá cờ phiên, trả null', async () => {
+      localStorage.setItem('gsa_session_present_v1', 'session:tok-het-han')
       fetchMock.mockResolvedValue({
         ok: false,
         status: 401,
@@ -176,11 +182,11 @@ describe('src/lib/auth.ts', () => {
       const user = await getCurrentUser()
 
       expect(user).toBeNull()
-      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
-    it('lỗi khác 401 (vd 500) → trả null nhưng KHÔNG xoá token', async () => {
-      localStorage.setItem('gsa_session_token_v1', 'tok-con-hieu-luc')
+    it('lỗi khác 401 (vd 500) → trả null nhưng KHÔNG xoá cờ phiên', async () => {
+      localStorage.setItem('gsa_session_present_v1', 'session:tok-con-hieu-luc')
       fetchMock.mockResolvedValue({
         ok: false,
         status: 500,
@@ -191,7 +197,8 @@ describe('src/lib/auth.ts', () => {
       const user = await getCurrentUser()
 
       expect(user).toBeNull()
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('tok-con-hieu-luc')
+      expect(localStorage.getItem('gsa_session_present_v1')).toBe('session:tok-con-hieu-luc')
+      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
     })
   })
 
@@ -226,12 +233,12 @@ describe('src/lib/auth.ts', () => {
       delete window.google
     })
 
-    it('lấy được access_token → gọi API, lưu token, trả user', async () => {
+    it('lấy được access_token → gọi API, lưu cờ phiên, trả user', async () => {
       vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'client-id-test')
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({
-          token: 'tok-google',
+          authenticated: true,
           user: {
             id: 'u3',
             email: 'g@b.com',
@@ -257,7 +264,8 @@ describe('src/lib/auth.ts', () => {
       const user = await loginWithGoogle()
 
       expect(user?.email).toBe('g@b.com')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('tok-google')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
+      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
       delete window.google
     })
 
@@ -345,12 +353,13 @@ describe('src/lib/auth.ts', () => {
       expect(user).toBeNull()
     })
 
-    it('có token trong URL hash → gọi API, lưu token và trả user', async () => {
-      window.location.hash = '#access_token=redirect-token-123&token_type=Bearer'
+    it('có token trong URL hash → gọi API, lưu cờ phiên và trả user', async () => {
+      sessionStorage.setItem('oauth_state_google', 'state-test')
+      window.location.hash = '#access_token=redirect-token-123&token_type=Bearer&state=state-test'
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({
-          token: 'session-from-redirect',
+          authenticated: true,
           user: {
             id: 'u-redirect',
             email: 'redirect@test.com',
@@ -365,11 +374,16 @@ describe('src/lib/auth.ts', () => {
 
       const user = await handleOAuthRedirectCallback()
       expect(user?.email).toBe('redirect@test.com')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('session-from-redirect')
+      expect(sessionStorage.getItem('oauth_state_google')).toBeNull()
+      expect(window.location.hash).toBe('')
+      expect(localStorage.getItem('gsa_session_present_v1')).toMatch(/^session:/)
+      expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/auth',
         expect.objectContaining({
           method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'google-token', accessToken: 'redirect-token-123' }),
         }),
       )

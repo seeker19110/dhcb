@@ -3,7 +3,12 @@
 // (test gác: api/routes-registered.test.ts đọc file này).
 import express from 'express'
 import type { Response as ExpressResponse } from 'express'
-import { HSTS_VALUE, PERMISSIONS_POLICY } from '@dhcb/core-auth/security'
+import {
+  HSTS_VALUE,
+  PERMISSIONS_POLICY,
+  isTrustedMutation,
+  getCorsHeaders,
+} from '@dhcb/core-auth/security'
 import { captureServerException } from './api/_lib/sentry.js'
 
 import ttsHandler from '@dhcb/core-ai/tts'
@@ -122,7 +127,8 @@ import geminiLiveHandler from './api/platform/gemini-live.js'
 // Content-Security-Policy dùng chung cho mọi response (API, static, health).
 // Đã bỏ các domain KHÔNG còn dùng: cdn.jsdelivr.net (không có script nào tải từ CDN),
 // fonts.googleapis.com + fonts.gstatic.com (font Inter đã tự host — xem src/main.tsx).
-// 'unsafe-inline'/'unsafe-eval' giữ lại vì bundle Vite hiện cần; siết thêm là việc riêng.
+// Tạm giữ inline/eval cho runtime luyện code; cần chuyển sang origin cách ly trước khi siết.
+// Vite không cần các quyền này. Xem docs/security-rollout-2026-09-27.md.
 // static.cloudflareinsights.com: script beacon Cloudflare tự chèn khi bật proxy
 // (xem docs/cloudflare-setup.md) — cần cho phép cả script-src (tải file) lẫn
 // connect-src (báo cáo RUM qua cdn-cgi/rum), nếu không sẽ bị chặn CSP.
@@ -139,7 +145,7 @@ import geminiLiveHandler from './api/platform/gemini-live.js'
 // loadMicrosoftScript()). Cả 3 mở popup (window mới), KHÔNG nhúng iframe trong trang như
 // Google One Tap, nên KHÔNG cần thêm vào frame-src.
 export const CSP_HEADER =
-  "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://accounts.google.com https://connect.facebook.net https://appleid.cdn-apple.com https://alcdn.msauth.net; style-src 'self' 'unsafe-inline' https://accounts.google.com; font-src 'self' data:; img-src 'self' data: https:; media-src 'self' blob: https:; connect-src 'self' https:; frame-src https://accounts.google.com; frame-ancestors 'self'"
+  "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://accounts.google.com https://connect.facebook.net https://appleid.cdn-apple.com https://alcdn.msauth.net; style-src 'self' 'unsafe-inline' https://accounts.google.com; font-src 'self' data:; img-src 'self' data: https:; media-src 'self' blob: https:; connect-src 'self' https:; frame-src https://accounts.google.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 
 // Header bảo mật đính vào MỌI response — API, static và health dùng chung đúng một nguồn.
 // Trước đây 3 chỗ tự gọi setHeader riêng nên HSTS/Permissions-Policy chỉ có ở response API,
@@ -159,7 +165,7 @@ export function applyCommonSecurityHeaders(res: ExpressResponse): void {
 // Edge Function: nhận (Request) → trả (Response)  [Web API chuẩn]
 // Express      : nhận (req, res)                   [Node.js API]
 // Node.js 20 hỗ trợ sẵn Web API Request/Response nên chuyển đổi khá gọn.
-function wrapEdge(handler: (req: Request) => Promise<Response>) {
+export function wrapEdge(handler: (req: Request) => Promise<Response>) {
   return async (req: express.Request, res: express.Response) => {
     try {
       // Dựng lại URL đầy đủ — một số handler dùng URL để đọc query params
@@ -174,6 +180,15 @@ function wrapEdge(handler: (req: Request) => Promise<Response>) {
         // GET/HEAD không có body
         body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
       })
+
+      if (!isTrustedMutation(webReq)) {
+        applyCommonSecurityHeaders(res)
+        for (const [name, value] of Object.entries(getCorsHeaders(webReq)))
+          res.setHeader(name, value)
+        res.setHeader('Cache-Control', 'no-store')
+        res.status(403).json({ error: 'Nguồn yêu cầu không được phép', code: 'UNTRUSTED_ORIGIN' })
+        return
+      }
 
       // Gọi handler gốc
       const webRes = await handler(webReq)

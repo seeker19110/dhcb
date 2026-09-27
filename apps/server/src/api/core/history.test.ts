@@ -148,7 +148,7 @@ describe('/api/history', () => {
     expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
-  it('phiên ĐỦ 2 tin nhắn (user + AI) → có trao thưởng mời bạn', async () => {
+  it('phiên do client tự khai đủ user + AI vẫn KHÔNG cấp thưởng mời bạn', async () => {
     await handler(
       makeRequest('POST', {
         action: 'chat',
@@ -161,7 +161,7 @@ describe('/api/history', () => {
         },
       }),
     )
-    expect(rewardReferralIfEligible).toHaveBeenCalledWith('user-1')
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
   const WRITING = {
@@ -186,7 +186,7 @@ describe('/api/history', () => {
     expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
-  it('bài viết đủ dài → có trao thưởng; khoảng trắng KHÔNG tính', async () => {
+  it('bài viết do client tự khai dù đủ dài vẫn KHÔNG cấp thưởng', async () => {
     // 40 ký tự thật nhưng bọc toàn khoảng trắng — phải trim trước khi đo.
     await handler(
       makeRequest('POST', {
@@ -203,7 +203,7 @@ describe('/api/history', () => {
         submission: { ...WRITING, essay: 'a'.repeat(40) },
       }),
     )
-    expect(rewardReferralIfEligible).toHaveBeenCalledWith('user-1')
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
   it('method lạ (DELETE) → 405', async () => {

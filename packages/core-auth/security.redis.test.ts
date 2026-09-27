@@ -147,6 +147,35 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
     })
   })
 
+  describe('production đóng khi thiếu bộ đếm dùng chung', () => {
+    afterEach(() => vi.unstubAllEnvs())
+
+    it('không có Redis từ chối rate limit và quota khách, kể cả VERCEL_ENV', async () => {
+      delete process.env.REDIS_URL
+      vi.stubEnv('VERCEL_ENV', 'production')
+      const { checkRateLimit, consumeDailyCounter } = await loadSecurity()
+      expect(await checkRateLimit('p', 60, 'auth')).toBe(false)
+      expect(await consumeDailyCounter('guest:p', 10)).toBe(false)
+    })
+
+    it('connecting/lỗi từ chối, phục hồi Redis nhận request lại', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { checkRateLimit, consumeDailyCounter } = await loadSecurity()
+      await checkRateLimit('seed', 5)
+      const client = lastClient()
+      client.status = 'connecting'
+      expect(await checkRateLimit('p', 5)).toBe(false)
+      expect(await consumeDailyCounter('guest:p', 5)).toBe(false)
+      client.status = 'ready'
+      client.eval.mockRejectedValue(new Error('down'))
+      expect(await checkRateLimit('p', 5)).toBe(false)
+      expect(await consumeDailyCounter('guest:p', 5)).toBe(false)
+      client.eval.mockResolvedValue(1)
+      expect(await checkRateLimit('p', 5)).toBe(true)
+      expect(await consumeDailyCounter('guest:p', 5)).toBe(true)
+    })
+  })
+
   describe('getRedisRuntimeStatus / pingRedis', () => {
     it('không có REDIS_URL → configured=false, state=disabled, ping báo chưa cấu hình', async () => {
       delete process.env.REDIS_URL

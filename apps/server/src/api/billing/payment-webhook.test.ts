@@ -4,9 +4,16 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 vi.mock('@dhcb/core-auth/security', () => ({ logSecurityEvent: vi.fn() }))
-const granted: { calls: { userId: string; plan: string; days: number }[] } = { calls: [] }
+const granted: { calls: { userId: string; plan: string; days: number }[]; failNext: boolean } = {
+  calls: [],
+  failNext: false,
+}
 vi.mock('@dhcb/core-billing/planGrant', () => ({
   grantPlanDays: async (userId: string, plan: string, days: number) => {
+    if (granted.failNext) {
+      granted.failNext = false
+      throw new Error('grant failed')
+    }
     granted.calls.push({ userId, plan, days })
     return { plan, planExpiresAt: new Date() }
   },
@@ -63,6 +70,7 @@ beforeEach(() => {
     connect: () => Promise.resolve(client),
   } as unknown as ReturnType<typeof getPgPool>)
   granted.calls = []
+  granted.failNext = false
   vi.mocked(logSecurityEvent).mockClear()
   process.env.SEPAY_WEBHOOK_API_KEY = API_KEY
 })
@@ -165,7 +173,7 @@ describe('/api/payment-webhook', () => {
     expect(params).toEqual(['payment-1', '999'])
   })
 
-  it('đủ tiền, đơn pending → coi như đã xác thực email (set email_verified nếu đang null)', async () => {
+  it('đủ tiền, đơn pending → cấp gói nhưng KHÔNG xác thực quyền sở hữu email', async () => {
     query.mockResolvedValueOnce({ rows: [PENDING_PAYMENT] }).mockResolvedValueOnce({
       rowCount: 1,
       rows: [{ user_id: 'user-1', plan: 'pro', cycle: 'month' }],
@@ -174,10 +182,8 @@ describe('/api/payment-webhook', () => {
       makeRequest({ id: 999, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }),
     )
     expect(resp.status).toBe(200)
-    const [sql, params] = query.mock.calls[2] as [string, unknown[]]
-    expect(sql).toContain('email_verified = now()')
-    expect(sql).toContain('email_verified is null')
-    expect(params).toEqual(['user-1'])
+    expect(query.mock.calls.map(([sql]) => String(sql)).join('\n')).not.toContain('email_verified')
+    expect(granted.calls).toEqual([{ userId: 'user-1', plan: 'pro', days: 30 }])
   })
 
   it('2 webhook song song cho cùng đơn: cái thứ 2 thấy rowCount=0 → KHÔNG cấp lần 2', async () => {
@@ -189,6 +195,64 @@ describe('/api/payment-webhook', () => {
     )
     expect(resp.status).toBe(200)
     expect(granted.calls).toEqual([])
+  })
+
+  it('hai webhook chạy đồng thời và retry → chỉ cấp một lần, không xác thực email', async () => {
+    let paid = false
+    query.mockImplementation(async (sql: string) => {
+      if (sql.startsWith('select'))
+        return { rows: [{ ...PENDING_PAYMENT, status: paid ? 'paid' : 'pending' }] }
+      if (sql.startsWith('update public.payments') && !paid) {
+        paid = true
+        return { rows: [PENDING_PAYMENT], rowCount: 1 }
+      }
+      return { rows: [], rowCount: 0 }
+    })
+    const payload = { id: 999, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }
+    const responses = await Promise.all([
+      handler(makeRequest(payload)),
+      handler(makeRequest(payload)),
+    ])
+    expect(responses.map((r) => r.status)).toEqual([200, 200])
+    expect((await handler(makeRequest(payload))).status).toBe(200)
+    expect(granted.calls).toEqual([{ userId: 'user-1', plan: 'pro', days: 30 }])
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('email_verified'))).toBe(false)
+  })
+
+  it('cấp gói lỗi → rollback; retry tiếp tục cấp đúng một lần', async () => {
+    let paid = false
+    const transactionSql: string[] = []
+    query.mockImplementation(async (sql: string) => {
+      if (sql.startsWith('select'))
+        return { rows: [{ ...PENDING_PAYMENT, status: paid ? 'paid' : 'pending' }] }
+      if (sql.startsWith('update public.payments') && !paid) {
+        paid = true
+        return { rows: [PENDING_PAYMENT], rowCount: 1 }
+      }
+      return { rows: [], rowCount: 0 }
+    })
+    mockedGetPool.mockReturnValue({
+      query,
+      connect: async () => ({
+        release: vi.fn(),
+        query: async (sql: string, params?: unknown[]) => {
+          transactionSql.push(sql)
+          if (sql === 'rollback') paid = false
+          if (['begin', 'commit', 'rollback'].includes(sql)) return { rows: [], rowCount: 0 }
+          return query(sql, params)
+        },
+      }),
+    } as unknown as ReturnType<typeof getPgPool>)
+    const payload = { id: 999, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }
+    granted.failNext = true
+    await expect(handler(makeRequest(payload))).rejects.toThrow('grant failed')
+    expect(paid).toBe(false)
+    expect(transactionSql).toContain('rollback')
+    expect(transactionSql).not.toContain('commit')
+    expect((await handler(makeRequest(payload))).status).toBe(200)
+    expect(paid).toBe(true)
+    expect(granted.calls).toEqual([{ userId: 'user-1', plan: 'pro', days: 30 }])
+    expect(transactionSql).toContain('commit')
   })
 
   it('UNIQUE violation provider_txn_id (23505) → coi như đã xử lý, success:true', async () => {

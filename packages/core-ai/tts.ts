@@ -53,7 +53,9 @@ import {
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { withConcurrencyLimit } from '@dhcb/core-db/concurrencyLimiter'
 import { resolveActor } from '@dhcb/core-auth/guest'
-import { checkAndConsumeGuestTrial } from '@dhcb/core-auth/guestTrial'
+import { checkAndConsumeGuestTrial, refundGuestTrial } from '@dhcb/core-auth/guestTrial'
+import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
+import { getAppSettings } from '@dhcb/core-db/settings'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
 const VALID_LANGS: Lang[] = ['en-US', 'vi-VN']
@@ -355,6 +357,14 @@ export default async function handler(req: Request): Promise<Response> {
 
   // Từ đây là "leader" — PHẢI xoá dòng khoá tts_cache_pending dù thành công hay lỗi, không
   // thì các request khác cho cùng câu này bị chặn tới khi hết hạn TTS_CLAIM_STALE_MS.
+  let chargedDay: string | null = null
+  let guestCharged = false
+  let providerStarted = false
+  const runProvider = <T>(key: string, generate: () => Promise<T>) =>
+    withConcurrencyLimit(key, () => {
+      providerStarted = true
+      return generate()
+    })
   try {
     // ── BƯỚC 2: Cache MISS → gọi Google TTS ──────────────────────────────────
     // Bộ đếm RIÊNG cho đường tạo audio mới (tốn tiền API): 60 lần/phút mỗi IP.
@@ -376,6 +386,14 @@ export default async function handler(req: Request): Promise<Response> {
     // Cache HIT đã thoát ở BƯỚC 1 nên khách vẫn nghe thoải mái câu đã có sẵn trong kho: đó là
     // thứ làm nội dung bài học đọc được mà không tốn thêm một đồng nào.
     if (actor.kind === 'guest') {
+      // Khách cũng phải tôn trọng cầu dao AI; không dùng mặc định khi DB cấu hình lỗi.
+      try {
+        if ((await getAppSettings({ requireAvailable: true })).aiCircuitBreaker) {
+          return jsonResponse({ error: 'Dịch vụ AI tạm dừng — thử lại sau.' }, 503, allHeaders)
+        }
+      } catch {
+        return jsonResponse({ error: 'Dịch vụ AI tạm dừng — thử lại sau.' }, 503, allHeaders)
+      }
       const guestGate = await checkAndConsumeGuestTrial(actor.guestKey, clientIp)
       if (!guestGate.ok) {
         logSecurityEvent('USAGE_LIMIT', clientIp, { path: '/api/tts', stage: 'generate' })
@@ -385,6 +403,14 @@ export default async function handler(req: Request): Promise<Response> {
           allHeaders,
         )
       }
+      guestCharged = true
+    } else {
+      // Audio MỚI tính vào cùng ngân sách AI/ngày với speaking; cache HIT không bị trừ.
+      const gate = await checkAndConsumeUsage(actor.userId, 'speaking')
+      if (!gate.ok) {
+        return jsonResponse({ error: gate.message }, 429, allHeaders)
+      }
+      chargedDay = gate.day
     }
 
     // Giọng ElevenLabs (VIP) dùng provider khác hẳn Google — text đọc y nguyên, provider
@@ -405,9 +431,7 @@ export default async function handler(req: Request): Promise<Response> {
     let visemeTimeline: VisemeFrame[] | null = null
     try {
       if (isValidElevenVoice(voice)) {
-        const result = await withConcurrencyLimit('elevenlabs', () =>
-          generateAudioFromElevenLabs(text),
-        )
+        const result = await runProvider('elevenlabs', () => generateAudioFromElevenLabs(text))
         audioData = result.audio
         if (result.alignment) {
           // Dựng timeline KHÔNG được phép làm hỏng việc tạo audio: eSpeak-ng có thể chưa cài trên
@@ -420,15 +444,13 @@ export default async function handler(req: Request): Promise<Response> {
           )
         }
       } else if (isValidGeminiVoice(voice)) {
-        audioData = await withConcurrencyLimit('gemini-tts', () =>
-          generateAudioFromGemini(text, voice),
-        )
+        audioData = await runProvider('gemini-tts', () => generateAudioFromGemini(text, voice))
       } else if (isValidStudioVoice(voice)) {
-        audioData = await withConcurrencyLimit('google-tts-studio', () =>
+        audioData = await runProvider('google-tts-studio', () =>
           generateStudioAudioFromGoogle(text, voice),
         )
       } else {
-        audioData = await withConcurrencyLimit('google-tts', () =>
+        audioData = await runProvider('google-tts', () =>
           generateAudioFromGoogle(text, voice, lang),
         )
       }
@@ -520,6 +542,14 @@ export default async function handler(req: Request): Promise<Response> {
       allHeaders,
     )
   } finally {
+    // Chỉ hoàn khi CHƯA gọi provider; lỗi lưu file/DB hoặc ngắt client không tạo lượt miễn phí.
+    if (!providerStarted) {
+      if (actor.kind === 'user' && chargedDay !== null) {
+        await refundUsage(actor.userId, 'speaking', chargedDay).catch(() => {})
+      } else if (actor.kind === 'guest' && guestCharged) {
+        await refundGuestTrial(actor.guestKey, clientIp).catch(() => {})
+      }
+    }
     await pool
       .query('delete from public.tts_cache_pending where hash = $1', [textHash])
       .catch((err: unknown) => console.warn('[tts] xoá khoá tts_cache_pending lỗi:', err))

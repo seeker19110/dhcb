@@ -5,9 +5,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // pingRedis được mock để test KHÔNG mở kết nối Redis thật (CI không có Redis, và chờ
 // connectTimeout thật sẽ làm test chậm + để hở handle).
 const pingRedisMock = vi.fn()
+const validateAuthMock = vi.fn()
 vi.mock('@dhcb/core-auth/security', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@dhcb/core-auth/security')>()),
   pingRedis: () => pingRedisMock(),
+  validateAuth: () => validateAuthMock(),
 }))
 
 import handler, { checkSystemHealth } from './healthDeep.js'
@@ -21,6 +23,8 @@ describe('Deep Health Check API (/api/health/deep)', () => {
     process.env = { ...originalEnv }
     pingRedisMock.mockReset()
     pingRedisMock.mockResolvedValue({ ok: true, latencyMs: 3 })
+    validateAuthMock.mockReset()
+    validateAuthMock.mockResolvedValue(null)
   })
 
   afterEach(() => {
@@ -132,6 +136,23 @@ describe('Deep Health Check API (/api/health/deep)', () => {
     const res = await handler(req)
 
     expect(res.status).toBe(405)
+  })
+
+  it('chỉ ID admin được xem nội tình hệ thống, ADMIN_EMAILS không cấp quyền', async () => {
+    process.env.ADMIN_USER_IDS = 'trusted-admin'
+    process.env.ADMIN_EMAILS = 'admin@example.com'
+    mockDbOk()
+    validateAuthMock.mockResolvedValue({ userId: 'other-user' })
+    const request = () => new Request('http://localhost/api/health/deep')
+    const denied = await handler(request())
+    const publicBody = await denied.json()
+    expect(publicBody).toEqual({ status: 'healthy', timestamp: expect.any(String) })
+
+    validateAuthMock.mockResolvedValue({ userId: 'trusted-admin' })
+    const allowed = await handler(request())
+    const adminBody = await allowed.json()
+    expect(adminBody.checks.database.status).toBe('up')
+    expect(adminBody.memory.rssMb).toBeGreaterThan(0)
   })
 
   // ── Cache/Redis: ghim đúng lỗi ĐÃ TỪNG CÓ ────────────────────────────────

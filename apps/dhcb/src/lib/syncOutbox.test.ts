@@ -388,3 +388,139 @@ describe('tiện ích', () => {
     expect(getSyncVersion(UID)).toBe(0)
   })
 })
+
+describe('audit — chia batch chấm và bảo toàn bài khi bảo trì', () => {
+  const item = (index: number) => ({
+    lessonId: `git-u${index}-l1`,
+    status: 'completed' as const,
+    clientUpdatedAt: '2026-09-27T00:00:00Z',
+    code: `# draft ${index}`,
+  })
+  function registerProgramming() {
+    registerKindHandler('programming', {
+      buildRequest: (_uid, entry) => ({
+        url: '/api/programming/progress',
+        body: { attemptId: entry.attemptId, items: entry.payload },
+      }),
+    })
+  }
+
+  it('12 bài có code được chia 5+5+2, giữ đủ bài và id retry ổn định', async () => {
+    registerProgramming()
+    const items = Array.from({ length: 12 }, (_, i) => item(i))
+    enqueue(UID, 'programming', items)
+    const ids = readOutbox(UID).map((entry) => entry.attemptId)
+    expect(ids).toHaveLength(3)
+    expect(new Set(ids).size).toBe(3)
+    expect(pendingProgrammingItems(UID)).toEqual(items)
+    const fn = mockFetch(() => new Response('boom', { status: 500 }))
+    await flush(UID)
+    expect(fn.mock.calls.map((call) => (bodyOf(call).items as unknown[]).length)).toEqual([5, 5, 2])
+    expect(readOutbox(UID).map((entry) => entry.attemptId)).toEqual(ids)
+    mockFetch(() => new Response('{}', { status: 200 }))
+    await flush(UID, { resetBackoff: true })
+    expect(pending(UID)).toBe(0)
+  })
+
+  it('51 bài in_progress không bị slice(-50) làm mất bài đầu', () => {
+    const items = Array.from({ length: 51 }, (_, i) => ({
+      ...item(i),
+      status: 'in_progress' as const,
+    }))
+    enqueue(UID, 'programming', items)
+    expect(pendingProgrammingItems(UID)).toEqual(items)
+    expect(readOutbox(UID).map((entry) => (entry.payload as unknown[]).length)).toEqual([50, 1])
+  })
+
+  it('thêm bài thứ 6 không đổi receipt của batch 5 bài đang chờ', () => {
+    enqueue(
+      UID,
+      'programming',
+      Array.from({ length: 5 }, (_, index) => item(index)),
+    )
+    const first = readOutbox(UID)[0]!
+    enqueue(UID, 'programming', [item(5)])
+    expect(readOutbox(UID)[0]?.attemptId).toBe(first.attemptId)
+    expect(readOutbox(UID)[0]?.payload).toEqual(first.payload)
+    expect(pendingProgrammingItems(UID)).toHaveLength(6)
+  })
+
+  it('hơn 200 mục bị bảo trì không mất code khi ghi thêm vào hàng đợi', () => {
+    enqueue(UID, 'programming', [item(0)])
+    const base = readOutbox(UID)[0]!
+    const parked = Array.from({ length: 205 }, (_, index) => ({
+      ...base,
+      attemptId: `parked-${index}`,
+      payload: [item(index)],
+      lastError: 'grading_unavailable',
+      nextAt: Number.MAX_SAFE_INTEGER,
+    }))
+    localStorage.setItem(OUTBOX_KEY(UID), JSON.stringify(parked))
+    enqueue(UID, 'english')
+    expect(pendingProgrammingItems(UID)).toHaveLength(205)
+    expect(pendingProgrammingItems(UID)[0]?.code).toBe('# draft 0')
+  })
+
+  it('hàng đợi phiên bản cũ 12 completion được chia trước gửi, không nhận 413 rồi mất bài', async () => {
+    registerProgramming()
+    enqueue(UID, 'programming', [item(0)])
+    const legacy = readOutbox(UID)[0]!
+    legacy.payload = Array.from({ length: 12 }, (_, i) => item(i))
+    localStorage.setItem(OUTBOX_KEY(UID), JSON.stringify([legacy]))
+    const fn = mockFetch(() => new Response('{}', { status: 200 }))
+    await flush(UID)
+    expect(fn.mock.calls.map((call) => (bodyOf(call).items as unknown[]).length)).toEqual([5, 5, 2])
+    expect(fn.mock.calls.flatMap((call) => bodyOf(call).items)).toEqual(legacy.payload)
+    expect(pending(UID)).toBe(0)
+  })
+
+  it('503 maintenance tách bài, giữ code đã nộp; mô phỏng khác vẫn đồng bộ, không tự quay vòng', async () => {
+    registerProgramming()
+    const paused = { ...item(0), lessonId: 'p1-u1-l1', code: 'print(1)' }
+    enqueue(UID, 'programming', [paused, item(1)])
+    const fn = mockFetch((_url, init) => {
+      const body = JSON.parse(String(init?.body)) as { items: Array<{ lessonId: string }> }
+      return body.items.some((entry) => entry.lessonId === paused.lessonId)
+        ? new Response(JSON.stringify({ code: 'PROGRAMMING_GRADING_UNAVAILABLE' }), { status: 503 })
+        : new Response('{}', { status: 200 })
+    })
+    await flush(UID)
+    expect(fn).toHaveBeenCalledTimes(3) // batch ban đầu, rồi từng bài để cô lập maintenance
+    expect(pendingProgrammingItems(UID)).toEqual([paused])
+    const held = readOutbox(UID)[0]!
+    expect(held.lastError).toBe('grading_unavailable')
+    expect(held.nextAt).toBe(Number.MAX_SAFE_INTEGER)
+    await flush(UID)
+    enqueue(UID, 'programming', [paused]) // xếp lại y nguyên cũng không mở retry
+    await flush(UID)
+    expect(fn).toHaveBeenCalledTimes(3)
+    expect(readOutbox(UID)[0]?.attemptId).toBe(held.attemptId)
+    mockFetch(() => new Response('{}', { status: 200 }))
+    await flush(UID, { resetBackoff: true })
+    expect(pending(UID)).toBe(0)
+  })
+
+  it('413 ngân sách server đổi: tách payload/id, không bỏ bài', async () => {
+    registerProgramming()
+    enqueue(UID, 'programming', [item(0), item(1)])
+    const fn = mockFetch((_url, init) => {
+      const body = JSON.parse(String(init?.body)) as { items: unknown[] }
+      return body.items.length > 1
+        ? new Response(JSON.stringify({ code: 'PROGRAMMING_GRADING_BATCH_LIMIT' }), { status: 413 })
+        : new Response('{}', { status: 200 })
+    })
+    await flush(UID)
+    expect(fn).toHaveBeenCalledTimes(3)
+    expect(new Set(fn.mock.calls.map((call) => bodyOf(call).attemptId)).size).toBe(3)
+    expect(pending(UID)).toBe(0)
+  })
+
+  it('bài đã completed nhưng sửa code sau đó: giữ bản mới và đổi attemptId', () => {
+    enqueue(UID, 'programming', [item(0)])
+    const before = readOutbox(UID)[0]!.attemptId
+    const newer = { ...item(0), code: '# fixed draft', clientUpdatedAt: '2026-09-27T01:00:00Z' }
+    enqueue(UID, 'programming', [newer])
+    expect(pendingProgrammingItems(UID)).toEqual([newer])
+    expect(readOutbox(UID)[0]?.attemptId).not.toBe(before)
+  })
+})

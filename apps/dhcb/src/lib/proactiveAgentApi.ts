@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/proactiveAgentApi.ts — Client API giao tiếp Proactive Agent V5.
 import type {
   GoalAutoPilotPlan,
@@ -17,7 +18,6 @@ export async function fetchProactiveAgentState(
   // nếu không thì StrictMode gọi hai lượt và lượt cũ setState sau khi trang đã unmount.
   options?: { signal?: AbortSignal },
 ): Promise<ProactiveAgentState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const searchParams = new URLSearchParams()
   if (params?.stressIndex !== undefined) searchParams.set('stressIndex', String(params.stressIndex))
   if (params?.circadianEnergy !== undefined)
@@ -31,7 +31,7 @@ export async function fetchProactiveAgentState(
 
   const res = await fetch(url, {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     ...(options?.signal ? { signal: options.signal } : {}),
   })
@@ -45,12 +45,11 @@ export async function fetchProactiveAgentState(
 }
 
 export async function dismissProactiveNudge(nudgeId: string): Promise<boolean> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/proactive-agent?action=dismiss_nudge', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ nudgeId }),
   })
@@ -66,12 +65,11 @@ export async function executeProactiveAction(
   nudgeId: string,
   actionPayload: ProactiveAction,
 ): Promise<{ success: boolean; message: string; targetUrl: string }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/proactive-agent?action=execute_action', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ nudgeId, actionPayload }),
   })
@@ -87,12 +85,11 @@ export async function executeProactiveAction(
 export async function updateProactiveConfigApi(
   config: Partial<ProactiveAgentConfig>,
 ): Promise<ProactiveAgentConfig> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/proactive-agent?action=update_config', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ config }),
   })
@@ -110,12 +107,11 @@ export async function createAutoPilotPlanApi(params: {
   goalTitle: string
   domain?: 'learning' | 'career' | 'work' | 'startup' | 'life'
 }): Promise<GoalAutoPilotPlan> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/proactive-agent?action=create_plan', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })

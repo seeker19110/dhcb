@@ -12,13 +12,21 @@ vi.mock('@dhcb/core-auth/security', () => ({
 }))
 
 const query = vi.hoisted(() => vi.fn())
+const transactionState = vi.hoisted(() => ({ committed: false, failCommit: false }))
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({ query }) }))
 // withTransaction thật cần pool.connect(); ở đây chạy thẳng fn với cùng `query` để test đọc được
 // TRÌNH TỰ SQL mà handler phát ra.
 vi.mock('@dhcb/core-db/transaction', () => ({
-  withTransaction: async (_pool: unknown, fn: (c: unknown) => Promise<unknown>) => fn({ query }),
+  withTransaction: async (_pool: unknown, fn: (c: unknown) => Promise<unknown>) => {
+    const result = await fn({ query })
+    if (transactionState.failCommit) throw new Error('commit failed')
+    transactionState.committed = true
+    return result
+  },
 }))
 
+vi.mock('../_lib/referral.js', () => ({ rewardReferralIfEligible: vi.fn(async () => {}) }))
+import { rewardReferralIfEligible } from '../_lib/referral.js'
 import handler from './evidence.js'
 import { PHYSICS_LESSONS } from '@dhcb/subject-physics/lessons'
 import { gradeStemEvidence } from '@dhcb/core-learner/stemEvidenceGrader'
@@ -67,6 +75,11 @@ beforeEach(() => {
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   query.mockResolvedValue({ rows: [] })
+  transactionState.committed = false
+  transactionState.failCommit = false
+  vi.mocked(rewardReferralIfEligible).mockImplementation(async () => {
+    expect(transactionState.committed).toBe(true)
+  })
 })
 
 describe('/api/learning/evidence — cửa an ninh', () => {
@@ -138,6 +151,7 @@ describe('/api/learning/evidence — POST server CHẤM LẠI', () => {
     expect((json.contentVersion as string).length).toBe(64)
     // Câu upsert state ghi 'in_progress'.
     expect(query.mock.calls[1]?.[1]).toContain('in_progress')
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
   it('trả lời đúng hết → passed true, status completed, ratio 1', async () => {
@@ -146,6 +160,14 @@ describe('/api/learning/evidence — POST server CHẤM LẠI', () => {
     const json = (await res.json()) as Record<string, unknown>
     expect(json).toMatchObject({ passed: true, ratio: 1, correct: bai.checkQuestions.length })
     expect(query.mock.calls[1]?.[1]).toContain('completed')
+    expect(rewardReferralIfEligible).toHaveBeenCalledWith('user-1')
+  })
+
+  it('commit bằng chứng lỗi không được kích hoạt thưởng', async () => {
+    transactionState.failCommit = true
+    query.mockResolvedValueOnce({ rows: [{ id: 'ev-1' }] }).mockResolvedValueOnce({ rows: [] })
+    expect((await handler(req('POST', body({ answers: traLoiDung() })))).status).toBe(500)
+    expect(rewardReferralIfEligible).not.toHaveBeenCalled()
   })
 
   it('kết quả server khớp ĐÚNG engine chấm dùng chung (không có đường thứ hai)', async () => {
@@ -203,6 +225,7 @@ describe('/api/learning/evidence — idempotency và "không kéo lùi"', () => 
       serverAt: '2026-09-15T08:00:01.000Z',
     })
     expect(query).toHaveBeenCalledTimes(2) // insert + đọc lại; KHÔNG có câu upsert state
+    expect(rewardReferralIfEligible).toHaveBeenCalledWith('user-1')
     expect(query.mock.calls.every((c) => !(c[0] as string).includes('completion_state'))).toBe(true)
   })
 

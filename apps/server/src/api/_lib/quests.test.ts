@@ -28,11 +28,6 @@ import {
   claimCefrExamQuest,
   getCurrentStreak,
   getQuestsStatus,
-  SHARE_QUEST_KEY,
-  SHARE_QUEST_REWARD_DAYS,
-  SHARE_QUEST_COOLDOWN_DAYS,
-  STREAK_QUEST_REQUIRED_DAYS,
-  STREAK_QUEST_REWARD_DAYS,
   CEFR_EXAM_QUEST_REWARD_DAYS,
 } from './quests'
 import { vnDateStr, addDays } from '@dhcb/core-db/date'
@@ -58,36 +53,18 @@ beforeEach(() => {
   granted.calls = []
 })
 
-describe('claimShareQuest', () => {
-  it('đủ điều kiện (hàm SQL trả true) → cấp đúng số ngày VIP', async () => {
-    query.mockResolvedValueOnce({ rows: [{ claim_quest_if_ready: true }] })
-    const r = await claimShareQuest('u1')
-    expect(r).toEqual({ ok: true, rewardDays: SHARE_QUEST_REWARD_DAYS })
-    expect(granted.calls).toEqual([{ userId: 'u1', plan: 'vip', days: SHARE_QUEST_REWARD_DAYS }])
-  })
-
-  it('truyền đúng quest key + số ngày hồi vào hàm SQL', async () => {
-    query.mockResolvedValueOnce({ rows: [{ claim_quest_if_ready: true }] })
-    await claimShareQuest('u1')
-    expect(query.mock.calls[0]?.[1]).toEqual(['u1', SHARE_QUEST_KEY, SHARE_QUEST_COOLDOWN_DAYS])
-  })
-
-  it('chưa đủ điều kiện (hàm SQL trả false) → KHÔNG cấp, trả thông điệp', async () => {
-    query.mockResolvedValueOnce({ rows: [{ claim_quest_if_ready: false }] })
-    const r = await claimShareQuest('u1')
-    expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.message).toMatch(/7 ngày/)
-    expect(granted.calls).toEqual([])
-  })
-
-  it('lỗi DB → trả ok:false, KHÔNG ném lỗi ra ngoài', async () => {
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    query.mockRejectedValueOnce(new Error('db down'))
-    const r = await claimShareQuest('u1')
-    expect(r.ok).toBe(false)
-    expect(granted.calls).toEqual([])
-    spy.mockRestore()
-  })
+describe('thưởng từ dữ liệu client tự khai', () => {
+  it.each([claimShareQuest, claimStreakQuest])(
+    'từ chối dù cooldown và dữ liệu cũ đủ điều kiện',
+    async (claim) => {
+      query.mockResolvedValue({ rows: [{ claim_quest_if_ready: true }] })
+      const result = await claim('u1')
+      expect(result.ok).toBe(false)
+      if (!result.ok) expect(result.message).toMatch(/xác minh/)
+      expect(query).not.toHaveBeenCalled()
+      expect(granted.calls).toEqual([])
+    },
+  )
 })
 
 describe('getCurrentStreak', () => {
@@ -111,27 +88,6 @@ describe('getCurrentStreak', () => {
     const today = vnDateStr()
     query.mockResolvedValueOnce({ rows: [{ day: addDays(today, -1) }] })
     expect(await getCurrentStreak('u1')).toBe(0)
-  })
-})
-
-describe('claimStreakQuest', () => {
-  it(`chưa đủ ${STREAK_QUEST_REQUIRED_DAYS} ngày → không cấp, không gọi hàm SQL claim`, async () => {
-    query.mockResolvedValueOnce({ rows: [{ day: vnDateStr() }] }) // streak = 1
-    const r = await claimStreakQuest('u1')
-    expect(r.ok).toBe(false)
-    expect(granted.calls).toEqual([])
-    expect(query).toHaveBeenCalledTimes(1) // chỉ gọi truy vấn streak, không gọi claim
-  })
-
-  it(`đủ ${STREAK_QUEST_REQUIRED_DAYS} ngày liên tiếp → cấp thưởng`, async () => {
-    const today = vnDateStr()
-    const rows = Array.from({ length: STREAK_QUEST_REQUIRED_DAYS }, (_, i) => ({
-      day: addDays(today, -i),
-    }))
-    query.mockResolvedValueOnce({ rows }) // streak đủ
-    query.mockResolvedValueOnce({ rows: [{ claim_quest_if_ready: true }] }) // claim
-    const r = await claimStreakQuest('u1')
-    expect(r).toEqual({ ok: true, rewardDays: STREAK_QUEST_REWARD_DAYS })
   })
 })
 
@@ -192,7 +148,10 @@ describe('getQuestsStatus', () => {
     expect(status.cefrExams.find((e) => e.level === 'A1')?.passed).toBe(true)
     expect(status.cefrExams.find((e) => e.level === 'A2')?.passed).toBe(false)
     expect(status.referral.code).toBe('ABC123')
-    expect(status.share.rewardDays).toBe(SHARE_QUEST_REWARD_DAYS)
+    expect(status.share.rewardDays).toBe(0)
+    expect(status.share.canClaim).toBe(false)
+    expect(status.streak.rewardDays).toBe(0)
+    expect(status.streak.canClaim).toBe(false)
   })
 })
 
@@ -236,7 +195,8 @@ describe('nhận thưởng — nguyên tử và đồng thời', () => {
       transactions.set(client, staged)
       return client
     })
-    mockedGetPool.mockReturnValue(Object.assign(new Pool(), { connect }))
+    query.mockResolvedValue({ rows: [{ cefr_exams: { A1: { passed: true } } }] })
+    mockedGetPool.mockReturnValue(Object.assign(new Pool(), { query, connect }))
     vi.mocked(grantPlanDays).mockImplementation(async (_userId, _plan, days, _now, client) => {
       const staged = transactions.get(client)
       expect(staged).toBeDefined()
@@ -250,24 +210,27 @@ describe('nhận thưởng — nguyên tử và đồng thời', () => {
   })
 
   it('hai yêu cầu đồng thời chỉ một lần nhận và cấp thưởng', async () => {
-    const results = await Promise.all([claimShareQuest('u1'), claimShareQuest('u1')])
+    const results = await Promise.all([
+      claimCefrExamQuest('u1', 'A1'),
+      claimCefrExamQuest('u1', 'A1'),
+    ])
     expect(results.filter((result) => result.ok)).toHaveLength(1)
     expect(claimed).toBe(true)
-    expect(grantedDays).toBe(SHARE_QUEST_REWARD_DAYS)
+    expect(grantedDays).toBe(CEFR_EXAM_QUEST_REWARD_DAYS)
   })
 
   it('grant thất bại rollback claim, retry còn nhận được thưởng', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
       failGrant = true
-      expect((await claimShareQuest('u1')).ok).toBe(false)
+      expect((await claimCefrExamQuest('u1', 'A1')).ok).toBe(false)
       expect(claimed).toBe(false)
       expect(grantedDays).toBe(0)
-      expect((await claimShareQuest('u1')).ok).toBe(true)
+      expect((await claimCefrExamQuest('u1', 'A1')).ok).toBe(true)
       expect(claimed).toBe(true)
-      expect(grantedDays).toBe(SHARE_QUEST_REWARD_DAYS)
-      expect((await claimShareQuest('u1')).ok).toBe(false)
-      expect(grantedDays).toBe(SHARE_QUEST_REWARD_DAYS)
+      expect(grantedDays).toBe(CEFR_EXAM_QUEST_REWARD_DAYS)
+      expect((await claimCefrExamQuest('u1', 'A1')).ok).toBe(false)
+      expect(grantedDays).toBe(CEFR_EXAM_QUEST_REWARD_DAYS)
     } finally {
       spy.mockRestore()
     }

@@ -32,6 +32,12 @@ export const GeminiLiveSessionConfigSchema = z.object({
 })
 export type GeminiLiveSessionConfig = z.infer<typeof GeminiLiveSessionConfigSchema>
 
+// Client chỉ chọn giọng và rút ngắn thời lượng; model, danh tính và ngân sách do server giữ.
+export const GeminiLiveSessionRequestSchema = z.object({
+  voiceName: GeminiLiveSessionConfigSchema.shape.voiceName.optional(),
+  maxDurationSeconds: z.number().int().min(30).max(600).optional(),
+})
+
 export const GeminiLiveClientPacketSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('setup'),

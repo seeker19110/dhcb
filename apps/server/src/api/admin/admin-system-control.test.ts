@@ -14,19 +14,12 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: vi.fn(),
 }))
 
-vi.mock('@dhcb/core-auth/authService', () => ({
-  getUserById: vi.fn(),
-}))
-
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (e?: string) => e === 'admin@example.com',
+  isAdminUser: (userId?: string) => userId === 'a1',
 }))
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { validateAuth } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-
-type UserInfo = Awaited<ReturnType<typeof getUserById>>
 
 describe('/api/admin-system-control', () => {
   const queryMock = getPgPool().query as unknown as ReturnType<typeof vi.fn>
@@ -44,10 +37,7 @@ describe('/api/admin-system-control', () => {
 
   it('đọc trạng thái circuit breaker (GET 200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({ rows: [{ ai_circuit_breaker: true }] })
 
     const req = new Request('http://localhost/api/admin-system-control')
@@ -59,10 +49,7 @@ describe('/api/admin-system-control', () => {
 
   it('bật/tắt circuit breaker (POST 200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({ rows: [] })
 
     const req = new Request('http://localhost/api/admin-system-control', {
@@ -77,10 +64,6 @@ describe('/api/admin-system-control', () => {
 
   it('từ chối người dùng không phải admin (403)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'u1',
-      email: 'user@example.com',
-    } as UserInfo)
 
     const req = new Request('http://localhost/api/admin-system-control')
     const res = await handler(req)
@@ -89,10 +72,7 @@ describe('/api/admin-system-control', () => {
 
   it('tắt circuit breaker trả message "Đã tắt" (POST enabled=false)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({ rows: [] })
 
     const req = new Request('http://localhost/api/admin-system-control', {
@@ -108,10 +88,6 @@ describe('/api/admin-system-control', () => {
 
   it('từ chối HTTP method không hỗ trợ (405)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
 
     const req = new Request('http://localhost/api/admin-system-control', {
       method: 'PUT',

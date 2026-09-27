@@ -20,6 +20,7 @@ import bcrypt from 'bcryptjs'
 import { OAuth2Client } from 'google-auth-library'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import { resolvePlan, type Plan } from '@dhcb/core-billing/plan'
 import { grantFounderIfAvailable } from '@dhcb/core-billing/founder'
 
@@ -181,18 +182,24 @@ export async function verifyGoogleAccessToken(
 // THAY VÌ 4 cột `google_id`/`facebook_id`/`apple_id`/`microsoft_id` cũ trên `users` — 4 cột đó
 // đã bị xoá ở migration 0037 (cùng đợt deploy với thay đổi này, không được lệch nhau).
 //
-// Nếu chưa có identity nhưng email đã tồn tại (đăng ký email/password hoặc provider khác
-// trước đó) thì LIÊN KẾT (thêm 1 dòng identities cho user cũ) thay vì tạo user trùng email —
-// 1 người có thể đăng nhập bằng nhiều kênh khác nhau.
+// Email trùng KHÔNG chứng minh người đăng nhập sở hữu tài khoản hiện có. Identity mới phải
+// được liên kết bằng một luồng có xác thực tài khoản cũ; không tự ghép theo email.
 // Trả kèm `isNew` — cần để BIẾT có phải lần đăng nhập ĐẦU TIÊN không (chỉ tài khoản mới mới
 // được cấp quà dùng thử tự động, xem grantSignupTrial ở api/auth.ts — người dùng cũ đăng nhập
 // lại KHÔNG được cấp thêm).
 type OAuthProvider = 'google' | 'facebook' | 'apple' | 'microsoft'
 
-/** Email/UPN của Microsoft có thể do tenant thay đổi, không là bằng chứng sở hữu email. */
-export class MicrosoftAccountLinkRequiredError extends Error {
+export class OAuthAccountLinkRequiredError extends Error {
   constructor() {
     super('Hãy đăng nhập bằng email đã xác minh hoặc nhà cung cấp đã liên kết với tài khoản.')
+    this.name = 'OAuthAccountLinkRequiredError'
+  }
+}
+
+/** Giữ tương thích với nơi gọi cũ; mọi provider đều dùng cùng rào chắn liên kết. */
+export class MicrosoftAccountLinkRequiredError extends OAuthAccountLinkRequiredError {
+  constructor() {
+    super()
     this.name = 'MicrosoftAccountLinkRequiredError'
   }
 }
@@ -222,35 +229,37 @@ async function findOrCreateOAuthUser(
     [normalizedEmail],
   )
   if (byEmail.rows[0]) {
-    await upsertIdentity(provider, providerId, byEmail.rows[0].id, normalizedEmail)
-    return { user: byEmail.rows[0], isNew: false }
+    throw new OAuthAccountLinkRequiredError()
   }
 
-  const { rows } = await pool.query<AuthUserRow>(
-    'insert into public.users (email, email_verified) values ($1, now()) returning id, email',
-    [normalizedEmail],
-  )
-  const created = rows[0]
-  if (!created) throw new Error(`Không tạo được user ${provider} mới`)
-  await upsertIdentity(provider, providerId, created.id, normalizedEmail)
-  return { user: created, isNew: true }
-}
-
-// Ghi/refresh 1 dòng bảng `identities` (0034) — an toàn gọi lặp lại (on conflict do nothing,
-// không cập nhật email để giữ email LÚC LIÊN KẾT ĐẦU TIÊN, khớp comment trong migration).
-async function upsertIdentity(
-  provider: OAuthProvider,
-  providerId: string,
-  userId: string,
-  email: string,
-): Promise<void> {
-  const pool = getPgPool()
-  await pool.query(
-    `insert into public.identities (provider, provider_user_id, user_id, email)
-     values ($1, $2, $3, $4)
-     on conflict (provider, provider_user_id) do nothing`,
-    [provider, providerId, userId, email],
-  )
+  try {
+    // Tạo user + identity cùng transaction, tránh tài khoản mồ côi nếu hai đăng nhập đua nhau.
+    return await withTransaction(pool, async (client) => {
+      const { rows } = await client.query<AuthUserRow>(
+        'insert into public.users (email, email_verified) values ($1, now()) returning id, email',
+        [normalizedEmail],
+      )
+      const created = rows[0]
+      if (!created) throw new Error(`Không tạo được user ${provider} mới`)
+      await client.query(
+        `insert into public.identities (provider, provider_user_id, user_id, email)
+         values ($1, $2, $3, $4)`,
+        [provider, providerId, created.id, normalizedEmail],
+      )
+      return { user: created, isNew: true }
+    })
+  } catch (err) {
+    if ((err as { code?: string }).code !== '23505') throw err
+    // Sau rollback, chỉ identity chính xác mới được phép phục hồi retry. Email trùng vẫn chặn.
+    const retry = await pool.query<AuthUserRow>(
+      `select u.id, u.email from public.users u
+       join public.identities i on i.user_id = u.id
+       where i.provider = $1 and i.provider_user_id = $2`,
+      [provider, providerId],
+    )
+    if (retry.rows[0]) return { user: retry.rows[0], isNew: false }
+    throw new OAuthAccountLinkRequiredError()
+  }
 }
 
 export async function findOrCreateGoogleUser(

@@ -46,7 +46,7 @@ describe('AuthProvider refreshVerified', () => {
   }
   beforeEach(async () => {
     localStorage.clear()
-    localStorage.setItem('gsa_session_token_v1', 'token-u1')
+    localStorage.setItem('gsa_session_present_v1', 'session:u1')
     calls.read.mockReset().mockResolvedValue(USER)
     calls.verified.mockReset()
     unmounted = false
@@ -68,9 +68,9 @@ describe('AuthProvider refreshVerified', () => {
 
   it('khởi động chỉ có cookie: adoption đặt token mới vẫn áp dụng user', async () => {
     act(() => root.unmount())
-    localStorage.removeItem('gsa_session_token_v1')
+    localStorage.removeItem('gsa_session_present_v1')
     calls.read.mockImplementationOnce(async () => {
-      localStorage.setItem('gsa_session_token_v1', 'adopted-token')
+      localStorage.setItem('gsa_session_present_v1', 'session:adopted')
       return USER
     })
     root = createRoot(container)
@@ -83,7 +83,7 @@ describe('AuthProvider refreshVerified', () => {
     )
     expect(context.user?.id).toBe('u1')
     expect(context.loading).toBe(false)
-    expect(localStorage.getItem('gsa_session_token_v1')).toBe('adopted-token')
+    expect(localStorage.getItem('gsa_session_present_v1')).toBe('session:adopted')
   })
 
   it.each(['success', 'reject'] as const)(
@@ -156,7 +156,7 @@ describe('AuthProvider refreshVerified', () => {
     calls.verified.mockRejectedValue(new Error(reason))
     await expect(context.refreshVerified('u1')).rejects.toThrow(reason)
     expect(context.user).toEqual(USER)
-    expect(localStorage.getItem('gsa_session_token_v1')).toBe('token-u1')
+    expect(localStorage.getItem('gsa_session_present_v1')).toBe('session:u1')
   })
   it('401 hợp lệ chuyển guest và xóa token, không trả success', async () => {
     calls.verified.mockRejectedValue(new SessionVerificationError('unauthorized'))
@@ -164,7 +164,7 @@ describe('AuthProvider refreshVerified', () => {
       await expect(context.refreshVerified('u1')).rejects.toThrow()
     })
     expect(context.isGuest).toBe(true)
-    expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+    expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
   })
   it('response user khác bị từ chối trước khi áp dụng context', async () => {
     calls.verified.mockResolvedValue({ ...USER, id: 'u2' })
@@ -177,7 +177,7 @@ describe('AuthProvider refreshVerified', () => {
       const old = deferred()
       calls.verified.mockReturnValue(old.promise)
       const checking = context.refreshVerified('u1').catch(() => undefined)
-      localStorage.setItem('gsa_session_token_v1', 'token-u2')
+      localStorage.setItem('gsa_session_present_v1', 'session:u2')
       calls.read.mockResolvedValue({ ...USER, id: 'u2' })
       await act(async () => context.refresh())
       await act(async () => {
@@ -186,14 +186,14 @@ describe('AuthProvider refreshVerified', () => {
         await checking
       })
       expect(context.user?.id).toBe('u2')
-      expect(localStorage.getItem('gsa_session_token_v1')).toBe('token-u2')
+      expect(localStorage.getItem('gsa_session_present_v1')).toBe('session:u2')
     },
   )
   it('response cũ sau logout không khôi phục user', async () => {
     const old = deferred()
     calls.verified.mockReturnValue(old.promise)
     const checking = context.refreshVerified('u1').catch(() => undefined)
-    localStorage.removeItem('gsa_session_token_v1')
+    localStorage.removeItem('gsa_session_present_v1')
     calls.read.mockResolvedValue(null)
     await act(async () => context.refresh())
     await act(async () => {

@@ -23,8 +23,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { getR2PublicBaseUrl } from '@dhcb/core-ai/fileStorage'
@@ -107,8 +106,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const admin = await getUserById(auth.userId)
-  if (!isAdminEmail(admin?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-tts-cache' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }
@@ -221,7 +219,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (!started.ok) return jsonResponse({ error: started.error }, 409, allHeaders)
 
     logSecurityEvent('TTS_CACHE_SCAN_STARTED', clientIp, {
-      adminEmail: admin?.email ?? 'unknown',
+      adminUserId: auth.userId,
       auditId: started.auditId,
     })
     return jsonResponse(

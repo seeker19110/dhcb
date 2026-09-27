@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/agentOrchestratorApi.ts — REST Client cho Autonomous Multi-Agent Orchestrator Studio V5.5.
 import type {
   AutonomousAgentRole,
@@ -6,10 +7,9 @@ import type {
 } from '@dhcb/core-contracts/agentOrchestrator'
 
 export async function fetchAgentSessions(): Promise<AgentExecutionSession[]> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/agent-orchestrator', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -27,12 +27,11 @@ export async function createAutonomousAgentSession(params: {
   userGoalDescription: string
   budgetGuardrail?: Partial<AgentBudgetGuardrail>
 }): Promise<AgentExecutionSession> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/agent-orchestrator', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })

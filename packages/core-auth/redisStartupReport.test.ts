@@ -51,7 +51,7 @@ describe('reportRedisStatusAtStartup', () => {
     const msg = String(warnSpy.mock.calls[0]?.[0])
     expect(msg).toContain('❌')
     expect(msg).toContain('NOAUTH') // nói rõ lý do, không chỉ "lỗi"
-    expect(msg).toContain('lỏng gấp N lần') // nói rõ HẬU QUẢ
+    expect(msg).toContain('production từ chối request có rate limit') // hậu quả mới: đóng an toàn
     expect(msg).toContain('redis://:MẬT_KHẨU@') // nói rõ CÁCH SỬA
     expect(logSpy).not.toHaveBeenCalled()
   })

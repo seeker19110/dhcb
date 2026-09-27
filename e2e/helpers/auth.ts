@@ -1,11 +1,11 @@
 import type { Page } from '@playwright/test'
 
-// Giả "đã đăng nhập" cho E2E: gieo trước token Bearer giả (đúng key mà
-// src/lib/authHeader.ts đọc — gsa_session_token_v1) + chặn network `GET
+// Giả "đã đăng nhập" cho E2E: gieo trước cờ phiên không bí mật (đúng key mà
+// src/lib/authHeader.ts đọc — gsa_session_present_v1) + chặn network `GET
 // /api/auth?action=me` (gọi thật khi AuthProvider mount, xem src/lib/auth.ts
 // getCurrentUser()) trả về profile giả — E2E chạy bằng `npm run dev` (Vite),
 // không có backend Postgres thật nên không thể để request đó đi thật.
-const TOKEN_KEY = 'gsa_session_token_v1'
+const TOKEN_KEY = 'gsa_session_present_v1'
 // Export để các file E2E khác seed localStorage đúng key theo user (vd `et_challenge_<uid>`).
 export const USER_ID = 'e2e-user-0001'
 
@@ -49,7 +49,7 @@ export async function mockLogin(
 
   await page.addInitScript(
     (data) => {
-      localStorage.setItem(data.tokenKey, 'e2e-fake-token')
+      localStorage.setItem(data.tokenKey, 'session:e2e')
       localStorage.setItem('ui_lang', data.uiLang)
       if (data.theme) localStorage.setItem('ui_theme', data.theme)
     },

@@ -27,7 +27,7 @@ import {
   findOrCreateAppleUser,
   verifyMicrosoftIdToken,
   findOrCreateMicrosoftUser,
-  MicrosoftAccountLinkRequiredError,
+  OAuthAccountLinkRequiredError,
   createSession,
   revokeSession,
   ensureProfileRow,
@@ -44,13 +44,22 @@ import {
 } from './security.js'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { sendVerificationCode, verifyCode, isEmailVerified } from './emailVerification.js'
-import { isAdminEmail } from './adminAuth.js'
+import { isAdminUser } from './adminAuth.js'
 import { grantSignupTrial, SIGNUP_TRIAL_DAYS } from './trial.js'
 import { changeEmail } from './changeEmail.js'
 import { requestPasswordReset, resetPassword } from './passwordReset.js'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { isReservedName } from './reservedNames.js'
 import { buildSessionCookie, buildClearSessionCookie, readSessionCookie } from './sessionCookie.js'
+
+const NewPasswordSchema = z
+  .string()
+  .refine((password) => Array.from(password).length >= 15, {
+    message: 'Mật khẩu tối thiểu 15 ký tự',
+  })
+  .refine((password) => Buffer.byteLength(password, 'utf8') <= 72, {
+    message: 'Mật khẩu tối thiểu 15 ký tự, tối đa 72 byte UTF-8',
+  })
 
 const RegisterSchema = z.object({
   action: z.literal('register'),
@@ -65,7 +74,7 @@ const RegisterSchema = z.object({
     .refine((name) => !isReservedName(name), {
       message: 'Tên này không thể sử dụng, vui lòng chọn tên khác',
     }),
-  password: z.string().min(6).max(200),
+  password: NewPasswordSchema,
 })
 const LoginSchema = z.object({
   action: z.literal('login'),
@@ -95,8 +104,7 @@ const MicrosoftSchema = z.object({
   action: z.literal('microsoft'),
   idToken: z.string().min(10),
 })
-// Đổi cookie phiên (dùng chung mọi subdomain của .donghanhcungban.org) lấy Bearer token cho
-// origin hiện tại. Xem khối xử lý bên dưới để biết vì sao cần và vì sao là POST.
+// Xác nhận phiên cookie cho giao diện trên origin mới, không trả secret ra JavaScript.
 const SessionFromCookieSchema = z.object({ action: z.literal('session-from-cookie') })
 
 const LogoutSchema = z.object({ action: z.literal('logout') })
@@ -125,7 +133,7 @@ const RequestPasswordResetSchema = z.object({
 const ResetPasswordSchema = z.object({
   action: z.literal('reset-password'),
   token: z.string().trim().min(20).max(200),
-  newPassword: z.string().min(6).max(200),
+  newPassword: NewPasswordSchema,
 })
 const BodySchema = z.union([
   RegisterSchema,
@@ -147,7 +155,6 @@ const BodySchema = z.union([
 // Trả về đúng shape AppUser phía client mong đợi (xem src/types.ts) — email lấy từ input vì
 // bảng users hiện chưa cần trả qua API này (chỉ id cần thiết cho các nơi khác dùng).
 function authResponse(
-  token: string,
   user: { id: string; email: string },
   profile: {
     plan: Plan
@@ -158,7 +165,7 @@ function authResponse(
   },
 ) {
   return {
-    token,
+    authenticated: true,
     user: {
       id: user.id,
       email: user.email,
@@ -187,9 +194,12 @@ async function oauthLoginResponse(
   const signupTrialGranted = isNew ? await grantSignupTrial(user.id) : false
   const profile = await ensureProfileRow(user.id, name)
   return {
-    ...authResponse(token, user, profile),
-    signupTrialGranted,
-    signupTrialDays: SIGNUP_TRIAL_DAYS,
+    token,
+    body: {
+      ...authResponse(user, profile),
+      signupTrialGranted,
+      signupTrialDays: SIGNUP_TRIAL_DAYS,
+    },
   }
 }
 
@@ -197,8 +207,7 @@ export default async function handler(req: Request): Promise<Response> {
   const allHeaders = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: allHeaders })
 
-  // Gắn thêm cookie phiên SONG SONG với token trả trong body (Bước 3 SSO — sessionCookie.ts).
-  // Client hiện tại vẫn đọc `token` trong body như cũ, cookie chỉ để trình duyệt tự lưu.
+  // Secret phiên chỉ đi qua cookie HttpOnly, không xuất hiện trong JSON.
   const reqHost = req.headers.get('host') || req.headers.get('Host') || ''
   const withCookie = (token: string) => ({
     ...allHeaders,
@@ -236,7 +245,7 @@ export default async function handler(req: Request): Promise<Response> {
         emailVerified: await isEmailVerified(auth.userId),
         // Để UI ẩn/hiện link "/admin" — server tự kiểm lại quyền mỗi lần gọi API admin, đây
         // chỉ là cờ hiển thị UI, không phải nguồn xác thực (xem api/_lib/adminAuth.ts).
-        isAdmin: isAdminEmail(user.email),
+        isAdmin: isAdminUser(user.id),
       },
       200,
       allHeaders,
@@ -254,28 +263,8 @@ export default async function handler(req: Request): Promise<Response> {
   if (!result.ok)
     return jsonResponse({ error: result.error.message }, result.error.status, allHeaders)
 
-  // ── Nạp lại "cờ đã đăng nhập" cho một origin mới ─────────────────────────────────────────
-  //
-  // ĐỌC KỸ KẺO HIỂU NHẦM: token trả về ở đây KHÔNG phải chứng chỉ xác thực. Từ Bước 6
-  // (docs/adr/0002-quan-ly-nguoi-dung.md) `validateAuth` CHỈ đọc cookie `session_token`;
-  // header `Authorization: Bearer` bị bỏ qua hoàn toàn — đo trực tiếp 2026-08-28: cùng một
-  // phiên, gọi `?action=me` chỉ với cookie → 200, chỉ với Bearer → 401.
-  //
-  // VÌ SAO VẪN CẦN: cookie có `Domain=.donghanhcungban.org` nên trình duyệt gửi nó cho MỌI
-  // subdomain — nghĩa là API đã xác thực được ngay trên subdomain mới. Nhưng PHÍA CLIENT lại
-  // dùng "có token trong localStorage hay không" làm cờ đã-đăng-nhập, mà localStorage thì cô
-  // lập theo origin. Người đang đăng nhập ở `www.` mở `hoc-tap.` sẽ bị giao diện coi là khách:
-  // `getCurrentUser()` thoát sớm, và các chỗ tự kiểm `getStoredToken()` (`cloud.ts`,
-  // `challengeCloud.ts`, `tutorFeedback.ts`) lặng lẽ bỏ qua việc đồng bộ. Endpoint này nạp lại
-  // đúng cờ đó một lần lúc khởi động, để không phải sửa rải rác hàng chục chỗ.
-  //
-  // VÌ SAO POST chứ không GET: `SameSite=Lax` KHÔNG gửi cookie kèm request POST từ site khác,
-  // nên site lạ không gọi được endpoint này. Với GET thì cookie đi kèm điều hướng cấp cao nhất
-  // — CORS vẫn chặn đọc phản hồi, nhưng POST đóng cửa sớm hơn một lớp và không có lý do gì
-  // chọn lớp yếu hơn.
-  //
-  // KHÔNG tạo phiên mới: cookie CHÍNH LÀ session token (xem sessionCookie.ts), nên đây chỉ là
-  // trả lại đúng token đó sau khi xác minh — không sinh thêm bản ghi phiên, không kéo dài hạn.
+  // Xác nhận cookie SSO và trả hồ sơ + cờ không bí mật cho origin hiện tại.
+  // Không tạo phiên mới, không kéo dài hạn và không tiết lộ token cookie.
   if (result.data.action === 'session-from-cookie') {
     const cookieToken = readSessionCookie(req)
     if (!cookieToken) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
@@ -289,7 +278,7 @@ export default async function handler(req: Request): Promise<Response> {
     ])
     if (!user) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-    return jsonResponse(authResponse(cookieToken, user, profile), 200, allHeaders)
+    return jsonResponse(authResponse(user, profile), 200, allHeaders)
   }
 
   if (result.data.action === 'register') {
@@ -312,7 +301,7 @@ export default async function handler(req: Request): Promise<Response> {
     // hàng loạt để cày trial). 4 kênh OAuth (Google/Facebook/Apple/Microsoft) COI NHƯ ĐÃ XÁC
     // THỰC (provider tự verify email) nên vẫn cấp NGAY — xem oauthLoginResponse() +
     // action 'verify-email' bên dưới.
-    return jsonResponse(authResponse(token, user, profile), 200, withCookie(token))
+    return jsonResponse(authResponse(user, profile), 200, withCookie(token))
   }
 
   if (result.data.action === 'login') {
@@ -324,58 +313,58 @@ export default async function handler(req: Request): Promise<Response> {
     }
     const profile = await ensureProfileRow(user.id, user.email.split('@')[0] ?? user.email)
     const token = await createSession(user.id)
-    return jsonResponse(authResponse(token, user, profile), 200, withCookie(token))
+    return jsonResponse(authResponse(user, profile), 200, withCookie(token))
   }
 
-  if (result.data.action === 'google') {
-    const info = await verifyGoogleIdToken(result.data.idToken)
-    if (!info) return jsonResponse({ error: 'Google token không hợp lệ' }, 401, allHeaders)
-    const { user, isNew } = await findOrCreateGoogleUser(info.googleId, info.email)
-    const body = await oauthLoginResponse(user, isNew, info.name)
-    return jsonResponse(body, 200, withCookie(body.token))
-  }
-
-  if (result.data.action === 'google-token') {
-    const info = await verifyGoogleAccessToken(result.data.accessToken)
-    if (!info) return jsonResponse({ error: 'Google token không hợp lệ' }, 401, allHeaders)
-    const { user, isNew } = await findOrCreateGoogleUser(info.googleId, info.email)
-    const body = await oauthLoginResponse(user, isNew, info.name)
-    return jsonResponse(body, 200, withCookie(body.token))
-  }
-
-  if (result.data.action === 'facebook') {
-    const info = await verifyFacebookAccessToken(result.data.accessToken)
-    if (!info) return jsonResponse({ error: 'Facebook token không hợp lệ' }, 401, allHeaders)
-    const { user, isNew } = await findOrCreateFacebookUser(info.facebookId, info.email)
-    const body = await oauthLoginResponse(user, isNew, info.name)
-    return jsonResponse(body, 200, withCookie(body.token))
-  }
-
-  if (result.data.action === 'apple') {
-    const info = await verifyAppleIdToken(result.data.idToken, result.data.name)
-    if (!info) return jsonResponse({ error: 'Apple token không hợp lệ' }, 401, allHeaders)
-    const { user, isNew } = await findOrCreateAppleUser(info.appleId, info.email)
-    const body = await oauthLoginResponse(user, isNew, info.name)
-    return jsonResponse(body, 200, withCookie(body.token))
-  }
-
-  if (result.data.action === 'microsoft') {
-    const info = await verifyMicrosoftIdToken(result.data.idToken)
-    if (!info) return jsonResponse({ error: 'Microsoft token không hợp lệ' }, 401, allHeaders)
-    try {
-      const { user, isNew } = await findOrCreateMicrosoftUser(info.microsoftId, info.email)
-      const body = await oauthLoginResponse(user, isNew, info.name)
-      return jsonResponse(body, 200, withCookie(body.token))
-    } catch (error) {
-      if (error instanceof MicrosoftAccountLinkRequiredError) {
-        return jsonResponse(
-          { error: error.message, code: 'MICROSOFT_ACCOUNT_LINK_REQUIRED' },
-          403,
-          allHeaders,
-        )
-      }
-      throw error
+  try {
+    if (result.data.action === 'google') {
+      const info = await verifyGoogleIdToken(result.data.idToken)
+      if (!info) return jsonResponse({ error: 'Google token không hợp lệ' }, 401, allHeaders)
+      const { user, isNew } = await findOrCreateGoogleUser(info.googleId, info.email)
+      const session = await oauthLoginResponse(user, isNew, info.name)
+      return jsonResponse(session.body, 200, withCookie(session.token))
     }
+
+    if (result.data.action === 'google-token') {
+      const info = await verifyGoogleAccessToken(result.data.accessToken)
+      if (!info) return jsonResponse({ error: 'Google token không hợp lệ' }, 401, allHeaders)
+      const { user, isNew } = await findOrCreateGoogleUser(info.googleId, info.email)
+      const session = await oauthLoginResponse(user, isNew, info.name)
+      return jsonResponse(session.body, 200, withCookie(session.token))
+    }
+
+    if (result.data.action === 'facebook') {
+      const info = await verifyFacebookAccessToken(result.data.accessToken)
+      if (!info) return jsonResponse({ error: 'Facebook token không hợp lệ' }, 401, allHeaders)
+      const { user, isNew } = await findOrCreateFacebookUser(info.facebookId, info.email)
+      const session = await oauthLoginResponse(user, isNew, info.name)
+      return jsonResponse(session.body, 200, withCookie(session.token))
+    }
+
+    if (result.data.action === 'apple') {
+      const info = await verifyAppleIdToken(result.data.idToken, result.data.name)
+      if (!info) return jsonResponse({ error: 'Apple token không hợp lệ' }, 401, allHeaders)
+      const { user, isNew } = await findOrCreateAppleUser(info.appleId, info.email)
+      const session = await oauthLoginResponse(user, isNew, info.name)
+      return jsonResponse(session.body, 200, withCookie(session.token))
+    }
+
+    if (result.data.action === 'microsoft') {
+      const info = await verifyMicrosoftIdToken(result.data.idToken)
+      if (!info) return jsonResponse({ error: 'Microsoft token không hợp lệ' }, 401, allHeaders)
+      const { user, isNew } = await findOrCreateMicrosoftUser(info.microsoftId, info.email)
+      const session = await oauthLoginResponse(user, isNew, info.name)
+      return jsonResponse(session.body, 200, withCookie(session.token))
+    }
+  } catch (error) {
+    if (error instanceof OAuthAccountLinkRequiredError) {
+      return jsonResponse(
+        { error: error.message, code: 'OAUTH_ACCOUNT_LINK_REQUIRED' },
+        409,
+        allHeaders,
+      )
+    }
+    throw error
   }
 
   // ── Xác thực email (chống email giả cày thưởng mời bạn) ────────────────────

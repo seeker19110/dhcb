@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/neuralCurriculumApi.ts — Client API giao tiếp Lộ trình Vi mô Thần kinh.
 import {
   type NeuralCurriculumState,
@@ -10,10 +11,9 @@ import {
 } from '@dhcb/core-contracts/neuralCurriculum'
 
 export async function fetchNeuralCurriculum(): Promise<NeuralCurriculumState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/neural-curriculum', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -30,12 +30,11 @@ export async function generateMicroModule(params: {
   targetDomain?: 'learning' | 'career' | 'work' | 'startup' | 'life'
   cefrLevel?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 }): Promise<{ module: MicroCurriculumModule; state: NeuralCurriculumState }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/neural-curriculum?action=generate_module', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })
@@ -55,12 +54,11 @@ export async function completeDrill(params: NeuralDrillSubmission): Promise<{
   review: NeuralDrillReview
   state: NeuralCurriculumState
 }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/neural-curriculum?action=complete_drill', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })

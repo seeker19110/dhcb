@@ -109,7 +109,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    // Cả 3 thao tác dưới đây (đánh dấu payment đã trả, cấp gói, xác thực email) phải cùng
+    // Hai thao tác dưới đây (đánh dấu payment đã trả, cấp gói) phải cùng
     // thành công hoặc cùng thất bại — nếu grantPlanDays() lỗi SAU KHI đã set status='paid' mà
     // không có transaction, user mất tiền nhưng không được cấp gói, và lần webhook retry sau đó
     // (SePay lặp lại tới 7 lần) sẽ bị chặn ngay ở nhánh `status === 'paid'` phía trên nên KHÔNG
@@ -136,13 +136,7 @@ export default async function handler(req: Request): Promise<Response> {
       // years > 1 CHỈ có ý nghĩa với cycle='year' (mua nhiều năm liền — xem api/checkout.ts).
       const grantDays = CYCLE_DAYS[row.cycle] * (row.cycle === 'year' ? Math.max(1, row.years) : 1)
       await grantPlanDays(row.user_id, row.plan, grantDays, new Date(), client)
-      // Đã bỏ tiền thật ra mua gói → coi như đã xác thực email (chống email giả mạnh hơn nhiều so
-      // với mã gửi qua email, vì phải chuyển khoản ngân hàng thật). Chỉ set khi đang null để không
-      // đè lên thời điểm xác thực thật (nếu người dùng đã tự xác thực trước đó).
-      await client.query(
-        'update public.users set email_verified = now() where id = $1 and email_verified is null',
-        [row.user_id],
-      )
+      // Chuyển khoản chứng minh thanh toán, không chứng minh sở hữu hộp thư.
       return row
     })
     if (!won) return ok(headers) // race: request khác vừa xử lý xong

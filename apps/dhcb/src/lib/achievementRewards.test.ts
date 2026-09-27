@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const headerState: { value: Record<string, string> } = { value: { Authorization: 'Bearer t' } }
-vi.mock('@core/authHeader', () => ({ getAuthHeader: () => headerState.value }))
+vi.mock('@core/authHeader', () => ({
+  getAuthHeader: () => headerState.value,
+  getStoredToken: () => (headerState.value.Authorization ? 'session:fixture' : null),
+}))
 
 import { fetchAchievementRewards, claimAchievementReward } from './achievementRewards'
 

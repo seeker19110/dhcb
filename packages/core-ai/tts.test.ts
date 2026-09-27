@@ -7,6 +7,15 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
+vi.mock('@dhcb/core-billing/usage', () => ({
+  checkAndConsumeUsage: vi.fn(async () => ({ ok: true, day: '2026-09-27' })),
+  refundUsage: vi.fn(async () => {}),
+}))
+vi.mock('@dhcb/core-db/settings', () => ({ getAppSettings: vi.fn() }))
+vi.mock('@dhcb/core-auth/guestTrial', () => ({
+  checkAndConsumeGuestTrial: vi.fn(async () => ({ ok: true })),
+  refundGuestTrial: vi.fn(async () => {}),
+}))
 vi.mock('./googleTts.js', () => ({
   generateAudioFromGoogle: vi.fn(),
   generateStudioAudioFromGoogle: vi.fn(),
@@ -58,6 +67,11 @@ import { saveAudio } from './fileStorage.js'
 import * as security from '@dhcb/core-auth/security'
 import { ensureProfileRow } from '@dhcb/core-auth/authService'
 import { clampVoiceToPlan } from './voiceAccess.js'
+import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
+import { getAppSettings } from '@dhcb/core-db/settings'
+import { checkAndConsumeGuestTrial } from '@dhcb/core-auth/guestTrial'
+import * as guest from '@dhcb/core-auth/guest'
+import * as concurrency from '@dhcb/core-db/concurrencyLimiter'
 
 const mockedGetPool = vi.mocked(getPgPool)
 const mockedGenGoogle = vi.mocked(generateAudioFromGoogle)
@@ -84,6 +98,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockedGenGoogle.mockResolvedValue(new ArrayBuffer(8))
   mockedSaveAudio.mockResolvedValue('https://cdn.test/audio.mp3')
+  vi.mocked(checkAndConsumeUsage).mockResolvedValue({ ok: true, day: '2026-09-27' })
+  vi.mocked(getAppSettings).mockResolvedValue({ aiCircuitBreaker: false } as Awaited<
+    ReturnType<typeof getAppSettings>
+  >)
+  vi.mocked(checkAndConsumeGuestTrial).mockResolvedValue({ ok: true })
 })
 
 afterEach(() => {
@@ -392,5 +411,87 @@ describe('handler /api/tts — giọng ElevenLabs (VIP) và Studio', () => {
     expect(res.status).toBe(200)
     expect(mockedGenStudio).not.toHaveBeenCalled()
     expect(mockedGenGoogle).toHaveBeenCalledWith('Xin chào', 'Kore', 'vi-VN')
+  })
+})
+
+describe('TTS — ngân sách AI chung cho cache MISS', () => {
+  beforeEach(() => {
+    mockedGetPool.mockReturnValue(
+      makePool(async (sql) => ({
+        rows: sql.startsWith('insert into public.tts_cache_pending') ? [{ hash: 'h' }] : [],
+      })) as never,
+    )
+  })
+  it('cache MISS trừ một lượt speaking trước provider', async () => {
+    expect((await handler(makeRequest())).status).toBe(200)
+    expect(checkAndConsumeUsage).toHaveBeenCalledExactlyOnceWith('user-test', 'speaking')
+    expect(vi.mocked(checkAndConsumeUsage).mock.invocationCallOrder[0]).toBeLessThan(
+      mockedGenGoogle.mock.invocationCallOrder[0]!,
+    )
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+  it.each(['Hết lượt hôm nay', 'Cầu dao AI đang bật'])(
+    'chặn provider nếu ngân sách từ chối: %s',
+    async (message) => {
+      vi.mocked(checkAndConsumeUsage).mockResolvedValue({ ok: false, message })
+      expect((await handler(makeRequest())).status).toBe(429)
+      expect(mockedGenGoogle).not.toHaveBeenCalled()
+      expect(refundUsage).not.toHaveBeenCalled()
+      expect(mockedGetPool().query).toHaveBeenCalledWith(
+        'delete from public.tts_cache_pending where hash = $1',
+        expect.any(Array),
+      )
+    },
+  )
+  it('cache HIT bỏ qua gate dù hết quota/cầu dao bật', async () => {
+    vi.mocked(checkAndConsumeUsage).mockResolvedValue({ ok: false, message: 'Hết lượt' })
+    mockedGetPool.mockReturnValue(
+      makePool(async () => ({ rows: [{ audio_url: 'https://cdn.test/cached.mp3' }] })) as never,
+    )
+    expect((await handler(makeRequest())).status).toBe(200)
+    expect(checkAndConsumeUsage).not.toHaveBeenCalled()
+    expect(getAppSettings).not.toHaveBeenCalled()
+    expect(mockedGenGoogle).not.toHaveBeenCalled()
+  })
+  it('hoàn đúng ngày khi hàng đợi lỗi trước khi gọi provider', async () => {
+    vi.spyOn(concurrency, 'withConcurrencyLimit').mockRejectedValueOnce(new Error('Queue stopped'))
+    expect((await handler(makeRequest())).status).toBe(500)
+    expect(mockedGenGoogle).not.toHaveBeenCalled()
+    expect(refundUsage).toHaveBeenCalledExactlyOnceWith('user-test', 'speaking', '2026-09-27')
+  })
+  it('không hoàn lượt đã tốn provider khi lưu file thất bại', async () => {
+    mockedSaveAudio.mockRejectedValueOnce(new Error('Storage failed'))
+    expect((await handler(makeRequest())).status).toBe(500)
+    expect(mockedGenGoogle).toHaveBeenCalledOnce()
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+  it('hai MISS đồng thời của một user vẫn đi qua gate nguyên tử cho từng lần', async () => {
+    vi.mocked(checkAndConsumeUsage)
+      .mockResolvedValueOnce({ ok: true, day: '2026-09-27' })
+      .mockResolvedValueOnce({ ok: false, message: 'Hết lượt' })
+    const responses = await Promise.all([
+      handler(makeRequest({ text: 'First', voice: 'Kore' })),
+      handler(makeRequest({ text: 'Second', voice: 'Kore' })),
+    ])
+    expect(responses.map((r) => r.status).sort()).toEqual([200, 429])
+    expect(checkAndConsumeUsage).toHaveBeenCalledTimes(2)
+    expect(mockedGenGoogle).toHaveBeenCalledOnce()
+  })
+  it('khách giữ trial gate khi tạo mới, không dùng quota tài khoản', async () => {
+    vi.spyOn(guest, 'resolveActor').mockResolvedValue({ kind: 'guest', guestKey: 'guest-1' })
+    expect((await handler(makeRequest())).status).toBe(200)
+    expect(checkAndConsumeGuestTrial).toHaveBeenCalledOnce()
+    expect(checkAndConsumeUsage).not.toHaveBeenCalled()
+  })
+  it('khách cũng bị chặn khi cầu dao bật hoặc settings không khả dụng', async () => {
+    vi.spyOn(guest, 'resolveActor').mockResolvedValue({ kind: 'guest', guestKey: 'guest-1' })
+    vi.mocked(getAppSettings).mockResolvedValueOnce({ aiCircuitBreaker: true } as Awaited<
+      ReturnType<typeof getAppSettings>
+    >)
+    expect((await handler(makeRequest())).status).toBe(503)
+    vi.mocked(getAppSettings).mockRejectedValueOnce(new Error('DB unavailable'))
+    expect((await handler(makeRequest())).status).toBe(503)
+    expect(checkAndConsumeGuestTrial).not.toHaveBeenCalled()
+    expect(mockedGenGoogle).not.toHaveBeenCalled()
   })
 })

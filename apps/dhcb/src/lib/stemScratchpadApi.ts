@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/stemScratchpadApi.ts — Client API cho STEM Interactive Scratchpad V5.
 import type {
   StemProblemState,
@@ -15,10 +16,9 @@ export async function fetchSampleStemProblems(): Promise<
     problemLatex?: string
   }>
 > {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/stem-scratchpad', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -36,12 +36,11 @@ export async function createStemProblemApi(params: {
   problemStatement: string
   problemLatex?: string
 }): Promise<StemProblemState> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/stem-scratchpad?action=create_problem', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })
@@ -64,12 +63,11 @@ export async function validateStemStepApi(params: {
   isSolved: boolean
   problem: StemProblemState
 }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/stem-scratchpad?action=validate_step', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })
@@ -85,12 +83,11 @@ export async function validateStemStepApi(params: {
 export async function getStemHintApi(
   problemId: string,
 ): Promise<{ hint: { hintText: string; suggestedFormula?: string }; hintsUsed: number }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/stem-scratchpad?action=get_hint', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify({ problemId }),
   })

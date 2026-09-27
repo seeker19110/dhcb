@@ -1,3 +1,4 @@
+import { isValidNewPassword } from '@core/clientAuth'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { BookOpen, Eye, EyeOff, Mic, PenLine, MessageCircle } from 'lucide-react'
@@ -106,6 +107,14 @@ export default function Login() {
     setLoading(true)
     try {
       if (mode === 'register') {
+        if (!isValidNewPassword(password)) {
+          setError(
+            isA
+              ? 'Mật khẩu tối thiểu 15 ký tự, tối đa 72 byte UTF-8'
+              : 'Password must be at least 15 characters and at most 72 UTF-8 bytes',
+          )
+          return
+        }
         if (!name.trim()) {
           setError(T.errNameRequired)
           return
@@ -354,10 +363,16 @@ export default function Login() {
               type={showPw ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={T.passwordPlaceholder}
+              placeholder={
+                mode === 'register'
+                  ? isA
+                    ? 'Mật khẩu (ít nhất 15 ký tự)'
+                    : 'Password (at least 15 characters)'
+                  : T.passwordPlaceholder
+              }
               className={`${inputCls} pr-11`}
               required
-              minLength={6}
+              minLength={mode === 'register' ? 15 : 1}
             />
             <button
               type="button"

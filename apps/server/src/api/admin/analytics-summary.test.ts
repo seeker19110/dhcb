@@ -10,12 +10,8 @@ vi.mock('@dhcb/core-auth/security', () => ({
   validateAuth: async () => authState.user,
   logSecurityEvent: () => {},
 }))
-const emailState: { email: string | undefined } = { email: 'admin@x.com' }
-vi.mock('@dhcb/core-auth/authService', () => ({
-  getUserById: async () => ({ id: 'user-1', email: emailState.email }),
-}))
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (email: string | null | undefined) => email === 'admin@x.com',
+  isAdminUser: (userId: string | null | undefined) => userId === 'user-1',
 }))
 
 import handler from './analytics-summary.js'
@@ -29,7 +25,6 @@ beforeEach(() => {
   query.mockResolvedValue({ rows: [] })
   mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
   authState.user = { userId: 'user-1' }
-  emailState.email = 'admin@x.com'
 })
 
 function makeRequest(qs = ''): Request {
@@ -44,7 +39,7 @@ describe('GET /api/analytics-summary', () => {
   })
 
   it('đăng nhập nhưng KHÔNG phải admin → 403', async () => {
-    emailState.email = 'user@x.com'
+    authState.user = { userId: 'non-admin' }
     const res = await handler(makeRequest())
     expect(res.status).toBe(403)
   })

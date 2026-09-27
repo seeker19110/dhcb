@@ -2,7 +2,7 @@
 // Quản lý đăng nhập, đăng ký, OAuth 2.0 (Google, Facebook, Apple, Microsoft), SSO cookie và chuyển hướng an toàn.
 
 import { z } from 'zod'
-import { setStoredToken, clearStoredToken, getAuthHeader } from './authHeader.js'
+import { setStoredToken, clearStoredToken, getAuthHeader, getStoredToken } from './authHeader.js'
 
 // GĐ1 2026-09-12 (docs/specs/2026-09-12-gd1-xoa-goi-pro.md): chỉ còn Free + VIP.
 // PHẢI khớp packages/core-billing/plan.ts (server là nguồn sự thật) và apps/dhcb/src/types.ts.
@@ -35,53 +35,87 @@ interface AuthApiUser {
 
 // ── Kiểm tra và làm sạch URL chuyển hướng (Safe Redirect URL) ───────────────────────────
 // Chống lỗ hổng Open Redirect Attack: chỉ cho phép các URL nội bộ hoặc thuộc hệ sinh thái Đồng Hành.
-const ALLOWED_HOST_SUFFIXES = [
-  'donghanhcungban.org',
-  'donghanhcungban.com',
-  'localhost',
-  '127.0.0.1',
-]
+const ALLOWED_REDIRECT_ORIGINS = new Set([
+  'https://donghanhcungban.org',
+  'https://www.donghanhcungban.org',
+  'https://en-vi.donghanhcungban.org',
+])
+const DEV_REDIRECT_ORIGINS = new Set([
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+])
+
+function hasUnsafeRedirectCharacters(value: string, rejectSpace = false): boolean {
+  return Array.from(value).some((character) => {
+    const code = character.charCodeAt(0)
+    return character === '\\' || code < (rejectSpace ? 33 : 32) || code === 127
+  })
+}
 
 export function getSafeRedirectUrl(
   redirectParam: string | null | undefined,
   fallbackUrl = 'https://www.donghanhcungban.org/',
 ): string {
-  if (!redirectParam || !redirectParam.trim()) return fallbackUrl
-  const trimmed = redirectParam.trim()
-
-  // 1. Đường dẫn tương đối hợp lệ (bắt đầu bằng / nhưng không phải //)
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-    return trimmed
-  }
-
-  // 2. URL tuyệt đối: kiểm tra hostname
+  if (!redirectParam) return fallbackUrl
+  // Chặn ký tự điều khiển và gạch chéo ngược trước khi URL tự chuẩn hóa.
+  if (hasUnsafeRedirectCharacters(redirectParam, true)) return fallbackUrl
   try {
-    const parsed = new URL(trimmed)
-    const hostname = parsed.hostname.toLowerCase()
-    const isAllowed = ALLOWED_HOST_SUFFIXES.some(
-      (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`),
-    )
-    if (isAllowed) {
-      return parsed.toString()
+    const decoded = decodeURIComponent(redirectParam)
+    if (hasUnsafeRedirectCharacters(decoded)) return fallbackUrl
+    if (redirectParam.startsWith('/')) {
+      if (decoded.startsWith('//')) return fallbackUrl
+      const parsed = new URL(redirectParam, 'https://www.donghanhcungban.org')
+      return parsed.origin === 'https://www.donghanhcungban.org' &&
+        !parsed.pathname.startsWith('//')
+        ? `${parsed.pathname}${parsed.search}${parsed.hash}`
+        : fallbackUrl
     }
+    const parsed = new URL(redirectParam)
+    if (parsed.username || parsed.password) return fallbackUrl
+    if (
+      ALLOWED_REDIRECT_ORIGINS.has(parsed.origin) ||
+      (import.meta.env.DEV && DEV_REDIRECT_ORIGINS.has(parsed.origin))
+    )
+      return parsed.toString()
   } catch {
-    // Không phải URL hợp lệ
+    // URL hoặc chuỗi mã hóa phần trăm không hợp lệ.
   }
-
   return fallbackUrl
 }
+
+export function isValidNewPassword(password: string): boolean {
+  return Array.from(password).length >= 15 && new TextEncoder().encode(password).byteLength <= 72
+}
+
+const authApiUserSchema = z.object({
+  id: z.string().min(1),
+  email: z.string(),
+  name: z.string(),
+  plan: z.enum(['free', 'vip']),
+  onboarded: z.boolean(),
+  planExpiresAt: z.string().nullable().optional(),
+  isFounder: z.boolean().optional(),
+  createdAt: z.number(),
+})
+const authResponseSchema = z.object({ authenticated: z.literal(true), user: authApiUserSchema })
 
 // ── Gọi API xác thực ──────────────────────────────────────────────────────────────────
 export async function callAuthApi(
   body: Record<string, unknown>,
-): Promise<{ token: string; user: AuthApiUser } | null> {
+): Promise<{ authenticated: true; user: AuthApiUser } | null> {
   const resp = await fetch('/api/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(body),
   })
   if (!resp.ok) return null
-  return (await resp.json()) as { token: string; user: AuthApiUser }
+  const parsed = authResponseSchema.safeParse(await resp.json())
+  return parsed.success ? parsed.data : null
 }
 
 export async function register(
@@ -91,14 +125,14 @@ export async function register(
 ): Promise<AppUser | null> {
   const result = await callAuthApi({ action: 'register', email, name, password })
   if (!result) return null
-  setStoredToken(result.token)
+  setStoredToken()
   return result.user
 }
 
 export async function login(email: string, password: string): Promise<AppUser | null> {
   const result = await callAuthApi({ action: 'login', email, password })
   if (!result) return null
-  setStoredToken(result.token)
+  setStoredToken()
   return result.user
 }
 
@@ -187,7 +221,7 @@ export async function loginWithGoogle(): Promise<AppUser | null> {
                 resolve(null)
                 return
               }
-              setStoredToken(result.token)
+              setStoredToken()
               resolve(result.user)
             })
             .catch(reject)
@@ -254,7 +288,7 @@ export function loginWithGoogleRedirect(redirectPath = '/login'): void {
   try {
     sessionStorage.setItem('oauth_state_google', state)
   } catch {
-    // ignore
+    throw new Error('Không lưu được trạng thái bảo mật OAuth; hãy dùng cửa sổ đăng nhập')
   }
 
   const params = new URLSearchParams({
@@ -285,11 +319,22 @@ export async function handleOAuthRedirectCallback(): Promise<AppUser | null> {
   const accessToken = accessTokenFromHash || accessTokenFromSearch
   if (!accessToken) return null
 
+  window.history.replaceState({}, document.title, window.location.pathname)
+  const returnedState = hashParams.get('state') || searchParams.get('state')
+  let expectedState: string | null = null
+  try {
+    expectedState = sessionStorage.getItem('oauth_state_google')
+    sessionStorage.removeItem('oauth_state_google')
+  } catch {
+    return null
+  }
+  if (!expectedState || returnedState !== expectedState) return null
+
   try {
     const result = await callAuthApi({ action: 'google-token', accessToken })
     if (!result) return null
 
-    setStoredToken(result.token)
+    setStoredToken()
 
     const cleanUrl = window.location.pathname
     window.history.replaceState({}, document.title, cleanUrl)
@@ -357,7 +402,7 @@ export async function loginWithFacebook(): Promise<AppUser | null> {
               resolve(null)
               return
             }
-            setStoredToken(result.token)
+            setStoredToken()
             resolve(result.user)
           })
           .catch(reject)
@@ -431,7 +476,7 @@ export async function loginWithApple(): Promise<AppUser | null> {
     ...(name ? { name } : {}),
   })
   if (!result) return null
-  setStoredToken(result.token)
+  setStoredToken()
   return result.user
 }
 
@@ -483,7 +528,7 @@ export async function loginWithMicrosoft(): Promise<AppUser | null> {
   const resp = await app.loginPopup({ scopes: ['openid', 'profile', 'email'] })
   const result = await callAuthApi({ action: 'microsoft', idToken: resp.idToken })
   if (!result) return null
-  setStoredToken(result.token)
+  setStoredToken()
   return result.user
 }
 
@@ -493,54 +538,27 @@ export async function logout(): Promise<void> {
   clearStoredToken()
 }
 
-/**
- * Không có token trong `localStorage` KHÔNG có nghĩa là chưa đăng nhập.
- *
- * Server xác thực bằng COOKIE `session_token` (Bước 6 — `validateAuth` bỏ qua hẳn header
- * `Authorization`), và cookie đó có `Domain=.donghanhcungban.org` nên đi theo mọi subdomain.
- * Tức là trên `hub.`/`hoc-tap.` thì API vốn đã gọi được. Thứ hỏng là PHÍA GIAO DIỆN: app dùng
- * "có token trong localStorage không" làm cờ đã-đăng-nhập, mà localStorage cô lập theo origin
- * — nên người dùng bị hiện thành khách dù phiên vẫn sống.
- *
- * Hàm này nạp lại cờ đó đúng MỘT lần lúc khởi động, để những chỗ tự kiểm `getStoredToken()`
- * (`cloud.ts`, `challengeCloud.ts`, `tutorFeedback.ts`) chạy như trên origin cũ.
- *
- * Trả về `null` khi không có cookie hoặc cookie hết hạn — đó là "thật sự chưa đăng nhập".
- */
+/** Nạp cờ UI từ cookie SSO mà không đọc hay nhận token bí mật. */
 async function adoptSessionFromCookie(): Promise<AppUser | null> {
   try {
-    const resp = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ action: 'session-from-cookie' }),
-    })
-    if (!resp.ok) return null
-    const data = (await resp.json()) as { token?: string; user?: AppUser }
-    if (!data.token || !data.user) return null
-    setStoredToken(data.token)
+    const data = await callAuthApi({ action: 'session-from-cookie' })
+    if (!data) return null
+    setStoredToken()
     return data.user
   } catch {
-    // Mất mạng / server không phản hồi — coi như chưa đăng nhập, KHÔNG ném lỗi ra ngoài để
-    // AuthProvider vẫn dựng được giao diện (nhánh chưa đăng nhập).
     return null
   }
 }
 
 export async function getCurrentUser(): Promise<AppUser | null> {
-  let auth = getAuthHeader()
-  if (!auth.Authorization) {
-    // Kho cục bộ rỗng — có thể là origin mới chứ chưa chắc là chưa đăng nhập. Hỏi cookie.
+  if (!getStoredToken()) {
     const adopted = await adoptSessionFromCookie()
     if (!adopted) return null
-    auth = getAuthHeader()
-    // Không lấy được header sau khi lưu (localStorage bị chặn — chế độ ẩn danh nghiêm ngặt):
-    // dùng luôn hồ sơ vừa nhận cho phiên hiện tại, khỏi tốn thêm một vòng mạng.
-    if (!auth.Authorization) return adopted
+    if (!getStoredToken()) return adopted
   }
 
   const resp = await fetch('/api/auth?action=me', {
-    headers: auth,
+    headers: getAuthHeader(),
     credentials: 'include',
   })
   if (!resp.ok) {

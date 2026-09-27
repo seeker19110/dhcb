@@ -1,11 +1,11 @@
-// api/_lib/adminAuth.ts — Xác thực ADMIN bằng danh sách email cố định trong biến môi
-// trường (không cần đổi schema DB). Đặt ADMIN_EMAILS trong .env, nhiều email cách nhau
-// dấu phẩy, vd: ADMIN_EMAILS=donghanhcungban.org@gmail.com
-export function isAdminEmail(email: string | null | undefined): boolean {
-  if (!email) return false
-  const list = (process.env.ADMIN_EMAILS || '')
+// Quyền ADMIN gắn với ID tài khoản bất biến do validateAuth xác thực, không dùng email
+// do người dùng có thể sửa. ADMIN_USER_IDS là danh sách ID phân tách bằng dấu phẩy.
+// Không cấu hình danh sách => từ chối toàn bộ quyền quản trị, không fallback ADMIN_EMAILS.
+export function isAdminUser(userId: string | null | undefined): boolean {
+  if (!userId) return false
+  const list = (process.env.ADMIN_USER_IDS || '')
     .split(',')
-    .map((e) => e.trim().toLowerCase())
+    .map((id) => id.trim())
     .filter(Boolean)
-  return list.includes(email.toLowerCase())
+  return list.includes(userId)
 }

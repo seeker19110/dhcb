@@ -1,128 +1,46 @@
-// completionSandboxServer — Chấm LẠI bài Make Ở SERVER trước khi ghi `status:'completed'`
-// (ADR-0007, docs/adr/0007-completion-evidence-sandbox-lap-trinh.md; phạm vi mở rộng theo
-// ADR-0008 docs/adr/0008-cham-lai-server-lap-trinh-ngoai-p1-p4.md).
+// completionSandboxServer — chính sách chấm lại bài nộp trên server.
 //
-// BỐN LUỒNG CHẤM KHÁC CƠ CHẾ, cố ý KHÔNG gộp làm một:
-//   · Python (bậc P1–P6 + 7 khoá ngắn) → `regradeMakeSubmission()`: `python3` thật trong tiến
-//     trình con, đủ 3 lớp bảo vệ mô tả dưới đây.
-//   · Kotlin/Swift/bash/git/hermes/vibe/openclaw → `regradeInterpretedSubmission()`: gọi thẳng
-//     trình thông dịch cây TypeScript thuần (không eval/không I/O, có trần bước + trần output).
-//   · JavaScript/TypeScript/html/dom/fetch (ADR-0008 B3) → `regradeWebSubmission()`: chạy trong
-//     `node:vm` với context TỐI GIẢN (không `require`/`process`/`global`) + timeout cứng — đúng
-//     cấu hình mà `lessonsJs.test.ts`/`lessonsTs.test.ts` đã chạy trong CI từ trước.
-//   · SQL (ADR-0008 câu hỏi 3) → `regradeSqlSubmission()`: `sql.js` (SQLite biên dịch WASM)
-//     in-memory — đã xác minh `load_extension` không tồn tại và `ATTACH DATABASE` không chạm hệ
-//     thống file thật (xem comment ngay trước hàm đó).
-//   · `regradeSubmission()` là điểm vào duy nhất cho route, tự chọn đúng luồng (ASYNC vì nhánh
-//     `fetch` vốn bất đồng bộ; các nhánh khác vẫn đồng bộ bên trong, trừ SQL nạp module lười).
-//
-// VÌ SAO CẦN: client chỉ chạy Pyodide/WASM trong Web Worker rồi tự POST 'completed' — DevTools
-// sửa được. File này CHẤM LẠI đúng test-case của bài (đọc từ registry server, KHÔNG tin dữ liệu
-// test-case do client gửi) bằng python3 thật trong tiến trình con, dùng LẠI đúng engine chấm
-// (`grading.ts`) và đúng "làn Python" (`pyLanes.ts`) mà `lessonsPython.test.ts` đã dùng làm cổng
-// nội dung — nhờ vậy hành vi CI/test và hành vi chấm-lại-khi-nộp-bài không trôi khỏi nhau.
-//
-// BA LỚP BẢO VỆ BẮT BUỘC (Quyết định 1–3 của ADR-0007):
-//   1. Allowlist Python: chặn import các module hệ thống/mạng nguy hiểm (luôn bật, không phụ
-//      thuộc hạ tầng).
-//   2. Chạy dưới user hệ thống riêng, không quyền ghi ngoài thư mục tạm của chính nó (BEST-EFFORT
-//      — cần biến môi trường `PROGRAMMING_SANDBOX_USER` trỏ tới user đã cấu hình sẵn trên VPS
-//      qua `sudo -n -u <user>`; KHÔNG cấu hình thì chạy bằng user của tiến trình Node, vẫn còn
-//      lớp 1 + 3 chặn).
-//   3. Giới hạn CPU/bộ nhớ/số tiến trình con (`ulimit`) + timeout cứng khớp client (10s).
-//
-// CÔ LẬP MẠNG (Quyết định 2 của ADR-0007) — HAI TẦNG:
-//   · TẦNG CHÍNH (luôn bật): allowlist ở lớp 1 chặn `socket`/`urllib`/`http`/`ftplib`/`smtplib`/
-//     `requests` (trừ làn httpsim tự có `requests.py` MÔ PHỎNG, không phải mạng thật).
-//   · TẦNG PHỤ (best-effort, dò THẬT lúc chạy, không giả định): nếu `unshare --net` dùng được
-//     trên máy chủ, bọc lệnh chấm trong đó để cô lập ở tầng OS. Không có thì bỏ qua — xem
-//     PROGRESS.md mục nợ kỹ thuật "cô lập mạng chấm bài Lập trình".
-import { execFileSync, spawnSync } from 'node:child_process'
-import { chownSync, mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+// Bản vá audit 2026-09-27: node:vm, Python subprocess cùng máy chủ và SQLite WASM
+// trong API KHÔNG cung cấp ranh giới cô lập đủ mạnh cho mã không tin cậy. Không giữ
+// fallback/biến môi trường mở lại các engine đó. Cần worker cô lập trước khi mở lại.
+// Kotlin/Swift/bash cũng tạm dừng: trần bước không chặn cấp phát bộ nhớ hoặc RegExp
+// trong một bước. Bốn bộ mô phỏng dòng lệnh bên dưới chỉ thao tác trạng thái ảo,
+// không eval/I/O, không vòng lặp do học viên định nghĩa; code luôn có trần kích thước.
 import { getLesson } from './lessons.js'
-import { chayKotlin } from './kotlinSim/chayKotlin.js'
-import { chaySwift } from './swiftSim/index.js'
-import { chayBash } from './bashSim.js'
 import { chayLenh } from './gitSim.js'
 import { chayLenhHermes } from './hermesSim.js'
 import { chayLenhVibe } from './vibeSim.js'
 import { chayLenhOpenclaw } from './openclawSim.js'
-import vm from 'node:vm'
-import { wrapJavaScript, formatConsoleArgs } from './jsPrelude.js'
-import { kiemTraTypeScript, dinhDangKetQuaTs, TIEU_DE_LOI, type TsCompiler } from './tsPrelude.js'
-import { chayBaiHtmlServer, chayBaiDomServer, chayBaiFetchServer } from './domFetchServerPrelude.js'
-import { laLanPython, fileCuaLan, noiCodeTheoLan, type PythonLane } from './pyLanes.js'
-import initSqlJs from 'sql.js'
-import { createRequire } from 'node:module'
-import { SQL_SEED } from './sqlDataset.js'
-import { formatSqlResults, type SqlResultTable } from './sqlPrelude.js'
+import { laLanPython } from './pyLanes.js'
 import { gradeTestCase, allTestsPassed, type TestCaseResult } from './grading.js'
-import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname } from 'node:path'
 
-/** Khớp `DEFAULT_TIMEOUT_MS` client (`apps/dhcb/src/lib/pythonRunner.ts`) — cùng trải nghiệm. */
-const TIMEOUT_MS = 10_000
-const MAX_OUTPUT_BYTES = 1_000_000
-/** Bộ nhớ ảo tối đa một lượt chấm (KB) — đủ cho bài người mới, chặn bom bộ nhớ. */
-const MAX_VIRTUAL_MEM_KB = 512_000
-/** Số tiến trình/luồng con tối đa của user chạy lệnh — chặn fork-bomb kiểu `while True: os.fork()`
- * (dù `os` đã bị chặn ở lớp 1, đây là lớp CHẶN THỨ HAI độc lập, phòng allowlist có kẽ hở). */
-const MAX_PROCESSES = 32
-
-/**
- * Bài XƯƠNG SỐNG của MỘT bậc bất kỳ (`p1`…`p6`) — KHÔNG khớp bước dự án `p<n>-s<x>` và KHÔNG
- * khớp tiêu chí hướng chuyên sâu `web-s2-m1` (hai loại đó chấm bằng rubric/artifact, NGOÀI phạm
- * vi ADR-0008 — xem câu hỏi 2 đã chốt).
- *
- * ADR-0008 B1 nới `^p[1-4]-…$` của ADR-0007 thành `^p[1-6]-…$`: P5/P6 dùng ĐÚNG hạ tầng Python
- * đã kiểm chứng, lý do duy nhất chúng chưa được chấm là phạm vi hẹp CÓ CHỦ ĐÍCH của ADR-0007.
- */
 const SPINE_RE = /^p[1-6]-u\d+-l\d+$/
-
-/** 7 khoá ngắn dùng làn Python (ADR-0008 B1). */
 const PYTHON_SHORT_COURSE_RE = /^(ml|pyai|mathai|mlds|cv1|cv2|llmagent)-u\d+-l\d+$/
-
-/** 4 khoá ngắn chạy bằng bộ MÔ PHỎNG thuần TypeScript (ADR-0008 B2). */
 const SIM_SHORT_COURSE_RE = /^(git|hermes|vibe|openclaw)-u\d+-l\d+$/
+const WEB_LANGUAGES = new Set(['javascript', 'typescript', 'html', 'dom', 'fetch'])
+const INTERPRETED_LANGUAGES = new Set([
+  'kotlin',
+  'swift',
+  'bash',
+  'git',
+  'hermes',
+  'vibe',
+  'openclaw',
+])
 
-/**
- * Chữ ký CHUNG của các bộ chạy "thông dịch trong tiến trình" (ADR-0008 B2).
- *
- * Tham số 2 mang nghĩa khác nhau tuỳ bộ chạy (dòng nhập với Kotlin/Swift — hiện chưa dùng; lệnh
- * dựng bối cảnh với bash/git/hermes/vibe/openclaw) nhưng ở CẢ SÁU bộ, cổng nội dung
- * (`lessonsKotlin.test.ts`, `lessonsBash.test.ts`, `lessonsGit.test.ts`…) đều truyền
- * `testCase.stdinLines` vào đúng vị trí này — server chấm lại phải làm Y HỆT để hành vi CI và
- * hành vi chấm-lại-khi-nộp-bài không trôi khỏi nhau.
- */
+/** Trần giống hợp đồng API, áp lại tại dispatcher để caller khác không bỏ qua được. */
+export const MAX_SUBMISSION_CODE_LENGTH = 4_000
+
 type InterpretedRunner = (code: string, stdinLines: string[]) => { output: string; error?: string }
-
-/**
- * Vì sao gọi THẲNG trong tiến trình Node mà KHÔNG cần subprocess/sandbox như Python (ADR-0008,
- * mục "Bằng chứng đã đọc"): sáu bộ chạy dưới đây là trình thông dịch cây TypeScript thuần —
- * không `eval`, không `new Function`, không `child_process`, không I/O thật — và đều có sẵn trần
- * số bước + trần độ dài output nên không thể treo. Chúng ĐÃ chạy trong Node (Vitest/CI) cho mọi
- * bài trong registry ngay bây giờ; đây chỉ là gọi thêm từ API.
- */
-const INTERPRETED_RUNNERS: Readonly<Record<string, InterpretedRunner>> = {
-  // Bọc lambda vì chayKotlin/chaySwift còn tham số thứ 3 (tuỳ chọn chạy) — giữ chữ ký chung.
-  kotlin: (code, stdinLines) => chayKotlin(code, stdinLines),
-  swift: (code, stdinLines) => chaySwift(code, stdinLines),
-  bash: (code, stdinLines) => chayBash(code, stdinLines),
-  git: (code, stdinLines) => chayLenh(code, stdinLines),
-  hermes: (code, stdinLines) => chayLenhHermes(code, stdinLines),
-  vibe: (code, stdinLines) => chayLenhVibe(code, stdinLines),
-  openclaw: (code, stdinLines) => chayLenhOpenclaw(code, stdinLines),
+const INTERPRETED_RUNNERS: Readonly<Partial<Record<string, InterpretedRunner>>> = {
+  git: chayLenh,
+  hermes: chayLenhHermes,
+  vibe: chayLenhVibe,
+  openclaw: chayLenhOpenclaw,
 }
 
-/**
- * Ngôn ngữ "web" chấm lại bằng `node:vm` (ADR-0008 B3). Tất cả 97 bài thuộc nhóm này đều là bài
- * XƯƠNG SỐNG (`p3`/`p4`/`p6`) — không khoá ngắn nào dùng chúng, nên chỉ cần `SPINE_RE`.
- */
-const WEB_LANGUAGES = new Set(['javascript', 'typescript', 'html', 'dom', 'fetch'])
-
-/** Bài này có thuộc phạm vi chấm-lại-ở-server không (dùng cả ở route để quyết có đòi `code` hay không). */
+/** Phạm vi BẮT BUỘC có bằng chứng chấm lại, KHÔNG phải danh sách engine đang mở.
+ * Giữ true với engine tạm dừng để API không rơi về tin completed do client tự khai. */
 export function isServerRegradableLesson(lessonId: string): boolean {
   const spine = SPINE_RE.test(lessonId)
   if (!spine && !PYTHON_SHORT_COURSE_RE.test(lessonId) && !SIM_SHORT_COURSE_RE.test(lessonId)) {
@@ -137,7 +55,7 @@ export function isServerRegradableLesson(lessonId: string): boolean {
     return spine || PYTHON_SHORT_COURSE_RE.test(lessonId)
   }
   // B2 — bộ thông dịch thuần: bài xương sống (Kotlin/Swift/bash/git ở P3/P6) + 4 khoá mô phỏng.
-  if (lesson.language in INTERPRETED_RUNNERS) {
+  if (INTERPRETED_LANGUAGES.has(lesson.language)) {
     return spine || SIM_SHORT_COURSE_RE.test(lessonId)
   }
   // ADR-0008 câu hỏi 3 — SQL: cả 5 bài đều là bài xương sống (p3/p5/p6), không có khoá ngắn SQL.
@@ -145,196 +63,34 @@ export function isServerRegradableLesson(lessonId: string): boolean {
   return false
 }
 
-// Lớp bảo vệ 1: chặn import module hệ thống/mạng — liệt kê MỌI module không lành mạnh mà bài
-// P1–P4 (đã rà: không bài nào dùng các module này) không cần tới.
-const BLOCKED_MODULES = [
-  'os',
-  'sys',
-  'subprocess',
-  'socket',
-  'ctypes',
-  'importlib',
-  'shutil',
-  'multiprocessing',
-  'threading',
-  'ftplib',
-  'smtplib',
-  'ssl',
-  'urllib',
-  'http',
-  'requests',
-  'asyncio',
-  'signal',
-  'resource',
-  'platform',
-  'pathlib',
-  'tempfile',
-  'pickle',
-  'marshal',
-  'webbrowser',
-  'pty',
-  'fcntl',
-  'mmap',
-] as const
+export type ServerRegradeAvailability = 'available' | 'isolated_worker_required' | 'not_regradable'
 
-function buildGuardPreamble(lane: PythonLane): string {
-  // Làn httpsim/apisim tự ghi sẵn module MÔ PHỎNG trùng tên ('requests.py', gói 'fastapi/') —
-  // không phải mạng thật, nên không chặn tên module đó ở đúng làn tương ứng.
-  const allow = new Set<string>()
-  if (lane === 'httpsim') allow.add('requests')
-  if (lane === 'apisim') allow.add('fastapi')
-  const blocked = BLOCKED_MODULES.filter((m) => !allow.has(m))
-  const pyList = blocked.map((m) => `'${m}'`).join(', ')
-  return (
-    `import builtins as _b\n` +
-    `_BLOCKED = {${pyList}}\n` +
-    `_orig_import = _b.__import__\n` +
-    `def _guarded_import(name, *a, **kw):\n` +
-    `    top = name.split('.')[0]\n` +
-    `    if top in _BLOCKED:\n` +
-    `        raise ImportError("module '" + top + "' bi chan trong moi truong cham bai")\n` +
-    `    return _orig_import(name, *a, **kw)\n` +
-    `_b.__import__ = _guarded_import\n\n`
-  )
+export function getServerRegradeAvailability(lessonId: string): ServerRegradeAvailability {
+  if (!isServerRegradableLesson(lessonId)) return 'not_regradable'
+  const lesson = getLesson(lessonId)!
+  return Object.hasOwn(INTERPRETED_RUNNERS, lesson.language)
+    ? 'available'
+    : 'isolated_worker_required'
 }
 
-/** Prelude input(): giống hệt `lessonsPython.test.ts` (đọc tuần tự stdinLines, echo ra stdout) —
- * PHẢI khớp hành vi sandbox trình duyệt (`pyodideWorker.ts`) để không lệch chấm. */
-function wrapStdin(code: string, stdinLines: string[]): string {
-  return (
-    `import builtins, json\n` +
-    `_lines = json.loads(${JSON.stringify(JSON.stringify(stdinLines))})\n` +
-    `_it = iter(_lines)\n` +
-    `def _input(prompt=""):\n` +
-    `    try:\n` +
-    `        value = next(_it)\n` +
-    `    except StopIteration:\n` +
-    `        raise EOFError("het du lieu nhap")\n` +
-    `    print(f"{prompt}{value}")\n` +
-    `    return value\n` +
-    `builtins.input = _input\n\n` +
-    `${code}\n`
-  )
+/** Lỗi dịch vụ có kiểu riêng để route trả 503, không biến thành bài làm sai/500. */
+export class GradingUnavailableError extends Error {
+  readonly code = 'PROGRAMMING_GRADING_UNAVAILABLE'
+
+  constructor() {
+    super(
+      'Chấm bài này đang tạm dừng để nâng cấp an toàn. Bạn vẫn có thể đọc bài và chạy thử trên trình duyệt; tiến độ hoàn thành chưa được ghi nhận.',
+    )
+    this.name = 'GradingUnavailableError'
+  }
 }
 
-let sandboxUserIds: { uid: number; gid: number } | null | undefined
-/**
- * uid/gid của `PROGRAMMING_SANDBOX_USER` — tra MỘT LẦN (cache), dùng để `chown` thư mục tạm.
- *
- * VÌ SAO CẦN: tiến trình Node chạy bằng `root` (theo `scripts/deploy.sh`, PM2 khởi động trực
- * tiếp trên VPS bằng user root) — `mkdtempSync` tạo thư mục quyền 700 sở hữu root. Nếu chấm bài
- * chạy dưới user riêng qua `sudo -u` mà KHÔNG `chown` trước, user đó không đọc/ghi được thư mục
- * tạm → mọi lượt chấm lỗi ngay, không phải lỗ hổng bảo mật nhưng là lỗi CHỨC NĂNG nghiêm trọng
- * nếu bật `PROGRAMMING_SANDBOX_USER` mà thiếu bước này.
- */
-function getSandboxUserIds(user: string): { uid: number; gid: number } | null {
-  if (sandboxUserIds !== undefined) return sandboxUserIds
-  try {
-    const uid = Number(execFileSync('id', ['-u', user], { encoding: 'utf8' }).trim())
-    const gid = Number(execFileSync('id', ['-g', user], { encoding: 'utf8' }).trim())
-    sandboxUserIds = Number.isFinite(uid) && Number.isFinite(gid) ? { uid, gid } : null
-  } catch {
-    sandboxUserIds = null
+export function assertServerRegradeAvailable(lessonId: string): void {
+  const availability = getServerRegradeAvailability(lessonId)
+  if (availability === 'not_regradable') {
+    throw new Error(`Bài "${lessonId}" không thuộc phạm vi chấm-lại-ở-server`)
   }
-  return sandboxUserIds
-}
-
-let unshareNetAvailable: boolean | null = null
-/** Dò THẬT lúc chạy (không giả định) — cache kết quả vì không đổi trong đời tiến trình server. */
-function hasUnshareNet(): boolean {
-  if (unshareNetAvailable !== null) return unshareNetAvailable
-  try {
-    const r = spawnSync('unshare', ['--net', '--', 'true'], { timeout: 2000 })
-    unshareNetAvailable = r.status === 0
-  } catch {
-    unshareNetAvailable = false
-  }
-  return unshareNetAvailable
-}
-
-interface RunOutcome {
-  output: string
-  error?: string
-}
-
-/**
- * Chạy MỘT lần trong tiến trình con đã bọc đủ 3 lớp bảo vệ + cô lập mạng best-effort.
- *
- * `scriptPath` PHẢI là file THẬT nằm trong `cwd` (đã ghi + `chown` sẵn cho user sandbox nếu có
- * cấu hình) — KHÔNG truyền code qua biến môi trường: `sudo` mặc định `env_reset` xoá sạch biến
- * môi trường tự đặt (đã xác nhận bằng thực nghiệm — bật `PROGRAMMING_SANDBOX_USER` thật khiến
- * code học viên "biến mất", `python3 -c ""` chạy rỗng, chấm sai im lặng). File tránh cả vấn đề
- * đó lẫn escaping/injection của việc nối chuỗi vào `-c`.
- */
-function runSandboxed(scriptPath: string, cwd: string): RunOutcome {
-  // `ulimit` là lệnh nội trú của shell — bọc qua `bash -c`, tham số `$1` là ĐƯỜNG DẪN FILE
-  // (không phải code) nên không có gì để escaping/injection.
-  const ulimitPart = `ulimit -v ${MAX_VIRTUAL_MEM_KB} -u ${MAX_PROCESSES} 2>/dev/null`
-  const runPart = 'exec python3 "$1"'
-  const script = `${ulimitPart}; ${runPart}`
-
-  const sandboxUser = process.env.PROGRAMMING_SANDBOX_USER
-  const netIsolate = hasUnshareNet()
-
-  let cmd = 'bash'
-  let args = ['-c', script, 'dhcb-sandbox', scriptPath]
-  // Lớp 2 (best-effort): user hệ thống riêng, cấu hình `sudo -n` (không hỏi mật khẩu) sẵn trên
-  // VPS cho đúng user đó — KHÔNG cấu hình được thì bỏ qua, không chặn PR (xem PROGRESS.md).
-  if (sandboxUser) {
-    args = ['-n', '-u', sandboxUser, '--', cmd, ...args]
-    cmd = 'sudo'
-  }
-  // Tầng phụ cô lập mạng: bọc NGOÀI CÙNG nếu máy chủ hỗ trợ.
-  if (netIsolate) {
-    args = ['--net', '--', cmd, ...args]
-    cmd = 'unshare'
-  }
-  // BỌC NGOÀI CÙNG bằng `timeout(1)` (coreutils) — xác nhận bằng thực nghiệm: timeout của
-  // Node (`execFileSync`'s `timeout` option) chỉ kill tiến trình CON TRỰC TIẾP nó spawn; khi
-  // đó là `sudo`, cháu `python3` SỐNG SÓT sau timeout (vòng lặp vô hạn chạy vô thời hạn dưới
-  // user sandbox — đúng thứ timeout cứng phải chặn). `timeout(1)` tự đặt process group mới
-  // (không có `--foreground`) và kill CẢ NHÓM khi hết giờ — diệt được cả chuỗi
-  // unshare→sudo→bash→python3. `-k 1` gửi thêm SIGKILL sau 1s nếu SIGTERM đầu không đủ.
-  const timeoutSeconds = Math.ceil(TIMEOUT_MS / 1000)
-  args = ['-k', '1', `${timeoutSeconds}`, cmd, ...args]
-  cmd = 'timeout'
-
-  try {
-    const output = execFileSync(cmd, args, {
-      encoding: 'utf8',
-      // Lưới an toàn PHỤ (Node), phòng khi `timeout(1)` tự nó bị treo — dài hơn timeout(1)
-      // một chút để không tranh triggers với nó.
-      timeout: TIMEOUT_MS + 3_000,
-      killSignal: 'SIGKILL',
-      cwd,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      maxBuffer: MAX_OUTPUT_BYTES,
-      // Không kế thừa secret của server (bất biến kỹ thuật #2, CLAUDE.md mục 4) — chỉ truyền
-      // đúng những gì cần. `sudo` sẽ tự `env_reset` lại theo chính sách của nó dù có set gì ở
-      // đây, nên code học viên KHÔNG được đặt vào env (xem comment ở scriptPath).
-      env: {
-        PATH: process.env.PATH ?? '/usr/bin:/bin',
-        PYTHONIOENCODING: 'utf-8',
-        PYTHONUTF8: '1',
-      },
-    })
-    return { output }
-  } catch (err) {
-    const e = err as {
-      stdout?: string
-      stderr?: string
-      message?: string
-      killed?: boolean
-      status?: number | null
-    }
-    // Mã thoát 124 = quy ước của `timeout(1)` khi nó phải diệt tiến trình (SIGTERM/SIGKILL đến
-    // TỪ `timeout`, không phải từ Node — `e.killed` chỉ đúng cho lưới an toàn phụ của Node).
-    const error =
-      e.killed || e.status === 124
-        ? 'Quá thời gian hoặc vượt giới hạn tài nguyên khi chấm lại'
-        : (e.stderr || e.message || 'lỗi chạy python3 khi chấm lại').trim()
-    return { output: e.stdout ?? '', error }
-  }
+  if (availability !== 'available') throw new GradingUnavailableError()
 }
 
 export interface RegradeResult {
@@ -342,274 +98,42 @@ export interface RegradeResult {
   results: TestCaseResult[]
 }
 
-/**
- * Chấm lại TOÀN BỘ test-case của bài Make bằng code học viên vừa nộp. Test-case lấy từ
- * `getLesson()` (registry server, đáng tin) — KHÔNG bao giờ nhận test-case từ client.
- *
- * Ném lỗi nếu bài không thuộc phạm vi chấm-lại (gọi `isServerRegradableLesson` trước ở route).
- */
+/** Giữ chữ ký cũ nhưng loại bỏ engine native khỏi module production; gọi thẳng cũng bị chặn. */
 export function regradeMakeSubmission(lessonId: string, code: string): RegradeResult {
-  const lesson = getLesson(lessonId)
-  if (!lesson || !laLanPython(lesson.language)) {
-    throw new Error(`Bài "${lessonId}" không thuộc phạm vi chấm-lại-ở-server`)
-  }
-  const lane = lesson.language
-  const laneFiles = fileCuaLan(lane)
-  const guard = buildGuardPreamble(lane)
-
-  // Thư mục TẠM RIÊNG cho lượt nộp này — xoá ngay sau khi chấm xong (không để rác/không rò
-  // giữa các lượt chấm của người dùng khác nhau).
-  const scratchDir = mkdtempSync(join(tmpdir(), 'dhcb-regrade-'))
-  try {
-    for (const [name, content] of Object.entries(laneFiles)) {
-      const dest = join(scratchDir, name)
-      mkdirSync(dirname(dest), { recursive: true })
-      writeFileSync(dest, content, 'utf8')
-    }
-
-    // Đổi chủ thư mục tạm cho user sandbox RIÊNG (nếu có cấu hình) — bắt buộc để nó đọc/ghi
-    // được, vì tiến trình Node (root) vừa tạo thư mục này với quyền mặc định 700 của root.
-    const sandboxUser = process.env.PROGRAMMING_SANDBOX_USER
-    const sandboxIds = sandboxUser ? getSandboxUserIds(sandboxUser) : null
-    if (sandboxUser && !sandboxIds) {
-      console.warn(
-        `[completionSandboxServer] không tra được uid/gid của user "${sandboxUser}" — ` +
-          'chạy chấm bài KHÔNG đổi chủ (có thể lỗi quyền nếu user đó tồn tại nhưng lệnh `id` thất bại).',
-      )
-    }
-    const chownForSandbox = (p: string) => {
-      if (!sandboxIds) return
-      chownSync(p, sandboxIds.uid, sandboxIds.gid)
-    }
-    if (sandboxIds) {
-      chownForSandbox(scratchDir)
-      for (const name of Object.keys(laneFiles)) {
-        // Đổi chủ CẢ đường dẫn cha lẫn file — tên có "/" nghĩa là một gói (fastapi/__init__.py).
-        let dir = dirname(join(scratchDir, name))
-        while (dir !== scratchDir && dir.startsWith(scratchDir)) {
-          chownForSandbox(dir)
-          dir = dirname(dir)
-        }
-        chownForSandbox(join(scratchDir, name))
-      }
-    }
-
-    const results: TestCaseResult[] = []
-    let seq = 0
-    for (const testCase of lesson.make.testCases) {
-      const studentCode = guard + noiCodeTheoLan(lane, code)
-      // Ghi ra FILE THẬT (không qua biến môi trường — xem comment ở runSandboxed) rồi chown
-      // ngay cho user sandbox, nếu có, để nó đọc được sau khi `sudo -u` hạ quyền.
-      const scriptPath = join(scratchDir, `submission-${seq++}.py`)
-      writeFileSync(scriptPath, wrapStdin(studentCode, testCase.stdinLines), 'utf8')
-      chownForSandbox(scriptPath)
-      const outcome = runSandboxed(scriptPath, scratchDir)
-      results.push(gradeTestCase(testCase, outcome.output, outcome.error))
-    }
-    return { passed: allTestsPassed(results), results }
-  } finally {
-    rmSync(scratchDir, { recursive: true, force: true })
-  }
+  void lessonId
+  void code
+  throw new GradingUnavailableError()
 }
 
-/**
- * ADR-0008 B2 — chấm lại bài chạy bằng BỘ THÔNG DỊCH THUẦN (Kotlin/Swift/bash/git/hermes/vibe/
- * openclaw) bằng cách gọi thẳng hàm thông dịch trong tiến trình Node.
- *
- * TÁCH HẲN khỏi `regradeMakeSubmission` có chủ đích: hai luồng khác cơ chế (subprocess `python3`
- * + 3 lớp bảo vệ OS ở kia, gọi hàm thuần ở đây) — gộp lại sẽ làm mờ ranh giới bảo mật giữa
- * chúng. Chỉ dùng CHUNG engine chấm (`gradeTestCase`/`allTestsPassed`) và kiểu `RegradeResult`
- * để route không phải biết chi tiết.
- */
-export function regradeInterpretedSubmission(lessonId: string, code: string): RegradeResult {
-  const lesson = getLesson(lessonId)
-  const runner = lesson ? INTERPRETED_RUNNERS[lesson.language] : undefined
-  if (!lesson || !runner) {
-    throw new Error(`Bài "${lessonId}" không thuộc phạm vi chấm-lại-bằng-bộ-thông-dịch`)
-  }
-  const results: TestCaseResult[] = lesson.make.testCases.map((testCase) => {
-    const r = runner(code, testCase.stdinLines)
-    return gradeTestCase(testCase, r.output, r.error)
-  })
-  return { passed: allTestsPassed(results), results }
-}
-
-// ────────────────────────────────────────────────────────────────────────────────────────────
-// ADR-0008 B3 — làn WEB (JavaScript / TypeScript / html / dom / fetch), chạy bằng `node:vm`.
-// ────────────────────────────────────────────────────────────────────────────────────────────
-
-/** Timeout một lượt chạy JS/TS — bằng `RUN_TIMEOUT_MS` của cổng nội dung `lessonsJs.test.ts`. */
-const JS_TIMEOUT_MS = 5_000
-
-/**
- * Trình biên dịch TypeScript nạp LƯỜI (gói `typescript` nặng, phần lớn request của server không
- * đụng tới bài TS) và nhớ lại một lần cho cả đời tiến trình.
- */
-let tsCompiler: TsCompiler | null = null
-async function layTsCompiler(): Promise<TsCompiler> {
-  if (!tsCompiler) tsCompiler = (await import('typescript')).default as unknown as TsCompiler
-  return tsCompiler
-}
-
-/**
- * Chạy JavaScript trong `node:vm` với context TỐI GIẢN — SAO ĐÚNG cấu hình của
- * `lessonsJs.test.ts` (chỉ cấp `console`, không `require`/`process`/`fetch`) để hành vi cổng CI
- * và hành vi chấm-lại-khi-nộp-bài không trôi khỏi nhau.
- */
-function chayJsTrongVm(source: string): { output: string; error?: string } {
-  const lines: string[] = []
-  const collect = (...args: unknown[]) => {
-    lines.push(formatConsoleArgs(args))
-  }
-  const context = vm.createContext({ console: { log: collect, error: collect } })
-  try {
-    vm.runInContext(source, context, { timeout: JS_TIMEOUT_MS })
-    return { output: lines.join('\n') }
-  } catch (err) {
-    return { output: lines.join('\n'), error: (err as Error).message }
-  }
-}
-
-/**
- * ADR-0008 B3 — chấm lại bài làn WEB. TÁCH khỏi hai luồng kia vì cơ chế cách ly khác hẳn
- * (`node:vm` trong tiến trình, không subprocess). Chỉ dùng chung engine chấm `grading.ts`.
- *
- * Bài TypeScript đi qua ĐÚNG HAI CHẶNG mà học viên gặp: kiểm kiểu bằng `kiemTraTypeScript()`
- * trước (còn lỗi thì CHƯƠNG TRÌNH KHÔNG CHẠY — nhiều bài cố ý chấm đúng thông báo lỗi TS đó),
- * rồi mới chạy JavaScript sinh ra. Kết quả kiểm kiểu chỉ phụ thuộc CODE nên tính MỘT lần cho cả
- * bộ test-case (một lượt tsc tốn ~2,5 giây).
- */
 export async function regradeWebSubmission(lessonId: string, code: string): Promise<RegradeResult> {
-  const lesson = getLesson(lessonId)
-  if (!lesson || !WEB_LANGUAGES.has(lesson.language)) {
-    throw new Error(`Bài "${lessonId}" không thuộc phạm vi chấm-lại-làn-web`)
-  }
-
-  // Bài dom/fetch chấm trên cây DOM của trang dựng sẵn trong registry (`domHtml`) — HTML và danh
-  // sách hành động đều lấy từ SERVER, client chỉ gửi phần JavaScript của học viên.
-  if (lesson.language === 'dom' || lesson.language === 'fetch') {
-    if (!lesson.domHtml) throw new Error(`Bài "${lessonId}" thiếu domHtml trong registry`)
-    const html = lesson.domHtml
-    const results: TestCaseResult[] = []
-    for (const testCase of lesson.make.testCases) {
-      const r =
-        lesson.language === 'dom'
-          ? chayBaiDomServer(html, code, testCase.stdinLines)
-          : await chayBaiFetchServer(html, code, testCase.stdinLines)
-      results.push(gradeTestCase(testCase, r.output, r.error))
-    }
-    return { passed: allTestsPassed(results), results }
-  }
-
-  if (lesson.language === 'html') {
-    const results = lesson.make.testCases.map((testCase) => {
-      const r = chayBaiHtmlServer(code)
-      return gradeTestCase(testCase, r.output, r.error)
-    })
-    return { passed: allTestsPassed(results), results }
-  }
-
-  // JavaScript / TypeScript.
-  let js = code
-  if (lesson.language === 'typescript') {
-    const { loi, js: bienDich } = kiemTraTypeScript(code, await layTsCompiler())
-    if (loi.length > 0) {
-      const output = [TIEU_DE_LOI, ...loi].join('\n')
-      const results = lesson.make.testCases.map((tc) => gradeTestCase(tc, output, undefined))
-      return { passed: allTestsPassed(results), results }
-    }
-    js = bienDich
-  }
-
-  const results: TestCaseResult[] = lesson.make.testCases.map((testCase) => {
-    const r = chayJsTrongVm(wrapJavaScript(js, testCase.stdinLines))
-    const output = lesson.language === 'typescript' ? dinhDangKetQuaTs([], r.output) : r.output
-    return gradeTestCase(testCase, output, r.error)
-  })
-  return { passed: allTestsPassed(results), results }
+  void lessonId
+  void code
+  throw new GradingUnavailableError()
 }
 
-// ────────────────────────────────────────────────────────────────────────────────────────────
-// ADR-0008 câu hỏi 3 — SQL, chạy bằng `sql.js` (SQLite biên dịch WASM), CÙNG engine với
-// `apps/dhcb/src/workers/sqlWorker.ts` (trình duyệt) và `lessonsSql.test.ts` (cổng nội dung).
-// ────────────────────────────────────────────────────────────────────────────────────────────
-
-// Xác minh trước khi bật (ADR-0008, câu hỏi 3 — đã đo thật 2026-09-20, không đoán):
-//   · `load_extension()` KHÔNG tồn tại trong bản dựng sql.js dùng ở đây (gọi thử ném
-//     "no such function: load_extension") — không thể nạp mã máy gốc.
-//   · `ATTACH DATABASE '<đường dẫn bất kỳ>' AS x` KHÔNG chạm hệ thống file thật: bản dựng WASM
-//     của sql.js không có VFS bền (không kèm gói `sql.js` dạng Node có `fs` binding), nên
-//     "đường dẫn" chỉ là một khoá đặt tên cho CSDL phụ nằm TRONG BỘ NHỚ — thử ATTACH rồi tạo
-//     bảng/ghi dữ liệu, `/tmp/<tên file>` không hề xuất hiện trên đĩa thật.
-//   · Do đó `sql.js` an toàn để chấm-lại-ở-server CÙNG MỘT MỨC với việc nó đã chạy trong Worker
-//     trình duyệt — không cần allowlist/sandbox OS riêng như Python.
-
-const requireSql = createRequire(import.meta.url)
-type SqlModule = Awaited<ReturnType<typeof initSqlJs>>
-let sqlModulePromise: Promise<SqlModule> | null = null
-
-/** Nạp `sql.js` một lần, dùng lại cho cả đời tiến trình — nạp .wasm thẳng từ `node_modules`
- *  (không qua mạng), đúng cách `lessonsSql.test.ts` đã làm ở cổng nội dung. */
-function laySqlModule(): Promise<SqlModule> {
-  if (!sqlModulePromise) {
-    const wasmPath = requireSql.resolve('sql.js/dist/sql-wasm.wasm')
-    sqlModulePromise = initSqlJs({ locateFile: () => wasmPath })
-  }
-  return sqlModulePromise
-}
-
-/** Mở CSDL mới tinh, nạp dữ liệu mẫu, chạy câu của học viên — mỗi lượt một CSDL sạch, ĐÚNG hành
- *  vi của `sqlWorker.ts`/`lessonsSql.test.ts` (seed riêng theo `testCase.datasetSql`, không có
- *  thì dùng `SQL_SEED` mặc định). */
-function chaySqlTrongDb(SQL: SqlModule, code: string, seed: string): RunOutcome {
-  const db = new SQL.Database()
-  try {
-    db.run(seed)
-    const tables = db.exec(code) as SqlResultTable[]
-    return { output: formatSqlResults(tables) }
-  } catch (err) {
-    return { output: '', error: (err as Error).message }
-  } finally {
-    db.close()
-  }
-}
-
-/**
- * ADR-0008 câu hỏi 3 — chấm lại bài SQL. TÁCH khỏi các luồng kia vì cơ chế khác hẳn (WASM
- * in-memory, không subprocess, không `node:vm`) — chỉ dùng chung engine chấm `grading.ts`.
- */
 export async function regradeSqlSubmission(lessonId: string, code: string): Promise<RegradeResult> {
-  const lesson = getLesson(lessonId)
-  if (!lesson || lesson.language !== 'sql') {
-    throw new Error(`Bài "${lessonId}" không thuộc phạm vi chấm-lại-SQL`)
+  void lessonId
+  void code
+  throw new GradingUnavailableError()
+}
+
+/** Chỉ chạy bộ mô phỏng đã được chính sách cho phép, kể cả khi caller bỏ qua dispatcher. */
+export function regradeInterpretedSubmission(lessonId: string, code: string): RegradeResult {
+  assertServerRegradeAvailable(lessonId)
+  if (code.length > MAX_SUBMISSION_CODE_LENGTH) {
+    throw new Error(`Code vượt quá ${MAX_SUBMISSION_CODE_LENGTH} ký tự`)
   }
-  const SQL = await laySqlModule()
-  const results: TestCaseResult[] = lesson.make.testCases.map((testCase) => {
-    const r = chaySqlTrongDb(SQL, code, testCase.datasetSql ?? SQL_SEED)
-    return gradeTestCase(testCase, r.output, r.error)
+  const lesson = getLesson(lessonId)!
+  const runner = INTERPRETED_RUNNERS[lesson.language]!
+  const results = lesson.make.testCases.map((testCase) => {
+    const result = runner(code, testCase.stdinLines)
+    return gradeTestCase(testCase, result.output, result.error)
   })
   return { passed: allTestsPassed(results), results }
 }
 
-/**
- * Điểm vào DUY NHẤT cho route `/api/programming/progress`: tự chọn đúng luồng chấm lại theo ngôn
- * ngữ của bài. Gọi `isServerRegradableLesson()` trước — hàm này ném lỗi với bài ngoài phạm vi.
- *
- * ASYNC từ ADR-0008 B3: nhánh `fetch` vốn bất đồng bộ (fetch giả lập + chuỗi Promise của học
- * viên) và trình biên dịch TypeScript nạp lười — các nhánh còn lại vẫn chạy đồng bộ bên trong
- * (trừ SQL, nạp module `sql.js` lười theo cùng khuôn với `tsCompiler`).
- */
+/** Điểm vào công khai luôn kiểm chính sách trước khi chạy bất kỳ mã học viên nào. */
 export async function regradeSubmission(lessonId: string, code: string): Promise<RegradeResult> {
-  const lesson = getLesson(lessonId)
-  if (!lesson) throw new Error(`Bài "${lessonId}" không tồn tại`)
-  if (lesson.language in INTERPRETED_RUNNERS) {
-    return regradeInterpretedSubmission(lessonId, code)
-  }
-  if (WEB_LANGUAGES.has(lesson.language)) {
-    return regradeWebSubmission(lessonId, code)
-  }
-  if (lesson.language === 'sql') {
-    return regradeSqlSubmission(lessonId, code)
-  }
-  return regradeMakeSubmission(lessonId, code)
+  assertServerRegradeAvailable(lessonId)
+  return regradeInterpretedSubmission(lessonId, code)
 }

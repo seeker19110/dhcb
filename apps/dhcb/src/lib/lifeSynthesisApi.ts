@@ -1,13 +1,13 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/lifeSynthesisApi.ts — REST Client cho Cross-Domain Life Synthesis Engine V5.4.
 import type { LifeSynthesisReport, LifeDomainType } from '@dhcb/core-contracts/lifeSynthesis'
 
 export async function fetchLifeSynthesisReport(
   timeframe: 'daily' | 'weekly' | 'monthly' = 'weekly',
 ): Promise<LifeSynthesisReport> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch(`/api/life-synthesis?timeframe=${timeframe}`, {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -32,12 +32,11 @@ export async function generateCustomLifeSynthesisReport(params: {
     progressPercent: number
   }>
 }): Promise<LifeSynthesisReport> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/life-synthesis', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(params),
   })

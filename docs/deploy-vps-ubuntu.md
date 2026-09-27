@@ -329,7 +329,8 @@ REDIS_URL=redis://:mat-khau-redis-that-cua-ban@127.0.0.1:6379
 
 > **Thiếu `TTS_ENCRYPTION_MASTER_KEY`** → audio cache mã hóa/giải mã thất bại, app fallback giọng trình duyệt.
 > **Thiếu `DATABASE_URL`** → app không kết nối được database, mọi request lỗi 500.
-> **Bỏ trống `ALLOWED_ORIGINS`** = cho phép mọi domain gọi API (chỉ dùng lúc dev).
+> **Không khai báo `ALLOWED_ORIGINS`** dùng danh sách mặc định ở production; khai báo chuỗi rỗng
+> sẽ chặn origin trình duyệt. Dev cookie/mutation chỉ nhận localhost hoặc allowlist tường minh.
 > Xem đầy đủ mọi biến (kể cả tùy chọn) tại `.env.example`.
 
 ```bash
@@ -343,12 +344,13 @@ npm run build
 > trong `ecosystem.config.cjs`, mục 2026-07-25). **Luôn chạy `npm run build` trước mỗi
 > `pm2 start`/`pm2 reload`**, nếu không PM2 sẽ chạy JS cũ (chưa có thay đổi mới nhất).
 
-> **Rate limit + cluster mode:** `REDIS_URL` ở trên (Bước 3b) đã đủ để rate limit dùng
-> chung đúng giữa mọi tiến trình PM2. Nếu bỏ qua Bước 3b và không đặt `REDIS_URL`, app vẫn
-> chạy được (rơi về Map in-memory mỗi tiến trình, đúng hành vi cũ — có cảnh báo ở log khởi
-> động, xem `warnIfClusterWithoutRedis()` trong `api/_lib/security.ts`) nhưng rate limit sẽ
-> lỏng hơn N lần (N = số tiến trình) — chấp nhận được khi traffic còn thấp, không nên dùng
-> khi traffic đông.
+> **Rate limit production:** `REDIS_URL` ở trên (Bước 3b) bắt buộc kể cả khi chỉ có một
+> tiến trình. Redis thiếu/đang kết nối/lỗi thì request có rate limit bị từ chối, không dùng Map
+> cục bộ để vượt hạn mức toàn cụm. Kiểm tra PING trước khi release.
+>
+> **Quyền admin:** đặt `ADMIN_USER_IDS` bằng UUID của tài khoản đã xác minh qua kênh quản trị
+> tin cậy. `ADMIN_EMAILS` không còn cấp quyền. Cấu hình `ALLOWED_ORIGINS` chính xác cho mọi
+> frontend cần dùng cookie; xem [runbook bảo mật 2026-09-27](security-rollout-2026-09-27.md).
 
 ---
 

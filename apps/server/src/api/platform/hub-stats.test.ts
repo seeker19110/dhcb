@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 vi.mock('@dhcb/core-auth/security', () => ({
@@ -10,9 +10,6 @@ vi.mock('@dhcb/core-auth/security', () => ({
 }))
 vi.mock('@dhcb/core-auth/authService', () => ({
   getUserById: vi.fn(),
-}))
-vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: vi.fn(),
 }))
 
 const query = vi.fn()
@@ -28,7 +25,11 @@ async function importHandler() {
 beforeEach(() => {
   query.mockReset()
   vi.clearAllMocks()
+  vi.stubEnv('ADMIN_USER_IDS', 'admin-123')
+  vi.stubEnv('ADMIN_EMAILS', 'admin@donghanhcungban.org')
 })
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe('/api/hub-stats', () => {
   it('người dùng chưa đăng nhập → trả { isAdmin: false, loggedIn: false }, KHÔNG trả totalUsers hay totalEnglishSessions', async () => {
@@ -49,11 +50,9 @@ describe('/api/hub-stats', () => {
   it('người dùng thông thường đã đăng nhập → trả { isAdmin: false, loggedIn: true, userName }, KHÔNG trả totalUsers hay totalEnglishSessions', async () => {
     const { validateAuth } = await import('@dhcb/core-auth/security')
     const { getUserById } = await import('@dhcb/core-auth/authService')
-    const { isAdminEmail } = await import('@dhcb/core-auth/adminAuth')
 
     vi.mocked(validateAuth).mockResolvedValue({ userId: 'user-123' })
     vi.mocked(getUserById).mockResolvedValue({ id: 'user-123', email: 'student@example.com' })
-    vi.mocked(isAdminEmail).mockReturnValue(false)
     query.mockResolvedValueOnce({ rows: [{ name: 'Nguyễn Văn A' }] }) // public.profiles
 
     const handler = await importHandler()
@@ -70,14 +69,12 @@ describe('/api/hub-stats', () => {
   it('admin đã đăng nhập → trả { isAdmin: true, loggedIn: true, totalUsers, totalEnglishSessions }', async () => {
     const { validateAuth } = await import('@dhcb/core-auth/security')
     const { getUserById } = await import('@dhcb/core-auth/authService')
-    const { isAdminEmail } = await import('@dhcb/core-auth/adminAuth')
 
     vi.mocked(validateAuth).mockResolvedValue({ userId: 'admin-123' })
     vi.mocked(getUserById).mockResolvedValue({
       id: 'admin-123',
       email: 'admin@donghanhcungban.org',
     })
-    vi.mocked(isAdminEmail).mockReturnValue(true)
     query
       .mockResolvedValueOnce({ rows: [{ name: 'Admin Master' }] }) // public.profiles
       .mockResolvedValueOnce({ rows: [{ count: '1234' }] }) // public.users
@@ -92,6 +89,24 @@ describe('/api/hub-stats', () => {
     expect(data.userName).toBe('Admin Master')
     expect(data.totalUsers).toBe(1234)
     expect(data.totalEnglishSessions).toBe(5678)
+  })
+
+  it('email admin trên tài khoản khác không làm lộ thống kê', async () => {
+    const { validateAuth } = await import('@dhcb/core-auth/security')
+    const { getUserById } = await import('@dhcb/core-auth/authService')
+    vi.mocked(validateAuth).mockResolvedValue({ userId: 'attacker-123' })
+    vi.mocked(getUserById).mockResolvedValue({
+      id: 'attacker-123',
+      email: 'admin@donghanhcungban.org',
+    })
+    query.mockResolvedValueOnce({ rows: [{ name: 'Admin' }] })
+    const handler = await importHandler()
+    const response = await handler(new Request('http://localhost/api/hub-stats'))
+    const body = await response.json()
+    expect(body.isAdmin).toBe(false)
+    expect(body.totalUsers).toBeUndefined()
+    expect(body.totalEnglishSessions).toBeUndefined()
+    expect(query).toHaveBeenCalledTimes(1)
   })
 
   it('method khác GET → 405, không đụng DB', async () => {
@@ -117,11 +132,9 @@ describe('/api/hub-stats', () => {
   it('fallback tên từ email khi profile name null, và fail-open khi DB lỗi', async () => {
     const { validateAuth } = await import('@dhcb/core-auth/security')
     const { getUserById } = await import('@dhcb/core-auth/authService')
-    const { isAdminEmail } = await import('@dhcb/core-auth/adminAuth')
 
     vi.mocked(validateAuth).mockResolvedValue({ userId: 'u1' })
     vi.mocked(getUserById).mockResolvedValue({ id: 'u1', email: 'john.doe@example.com' })
-    vi.mocked(isAdminEmail).mockReturnValue(false)
     query.mockResolvedValueOnce({ rows: [{ name: null }] })
 
     const handler = await importHandler()

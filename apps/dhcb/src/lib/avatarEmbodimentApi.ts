@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // apps/dhcb/src/lib/avatarEmbodimentApi.ts — Client API giao tiep Hien than 3D Cyber-Tutor.
 import { AvatarEmbodimentConfig, Avatar3DState } from '@dhcb/core-contracts/avatarEmbodiment'
 
@@ -5,10 +6,9 @@ export async function fetchAvatarEmbodiment(): Promise<{
   config: AvatarEmbodimentConfig
   state: Avatar3DState
 }> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/avatar-embodiment', {
     headers: {
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
   })
 
@@ -26,12 +26,11 @@ export async function fetchAvatarEmbodiment(): Promise<{
 export async function updateAvatarEmbodiment(
   updates: Partial<AvatarEmbodimentConfig>,
 ): Promise<AvatarEmbodimentConfig> {
-  const token = localStorage.getItem('gsa_session_token_v1')
   const res = await fetch('/api/avatar-embodiment', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
+      ...getAuthHeader(),
     },
     body: JSON.stringify(updates),
   })

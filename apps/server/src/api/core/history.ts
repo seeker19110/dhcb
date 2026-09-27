@@ -25,12 +25,6 @@ import {
 } from '@dhcb/core-auth/security'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
-import { rewardReferralIfEligible } from '../_lib/referral.js'
-
-// Ngưỡng tối thiểu để coi 1 phiên là "đã học thật" khi xét thưởng mời bạn — đủ thấp để người
-// học bình thường luôn đạt, đủ cao để 1 request rỗng không ăn được thưởng.
-const MIN_MESSAGES_FOR_REAL_SESSION = 2
-const MIN_ESSAY_CHARS_FOR_REAL_SESSION = 40
 
 const SessionSchema = z.object({
   id: z.string().uuid(),
@@ -191,12 +185,7 @@ export default async function handler(req: Request): Promise<Response> {
        where ${table}.user_id = excluded.user_id`,
       [s.id, auth.userId, s.situation, s.level, JSON.stringify(s.messages), s.createdAt],
     )
-    // Mời bạn: phiên hội thoại CÓ THỰC CHẤT (ít nhất 1 lượt user + 1 lượt AI) mới tính là
-    // "đã học thật" để trao thưởng — phiên rỗng/1 tin nhắn không đủ, tránh tạo tài khoản ảo
-    // rồi gọi API này 1 lần là ăn thưởng. Không chặn luồng lưu nếu thưởng lỗi (hàm tự nuốt lỗi).
-    if (s.messages.length >= MIN_MESSAGES_FOR_REAL_SESSION) {
-      await rewardReferralIfEligible(auth.userId)
-    }
+    // Lịch sử này do client tự khai, chỉ lưu/hiển thị; không cấp entitlement từ nó.
     return jsonResponse({ ok: true }, 200, allHeaders)
   }
 
@@ -214,10 +203,6 @@ export default async function handler(req: Request): Promise<Response> {
        where writing_submissions.user_id = excluded.user_id`,
       [s.id, auth.userId, s.essayPrompt, s.essay, s.feedback, s.submittedAt],
     )
-    // Mời bạn: bài viết phải có nội dung thật mới tính (xem chú thích ở nhánh chat/speaking).
-    if (s.essay.trim().length >= MIN_ESSAY_CHARS_FOR_REAL_SESSION) {
-      await rewardReferralIfEligible(auth.userId)
-    }
     return jsonResponse({ ok: true }, 200, allHeaders)
   }
 

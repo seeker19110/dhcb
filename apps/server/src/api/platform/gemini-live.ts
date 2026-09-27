@@ -1,5 +1,6 @@
 // api/gemini-live.ts — REST handler cho Gemini Live Session Gateway V7.2.
 import { jsonResponse } from '@dhcb/core-http/http'
+import { randomUUID } from 'node:crypto'
 import {
   validateAuth,
   getCorsHeaders,
@@ -7,13 +8,18 @@ import {
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { getClientIp } from '@dhcb/core-http/http'
-import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
+import { reserveGeminiLiveUsage } from '@dhcb/core-ai/geminiLiveAdmission'
+import { readJsonBody } from '@dhcb/core-http/validation'
+import { getAppSettings } from '@dhcb/core-db/settings'
 import {
   createGeminiLiveSession,
   getGeminiLiveSession,
   removeGeminiLiveSession,
 } from '@dhcb/core-ai/geminiLiveService'
-import { GeminiLiveSessionConfigSchema, GEMINI_LIVE_VERSION } from '@dhcb/core-contracts/geminiLive'
+import {
+  GeminiLiveSessionRequestSchema,
+  GEMINI_LIVE_VERSION,
+} from '@dhcb/core-contracts/geminiLive'
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -40,7 +46,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const session = getGeminiLiveSession(sessionId)
-    if (!session) {
+    if (!session || session.config.personId !== auth.userId) {
       return jsonResponse({ error: 'Session not found or already closed' }, 404)
     }
 
@@ -53,24 +59,47 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   if (req.method === 'POST') {
-    // Mỗi phiên Gemini Live realtime trừ 1 lượt 'speaking' — đây là đường AI đắt nhất,
-    // trước đây không có hàng rào chi phí nào (vá 2026-08-23, đề xuất N1 mục B3).
-    const gate = await checkAndConsumeUsage(auth.userId, 'speaking')
+    const body = await readJsonBody(req)
+    if (!body.ok) return jsonResponse({ error: body.error.message }, body.error.status)
+    const parsedConfig = GeminiLiveSessionRequestSchema.safeParse(body.raw)
+    if (!parsedConfig.success) return jsonResponse({ error: 'Invalid configuration' }, 400)
+
+    const gate = await reserveGeminiLiveUsage(auth.userId)
     if (!gate.ok) {
       logSecurityEvent('USAGE_LIMIT', clientIp, { path: '/api/gemini-live' })
-      return jsonResponse({ error: gate.message }, 429)
+      return jsonResponse({ error: gate.message }, gate.status)
     }
+    const sessionId = `live-${randomUUID()}`
+    let session: ReturnType<typeof createGeminiLiveSession> | undefined
     try {
-      const body = await req.json()
-      const parsedConfig = GeminiLiveSessionConfigSchema.partial().parse(body)
-      const sessionId = parsedConfig.sessionId || `live-${auth.userId}-${Date.now()}`
-
-      const session = createGeminiLiveSession({
-        ...parsedConfig,
+      session = createGeminiLiveSession({
+        ...parsedConfig.data,
         sessionId,
         personId: auth.userId,
       })
+      session.once('closed', gate.admission.release)
       session.start()
+      if (session.hasProviderStarted()) gate.admission.markStarted()
+      else await gate.admission.refundBeforeStart()
+      // start/hoàn lượt có thể đã đóng phiên; không gắn interval mồ côi hoặc báo tạo thành công.
+      if (session.getStatus() === 'closed') throw new Error('Session closed during startup')
+      let checking = false
+      const revalidation = setInterval(() => {
+        if (checking) return
+        checking = true
+        void Promise.all([validateAuth(req), getAppSettings({ requireAvailable: true })])
+          .then(([currentAuth, settings]) => {
+            if (currentAuth?.userId !== auth.userId || settings.aiCircuitBreaker) {
+              removeGeminiLiveSession(sessionId)
+            }
+          })
+          .catch(() => removeGeminiLiveSession(sessionId))
+          .finally(() => {
+            checking = false
+          })
+      }, 30_000)
+      revalidation.unref()
+      session.once('closed', () => clearInterval(revalidation))
 
       return jsonResponse(
         {
@@ -82,10 +111,12 @@ export default async function handler(req: Request): Promise<Response> {
         },
         201,
       )
-    } catch (err) {
-      // Tạo phiên thất bại → chưa tốn AI, trả lại lượt vừa trừ
-      refundUsage(auth.userId, 'speaking', gate.day).catch(() => {})
-      return jsonResponse({ error: 'Invalid configuration', details: String(err) }, 400)
+    } catch {
+      if (session?.hasProviderStarted()) gate.admission.markStarted()
+      removeGeminiLiveSession(sessionId)
+      gate.admission.release()
+      await gate.admission.refundBeforeStart()
+      return jsonResponse({ error: 'Không thể mở phiên giọng nói.' }, 503)
     }
   }
 
@@ -95,6 +126,10 @@ export default async function handler(req: Request): Promise<Response> {
       return jsonResponse({ error: 'Missing sessionId parameter' }, 400)
     }
 
+    const session = getGeminiLiveSession(sessionId)
+    if (!session || session.config.personId !== auth.userId) {
+      return jsonResponse({ error: 'Session not found or already closed' }, 404)
+    }
     removeGeminiLiveSession(sessionId)
     return jsonResponse({ success: true, message: 'Session closed successfully' }, 200)
   }

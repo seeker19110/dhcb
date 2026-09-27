@@ -1,7 +1,7 @@
 // api/admin-usage-stats.ts — Dashboard vận hành cho ADMIN: ai đang dùng gì, tốn bao nhiêu
 // tiền, thu về bao nhiêu.
 //
-// GET /api/admin-usage-stats?days=30  (cần đăng nhập — cookie, email nằm trong ADMIN_EMAILS)
+// GET /api/admin-usage-stats?days=30  (cần đăng nhập — cookie, ID nằm trong ADMIN_USER_IDS)
 //
 // Khác gì /api/analytics-summary? File đó đọc bảng `analytics_events` — phễu MARKETING (xem
 // landing, bấm CTA, đăng ký). File này đọc dữ liệu VẬN HÀNH THẬT (daily_usage, profiles,
@@ -22,8 +22,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-import { isAdminEmail } from '@dhcb/core-auth/adminAuth'
+import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { getUnitCostsUsd, getUsdVndRate, estimateCostUsd } from '@dhcb/core-ai/aiCost'
 import { getDailyBudgetUsd } from '@dhcb/core-ai/aiTokenUsage'
@@ -137,8 +136,7 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
-  const user = await getUserById(auth.userId)
-  if (!isAdminEmail(user?.email)) {
+  if (!isAdminUser(auth.userId)) {
     logSecurityEvent('ADMIN_ACCESS_DENIED', clientIp, { path: '/api/admin-usage-stats' })
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }

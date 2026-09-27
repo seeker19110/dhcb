@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@core/authHeader'
 // pushNotif.ts — Đăng ký / hủy Web Push Notification
 // Yêu cầu: trình duyệt hỗ trợ serviceWorker + PushManager (Chrome/Edge/Firefox/Safari 16.4+)
 
@@ -21,10 +22,7 @@ export function getNotifPermission(): NotificationPermission {
 
 // Đăng ký SW + subscribe push, gửi subscription lên server.
 // remindHour: giờ UTC (0–23) muốn được nhắc học mỗi ngày (server gửi đúng giờ này).
-export async function subscribePush(
-  accessToken: string,
-  remindHour?: number,
-): Promise<PushActionResult> {
+export async function subscribePush(remindHour?: number): Promise<PushActionResult> {
   if (!isPushSupported()) return { status: 'failed' }
   if (getNotifPermission() === 'denied') return { status: 'denied' }
 
@@ -73,7 +71,7 @@ export async function subscribePush(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        ...getAuthHeader(),
       },
       body: JSON.stringify({ action: 'subscribe', subscription: sub.toJSON(), remindHour }),
     })
@@ -95,7 +93,7 @@ export async function subscribePush(
 }
 
 // Hủy đăng ký push
-export async function unsubscribePush(accessToken: string): Promise<PushActionResult> {
+export async function unsubscribePush(): Promise<PushActionResult> {
   if (!isPushSupported()) return { status: 'failed' }
   let serverUpdated = false
   try {
@@ -105,7 +103,7 @@ export async function unsubscribePush(accessToken: string): Promise<PushActionRe
 
     const response = await fetch('/api/push', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify({ action: 'unsubscribe', subscription: sub.toJSON() }),
     })
     if (!response.ok) return { status: 'failed' }

@@ -26,3 +26,63 @@ test('người chưa đăng nhập vẫn thấy form đăng nhập ở /login', 
   await expect(page).toHaveURL(/\/login$/)
   await expect(page.locator('input[type="email"]')).toBeVisible()
 })
+
+// Hợp đồng cookie thật trong trình duyệt: JSON/cờ UI không chứa secret phiên.
+test('đăng nhập bằng cookie HttpOnly, không lưu hay gửi lại secret qua JavaScript', async ({
+  page,
+}) => {
+  await mockLogin(page)
+  await page.addInitScript(() => localStorage.removeItem('gsa_session_present_v1'))
+  const profile = {
+    id: 'e2e-user-0001',
+    email: 'e2e@example.com',
+    name: 'E2E User',
+    plan: 'free',
+    onboarded: true,
+    createdAt: Date.now(),
+  }
+  let loggedIn = false
+  const authHeaders: Record<string, string>[] = []
+  await page.route('**/api/auth**', async (route) => {
+    authHeaders.push(route.request().headers())
+    const action =
+      route.request().method() === 'POST'
+        ? (route.request().postDataJSON() as { action: string }).action
+        : 'me'
+    if (action === 'login') {
+      loggedIn = true
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'set-cookie': 'session_token=e2e-cookie-secret; HttpOnly; Path=/; SameSite=Lax',
+        },
+        body: JSON.stringify({ authenticated: true, user: profile }),
+      })
+      return
+    }
+    await route.fulfill({
+      status: loggedIn ? 200 : 401,
+      contentType: 'application/json',
+      body: JSON.stringify(loggedIn ? profile : { error: 'Unauthorized' }),
+    })
+  })
+  await page.goto('/login')
+  await page.locator('input[type="email"]').fill(profile.email)
+  // Tài khoản cũ tiếp tục đăng nhập được bằng mật khẩu dưới 15 ký tự.
+  await page.locator('input[name="password"]').fill('legacy')
+  await page.locator('form button[type="submit"]').click()
+  await expect(page).toHaveURL(/\/$/)
+  const clientState = await page.evaluate(() => ({
+    legacy: localStorage.getItem('gsa_session_token_v1'),
+    marker: localStorage.getItem('gsa_session_present_v1'),
+    cookies: document.cookie,
+  }))
+  expect(clientState.legacy).toBeNull()
+  expect(clientState.marker).toMatch(/^session:/)
+  expect(JSON.stringify(clientState)).not.toContain('e2e-cookie-secret')
+  expect(authHeaders.every((headers) => !headers.authorization)).toBe(true)
+  expect(
+    (await page.context().cookies()).find((cookie) => cookie.name === 'session_token'),
+  ).toMatchObject({ httpOnly: true, value: 'e2e-cookie-secret' })
+})

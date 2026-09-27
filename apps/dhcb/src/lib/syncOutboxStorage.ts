@@ -26,7 +26,7 @@ export interface OutboxEntry {
   tries: number
   /** Mốc epoch ms sớm nhất được thử lại; 0 = gửi ngay. */
   nextAt: number
-  lastError?: 'network' | 'http_5xx' | 'http_401' | 'http_429' | 'timeout'
+  lastError?: 'network' | 'http_5xx' | 'http_401' | 'http_429' | 'timeout' | 'grading_unavailable'
 }
 
 export interface FlushResult {
@@ -98,7 +98,11 @@ export function readEntries(uid: string): OutboxEntry[] {
 }
 
 export function writeEntries(uid: string, entries: OutboxEntry[]): void {
-  const kept = entries.slice(-MAX_ENTRIES)
+  // Chia batch/bảo trì có thể tăng số entry dù số bài không đổi. Không áp trần
+  // entry để âm thầm xoá code học viên; quota localStorage vẫn có fallback bộ nhớ.
+  const kept = entries.filter(
+    (entry, index) => entry.kind === 'programming' || index >= entries.length - MAX_ENTRIES,
+  )
   try {
     if (kept.length === 0) localStorage.removeItem(OUTBOX_KEY(uid))
     else localStorage.setItem(OUTBOX_KEY(uid), JSON.stringify(kept))
@@ -149,6 +153,42 @@ export function pending(uid: string): number {
 export function isBlockedByAuth(uid: string): boolean {
   if (!uid) return false
   return readEntries(uid).some((e) => e.lastError === 'http_401')
+}
+
+/** Mã bài vẫn nằm trong outbox khi dịch vụ chấm đang bảo trì. */
+export function isGradingUnavailable(uid: string): boolean {
+  return !!uid && readEntries(uid).some((entry) => entry.lastError === 'grading_unavailable')
+}
+
+/** Chia cả hàng đợi cũ theo ngân sách mới, không cắt mất bài hoặc tái dùng receipt
+ * cho payload khác. maxItems=1 cô lập bài bị bảo trì để bài khác vẫn đồng bộ được. */
+export function splitProgrammingEntry(entry: OutboxEntry, maxItems = 50): OutboxEntry[] {
+  if (entry.kind !== 'programming' || !Array.isArray(entry.payload)) return [entry]
+  const chunks: unknown[][] = []
+  let current: unknown[] = []
+  let completed = 0
+  for (const item of entry.payload as unknown[]) {
+    const isCompleted =
+      !!item && typeof item === 'object' && 'status' in item && item.status === 'completed'
+    if (current.length >= maxItems || (isCompleted && completed >= 5)) {
+      chunks.push(current)
+      current = []
+      completed = 0
+    }
+    current.push(item)
+    if (isCompleted) completed++
+  }
+  if (current.length > 0) chunks.push(current)
+  if (chunks.length <= 1) return [entry]
+  return chunks.map((payload) => ({
+    ...entry,
+    payload,
+    payloadHash: hashPayload('programming', payload),
+    attemptId: newAttemptId(),
+    tries: 0,
+    nextAt: 0,
+    lastError: undefined,
+  }))
 }
 
 export function subscribe(cb: (uid: string) => void): () => void {

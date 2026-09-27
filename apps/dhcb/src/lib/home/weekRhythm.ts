@@ -33,12 +33,14 @@ export interface BuildWeekRhythmInput {
 function countQuests(quests: QuestsStatus | null): { done: number; total: number } | undefined {
   if (!quests) return undefined
   // share/streak: "done" = KHÔNG canClaim (đã nhận hoặc chưa đủ điều kiện — cùng coi là xong lượt này).
-  const doneShare = quests.share.canClaim ? 0 : 1
-  const doneStreak = quests.streak.canClaim ? 0 : 1
+  const activeShare = quests.share.rewardDays > 0
+  const activeStreak = quests.streak.rewardDays > 0
+  const doneShare = activeShare && !quests.share.canClaim ? 1 : 0
+  const doneStreak = activeStreak && !quests.streak.canClaim ? 1 : 0
   const doneCefr = quests.cefrExams.filter((e) => e.claimed).length
   return {
     done: doneShare + doneStreak + doneCefr,
-    total: 2 + quests.cefrExams.length,
+    total: Number(activeShare) + Number(activeStreak) + quests.cefrExams.length,
   }
 }
 

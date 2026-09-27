@@ -5,7 +5,7 @@ import { preloadBrowseChunks } from '../lib/preloadBrowse'
 import { resetPreload } from '../lib/preloadState'
 import { clearAudioCache } from '../lib/audioCache'
 import { cacheAllowedVoices } from '../lib/voiceTiers'
-import { getStoredToken, clearStoredToken } from '@core/authHeader'
+import { getStoredToken, clearStoredToken, SESSION_MARKER_KEY } from '@core/authHeader'
 import { getGuestId } from '@core/guestId'
 import { mergeGuestProgressInto, hasGuestProgress } from '../lib/guestProgress'
 import type { User } from '../types'
@@ -115,10 +115,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(refresh)
       .catch(() => undefined)
 
-    // Bearer token không tự "hết hạn giữa chừng" như cookie — chỉ cần đồng bộ lại giữa các
-    // tab khi 1 tab đăng xuất/đăng nhập (localStorage 'storage' event chỉ bắn ở TAB KHÁC).
+    // Cờ UI không bí mật giúp đồng bộ đăng nhập/đăng xuất giữa các tab.
+    // Cookie vẫn là nguồn xác thực duy nhất khi gọi máy chủ.
     function onStorage(e: StorageEvent) {
-      if (e.key === null || e.key === 'gsa_session_token_v1') refresh()
+      if (e.key === null || e.key === SESSION_MARKER_KEY || e.key === 'gsa_session_token_v1')
+        refresh()
     }
     window.addEventListener('storage', onStorage)
     return () => {

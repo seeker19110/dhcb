@@ -22,11 +22,24 @@ import { getPgPool } from '@dhcb/core-db/pgPool'
 
 const mockedGetPool = vi.mocked(getPgPool)
 const query = vi.fn()
+const client = {
+  query: vi.fn((sql: string, params?: unknown[]) => {
+    if (sql === 'begin' || sql === 'commit' || sql === 'rollback') {
+      return Promise.resolve({ rows: [], rowCount: 0 })
+    }
+    return query(sql, params)
+  }),
+  release: vi.fn(),
+}
 
 beforeEach(() => {
   query.mockReset()
+  client.query.mockClear()
+  client.release.mockClear()
   query.mockResolvedValue({ rows: [] })
-  mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+  mockedGetPool.mockReturnValue({ query, connect: async () => client } as unknown as ReturnType<
+    typeof getPgPool
+  >)
   passwordState.valid = true
 })
 

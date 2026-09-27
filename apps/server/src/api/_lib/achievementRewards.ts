@@ -5,13 +5,8 @@ import { readVerifiedCefrExams } from './cefrAssessment.js'
 // achievement_claims, mỗi huy hiệu CHỈ nhận 1 LẦN/tài khoản — khác nhiệm vụ lặp lại theo
 // cooldown ở quests.ts).
 //
-// QUAN TRỌNG: "đã đạt huy hiệu" được XÁC MINH LẠI Ở ĐÂY từ dữ liệu SERVER (streak tính từ
-// free_daily_credit giống quests.ts, còn lại đọc thẳng từ learning_progress/writing_submissions/
-// speaking_sessions/challenge_entries) — KHÔNG tin danh sách huy hiệu localStorage gửi lên (client
-// tự tính ở src/lib/achievements.ts chỉ để hiển thị UI ngay, có thể bị sửa). Danh sách id +
-// điều kiện dưới đây PHẢI khớp apps/dhcb/src/data/achievements.ts + lib/achievements.ts —
-// không import thẳng module frontend vào backend (giữ tách 2 tầng, giống cách quests.ts đã làm
-// với CEFR_EXAM_LEVELS).
+// Lịch sử học đồng bộ từ client chỉ đủ để HIỂN THỊ huy hiệu; dữ liệu đã nằm trong DB
+// không đồng nghĩa đã được server xác thực. Chỉ kết quả CEFR do server chấm được cấp VIP.
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { withTransaction } from '@dhcb/core-db/transaction'
@@ -107,7 +102,7 @@ async function loadRewardConfig(): Promise<Map<AchievementId, AchievementRewardC
   return map
 }
 
-// ── Tính lại điều kiện đạt TỪ DỮ LIỆU SERVER (tin cậy) ──────────────────────────────────────
+// ── Tính điều kiện HIỂN THỊ huy hiệu từ dữ liệu đã lưu ──────────────────────────────────────
 interface ServerStats {
   streak: number
   vocab: number
@@ -168,7 +163,7 @@ async function computeServerStats(userId: string): Promise<ServerStats> {
 }
 
 // Điều kiện đạt của từng huy hiệu — PHẢI khớp isEarned() ở apps/dhcb/src/lib/achievements.ts
-// (bản client chỉ dùng để hiển thị UI ngay, bản này mới là bản QUYẾT ĐỊNH cấp thưởng).
+// Đây là điều kiện hiển thị; quyền nhận thưởng còn phải qua cổng bằng chứng tin cậy.
 function isEarned(id: AchievementId, s: ServerStats): boolean {
   switch (id) {
     case 'streak_7':
@@ -212,6 +207,20 @@ function isEarned(id: AchievementId, s: ServerStats): boolean {
   }
 }
 
+/** Những huy hiệu có bằng chứng do server chấm, không do client tự báo cáo. */
+export function supportsPaidReward(id: AchievementId): boolean {
+  return id.startsWith('cefr_')
+}
+
+function effectiveReward(
+  id: AchievementId,
+  config?: AchievementRewardConfig,
+): AchievementRewardConfig {
+  return supportsPaidReward(id) && config
+    ? config
+    : { enabled: false, rewardPlan: 'vip', rewardDays: 0 }
+}
+
 // ── Trạng thái tổng hợp cho UI (GET /api/achievements) ──────────────────────────────────────
 export async function getAchievementsStatus(userId: string): Promise<AchievementStatusItem[]> {
   const [rewardConfig, stats, claimsRes] = await Promise.all([
@@ -228,7 +237,7 @@ export async function getAchievementsStatus(userId: string): Promise<Achievement
     id,
     earned: isEarned(id, stats),
     claimed: claimed.has(id),
-    reward: rewardConfig.get(id) ?? { enabled: false, rewardPlan: 'vip', rewardDays: 0 },
+    reward: effectiveReward(id, rewardConfig.get(id)),
   }))
 }
 
@@ -241,6 +250,13 @@ export async function claimAchievementReward(
     return { ok: false, message: 'Huy hiệu không hợp lệ.' }
   }
   const id = achievementId as AchievementId
+  if (!supportsPaidReward(id)) {
+    return {
+      ok: false,
+      message:
+        'Huy hiệu này được ghi nhận nhưng chưa hỗ trợ thưởng VIP từ bằng chứng học đã xác minh.',
+    }
+  }
 
   try {
     const rewardConfig = (await loadRewardConfig()).get(id)
@@ -288,7 +304,7 @@ export async function getAllRewardConfigs(): Promise<
   const map = await loadRewardConfig()
   return ACHIEVEMENT_IDS.map((achievementId) => ({
     achievementId,
-    config: map.get(achievementId) ?? { enabled: false, rewardPlan: 'vip', rewardDays: 0 },
+    config: effectiveReward(achievementId, map.get(achievementId)),
   }))
 }
 
@@ -298,6 +314,12 @@ export async function upsertRewardConfig(
 ): Promise<void> {
   if (!(ACHIEVEMENT_IDS as readonly string[]).includes(achievementId)) {
     throw new Error('Huy hiệu không hợp lệ.')
+  }
+  if (
+    !supportsPaidReward(achievementId as AchievementId) &&
+    (patch.enabled === true || (patch.rewardDays ?? 0) > 0)
+  ) {
+    throw new Error('Chỉ huy hiệu CEFR đã xác minh được hỗ trợ thưởng VIP.')
   }
   const safeDays =
     patch.rewardDays !== undefined ? Math.min(7, Math.max(0, patch.rewardDays)) : undefined

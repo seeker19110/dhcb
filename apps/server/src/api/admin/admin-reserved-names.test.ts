@@ -14,19 +14,12 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: vi.fn(),
 }))
 
-vi.mock('@dhcb/core-auth/authService', () => ({
-  getUserById: vi.fn(),
-}))
-
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
-  isAdminEmail: (e?: string) => e === 'admin@example.com',
+  isAdminUser: (userId?: string) => userId === 'a1',
 }))
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { validateAuth, checkRateLimit } from '@dhcb/core-auth/security'
-import { getUserById } from '@dhcb/core-auth/authService'
-
-type UserInfo = Awaited<ReturnType<typeof getUserById>>
 
 describe('/api/admin-reserved-names', () => {
   const queryMock = getPgPool().query as unknown as ReturnType<typeof vi.fn>
@@ -44,10 +37,7 @@ describe('/api/admin-reserved-names', () => {
 
   it('lấy danh sách từ cấm (GET 200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({ rows: [{ id: '1', phrase: 'admin' }] })
 
     const req = new Request('http://localhost/api/admin-reserved-names')
@@ -59,10 +49,7 @@ describe('/api/admin-reserved-names', () => {
 
   it('thêm từ cấm mới (POST 200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
+
     queryMock.mockResolvedValueOnce({ rows: [] })
 
     const req = new Request('http://localhost/api/admin-reserved-names', {
@@ -75,10 +62,6 @@ describe('/api/admin-reserved-names', () => {
 
   function asAdmin() {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'a1',
-      email: 'admin@example.com',
-    } as UserInfo)
   }
 
   it('OPTIONS → 204 (preflight CORS), không cần đăng nhập', async () => {
@@ -98,10 +81,7 @@ describe('/api/admin-reserved-names', () => {
 
   it('đăng nhập nhưng KHÔNG phải admin → 403', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u9' })
-    vi.mocked(getUserById).mockResolvedValueOnce({
-      id: 'u9',
-      email: 'nguoi-la@example.com',
-    } as UserInfo)
+
     const res = await handler(new Request('http://localhost/api/admin-reserved-names'))
     expect(res.status).toBe(403)
     expect(queryMock).not.toHaveBeenCalled()

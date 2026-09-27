@@ -8,6 +8,7 @@ import {
 import { jsonResponse } from '@dhcb/core-http/http'
 import { CefrAssessmentRequest } from '@dhcb/core-contracts/cefrAssessment'
 import { assessCefr, AssessmentError } from '../../_lib/cefrAssessment.js'
+import { rewardReferralIfEligible } from '../../_lib/referral.js'
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -20,7 +21,12 @@ export default async function handler(req: Request): Promise<Response> {
   const parsed = CefrAssessmentRequest.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return jsonResponse({ error: 'Bài thi không hợp lệ' }, 400, headers)
   try {
-    return jsonResponse(await assessCefr(getPgPool(), auth.userId, parsed.data), 200, headers)
+    const result = await assessCefr(getPgPool(), auth.userId, parsed.data)
+    // assessCefr đã commit kết quả chấm; tạo đề hoặc bài chưa đạt không kích hoạt thưởng.
+    if (parsed.data.action === 'submit' && 'passed' in result && result.passed) {
+      await rewardReferralIfEligible(auth.userId)
+    }
+    return jsonResponse(result, 200, headers)
   } catch (error) {
     if (error instanceof AssessmentError)
       return jsonResponse({ error: error.message }, error.status, headers)

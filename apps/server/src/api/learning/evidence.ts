@@ -40,6 +40,7 @@ import { getMathLesson } from '@dhcb/subject-math/lessons'
 import { getPhysicsLesson } from '@dhcb/subject-physics/lessons'
 import { getChemLesson } from '@dhcb/subject-chemistry/lessons'
 import { getBiologyLesson } from '@dhcb/subject-biology/lessons'
+import { rewardReferralIfEligible } from '../_lib/referral.js'
 
 /** Bài học STEM có đủ hai mặt việc này cần: chấm (`checkQuestions.answer`) và băm nội dung. */
 type BaiStem = StemLessonLike & NoiDungCanDuyet
@@ -360,6 +361,8 @@ export default async function handler(req: Request): Promise<Response> {
           }))
         : graded.items,
     }
+    // Chỉ sau COMMIT bằng chứng thật. Retry cũng xét lại để khôi phục thưởng lỗi trước đó.
+    if (evidence.passed) await rewardReferralIfEligible(auth.userId)
     return jsonResponse(evidence, 200, headers)
   } catch (err: unknown) {
     return internalErrorResponse(err, headers, 'learning-evidence')

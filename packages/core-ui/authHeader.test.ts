@@ -16,9 +16,11 @@ describe('getStoredToken/setStoredToken/clearStoredToken', () => {
     expect(getStoredToken()).toBeNull()
   })
 
-  it('lưu rồi đọc lại → đúng giá trị', () => {
+  it('chỉ lưu cờ, loại bỏ secret phiên', () => {
     setStoredToken('abc123')
-    expect(getStoredToken()).toBe('abc123')
+    expect(getStoredToken()).toMatch(/^session:/)
+    expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+    expect(JSON.stringify(localStorage)).not.toContain('abc123')
   })
 
   it('xoá token → đọc lại null', () => {
@@ -82,9 +84,9 @@ describe('getAccessToken', () => {
     expect(getAccessToken()).toBeUndefined()
   })
 
-  it('đã đăng nhập → trả đúng token', () => {
+  it('đã đăng nhập cũng không đọc được secret cookie', () => {
     setStoredToken('tok-1')
-    expect(getAccessToken()).toBe('tok-1')
+    expect(getAccessToken()).toBeUndefined()
   })
 })
 
@@ -97,8 +99,22 @@ describe('getAuthHeader', () => {
     expect(headers['X-Guest-Id']).toMatch(/^guest_/)
   })
 
-  it('đã đăng nhập → CHỈ có Authorization Bearer, không kèm id khách', () => {
+  it('đã đăng nhập → cookie xác thực, không có Authorization hoặc id khách', () => {
     setStoredToken('tok-2')
-    expect(getAuthHeader()).toEqual({ Authorization: 'Bearer tok-2' })
+    expect(getAuthHeader()).toEqual({})
   })
+})
+
+it('tự loại bỏ token legacy, giữ cờ đăng nhập không bí mật', () => {
+  localStorage.setItem('gsa_session_token_v1', 'secret-legacy')
+  expect(getStoredToken()).toMatch(/^session:/)
+  expect(localStorage.getItem('gsa_session_token_v1')).toBeNull()
+  expect(getAuthHeader()).toEqual({})
+})
+
+it('cờ đổi theo mỗi lần đăng nhập để bỏ callback của tài khoản cũ', () => {
+  setStoredToken()
+  const previous = getStoredToken()
+  setStoredToken()
+  expect(getStoredToken()).not.toBe(previous)
 })

@@ -9,12 +9,10 @@ const mocks = vi.hoisted(() => ({
   permission: { value: 'default' as NotificationPermission },
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
-  getAccessToken: vi.fn().mockResolvedValue('token'),
 }))
 
 vi.mock('../context/useAuth', () => ({ useAuth: () => ({ user: mocks.auth.user }) }))
 vi.mock('../context/useLang', () => ({ useLang: () => ({ lang: 'vi' }) }))
-vi.mock('@core/authHeader', () => ({ getAccessToken: mocks.getAccessToken }))
 vi.mock('../lib/pushNotif', () => ({
   isPushSupported: () => true,
   getNotifPermission: () => mocks.permission.value,
@@ -62,7 +60,6 @@ beforeEach(() => {
   mocks.permission.value = 'default'
   mocks.subscribe.mockReset().mockResolvedValue({ status: 'success' })
   mocks.unsubscribe.mockReset().mockResolvedValue({ status: 'success' })
-  mocks.getAccessToken.mockClear()
   localStorage.clear()
 })
 
@@ -114,7 +111,7 @@ describe('QuickActions — storage an toàn', () => {
 
     const offsetHours = -new Date().getTimezoneOffset() / 60
     const expectedUtcHour = ((Math.round(18 - offsetHours) % 24) + 24) % 24
-    expect(mocks.subscribe).toHaveBeenCalledWith('token', expectedUtcHour)
+    expect(mocks.subscribe).toHaveBeenCalledWith(expectedUtcHour)
     expect(container.textContent).toContain('Không thể lưu giờ nhắc trên thiết bị này')
 
     // Dựng lại cả component như một lần mở trang mới: setItem đã ném lỗi nên key không tồn tại,
@@ -158,8 +155,8 @@ describe('QuickActions — phục hồi lỗi push', () => {
     expect(document.activeElement).toBe(button('Tắt nhắc học'))
   })
 
-  it('lỗi lấy token vẫn thoát loading và cho thử lại', async () => {
-    mocks.getAccessToken.mockRejectedValueOnce(new Error('token failure'))
+  it('lỗi đăng ký push vẫn thoát loading và cho thử lại', async () => {
+    mocks.subscribe.mockRejectedValueOnce(new Error('push failure'))
     await render()
     await click(button('Bật nhắc học mỗi ngày'))
     await click(button('Nhắc tôi lúc 20:00'))

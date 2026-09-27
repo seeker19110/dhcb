@@ -14,6 +14,7 @@ import {
   handlers,
   pending,
   readEntries,
+  splitProgrammingEntry,
   writeEntries,
   type FlushResult,
   type OutboxEntry,
@@ -74,6 +75,27 @@ export async function sendDueEntries(uid: string): Promise<FlushResult> {
       continue
     }
 
+    // Batch bị bảo trì/đổi giới hạn phải tách để không chặn các bài còn chấm được.
+    // Response lỗi của API là atomic (chưa ghi gì), mỗi payload mới nhận id mới.
+    if (
+      entry.kind === 'programming' &&
+      ((outcome.kind === 'retry' && outcome.reason === 'grading_unavailable') ||
+        (outcome.kind === 'drop' && outcome.code === 'PROGRAMMING_GRADING_BATCH_LIMIT'))
+    ) {
+      const split = splitProgrammingEntry(entry, 1)
+      if (split.length > 1) {
+        const fresh = readEntries(uid)
+        if (fresh.some((item) => item.attemptId === attemptId)) {
+          writeEntries(
+            uid,
+            fresh.flatMap((item) => (item.attemptId === attemptId ? split : [item])),
+          )
+          due.push(...split.map((item) => item.attemptId))
+        }
+        continue
+      }
+    }
+
     if (outcome.kind === 'drop') {
       // 400/403/404/413…: gửi lại bao nhiêu lần cũng vẫn hỏng — bỏ mục, ghi lại để còn lần ra.
       console.warn(
@@ -93,7 +115,7 @@ export async function sendDueEntries(uid: string): Promise<FlushResult> {
       target.tries += 1
       target.lastError = outcome.reason
       target.nextAt =
-        outcome.reason === 'http_401'
+        outcome.reason === 'http_401' || outcome.reason === 'grading_unavailable'
           ? Number.MAX_SAFE_INTEGER // chờ token mới, không lùi vô ích
           : target.tries >= MAX_TRIES
             ? Number.MAX_SAFE_INTEGER // hết lượt tự động: chờ `online`/mở lại app/flush tay
@@ -111,7 +133,7 @@ export async function sendDueEntries(uid: string): Promise<FlushResult> {
 
 type SendOutcome =
   | { kind: 'ok'; body: unknown }
-  | { kind: 'drop'; status: number }
+  | { kind: 'drop'; status: number; code?: string }
   | { kind: 'retry'; reason: NonNullable<OutboxEntry['lastError']>; retryAfterMs?: number }
 
 async function postEntry(url: string, body: unknown): Promise<SendOutcome> {
@@ -119,6 +141,7 @@ async function postEntry(url: string, body: unknown): Promise<SendOutcome> {
   try {
     resp = await fetch(url, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
       body: JSON.stringify(body),
     })
@@ -140,6 +163,17 @@ async function postEntry(url: string, body: unknown): Promise<SendOutcome> {
     const header = Number(resp.headers.get('Retry-After'))
     const retryAfterMs = Number.isFinite(header) && header > 0 ? header * 1000 : 60_000
     return { kind: 'retry', reason: 'http_429', retryAfterMs }
+  }
+  if (resp.status === 503 || resp.status === 413) {
+    const error: unknown = await resp.json().catch(() => null)
+    const code =
+      error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+        ? error.code
+        : undefined
+    if (url === '/api/programming/progress' && code === 'PROGRAMMING_GRADING_UNAVAILABLE') {
+      return { kind: 'retry', reason: 'grading_unavailable' }
+    }
+    if (resp.status === 413) return { kind: 'drop', status: resp.status, code }
   }
   if (resp.status >= 500) return { kind: 'retry', reason: 'http_5xx' }
   return { kind: 'drop', status: resp.status }

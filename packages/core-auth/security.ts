@@ -8,7 +8,7 @@ import { readSessionCookie } from './sessionCookie.js'
 // ── CORS ──────────────────────────────────────────────────────────────────────
 // Đọc danh sách domain cho phép từ biến môi trường ALLOWED_ORIGINS (phân cách bằng dấu phẩy).
 // Ví dụ: ALLOWED_ORIGINS=https://myapp.vercel.app,https://myapp.com
-// Nếu không có biến này (môi trường dev), cho phép tất cả ('*').
+// Production có mặc định cụ thể; dev chỉ cho cookie/mutation từ localhost.
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://www.donghanhcungban.org',
   'https://donghanhcungban.org',
@@ -18,53 +18,59 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://en-vi.donghanhcungban.com',
 ]
 
-export function getCorsHeaders(req: Request): Record<string, string> {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-  const origin = req.headers.get('Origin') ?? ''
+function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+}
 
-  let allowOrigin = '*'
-  let allowCredentials = false
-  // FAIL-SAFE (audit 2026-08-24, F9): ở production mà QUÊN đặt ALLOWED_ORIGINS thì trước đây
-  // CORS lặng lẽ về '*' — không lỗi, không cảnh báo, chỉ âm thầm mở rộng hơn ý muốn. Bearer
-  // token qua header nên chưa khai thác được ngay, nhưng "mặc định an toàn" phải là đóng chứ
-  // không phải mở. Dev (không đặt NODE_ENV=production) vẫn giữ '*' cho tiện.
-  const list = allowedOrigins
-    ? Array.from(
-        new Set([
-          ...allowedOrigins
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean),
-          ...DEFAULT_ALLOWED_ORIGINS,
-        ]),
-      )
-    : process.env.NODE_ENV === 'production'
-      ? DEFAULT_ALLOWED_ORIGINS
-      : null
-  if (list) {
-    if (origin && list.includes(origin)) {
-      // Origin nằm trong whitelist → phản chiếu đúng origin + cho phép credentials
-      allowOrigin = origin
-      allowCredentials = true
-    } else {
-      // Không khớp → trả origin đầu danh sách (browser sẽ chặn origin lạ)
-      allowOrigin = list[0] ?? '*'
-    }
+function allowedOrigins(): string[] | null {
+  if (process.env.ALLOWED_ORIGINS !== undefined) {
+    return process.env.ALLOWED_ORIGINS.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
   }
+  return isProduction() ? DEFAULT_ALLOWED_ORIGINS : null
+}
 
+/** Khớp origin chính xác; cấu hình tường minh thay thế danh sách mặc định. */
+export function isAllowedOrigin(origin: string): boolean {
+  if (!origin || origin === 'null') return false
+  const list = allowedOrigins()
+  if (list) return list.includes(origin)
+  try {
+    const url = new URL(origin)
+    return (
+      url.origin === origin &&
+      ['http:', 'https:'].includes(url.protocol) &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    )
+  } catch {
+    return false
+  }
+}
+
+/** Request sửa dữ liệu phải đến từ origin tin cậy, kể cả các subdomain cùng site. */
+export function isTrustedMutation(req: Request): boolean {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase())) return true
+  const origin = req.headers.get('Origin')
+  if (origin !== null) return isAllowedOrigin(origin)
+  const site = req.headers.get('Sec-Fetch-Site')
+  if (site === 'cross-site' || site === 'same-site') return false
+  // Trình duyệt có phiên phải gửi Origin. Webhook/server không dùng cookie
+  // vẫn được đi đến handler để xác thực bằng khóa riêng.
+  return !readSessionCookie(req)
+}
+
+export function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const trusted = isAllowedOrigin(origin)
+  const list = allowedOrigins()
   const headers: Record<string, string> = {
-    'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Origin': trusted ? origin : list === null ? '*' : (list[0] ?? 'null'),
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Guest-Id',
     Vary: 'Origin',
   }
-  // CHỈ gắn Allow-Credentials khi phản chiếu đúng 1 origin cụ thể trong whitelist.
-  // KHÔNG bao giờ kèm '*' — tổ hợp '*' + credentials bị browser từ chối và quá rộng.
-  // Cần cho cookie phiên (Bước 3 SSO, sessionCookie.ts) khi app con ở subdomain khác gọi
-  // API bằng `fetch(..., { credentials: 'include' })` — Bearer (cơ chế chính) không cần.
-  if (allowCredentials) {
-    headers['Access-Control-Allow-Credentials'] = 'true'
-  }
+  if (trusted) headers['Access-Control-Allow-Credentials'] = 'true'
   return headers
 }
 
@@ -102,13 +108,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
 }
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
-// HAI cơ chế, tự chọn theo biến môi trường REDIS_URL:
-//   1) CÓ REDIS_URL → đếm trên Redis (dùng chung cho MỌI tiến trình/máy). Bắt buộc khi
-//      chạy PM2 cluster nhiều instance: nếu mỗi instance đếm riêng thì 1 IP có thể vượt
-//      giới hạn gấp N lần (N = số instance).
-//   2) KHÔNG có REDIS_URL, hoặc Redis lỗi → quay về Map in-memory bên dưới (mỗi instance
-//      một bộ đếm riêng). Đây là FAIL-OPEN có chủ ý — giống triết lý ở usage.ts: thà rate
-//      limit lỏng hơn một chút còn hơn làm hỏng request của người dùng thật.
+// Production bắt buộc dùng bộ đếm Redis chung. Thiếu/đang kết nối/lỗi Redis
+// sẽ từ chối request có rate limit; chỉ dev/test dùng bộ đếm cục bộ.
+// Giữ giới hạn chi phí AI và thử đăng nhập trong suốt sự cố Redis.
 //
 // LƯU Ý khi có Cloudflare trước VPS (xem docs/cloudflare-setup.md): IP lấy từ
 // header X-Forwarded-For (clientIp ở mỗi handler api/*.ts) CHỈ đáng tin nếu Nginx
@@ -144,13 +146,13 @@ function getRedis(): Redis | null {
 
   const url = process.env.REDIS_URL
   if (!url) {
-    redisClient = null // Không cấu hình Redis → dùng Map in-memory
+    redisClient = null // Không cấu hình Redis: production từ chối, dev dùng Map
     return null
   }
 
   try {
     redisClient = new Redis(url, {
-      // Không thử lại vô hạn: request phải trả lời nhanh, hỏng thì rơi về Map.
+      // Không thử lại vô hạn: request phải trả lời nhanh và đóng an toàn ở production.
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
       connectTimeout: 2000,
@@ -177,7 +179,7 @@ function noteRedisDegraded(err: unknown): void {
   if (redisDegraded) return
   redisDegraded = true
   console.warn(
-    `[Security] Redis lỗi (${message}) — rate limit tạm dùng Map in-memory mỗi instance.`,
+    `[Security] Redis lỗi (${message}) — production từ chối request có rate limit; dev dùng Map in-memory.`,
   )
 }
 
@@ -220,22 +222,16 @@ export async function pingRedis(): Promise<{ ok: boolean; latencyMs?: number; er
   }
 }
 
-// Cảnh báo LÚC KHỞI ĐỘNG (gọi 1 lần từ server.ts) nếu chạy dưới PM2 mà CHƯA đặt
-// REDIS_URL — khác với noteRedisDegraded() ở trên (chỉ bắn khi Redis THỰC SỰ lỗi
-// kết nối). Thiếu cấu hình REDIS_URL thì getRedis() âm thầm dùng Map in-memory, KHÔNG
-// đi qua nhánh lỗi nên không có cảnh báo nào — lỗ hổng im lặng: chạy cluster nhiều
-// instance mà quên Redis, rate limit lỏng gấp N lần (N = số instance) mà log không hề
-// báo cho tới khi bị lạm dụng thật. `NODE_APP_INSTANCE` do PM2 tự gắn cho MỌI tiến
-// trình nó quản lý (kể cả fork mode 1 instance) nên đây là tín hiệu đáng tin để biết
-// "đang chạy dưới PM2", không cần biết chính xác số instance.
+// Cảnh báo cấu hình Redis thiếu khi khởi động dưới PM2. Production từ chối
+// request có rate limit cho đến khi cấu hình và kết nối được khôi phục.
 export function warnIfClusterWithoutRedis(): void {
   const underPm2 = process.env.NODE_APP_INSTANCE !== undefined
   if (underPm2 && !process.env.REDIS_URL) {
     console.warn(
       '[Security] ⚠️  Chạy dưới PM2 nhưng CHƯA đặt REDIS_URL trong .env — nếu ' +
         "ecosystem.config.cjs đang bật cluster mode nhiều instance ('instances' > 1), " +
-        'rate limit (bao gồm giới hạn gọi AI trả phí) sẽ lỏng gấp N lần vì mỗi tiến ' +
-        'trình đếm riêng bằng Map in-memory. Xem docs/deploy-vps-ubuntu.md mục REDIS_URL.',
+        'production từ chối request có rate limit cho đến khi Redis sẵn sàng. ' +
+        'Xem docs/deploy-vps-ubuntu.md mục REDIS_URL.',
     )
   }
 }
@@ -267,8 +263,8 @@ export async function reportRedisStatusAtStartup(
     return
   }
   console.warn(
-    `   Redis    : ❌ KHÔNG dùng được (${ping.error}) — rate limit đang đếm RIÊNG mỗi ` +
-      'instance, hạn mức lỏng gấp N lần. Kiểm REDIS_URL trong .env: Redis có mật khẩu thì ' +
+    `   Redis    : ❌ KHÔNG dùng được (${ping.error}) — production từ chối request có rate limit. ` +
+      'Kiểm REDIS_URL trong .env: Redis có mật khẩu thì ' +
       'URL phải dạng redis://:MẬT_KHẨU@127.0.0.1:6379 (chú ý dấu hai chấm sau //).',
   )
 }
@@ -288,8 +284,8 @@ export async function checkRateLimit(
   const redis = getRedis()
   // CHỈ dùng khi kết nối đã sẵn sàng. `enableOfflineQueue: false` nghĩa là gọi lệnh lúc client
   // còn 'connecting'/'reconnecting' sẽ ném ngay "Stream isn't writeable…" — đúng lỗi thấy trong
-  // log production sau mỗi lần PM2 restart. Rơi về Map trong cửa sổ kết nối là đúng và im lặng;
-  // báo động chỉ dành cho lỗi thật.
+  // log production sau mỗi lần PM2 restart. Trong cửa sổ này production từ chối lượt mới;
+  // dev/test dùng bộ đếm cục bộ.
   if (redis && redis.status === 'ready') {
     try {
       // Script Lua chạy nguyên khối trên Redis → INCR và PEXPIRE không bị chen giữa
@@ -298,11 +294,13 @@ export async function checkRateLimit(
       noteRedisRecovered()
       return count <= maxPerMin
     } catch (err) {
-      // Redis hỏng → KHÔNG làm vỡ request, chỉ cảnh báo rồi dùng Map in-memory.
+      // Redis hỏng → production từ chối, dev/test dùng Map in-memory.
       noteRedisDegraded(err)
     }
   }
 
+  // Không nhân hạn mức lên theo số worker khi Redis gặp sự cố.
+  if (isProduction()) return false
   return checkRateLimitInMemory(key, maxPerMin)
 }
 
@@ -313,8 +311,7 @@ export async function checkRateLimit(
 //
 // VÌ SAO KHÔNG DÙNG POSTGRES: khách ẩn danh không có hàng nào trong `profiles`, và đặc tả cố ý
 // không thêm migration cho đợt này. Redis là nơi duy nhất đã có sẵn, dùng chung toàn cluster.
-// Redis hỏng → rơi về Map in-memory: bộ đếm hẹp hơn (mỗi tiến trình một bản) nhưng vẫn CHẶN,
-// không fail-open — với lượt AI tốn tiền của người chưa đăng nhập thì chặt hơn là đúng.
+// Production từ chối lượt mới khi Redis không sẵn sàng; Map chỉ dùng trong dev/test.
 const dailyCounterMap = new Map<string, { count: number; resetAt: number }>()
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -346,6 +343,7 @@ export async function consumeDailyCounter(key: string, limit: number): Promise<b
     }
   }
 
+  if (isProduction()) return false
   const now = Date.now()
   pruneDailyCounters(now)
   const entry = dailyCounterMap.get(key)
@@ -399,8 +397,7 @@ function checkRateLimitInMemory(key: string, maxPerMin: number): boolean {
 // ── Auth Validation ───────────────────────────────────────────────────────────
 // [Cập nhật Bước 6, docs/adr/0002-quan-ly-nguoi-dung.md] Đọc session token TỪ COOKIE
 // `session_token` (packages/core-auth/sessionCookie.ts) — Bearer đã bị bỏ hoàn toàn (trước đó
-// dual-accept ở Bước 3). Client vẫn gửi kèm `Authorization: Bearer` (chưa dọn — xem
-// authService.ts đầu file) nhưng server KHÔNG còn đọc header đó nữa, cố tình bỏ qua.
+// dual-accept ở Bước 3). Client chỉ giữ cờ UI không bí mật; server bỏ qua Bearer.
 // Tra bảng `sessions` trên Postgres tự host (Giai đoạn B — thay Supabase Auth) — trả về
 // userId nếu hợp lệ + chưa hết hạn, null nếu không. Xem api/_lib/authService.ts.
 //

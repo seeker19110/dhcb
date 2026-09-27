@@ -21,7 +21,7 @@ import { test, expect, type Page, type Route } from '@playwright/test'
 /* ── Hằng số ─────────────────────────────────────────────────────────────── */
 
 const ADMIN_URL = '/admin-s'
-const TOKEN_KEY = 'gsa_session_token_v1'
+const TOKEN_KEY = 'gsa_session_present_v1'
 const GOTO_TIMEOUT = 20000
 const VISIBLE_TIMEOUT = 15000
 
@@ -374,7 +374,7 @@ const MOCK_GRANT_LOOKUP = { email: 'user@test.com', plan: 'free', planExpiresAt:
 async function loginAsAdmin(page: Page): Promise<void> {
   await page.addInitScript(
     ({ tokenKey }: { tokenKey: string }) => {
-      localStorage.setItem(tokenKey, 'e2e-admin-fake-token')
+      localStorage.setItem(tokenKey, 'session:e2e-admin')
       localStorage.setItem('ui_lang', 'vi')
     },
     { tokenKey: TOKEN_KEY },

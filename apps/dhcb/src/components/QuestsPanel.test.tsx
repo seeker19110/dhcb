@@ -7,7 +7,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import QuestsPanel from './QuestsPanel'
 
 const fetchQuestsStatus = vi.fn()
-const getAuthHeader = vi.fn()
+const getStoredToken = vi.fn()
 
 vi.mock('../lib/quests', () => ({
   fetchQuestsStatus: () => fetchQuestsStatus(),
@@ -15,7 +15,7 @@ vi.mock('../lib/quests', () => ({
   claimCefrExamQuest: vi.fn(),
 }))
 vi.mock('@core/authHeader', () => ({
-  getAuthHeader: () => getAuthHeader(),
+  getStoredToken: () => getStoredToken(),
 }))
 vi.mock('@core/ToastProvider', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }),
@@ -41,7 +41,7 @@ async function render(props: Parameters<typeof QuestsPanel>[0]) {
 describe('QuestsPanel — phân biệt chưa đăng nhập với lỗi tải', () => {
   beforeEach(() => {
     fetchQuestsStatus.mockReset()
-    getAuthHeader.mockReset()
+    getStoredToken.mockReset()
   })
 
   afterEach(async () => {
@@ -51,7 +51,7 @@ describe('QuestsPanel — phân biệt chưa đăng nhập với lỗi tải', (
 
   it('chưa đăng nhập (không có token): hiện câu mời đăng nhập, không phải khối lỗi', async () => {
     fetchQuestsStatus.mockResolvedValue(null)
-    getAuthHeader.mockReturnValue({}) // khách — không có Authorization
+    getStoredToken.mockReturnValue(null) // khách — không có Authorization
     const el = await render({ isA: true })
     expect(el.textContent).toContain('Đăng nhập để xem nhiệm vụ nhé.')
     expect(el.textContent).not.toContain('Không tải được nhiệm vụ')
@@ -59,7 +59,7 @@ describe('QuestsPanel — phân biệt chưa đăng nhập với lỗi tải', (
 
   it('đã đăng nhập mà API lỗi: hiện khối lỗi chuẩn + nút Thử lại, không phải câu mời đăng nhập', async () => {
     fetchQuestsStatus.mockResolvedValue(null)
-    getAuthHeader.mockReturnValue({ Authorization: 'Bearer tok' })
+    getStoredToken.mockReturnValue('session:fixture')
     const el = await render({ isA: true })
     expect(el.textContent).toContain('Không tải được nhiệm vụ')
     expect(el.textContent).toContain('Nhiệm vụ và thưởng của bạn vẫn còn nguyên')
@@ -72,7 +72,7 @@ describe('QuestsPanel — phân biệt chưa đăng nhập với lỗi tải', (
 
   it('bấm Thử lại gọi lại fetchQuestsStatus', async () => {
     fetchQuestsStatus.mockResolvedValue(null)
-    getAuthHeader.mockReturnValue({ Authorization: 'Bearer tok' })
+    getStoredToken.mockReturnValue('session:fixture')
     const el = await render({ isA: true })
     expect(fetchQuestsStatus).toHaveBeenCalledTimes(1)
     const retryBtn = [...el.querySelectorAll('button')].find((b) =>
@@ -80,5 +80,20 @@ describe('QuestsPanel — phân biệt chưa đăng nhập với lỗi tải', (
     ) as HTMLButtonElement
     await act(async () => retryBtn.click())
     expect(fetchQuestsStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('payout bị tắt: giữ streak/chia sẻ, không hứa VIP hoặc hiện nút nhận thưởng', async () => {
+    fetchQuestsStatus.mockResolvedValue({
+      share: { cooldownDays: 7, rewardDays: 0, canClaim: false },
+      streak: { current: 8, required: 5, rewardDays: 0, cooldownDays: 7, canClaim: false },
+      cefrExams: [],
+    })
+    getStoredToken.mockReturnValue('session:fixture')
+    const el = await render({ isA: true })
+    expect(el.textContent).toContain('Chuỗi ngày học của bạn: 8 ngày.')
+    expect(el.textContent).toContain('Mục này hiện không có thưởng VIP.')
+    expect(el.textContent).not.toContain('Nhận thưởng')
+    expect(el.textContent).not.toContain('+0 ngày')
+    expect(el.textContent).toContain('Chia sẻ kết quả')
   })
 })
