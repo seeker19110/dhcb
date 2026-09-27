@@ -34,7 +34,7 @@ import { purgeExpiredPositions } from '@dhcb/core-location/locationService'
 import { attachVoiceWebSocketServer } from '@dhcb/core-ai/wsVoiceHandler'
 import { attachCoLearningWebSocketServer } from '@dhcb/core-ai/wsCoLearningHandler'
 import { attachGeminiLiveWebSocketServer } from '@dhcb/core-ai/wsGeminiLiveHandler'
-import { sendReminders } from './api/core/push.js'
+import { sendReminders, isLeakedVapidPublicKey } from './api/core/push.js'
 import { downgradeExpiredPlans } from './api/_lib/planExpiry.js'
 import { purgeOldSyncReceipts } from './api/_lib/syncReceipt.js'
 import { getPgPool } from '@dhcb/core-db/pgPool'
@@ -188,6 +188,15 @@ function startReminderScheduler() {
     console.log('   Nhắc học Web Push : tắt (chưa cấu hình VAPID keys)')
   } else {
     console.log('   Nhắc học Web Push : bật (gửi đúng giờ mỗi người chọn)')
+    if (isLeakedVapidPublicKey(process.env.VAPID_PUBLIC_KEY)) {
+      console.error(
+        '🔴 [security] VAPID key đang dùng là cặp khoá ĐÃ LỘ trong lịch sử git public. ' +
+          'Tạo cặp mới và thay VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY trong .env (docs/changelog/0465).',
+      )
+      captureServerException(new Error('VAPID key đã lộ vẫn đang được dùng'), {
+        context: 'vapid-leaked-key',
+      })
+    }
   }
 
   // Khởi tạo = giờ hiện tại để BỎ QUA phần giờ dở dang lúc server vừa bật

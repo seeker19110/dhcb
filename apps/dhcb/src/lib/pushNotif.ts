@@ -57,12 +57,20 @@ export async function subscribePush(remindHour?: number): Promise<PushActionResu
     if (permission !== 'granted') return { status: 'failed' }
 
     // Subscribe push (Notification.requestPermission đã hỏi ở trên)
-    const existing = await reg.pushManager.getSubscription()
+    const serverKey = urlBase64ToUint8Array(publicKey)
+    let existing = await reg.pushManager.getSubscription()
+    // Subscription cũ gắn với khoá VAPID CŨ (server đã xoay khoá, vd sau sự cố lộ khoá
+    // 2026-09-27) thì dịch vụ push từ chối mọi thông báo — dùng lại nó là người dùng âm thầm
+    // mất nhắc học mãi mãi. Khác khoá → huỷ rồi đăng ký lại bằng khoá hiện tại.
+    if (existing && isDifferentServerKey(existing.options?.applicationServerKey, serverKey)) {
+      await existing.unsubscribe().catch(() => false)
+      existing = null
+    }
     const sub =
       existing ??
       (await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey) as unknown as ArrayBuffer,
+        applicationServerKey: serverKey as unknown as ArrayBuffer,
       }))
     browserUpdated = true
 
@@ -128,6 +136,20 @@ export async function unsubscribePush(): Promise<PushActionResult> {
       ? { status: 'partial', serverUpdated: true, browserUpdated: false }
       : { status: 'failed' }
   }
+}
+
+/**
+ * Khoá VAPID mà subscription hiện có đang gắn có KHÁC khoá server trả về không. Trình duyệt cũ
+ * không báo khoá (`null`/không có) → coi như không biết, giữ subscription như hành vi cũ.
+ */
+export function isDifferentServerKey(
+  current: ArrayBuffer | null | undefined,
+  serverKey: Uint8Array,
+): boolean {
+  if (!current) return false
+  const bytes = new Uint8Array(current)
+  if (bytes.length !== serverKey.length) return true
+  return bytes.some((b, i) => b !== serverKey[i])
 }
 
 // Chuyển VAPID public key từ base64url sang Uint8Array (PushManager yêu cầu)

@@ -61,6 +61,33 @@ describe('chatPush: notifyOfflinePeers', () => {
     )
   })
 
+  it('CHẶN HỒI QUY 2026-09-27: KHÔNG gửi tới endpoint ngoài dịch vụ push (SSRF/lộ IP origin)', async () => {
+    vi.spyOn(redisChatModule, 'isOnline').mockResolvedValue(false)
+    const queryMock = vi.fn().mockImplementation((query: string) => {
+      if (query.includes('push_subscriptions')) {
+        return Promise.resolve({
+          rows: [
+            { endpoint: 'https://attacker.example/x', p256dh: 'p', auth_key: 'a' },
+            { endpoint: 'https://127.0.0.1:6379/', p256dh: 'p', auth_key: 'a' },
+            { endpoint: 'https://fcm.googleapis.com/fcm/send/ok', p256dh: 'p', auth_key: 'a' },
+          ],
+        })
+      }
+      return Promise.resolve({ rows: [] })
+    })
+    vi.spyOn(pgPoolModule, 'getPgPool').mockReturnValue({
+      query: queryMock,
+    } as unknown as ReturnType<typeof pgPoolModule.getPgPool>)
+    const sendPushMock = vi.spyOn(webpush, 'sendNotification').mockResolvedValue({} as never)
+
+    await notifyOfflinePeers(['peer-1'], 'sender-1', 'room-1', 'hi')
+
+    expect(sendPushMock).toHaveBeenCalledTimes(1)
+    expect(sendPushMock.mock.calls[0]?.[0]).toMatchObject({
+      endpoint: 'https://fcm.googleapis.com/fcm/send/ok',
+    })
+  })
+
   it('xử lý khi người dùng không có subscription hoặc query bị lỗi', async () => {
     vi.spyOn(redisChatModule, 'isOnline').mockResolvedValue(false)
 

@@ -3,6 +3,7 @@
 
 import webpush from 'web-push'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { isAllowedPushEndpoint } from '@dhcb/core-contracts/pushSubscription'
 import { isOnline } from './redisChat.js'
 
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY ?? ''
@@ -92,6 +93,10 @@ export async function notifyOfflinePeers(
 
       await Promise.all(
         subsRes.rows.map(async (sub) => {
+          // Chỉ gửi tới dịch vụ push thật: mỗi tin nhắn chat là một lần server POST tới
+          // endpoint — không lọc thì kẻ xấu biến chat thành công cụ SSRF/dò IP origin theo ý
+          // muốn (vá 2026-09-27, xem core-contracts/pushSubscription.ts).
+          if (!isAllowedPushEndpoint(sub.endpoint)) return
           try {
             await webpush.sendNotification(
               {

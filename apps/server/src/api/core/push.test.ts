@@ -87,7 +87,7 @@ function mockPool(opts: {
 
 const sub = (id: string): Row => ({
   user_id: id,
-  endpoint: `https://push.example/${id}`,
+  endpoint: `https://fcm.googleapis.com/fcm/send/${id}`,
   p256dh: 'p256dh',
   auth_key: 'auth',
 })
@@ -473,7 +473,7 @@ describe('sendReminders — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)',
     const deleteCall = queryLog.find((q) =>
       q.sql.startsWith('delete from public.push_subscriptions where endpoint'),
     )
-    expect(deleteCall?.params?.[0]).toEqual(['https://push.example/u11'])
+    expect(deleteCall?.params?.[0]).toEqual(['https://fcm.googleapis.com/fcm/send/u11'])
   })
 
   it('sendNotification thất bại với statusCode KHÁC 410/404 (vd 500) → không tính hết hạn, không xoá', async () => {
@@ -565,7 +565,10 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       method: 'POST',
       body: JSON.stringify({
         action: 'subscribe',
-        subscription: { endpoint: 'https://push.example/dev1', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev1',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
@@ -592,7 +595,7 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
     expect(json.error).toBe('Thiếu dữ liệu subscription')
   })
 
-  it('subscribe: DB insert lỗi → 500 kèm message lỗi thật', async () => {
+  it('subscribe: DB insert lỗi → 500 với thông báo chung (không lộ lỗi CSDL)', async () => {
     mockedGetPool.mockReturnValue({
       query: vi.fn(async () => {
         throw new Error('duplicate key value')
@@ -602,13 +605,16 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       method: 'POST',
       body: JSON.stringify({
         action: 'subscribe',
-        subscription: { endpoint: 'https://push.example/dev2', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev2',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('duplicate key value')
+    expect(json.error).toBe('Internal server error')
   })
 
   it('subscribe: remindHour hợp lệ (0-23, có phần thập phân) → làm tròn rồi lưu', async () => {
@@ -627,7 +633,10 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       body: JSON.stringify({
         action: 'subscribe',
         remindHour: 7.6,
-        subscription: { endpoint: 'https://push.example/dev5', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev5',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
@@ -650,16 +659,19 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       method: 'POST',
       body: JSON.stringify({
         action: 'unsubscribe',
-        subscription: { endpoint: 'https://push.example/dev3', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev3',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
     expect(res.status).toBe(200)
     expect(deleteCalls).toHaveLength(1)
-    expect(deleteCalls[0]?.[1]).toBe('https://push.example/dev3')
+    expect(deleteCalls[0]?.[1]).toBe('https://fcm.googleapis.com/fcm/send/dev3')
   })
 
-  it('subscribe: DB insert ném lỗi KHÔNG PHẢI Error (vd chuỗi) → 500, message vẫn là chuỗi đọc được', async () => {
+  it('subscribe: DB insert ném lỗi KHÔNG PHẢI Error (vd chuỗi) → 500 với thông báo chung', async () => {
     mockedGetPool.mockReturnValue({
       query: vi.fn(async () => {
         // KHÔNG PHẢI Error để phủ nhánh `err instanceof Error ? ... : String(err)` bên false.
@@ -670,16 +682,19 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       method: 'POST',
       body: JSON.stringify({
         action: 'subscribe',
-        subscription: { endpoint: 'https://push.example/dev6', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev6',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('boom-string')
+    expect(json.error).toBe('Internal server error')
   })
 
-  it('unsubscribe: DB delete lỗi → 500 kèm message lỗi thật', async () => {
+  it('unsubscribe: DB delete lỗi → 500 với thông báo chung (không lộ lỗi CSDL)', async () => {
     mockedGetPool.mockReturnValue({
       query: vi.fn(async () => {
         throw new Error('connection lost')
@@ -689,16 +704,19 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       method: 'POST',
       body: JSON.stringify({
         action: 'unsubscribe',
-        subscription: { endpoint: 'https://push.example/dev4', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev4',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('connection lost')
+    expect(json.error).toBe('Internal server error')
   })
 
-  it('unsubscribe: DB delete ném lỗi KHÔNG PHẢI Error (vd chuỗi) → 500, message vẫn đọc được', async () => {
+  it('unsubscribe: DB delete ném lỗi KHÔNG PHẢI Error (vd chuỗi) → 500 với thông báo chung', async () => {
     mockedGetPool.mockReturnValue({
       query: vi.fn(async () => {
         // KHÔNG PHẢI Error để phủ nhánh `err instanceof Error ? ... : String(err)` bên false.
@@ -709,13 +727,16 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
       method: 'POST',
       body: JSON.stringify({
         action: 'unsubscribe',
-        subscription: { endpoint: 'https://push.example/dev7', keys: { p256dh: 'p', auth: 'a' } },
+        subscription: {
+          endpoint: 'https://fcm.googleapis.com/fcm/send/dev7',
+          keys: { p256dh: 'p', auth: 'a' },
+        },
       }),
     })
     const res = await handler(req)
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('boom-string-2')
+    expect(json.error).toBe('Internal server error')
   })
 
   it('send-daily: KHÔNG truyền hour → dùng giờ UTC hiện tại của server (fallback)', async () => {
@@ -752,7 +773,7 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
     expect(json.deleted).toBe(0)
   })
 
-  it('clear-all: DB lỗi → 500 kèm message lỗi thật', async () => {
+  it('clear-all: DB lỗi → 500 với thông báo chung (không lộ lỗi CSDL)', async () => {
     mockedGetPool.mockReturnValue({
       query: vi.fn(async () => {
         throw new Error('table locked')
@@ -765,10 +786,10 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
     const res = await handler(req)
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('table locked')
+    expect(json.error).toBe('Internal server error')
   })
 
-  it('clear-all: DB ném lỗi KHÔNG PHẢI Error (vd chuỗi) → 500, message vẫn đọc được', async () => {
+  it('clear-all: DB ném lỗi KHÔNG PHẢI Error (vd chuỗi) → 500 với thông báo chung', async () => {
     mockedGetPool.mockReturnValue({
       query: vi.fn(async () => {
         // KHÔNG PHẢI Error để phủ nhánh `err instanceof Error ? ... : String(err)` bên false.
@@ -782,7 +803,7 @@ describe('api/push default handler — nhánh còn thiếu (Đợt 2 coverage 20
     const res = await handler(req)
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('boom-string-3')
+    expect(json.error).toBe('Internal server error')
   })
 })
 
@@ -803,5 +824,106 @@ describe('api/push default handler — thiếu VAPID (Đợt 2 coverage 2026-09-
     // Khôi phục cho tiến trình (module cache đã bị reset ở test trên).
     vi.stubEnv('VAPID_PUBLIC_KEY', 'pub-test')
     vi.stubEnv('VAPID_PRIVATE_KEY', 'priv-test')
+  })
+})
+
+describe('api/push — chống SSRF qua endpoint + rate limit (vá 2026-09-27)', () => {
+  let handler: typeof import('./push.js').default
+  let cronSecretMatches: typeof import('./push.js').cronSecretMatches
+  let sendRemindersFresh: typeof import('./push.js').sendReminders
+
+  beforeAll(async () => {
+    vi.resetModules()
+    vi.stubEnv('VAPID_PUBLIC_KEY', 'pub-test')
+    vi.stubEnv('VAPID_PRIVATE_KEY', 'priv-test')
+    vi.stubEnv('CRON_SECRET', 'test-cron-secret')
+    vi.stubEnv('SKIP_AUTH', 'true')
+    vi.stubEnv('NODE_ENV', 'test')
+    vi.stubEnv('VERCEL_ENV', undefined)
+    const mod = await import('./push.js')
+    handler = mod.default
+    cronSecretMatches = mod.cronSecretMatches
+    sendRemindersFresh = mod.sendReminders
+  })
+
+  const subscribeReq = (endpoint: string, ip = '198.51.100.1') =>
+    new Request('https://example.com/api/push', {
+      method: 'POST',
+      headers: { 'x-real-ip': ip },
+      body: JSON.stringify({
+        action: 'subscribe',
+        subscription: { endpoint, keys: { p256dh: 'p', auth: 'a' } },
+      }),
+    })
+
+  it.each([
+    'https://attacker.example/collect',
+    'https://127.0.0.1/internal',
+    'https://localhost:6379/',
+    'https://fcm.googleapis.com:8443/fcm/send/x',
+    'http://fcm.googleapis.com/fcm/send/x',
+    'https://fcm.googleapis.com.attacker.example/fcm/send/x',
+  ])('subscribe endpoint ngoài dịch vụ push (%s) → 400, không ghi DB', async (endpoint) => {
+    const query = vi.fn()
+    mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+    const res = await handler(subscribeReq(endpoint))
+    expect(res.status).toBe(400)
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('sendReminders KHÔNG gửi tới dòng cũ trong DB có endpoint ngoài danh sách', async () => {
+    mockedGetPool.mockReturnValue(
+      mockPool({
+        subs: [
+          { user_id: 'u1', endpoint: 'https://attacker.example/x', p256dh: 'p', auth_key: 'a' },
+          {
+            user_id: 'u2',
+            endpoint: 'https://fcm.googleapis.com/fcm/send/ok',
+            p256dh: 'p',
+            auth_key: 'a',
+          },
+        ],
+      }),
+    )
+    const result = await sendRemindersFresh(13)
+    expect(mockedSend).toHaveBeenCalledTimes(1)
+    expect(mockedSend.mock.calls[0]?.[0].endpoint).toBe('https://fcm.googleapis.com/fcm/send/ok')
+    expect(result.skipped).toBe(1)
+  })
+
+  it('quá 30 lượt/phút cùng một IP → 429', async () => {
+    const statuses: number[] = []
+    for (let i = 0; i < 31; i++) {
+      const res = await handler(
+        new Request('https://example.com/api/push', {
+          method: 'POST',
+          headers: { 'x-real-ip': '203.0.113.250' },
+          body: JSON.stringify({ action: 'vapid-key' }),
+        }),
+      )
+      statuses.push(res.status)
+    }
+    expect(statuses.slice(0, 30).every((s) => s === 200)).toBe(true)
+    expect(statuses[30]).toBe(429)
+  })
+
+  it('cronSecretMatches: đúng khoá mới qua; sai/thiếu/không phải chuỗi đều trượt', () => {
+    expect(cronSecretMatches('test-cron-secret')).toBe(true)
+    expect(cronSecretMatches('test-cron-secreT')).toBe(false)
+    expect(cronSecretMatches('')).toBe(false)
+    expect(cronSecretMatches(undefined)).toBe(false)
+    expect(cronSecretMatches(123)).toBe(false)
+  })
+})
+
+describe('isLeakedVapidPublicKey (khoá VAPID đã lộ trong lịch sử git — 2026-09-27)', () => {
+  it('nhận ra đúng khoá đã lộ (kể cả thừa khoảng trắng), bỏ qua khoá khác/rỗng', async () => {
+    const { isLeakedVapidPublicKey, LEAKED_VAPID_PUBLIC_KEYS } = await import('./push.js')
+    const leaked = LEAKED_VAPID_PUBLIC_KEYS[0] ?? ''
+    expect(isLeakedVapidPublicKey(leaked)).toBe(true)
+    expect(isLeakedVapidPublicKey(` ${leaked}\n`)).toBe(true)
+    expect(isLeakedVapidPublicKey('BNewlyGeneratedKey')).toBe(false)
+    expect(isLeakedVapidPublicKey('')).toBe(false)
+    expect(isLeakedVapidPublicKey(undefined)).toBe(false)
   })
 })
