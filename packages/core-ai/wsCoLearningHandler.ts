@@ -2,7 +2,7 @@
 // Gắn vào http.Server tại route /ws/co-learning-room, xác thực bằng session cookie.
 import type { Server as HttpServer, IncomingMessage } from 'node:http'
 import { WebSocketServer, WebSocket } from 'ws'
-import { validateAuth } from '@dhcb/core-auth/security'
+import { isAllowedWebSocketOrigin, validateAuth } from '@dhcb/core-auth/security'
 import {
   processAudioChunk,
   joinAudioRoom,
@@ -57,6 +57,12 @@ export function attachCoLearningWebSocketServer(server: HttpServer): void {
   server.on('upgrade', (req, socket, head) => {
     const url = new URL(req.url ?? '', 'http://localhost')
     if (url.pathname !== WS_CO_LEARNING_PATH) return // Nhường các WebSocket route khác
+    // Chống Cross-Site WebSocket Hijacking: chỉ nhận upgrade từ origin tin cậy (vá 2026-09-27).
+    if (!isAllowedWebSocketOrigin(req.headers.origin)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n')
+      socket.destroy()
+      return
+    }
 
     authenticateUpgrade(req)
       .then((auth) => {
