@@ -1,3 +1,4 @@
+import { readVerifiedCefrExams } from './cefrAssessment.js'
 // api/_lib/achievementRewards.ts — Phần thưởng (ngày VIP) cho HUY HIỆU & MỐC, migration
 // 0026. Admin cấu hình từng huy hiệu qua api/admin-achievement-rewards.ts (bảng
 // achievement_rewards); người dùng nhận thưởng qua api/achievements.ts (bảng
@@ -13,6 +14,7 @@
 // với CEFR_EXAM_LEVELS).
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 import { getCurrentStreak } from './quests.js'
 import type { Plan } from '@dhcb/core-billing/plan'
@@ -152,7 +154,7 @@ async function computeServerStats(userId: string): Promise<ServerStats> {
     ])
 
   const learned = progressRes.rows[0]?.learned ?? []
-  const cefrExams = progressRes.rows[0]?.cefr_exams ?? {}
+  const cefrExams = await readVerifiedCefrExams(pool, userId)
 
   return {
     streak,
@@ -252,18 +254,27 @@ export async function claimAchievementReward(
     }
 
     const pool = getPgPool()
-    const { rowCount } = await pool.query(
-      `insert into public.achievement_claims (user_id, achievement_id)
-       values ($1, $2)
-       on conflict (user_id, achievement_id) do nothing`,
-      [userId, id],
-    )
-    if (rowCount === 0) {
-      return { ok: false, message: 'Bạn đã nhận thưởng huy hiệu này rồi.' }
-    }
+    return await withTransaction(pool, async (client): Promise<ClaimAchievementResult> => {
+      const { rowCount } = await client.query(
+        `insert into public.achievement_claims (user_id, achievement_id)
+         values ($1, $2)
+         on conflict (user_id, achievement_id) do nothing`,
+        [userId, id],
+      )
+      if (rowCount === 0) {
+        return { ok: false, message: 'Bạn đã nhận thưởng huy hiệu này rồi.' }
+      }
 
-    await grantPlanDays(userId, rewardConfig.rewardPlan, rewardConfig.rewardDays)
-    return { ok: true, rewardDays: rewardConfig.rewardDays, rewardPlan: rewardConfig.rewardPlan }
+      // Claim chỉ có hiệu lực khi quyền lợi đã được cấp trong cùng transaction.
+      await grantPlanDays(
+        userId,
+        rewardConfig.rewardPlan,
+        rewardConfig.rewardDays,
+        new Date(),
+        client,
+      )
+      return { ok: true, rewardDays: rewardConfig.rewardDays, rewardPlan: rewardConfig.rewardPlan }
+    })
   } catch (err) {
     console.error('[achievementRewards] claimAchievementReward lỗi:', err)
     return { ok: false, message: 'Có lỗi xảy ra, thử lại sau nhé.' }

@@ -1,7 +1,15 @@
 // api/co-learning-audio.test.ts — Tests cho REST handler co-learning-audio
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import handler from './co-learning-audio.js'
-import { _resetAudioCoLearningStateForTests } from '@dhcb/core-ai/audioCoLearningService'
+import {
+  _resetAudioCoLearningStateForTests,
+  createAudioRoom,
+} from '@dhcb/core-ai/audioCoLearningService'
+
+import { generateChatText } from '@dhcb/core-ai/chatFallback'
+import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
+vi.mock('@dhcb/core-ai/chatFallback', () => ({ generateChatText: vi.fn() }))
+vi.mock('@dhcb/core-billing/usage', () => ({ checkAndConsumeUsage: vi.fn(), refundUsage: vi.fn() }))
 
 // Mock validateAuth
 vi.mock('@dhcb/core-auth/security', () => ({
@@ -21,6 +29,9 @@ vi.mock('@dhcb/core-auth/security', () => ({
 describe('api/co-learning-audio', () => {
   beforeEach(() => {
     _resetAudioCoLearningStateForTests()
+    vi.mocked(generateChatText).mockReset().mockResolvedValue('Vì sao bạn chọn cách giải đó?')
+    vi.mocked(checkAndConsumeUsage).mockReset().mockResolvedValue({ ok: true, day: '2026-09-27' })
+    vi.mocked(refundUsage).mockReset().mockResolvedValue(undefined)
   })
 
   it('should return 401 if unauthenticated', async () => {
@@ -225,6 +236,49 @@ describe('api/co-learning-audio', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.event.socraticType ?? data.event.payload?.socraticType).toBe('clarification')
+  })
+
+  it('người ngoài phòng không thể giả danh moderator', async () => {
+    const room = createAudioRoom({
+      hostPersonId: 'another-user',
+      hostDisplayName: 'Other',
+      topic: 'AI',
+      subject: 'english',
+    })!
+    const res = await post('request_hint', { roomId: room.id, hintText: 'Tin nhắn giả mạo' })
+    expect(res.status).toBe(403)
+    expect(checkAndConsumeUsage).not.toHaveBeenCalled()
+    expect(generateChatText).not.toHaveBeenCalled()
+  })
+
+  it('bỏ qua hintText client, trừ quota auth user và chặn request lặp', async () => {
+    const roomId = await taoPhong()
+    const res = await post('request_hint', {
+      roomId,
+      hintText: 'Tin giả',
+      personId: 'another-user',
+    })
+    expect(res.status).toBe(200)
+    expect((await res.json()).event.payload.hint).toBe('Vì sao bạn chọn cách giải đó?')
+    expect(checkAndConsumeUsage).toHaveBeenCalledExactlyOnceWith('user-test-123', 'chat')
+    expect((await post('request_hint', { roomId })).status).toBe(429)
+    expect(generateChatText).toHaveBeenCalledTimes(1)
+  })
+
+  it('hết quota → 429, không gọi provider', async () => {
+    const roomId = await taoPhong()
+    vi.mocked(checkAndConsumeUsage).mockResolvedValue({ ok: false, message: 'Hết lượt' })
+    expect((await post('request_hint', { roomId })).status).toBe(429)
+    expect(generateChatText).not.toHaveBeenCalled()
+  })
+
+  it('provider không khả dụng → câu mẫu gắn nhãn fallback và hoàn lượt', async () => {
+    const roomId = await taoPhong()
+    vi.mocked(generateChatText).mockResolvedValue(null)
+    const res = await post('request_hint', { roomId })
+    expect(res.status).toBe(200)
+    expect((await res.json()).event.payload.isFallback).toBe(true)
+    expect(refundUsage).toHaveBeenCalledExactlyOnceWith('user-test-123', 'chat', '2026-09-27')
   })
 
   it('action lạ → 400; body không phải JSON → 400; method khác → 405', async () => {

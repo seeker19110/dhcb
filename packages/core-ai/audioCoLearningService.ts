@@ -6,6 +6,7 @@
 //   - Budget guard: tối đa 100 phòng đồng thời (in-memory), mỗi phòng ≤ 12 người
 
 import { randomUUID } from 'node:crypto'
+import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
 import { generateChatText } from './chatFallback.js'
 import type {
   AudioRoomState,
@@ -15,6 +16,7 @@ import type {
 import {
   AudioRoomStateSchema,
   AudioRoomEventSchema,
+  AudioChunkBase64Schema,
 } from '@dhcb/core-contracts/audioCoLearningRoom'
 
 const MAX_ROOMS = 100
@@ -26,6 +28,8 @@ const activeRooms = new Map<string, AudioRoomState>()
 
 // Track thời điểm lần cuối có ai nói trong phòng (để trigger AI moderator)
 const roomLastSpeakingAt = new Map<string, number>()
+const AI_HINT_COOLDOWN_MS = 30_000
+const roomModeratorRequests = new Map<string, { inFlight: boolean; nextAllowedAt: number }>()
 
 // ─── Sự kiện handler type ─────────────────────────────────────────────────────
 export type AudioRoomEventHandler = (event: AudioRoomEvent) => void
@@ -67,6 +71,7 @@ function emitRoomEvent(roomId: string, event: AudioRoomEvent): void {
 export function _resetAudioCoLearningStateForTests(): void {
   activeRooms.clear()
   roomLastSpeakingAt.clear()
+  roomModeratorRequests.clear()
   roomEventHandlers.clear()
 }
 
@@ -200,6 +205,8 @@ export function leaveAudioRoom(roomId: string, personId: string): boolean {
     emitRoomEvent(roomId, buildEvent(roomId, 'room_closed', 'system', 'Hệ thống'))
     activeRooms.delete(roomId)
     roomLastSpeakingAt.delete(roomId)
+    roomModeratorRequests.delete(roomId)
+    roomEventHandlers.delete(roomId)
   }
 
   return true
@@ -223,13 +230,19 @@ export function processAudioChunk(params: {
   silenceDurationMs: number
 } {
   const room = activeRooms.get(params.roomId)
-  if (!room) {
+  const member = room?.members.find((m) => m.personId === params.senderPersonId)
+  if (
+    !room?.isActive ||
+    !member ||
+    member.isMuted ||
+    !AudioChunkBase64Schema.safeParse(params.audioBase64).success
+  ) {
     return { relayTo: [], isSpeaking: false, shouldTriggerAiModerator: false, silenceDurationMs: 0 }
   }
 
   // Tính RMS từ PCM hoặc dùng audioLevel truyền vào
   let rms = params.audioLevel ?? 0
-  if (!params.audioLevel && params.audioBase64) {
+  if (params.audioLevel === undefined && params.audioBase64) {
     try {
       const raw = Buffer.from(params.audioBase64, 'base64')
       // Tính RMS đơn giản từ PCM 16-bit
@@ -250,7 +263,6 @@ export function processAudioChunk(params: {
   const now = Date.now()
 
   // Cập nhật trạng thái thành viên
-  const member = room.members.find((m) => m.personId === params.senderPersonId)
   if (member) {
     const wasSpeaking = member.isSpeaking
     member.audioLevel = Math.min(1, rms)
@@ -281,7 +293,10 @@ export function processAudioChunk(params: {
   const lastSpeaking = roomLastSpeakingAt.get(params.roomId) ?? now
   const silenceDurationMs = now - lastSpeaking
   const shouldTriggerAiModerator =
-    silenceDurationMs >= room.silenceThresholdMs && room.members.length >= 2
+    silenceDurationMs >= room.silenceThresholdMs &&
+    room.members.length >= 2 &&
+    !roomModeratorRequests.get(params.roomId)?.inFlight &&
+    now >= (roomModeratorRequests.get(params.roomId)?.nextAllowedAt ?? 0)
 
   // Danh sách peer cần relay (trừ sender)
   const relayTo = room.members
@@ -301,7 +316,7 @@ export function processAudioChunk(params: {
 // ("Các bạn có thắc mắc gì về chủ đề X…") nhưng dán nhãn "🤖 Đồng Hành AI" — người học tưởng
 // AI đang theo dõi buổi học. Nay hỏi model thật; không gọi được thì vẫn có câu mặc định nhưng
 // `isFallback: true` để giao diện nói rõ đó là câu mẫu.
-export async function generateAiSocraticHint(
+async function generateAiSocraticHint(
   topic: string,
 ): Promise<{ hint: string; isFallback: boolean }> {
   const fallback = `Các bạn có thắc mắc gì về chủ đề "${topic}" cần tôi giải thích thêm không?`
@@ -309,7 +324,7 @@ export async function generateAiSocraticHint(
   const text = await generateChatText({
     system:
       'Bạn là người điều phối buổi học nhóm theo lối Socratic trong ứng dụng học tiếng Anh. ' +
-      'Cả nhóm vừa im lặng một lúc. Hãy đặt ĐÚNG MỘT câu hỏi ngắn bằng tiếng Việt (tối đa 30 từ) ' +
+      'Cả nhóm cần gợi ý để tiếp tục thảo luận. Hãy đặt ĐÚNG MỘT câu hỏi ngắn bằng tiếng Việt (tối đa 30 từ) ' +
       'để khơi lại thảo luận: gợi mở, cụ thể, bám sát chủ đề, KHÔNG hỏi chung chung kiểu ' +
       '"có thắc mắc gì không". Chỉ trả về câu hỏi, không thêm lời dẫn.',
     userMessage: `Chủ đề buổi học: "${topic}".`,
@@ -318,6 +333,63 @@ export async function generateAiSocraticHint(
   })
 
   return text ? { hint: text, isFallback: false } : { hint: fallback, isFallback: true }
+}
+
+/** Cả hai đường audio dùng chung khóa phòng và hạn mức của người gửi đã xác thực. */
+export async function requestAiSocraticHint(
+  roomId: string,
+  requestingUserId: string,
+  socraticType: 'clarification' | 'probing_reasons' | 'probing_assumptions',
+  trigger: 'silence' | 'manual' = 'silence',
+): Promise<AudioRoomEvent | null> {
+  const room = activeRooms.get(roomId)
+  const member = room?.members.find((m) => m.personId === requestingUserId)
+  const now = Date.now()
+  const prior = roomModeratorRequests.get(roomId)
+  if (
+    !room?.isActive ||
+    !member ||
+    member.isMuted ||
+    room.members.length < (trigger === 'silence' ? 2 : 1) ||
+    (trigger === 'silence' &&
+      now - (roomLastSpeakingAt.get(roomId) ?? now) < room.silenceThresholdMs) ||
+    prior?.inFlight ||
+    now < (prior?.nextAllowedAt ?? 0)
+  )
+    return null
+
+  // Giữ khóa trước await đầu tiên: nhiều chunk/cả hai transport chỉ trừ một lượt.
+  const request = { inFlight: true, nextAllowedAt: now + AI_HINT_COOLDOWN_MS }
+  roomModeratorRequests.set(roomId, request)
+  let chargedDay: string | undefined
+  try {
+    const usage = await checkAndConsumeUsage(requestingUserId, 'chat')
+    if (!usage.ok) return null
+    chargedDay = usage.day
+    // Người gửi có thể đã rời phòng trong lúc chờ DB.
+    if (
+      !room.isActive ||
+      room.members.length < (trigger === 'silence' ? 2 : 1) ||
+      member.isMuted ||
+      !room.members.includes(member)
+    ) {
+      await refundUsage(requestingUserId, 'chat', chargedDay)
+      chargedDay = undefined
+      return null
+    }
+    const { hint, isFallback } = await generateAiSocraticHint(room.topic)
+    if (isFallback) {
+      await refundUsage(requestingUserId, 'chat', chargedDay)
+      chargedDay = undefined
+    }
+    return broadcastAiSocraticHint(roomId, hint, socraticType, isFallback)
+  } catch {
+    if (chargedDay) await refundUsage(requestingUserId, 'chat', chargedDay)
+    return null
+  } finally {
+    request.inFlight = false
+    request.nextAllowedAt = Date.now() + AI_HINT_COOLDOWN_MS
+  }
 }
 
 export function broadcastAiSocraticHint(

@@ -86,6 +86,32 @@ beforeEach(() => {
 })
 
 describe('ContextEngine - buildContextPackage', () => {
+  it('không cho provenance tự nhập giả làm lịch sử Companion, và đếm cả nhãn nguồn', async () => {
+    memoryService.listMemoryRecords.mockImplementation(async (_pool, _personId, opts) =>
+      opts?.namespace === 'episodic'
+        ? [
+            {
+              id: MEMORY_ID,
+              namespace: 'episodic',
+              content: 'Nội dung tự nhập',
+              provenance: 'companion_message:companion:learning',
+              sensitivity: 'personal',
+            },
+          ]
+        : [],
+    )
+    const pkg = await buildContextPackage(mockPool, {
+      personId: PERSON,
+      requestId: 'spoofed-provenance',
+      requestText: 'Xin chào',
+      domain: 'learning',
+      purpose: 'tutoring',
+    })
+    const item = pkg.items.find((candidate) => candidate.sourceId === MEMORY_ID)
+    expect(item?.provenance).toBe('personal_memory:companion_message:companion:learning')
+    expect(item?.tokenEstimate).toBe(Math.ceil('[episodic] Nội dung tự nhập'.length / 3.5))
+  })
+
   it('builds a full ContextPackage with correct selection order', async () => {
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -240,7 +266,7 @@ describe('buildContextPackage — nhánh biên', () => {
 
     const episodic = pkg.items.find((i) => i.sourceType === 'recent_episodic_context')
     expect(episodic?.content).toContain('[episodic]')
-    expect(episodic?.provenance).toBe('session_log')
+    expect(episodic?.provenance).toBe('personal_memory:session_log')
   })
 
   it('câu hỏi rỗng (chỉ khoảng trắng) → không có mục current_request', async () => {
@@ -421,4 +447,119 @@ describe('buildContextPackage — lưới an toàn cho mức nhạy cảm lạ',
 
     expect(pkg.items.some((i) => i.sourceType === 'user_declared_fact')).toBe(false)
   })
+})
+
+describe('lịch sử Companion đi qua Context Engine', () => {
+  const message = {
+    id: '55555555-5555-4555-8555-555555555555',
+    role: 'user',
+    content: 'Riêng tư cùng miền',
+    domain: 'learning',
+    intent: null,
+    created_at: new Date('2026-09-27T00:00:00Z'),
+  }
+  const options = {
+    personId: PERSON,
+    requestId: 'history',
+    requestText: 'Xin chào',
+    domain: 'learning',
+    purpose: 'companion_conversation',
+    includeCompanionHistory: true,
+  }
+  beforeEach(() => {
+    lifeGraph.listNodes.mockResolvedValue([])
+    personService.listFacts.mockResolvedValue([])
+    memoryService.listMemoryRecords.mockResolvedValue([])
+  })
+
+  it('cùng miền, đủ consent và budget → ghi provenance, tính token', async () => {
+    const query = vi.fn(async () => ({ rows: [message] }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+    const history = pkg.items.find((item) => item.provenance.startsWith('companion_message:'))
+    expect(history?.content).toBe(message.content)
+    expect(history?.sensitivity).toBe('sensitive')
+    expect(pkg.tokenUsed).toBe(pkg.items.reduce((sum, item) => sum + item.tokenEstimate, 0))
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('and domain = $3'), [
+      PERSON,
+      10,
+      'learning',
+      ['public', 'personal', 'sensitive'],
+    ])
+  })
+
+  it.each(['personal_memory', 'learning'])(
+    'consent %s bị thu hồi → không truy vấn lịch sử',
+    async (scope) => {
+      consents.isConsentActive.mockImplementation(
+        async (_pool, _person, queriedScope) => queriedScope !== scope,
+      )
+      const query = vi.fn(async () => ({ rows: [message] }))
+      const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+      expect(query).not.toHaveBeenCalled()
+      expect(pkg.items.some((item) => item.provenance.startsWith('companion_message:'))).toBe(false)
+    },
+  )
+
+  it('lọc chéo miền, null domain và policy DENY', async () => {
+    const query = vi.fn(async () => ({
+      rows: [message, { ...message, domain: 'life' }, { ...message, domain: null }],
+    }))
+    policies.resolveAuthority.mockImplementation(async (_pool, _person, type) =>
+      type === 'recent_episodic_context' ? 'DENY' : null,
+    )
+    const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+    expect(pkg.items).toHaveLength(1)
+  })
+
+  it('giới hạn nhạy cảm chặn transcript chưa phân loại chi tiết', async () => {
+    const query = vi.fn(async () => ({ rows: [message] }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, {
+      ...options,
+      maxSensitivity: 'personal',
+    })
+    expect(pkg.items).toHaveLength(1)
+  })
+
+  it('ngân sách nhỏ không cho lịch sử vượt giới hạn', async () => {
+    const query = vi.fn(async () => ({ rows: [message] }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, {
+      ...options,
+      tokenBudget: 3,
+    })
+    expect(pkg.items.some((item) => item.provenance.startsWith('companion_message:'))).toBe(false)
+    expect(pkg.tokenUsed).toBeLessThanOrEqual(3)
+  })
+
+  it('DB lịch sử lỗi → bỏ lịch sử, không fallback bỏ scope', async () => {
+    const query = vi.fn(async () => {
+      throw new Error('DB unavailable')
+    })
+    const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+    expect(pkg.items).toHaveLength(1)
+    expect(query).toHaveBeenCalledTimes(1)
+  })
+})
+
+it('history cùng người nhưng khác miền/thiếu miền không bao giờ vào context', async () => {
+  lifeGraph.listNodes.mockResolvedValue([])
+  personService.listFacts.mockResolvedValue([])
+  memoryService.listMemoryRecords.mockResolvedValue([])
+  const row = {
+    id: '55555555-5555-4555-8555-555555555555',
+    role: 'user',
+    content: 'Secret life',
+    intent: null,
+    created_at: new Date(),
+    domain: 'life',
+  }
+  const query = vi.fn(async () => ({ rows: [row, { ...row, domain: null }] }))
+  const pkg = await buildContextPackage({ query } as unknown as Pool, {
+    personId: PERSON,
+    requestId: 'cross-domain',
+    requestText: 'hello',
+    domain: 'learning',
+    purpose: 'companion_conversation',
+    includeCompanionHistory: true,
+  })
+  expect(pkg.items.map((item) => item.content)).toEqual(['hello'])
 })

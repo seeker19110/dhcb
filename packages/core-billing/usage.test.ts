@@ -35,7 +35,7 @@ const FAKE_SETTINGS_ROW = {
 function mockPool(opts: {
   plan?: 'free' | 'vip' | 'pro'
   planExpiresAt?: string | null
-  consumeResult?: boolean
+  consumeResult?: unknown
   queryError?: Error
   promoUntil?: string | null
   aiCircuitBreaker?: boolean
@@ -66,7 +66,11 @@ function mockPool(opts: {
     // Free VÀ VIP: cùng một hạn mức TỔNG/ngày, chỉ khác con số (GĐ1 2026-09-12) — vẫn tăng đúng
     // cột theo mode, nhưng ngưỡng chặn là SUM mọi cột (consume_usage_total, migration 0016).
     if (sql.includes('consume_usage_total'))
-      return { rows: [{ consume_usage_total: opts.consumeResult ?? true }] }
+      return {
+        rows: [
+          { consume_usage_total: Object.hasOwn(opts, 'consumeResult') ? opts.consumeResult : true },
+        ],
+      }
     if (sql.includes('refund_usage')) return { rows: [] }
     return { rows: [] }
   })
@@ -126,11 +130,14 @@ describe('checkAndConsumeUsage — gói Free (hạn mức TỔNG/ngày = hạn m
     expect(sqls.some((s) => s.includes('consume_rolling_credit'))).toBe(false)
   })
 
-  it('DB lỗi (query throw) → FAIL-OPEN (cho qua)', async () => {
+  it('DB lỗi (query throw) → từ chối provider', async () => {
     mockedGetPool.mockReturnValue(mockPool({ queryError: new Error('db down') }))
-    const r = await checkAndConsumeUsage('u1', 'chat')
-    expect(r.ok).toBe(true)
-    if (r.ok) expect(r.day).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect((await checkAndConsumeUsage('u1', 'chat')).ok).toBe(false)
+  })
+
+  it.each([undefined, null, 'true', 1])('SQL trả %s thay vì true → từ chối', async (value) => {
+    mockedGetPool.mockReturnValue(mockPool({ consumeResult: value }))
+    expect((await checkAndConsumeUsage('u1', 'chat')).ok).toBe(false)
   })
 
   // Audit 2026-08-12 — phanh tay theo môn (bảng subject_limits, migration 0029). Trước đây

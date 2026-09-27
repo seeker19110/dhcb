@@ -25,7 +25,7 @@ export default function ExamQuestionCard({
   nextLabel,
   rate,
 }: {
-  q: ExamQuestion
+  q: Omit<ExamQuestion, 'correct'> & { correct?: string }
   isA: boolean
   accent: AccentClasses
   current: number
@@ -59,6 +59,7 @@ export default function ExamQuestionCard({
   }, [step])
 
   function feedback(opt: string) {
+    if (q.correct === undefined) return isA ? `Đã chọn: ${opt}.` : `Selected: ${opt}.`
     const correct = opt === q.correct
     return isA
       ? `${correct ? 'Đúng.' : 'Chưa đúng.'} Bạn đã chọn: ${opt}.${correct ? '' : ` Đáp án đúng: ${q.correct}.`}`
@@ -172,7 +173,12 @@ export default function ExamQuestionCard({
             // Đúng → phồng nhẹ; đáp án sai đã chọn → lắc ngang. Giống hệt mini-quiz và tab
             // Kiểm tra: phản hồi phải là quy ước của cả app, không phải đặc sản của vài màn —
             // trước đây bài nghe là loại bài DUY NHẤT trả lời xong mà màn hình đứng im.
-            if (opt === q.correct)
+            if (q.correct === undefined)
+              cls =
+                opt === selected
+                  ? 'bg-accent-500/20 border-accent-500/60 text-accent-300'
+                  : 'bg-zinc-900/40 border-zinc-800/40 text-zinc-400'
+            else if (opt === q.correct)
               cls = 'bg-accent-500/20 border-accent-500/60 text-accent-300 animate-pop-correct'
             else if (opt === selected)
               cls =

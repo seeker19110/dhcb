@@ -6,6 +6,7 @@ import {
   checkRateLimit,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
+import { AudioRoomHintRequestSchema } from '@dhcb/core-contracts/audioCoLearningRoom'
 import { getClientIp } from '@dhcb/core-http/http'
 import {
   createAudioRoom,
@@ -13,7 +14,7 @@ import {
   listActiveAudioRooms,
   joinAudioRoom,
   leaveAudioRoom,
-  broadcastAiSocraticHint,
+  requestAiSocraticHint,
   setMemberMuted,
 } from '@dhcb/core-ai/audioCoLearningService'
 
@@ -113,19 +114,17 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'request_hint') {
-        const { roomId, hintText, socraticType } = body
-        if (!roomId) {
-          return jsonResponse({ error: 'Missing roomId' }, 400)
+        const parsed = AudioRoomHintRequestSchema.safeParse(body)
+        if (!parsed.success) return jsonResponse({ error: 'Invalid roomId' }, 400)
+        const { roomId } = parsed.data
+        const room = getAudioRoom(roomId)
+        if (!room?.isActive) return jsonResponse({ error: 'Room not found or inactive' }, 404)
+        if (!room.members.some((member) => member.personId === personId)) {
+          return jsonResponse({ error: 'Bạn cần tham gia phòng trước khi yêu cầu gợi ý.' }, 403)
         }
-
-        const event = broadcastAiSocraticHint(
-          roomId,
-          hintText || 'Bạn có muốn thử phân tích bài toán này theo một hướng khác không?',
-          socraticType || 'clarification',
-        )
-
+        const event = await requestAiSocraticHint(roomId, personId, 'clarification', 'manual')
         if (!event) {
-          return jsonResponse({ error: 'Room not found or inactive' }, 404)
+          return jsonResponse({ error: 'Chưa thể tạo gợi ý lúc này. Vui lòng thử lại sau.' }, 429)
         }
 
         return jsonResponse({ success: true, event }, 200)

@@ -15,6 +15,8 @@
 
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
+import { readSessionCookie } from '@dhcb/core-auth/sessionCookie'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -86,6 +88,33 @@ export default async function handler(req: Request): Promise<Response> {
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
 
   const pool = getPgPool()
+  const userId = auth.userId
+
+  // Hồ sơ ẩn cần bật 2FA và xác minh lại đúng phiên hiện tại; đọc/xoá dữ liệu thường vẫn mở.
+  async function requirePrivateRead(): Promise<Response | null> {
+    const status = await getTwoFactorStatus(pool, userId)
+    if (!status.enabled) {
+      return jsonResponse(
+        {
+          error: 'Bật xác thực hai bước để xem dữ liệu riêng tư.',
+          code: 'TWO_FACTOR_SETUP_REQUIRED',
+        },
+        403,
+        allHeaders,
+      )
+    }
+    if (!(await hasStepUp(pool, userId, readSessionCookie(req)))) {
+      return jsonResponse(
+        {
+          error: 'Xác minh lại bằng mã hai bước để xem dữ liệu riêng tư.',
+          code: 'STEP_UP_REQUIRED',
+        },
+        403,
+        allHeaders,
+      )
+    }
+    return null
+  }
   const url = new URL(req.url)
 
   try {
@@ -96,9 +125,22 @@ export default async function handler(req: Request): Promise<Response> {
       const includeHistory = url.searchParams.get('includeHistory') === '1'
       // includeHistory = "export" — chỉ chính chủ, và personId đã lấy từ token nên luôn đúng chủ.
       if (includeHistory && !namespace) {
+        const denied = await requirePrivateRead()
+        if (denied) return denied
         return jsonResponse(await exportPersonData(pool, person), 200, allHeaders)
       }
       const facts = await listFacts(pool, person.id, { namespace, includeHistory })
+      if (
+        facts.some(
+          (fact) =>
+            fact.origin === 'derived' ||
+            fact.sensitivity === 'sensitive' ||
+            fact.sensitivity === 'restricted',
+        )
+      ) {
+        const denied = await requirePrivateRead()
+        if (denied) return denied
+      }
       return jsonResponse({ facts }, 200, allHeaders)
     }
 
@@ -151,6 +193,21 @@ export default async function handler(req: Request): Promise<Response> {
       if (!result.ok)
         return jsonResponse({ error: result.error.message }, result.error.status, allHeaders)
       const p = result.data
+
+      // PATCH có thể chỉ đổi sensitivity/confidence và trả lại nguyên value cũ.
+      // Kiểm bản ghi thuộc chính chủ trước khi cho phép hạ nhãn hoặc đọc vòng qua response.
+      const current = (await listFacts(pool, person.id, { includeHistory: true })).find(
+        (fact) => fact.id === idParam.data,
+      )
+      if (
+        current &&
+        (current.origin === 'derived' ||
+          current.sensitivity === 'sensitive' ||
+          current.sensitivity === 'restricted')
+      ) {
+        const denied = await requirePrivateRead()
+        if (denied) return denied
+      }
 
       const fact = await correctFact(pool, person.id, idParam.data, {
         // `undefined` = client không muốn đổi value (muốn xoá giá trị thì gửi `null`).

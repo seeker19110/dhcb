@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from './debate-arena.js'
 import * as security from '@dhcb/core-auth/security'
 import * as usage from '@dhcb/core-billing/usage'
+import { generateChatText } from '@dhcb/core-ai/chatFallback'
+
+// Không gọi provider thật, kể cả khi môi trường máy chạy có cấu hình AI.
+vi.mock('@dhcb/core-ai/chatFallback', () => ({ generateChatText: vi.fn() }))
 
 // Handler đã chuyển state sang platform.feature_state — mock bằng Map in-memory (hành vi giống
 // hệt Map cấp module cũ: state sống suốt file test), theo đúng khuôn pvp-arena.test.ts.
@@ -17,6 +21,12 @@ vi.mock('@dhcb/core-db/featureState', () => ({
 describe('Debate Arena API Handler (/api/debate-arena)', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    featureStore.clear()
+    vi.spyOn(usage, 'checkAndConsumeUsage').mockResolvedValue({ ok: true, day: '2026-09-27' })
+    vi.spyOn(usage, 'refundUsage').mockResolvedValue(undefined)
+    vi.mocked(generateChatText)
+      .mockReset()
+      .mockResolvedValue('Audits need clear evidence because their impact depends on enforcement.')
   })
 
   it('rejects unauthorized requests with 401', async () => {
@@ -90,6 +100,12 @@ describe('Debate Arena API Handler (/api/debate-arena)', () => {
     expect(turnData.userTurn).toBeDefined()
     expect(turnData.aiTurn).toBeDefined()
     expect(turnData.session.turns.length).toBeGreaterThanOrEqual(2)
+    expect(usage.checkAndConsumeUsage).toHaveBeenCalledWith(
+      '11111111-1111-4111-8111-111111111111',
+      'chat',
+    )
+    expect(generateChatText).toHaveBeenCalledOnce()
+    expect(usage.refundUsage).not.toHaveBeenCalled()
   })
 
   it('handles OPTIONS request with 204', async () => {
@@ -267,7 +283,7 @@ describe('Debate Arena API Handler (/api/debate-arena)', () => {
     vi.spyOn(usage, 'checkAndConsumeUsage').mockResolvedValueOnce({
       ok: false,
       message: 'Hết lượt chat hôm nay',
-    } as never)
+    })
 
     const createReq = new Request('http://localhost/api/debate-arena?action=create_session', {
       method: 'POST',
@@ -294,6 +310,31 @@ describe('Debate Arena API Handler (/api/debate-arena)', () => {
       }),
     )
     expect(turnRes.status).toBe(429)
+    expect(generateChatText).not.toHaveBeenCalled()
+    expect(usage.refundUsage).not.toHaveBeenCalled()
+  })
+
+  it('hoàn đúng lượt đã trừ khi provider không trả được câu trả lời', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    vi.mocked(generateChatText).mockResolvedValueOnce(null)
+
+    const response = await handler(
+      new Request('http://localhost/api/debate-arena?action=submit_turn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: 'provider-unavailable', content: 'Lập luận' }),
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).aiTurn.isFallback).toBe(true)
+    expect(usage.refundUsage).toHaveBeenCalledExactlyOnceWith(
+      '11111111-1111-4111-8111-111111111111',
+      'chat',
+      '2026-09-27',
+    )
   })
 
   it('sinh câu hỏi socratic moderator khi đủ 4 lượt trong vòng', async () => {

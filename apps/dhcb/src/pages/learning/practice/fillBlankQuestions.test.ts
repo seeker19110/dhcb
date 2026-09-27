@@ -217,3 +217,31 @@ describe('thống kê', () => {
     expect(() => buildFillBlankQuestions([fillers[0]], 'A', { refs: [] })).toThrow()
   })
 })
+
+describe('giới hạn dựng câu trong phiên học', () => {
+  it('chỉ xếp hạng distractor cho số câu cần dùng, vẫn quét qua câu lỗi', () => {
+    const pool = [
+      null,
+      ...Array.from({ length: 1000 }, (_, i) =>
+        e(`word${i}`, `từ${i}`, `A word${i} here.`, `Một từ${i}.`),
+      ),
+    ]
+    let ranks = 0
+    const result = buildFillBlankQuestions(pool, 'A', {
+      maxQuestions: 10,
+      rank: (key) => {
+        ranks++
+        return fnvRank(key)
+      },
+    })
+    expect(result.questions).toHaveLength(10)
+    expect(result.total).toBe(11)
+    expect(ranks).toBeLessThan(11_000)
+    result.questions.forEach(assertInvariants)
+  })
+  it('audit không giới hạn vẫn kiểm đủ pool; giới hạn rỗng không tạo câu', () => {
+    expect(buildFillBlankQuestions(fillers, 'A').total).toBe(fillers.length)
+    expect(buildFillBlankQuestions(fillers, 'A', { maxQuestions: 0 }).total).toBe(0)
+    expect(() => buildFillBlankQuestions(fillers, 'A', { maxQuestions: -1 })).toThrow()
+  })
+})

@@ -12,6 +12,9 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
+const twoFactor = vi.hoisted(() => ({ getTwoFactorStatus: vi.fn(), hasStepUp: vi.fn() }))
+vi.mock('@dhcb/core-auth/twoFactor', () => twoFactor)
+
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
 
 const getOrCreatePerson = vi.fn()
@@ -21,10 +24,12 @@ vi.mock('@dhcb/core-personal/personService', () => ({
 
 const runtime = vi.hoisted(() => ({
   executeCompanionTurn: vi.fn(),
+  streamCompanionTurn: vi.fn(),
 }))
 
 vi.mock('@dhcb/core-personal/companionRuntime', () => ({
   executeCompanionTurn: (...a: unknown[]) => runtime.executeCompanionTurn(...a),
+  streamCompanionTurn: (...a: unknown[]) => runtime.streamCompanionTurn(...a),
 }))
 
 const messageService = vi.hoisted(() => ({
@@ -64,6 +69,8 @@ function req(method: string, body?: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+  twoFactor.hasStepUp.mockResolvedValue(false)
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   usageMock.checkAndConsumeUsage.mockResolvedValue({ ok: true, day: '2026-08-25' })
@@ -179,5 +186,87 @@ describe('GET /api/companion — lịch sử hội thoại', () => {
     messageService.listRecentCompanionMessages.mockRejectedValue(new Error('DB sập'))
     const res = await handler(req('GET'))
     expect(res.status).toBe(500)
+  })
+})
+
+describe('cổng dữ liệu T2 Companion', () => {
+  it('chưa bật 2FA vẫn chat, chỉ nạp context tối đa personal', async () => {
+    expect((await handler(req('POST', { message: 'hello' }))).status).toBe(200)
+    expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ maxSensitivity: 'personal' }),
+    )
+  })
+  it('đã bật nhưng phiên hết hạn vẫn chỉ nạp personal', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+    await handler(req('POST', { message: 'hello' }))
+    expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ maxSensitivity: 'personal' }),
+    )
+  })
+  it('phiên 2FA còn hiệu lực được nạp sensitive', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+    twoFactor.hasStepUp.mockResolvedValue(true)
+    await handler(req('POST', { message: 'hello' }))
+    expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ maxSensitivity: 'sensitive' }),
+    )
+  })
+  it('người gọi không thể tự nâng maxSensitivity từ request', async () => {
+    const response = await handler(req('POST', { message: 'hello', maxSensitivity: 'restricted' }))
+    expect(response.status).toBe(400)
+    expect(runtime.executeCompanionTurn).not.toHaveBeenCalled()
+  })
+  it('GET lịch sử lọc T2 ở service khi chưa step-up', async () => {
+    messageService.listRecentCompanionMessages.mockResolvedValue([])
+    await handler(req('GET'))
+    expect(messageService.listRecentCompanionMessages).toHaveBeenCalledWith(
+      expect.anything(),
+      PERSON,
+      50,
+      undefined,
+      'personal',
+    )
+  })
+  it('GET lịch sử sau step-up cho đọc mọi sensitivity của chính chủ', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+    twoFactor.hasStepUp.mockResolvedValue(true)
+    messageService.listRecentCompanionMessages.mockResolvedValue([])
+    await handler(req('GET'))
+    expect(messageService.listRecentCompanionMessages).toHaveBeenCalledWith(
+      expect.anything(),
+      PERSON,
+      50,
+      undefined,
+      'restricted',
+    )
+  })
+  it('JSON không trả raw context dù runtime có dữ liệu T2', async () => {
+    runtime.executeCompanionTurn.mockResolvedValue({
+      reply: 'hi',
+      contextPackage: { items: [{ content: 'PRIVATE_CONTEXT' }], tokenUsed: 4 },
+    })
+    const response = await handler(req('POST', { message: 'hello' }))
+    expect(await response.text()).not.toContain('PRIVATE_CONTEXT')
+  })
+  it('SSE meta không trả raw context', async () => {
+    runtime.streamCompanionTurn.mockImplementation(async function* () {
+      yield {
+        type: 'meta',
+        data: {
+          intent: 'general',
+          targetDomain: 'learning',
+          contextPackage: { items: [{ content: 'PRIVATE_CONTEXT' }], tokenUsed: 4 },
+        },
+      }
+      yield { type: 'reply_delta', data: { text: 'hello' } }
+    })
+    const response = await handler(req('POST', { message: 'hello', stream: true }))
+    const text = await response.text()
+    expect(text).toContain('event: meta')
+    expect(text).toContain('hello')
+    expect(text).not.toContain('PRIVATE_CONTEXT')
   })
 })

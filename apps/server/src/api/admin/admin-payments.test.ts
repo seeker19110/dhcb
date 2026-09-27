@@ -1,9 +1,17 @@
+import { Client } from 'pg'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import handler from './admin-payments.js'
 
 vi.mock('@dhcb/core-db/pgPool', () => {
   const query = vi.fn()
-  return { getPgPool: () => ({ query }) }
+  const transactionQuery = vi.fn((sql: string, params?: unknown[]) =>
+    ['begin', 'commit', 'rollback'].includes(sql)
+      ? Promise.resolve({ rows: [] })
+      : query(sql, params),
+  )
+  const client = { query: transactionQuery, release: vi.fn() }
+  const pool = { query, connect: vi.fn(async () => client) }
+  return { getPgPool: () => pool }
 })
 
 vi.mock('@dhcb/core-auth/security', () => ({
@@ -29,6 +37,7 @@ vi.mock('@dhcb/core-billing/planGrant', () => ({
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { validateAuth, checkRateLimit } from '@dhcb/core-auth/security'
 import { getUserById } from '@dhcb/core-auth/authService'
+import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 
 type UserInfo = Awaited<ReturnType<typeof getUserById>>
 
@@ -37,6 +46,7 @@ describe('/api/admin-payments', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    queryMock.mockReset()
   })
 
   it('từ chối người dùng chưa đăng nhập (401)', async () => {
@@ -202,5 +212,110 @@ describe('/api/admin-payments', () => {
       new Request('http://localhost/api/admin-payments', { method: 'DELETE' }),
     )
     expect(res.status).toBe(405)
+  })
+})
+
+// Mô hình READ COMMITTED + khóa dòng: trạng thái và quyền lợi chỉ lộ ra sau commit.
+describe('manual-match — nguyên tử, đồng thời và retry', () => {
+  let paid: boolean
+  let grantedDays: number
+  let failGrant: boolean
+  let cycle: 'month' | 'year'
+  let years: number
+  let lockTail: Promise<void>
+  const transactions = new Map<unknown, { days: number }>()
+  const paymentId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+  const request = () =>
+    new Request('http://localhost/api/admin-payments', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'manual-match', paymentId, email: 'buyer@example.com' }),
+    })
+
+  beforeEach(() => {
+    paid = false
+    grantedDays = 0
+    failGrant = false
+    cycle = 'month'
+    years = 1
+    lockTail = Promise.resolve()
+    transactions.clear()
+    vi.mocked(validateAuth).mockResolvedValue({ userId: 'a1' })
+    vi.mocked(getUserById).mockResolvedValue({ id: 'a1', email: 'admin@example.com' } as UserInfo)
+    vi.mocked(getPgPool().query).mockReset()
+    vi.mocked(getPgPool().query).mockImplementation(async () => ({
+      rows: [{ id: 'u99' }],
+      rowCount: 1,
+      command: 'SELECT',
+      oid: 0,
+      fields: [],
+    }))
+    vi.mocked(getPgPool().connect).mockImplementation(async () => {
+      let unlock: (() => void) | undefined
+      let stagedPaid = false
+      const staged = { days: 0 }
+      const query = vi.fn(async (sql: string) => {
+        if (sql.includes('from public.payments')) {
+          expect(sql).toContain('for update')
+          const previous = lockTail
+          lockTail = new Promise<void>((resolve) => {
+            unlock = resolve
+          })
+          await previous
+          stagedPaid = paid
+          return { rows: [{ status: stagedPaid ? 'paid' : 'pending', cycle, years }] }
+        }
+        if (sql.startsWith('update public.payments')) {
+          expect(unlock).toBeDefined()
+          stagedPaid = true
+        }
+        if (sql === 'commit') {
+          paid = stagedPaid
+          grantedDays += staged.days
+          unlock?.()
+        }
+        if (sql === 'rollback') unlock?.()
+        return { rows: [] }
+      })
+      const client = Object.assign(new Client(), { query, release: vi.fn() })
+      transactions.set(client, staged)
+      return client
+    })
+    vi.mocked(grantPlanDays).mockImplementation(async (_userId, _plan, days, _now, client) => {
+      const staged = transactions.get(client)
+      expect(staged).toBeDefined()
+      if (failGrant) {
+        failGrant = false
+        throw new Error('grant failed')
+      }
+      if (staged) staged.days += days
+      return { plan: 'vip', planExpiresAt: null }
+    })
+  })
+
+  it('hai admin khớp cùng đơn chỉ cấp đúng một lần; retry đã paid không cấp thêm', async () => {
+    const results = await Promise.all([handler(request()), handler(request())])
+    expect(results.map((result) => result.status).sort()).toEqual([200, 400])
+    expect(paid).toBe(true)
+    expect(grantedDays).toBe(30)
+    expect((await handler(request())).status).toBe(400)
+    expect(grantedDays).toBe(30)
+  })
+
+  it('cấp gói lỗi không để đơn paid, retry cấp được quyền lợi', async () => {
+    failGrant = true
+    await expect(handler(request())).rejects.toThrow('grant failed')
+    expect(paid).toBe(false)
+    expect(grantedDays).toBe(0)
+    expect((await handler(request())).status).toBe(200)
+    expect(paid).toBe(true)
+    expect(grantedDays).toBe(30)
+  })
+
+  it('khớp đơn mua nhiều năm cấp đủ thời hạn', async () => {
+    cycle = 'year'
+    years = 3
+    expect((await handler(request())).status).toBe(200)
+    expect(grantedDays).toBe(3 * 365)
   })
 })

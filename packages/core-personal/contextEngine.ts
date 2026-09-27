@@ -15,6 +15,7 @@ import { resolveAuthority } from './policyService.js'
 import { listNodes } from './lifeGraphService.js'
 import { listFacts } from './personService.js'
 import { listMemoryRecords } from './memoryService.js'
+import { listRecentCompanionMessages, COMPANION_HISTORY_TURNS } from './companionMessageService.js'
 
 type ContextItemSource = z.infer<typeof ContextItemSourceSchema>
 
@@ -26,6 +27,8 @@ export interface ContextBuildOptions {
   purpose: string
   tokenBudget?: number
   maxSensitivity?: Sensitivity
+  /** Chỉ lịch sử đúng miền, đã qua consent/policy và dùng chung ngân sách ngữ cảnh. */
+  includeCompanionHistory?: boolean
   domainState?: {
     sourceId: string
     content: string
@@ -170,9 +173,10 @@ export async function buildContextPackage(
         sourceType: 'validated_derived_memory',
         sourceId: memory.id,
         content: `[${memory.namespace}] ${memory.content}`,
-        provenance: memory.provenance,
+        // Provenance của bản ghi do người dùng nhập không được giả mạo nguồn transcript.
+        provenance: `personal_memory:${memory.provenance}`.slice(0, 200),
         sensitivity: memory.sensitivity,
-        tokenEstimate: estimateTokens(memory.content),
+        tokenEstimate: estimateTokens(`[${memory.namespace}] ${memory.content}`),
       })
     }
 
@@ -186,10 +190,44 @@ export async function buildContextPackage(
         sourceType: 'recent_episodic_context',
         sourceId: memory.id,
         content: `[episodic] ${memory.content}`,
-        provenance: memory.provenance,
+        provenance: `personal_memory:${memory.provenance}`.slice(0, 200),
         sensitivity: memory.sensitivity,
-        tokenEstimate: estimateTokens(memory.content),
+        tokenEstimate: estimateTokens(`[episodic] ${memory.content}`),
       })
+    }
+  }
+
+  // Lịch sử cũng là dữ liệu cá nhân: chỉ đọc khi consent cho bộ nhớ VÀ miền còn hiệu lực.
+  // Không nhận lịch sử thô từ runtime để tránh đường vòng vượt Context Engine.
+  if (
+    options.includeCompanionHistory &&
+    hasMemoryConsent &&
+    (await isConsentActive(pool, personId, domain, purpose))
+  ) {
+    try {
+      const history = await listRecentCompanionMessages(
+        pool,
+        personId,
+        COMPANION_HISTORY_TURNS,
+        domain,
+        maxSensitivity,
+      )
+      for (const message of history) {
+        // Loại cả dữ liệu cũ thiếu miền; không coi "all" là quyền đọc mọi miền.
+        if (message.domain !== domain) continue
+        const content = message.content.slice(0, 1500)
+        candidates.push({
+          sourceType: 'recent_episodic_context',
+          sourceId: message.id,
+          content,
+          provenance: `companion_message:${message.role}:${domain}`,
+          // Transcript kế thừa độ nhạy của mọi nguồn context dùng tạo ra câu trả lời.
+          sensitivity: message.sensitivity ?? 'sensitive',
+          tokenEstimate: estimateTokens(content),
+        })
+      }
+    } catch {
+      // Không đọc được lịch sử thì bỏ qua; tuyệt đối không fallback sang truy vấn bỏ scope.
     }
   }
 

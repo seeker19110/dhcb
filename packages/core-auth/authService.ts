@@ -189,6 +189,14 @@ export async function verifyGoogleAccessToken(
 // lại KHÔNG được cấp thêm).
 type OAuthProvider = 'google' | 'facebook' | 'apple' | 'microsoft'
 
+/** Email/UPN của Microsoft có thể do tenant thay đổi, không là bằng chứng sở hữu email. */
+export class MicrosoftAccountLinkRequiredError extends Error {
+  constructor() {
+    super('Hãy đăng nhập bằng email đã xác minh hoặc nhà cung cấp đã liên kết với tài khoản.')
+    this.name = 'MicrosoftAccountLinkRequiredError'
+  }
+}
+
 async function findOrCreateOAuthUser(
   provider: OAuthProvider,
   providerId: string,
@@ -204,6 +212,10 @@ async function findOrCreateOAuthUser(
     [provider, providerId],
   )
   if (byIdentity.rows[0]) return { user: byIdentity.rows[0], isNew: false }
+
+  // Chỉ identity đã liên kết mới được đăng nhập Microsoft. Không chiếm email của user cũ,
+  // cũng không tạo user mới với email chưa chứng minh sở hữu (gây khóa đăng ký của chủ thật).
+  if (provider === 'microsoft') throw new MicrosoftAccountLinkRequiredError()
 
   const byEmail = await pool.query<AuthUserRow>(
     'select id, email from public.users where email = $1',

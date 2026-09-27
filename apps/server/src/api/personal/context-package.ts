@@ -3,6 +3,8 @@
 import { z } from 'zod'
 import { randomUUID } from 'node:crypto'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
+import { readSessionCookie } from '@dhcb/core-auth/sessionCookie'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -79,6 +81,33 @@ export default async function handler(req: Request): Promise<Response> {
       domainState: validated.data.domainState,
     })
 
+    if (
+      contextPackage.items.some(
+        (item) => item.sensitivity === 'sensitive' || item.sensitivity === 'restricted',
+      )
+    ) {
+      const status = await getTwoFactorStatus(pool, auth.userId)
+      if (!status.enabled) {
+        return jsonResponse(
+          {
+            error: 'Bật xác thực hai bước để xem dữ liệu riêng tư.',
+            code: 'TWO_FACTOR_SETUP_REQUIRED',
+          },
+          403,
+          headers,
+        )
+      }
+      if (!(await hasStepUp(pool, auth.userId, readSessionCookie(req)))) {
+        return jsonResponse(
+          {
+            error: 'Xác minh lại bằng mã hai bước để xem dữ liệu riêng tư.',
+            code: 'STEP_UP_REQUIRED',
+          },
+          403,
+          headers,
+        )
+      }
+    }
     return jsonResponse({ contextPackage }, 200, headers)
   } catch (err) {
     if (isAppError(err)) {

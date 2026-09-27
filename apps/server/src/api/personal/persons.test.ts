@@ -11,6 +11,9 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
+const twoFactor = vi.hoisted(() => ({ getTwoFactorStatus: vi.fn(), hasStepUp: vi.fn() }))
+vi.mock('@dhcb/core-auth/twoFactor', () => twoFactor)
+
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn().mockReturnValue({}) }))
 
 const getOrCreatePersonMock = vi.fn()
@@ -63,6 +66,10 @@ const ERASE_RESULT = {
 }
 
 beforeEach(() => {
+  twoFactor.getTwoFactorStatus.mockReset()
+  twoFactor.hasStepUp.mockReset()
+  twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: true })
+  twoFactor.hasStepUp.mockResolvedValue(true)
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   getOrCreatePersonMock.mockReset()
@@ -137,5 +144,32 @@ describe('DELETE /api/persons?action=full_erase', () => {
     expect(
       (await handler(makeReq('DELETE', 'http://localhost/api/persons?action=full_erase'))).status,
     ).toBe(401)
+  })
+})
+
+describe('hồ sơ riêng tư yêu cầu xác minh hai bước', () => {
+  it('chưa bật 2FA → yêu cầu thiết lập, không trả dữ liệu', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+    const response = await handler(makeReq('GET', 'http://localhost/api/persons?action=export'))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'TWO_FACTOR_SETUP_REQUIRED' })
+    expect(exportPersonDataMock).not.toHaveBeenCalled()
+  })
+  it('phiên chưa xác minh/hết hạn → STEP_UP_REQUIRED', async () => {
+    twoFactor.hasStepUp.mockResolvedValue(false)
+    const response = await handler(makeReq('GET', 'http://localhost/api/persons?action=export'))
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ code: 'STEP_UP_REQUIRED' })
+    expect(exportPersonDataMock).not.toHaveBeenCalled()
+  })
+  it('phiên đã xác minh → đọc thành công', async () => {
+    expect(
+      (await handler(makeReq('GET', 'http://localhost/api/persons?action=export'))).status,
+    ).toBe(200)
+  })
+  it('danh tính/dữ liệu thường không bị ép bật 2FA', async () => {
+    twoFactor.getTwoFactorStatus.mockResolvedValue({ enabled: false })
+    expect((await handler(makeReq())).status).toBe(200)
+    expect(twoFactor.getTwoFactorStatus).not.toHaveBeenCalled()
   })
 })

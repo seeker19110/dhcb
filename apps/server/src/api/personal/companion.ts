@@ -2,6 +2,8 @@
 // POST /api/companion -> executes a complete Companion turn.
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
+import { readSessionCookie } from '@dhcb/core-auth/sessionCookie'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -52,10 +54,15 @@ export default async function handler(req: Request): Promise<Response> {
     try {
       const pool = getPgPool()
       const person = await getOrCreatePerson(pool, auth.userId)
+      const privateAccess =
+        (await getTwoFactorStatus(pool, auth.userId)).enabled &&
+        (await hasStepUp(pool, auth.userId, readSessionCookie(req)))
       const messages = await listRecentCompanionMessages(
         pool,
         person.id,
         COMPANION_HISTORY_PAGE_SIZE,
+        undefined,
+        privateAccess ? 'restricted' : 'personal',
       )
       return jsonResponse({ messages }, 200, headers)
     } catch (err: unknown) {
@@ -91,12 +98,16 @@ export default async function handler(req: Request): Promise<Response> {
     const pool = getPgPool()
     const person = await getOrCreatePerson(pool, auth.userId)
 
+    const privateAccess =
+      (await getTwoFactorStatus(pool, auth.userId)).enabled &&
+      (await hasStepUp(pool, auth.userId, readSessionCookie(req)))
     const turnInput = {
       personId: person.id,
       userMessage: validation.data.message,
       intent: validation.data.intent,
       targetDomain: validation.data.domain,
       tokenBudget: validation.data.tokenBudget,
+      maxSensitivity: privateAccess ? ('sensitive' as const) : ('personal' as const),
     }
 
     if (validation.data.stream) {
@@ -105,7 +116,12 @@ export default async function handler(req: Request): Promise<Response> {
           const encoder = new TextEncoder()
           try {
             for await (const event of streamCompanionTurn(pool, turnInput)) {
-              const sseChunk = `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`
+              // Metadata công khai chỉ chứa số liệu, không gửi raw context qua SSE.
+              const data =
+                event.type === 'meta'
+                  ? { ...event.data, contextPackage: { ...event.data.contextPackage, items: [] } }
+                  : event.data
+              const sseChunk = `event: ${event.type}\ndata: ${JSON.stringify(data)}\n\n`
               controller.enqueue(encoder.encode(sseChunk))
             }
             controller.close()
@@ -139,7 +155,11 @@ export default async function handler(req: Request): Promise<Response> {
 
     const response = await executeCompanionTurn(pool, turnInput)
 
-    return jsonResponse(response, 200, headers)
+    return jsonResponse(
+      { ...response, contextPackage: { ...response.contextPackage, items: [] } },
+      200,
+      headers,
+    )
   } catch (err: unknown) {
     // Lỗi trước khi có phản hồi AI → trả lại lượt (cùng quy ước /api/agent)
     refundUsage(auth.userId, 'chat', gate.day).catch(() => {})

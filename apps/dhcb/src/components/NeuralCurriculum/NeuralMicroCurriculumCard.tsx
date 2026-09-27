@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { NeuralCurriculumState } from '@dhcb/core-contracts/neuralCurriculum'
+import {
+  NeuralCurriculumState,
+  type NeuralDrillSubmission,
+} from '@dhcb/core-contracts/neuralCurriculum'
 import {
   fetchNeuralCurriculum,
   generateMicroModule,
@@ -16,18 +19,6 @@ export default function NeuralMicroCurriculumCard() {
   const [loading, setLoading] = useState(true)
   const [drillModalOpen, setDrillModalOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
-
-  // Dùng lại được từ handler (hoàn thành drill xong nạp lại).
-  const loadState = async () => {
-    try {
-      const data = await fetchNeuralCurriculum()
-      setState(data)
-    } catch {
-      // im lặng nếu offline
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Nạp lần đầu lúc mount — hàm async định nghĩa TRONG effect, mọi setState
   // nằm sau await (không setState đồng bộ trong thân effect).
@@ -58,14 +49,12 @@ export default function NeuralMicroCurriculumCard() {
     }
   }
 
-  const handleCompleteDrill = async (isCorrect: boolean) => {
-    try {
-      await completeDrill({ isCorrect, previousInterval: 2 })
-      toast.success(isCorrect ? 'Xuất sắc! +15 điểm Mastery' : 'Cần ôn lại vào ngày mai.')
-      await loadState()
-    } catch {
-      // bỏ qua
-    }
+  const handleCompleteDrill = async (answers: NeuralDrillSubmission['answers']) => {
+    const moduleId = state?.modules[0]?.moduleId
+    if (!moduleId) throw new Error('Không tìm thấy bài luyện.')
+    const result = await completeDrill({ moduleId, answers })
+    setState(result.state)
+    return result.review
   }
 
   if (loading || !state) return null
@@ -140,6 +129,7 @@ export default function NeuralMicroCurriculumCard() {
 
       {activeModule && (
         <MicroDrillModal
+          key={activeModule.moduleId}
           isOpen={drillModalOpen}
           onClose={() => setDrillModalOpen(false)}
           drills={activeModule.drills}

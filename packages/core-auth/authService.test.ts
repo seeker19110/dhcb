@@ -566,7 +566,7 @@ describe('findOrCreate*User (Facebook/Apple/Microsoft — liên kết tài kho�
     expect(calls.some((sql) => sql.startsWith('insert into public.identities'))).toBe(true)
   })
 
-  it('findOrCreateMicrosoftUser: insert không trả dòng nào (lỗi lạ) → ném lỗi', async () => {
+  it('Microsoft chưa có identity → từ chối tạo/liên kết bằng email mutable', async () => {
     mockedGetPool.mockReturnValue(
       mockPool(async (sql) => {
         if (sql.startsWith('select')) return { rows: [] }
@@ -574,7 +574,7 @@ describe('findOrCreate*User (Facebook/Apple/Microsoft — liên kết tài kho�
       }),
     )
     await expect(findOrCreateMicrosoftUser('ms1', 'x@b.com')).rejects.toThrow(
-      'Không tạo được user microsoft mới',
+      'Hãy đăng nhập bằng email đã xác minh',
     )
   })
 })
@@ -847,5 +847,30 @@ describe('ensureProfileRow — nhánh còn thiếu (Đợt 2 coverage 2026-09-05
     )
     const result = await ensureProfileRow('u1', 'Tên Mặc Định')
     expect(result.name).toBe('Tên Mặc Định')
+  })
+})
+
+describe('Microsoft — không dùng email/UPN làm bằng chứng sở hữu tài khoản', () => {
+  it('email trùng tài khoản nạn nhân không dẫn tới liên kết identity', async () => {
+    const query = vi.fn(async (sql: string) => ({
+      rows: sql.includes('join public.identities')
+        ? []
+        : [{ id: 'victim', email: 'victim@example.com' }],
+    }))
+    mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+    await expect(findOrCreateMicrosoftUser('attacker-sub', 'victim@example.com')).rejects.toThrow(
+      'Hãy đăng nhập bằng email đã xác minh',
+    )
+    expect(query).toHaveBeenCalledTimes(1)
+  })
+
+  it('identity đã liên kết đăng nhập được dù email claim đã đổi', async () => {
+    const query = vi.fn(async () => ({ rows: [{ id: 'owner', email: 'owner@example.com' }] }))
+    mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+    expect(await findOrCreateMicrosoftUser('linked-sub', 'changed@example.com')).toEqual({
+      user: { id: 'owner', email: 'owner@example.com' },
+      isNew: false,
+    })
+    expect(query).toHaveBeenCalledTimes(1)
   })
 })

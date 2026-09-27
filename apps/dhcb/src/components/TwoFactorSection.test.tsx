@@ -16,6 +16,7 @@ vi.mock('../lib/twoFactorApi', () => ({
   confirmTwoFactorSetup: vi.fn(),
   disableTwoFactor: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
+  verifyTwoFactor: vi.fn(),
 }))
 vi.mock('qrcode', () => ({ default: { toDataURL: vi.fn() } }))
 

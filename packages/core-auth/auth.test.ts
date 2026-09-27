@@ -41,7 +41,13 @@ const authService = vi.hoisted(() => ({
   validateSessionToken: vi.fn(),
   SESSION_TTL_MS: 30 * 24 * 60 * 60 * 1000,
 }))
-vi.mock('./authService.js', () => authService)
+vi.mock('./authService.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./authService.js')>()
+  return {
+    ...authService,
+    MicrosoftAccountLinkRequiredError: actual.MicrosoftAccountLinkRequiredError,
+  }
+})
 
 vi.mock('./emailVerification.js', () => ({
   sendVerificationCode: vi.fn(async () => ({ ok: true, mail: 'sent' })),
@@ -61,6 +67,7 @@ vi.mock('./passwordReset.js', () => ({
 }))
 
 import handler from './auth.js'
+import { MicrosoftAccountLinkRequiredError } from './authService.js'
 
 function makeRequest(body: unknown): Request {
   return new Request('http://localhost/api/auth', {
@@ -440,4 +447,18 @@ describe('/api/auth — method/route không hợp lệ', () => {
     const resp = await handler(req)
     expect(resp.status).toBe(400)
   })
+})
+
+it('Microsoft chưa liên kết → 403 rõ ràng, không tạo phiên/trial', async () => {
+  authService.verifyMicrosoftIdToken.mockResolvedValue({
+    microsoftId: 'new',
+    email: 'victim@example.com',
+    name: 'Test',
+  })
+  authService.findOrCreateMicrosoftUser.mockRejectedValue(new MicrosoftAccountLinkRequiredError())
+  const response = await handler(makeRequest({ action: 'microsoft', idToken: 'token-for-test' }))
+  expect(response.status).toBe(403)
+  expect(await response.json()).toMatchObject({ code: 'MICROSOFT_ACCOUNT_LINK_REQUIRED' })
+  expect(authService.createSession).not.toHaveBeenCalled()
+  expect(trial.grantSignupTrial).not.toHaveBeenCalled()
 })

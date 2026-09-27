@@ -1,15 +1,16 @@
 // Test thưởng huy hiệu & mốc (migration 0026) — trọng tâm: KHÔNG cấp thưởng khi chưa đạt/đã
 // nhận rồi/admin tắt thưởng (đây là chỗ đụng tiền thật, giống quests.test.ts).
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { Pool, Client } from 'pg'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 
 const granted: { calls: { userId: string; plan: string; days: number }[] } = { calls: [] }
 vi.mock('@dhcb/core-billing/planGrant', () => ({
-  grantPlanDays: async (userId: string, plan: string, days: number) => {
+  grantPlanDays: vi.fn(async (userId: string, plan: string, days: number) => {
     granted.calls.push({ userId, plan, days })
     return { plan, planExpiresAt: new Date() }
-  },
+  }),
 }))
 
 const streakMock = vi.fn()
@@ -26,6 +27,7 @@ import {
   ACHIEVEMENT_IDS,
 } from './achievementRewards'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 
 const mockedGetPool = vi.mocked(getPgPool)
 const query = vi.fn()
@@ -58,6 +60,19 @@ function setupQueryImplementation(overrides: {
     if (sql.includes('select achievement_id from public.achievement_claims')) {
       return { rows: (overrides.claimed ?? []).map((achievement_id) => ({ achievement_id })) }
     }
+    if (sql.includes('platform.feature_state'))
+      return {
+        rows: [
+          {
+            cefr_exams: Object.fromEntries(
+              Object.entries(overrides.cefrExams ?? {}).map(([key, value]) => [
+                key,
+                { bestPct: 80, attempts: 1, lastAt: '2026-09-27', ...value },
+              ]),
+            ),
+          },
+        ],
+      }
     if (sql.includes('learning_progress')) {
       return {
         rows: [{ learned: overrides.learned ?? [], cefr_exams: overrides.cefrExams ?? {} }],
@@ -83,7 +98,21 @@ beforeEach(() => {
   query.mockReset()
   streakMock.mockReset()
   streakMock.mockResolvedValue(0)
-  mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
+  const client = Object.assign(new Client(), {
+    query: vi.fn((sql: string, params?: unknown[]) =>
+      ['begin', 'commit', 'rollback'].includes(sql)
+        ? Promise.resolve({ rows: [] })
+        : query(sql, params),
+    ),
+    release: vi.fn(),
+  })
+  mockedGetPool.mockReturnValue(
+    Object.assign(new Pool(), { query, connect: vi.fn(async () => client) }),
+  )
+  vi.mocked(grantPlanDays).mockImplementation(async (userId, plan, days) => {
+    granted.calls.push({ userId, plan, days })
+    return { plan, planExpiresAt: new Date() }
+  })
   granted.calls = []
   invalidateAchievementRewardsCache()
 })
@@ -185,6 +214,89 @@ describe('claimAchievementReward', () => {
     expect(r.ok).toBe(false)
     expect(granted.calls).toEqual([])
     spy.mockRestore()
+  })
+})
+
+describe('claimAchievementReward — nguyên tử, đồng thời và retry', () => {
+  let claimed: boolean
+  let daysGranted: number
+  let failGrant: boolean
+  let lockTail: Promise<void>
+  const stagedGrants = new Map<unknown, { days: number }>()
+
+  beforeEach(() => {
+    claimed = false
+    daysGranted = 0
+    failGrant = false
+    lockTail = Promise.resolve()
+    stagedGrants.clear()
+    streakMock.mockResolvedValue(7)
+    setupQueryImplementation({})
+    vi.mocked(getPgPool().connect).mockImplementation(async () => {
+      let unlock: (() => void) | undefined
+      let stagedClaim = false
+      const staged = { days: 0 }
+      const transactionQuery = vi.fn(async (sql: string) => {
+        if (sql.includes('insert into public.achievement_claims')) {
+          expect(sql).toContain('on conflict (user_id, achievement_id) do nothing')
+          const previous = lockTail
+          lockTail = new Promise<void>((resolve) => {
+            unlock = resolve
+          })
+          await previous
+          stagedClaim = claimed
+          if (stagedClaim) return { rows: [], rowCount: 0 }
+          stagedClaim = true
+          return { rows: [], rowCount: 1 }
+        }
+        if (sql === 'commit') {
+          claimed = stagedClaim
+          daysGranted += staged.days
+          unlock?.()
+        }
+        if (sql === 'rollback') unlock?.()
+        return { rows: [] }
+      })
+      const client = Object.assign(new Client(), { query: transactionQuery, release: vi.fn() })
+      stagedGrants.set(client, staged)
+      return client
+    })
+    vi.mocked(grantPlanDays).mockImplementation(async (_userId, _plan, days, _now, client) => {
+      const staged = stagedGrants.get(client)
+      expect(staged).toBeDefined()
+      if (failGrant) {
+        failGrant = false
+        throw new Error('grant failed')
+      }
+      if (staged) staged.days += days
+      return { plan: 'vip', planExpiresAt: null }
+    })
+  })
+
+  it('hai claim đồng thời và retry chỉ cấp một lần', async () => {
+    const results = await Promise.all([
+      claimAchievementReward('u1', 'streak_7'),
+      claimAchievementReward('u1', 'streak_7'),
+    ])
+    expect(results.filter((result) => result.ok)).toHaveLength(1)
+    expect(claimed).toBe(true)
+    expect(daysGranted).toBe(1)
+    expect((await claimAchievementReward('u1', 'streak_7')).ok).toBe(false)
+    expect(daysGranted).toBe(1)
+  })
+
+  it('cấp gói lỗi rollback claim và retry vẫn nhận được thưởng', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      failGrant = true
+      expect((await claimAchievementReward('u1', 'streak_7')).ok).toBe(false)
+      expect(claimed).toBe(false)
+      expect(daysGranted).toBe(0)
+      expect((await claimAchievementReward('u1', 'streak_7')).ok).toBe(true)
+      expect(daysGranted).toBe(1)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
 

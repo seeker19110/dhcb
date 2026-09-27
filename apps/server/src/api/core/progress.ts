@@ -31,11 +31,11 @@ import { computeUnlockedLevels } from '@dhcb/core-learner/cefrUnlock'
 import { SyncEnvelopeSchema } from '@dhcb/core-contracts/sync'
 import {
   mergeSrsMap,
-  mergeExamMap,
   mergeByTimestamp,
   mergeArrayUnion,
   resolveHard,
 } from '../_lib/progressMerge.js'
+import { readVerifiedCefrExams } from '../_lib/cefrAssessment.js'
 import { findReceipt, saveReceipt } from '../_lib/syncReceipt.js'
 
 // Giới hạn kích thước hợp lý — chặn payload bất thường (DoS/lỗi client) mà vẫn đủ rộng
@@ -198,8 +198,10 @@ export default async function handler(req: Request): Promise<Response> {
          from english.learning_progress where user_id = $1`,
       [auth.userId],
     )
-    const row = rows[0]
-    if (!row) return jsonResponse(null, 200, allHeaders)
+    const verifiedExams = await readVerifiedCefrExams(pool, auth.userId)
+    const row: Partial<ProgressRow> = rows[0] ?? {}
+    if (!rows[0] && Object.keys(verifiedExams).length === 0)
+      return jsonResponse(null, 200, allHeaders)
     // TÍNH LẠI mỗi lần đọc, không trả thẳng cột đã lưu: có vậy VIP hết hạn mới bị khoá lại đúng
     // lúc (tiêu chí 6) mà không cần job dọn dữ liệu chạy trước.
     const plan = await readEffectivePlan(pool, auth.userId)
@@ -212,10 +214,10 @@ export default async function handler(req: Request): Promise<Response> {
         cefrDialogues: row.cefr_dialogues ?? [],
         cefrUnlocked: computeUnlockedLevels({
           plan,
-          exams: row.cefr_exams ?? {},
+          exams: verifiedExams,
           grandfathered: row.cefr_unlocked_grandfathered ?? [],
         }),
-        cefrExams: row.cefr_exams ?? {},
+        cefrExams: verifiedExams,
         placement: row.placement ?? {},
         weeklyGoal: row.weekly_goal ?? {},
         achievements: row.achievements ?? [],
@@ -303,8 +305,8 @@ export default async function handler(req: Request): Promise<Response> {
     // Xung đột = có thiết bị khác ghi chen vào giữa lúc client đọc và lúc gửi. KHÔNG đổi luật
     // merge: vẫn gộp bằng đúng 4 hàm domain, chỉ báo cho client biết bản cục bộ đã cũ.
     const conflict = sync ? sync.baseVersion !== existingVersion : false
-    // Kết quả thi sau hợp nhất là ĐẦU VÀO của luật mở cấp → tính trước để dùng ở cả hai chỗ.
-    const mergedExams = mergeExamMap(existing?.cefr_exams ?? {}, d.cefrExams)
+    // Điểm tự khai (kể cả marker giả) không cấp quyền. Chỉ đọc sổ bài thi do server chấm.
+    const mergedExams = await readVerifiedCefrExams(client, auth.userId)
     // F6/F8: một trục đồng hồ CLIENT duy nhất cho cả request — bản đã lưu (existing, cột DB) so
     // với request hiện tại (sync?.clientUpdatedAt). Xem `_lib/progressMerge.ts`.
     const existingClientUpdatedAt = clientUpdatedAtIso(existing?.client_updated_at)

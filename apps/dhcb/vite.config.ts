@@ -307,6 +307,10 @@ const API_ROUTES: { prefix: string; module: string }[] = [
   },
   { prefix: '/api/auth', module: '/packages/core-auth/auth.ts' },
   { prefix: '/api/profile', module: '/apps/server/src/api/core/profile.ts' },
+  {
+    prefix: '/api/cefr-assessment',
+    module: '/apps/server/src/api/subjects/english/cefr-assessment.ts',
+  },
   { prefix: '/api/progress', module: '/apps/server/src/api/core/progress.ts' },
   { prefix: '/api/history', module: '/apps/server/src/api/core/history.ts' },
   { prefix: '/api/challenge', module: '/apps/server/src/api/subjects/english/challenge.ts' },

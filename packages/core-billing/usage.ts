@@ -2,7 +2,7 @@
 //
 // Giai đoạn C: chuyển từ Supabase (RPC consume_usage/refund_usage qua PostgREST) sang
 // Postgres tự host (cùng 2 hàm SQL, giờ gọi thẳng qua `pg`) — xem postgres/schema.sql.
-// Logic nghiệp vụ (giới hạn theo gói, FAIL-OPEN khi lỗi hạ tầng) giữ nguyên 100%.
+// Cổng chi phí từ chối khi không xác minh được cấu hình hoặc trừ lượt.
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { vnDateStr } from '@dhcb/core-db/date'
@@ -106,7 +106,7 @@ async function bumpUsageStat(userId: string, day: string, col: string): Promise<
   }
 }
 
-// Kiểm tra còn lượt không + tăng 1 (authoritative). FAIL-OPEN khi lỗi hạ tầng.
+// Kiểm tra còn lượt không + tăng 1 (authoritative). FAIL-CLOSED khi lỗi hạ tầng.
 // `day` trả kèm khi cho qua = NGÀY (giờ VN) mà lượt đã bị trừ vào. Nơi gọi PHẢI truyền lại
 // đúng ngày này cho refundUsage() nếu sau đó provider lỗi — xem giải thích ở refundUsage().
 export async function checkAndConsumeUsage(
@@ -120,7 +120,7 @@ export async function checkAndConsumeUsage(
     // Cầu dao khẩn cấp (admin bật qua /api/admin-settings khi phát hiện chi phí AI bất
     // thường) — chặn NGAY, trước khi động vào bảng daily_usage, không phân biệt gói/hạn mức.
     // Xem postgres/migrations/0005_ai_circuit_breaker.sql.
-    const { aiCircuitBreaker } = await getAppSettings()
+    const { aiCircuitBreaker, limits } = await getAppSettings({ requireAvailable: true })
     if (aiCircuitBreaker) {
       return { ok: false, message: CIRCUIT_BREAKER_MESSAGE }
     }
@@ -139,7 +139,6 @@ export async function checkAndConsumeUsage(
     // GĐ1 2026-09-12: Free dùng chung đúng cơ chế này (trước đây là kho lượt cửa sổ trượt 7
     // ngày qua consume_rolling_credit), chỉ khác con số hạn mức — cả hai đều đọc từ app_settings.
     const col = COLUMN[mode]
-    const { limits } = await getAppSettings()
     const limit = limits[plan]
 
     // Kiểm tra + tăng ATOMIC qua hàm SQL (chống race condition 2 request song song)
@@ -149,10 +148,14 @@ export async function checkAndConsumeUsage(
     )
     const allowed = rows[0]?.consume_usage_total
 
-    return allowed === false ? { ok: false, message: LIMIT_MESSAGE } : { ok: true, day }
+    if (allowed === true) return { ok: true, day }
+    return {
+      ok: false,
+      message: allowed === false ? LIMIT_MESSAGE : CIRCUIT_BREAKER_MESSAGE,
+    }
   } catch (err) {
-    console.warn('[usage] kiểm tra lượt lỗi → fail-open (cho qua):', err)
-    return { ok: true, day }
+    console.warn('[usage] Không xác minh được lượt → tạm dừng AI:', err)
+    return { ok: false, message: CIRCUIT_BREAKER_MESSAGE }
   }
 }
 

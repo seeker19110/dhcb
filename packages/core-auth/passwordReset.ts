@@ -14,6 +14,7 @@
 
 import { randomBytes, createHash } from 'node:crypto'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import { hashPassword } from './authService.js'
 import { sendMailWithQuota } from '@dhcb/core-http/mailQuota'
 
@@ -137,15 +138,21 @@ export async function resetPassword(
 
   const passwordHash = await hashPassword(newPassword)
 
-  // Đánh dấu used_at NGAY LÚC đổi mật khẩu (không tách 2 bước) để 2 request song song dùng
-  // cùng 1 token chỉ đổi được đúng 1 lần — race condition tương tự chốt rewarded_at ở referral.
-  await pool.query('update public.password_resets set used_at = now() where id = $1', [record.id])
-  await pool.query('update public.users set password_hash = $1 where id = $2', [
-    passwordHash,
-    record.user_id,
-  ])
-  // Thu hồi TOÀN BỘ session cũ — bắt buộc, xem chú thích bảo mật #2 ở đầu file.
-  await pool.query('delete from public.sessions where user_id = $1', [record.user_id])
-
-  return { ok: true }
+  return withTransaction(pool, async (client): Promise<ResetPasswordResult> => {
+    // UPDATE có điều kiện giữ khóa dòng đến commit: hai request cùng token chỉ một request
+    // nhận được dòng. Đổi mật khẩu và thu hồi phiên thất bại sẽ hoàn tác cả lần tiêu thụ này.
+    const consumed = await client.query<{ user_id: string }>(
+      `update public.password_resets set used_at = now()
+       where id = $1 and used_at is null and expires_at > now()
+       returning user_id`,
+      [record.id],
+    )
+    if (!consumed.rows[0]) return { ok: false, reason: 'invalid_or_expired' }
+    await client.query('update public.users set password_hash = $1 where id = $2', [
+      passwordHash,
+      consumed.rows[0].user_id,
+    ])
+    await client.query('delete from public.sessions where user_id = $1', [consumed.rows[0].user_id])
+    return { ok: true }
+  })
 }

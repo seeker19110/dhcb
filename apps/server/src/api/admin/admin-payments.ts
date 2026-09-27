@@ -5,6 +5,7 @@
 
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import {
   validateAuth,
   getCorsHeaders,
@@ -121,41 +122,34 @@ export default async function handler(req: Request): Promise<Response> {
       )
     }
 
-    // Đọc thông tin đơn
-    const { rows: pRows } = await pool.query<{
-      id: string
-      status: string
-      // Đơn CŨ trong bảng payments còn plan 'plus'/'pro' (gói đã xoá ở GĐ1 2026-09-12) — dữ
-      // liệu lịch sử giữ nguyên, nhưng khớp tay thì luôn cấp VIP (xem chuẩn hoá bên dưới).
-      plan: string
-      cycle: '10day' | 'month' | 'year'
-    }>('select id, status, plan, cycle from public.payments where id = $1', [paymentId])
-
-    const pay = pRows[0]
-    if (!pay) return jsonResponse({ error: 'Không tìm thấy đơn thanh toán' }, 404, allHeaders)
-
-    if (pay.status === 'paid') {
-      return jsonResponse(
-        { error: 'Đơn này đã được ghi nhận thanh toán từ trước' },
-        400,
-        allHeaders,
+    const outcome = await withTransaction(pool, async (client) => {
+      // Khóa tới khi cấp quyền xong; cả admin khác và webhook phải đợi cùng dòng đơn.
+      const { rows } = await client.query<{
+        status: string
+        cycle: '10day' | 'month' | 'year'
+        years: number
+      }>('select status, cycle, years from public.payments where id = $1 for update', [paymentId])
+      const pay = rows[0]
+      if (!pay) return { error: 'Không tìm thấy đơn thanh toán', status: 404 } as const
+      if (pay.status === 'paid') {
+        return { error: 'Đơn này đã được ghi nhận thanh toán từ trước', status: 400 } as const
+      }
+      const days =
+        (CYCLE_DAYS[pay.cycle] ?? 30) * (pay.cycle === 'year' ? Math.max(1, pay.years ?? 1) : 1)
+      // Đơn gói cũ vẫn được cấp VIP; cấp quyền và ghi nhận thanh toán cùng commit/rollback.
+      await grantPlanDays(targetUserId, 'vip', days, new Date(), client)
+      await client.query(
+        `update public.payments
+         set status = 'paid', paid_at = now(), provider_txn_id = $1
+         where id = $2`,
+        [`MANUAL_${paymentId}`, paymentId],
       )
+      return { days } as const
+    })
+    if ('error' in outcome) {
+      return jsonResponse({ error: outcome.error }, outcome.status, allHeaders)
     }
-
-    const days = CYCLE_DAYS[pay.cycle] ?? 30
-    const txnId = `MANUAL_${Date.now()}`
-
-    // Cập nhật trạng thái đơn
-    await pool.query(
-      `update public.payments
-       set status = 'paid', paid_at = now(), provider_txn_id = $1
-       where id = $2`,
-      [txnId, paymentId],
-    )
-
-    // Cấp gói VIP cho user. Đơn của gói cũ ('plus'/'pro') vẫn được cấp VIP — người đã trả tiền
-    // không bao giờ bị mất quyền lợi vì ta xoá gói (đặc tả §⑤).
-    await grantPlanDays(targetUserId, 'vip', days)
+    const { days } = outcome
 
     return jsonResponse(
       {

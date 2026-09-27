@@ -1,47 +1,49 @@
-// apps/dhcb/src/lib/neuralCurriculumApi.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NeuralCurriculumService } from '@dhcb/core-ai/neuralCurriculumService'
 import { fetchNeuralCurriculum, generateMicroModule, completeDrill } from './neuralCurriculumApi.js'
-
-describe('neuralCurriculumApi client library', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks()
-    localStorage.clear()
+const state = NeuralCurriculumService.createDefaultState('11111111-1111-4111-8111-111111111111')
+const module = state.modules[0]!
+beforeEach(() => {
+  vi.restoreAllMocks()
+  localStorage.clear()
+})
+describe('neuralCurriculumApi', () => {
+  it('validate state tải từ server', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(Response.json({ state }))
+    expect(await fetchNeuralCurriculum()).toEqual(state)
   })
-
-  it('fetches neural curriculum state', async () => {
-    const mockState = { masteryScore: 80, modules: [] }
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, state: mockState }),
-    } as unknown as Response)
-
-    const state = await fetchNeuralCurriculum()
-    expect(state.masteryScore).toBe(80)
+  it('từ chối state malformed', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      Response.json({ state: { masteryScore: 100 } }),
+    )
+    await expect(fetchNeuralCurriculum()).rejects.toThrow()
   })
-
-  it('generates micro module via POST', async () => {
-    const mockRes = {
-      success: true,
-      module: { title: 'Test Module' },
-      state: { modules: [] },
+  it('tạo module qua POST', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(Response.json({ module, state }))
+    expect((await generateMicroModule({ topicOrKeyword: 'Presentation' })).module).toEqual(module)
+  })
+  it('gửi đáp án kèm ID, nhận kết quả đã chấm từ server', async () => {
+    const review = {
+      masteryDelta: 15,
+      nextIntervalDays: 2,
+      correctCount: 3,
+      total: 3,
+      recorded: true,
     }
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockRes,
-    } as unknown as Response)
-
-    const result = await generateMicroModule({ topicOrKeyword: 'Presentation' })
-    expect(result.module.title).toBe('Test Module')
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(Response.json({ state, review }))
+    const submission = {
+      moduleId: module.moduleId,
+      answers: module.drills.map((drill) => ({ drillId: drill.id, answer: drill.correctAnswer })),
+    }
+    expect(await completeDrill(submission)).toEqual({ state, review })
+    expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual(submission)
   })
-
-  it('completes drill and returns review interval', async () => {
-    const mockReview = { masteryDelta: 15, nextIntervalDays: 4 }
-    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, review: mockReview }),
-    } as unknown as Response)
-
-    const review = await completeDrill({ isCorrect: true, previousInterval: 2 })
-    expect(review.masteryDelta).toBe(15)
+  it('lỗi lưu không báo thành công', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      Response.json({ error: 'offline' }, { status: 503 }),
+    )
+    await expect(completeDrill({ moduleId: module.moduleId, answers: [] })).rejects.toThrow('503')
   })
 })

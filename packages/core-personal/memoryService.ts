@@ -179,10 +179,16 @@ export async function ingestMemoryWithClient(
     // Merge into existing record
     const { rows } = await client.query<MemoryRecordRow>(
       `update personal.memory_records
-       set content = $1, status = 'merged', updated_at = now(), version = version + 1
+       set content = $1, status = 'merged', updated_at = now(), version = version + 1,
+           sensitivity = (array['public', 'personal', 'sensitive', 'restricted']::text[])[
+             greatest(
+               array_position(array['public', 'personal', 'sensitive', 'restricted']::text[], sensitivity),
+               array_position(array['public', 'personal', 'sensitive', 'restricted']::text[], $4)
+             )
+           ]
        where id = $2 and person_id = $3
        returning ${MEMORY_COLUMNS}`,
-      [evaluation.mergedContent, evaluation.existingRecordId, personId],
+      [evaluation.mergedContent, evaluation.existingRecordId, personId, candidate.sensitivity],
     )
     const row = rows[0]
     if (!row) throw new NotFoundError('Target memory record to merge was not found')
