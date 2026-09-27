@@ -14,7 +14,7 @@
 
 - Outcome: có một lộ trình DHCB bằng tiếng Việt, đi từ nền tảng ML đến thiết kế hệ thống AI, tái sử dụng bài đã có và bổ sung nội dung còn thiếu.
 - Người dùng: người học muốn trở thành AI Engineer, LLM Engineer, Agent Engineer hoặc AI Platform Engineer.
-- Metric baseline → target: hiện có chuỗi 6 khóa AI riêng; chưa có lộ trình tổng hợp khớp 19 mô-đun tham chiếu → 19/19 mô-đun được ánh xạ vào chương và mọi lesson ID hợp lệ, đã qua cổng chất lượng nội dung.
+- Metric baseline → target: hiện có chuỗi 6 khóa AI riêng; chưa có lộ trình tổng hợp khớp 19 mô-đun tham chiếu → 19/19 mô-đun được ánh xạ vào chương và mọi lesson ID hợp lệ, đã qua cổng chất lượng nội dung. Tổng số bài được chốt theo outcome và map reuse, không mặc định phải bằng 146+ của nguồn.
 - Cửa sổ đo: tại mỗi PR nội dung và lần phát hành cuối.
 - Guardrails: nội dung tự biên soạn; bài code chạy trong sandbox hiện có; không gọi provider trả phí; không thay đổi đặc quyền, thanh toán, mastery hoặc API AI; accessibility theo quy định dự án.
 - Completion approver: Chủ dự án DHCB.

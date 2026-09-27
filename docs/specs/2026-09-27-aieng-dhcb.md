@@ -20,6 +20,7 @@ Tạo một lộ trình tổng hợp bằng tiếng Việt trong môn Lập trì
 - Persona/job-to-be-done: người học cần một đường đi có thứ tự từ ML căn bản đến triển khai và thiết kế hệ thống AI, không phải tự ghép nhiều khóa riêng.
 - Hiện trạng và pain point: DHCB đã có chuỗi sáu khóa `pyai` → `mathai` → `mlds` → `cv1` → `cv2` → `llmagent`, cùng nội dung `airel`; các chủ đề đang nằm ở các mục catalog riêng.
 - Baseline định lượng/định tính: chưa có một khóa tổng hợp theo bản đồ 19 mô-đun của nguồn; đã có các bài có thể dùng lại về Python, toán, ML, DL/CV, Transformer, RAG, agents, an toàn và triển khai.
+- Khối lượng: README nguồn nêu 146+ bài. Bản đề xuất hiện không coi con số đó là tiêu chí bắt buộc; số bài DHCB sẽ được chốt bằng bản đồ outcome/reuse để tránh thêm bài chỉ nhằm khớp số lượng.
 - Nguồn bằng chứng, link và ngày truy cập: GitHub README nguồn, truy cập 2026-09-27. README mô tả 18 mô-đun chính (Module 1–18), thêm Module 0 “Must Know”, và 146+ bài; bảng mục lục nguồn gồm cả inference, evaluation, safety, multimodal, system design, frontier và interview.
 - Nghiên cứu repo: `packages/subject-programming/courses/{pyai,mathai,mlds,cv1,cv2,llmagent,airel}.ts`; `packages/subject-programming/courses/registry.ts`; `packages/subject-programming/lessons.ts`; `packages/subject-programming/lessonTypes.ts`; trang hiện hành `apps/dhcb/src/pages/subjects/programming/ProgrammingCoursePage.tsx`.
 - Vì sao cần làm bây giờ: người dùng gửi tham chiếu cụ thể và yêu cầu tạo khóa; trước khi soạn nội dung cần phân biệt phần đã có với phần mới để tránh trùng lặp.
@@ -59,7 +60,7 @@ Tiêu chí quyết định: tận dụng `ShortCourse` hiện có; tránh bài t
 
 ## 5. Outcome và guardrails
 
-- Metric chính + baseline + target: baseline là 0 khóa tổng hợp với 19 mô-đun; target là 1 khóa `aieng`, 19/19 chương có lesson hợp lệ, mọi lesson mới qua cổng nội dung hiện hành.
+- Metric chính + baseline + target: baseline là 0 khóa tổng hợp với 19 mô-đun; target là 1 khóa `aieng`, 19/19 chương có đủ bài cho mục tiêu chương và lesson ID hợp lệ, mọi lesson mới qua cổng nội dung hiện hành. Chưa đặt số lượng cứng tương đương 146+ bài nguồn.
 - Guardrail: 0 lesson ID trỏ tới nội dung thiếu; 0 câu hỏi SRS trùng theo cổng môn học; 0 lời gọi provider trả phí; 0 thay đổi quyền/thu phí/mastery; không đưa output AI thành sự thật có thẩm quyền.
 - Thời gian đo: trong mỗi lát PR và khi đăng ký khóa cuối.
 - Điều kiện dừng/rollback: dừng nếu map đòi thay đổi kiến trúc hoặc luật product; có thể gỡ mục `aieng` khỏi registry để ẩn khóa mà không xóa lesson progress hay đổi ID đã phát hành.
@@ -133,6 +134,7 @@ Tiêu chí quyết định: tận dụng `ShortCourse` hiện có; tránh bài t
 
 - AC-1 — Given khóa đã đăng ký, When catalog tải, Then `aieng` có đúng 19 chương theo Module 0–18.
 - AC-2 — Given mỗi chương, When `courses.test.ts` kiểm tra, Then tất cả lesson IDs tồn tại, không có ID lặp và thứ tự lesson có chủ đích.
+- AC-2a — Given bản đồ lesson/outcome đã duyệt, When rà từng chương, Then chương có đủ chiều sâu để đạt mục tiêu học; không thêm bài chỉ để khớp một con số của nguồn tham chiếu.
 - AC-3 — Given mỗi bài mới, When lesson audit/test chạy, Then nội dung theo schema, câu hỏi và code mẫu hợp lệ; bài code chạy trong sandbox hiện hành.
 - AC-4 — Given bài đã có cùng mục tiêu học, When map được khóa, Then khóa tổng hợp trỏ tới bài hiện có thay vì sao chép.
 - AC-5 — Given repo không có API key/provider, When chạy test, Then khóa và các bài không gọi mạng/provider.
@@ -205,10 +207,11 @@ Mỗi lát code có `npm run codemap -- impact <file>`, kiểm tra mục tiêu, 
 
 ## 18. Câu hỏi mở và quyết định
 
-| Mục                                                                                            | Owner          | Hạn                 | Quyết định  |
-| ---------------------------------------------------------------------------------------------- | -------------- | ------------------- | ----------- |
-| Duyệt cách làm một khóa tổng hợp `aieng` tái sử dụng 6 khóa hiện hữu thay vì tạo bản sao riêng | Chủ dự án DHCB | Trước source change | Chờ xem xét |
-| Duyệt bản đồ 19 chương và quy tắc chỉ đăng ký khóa khi hoàn chỉnh                              | Chủ dự án DHCB | Trước source change | Chờ xem xét |
+| Mục                                                                                            | Owner          | Hạn                 | Quyết định                               |
+| ---------------------------------------------------------------------------------------------- | -------------- | ------------------- | ---------------------------------------- |
+| Duyệt cách làm một khóa tổng hợp `aieng` tái sử dụng 6 khóa hiện hữu thay vì tạo bản sao riêng | Chủ dự án DHCB | Trước source change | Chờ xem xét                              |
+| Duyệt bản đồ 19 chương và quy tắc chỉ đăng ký khóa khi hoàn chỉnh                              | Chủ dự án DHCB | Trước source change | Chờ xem xét                              |
+| Chốt độ sâu/khối lượng: theo outcome DHCB hay tương đương 146+ bài của nguồn                   | Chủ dự án DHCB | Trước source change | Đề xuất: theo outcome, không ép số lượng |
 
 ## 19. Phê duyệt
 
