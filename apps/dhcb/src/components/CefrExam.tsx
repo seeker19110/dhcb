@@ -265,7 +265,7 @@ export default function CefrExam({
             </p>
           )}
           {savedPct != null && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-300">
               {isA ? `Điểm cao nhất đã lưu: ${savedPct}%` : `Best score saved: ${savedPct}%`}
             </p>
           )}
