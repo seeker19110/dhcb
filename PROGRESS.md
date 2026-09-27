@@ -1145,7 +1145,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `docs/changelog/0459-*.md`):** 56/56 soi 5 mốc, sửa 54 (khoảng 25 sai KIẾN THỨC, có SO₄²⁻ "bị oxi
   hoá ở anode" trong cả lí thuyết bài điện phân) + bộ vẽ đọc mốc đúng ý người soạn (`giaiMoc`: giữ
   giá trị mốc trước, giữ trạng thái đầu/cuối — 40 hoạt ảnh ở 4 môn từng chạy sai) + `scaleX/scaleY`.
-  **Còn thiếu:** rà mắt Sinh (64) hoạt ảnh — PR kế tiếp; cấu trúc animation cho môn Anh (chưa thiết
+  **Rà mắt Sinh xong (2026-09-27, `docs/changelog/0461-*.md`):** 64/64 soi 5 mốc, sửa 44 (khoảng
+  15 sai kiến thức/lập luận: chạc sao chép ngược chiều, phả hệ không loại được gene trên X, đường S
+  nằm trên J, màu máu giàu/nghèo O₂ đảo…), cảnh báo máy 31 → 6/64; `shots:lesson-anim` chạy được
+  trên Windows. **Còn thiếu:** chuyên gia Sinh duyệt 7 bài kiến thức; cấu trúc animation cho môn Anh (chưa thiết
   kế).
   Đặc tả: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`.
 - ✅ **[2026-09-20 — PR #1061 → ĐÓNG 2026-09-25, `docs/changelog/0447-*.md`] Ảnh Tầng 8b cho sửa

@@ -612,3 +612,25 @@ thẳng `loc`.
 hai cú). Đây là cách tái hiện tất định, không cần máy chậm: xem ca "hai cú bấm liền nhau trước
 khi trang kịp render lại" ở `ProgrammingLessonPage.test.tsx` (đỏ trước khi sửa với đúng triệu
 chứng của CI). Trang mới có điều hướng theo hash phải có ca tương tự.
+
+## 15. Hai nhãn SVG xếp dòng quá sát → cổng AAA không đo được halo, báo "incomplete"
+
+**Ngày/PR:** 2026-09-27, PR #1187 (`docs/changelog/0461-*.md`). CI `E2E shard 1/6` đỏ ở ca
+`a11y AAA: khối duyệt trong bài học (admin)` cả 3 theme.
+
+**Khuôn lỗi:** khi rà mắt hoạt ảnh `sinh12-c1-b1`, tôi dời nhãn "chạc chữ Y" sang trái và tách
+thành hai dòng cách nhau 14 đơn vị (cỡ chữ 11). Ảnh chụp trông ổn, máy kiểm hình học của
+`shots:lesson-anim` không cảnh báo. Nhưng axe không tự đo được nền dưới chữ SVG (báo
+`incomplete … overlapped by another element`), nên cổng dùng `measureSvgHalo`
+(`e2e/helpers/svgHaloContrast.ts`) để đo qua viền halo. Hàm đó **bỏ cuộc** khi khung bao của một
+phần tử vẽ SAU giao với khung bao nhãn (đã nới thêm nửa viền). Nhãn luôn vẽ sau hình, nên chỉ
+nhãn với nhãn mới chạm điều kiện này: khung bao chữ cao khoảng 1,2 × cỡ chữ, viền 3px không co
+giãn theo tỉ lệ (`non-scaling-stroke`). Hai dòng cách 14 đơn vị thì khung bao giao nhau.
+
+**Cách rà:** hai nhãn xếp chồng theo chiều dọc và giao nhau theo chiều ngang phải cách nhau
+**≥ 1,6 × cỡ chữ** (cỡ 11 → 18 đơn vị). Tính cả màn 390px: viền 3px chiếm nhiều đơn vị viewBox
+hơn khi hình bị thu nhỏ.
+
+**Cổng chốt chặn:** cổng AAA chỉ quét trang bài `sinh12-c1-b1` (và các trang trong danh sách của
+`e2e/a11y-aaa.spec.ts`), không quét mọi hoạt ảnh. Đề xuất: cho máy kiểm hình học của
+`scripts/shots-lesson-animations.ts` cảnh báo khi khung bao hai nhãn giao nhau.
