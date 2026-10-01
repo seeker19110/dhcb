@@ -9,12 +9,18 @@ const ROUTES = [
     path: '/goc-hoc-tap/english/lo-trinh/a1',
     destination: /\/goc-hoc-tap\/english\/lo-trinh\/?$/,
     backName: 'Lộ trình CEFR',
+    // Tên trang nằm ở header (trang cấp CEFR truyền `title` cho Layout).
+    titleIn: 'header',
   },
   {
     name: 'Lập trình',
     path: '/goc-hoc-tap/programming/bai-hoc/p1-u4-l1',
     destination: /\/goc-hoc-tap\/programming\/bac\/p1--/,
     backName: 'Nhập môn tư duy',
+    // [2026-10-01, đồng nhất khung bài học] Tên bài là <h1> trong nội dung như bài STEM và bài
+    // hội thoại; header chỉ còn nút Back. Ý định của phép kiểm giữ nguyên: ở 320/390px người
+    // học vẫn THẤY tên bài, nút Back 44px không đẩy mất nó.
+    titleIn: 'h1',
   },
 ] as const
 
@@ -51,7 +57,12 @@ for (const width of [320, 390]) {
             () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
           ),
         ).toBe(0)
-        await expect(page.locator('header p').first()).toBeVisible()
+        if (route.titleIn === 'header') {
+          await expect(page.locator('header p').first()).toBeVisible()
+        } else {
+          await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+          await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
+        }
         await expect(
           page.locator('header').getByRole('button', { name: 'Mở Bạn Đồng Hành AI' }),
         ).toBeVisible()

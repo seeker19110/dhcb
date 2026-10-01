@@ -9,8 +9,10 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
 import DesktopSidebar from './DesktopSidebar'
 
+// `plan` đổi được theo từng ca (nhãn gói ở chân sidebar đọc gói thật của phiên).
+let planGiaLap: 'free' | 'vip' = 'free'
 vi.mock('../context/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'u1', name: 'An', onboarded: true } }),
+  useAuth: () => ({ user: { id: 'u1', name: 'An', onboarded: true, plan: planGiaLap } }),
 }))
 
 function render(pathname: string) {
@@ -46,6 +48,7 @@ function setViewportWidth(width: number) {
 
 beforeEach(() => {
   localStorage.clear()
+  planGiaLap = 'free'
   // Các test cấu trúc cây canh sidebar MỞ RỘNG — bề rộng desktop phổ biến nhất.
   setViewportWidth(1440)
 })
@@ -220,5 +223,28 @@ describe('DesktopSidebar — dải desktop hẹp 1024–1279px', () => {
     expect(render('/tien-do')).toContain('aria-label="Thu gọn thanh điều hướng"')
     localStorage.setItem('ui_sidebar_collapsed', '1')
     expect(render('/tien-do')).toContain('aria-label="Mở rộng thanh điều hướng"')
+  })
+})
+
+// [2026-10-01, audit M8] Nhãn gói ở chân sidebar theo gói THẬT — trước đây ghi cứng
+// "Free · Nâng cấp" cho cả người dùng VIP, và "VIP" cho cả người dùng Free khi thu gọn.
+describe('DesktopSidebar — nhãn gói theo phiên', () => {
+  it('tài khoản Free: "Free · Nâng cấp" (mở rộng) / "Nâng cấp" (thu gọn), không hiện chữ VIP', () => {
+    planGiaLap = 'free'
+    const moRong = render('/tien-do')
+    expect(moRong).toContain('Free · Nâng cấp')
+    setViewportWidth(1024)
+    const thuGon = render('/tien-do')
+    expect(thuGon).toContain('>Nâng cấp</a>')
+    expect(thuGon).not.toContain('>VIP</a>')
+  })
+
+  it('tài khoản VIP: "Gói VIP" / "VIP", không bao giờ ghi "Free"', () => {
+    planGiaLap = 'vip'
+    const moRong = render('/tien-do')
+    expect(moRong).toContain('>Gói VIP</a>')
+    expect(moRong).not.toContain('Free · Nâng cấp')
+    setViewportWidth(1024)
+    expect(render('/tien-do')).toContain('>VIP</a>')
   })
 })

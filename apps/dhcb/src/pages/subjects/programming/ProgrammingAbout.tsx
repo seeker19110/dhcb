@@ -144,10 +144,10 @@ export default function ProgrammingAbout() {
             <Trophy className="w-5 h-5 text-accent-400" />
             <span>Học xong bạn cầm được gì trên tay</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             Không phải chứng chỉ. Là <strong>hai thứ</strong>:
           </p>
-          <ol className="space-y-2 text-sm text-zinc-200 leading-relaxed list-decimal pl-5">
+          <ol className="space-y-2 text-sm text-zinc-200 leading-relaxed list-decimal pl-5 read-measure">
             <li>
               <strong>Một sản phẩm chạy thật trên Internet</strong> — có địa chỉ https, người khác
               vào dùng được.
@@ -187,7 +187,7 @@ export default function ProgrammingAbout() {
               </div>
             ))}
           </dl>
-          <p className="text-sm text-zinc-200 leading-relaxed pt-1 border-t border-zinc-800">
+          <p className="text-sm text-zinc-200 leading-relaxed pt-1 border-t border-zinc-800 read-measure">
             Theo thang nghề SFIA, đây tương đương{' '}
             <strong>bậc 3 — lập trình viên làm việc độc lập</strong>, tức đủ để nhận việc thật ở mức
             junior.
@@ -200,13 +200,13 @@ export default function ProgrammingAbout() {
             <Brain className="w-5 h-5 text-accent-400" />
             <span>Thứ chúng tôi cho là giá trị nhất: sáu thói quen tư duy</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             Kiến thức thì tra được. Sáu thói quen này thì không — và chúng được cài rải khắp {soBai}{' '}
             bài chứ không nằm gọn ở bài nào:
           </p>
           <ol className="space-y-2.5 list-decimal pl-5">
             {THOI_QUEN.map((tq) => (
-              <li key={tq.tieu_de} className="text-sm text-zinc-200 leading-relaxed">
+              <li key={tq.tieu_de} className="text-sm text-zinc-200 leading-relaxed read-measure">
                 <strong className="text-white">{tq.tieu_de}.</strong> {tq.giai_thich}
               </li>
             ))}
@@ -219,14 +219,14 @@ export default function ProgrammingAbout() {
             <ShieldAlert className="w-5 h-5 text-amber-400 theme-light:text-amber-900" />
             <span>Nói thẳng: thứ bạn sẽ KHÔNG có</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             Chúng tôi thà mất một học viên còn hơn để bạn học một năm rồi mới biết:
           </p>
           <ul className="space-y-2">
             {KHONG_CO.map((item) => (
               <li
                 key={item}
-                className="flex items-start gap-2 text-sm text-zinc-200 leading-relaxed"
+                className="flex items-start gap-2 text-sm text-zinc-200 leading-relaxed read-measure"
               >
                 <span
                   className="text-amber-400 theme-light:text-amber-900 shrink-0"
@@ -246,13 +246,13 @@ export default function ProgrammingAbout() {
             <Clock className="w-5 h-5 text-accent-400" />
             <span>Cái giá, và trạng thái thật của khoá học</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             Ước tính trong đặc tả: <strong>khoảng {tongTuan} tuần — gần một năm</strong> học đều
             đặn. Đây không phải bootcamp ba tháng, và chúng tôi không bán nó như vậy.
           </p>
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
             <p className="text-sm font-bold text-white">Trạng thái thật hôm nay</p>
-            <p className="text-sm text-zinc-100 leading-relaxed">
+            <p className="text-sm text-zinc-100 leading-relaxed read-measure">
               Nội dung đã đủ —{' '}
               <strong>
                 {soBai} bài, cả {soBac} bậc đều mở
@@ -272,14 +272,14 @@ export default function ProgrammingAbout() {
             <UserCheck className="w-5 h-5 text-accent-400" />
             <span>Hợp và không hợp</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             <strong className="text-emerald-300 theme-light:text-emerald-800">
               Hợp với bạn nếu:
             </strong>{' '}
             bạn muốn đổi nghề một cách nghiêm túc, hoặc là học sinh / sinh viên muốn một cái nền
             vững chứ không phải mẹo vặt.
           </p>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             <strong className="text-amber-300 theme-light:text-amber-900">Không hợp nếu:</strong>{' '}
             bạn cần một công việc trong ba tháng.
           </p>

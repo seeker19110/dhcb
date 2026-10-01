@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import Layout from '../../components/Layout'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 import SubjectIllustration from '../../components/SubjectIllustration'
 import LoadError from '../../components/LoadError'
 import { listSubjects, SubjectApiError } from '../../lib/subjectApi'
@@ -76,6 +77,13 @@ type CatalogState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; subjects: SubjectManifest[] }
+
+/**
+ * Chip lọc ĐANG CHỌN — một màu cho mọi nhóm (accent + chữ tối cố định như nút chính).
+ * [2026-10-01, đồng nhất] Trước đây mỗi nhóm một màu khi chọn (accent / xanh lá / xanh dương):
+ * màu đổi theo nút bấm làm người dùng tưởng ba trạng thái khác nhau.
+ */
+const CHIP_DANG_CHON = 'bg-accent-500 text-[#09090b] shadow-sm'
 
 export default function Subjects() {
   usePageTitle('Môn học | Đồng hành cùng bạn')
@@ -226,7 +234,7 @@ export default function Subjects() {
               onClick={() => setFilter('all')}
               className={`tap-44 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
                 filter === 'all'
-                  ? 'bg-accent-500 text-black shadow-md shadow-accent-500/20'
+                  ? CHIP_DANG_CHON
                   : 'bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-white'
               }`}
             >
@@ -236,7 +244,7 @@ export default function Subjects() {
               onClick={() => setFilter('language')}
               className={`tap-44 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
                 filter === 'language'
-                  ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
+                  ? CHIP_DANG_CHON
                   : 'bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-white'
               }`}
             >
@@ -246,7 +254,7 @@ export default function Subjects() {
               onClick={() => setFilter('stem')}
               className={`tap-44 px-3.5 py-2 rounded-xl text-xs font-semibold transition ${
                 filter === 'stem'
-                  ? 'bg-blue-500 text-black shadow-md shadow-blue-500/20'
+                  ? CHIP_DANG_CHON
                   : 'bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-white'
               }`}
             >
@@ -425,11 +433,11 @@ export default function Subjects() {
                       // host Góc học tập đưa người đã đăng nhập sang một origin có localStorage
                       // trống — họ thành khách với tiến độ 0 (spec 02 §2.3).
                       onClick={() => goToSubjectHome(nav, sub.id)}
-                      className={`w-full tap-44 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition active:scale-[0.98] ${
-                        sub.id === 'english'
-                          ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-md'
-                          : 'bg-accent-500 hover:bg-accent-400 text-black shadow-md'
-                      }`}
+                      // [2026-10-01, đồng nhất] Cùng MỘT nút chính cho mọi môn — trước đây riêng
+                      // Tiếng Anh xanh lá, các môn khác màu accent: cùng vai trò mà khác màu thì
+                      // người học tưởng hai nút khác nghĩa. Xanh lá dành cho nghĩa "đúng"
+                      // (CLAUDE.md §4.8), không làm màu thương hiệu của một môn.
+                      className={buttonClass({ variant: 'primary', size: 'lg', fullWidth: true })}
                     >
                       <Bot className="w-4 h-4" />
                       {/* Một khuôn nhãn cho cả 6 môn (quyết định chủ dự án 2026-09-15, Q2). */}

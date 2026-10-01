@@ -522,10 +522,13 @@ function LessonBody({
           bấm vào chính mình là vô nghĩa). Trước đợt này trang chỉ truyền đốt "bậc học", nên
           chính nó bị cắt và breadcrumb dừng ở "Lập trình" — thấy rõ trên ảnh chụp Tầng 8b.
           Thêm tên bài vào cuối là đốt bậc/khoá hiện ra đúng như đặc tả AC-13. */}
+      {/* [2026-10-01, đồng nhất khung bài học] KHÔNG truyền `title`: tên bài là <h1> hiện trong
+          nội dung, như bài STEM và bài hội thoại. Trước đây tên bài chỉ nằm ở header (15px, cắt
+          cụt "Chương trình đầu tiên — …" ở 390/1024px) còn <h1> bị ẩn. Đốt cuối của `crumbs` vẫn
+          là tên bài để nhãn nút Back ra đúng đốt cha (bậc/khoá). */}
       <Layout
         onBack={() => nav(backTo)}
         crumbs={[...crumbs, { label: lesson.title, to: '' }]}
-        title={lesson.title}
         focus
       />
 
@@ -545,14 +548,14 @@ function LessonBody({
             rail={<StepRail steps={STEPS} current={step} isDone={stepDone} onGo={goToStep} />}
           >
             <div className="space-y-5">
-              {/* Đích `#dau-bai` (S09d): tên bài đã hiện ở header nên h1 ẩn khi đọc bình thường
-                  (hiện cả hai là lặp chữ — đúng loại lỗi ảnh Tầng 8b từng bắt). Nhưng khi được
-                  FOCUS (hash lạ, Back về đầu bài) nó HIỆN RA: người dùng bàn phím nhìn thấy focus
-                  đang ở đâu, không phải một điểm focus vô hình. */}
+              {/* Đích `#dau-bai` (S09d). [2026-10-01] Tên bài HIỆN thường trực, cùng thang chữ tiêu
+                  đề bài của STEM và hội thoại (`text-2xl sm:text-3xl font-extrabold`); header thôi
+                  nhắc lại tên bài nên không lặp chữ. Vẫn nhận focus bằng mã lệnh (hash lạ, Back
+                  về đầu bài) với vòng focus nhìn thấy được. */}
               <h1
                 id={LESSON_HEAD_ANCHOR}
                 tabIndex={-1}
-                className="sr-only t-h2 text-content rounded-lg scroll-mt-24 focus:not-sr-only focus:block focus:px-2 focus:py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                className="text-2xl sm:text-3xl font-extrabold leading-tight text-content rounded-lg scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
               >
                 {lesson.title}
               </h1>

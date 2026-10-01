@@ -90,7 +90,8 @@ const ALLOWED_COLOR_SHADOW_COUNT: Record<string, number> = {
   'pages/learning/AppliedKnowledge.tsx': 4, // 4 tab đang chọn (tách 2026-09-06)
   'pages/learning/appliedKnowledge/tabs/SimulatorsLab.tsx': 10, // 10 simulator đang chọn
   'pages/learning/SubjectDetail.tsx': 2, // lớp/độ khó đang chọn
-  'pages/learning/Subjects.tsx': 3, // 3 bộ lọc đang chọn
+  // 'pages/learning/Subjects.tsx' — 3 chip lọc đang chọn ĐÃ GỠ bóng màu (2026-10-01, đồng nhất đợt 2:
+  // chip chọn dùng chung một màu accent + bóng trung tính, như nút chuẩn).
   'pages/subjects/english/lessons/LessonView.tsx': 1, // dòng hội thoại đang đọc (tách từ Lessons.tsx 2026-09-06)
   'pages/subjects/english/Speaking.tsx': 1, // đang ghi âm; nút chọn cấp độ đã dùng buttonClass
 }
