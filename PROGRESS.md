@@ -179,6 +179,13 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   U3 (14 trang tương phản + đưa vào cổng) và U4 (ngôn ngữ trang) làm được ngay, không cần quyết
   định sản phẩm. U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding)
   cần chủ dự án quyết trước.
+  **[2026-10-01] Một phần U9 + M15 đã làm** ([audit đồng nhất bố cục](docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md),
+  `docs/changelog/0467-*.md`): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
+  chỉ số dưới (M15 phần cấu trúc), nút Back header đúng đích ở 21 trang, chế độ tập trung + "Bài
+  sau" cho bài hội thoại. **Việc kế tiếp của nhánh này** (báo cáo đó §4): tiêu đề bài Lập trình
+  trong nội dung; khối "Học tiếp" dùng chung các trang môn — **chờ chủ dự án chốt màu nút chính**
+  (Tiếng Anh xanh lá vs Lập trình xanh trời); đổi 573 tiêu đề STEM sang viết hoa đầu câu ngay
+  trong dữ liệu nguồn (có người duyệt).
 - **[2026-09-23] Kế hoạch nâng cấp UI/UX và sư phạm sau audit**:
   [goal 5 đợt](docs/goals/2026-09-23-uiux-su-pham.md) và
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).

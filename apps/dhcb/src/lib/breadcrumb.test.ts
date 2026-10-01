@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCrumbs } from './breadcrumb'
+import { buildCrumbs, defaultBackDestination } from './breadcrumb'
 
 describe('buildCrumbs', () => {
   it('Trang chủ không có đường đi (không vẽ breadcrumb)', () => {
@@ -175,5 +175,35 @@ describe('buildCrumbs', () => {
       expect(buildCrumbs(p).map((c) => c.label)).not.toContain('Phòng Luyện Tập')
     }
     expect(buildCrumbs('/luyen-tap').map((c) => c.label)).toEqual(['Trang chủ', 'Phòng Luyện Tập'])
+  })
+})
+
+// [2026-10-01, audit đồng nhất bố cục] Nhãn nút Back và đích bấm phải là CÙNG một đốt. Trước đây
+// đích mặc định là '/' cứng nên "← Tiến độ" ở Lịch sử học lại đưa về Trang chủ.
+describe('defaultBackDestination — đích Back trùng nhãn', () => {
+  const backOf = (pathname: string, title?: string, extra?: Parameters<typeof buildCrumbs>[2]) => {
+    const ancestors = buildCrumbs(pathname, title, extra).slice(0, -1)
+    return { label: ancestors[ancestors.length - 1]?.label, to: defaultBackDestination(ancestors) }
+  }
+
+  it('trang tầng 1 về Trang chủ như cũ', () => {
+    expect(backOf('/tien-do', 'Tiến độ học')).toEqual({ label: 'Trang chủ', to: '/' })
+  })
+
+  it('trang con lùi đúng về trang cha ghi trên nhãn (không về Trang chủ)', () => {
+    expect(backOf('/lich-su-hoc', 'Lịch sử học')).toEqual({ label: 'Tiến độ', to: '/tien-do' })
+    expect(backOf('/ban-be', 'Bạn bè')).toEqual({ label: 'Hồ sơ', to: '/trang-ca-nhan' })
+  })
+
+  it('trang bài STEM có đốt động "Bài học" lùi về danh sách bài của môn', () => {
+    const r = backOf('/goc-hoc-tap/physics/bai-hoc/ly10-c2-b10--su-roi-tu-do', 'Sự rơi tự do', [
+      { label: 'Bài học môn Vật lí', to: '/goc-hoc-tap/physics/bai-hoc' },
+    ])
+    expect(r).toEqual({ label: 'Bài học môn Vật lí', to: '/goc-hoc-tap/physics/bai-hoc' })
+  })
+
+  it('không có đốt cha, hoặc đốt cha không có liên kết → về Trang chủ', () => {
+    expect(defaultBackDestination([])).toBe('/')
+    expect(defaultBackDestination([{ label: 'X', to: '' }])).toBe('/')
   })
 })

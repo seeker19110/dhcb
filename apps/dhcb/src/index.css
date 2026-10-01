@@ -91,6 +91,14 @@ html[data-sidebar='collapsed'] {
 html[data-focus='1'] nav.bottom-nav {
   display: none;
 }
+/* [2026-10-01, audit đồng nhất bố cục] Thanh đáy đã ẩn thì KHÔNG chừa chỗ cho nó nữa. Trước đây
+   hai biến giữ nguyên ~128px nên mọi trang tập trung (bài STEM, bài Lập trình, truyện) có một dải
+   trống cuối trang, còn khung cao cố định `100dvh - --bnav-h` (bài hội thoại mobile) hụt đúng
+   chừng ấy. Selector `html[...]` (0,1,1) thắng `:root` (0,1,0) cả trong media query ≥1024px. */
+html[data-focus='1'] {
+  --bnav-only-h: 0px;
+  --bnav-h: 0px;
+}
 
 /* [S07d, 2026-09-25] FOCUS KHÔNG BỊ HEADER/THANH ĐÁY CHE (WCAG 2.4.11). Khi Tab tới một
    phần tử ngoài tầm nhìn, trình duyệt cuộn nó tới SÁT MÉP viewport — đúng chỗ header sticky

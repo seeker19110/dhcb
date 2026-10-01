@@ -14,14 +14,20 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import { Play, Loader2 } from 'lucide-react'
 import Layout from '../../../components/Layout'
-import { PageShell } from '@core/PageShell'
+import { PageShell, MAIN_CONTENT_ID } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { getDirection } from '../../../lib/storage'
 import { useAuth } from '../../../context/useAuth'
 import { getViewedIds, markViewed } from '../../../lib/viewedTracking'
 import { loadIndex, loadLesson, type Lesson, type LessonMeta } from '../../../data/lessons/loader'
-import { docThamSoBai, searchBoBai, searchVoiBai } from '../../../lib/englishLessonAnchors'
+import {
+  cayBaiHoiThoai,
+  docThamSoBai,
+  searchBoBai,
+  searchVoiBai,
+} from '../../../lib/englishLessonAnchors'
+import OutlinePrevNext from '../../../components/OutlinePrevNext'
 import type { Direction } from '../../../types'
 import { getColor } from './lessons/shared'
 import { SearchBar } from './lessons/SearchBar'
@@ -124,6 +130,11 @@ export default function Lessons() {
     }
   }, [lanTaiChiMuc])
   const index = useMemo(() => (chiMuc.trangThai === 'xong' ? chiMuc.ds : []), [chiMuc])
+  // Cây phẳng cho "Bài trước / Bài sau" — cùng component với bài STEM/Lập trình.
+  const cayBai = useMemo(
+    () => cayBaiHoiThoai(index, location.pathname, location.search),
+    [index, location.pathname, location.search],
+  )
 
   // ── Bài được chọn: đọc từ URL, đối chiếu chỉ mục ──────────────────────────────
   const thamSo = docThamSoBai(location.search)
@@ -315,6 +326,21 @@ export default function Lessons() {
         userId={uid}
         onBack={veDanhSach}
         {...(variant === 'desktop' ? { variant } : {})}
+        footer={
+          <OutlinePrevNext
+            outline={cayBai}
+            contentId={String(lesson.id)}
+            {...(isA
+              ? {}
+              : {
+                  labels: {
+                    nav: 'Previous and next lesson',
+                    prev: 'Previous',
+                    next: 'Next',
+                  },
+                })}
+          />
+        }
       />
     )
   }
@@ -392,14 +418,27 @@ export default function Lessons() {
   if (selectedMeta || dangChoChiMuc) {
     return (
       <div className="h-[calc(100dvh-var(--bnav-h))] overflow-hidden bg-zinc-950 flex flex-col">
-        <Layout backTo={duongDanMonTiengAnh()} back />
-        {selectedMeta && lesson && !loiTaiBai ? (
-          chiTiet('mobile')
-        ) : (
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            {selectedMeta ? chiTiet('mobile') : dangTai}
-          </div>
-        )}
+        {/* [2026-10-01, audit đồng nhất bố cục] `focus` như khuôn desktop và như bài STEM/Lập
+            trình/truyện: trước đây riêng khuôn mobile này còn thanh điều hướng đáy + dải
+            Reachability chiếm ~128px suốt buổi học. Thanh đáy ẩn thì `--bnav-h` = 0 (index.css)
+            nên khung cao cố định phía trên tự giãn hết màn. */}
+        <Layout backTo={duongDanMonTiengAnh()} back focus />
+        {/* <main> = đích "Bỏ qua tới nội dung chính" — khuôn này không đi qua `PageShell` nên
+            phải tự dựng (trước đây trang không có landmark <main>, liên kết bỏ qua trỏ vào hư
+            không). `min-h-0` cho vùng cuộn nội bộ của bài co đúng trong cột flex. */}
+        <main
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="flex min-h-0 flex-1 flex-col focus:outline-none"
+        >
+          {selectedMeta && lesson && !loiTaiBai ? (
+            chiTiet('mobile')
+          ) : (
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              {selectedMeta ? chiTiet('mobile') : dangTai}
+            </div>
+          )}
+        </main>
       </div>
     )
   }

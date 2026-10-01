@@ -33,6 +33,7 @@ import { LessonAnimation } from '@core/LessonAnimation'
 import Layout from '../../components/Layout'
 import { buttonClass } from '@core/buttonStyles'
 import { usePageTitle } from '../../lib/usePageTitle'
+import StemTheory from '../../components/StemTheory'
 import { useAuth } from '../../context/useAuth'
 import { contentFingerprint } from '../../lib/learningSession'
 import { boCoTuThuLai, docCauTuThuLai } from '../../lib/stemRetry'
@@ -678,23 +679,41 @@ export default function StemLessonView() {
   if (!subject) return <Navigate to="/goc-hoc-tap" replace />
 
   const duongDanVe = duongDanDanhSachBai(subject.id)
+  const nhanDanhSach = `Bài học môn ${subject.label}`
 
   return (
     <>
-      {/* `focus`: trang ngồi học lâu → ẩn bộ chuyển Studio + huy hiệu streak (xem Layout). */}
-      <Layout focus />
+      {/* `focus`: trang ngồi học lâu → ẩn bộ chuyển Studio + huy hiệu streak (xem Layout).
+          [2026-10-01, audit đồng nhất bố cục] `crumbs` cho nút Back ở header đúng nhãn + đúng
+          đích "← Bài học môn …" (trước đây không truyền gì: nhãn "← Góc học tập" mà bấm lại về
+          Trang chủ). Đốt cuối là tên bài — KHÔNG truyền `title` vì tên bài đã là <h1> bên dưới,
+          header không nhắc lại (cùng quy ước bài hội thoại tiếng Anh, S09c). */}
+      <Layout
+        focus
+        crumbs={[
+          { label: nhanDanhSach, to: duongDanVe },
+          { label: tomTat?.title ?? 'Bài học', to: '' },
+        ]}
+      />
       <PageShell width={isDesktop && rail ? 'standard' : 'reading'}>
         <TwoPane isDesktop={isDesktop} railSide="left" railLabel="Mục lục môn học" rail={rail}>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              to={duongDanVe}
-              className="inline-flex min-h-[44px] items-center gap-2 text-content-secondary"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Bài học môn {subject.label}
-            </Link>
-            {trigger}
-          </div>
+          {/* Liên kết về danh sách CHỈ ở mobile: ở đó nút Back của header chỉ còn mũi tên (nhãn
+              ẩn dưới 640px). Từ 1024px header đã ghi đúng chữ này — vẽ thêm một bản trong nội
+              dung là hai lối lùi trùng nhau đứng cách nhau 40px. */}
+          {(!isDesktop || trigger) && (
+            <div className="flex flex-wrap items-center gap-3">
+              {!isDesktop && (
+                <Link
+                  to={duongDanVe}
+                  className="inline-flex min-h-[44px] items-center gap-2 text-content-secondary"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                  {nhanDanhSach}
+                </Link>
+              )}
+              {trigger}
+            </div>
+          )}
 
           {trangThai === 'dang-tai' && <p className="mt-6 text-content-secondary">Đang tải bài…</p>}
 
@@ -748,7 +767,8 @@ export default function StemLessonView() {
               >
                 Lý thuyết
               </h2>
-              <p className="mt-2 whitespace-pre-line text-content">{bai.theory}</p>
+              {/* [2026-10-01] Dòng "TIÊU ĐỀ:" thành <h3> thật + chỉ số dưới — xem lib/stemTheory.ts. */}
+              <StemTheory text={bai.theory} />
 
               {bai.animation && (
                 <>
