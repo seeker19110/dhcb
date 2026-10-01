@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import Layout from '../../../components/Layout.js'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 import PricePromoBanner from '../../../components/PricePromoBanner.js'
 import RewardTipBanner from '../../../components/RewardTipBanner.js'
 import { getDirection } from '../../../lib/storage'
@@ -155,7 +156,7 @@ export default function EnglishHome() {
               </div>
               <div>
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  {isA ? 'Gia Sư Tiếng Anh Song Ngữ' : 'Bilingual English Tutor'}
+                  {isA ? 'Gia sư tiếng Anh song ngữ' : 'Bilingual English tutor'}
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 font-bold border border-emerald-500/30 whitespace-nowrap">
                     A1–C2
                   </span>
@@ -194,7 +195,9 @@ export default function EnglishHome() {
               </div>
               <button
                 onClick={goToNextStep}
-                className="tap-44 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#09090b] font-bold text-sm shadow-md transition active:scale-95 shrink-0"
+                // [2026-10-01, đồng nhất] Nút chính chuẩn (accent) như "Học tiếp" của môn Lập
+                // trình và "Vào môn" ở hub — trước đây riêng nút này xanh lá.
+                className={buttonClass({ variant: 'primary', className: 'shrink-0' })}
               >
                 <span>{isA ? 'Tiếp tục học ngay' : 'Continue learning'}</span>
                 <ChevronRight className="w-4 h-4" />

@@ -65,7 +65,7 @@ function SpecCard({
             Bạn đang theo hướng này · {soChangXong}/{spec.stages.length} chặng xong
           </p>
         )}
-        <p className="text-sm text-zinc-200 leading-relaxed">{spec.tagline}</p>
+        <p className="text-sm text-zinc-200 leading-relaxed read-measure">{spec.tagline}</p>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
             <Lock className="w-3 h-3" aria-hidden="true" />
@@ -76,11 +76,11 @@ function SpecCard({
             {spec.duration}
           </span>
         </div>
-        <p className="text-xs text-zinc-300 leading-relaxed">
+        <p className="text-xs text-zinc-300 leading-relaxed read-measure">
           <span className="font-semibold text-zinc-200">Ngôn ngữ chính:</span>{' '}
           {spec.languages.join(' · ')}
         </p>
-        <p className="text-xs text-zinc-300 leading-relaxed flex items-center gap-1.5">
+        <p className="text-xs text-zinc-300 leading-relaxed flex items-center gap-1.5 read-measure">
           <Boxes className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
           <span>
             Bản đồ kiến trúc: {spec.architecture.modules.length} module ·{' '}
@@ -135,7 +135,7 @@ export default function ProgrammingSpecializations() {
             <Compass className="w-5 h-5 text-accent-400" aria-hidden="true" />
             <span>Chọn thế nào cho đỡ hối hận</span>
           </h2>
-          <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5">
+          <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
             <li>
               Chọn theo <strong>sản phẩm bạn muốn làm ra</strong>, không theo mức lương người ta
               đồn.
@@ -183,7 +183,7 @@ export default function ProgrammingSpecializations() {
             <Boxes className="w-4 h-4 text-accent-400" aria-hidden="true" />
             <span>Hướng nền — học SONG SONG, không thay hướng chính</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             Hai hướng này cắt ngang mọi hướng trên. Đặc biệt{' '}
             <strong>Kiến trúc hệ thống &amp; Đặc tả</strong> là hướng dành cho người sẽ quyết định
             và viết đặc tả để người khác — hoặc AI — thi hành, thay vì tự gõ từng dòng.

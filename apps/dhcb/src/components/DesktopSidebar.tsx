@@ -140,6 +140,12 @@ const ACTIVE_ORDER: Item[] = [
   ...CORE_BOTTOM,
 ]
 
+/** Nhãn lối vào trang gói ở chân sidebar — theo gói THẬT, gọn hơn khi thu gọn. */
+function nhanGoi(laVip: boolean, thuGon: boolean): string {
+  if (laVip) return thuGon ? 'VIP' : 'Gói VIP'
+  return thuGon ? 'Nâng cấp' : 'Free · Nâng cấp'
+}
+
 function readCollapsed(): boolean {
   try {
     return localStorage.getItem(STORAGE_KEY) === '1'
@@ -403,14 +409,18 @@ export default function DesktopSidebar() {
       </nav>
 
       {/* Bảng giá tách khỏi trang Hồ sơ (audit 2026-08-31 mục B9) nên vẫn cần lối vào riêng —
-          nay chỉ là dòng chữ nhỏ, không còn mục cấp 1 riêng (P1-7, rút 10 → 7 mục). */}
+          nay chỉ là dòng chữ nhỏ, không còn mục cấp 1 riêng (P1-7, rút 10 → 7 mục).
+          [2026-10-01, audit M8] Nhãn đọc GÓI THẬT của phiên (`user.plan` — server đã xét hạn
+          gói qua `resolvePlan`). Trước đây ghi cứng "Free · Nâng cấp" (thu gọn: "VIP") cho MỌI
+          người, nên người dùng VIP thấy chữ "Free" ngay cạnh trang ghi "Bạn đang dùng gói VIP",
+          còn người dùng Free ở thanh thu gọn lại thấy chữ "VIP" như một huy hiệu. */}
       <Link
         to="/nang-cap"
         className={`tap-44-coarse-y flex items-center px-3 py-2 text-xs text-content-muted hover:text-content transition ${
-          collapsed ? 'justify-center' : ''
+          collapsed ? 'justify-center text-center' : ''
         }`}
       >
-        {collapsed ? 'VIP' : 'Free · Nâng cấp'}
+        {nhanGoi(user?.plan === 'vip', collapsed)}
       </Link>
     </aside>
   )

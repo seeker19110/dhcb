@@ -85,8 +85,8 @@ function ArchList({
         {icon}
         <span>{title}</span>
       </h3>
-      <p className="text-xs text-zinc-300 leading-relaxed">{hint}</p>
-      <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5">
+      <p className="text-xs text-zinc-300 leading-relaxed read-measure">{hint}</p>
+      <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -104,17 +104,17 @@ function ProjectBlock({ project, tone }: { project: SpecProject; tone: 'stage' |
         <Trophy className="w-4 h-4 text-accent-400 shrink-0" aria-hidden="true" />
         <span>Dự án: {project.name}</span>
       </h4>
-      <p className="text-sm text-zinc-200 leading-relaxed">{project.brief}</p>
+      <p className="text-sm text-zinc-200 leading-relaxed read-measure">{project.brief}</p>
       <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">
         Xong nghĩa là đạt đủ:
       </p>
-      <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5">
+      <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5 read-measure">
         {project.requirements.map((req) => (
           <li key={req}>{req}</li>
         ))}
       </ul>
       {project.stretch && project.stretch.length > 0 && (
-        <p className="text-xs text-zinc-300 leading-relaxed">
+        <p className="text-xs text-zinc-300 leading-relaxed read-measure">
           <span className="font-semibold text-zinc-200">Muốn đi xa hơn:</span>{' '}
           {project.stretch.join(' · ')}
         </p>
@@ -142,7 +142,7 @@ function StageLessons({ stageId }: { stageId: string }) {
         />
         <span>Chặng này đã có bài học ({units.length} phần)</span>
       </h4>
-      <ul className="text-sm text-zinc-100 leading-relaxed space-y-1 list-disc pl-5">
+      <ul className="text-sm text-zinc-100 leading-relaxed space-y-1 list-disc pl-5 read-measure">
         {units.map((id) => (
           <li key={id}>{tieuDe(id)}</li>
         ))}
@@ -185,7 +185,7 @@ function StageBlock({
           {TIER_LABEL[stage.tier] ?? stage.tier}
         </p>
         <h3 className="text-base font-bold text-white leading-snug">{stage.name}</h3>
-        <p className="text-sm text-zinc-200 leading-relaxed">
+        <p className="text-sm text-zinc-200 leading-relaxed read-measure">
           <span className="font-semibold">Học xong làm được:</span> {stage.canDo}
         </p>
         <p className="text-xs text-zinc-300 flex items-center gap-1.5">
@@ -200,7 +200,7 @@ function StageBlock({
             <h4 className="text-sm font-bold text-white">
               {i + 1}. {mod.title}
             </h4>
-            <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5">
+            <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5 read-measure">
               {mod.topics.map((topic) => (
                 <li key={topic}>{topic}</li>
               ))}
@@ -324,7 +324,7 @@ export default function ProgrammingSpecializationPage() {
               />
               <span>{dangTheo ? 'Bạn đang theo hướng này' : 'Theo hướng này?'}</span>
             </h2>
-            <p className="text-sm text-zinc-100 leading-relaxed">
+            <p className="text-sm text-zinc-100 leading-relaxed read-measure">
               {laHuongNen
                 ? 'Đây là hướng NỀN — theo hướng này không thay hướng chính của bạn, hai bên học song song.'
                 : 'Đây là hướng SẢN PHẨM — mỗi lúc chỉ theo MỘT hướng chính. Chọn hướng này sẽ thay hướng chính đang theo (nếu có); tiến độ chặng của hướng cũ vẫn còn nguyên.'}
@@ -353,7 +353,7 @@ export default function ProgrammingSpecializationPage() {
             <Target className="w-5 h-5 text-accent-400" aria-hidden="true" />
             <span>Hướng này hợp với ai</span>
           </h2>
-          <p className="text-sm text-zinc-200 leading-relaxed">{spec.forWho}</p>
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">{spec.forWho}</p>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Lock className="w-3 h-3" aria-hidden="true" />
@@ -364,10 +364,10 @@ export default function ProgrammingSpecializationPage() {
               {spec.duration}
             </span>
           </div>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             <span className="font-semibold">Ngôn ngữ:</span> {spec.languages.join(' · ')}
           </p>
-          <p className="text-sm text-zinc-200 leading-relaxed flex items-start gap-2">
+          <p className="text-sm text-zinc-200 leading-relaxed flex items-start gap-2 read-measure">
             <Wrench className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" aria-hidden="true" />
             <span>
               <span className="font-semibold">Công cụ lõi:</span> {spec.coreTools.join(' · ')}
@@ -386,7 +386,7 @@ export default function ProgrammingSpecializationPage() {
             </h2>
             <p className="text-xs text-zinc-300">{countArchitectureItems(spec)} mục</p>
           </div>
-          <p className="text-sm text-zinc-200 leading-relaxed">
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">
             Phần này dành cho người sẽ <strong>quyết định và đặc tả</strong> — kể cả khi phần code
             do AI hoặc người khác viết. Thiếu ranh giới module thì bên thi hành tự bịa cấu trúc;
             thiếu hợp đồng thì hai phần viết xong không ghép được; thiếu ngưỡng phi chức năng thì
@@ -398,13 +398,13 @@ export default function ProgrammingSpecializationPage() {
               <Boxes className="w-4 h-4 text-accent-400" aria-hidden="true" />
               <span>Module điển hình &amp; trách nhiệm</span>
             </h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
+            <p className="text-xs text-zinc-300 leading-relaxed read-measure">
               Mỗi module chịu trách nhiệm MỘT việc — và quan trọng không kém: không được làm việc
               gì.
             </p>
             <ul className="space-y-2">
               {spec.architecture.modules.map((mod) => (
-                <li key={mod.name} className="text-sm text-zinc-200 leading-relaxed">
+                <li key={mod.name} className="text-sm text-zinc-200 leading-relaxed read-measure">
                   <span className="font-semibold text-white">{mod.name}</span> — {mod.role}
                 </li>
               ))}
@@ -437,10 +437,10 @@ export default function ProgrammingSpecializationPage() {
               <ClipboardCheck className="w-4 h-4 text-accent-400" aria-hidden="true" />
               <span>Checklist khi viết đặc tả cho hướng này</span>
             </h3>
-            <p className="text-xs text-zinc-300 leading-relaxed">
+            <p className="text-xs text-zinc-300 leading-relaxed read-measure">
               Thiếu ô nào thì bên thi hành (người hoặc AI) sẽ tự đoán — và thường đoán sai.
             </p>
-            <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5">
+            <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
               {spec.architecture.specChecklist.map((item) => (
                 <li key={item}>{item}</li>
               ))}
@@ -481,10 +481,10 @@ export default function ProgrammingSpecializationPage() {
             <Sparkles className="w-5 h-5 text-accent-400" aria-hidden="true" />
             <span>Dấu hiệu bạn đã thành chuyên gia</span>
           </h2>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-300 leading-relaxed read-measure">
             Đây là hành vi quan sát được, không phải số năm kinh nghiệm.
           </p>
-          <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5">
+          <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
             {spec.expertSignals.map((sig) => (
               <li key={sig}>{sig}</li>
             ))}
@@ -514,7 +514,7 @@ export default function ProgrammingSpecializationPage() {
             />
             <span>Bẫy khiến người học đứng lại ở mức trung bình</span>
           </h2>
-          <ul className="text-sm text-zinc-100 leading-relaxed space-y-1.5 list-disc pl-5">
+          <ul className="text-sm text-zinc-100 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
             {spec.pitfalls.map((p) => (
               <li key={p}>{p}</li>
             ))}
@@ -526,7 +526,7 @@ export default function ProgrammingSpecializationPage() {
             <BookOpen className="w-5 h-5 text-accent-400" aria-hidden="true" />
             <span>Nguồn học chuẩn của ngành</span>
           </h2>
-          <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5">
+          <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
             {spec.resources.map((r) => (
               <li key={r}>{r}</li>
             ))}

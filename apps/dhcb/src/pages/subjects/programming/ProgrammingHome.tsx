@@ -47,6 +47,7 @@ import {
   duongDanLoTrinh,
 } from '../../../lib/programmingRoutes'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 
 const SO_KHOA_HIEN_TRUOC = 3
 const MUC_LUC = [
@@ -134,7 +135,7 @@ export default function ProgrammingHome() {
               <PartyPopper className="w-5 h-5 text-emerald-400 theme-light:text-emerald-900" />
               <span>Bạn đã đi hết {total} bài của môn</span>
             </h2>
-            <p className="text-sm text-zinc-100 leading-relaxed">
+            <p className="text-sm text-zinc-100 leading-relaxed read-measure">
               Giờ sản phẩm mới là thứ đáng khoe, không phải số bài. Quay lại dự án của bạn, hoặc ôn
               lại những khái niệm đã lâu không dùng.
             </p>
@@ -158,7 +159,7 @@ export default function ProgrammingHome() {
             <button
               onClick={() => item && nav(item.href)}
               disabled={!item}
-              className="tap-44 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition active:scale-[0.98]"
+              className={buttonClass({ variant: 'primary', size: 'lg', fullWidth: true })}
             >
               <Play className="w-4 h-4" />
               <span>
@@ -234,7 +235,7 @@ export default function ProgrammingHome() {
             <Rocket className="w-5 h-5 text-accent-400" />
             <span>Dự án xuyên suốt — học tới đâu, xây tới đó</span>
           </h2>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-300 leading-relaxed read-measure">
             Mỗi bậc kết thúc bằng một chặng của <strong>cùng một sản phẩm</strong>: bắt đầu là máy
             tính tiền chạy chữ, kết thúc là web bán hàng của bạn chạy thật trên Internet — kèm repo
             GitHub làm hồ sơ xin việc.
@@ -327,7 +328,7 @@ export default function ProgrammingHome() {
             nextLockedLevelId={bacKeTiepDangKhoa}
           />
           {plan === 'free' && (
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-zinc-400 leading-relaxed read-measure">
               Bậc sau mở khi bạn hoàn thành ít nhất {Math.round(UNLOCK_PCT * 100)}% số bài của bậc
               trước. VIP vào bậc nào cũng được.
             </p>
@@ -344,7 +345,7 @@ export default function ProgrammingHome() {
             <Compass className="w-5 h-5 text-accent-400" aria-hidden="true" />
             <span>Chuyên sâu — theo nghề nghiệp</span>
           </h2>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-300 leading-relaxed read-measure">
             Xong xương sống là bạn lập trình được. Từ đó có{' '}
             <strong>{PROGRAMMING_SPECIALIZATIONS.length} con đường</strong> đi tới mức chuyên gia —
             web, di động, backend, dữ liệu, AI, hệ thống, game, nhúng… Mỗi hướng 4 chặng và 5 sản
@@ -419,7 +420,7 @@ export default function ProgrammingHome() {
               <Map className="w-5 h-5 text-accent-400" aria-hidden="true" />
               <span>Lộ trình mục tiêu — một đích nghề, một con đường</span>
             </h2>
-            <p className="text-sm text-zinc-300 leading-relaxed">
+            <p className="text-sm text-zinc-300 leading-relaxed read-measure">
               Ghép sẵn các chặng của nhiều hướng chuyên sâu thành một con đường có thứ tự, đi từ nền
               tảng tới đích nghề — mỗi giai đoạn kết bằng một sản phẩm giữ lại được.
             </p>

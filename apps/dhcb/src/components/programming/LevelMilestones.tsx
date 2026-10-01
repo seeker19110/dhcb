@@ -157,11 +157,15 @@ export default function LevelMilestones({
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-zinc-400 leading-relaxed">{level.canDo}</p>
+                <p className="text-xs text-zinc-400 leading-relaxed read-measure">{level.canDo}</p>
                 {/* Ổ khoá CÂM là thứ làm người học bỏ đi — bậc kế tiếp nói rõ còn thiếu bao nhiêu,
                     bậc xa hơn chỉ cần biết mở sau bậc nào (P2-1: tránh lặp câu y hệt nhiều lần). */}
-                {giaiThich && <p className="text-xs text-zinc-100 leading-relaxed">{giaiThich}</p>}
-                {moSau && <p className="text-xs text-zinc-500 leading-relaxed">{moSau}</p>}
+                {giaiThich && (
+                  <p className="text-xs text-zinc-100 leading-relaxed read-measure">{giaiThich}</p>
+                )}
+                {moSau && (
+                  <p className="text-xs text-zinc-500 leading-relaxed read-measure">{moSau}</p>
+                )}
                 <div className="flex items-center gap-3 flex-wrap text-[11px] text-zinc-500">
                   <span className="inline-flex items-center gap-1">
                     <Languages className="w-3.5 h-3.5" aria-hidden="true" />{' '}

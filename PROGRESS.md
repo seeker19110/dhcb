@@ -182,10 +182,12 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   **[2026-10-01] Một phần U9 + M15 đã làm** ([audit đồng nhất bố cục](docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md),
   `docs/changelog/0467-*.md`, PR #1200): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
   chỉ số dưới (M15 phần cấu trúc), nút Back header đúng đích ở 21 trang, chế độ tập trung + "Bài
-  sau" cho bài hội thoại. **Việc kế tiếp của nhánh này** (báo cáo đó §4): tiêu đề bài Lập trình
-  trong nội dung; khối "Học tiếp" dùng chung các trang môn — **chờ chủ dự án chốt màu nút chính**
-  (Tiếng Anh xanh lá vs Lập trình xanh trời); đổi 573 tiêu đề STEM sang viết hoa đầu câu ngay
-  trong dữ liệu nguồn (có người duyệt).
+  sau" cho bài hội thoại. **Đợt 2 (`docs/changelog/0469-*.md`, PR #1202)**: chủ dự án giao "chọn theo đề xuất
+  tốt nhất" → nút chính mọi trang môn dùng màu accent (xanh lá dành cho nghĩa "đúng"), tiêu đề bài
+  Lập trình hiện trong nội dung, nhãn gói ở thanh bên đọc gói thật (M8 phần thanh bên), khổ đọc
+  60ch cho trang Lập trình (M22). **Việc kế tiếp:** PR nội dung riêng — 573 tiêu đề lý thuyết STEM
+  sang viết hoa đầu câu ngay trong dữ liệu nguồn, giữ nguyên tên riêng/viết tắt; sau đó khối
+  "Học tiếp" dùng chung một component cho các trang môn.
 - **[2026-09-23] Kế hoạch nâng cấp UI/UX và sư phạm sau audit**:
   [goal 5 đợt](docs/goals/2026-09-23-uiux-su-pham.md) và
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).
