@@ -18,7 +18,7 @@ export const HOA10_C6_LESSONS: ChemLesson[] = [
       'BIỂU THỨC TỐC ĐỘ TỨC THỜI cho phản ứng đơn giản aA + bB → sản phẩm: v = k·[A]^a·[B]^b, ' +
       'trong đó k là hằng số tốc độ (phụ thuộc nhiệt độ, bản chất chất phản ứng, không phụ ' +
       'thuộc nồng độ), [A], [B] là nồng độ mol/L.\n\n' +
-      'CÁC YẾU TỐ ẢNH HƯỞNG ĐẾN TỐC ĐỘ PHẢN ỨNG:\n' +
+      '## Các yếu tố ảnh hưởng đến tốc độ phản ứng\n' +
       '— NỒNG ĐỘ: nồng độ chất phản ứng càng lớn, tốc độ càng nhanh (va chạm hiệu quả nhiều ' +
       'hơn).\n' +
       "— NHIỆT ĐỘ: nhiệt độ tăng, tốc độ phản ứng tăng — theo HỆ SỐ NHIỆT ĐỘ VAN'T HOFF (γ), " +

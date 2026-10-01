@@ -15,15 +15,15 @@ export const HOA12_C7_LESSONS: ChemLesson[] = [
       'Lithium vận hành pin điện thoại, Sodium (Natri) là thành phần cấu tạo muối ăn hằng ngày.' +
       ' Các kim loại kiềm này có hoạt tính hoá học cực mạnh, có thể bốc cháy hoặc nổ tung khi gặp nước.',
     theory:
-      'VỊ TRÍ VÀ CẤU TẠO:\n' +
+      '## Vị trí và cấu tạo\n' +
       '— Nhóm IA (kim loại kiềm) gồm: Lithium (Li), Sodium (Na), Potassium (K), Rubidium (Rb), Cesium (Cs). Nguyên tử của chúng đều có 1 electron ở lớp ngoài cùng (ns¹).\n\n' +
-      'TÍNH CHẤT VẬT LÍ:\n' +
+      '## Tính chất vật lí\n' +
       '— Có nhiệt độ nóng chảy, nhiệt độ sôi thấp, khối lượng riêng nhỏ (Li nhẹ nhất trong các kim loại rắn) và độ cứng thấp (mềm, cắt được bằng dao) do liên kết kim loại trong mạng tinh thể lập phương tâm khối khá yếu.\n\n' +
-      'TÍNH CHẤT HOÁ HỌC (Tính khử cực kì mạnh, tăng dần từ Li đến Cs):\n' +
+      '## Tính chất hoá học (Tính khử cực kì mạnh, tăng dần từ Li đến Cs)\n' +
       '— Trong các phản ứng, chúng dễ dàng nhường 1e để đạt cấu hình khí hiếm bền vững, thể hiện số oxi hoá +1.\n' +
       '1. Tác dụng với nước: Phản ứng mãnh liệt ở nhiệt độ thường giải phóng khí H₂ và tạo dung dịch kiềm mạnh: 2M + 2H₂O → 2M⁺ + 2OH⁻ + H₂↑. Vì thế, kim loại kiềm phải được bảo quản bằng cách ngâm ngập trong dầu hoả khan.\n' +
       '2. Tác dụng với phi kim: Bốc cháy trong khí chlorine, phản ứng mạnh với oxygen tạo oxide hoặc peroxide.\n\n' +
-      'MỘT SỐ HỢP CHẤT QUAN TRỌNG:\n' +
+      '## Một số hợp chất quan trọng\n' +
       '— NaOH (caustic soda): Chất rắn màu trắng, hút ẩm mạnh, kiềm mạnh dùng trong dệt nhuộm, xà phòng.\n' +
       '— NaHCO₃ (baking soda): Chất bột trắng, dùng làm bột nở và làm thuốc chữa đau dạ dày do thừa acid (nó trung hoà bớt acid trong dạ dày). Bị nhiệt phân huỷ: 2NaHCO₃ → Na₂CO₃ + CO₂↑ + H₂O (t°).\n' +
       '— Na₂CO₃ (soda): Hoá chất cơ bản dùng sản xuất thuỷ tinh, bột giặt, giấy.',
@@ -704,16 +704,16 @@ export const HOA12_C7_LESSONS: ChemLesson[] = [
       'Calcium (canxi) tạo nên bộ xương chắc khoẻ của chúng ta, và cũng chính nó tạc nên những hang động đá vôi kì vĩ.' +
       ' Bài này tìm hiểu nhóm IIA — các kim loại kiềm thổ — cùng hiện tượng nước cứng rất quen thuộc trong đời sống.',
     theory:
-      'VỊ TRÍ VÀ CẤU TẠO:\n' +
+      '## Vị trí và cấu tạo\n' +
       '— Nhóm IIA (kim loại kiềm thổ) gồm: Beryllium (Be), Magnesium (Mg), Calcium (Ca), Strontium (Sr), Barium (Ba). Có 2 electron ở lớp ngoài cùng (ns²).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC (Tính khử mạnh, tăng dần từ Be đến Ba):\n' +
+      '## Tính chất hoá học (Tính khử mạnh, tăng dần từ Be đến Ba)\n' +
       '— Nhường 2e trong các phản ứng hoá học, đạt số oxi hoá +2.\n' +
       '— Phản ứng với nước: Be không phản ứng; Mg phản ứng rất chậm với nước nóng; Ca, Sr, Ba phản ứng mạnh với nước ở nhiệt độ thường tạo dung dịch base: Ca + 2H₂O → Ca(OH)₂ + H₂↑.\n\n' +
-      'SỰ TẠO THÀNH THẠCH NHŨ HANG ĐỘNG:\n' +
+      '## Sự tạo thành thạch nhũ hang động\n' +
       '— Giải thích bằng phản ứng thuận nghịch: CaCO₃ + CO₂ + H₂O ⇌ Ca(HCO₃)₂.\n' +
       '   — Chiều thuận (nước mưa hoà tan nhiều CO₂, nhiệt độ thấp): đá vôi CaCO₃ tan ra thành Ca(HCO₃)₂ tan được, lâu ngày khoét thành hang động.\n' +
       '   — Chiều nghịch (nước nhỏ giọt trong hang, CO₂ thoát bớt ra không khí, nhiệt độ tăng): CaCO₃ kết tinh trở lại, tích tụ thành thạch nhũ và măng đá.\n\n' +
-      'NƯỚC CỨNG (Hard Water):\n' +
+      '## Nước cứng (Hard Water)\n' +
       '— Định nghĩa: Là nước chứa nhiều ion Ca²⁺ và Mg²⁺ (nước chứa ít hoặc không chứa các ion này gọi là nước mềm).\n' +
       '— Phân loại:\n' +
       '  1. Nước cứng tạm thời: Chứa các muối Ca(HCO₃)₂ và Mg(HCO₃)₂. Gọi là tạm thời vì có thể loại bỏ tính cứng đơn giản bằng cách đun sôi (muối hydrogencarbonate bị nhiệt phân tạo kết tủa CaCO₃, MgCO₃).\n' +
@@ -1227,7 +1227,7 @@ export const HOA12_C7_LESSONS: ChemLesson[] = [
       'Chương 7 nói về hai nhóm kim loại hoạt động mạnh nhất bảng tuần hoàn: nhóm IA và nhóm IIA. ' +
       'Bài này ôn lại tính chất của chúng, các hợp chất quen thuộc và cách làm mềm nước cứng.',
     theory:
-      'TỔNG KẾT KIẾN THỨC CHƯƠNG 7:\n' +
+      '## Tổng kết kiến thức chương 7\n' +
       '1. Kim loại kiềm (nhóm IA): Li, Na, K, Rb, Cs. Cấu hình ns¹. Hoạt tính cực mạnh, phản ứng mãnh liệt với nước tạo dung dịch kiềm mạnh và H₂. Bảo quản bằng cách ngâm dầu hoả. NaOH là kiềm mạnh; NaHCO₃ có tính lưỡng tính yếu, bị nhiệt phân giải phóng CO₂; Na₂CO₃ dùng làm mềm nước và sản xuất thuỷ tinh.\n' +
       '2. Kim loại kiềm thổ (nhóm IIA): Be, Mg, Ca, Sr, Ba. Cấu hình ns². Be không phản ứng với nước, Mg chỉ phản ứng chậm với nước nóng, còn Ca, Sr, Ba phản ứng ngay với nước ở nhiệt độ thường. Phản ứng xâm thực đá vôi và tạo thạch nhũ hang động là phản ứng thuận nghịch của hệ CaCO₃/Ca(HCO₃)₂.\n' +
       '3. Nước cứng: Chứa nhiều Ca²⁺, Mg²⁺. Tạm thời (chứa HCO₃⁻, đun sôi làm mềm được). Vĩnh cửu (chứa Cl⁻, SO₄²⁻, đun sôi không làm mềm được). Làm mềm bằng cách dùng kết tủa (Na₂CO₃, Na₃PO₄) hoặc dùng nhựa trao đổi ion.',

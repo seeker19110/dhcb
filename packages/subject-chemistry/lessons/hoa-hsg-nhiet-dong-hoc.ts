@@ -29,11 +29,11 @@ export const HOA_HSG_NHIET_DONG_LESSONS: ChemLesson[] = [
       'VÌ SAO đúng? Vì enthalpy là một HÀM TRẠNG THÁI: giá trị của nó do trạng thái hiện tại ' +
       'của hệ quyết định, giống như độ cao của một điểm trên núi không phụ thuộc bạn leo đường ' +
       'nào. Nhờ vậy ta được phép cộng, trừ, nhân các phương trình nhiệt hoá như cộng trừ đại số.\n\n' +
-      'HAI HỆ QUẢ DÙNG LIÊN TỤC KHI GIẢI ĐỀ:\n' +
+      '## Hai hệ quả dùng liên tục khi giải đề\n' +
       '1. Đảo chiều phản ứng thì ΔH đổi dấu.\n' +
       '2. Nhân phương trình với hệ số k thì ΔH cũng nhân k (vì ΔH gắn với đúng phương trình đã ' +
       'viết, không phải với "một mol chất bất kì").\n\n' +
-      'BA CÔNG THỨC TÍNH ΔᵣH° VÀ ĐIỀU KIỆN DÙNG:\n' +
+      '## Ba công thức tính ΔᵣH° và điều kiện dùng\n' +
       '— Theo nhiệt tạo thành: ΔᵣH° = Σn·ΔfH°(sản phẩm) − Σn·ΔfH°(chất đầu). Điều kiện: tra ' +
       'được ΔfH° của MỌI chất, và phải đúng TRẠNG THÁI (l, g, s) ghi trong bảng — cùng một ' +
       'chất ở trạng thái khác nhau có ΔfH° khác nhau (H₂O lỏng: −285,8; H₂O hơi: −241,8 kJ/mol).\n' +
@@ -234,7 +234,7 @@ export const HOA_HSG_NHIET_DONG_LESSONS: ChemLesson[] = [
       'hỗn loạn (ΔS > 0). Khi hai xu hướng này ngược nhau thì cái nào thắng phụ thuộc NHIỆT ĐỘ. ' +
       'Đại lượng gộp cả hai là NĂNG LƯỢNG GIBBS:\n\n' +
       '    ΔG = ΔH − T·ΔS\n\n' +
-      'TIÊU CHUẨN TỰ DIỄN BIẾN (ở áp suất và nhiệt độ không đổi):\n' +
+      '## Tiêu chuẩn tự diễn biến (ở áp suất và nhiệt độ không đổi)\n' +
       '— ΔG < 0: phản ứng tự xảy ra theo chiều thuận.\n' +
       '— ΔG > 0: không tự xảy ra (chiều nghịch mới tự xảy ra).\n' +
       '— ΔG = 0: hệ ở trạng thái cân bằng.\n\n' +

@@ -185,9 +185,10 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   sau" cho bài hội thoại. **Đợt 2 (`docs/changelog/0469-*.md`, PR #1202)**: chủ dự án giao "chọn theo đề xuất
   tốt nhất" → nút chính mọi trang môn dùng màu accent (xanh lá dành cho nghĩa "đúng"), tiêu đề bài
   Lập trình hiện trong nội dung, nhãn gói ở thanh bên đọc gói thật (M8 phần thanh bên), khổ đọc
-  60ch cho trang Lập trình (M22). **Việc kế tiếp:** PR nội dung riêng — 573 tiêu đề lý thuyết STEM
-  sang viết hoa đầu câu ngay trong dữ liệu nguồn, giữ nguyên tên riêng/viết tắt; sau đó khối
-  "Học tiếp" dùng chung một component cho các trang môn.
+  60ch cho trang Lập trình (M22). **Đợt nội dung (`docs/changelog/0470-*.md`, PR #1203)**: 575 tiêu đề lý
+  thuyết STEM chuyển sang viết hoa đầu câu + dấu `## ` trong dữ liệu nguồn (giữ tên riêng/viết
+  tắt; cổng chặn kiểu viết HOA cũ quay lại) — M15 xong. **Việc kế tiếp:** khối "Học tiếp" dùng
+  chung một component cho các trang môn; thanh công cụ bài hội thoại mobile gọn một hàng.
 - **[2026-09-23] Kế hoạch nâng cấp UI/UX và sư phạm sau audit**:
   [goal 5 đợt](docs/goals/2026-09-23-uiux-su-pham.md) và
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).

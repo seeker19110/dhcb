@@ -11,12 +11,12 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Gen, mã di truyền và nhân đôi ADN',
     hook: 'Làm thế nào một tế bào ban đầu có thể nhân bản chính xác hàng tỉ nucleotit để truyền lại bản thiết kế sự sống cho các tế bào con? Đó là nhờ cơ chế nhân đôi ADN vô cùng chuẩn xác.',
     theory:
-      'CẤU TRÚC CỦA GEN:\n' +
+      '## Cấu trúc của gen\n' +
       '— Gen là một đoạn của phân tử ADN mang thông tin mã hóa cho một sản phẩm nhất định (chuỗi polipeptit hoặc phân tử ARN).\n' +
       '— Cấu trúc vùng mã hóa của gen:\n' +
       '  + Sinh vật nhân sơ: Vùng mã hóa liên tục (gen không phân mảnh).\n' +
       '  + Sinh vật nhân thực: Vùng mã hóa không liên tục (gen phân mảnh), xen kẽ giữa các đoạn mã hóa axit amin (exon) là các đoạn không mã hóa (intron).\n\n' +
-      'MÃ DI TRUYỀN (Genetic code):\n' +
+      '## Mã di truyền (Genetic code)\n' +
       '— Mã di truyền là mã bộ ba (codon trên mARN). Có 64 bộ ba, trong đó 61 bộ ba mã hóa cho 20 loại axit amin.\n' +
       "— Bộ ba mở đầu: 5'-AUG-3' (mã hóa methionine ở nhân thực, formylmethionine ở nhân sơ).\n" +
       "— Ba bộ ba kết thúc: 5'-UAA-3', 5'-UAG-3', 5'-UGA-3' (không mã hóa axit amin).\n" +
@@ -25,7 +25,7 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
       '  + Tính phổ biến: Tất cả các loài sinh vật đều dùng chung một bộ mã di truyền (trừ vài ngoại lệ).\n' +
       '  + Tính đặc hiệu: Một bộ ba chỉ mã hóa cho một loại axit amin.\n' +
       '  + Tính thoái hóa (dư thừa): Nhiều bộ ba khác nhau cùng mã hóa cho một loại axit amin (trừ AUG và UGG).\n\n' +
-      'QUÁ TRÌNH NHÂN ĐÔI ADN (Tái bản):\n' +
+      '## Quá trình nhân đôi ADN (Tái bản)\n' +
       'Diễn ra trong pha S của kì trung gian ở tế bào.\n' +
       '1. Bước 1: Tháo xoắn ADN nhờ enzyme tháo xoắn làm lộ ra chạc chữ Y.\n' +
       "2. Bước 2: Tổng hợp mạch ADN mới nhờ enzyme ADN polimerase. Nguyên tắc: ADN polimerase chỉ tổng hợp mạch mới theo chiều 5' -> 3' (đọc mạch khuôn 3' -> 5').\n" +
@@ -324,11 +324,11 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Phiên mã và dịch mã',
     hook: 'Thông tin di truyền lưu trữ trên ADN được chuyển dịch thành cấu trúc protein thực hiện chức năng sinh học thông qua hai bước phiên mã và dịch mã.',
     theory:
-      'QUÁ TRÌNH PHIÊN MÃ (Transcription - Tổng hợp ARN):\n' +
+      '## Quá trình phiên mã (Transcription - Tổng hợp ARN)\n' +
       '— Diễn ra trong nhân tế bào (ở nhân thực) nhờ enzyme ARN polimerase.\n' +
       "— Diễn biến: ARN polimerase liên kết với vùng khởi động (promoter) của gen, tháo xoắn và trượt dọc mạch khuôn 3' -> 5' của gen để liên kết các ribonucleotit tự do (A, U, G, C) theo nguyên tắc bổ sung (A-U, T-A, G-C, C-G) tạo thành mạch ARN mới theo chiều 5' -> 3'.\n" +
       '— Xử lý ARN (ở nhân thực): ARN sơ khai bị cắt bỏ các đoạn không mã hóa (intron) và nối các đoạn mã hóa (exon) lại với nhau tạo mARN trưởng thành.\n\n' +
-      'QUÁ TRÌNH DỊCH MÃ (Translation - Tổng hợp chuỗi polipeptit):\n' +
+      '## Quá trình dịch mã (Translation - Tổng hợp chuỗi polipeptit)\n' +
       'Diễn ra ở tế bào chất, với sự tham gia của mARN, tARN, ribosome và axit amin tự do.\n' +
       '1. Bước 1: Hoạt hóa axit amin. Axit amin kết hợp với ATP và liên kết với tARN tương ứng nhờ enzyme đặc hiệu tạo phức hợp aa-tARN.\n' +
       "2. Bước 2: Dịch mã chuỗi polipeptit. Ribosome gắn vào mARN tại bộ ba mở đầu 5'-AUG-3'. tARN mang axit amin mở đầu tiến vào đối mã bổ sung (UAC).\n" +
@@ -1206,16 +1206,16 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Điều hòa biểu hiện gen',
     hook: 'Mỗi tế bào trong cơ thể bạn đều chứa toàn bộ bộ gene giống hệt nhau, nhưng tại sao tế bào mắt lại tổng hợp sắc tố thị giác còn tế bào cơ đùi lại tổng hợp actin? Đó là nhờ cơ chế điều hòa biểu hiện gen.',
     theory:
-      'KHÁI NIỆM ĐIỀU HÒA HOẠT ĐỘNG CỦA GEN:\n' +
+      '## Khái niệm điều hòa hoạt động của gen\n' +
       '— Là quá trình điều hòa lượng sản phẩm của gen (ARN hoặc protein) được tạo ra trong tế bào, giúp tế bào tiết kiệm năng lượng và thích nghi tốt với môi trường.\n\n' +
-      'MÔ HÌNH OPERON LAC Ở VI KHUẨN E. COLI (Jacob và Monod phát hiện):\n' +
+      '## Mô hình operon Lac ở vi khuẩn E. coli (Jacob và Monod phát hiện)\n' +
       'Operon là cụm các gen cấu trúc có liên quan về chức năng nằm kề nhau và chịu sự điều hòa chung của một cơ chế duy nhất.\n' +
       '— Cấu trúc Operon Lac gồm:\n' +
       '  + Vùng khởi động (P - promoter): nơi enzyme ARN polimerase liên kết để khởi đầu phiên mã.\n' +
       '  + Vùng vận hành (O - operator): vị trí tương tác của protein ức chế để ngăn cản phiên mã.\n' +
       '  + Nhóm gen cấu trúc (Z, Y, A): mã hóa các enzyme phân giải đường lactose.\n' +
       '— Gen điều hòa (R): Nằm ngoài operon Lac, chịu trách nhiệm tổng hợp liên tục protein ức chế.\n\n' +
-      'CƠ CHẾ HOẠT ĐỘNG CỦA OPERON LAC:\n' +
+      '## Cơ chế hoạt động của operon Lac\n' +
       '1. Khi môi trường không có lactose:\n' +
       '   Gen điều hòa (R) tổng hợp protein ức chế. Protein ức chế bám vào vùng vận hành (O), cản trở ARN polimerase liên kết với vùng khởi động (P) → các gen cấu trúc Z, Y, A không phiên mã.\n' +
       '2. Khi môi trường có lactose:\n' +
@@ -1673,17 +1673,17 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Đột biến gen',
     hook: 'Một sự thay đổi chỉ một nucleotit duy nhất trong hàng triệu cặp nucleotit của gen có thể gây ra bệnh hồng cầu hình liềm nguy hiểm, nhưng cũng có thể tạo ra những tính trạng mới tuyệt vời cho tiến hóa.',
     theory:
-      'KHÁI NIỆM ĐỘT BIẾN GEN:\n' +
+      '## Khái niệm đột biến gen\n' +
       '— Đột biến gen là những biến đổi trong cấu trúc của gen, liên quan đến một hoặc một số cặp nucleotit (đột biến điểm là đột biến chỉ liên quan đến 1 cặp nucleotit).\n' +
       '— Alen đột biến: Trạng thái mới của gen sau khi bị đột biến. Thể đột biến là cá thể mang gen đột biến đã biểu hiện ra kiểu hình.\n\n' +
-      'CÁC DẠNG ĐỘT BIẾN ĐIỂM CHÍNH:\n' +
+      '## Các dạng đột biến điểm chính\n' +
       '1. Thay thế một cặp nucleotit (ví dụ thay A-T bằng G-C):\n' +
       '   — Có thể làm thay đổi 1 axit amin trong chuỗi polipeptit (đột biến nhầm nghĩa, còn gọi là sai nghĩa), hoặc làm xuất hiện bộ ba kết thúc sớm (đột biến vô nghĩa), hoặc không đổi axit amin do tính thoái hóa (đột biến đồng nghĩa/im lặng).\n' +
       '2. Mất một cặp nucleotit hoặc Thêm một cặp nucleotit:\n' +
       '   — Gây ra hiện tượng dịch khung đọc mã di truyền (frameshift) kể từ điểm xảy ra đột biến, làm thay đổi toàn bộ trình tự axit amin phía sau, thường làm hỏng chức năng protein.\n\n' +
-      'NGUYÊN NHÂN VÀ CƠ CHẾ PHÁT SINH:\n' +
+      '## Nguyên nhân và cơ chế phát sinh\n' +
       '— Nguyên nhân: Tác nhân vật lý (tia tử ngoại UV, tia phóng xạ), tác nhân hóa học (5-bromuracil, viết tắt 5-BU, gây thay thế cặp A-T bằng cặp G-C), hoặc các tác nhân sinh học (virus) và sự rối loạn tự nhiên trong nhân đôi ADN.\n\n' +
-      'VAI TRÒ VÀ Ý NGHĨA:\n' +
+      '## Vai trò và ý nghĩa\n' +
       '— Đối với tiến hóa: Đột biến gen là nguồn nguyên liệu sơ cấp chủ yếu cung cấp các alen mới cho quá trình chọn lọc tự nhiên.\n' +
       '— Đối với thực tiễn: Tạo ra các đột biến có lợi ở thực vật để chọn giống.',
     workedExample: {
@@ -1986,11 +1986,11 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Nhiễm sắc thể và đột biến cấu trúc nhiễm sắc thể',
     hook: 'Nhiễm sắc thể đóng vai trò như những chiếc tủ lưu trữ tài liệu ADN khổng lồ. Một sự đứt gãy, trao đổi nhầm lẫn các đoạn nhiễm sắc thể sẽ gây ra những biến đổi lớn về kiểu hình sinh vật.',
     theory:
-      'CẤU TRÚC SIÊU VI THỂ CỦA NHIỄM SẮC THỂ (ở nhân thực):\n' +
+      '## Cấu trúc siêu vi thể của nhiễm sắc thể (ở nhân thực)\n' +
       '— Sợi nhiễm sắc cấu tạo từ chất nhiễm sắc (ADN quấn quanh các hạt protein histone tạo nucleosome).\n' +
       '— Mỗi nucleosome gồm 8 phân tử protein histone được quấn quanh bởi 1,75 vòng ADN (khoảng 146 cặp nucleotit).\n' +
       '— Các cấp độ co xoắn của NST:\n  + Sợi cơ bản (đường kính 11 nm) → Sợi nhiễm sắc (30 nm) → Sợi siêu xoắn (300 nm) → Cromatid (700 nm) → NST ở kì giữa co xoắn cực đại (1400 nm).\n\n' +
-      'CÁC DẠNG ĐỘT BIẾN CẤU TRÚC NHIỄM SẮC THỂ:\n' +
+      '## Các dạng đột biến cấu trúc nhiễm sắc thể\n' +
       'Là những biến đổi trong cấu trúc của NST, gồm 4 dạng chính:\n' +
       '1. Mất đoạn (Deletion): Một đoạn NST bị đứt ra và mất đi.\n   — Hậu quả: Làm giảm số lượng gen trên NST, thường gây chết hoặc giảm sức sống (ở người, mất đoạn vai ngắn NST số 5 gây hội chứng tiếng mèo kêu, mất đoạn NST số 22 gây ung thư máu ác tính).\n' +
       '2. Lặp đoạn (Duplication): Một đoạn NST được lặp lại một hay nhiều lần.\n   — Hậu quả: Làm tăng số lượng bản sao của gen, tăng cường hoặc giảm biểu hiện tính trạng (ở đại mạch, lặp đoạn gen mã hóa enzyme amylase làm tăng hoạt tính phân giải tinh bột, có lợi cho sản xuất bia).\n' +
@@ -2447,12 +2447,12 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Đột biến số lượng nhiễm sắc thể',
     hook: 'Đột biến số lượng nhiễm sắc thể có thể tạo ra những quả dưa hấu không hạt tam bội mọng nước, nhưng ở người, nó cũng gây ra hội chứng Down do thừa một nhiễm sắc thể số 21.',
     theory:
-      'KHÁI NIỆM ĐỘT BIẾN SỐ LƯỢNG NHIỄM SẮC THỂ:\n' +
+      '## Khái niệm đột biến số lượng nhiễm sắc thể\n' +
       'Là sự biến đổi về số lượng NST xảy ra ở một hoặc một số cặp NST tương đồng (lệch bội) hoặc ở toàn bộ các cặp NST (đa bội).\n\n' +
-      'ĐỘT BIẾN LỆCH BỘI (Aneuploidy):\n' +
+      '## Đột biến lệch bội (Aneuploidy)\n' +
       '— Xảy ra do sự không phân li của một hoặc một số cặp NST trong giảm phân tạo giao tử không bình thường (giao tử n+1 hoặc n-1).\n' +
       '— Các dạng phổ biến:\n  + Thể một (Monosomy, 2n - 1): Thiếu 1 NST ở một cặp tương đồng (ví dụ hội chứng Turner XO ở người).\n  + Thể ba (Trisomy, 2n + 1): Thừa 1 NST ở một cặp tương đồng (ví dụ hội chứng Down có 3 NST số 21, hội chứng Klinefelter XXY).\n\n' +
-      'ĐỘT BIẾN ĐA BỘI (Polyploidy):\n' +
+      '## Đột biến đa bội (Polyploidy)\n' +
       '1. Tự đa bội (Autopolyploidy): Tăng số bộ NST đơn bộ của cùng một loài.\n   — Đa bội lẻ (3n, 5n...): Cơ thể hầu như không có khả năng sinh sản hữu tính bình thường do tế bào giảm phân rối loạn không tạo được giao tử cân bằng (ứng dụng tạo quả không hạt như dưa hấu 3n, nho 3n).\n   — Đa bội chẵn (4n, 6n...): Cơ thể sinh trưởng mạnh, cơ quan sinh dưỡng lớn (lá to, quả to), chống chịu tốt.\n2. Dị đa bội (Allopolyploidy): Bộ NST tăng lên chứa hai hay nhiều bộ NST của các loài khác nhau (hình thành nhờ lai xa kết hợp đa bội hóa, tạo thể song nhị bội 2n_A + 2n_B).',
     workedExample: {
       problem:
@@ -2516,10 +2516,10 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Quan sát tiêu bản nhiễm sắc thể và đột biến nhiễm sắc thể',
     hook: 'Dưới kính hiển vi quang học, chúng ta có thể trực tiếp quan sát bộ nhiễm sắc thể của tế bào đang phân chia và phát hiện các đột biến hình thái hoặc số lượng của chúng.',
     theory:
-      'PHƯƠNG PHÁP QUAN SÁT NST Ở TẾ BÀO ĐANG PHÂN CHIA:\n' +
+      '## Phương pháp quan sát NST ở tế bào đang phân chia\n' +
       '— Nguyên liệu tốt nhất: Tế bào đang ở kì giữa (metaphase) của nguyên phân hoặc giảm phân (do kì giữa NST co xoắn cực đại, nhìn thấy rõ hình thái dạng kép gồm 2 cromatid chung tâm động).\n' +
       '— Nhuộm màu tiêu bản: Sử dụng các loại thuốc nhuộm kiềm tính liên kết đặc hiệu với ADN (như aceto-carmine hoặc orcein) để NST bắt màu đậm (đỏ/tím).\n\n' +
-      'PHƯƠNG PHÁP NHẬN DIỆN TIÊU BẢN ĐỘT BIẾN NST:\n' +
+      '## Phương pháp nhận diện tiêu bản đột biến NST\n' +
       '1. Tiêu bản tế bào rễ hành ta (nguyên phân): Quan sát các kì nguyên phân và đếm số lượng NST (2n = 16). Phát hiện tế bào lệch bội nếu đếm thừa hoặc thiếu chiếc.\n' +
       '2. Tiêu bản nhiễm sắc thể khổng lồ ở tuyến nước bọt ấu trùng ruồi giấm (Drosophila):\n   — NST khổng lồ hình thành do nhân đôi ADN nhiều lần mà tế bào không phân chia.\n   — Nhuộm bằng orcein thấy các vạch sáng tối rõ nét. Phát hiện đột biến cấu trúc NST như mất đoạn, lặp đoạn (làm thay đổi độ dài, số vạch) hoặc đảo đoạn (vòng đảo đoạn).',
     workedExample: {
@@ -2586,12 +2586,12 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Học thuyết di truyền của Mendel',
     hook: 'Gregor Mendel đã lai hàng vạn cây đậu Hà Lan trong vườn tu viện để tìm ra những quy luật toán học chi phối sự di truyền tính trạng — nền móng cho toàn bộ ngành Di truyền học hiện đại.',
     theory:
-      'PHƯƠNG PHÁP NGHIÊN CỨU CỦA MENDEL:\n' +
+      '## Phương pháp nghiên cứu của Mendel\n' +
       '— Phương pháp phân tích các thế hệ lai (độc đáo):\n  1. Chọn đối tượng nghiên cứu thuần chủng, tự thụ phấn nghiêm ngặt và có các cặp tính trạng tương phản rõ rệt (đậu Hà Lan).\n  2. Lai các cặp bố mẹ thuần chủng khác nhau về một hoặc một số cặp tính trạng rồi theo dõi F₁, F₂ và F₃.\n  3. Sử dụng toán thống kê để phân tích số liệu thu được, từ đó rút ra quy luật di truyền.\n\n' +
-      'QUY LUẬT PHÂN LI (Lai một cặp tính trạng):\n' +
+      '## Quy luật phân li (Lai một cặp tính trạng)\n' +
       '— Thí nghiệm: Lai P thuần chủng Hạt vàng × Hạt xanh → F₁: 100% Hạt vàng. Cho F₁ tự thụ phấn → F₂: Tỉ lệ kiểu hình xấp xỉ 3 Hạt vàng : 1 Hạt xanh.\n' +
       '— Nội dung quy luật: Mỗi tính trạng được quy định bởi một cặp nhân tố di truyền (sau này gọi là alen). Trong tế bào sinh dưỡng, các nhân tố di truyền tồn tại thành từng cặp và không hòa trộn vào nhau. Khi giảm phân tạo giao tử, mỗi nhân tố di truyền trong cặp phân li đồng đều về các giao tử (giao tử thuần khiết).\n\n' +
-      'QUY LUẬT PHÂN LI ĐỘC LẬP (Lai hai cặp tính trạng):\n' +
+      '## Quy luật phân li độc lập (Lai hai cặp tính trạng)\n' +
       '— Thí nghiệm: P thuần chủng Hạt vàng, trơn × Hạt xanh, nhăn → F₁: 100% Hạt vàng, trơn. F₁ tự thụ phấn → F₂: Tỉ lệ kiểu hình 9 vàng, trơn : 3 vàng, nhăn : 3 xanh, trơn : 1 xanh, nhăn.\n' +
       '— Nội dung quy luật: Các cặp nhân tố di truyền quy định các tính trạng khác nhau phân li độc lập với nhau trong quá trình hình thành giao tử.\n  + Điều kiện: Các gen quy định các tính trạng phải nằm trên các cặp nhiễm sắc thể tương đồng khác nhau.',
     workedExample: {
@@ -3622,13 +3622,13 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Tương tác gen và tác động đa hiệu của gen',
     hook: 'Không phải lúc nào một gen cũng chỉ quyết định một tính trạng. Đôi khi nhiều gen cùng bắt tay nhau để tạo nên màu sắc của một bông hoa, hoặc một gen đơn độc lại chi phối hàng loạt đặc điểm trên cơ thể.',
     theory:
-      'TƯƠNG TÁC GEN (Gene interaction):\n' +
+      '## Tương tác gen (Gene interaction)\n' +
       'Là sự tác động qua lại giữa các gen không alen (nằm ở các lôcut khác nhau) trong quá trình hình thành kiểu hình tính trạng.\n' +
       '1. Tương tác bổ trợ (Complementary interaction):\n' +
       '   — Hai hay nhiều gen không alen cùng có mặt sẽ tương tác biểu hiện kiểu hình mới khác biệt.\n   — Ví dụ: lai bí cho quả dẹt, F₂ phân li 9 quả dẹt : 6 quả tròn : 1 quả dài (tương tác bổ trợ 9:6:1); hoặc lai hoa, F₂ phân li 9 hoa đỏ : 7 hoa trắng (tương tác bổ trợ 9:7).\n' +
       '2. Tương tác cộng gộp (Cumulative interaction):\n' +
       '   — Mỗi alen trội (của bất kỳ locus nào tham gia) đóng góp một lượng ngang nhau vào sự gia tăng biểu hiện của kiểu hình tính trạng.\n   — Thường gặp ở các tính trạng số lượng (màu da người, năng suất sữa, chiều cao). Ví dụ: da người do 3 cặp gen tương tác cộng gộp quy định.\n\n' +
-      'TÁC ĐỘNG ĐA HIỆU CỦA GEN (Pleiotropy):\n' +
+      '## Tác động đa hiệu của gen (Pleiotropy)\n' +
       '— Là hiện tượng một gen đột biến hoặc bình thường chi phối sự biểu hiện của nhiều tính trạng khác nhau trên cơ thể sinh vật.\n' +
       '— Cơ chế: Gen kiểm soát tổng hợp một loại sản phẩm (ví dụ một enzyme) tham gia vào nhiều con đường chuyển hóa khác nhau.\n  + Ví dụ ở người: Gen đột biến gây hội chứng Marfan làm ngón tay ngón chân dài nhện, thủy tinh thể bị lệch, thành động mạch chủ bị suy yếu; gen đột biến huyết sắc tố hồng cầu hình liềm gây thiếu máu, tổn thương thận, lách, não.',
     workedExample: {
@@ -3692,10 +3692,10 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Liên kết gen và hoán vị gen',
     hook: 'Thomas Morgan đã thí nghiệm lai ruồi giấm để phát hiện ra rằng các gen không phải lúc nào cũng phân li độc lập — chúng có thể đi cùng nhau trên một nhiễm sắc thể, hoặc đôi khi hoán đổi vị trí cho nhau qua hiện tượng hoán vị.',
     theory:
-      'LIÊN KẾT GEN HOÀN TOÀN (Morgan phát hiện ở ruồi giấm):\n' +
+      '## Liên kết gen hoàn toàn (Morgan phát hiện ở ruồi giấm)\n' +
       '— Khái niệm: Các gen nằm trên cùng một nhiễm sắc thể di truyền cùng nhau tạo thành một nhóm gen liên kết (số nhóm gen liên kết của loài bằng số NST đơn bội n của loài đó).\n' +
       '— Ý nghĩa: Hạn chế sự xuất hiện biến dị tổ hợp, duy trì sự ổn định của nhóm tính trạng tốt luôn đi kèm nhau.\n\n' +
-      'LIÊN KẾT GEN KHÔNG HOÀN TOÀN (Hoán vị gen):\n' +
+      '## Liên kết gen không hoàn toàn (Hoán vị gen)\n' +
       '— Cơ chế: Trong kì đầu của giảm phân I, các NST kép tương đồng bắt cặp xảy ra sự tiếp hợp và trao đổi chéo đoạn cromatid không chị em, dẫn đến sự tổ hợp lại các gen nằm trên cùng NST.\n' +
       '— Tần số hoán vị gen (f):\n  + Công thức: f = (Số cá thể thuộc kiểu hình tái tổ hợp / Tổng số cá thể đời con) × 100%.\n  + Đặc điểm: Tần số hoán vị gen tỉ lệ thuận với khoảng cách giữa hai gen trên nhiễm sắc thể (càng xa nhau càng dễ hoán vị). Tần số hoán vị luôn bé hơn hoặc bằng 50% (f ≤ 50%).\n  + Bản đồ di truyền: Bản đồ biểu diễn trật tự phân bố và khoảng cách tương đối giữa các gen trên NST. Đơn vị đo khoảng cách là centimorgan (cM), quy ước 1% hoán vị gen = 1 cM.\n— Ý nghĩa hoán vị gen: Tăng nguồn biến dị tổ hợp phong phú, tạo tổ hợp gen mới làm nguyên liệu cho tiến hóa.',
     workedExample: {
@@ -4655,13 +4655,13 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Di truyền liên kết giới tính và di truyền ngoài nhân',
     hook: 'Tại sao bệnh mù màu và máu khó đông lại phổ biến ở nam giới hơn nữ giới? Và tại sao tất cả con cái đều mang các đặc điểm ti thể giống hệt mẹ của chúng?',
     theory:
-      'DI TRUYỀN LIÊN KẾT GIỚI TÍNH:\n' +
+      '## Di truyền liên kết giới tính\n' +
       'Là hiện tượng các gen quy định tính trạng nằm trên nhiễm sắc thể giới tính (X hoặc Y).\n' +
       '1. Gen trên NST giới tính X (không có alen tương đồng trên Y):\n' +
       '   — Di truyền chéo: Gen lặn trên X của bố truyền cho con gái, từ con gái truyền cho cháu ngoại trai. Tính trạng dễ biểu hiện ở giới dị giao tử XY (chỉ cần 1 alen lặn X^a đã biểu hiện kiểu hình, ở nữ phải X^aX^a mới biểu hiện).\n   — Ví dụ: Bệnh máu khó đông, mù màu đỏ-lục ở người.\n' +
       '2. Gen trên NST giới tính Y (không có alen tương đồng trên X):\n' +
       '   — Di truyền thẳng: Truyền trực tiếp từ bố cho 100% con trai ở giới dị giao tử XY (ví dụ gen quy định túm lông ở vành tai người).\n\n' +
-      'DI TRUYỀN NGOÀI NHÂN (Di truyền tế bào chất / Di truyền theo dòng mẹ):\n' +
+      '## Di truyền ngoài nhân (Di truyền tế bào chất / Di truyền theo dòng mẹ)\n' +
       '— Đặc điểm: Các gen nằm trên phân tử ADN dạng vòng kép trong các bào quan ở tế bào chất như ti thể (ở động vật và thực vật) hoặc lục lạp (ở thực vật).\n' +
       '— Kết quả phép lai thuận nghịch khác nhau: Đổi vai bố mẹ thì kết quả đổi theo: ở cả hai phép lai, đời con đều có 100% kiểu hình giống CƠ THỂ MẸ.\n  + Cơ chế: Khi thụ tinh, giao tử đực (tinh trùng) chỉ truyền nhân mà hầu như không truyền tế bào chất, toàn bộ tế bào chất của hợp tử do giao tử cái (trứng) cung cấp.',
     workedExample: {
@@ -4971,12 +4971,12 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Ảnh hưởng của môi trường lên sự biểu hiện của gen',
     hook: 'Tại sao những chú thỏ Himalaya cạo lông ở lưng và chườm nước đá lại mọc ra chùm lông màu đen thay vì màu trắng? Môi trường có vai trò gì trong sự biểu hiện kiểu hình?',
     theory:
-      'MỐI QUAN HỆ GIỮA KIỂU GEN, MÔI TRƯỜNG VÀ KIỂU HÌNH:\n' +
+      '## Mối quan hệ giữa kiểu gen, môi trường và kiểu hình\n' +
       '— Kiểu hình là kết quả tương tác giữa kiểu gen và môi trường sinh thái ngoài tế bào.\n  + Kiểu gen quy định khả năng phản ứng của cơ thể trước các môi trường khác nhau.\n  + Môi trường quyết định sự biểu hiện cụ thể của kiểu gen thành kiểu hình.\n\n' +
-      'THƯỜNG BIẾN (Biến đổi kiểu hình không di truyền):\n' +
+      '## Thường biến (Biến đổi kiểu hình không di truyền)\n' +
       '— Định nghĩa: Là những biến đổi về kiểu hình của cùng một kiểu gen dưới tác động trực tiếp của các điều kiện môi trường khác nhau.\n' +
       '— Đặc điểm: Biến đổi đồng loạt, định hướng phù hợp với môi trường, giúp sinh vật thích nghi tạm thời. Thường biến không làm thay đổi kiểu gen nên không di truyền.\n  + Ví dụ: Cây hoa cẩm tú cầu có cùng kiểu gen nhưng nở hoa màu xanh lam ở đất chua (pH < 7) và màu hồng đỏ ở đất kiềm (pH > 7).\n\n' +
-      'MỨC PHẢN ỨNG (Norm of reaction):\n' +
+      '## Mức phản ứng (Norm of reaction)\n' +
       '— Định nghĩa: Tập hợp các kiểu hình của cùng một kiểu gen tương ứng với các điều kiện môi trường khác nhau.\n' +
       '— Đặc điểm: Mức phản ứng do kiểu gen quy định nên di truyền được. Mỗi gen có mức phản ứng rộng hoặc hẹp khác nhau:\n  + Tính trạng chất lượng (hình dạng quả, màu sắc hoa): Mức phản ứng hẹp, ít phụ thuộc môi trường.\n  + Tính trạng số lượng (sản lượng sữa, khối lượng hạt): Mức phản ứng rộng, phụ thuộc nhiều vào chăm sóc và môi trường.',
     workedExample: {
@@ -5042,7 +5042,7 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Lai giống',
     hook: 'Làm thế nào các nhà khoa học và nông dân lai tạo thành công những giống lúa lai F₁ năng suất vượt trội? Chúng ta sẽ tìm hiểu các kỹ thuật lai hữu tính trên hoa.',
     theory:
-      'QUY TRÌNH LAI HỮU TÍNH Ở THỰC VẬT (lai hoa lưỡng tính):\n' +
+      '## Quy trình lai hữu tính ở thực vật (lai hoa lưỡng tính)\n' +
       'Để tránh tự thụ phấn ngoài ý muốn, quy trình lai gồm các bước nghiêm ngặt:\n' +
       '1. Bước 1: Khử đực ở hoa của cây chọn làm mẹ.\n   — Chọn những nụ hoa cái chưa nở (bao phấn chưa chín và chưa giải phóng hạt phấn).\n   — Dùng kẹp y tế tách nhẹ cánh hoa, cắt bỏ toàn bộ nhị (bao phấn), chỉ giữ lại nhụy — tức cơ quan sinh sản cái.\n2. Bước 2: Bảo vệ hoa mẹ.\n   — Bao kín hoa đã khử đực bằng túi nilon hoặc giấy mỏng để ngăn chặn hạt phấn lạ ngoài môi trường bay vào thụ phấn chéo ngoài ý muốn.\n3. Bước 3: Thụ phấn nhân tạo.\n   — Khi nhụy hoa mẹ chín (tiết dịch nhầy ở đầu nhụy), thu hạt phấn từ hoa đực của cây chọn làm bố (bao phấn đã chín và vỡ). Rắc nhẹ hạt phấn này lên đầu nhụy hoa mẹ.\n4. Bước 4: Gắn thẻ theo dõi.\n   — Bao kín hoa lại, gắn nhãn ghi rõ tên bố mẹ, ngày thực hiện lai để theo dõi kết quả thu hoạch hạt lai F₁.',
     workedExample: {
@@ -5363,10 +5363,10 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Cấu trúc di truyền của quần thể',
     hook: 'Một quần thể sinh vật không chỉ đơn giản là tập hợp các cá thể. Chúng liên kết với nhau bằng một vốn gen chung được đặc trưng bởi tần số các alen và tần số các kiểu gen.',
     theory:
-      'KHÁI NIỆM VỀ QUẦN THỂ DI TRUYỀN:\n' +
+      '## Khái niệm về quần thể di truyền\n' +
       '— Quần thể là tập hợp các cá thể cùng loài, cùng sống trong một khoảng không gian xác định, vào một thời điểm nhất định và có khả năng giao phối sinh sản ra đời con hữu thụ.\n' +
       '— Vốn gen (Gene pool): Toàn bộ các alen của tất cả các gen trong quần thể tại một thời điểm xác định. Đặc trưng bằng:\n  + Tần số kiểu gen: Tỉ lệ số cá thể mang kiểu gen đó trên tổng số cá thể của quần thể.\n  + Tần số alen: Tỉ lệ số alen đó trên tổng số alen của locus đó trong quần thể.\n\n' +
-      'QUẦN THỂ TỰ PHỐI (Tự thụ phấn hoặc Giao phối cận huyết):\n' +
+      '## Quần thể tự phối (Tự thụ phấn hoặc Giao phối cận huyết)\n' +
       '— Đặc điểm biến đổi cấu trúc qua các thế hệ tự phối liên tiếp:\n  + Tần số kiểu gen đồng hợp tử tăng dần, dị hợp tử giảm dần.\n  + Qua n thế hệ tự phối liên tiếp từ 100% cá thể dị hợp Aa:\n    * Tỉ lệ dị hợp Aa = (1/2)ⁿ.\n    * Tỉ lệ đồng hợp trội AA = đồng hợp lặn aa = [1 - (1/2)ⁿ] / 2.\n  + Tần số các alen (A và a) không thay đổi nếu không có tác động của các nhân tố tiến hóa khác.\n— Hậu quả: Gây ra hiện tượng thoái hóa giống ở động vật và thực vật do các alen lặn có hại có cơ hội gặp nhau tạo kiểu gen đồng hợp lặn biểu hiện ra kiểu hình gây hại.',
     workedExample: {
       problem:
@@ -5688,9 +5688,9 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Trạng thái cân bằng di truyền của quần thể ngẫu phối',
     hook: 'Định luật Hardy–Weinberg cho phép chúng ta dùng toán học xác định chính xác tỉ lệ người mang gen bệnh tiềm ẩn trong cộng đồng chỉ từ việc biết số lượng ca bệnh biểu hiện.',
     theory:
-      'QUẦN THỂ NGẪU PHỐI (Panmixia):\n' +
+      '## Quần thể ngẫu phối (Panmixia)\n' +
       '— Đặc điểm: Các cá thể trong quần thể lựa chọn bạn tình giao phối hoàn toàn ngẫu nhiên. Tạo nên sự đa dạng kiểu gen khổng lồ (biến dị tổ hợp).\n\n' +
-      'ĐỊNH LUẬT HARDY–WEINBERG (Cân bằng quần thể):\n' +
+      '## Định luật Hardy–Weinberg (Cân bằng quần thể)\n' +
       '— Nội dung: Trong một quần thể lớn ngẫu phối, nếu không có các nhân tố làm thay đổi tần số alen (đột biến, chọn lọc, di nhập gen...), thì tần số các alen và thành phần kiểu gen của quần thể sẽ được duy trì ổn định không đổi qua các thế hệ.\n' +
       '— Công thức toán học (cho 1 locus có 2 alen A và a):\n  Gọi p là tần số alen A, q là tần số alen a (p + q = 1).\n  Quần thể đạt trạng thái cân bằng di truyền khi thành phần kiểu gen tuân theo đẳng thức:\n  p² AA + 2pq Aa + q² aa = 1.\n— Điều kiện nghiệm đúng của định luật:\n  1. Quần thể phải có kích thước lớn.\n  2. Các cá thể ngẫu phối tự do.\n  3. Không có đột biến, hoặc tần số đột biến thuận nghịch bằng nhau.\n  4. Không có chọn lọc tự nhiên (các kiểu gen có sức sống ngang nhau).\n  5. Quần thể phải được cách ly, không có sự di nhập gen.',
     workedExample: {
@@ -6148,13 +6148,13 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Chọn giống vật nuôi và cây trồng bằng phương pháp truyền thống',
     hook: 'Từ tổ tiên là loài gà rừng nhỏ bé, con người đã chọn lọc tạo ra hàng trăm giống gà chuyên thịt, chuyên trứng năng suất cao nhờ các phương pháp chọn giống cổ điển.',
     theory:
-      'CHỌN GIỐNG TỪ NGUỒN BIẾN DỊ TỔ HỢP:\n' +
+      '## Chọn giống từ nguồn biến dị tổ hợp\n' +
       '— Cơ chế: Cho lai giữa các dòng thuần chủng khác nhau để tạo ra các biến dị tổ hợp phong phú ở đời con, sau đó chọn lọc cá thể có tổ hợp gen mong muốn và tự phối/giao phối gần để tạo dòng thuần chủng mới.\n\n' +
-      'ƯU THẾ LAI (Hybrid vigor):\n' +
+      '## Ưu thế lai (Hybrid vigor)\n' +
       '— Khái niệm: Hiện tượng con lai F₁ có sức sống cao hơn, sinh trưởng nhanh hơn, chống chịu tốt hơn và năng suất vượt trội so với các dòng bố mẹ thuần chủng.\n' +
       '— Học thuyết siêu trội (phổ biến nhất): Giải thích ưu thế lai xuất hiện do kiểu gen dị hợp tử (Aa, Bb...) vượt trội về tính trạng so với các kiểu gen đồng hợp tử (AA, aa, BB, bb...).\n' +
       '— Đặc điểm quan trọng: Ưu thế lai biểu hiện cao nhất ở đời F₁, sau đó giảm dần qua các thế hệ tự phối do tỉ lệ dị hợp tử giảm. Vì vậy con lai F₁ không được dùng làm giống để nhân giống cho đời sau, chỉ dùng vào mục đích kinh tế (thương phẩm).\n\n' +
-      'PHƯƠNG PHÁP TẠO ƯU THẾ LAI:\n' +
+      '## Phương pháp tạo ưu thế lai\n' +
       '— Lai khác dòng đơn: Dòng A × Dòng B → F₁.\n' +
       '— Lai khác dòng kép: (Dòng A × Dòng B) × (Dòng C × Dòng D) → F₁.',
     workedExample: {
@@ -6617,12 +6617,12 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Chọn giống bằng công nghệ tế bào',
     hook: 'Công nghệ tế bào cho phép chúng ta tạo ra loài cây lai "Pomato" vừa ra quả cà chua ở trên vừa tạo củ khoai tây ở dưới đất bằng kỹ thuật dung hợp tế bào trần.',
     theory:
-      'CÔNG NGHỆ TẾ BÀO THỰC VẬT:\n' +
+      '## Công nghệ tế bào thực vật\n' +
       '1. Dung hợp tế bào trần (Somatic hybridization):\n' +
       '   — Cách làm: Dùng enzyme cellulase loại bỏ thành tế bào (bằng cellulose) của tế bào sinh dưỡng ở hai loài khác nhau tạo tế bào trần, sau đó cho dung hợp tạo tế bào lai. Nuôi cấy tế bào lai phát triển thành cây lai song nhị bội khác loài mà không cần qua sinh sản hữu tính (ví dụ cây Pomato lai giữa khoai tây và cà chua).\n' +
       '2. Nuôi cấy hạt phấn hoặc noãn chưa thụ tinh (đơn bội n):\n' +
       '   — Cách làm: Nuôi hạt phấn (n) trên môi trường nhân tạo tạo mô đơn bội, sau đó xử lý bằng hóa chất colchicine để lưỡng bội hóa tạo dòng lưỡng bội (2n) thuần chủng tuyệt đối về tất cả các gen.\n\n' +
-      'CÔNG NGHỆ TẾ BÀO ĐỘNG VẬT:\n' +
+      '## Công nghệ tế bào động vật\n' +
       '1. Nhân bản vô tính động vật bằng chuyển nhân (Cloning):\n' +
       '   — Đại diện: Cừu Dolly (1996).\n   — Ý nghĩa: Nhân nhanh các cá thể động vật quý hiếm, hoặc các cá thể mang gene quý dùng trong y học.\n' +
       '2. Cấy truyền phôi (Embryo transfer):\n' +
@@ -7154,13 +7154,13 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Chọn giống bằng công nghệ gen',
     hook: 'Bằng công nghệ chuyển gen, chúng ta đã tạo ra giống lúa vàng chứa vitamin A cứu sống hàng triệu trẻ em thiếu dinh dưỡng, hay những con vi khuẩn E. coli sản xuất hormone insulin trị bệnh tiểu đường.',
     theory:
-      'KHÁI NIỆM VỀ CÔNG NGHỆ GEN:\n' +
+      '## Khái niệm về công nghệ gen\n' +
       '— Là quy trình tạo ra những tế bào hoặc sinh vật có gen bị biến đổi hoặc có thêm gen mới, từ đó tạo ra những đặc tính mới mong muốn.\n' +
       '— Sinh vật biến đổi gen (GMO): Sinh vật có hệ gen được biến đổi nhân tạo (được chuyển gen mới, làm bất hoạt gen có sẵn, hoặc biến đổi tăng hoạt tính gen).\n\n' +
-      'KỸ THUẬT CHUYỂN GEN (Kỹ thuật tái tổ hợp ADN):\n' +
+      '## Kỹ thuật chuyển gen (Kỹ thuật tái tổ hợp ADN)\n' +
       'Gồm 3 bước cơ bản:\n' +
       '1. Bước 1: Tạo ADN tái tổ hợp.\n   — Tách thể truyền (plasmid vi khuẩn hoặc virut) và gen cần chuyển từ tế bào cho.\n   — Cắt thể truyền và gen cần chuyển bằng cùng một loại enzyme cắt giới hạn (restrictase) tạo đầu dính tương thích.\n   — Nối gen cần chuyển vào thể truyền nhờ enzyme nối ligase tạo ADN tái tổ hợp.\n2. Bước 2: Đưa ADN tái tổ hợp vào tế bào nhận.\n   — Dùng CaCl₂ hoặc xung điện để làm giãn màng sinh chất tế bào nhận (thường là vi khuẩn E. coli) giúp ADN tái tổ hợp xâm nhập vào.\n3. Bước 3: Phân lập dòng tế bào chứa ADN tái tổ hợp.\n   — Nuôi cấy tế bào trên môi trường chọn lọc chứa gen đánh dấu (như gen kháng kháng sinh có trên thể truyền) để cô lập dòng tế bào đã nhận gen thành công.\n\n' +
-      'THÀNH TỰU CÔNG NGHỆ GEN:\n' +
+      '## Thành tựu công nghệ gen\n' +
       '— Động vật: Cừu chuyển gen tổng hợp protein người trong sữa; chuột nhắt mang gen sinh trưởng của chuột cống to gấp đôi.\n' +
       '— Thực vật: Bông kháng sâu hại (mang gen Bt độc tố diệt sâu); lúa vàng (Golden Rice) tổng hợp beta-carotene (tiền chất vitamin A).\n' +
       '— Vi sinh vật: Vi khuẩn E. coli chuyển gen sản xuất insulin người trị tiểu đường, hormone sinh trưởng.',
@@ -7589,11 +7589,11 @@ export const SINH12_C1_LESSONS: BiologyLesson[] = [
     title: 'Di truyền y học và bảo vệ vốn gen loài người',
     hook: 'Di truyền y học giúp chúng ta giải mã các nguyên nhân gây ung thư, dự báo nguy cơ sinh con dị tật bẩm sinh nhờ các phương pháp xét nghiệm sàng lọc trước sinh hiện đại.',
     theory:
-      'KHÁI NIỆM DI TRUYỀN Y HỌC:\n' +
+      '## Khái niệm di truyền y học\n' +
       'Là một nhánh của di truyền học người chuyên nghiên cứu cơ chế phát sinh, chẩn đoán, phòng ngừa và điều trị các bệnh di truyền ở người.\n\n' +
-      'CÁC NHÓM BỆNH DI TRUYỀN CHÍNH:\n' +
+      '## Các nhóm bệnh di truyền chính\n' +
       '1. Bệnh di truyền phân tử (đột biến gen):\n   — Bệnh phêninkêtô niệu (PKU): Do đột biến gen mã hóa enzym chuyển hóa axit amin phenylalanine thành tyrosine. Axit amin phenylalanine tích tụ trong máu, đầu độc tế bào thần kinh và gây thiểu năng trí tuệ.\n   — Bệnh hồng cầu hình liềm, mù màu, máu khó đông.\n2. Hội chứng bệnh liên quan đến đột biến NST (rối loạn số lượng/cấu trúc NST):\n   — Hội chứng Down (3 NST 21), Klinefelter (XXY), Turner (XO), Patau (3 NST 13), Edward (3 NST 18).\n3. Bệnh ung thư (ác tính):\n   — Do đột biến gen tiền ung thư (chuyển thành gen ung thư trội biểu hiện liên tục) hoặc đột biến gen ức chế khối u (gen lặn mất chức năng bảo vệ tế bào), làm tế bào phân chia mất kiểm soát hình thành khối u di căn.\n\n' +
-      'BẢO VỆ VỐN GEN LOÀI NGƯỜI:\n' +
+      '## Bảo vệ vốn gen loài người\n' +
       '— Tư vấn di truyền y học: Phân tích phả hệ, xét nghiệm di truyền đưa ra lời khuyên cho các cặp vợ chồng có nguy cơ sinh con mắc bệnh.\n' +
       '— Sàng lọc trước sinh: Chọc dò dịch ối, sinh thiết tua nhau thai, xét nghiệm máu mẹ (NIPT) để phát hiện dị tật NST từ giai đoạn phôi thai.\n' +
       '— Liệu pháp gene: Đưa gene lành thay gene đột biến bệnh lý trực tiếp vào tế bào người.',

@@ -15,13 +15,13 @@ export const HOA11_C3_LESSONS: ChemLesson[] = [
       'Từ thức ăn chúng ta ăn, quần áo chúng ta mặc, cho đến DNA quy định sự sống — tất cả đều cấu tạo ' +
       'từ hợp chất hữu cơ. Hoá học hữu cơ chính là hoá học của nguyên tố Carbon.',
     theory:
-      'KHÁI NIỆM HỢP CHẤT HỮU CƠ VÀ HOÁ HỌC HỮU CƠ:\n' +
+      '## Khái niệm hợp chất hữu cơ và hoá học hữu cơ\n' +
       '— Hợp chất hữu cơ là hợp chất của carbon (trừ một số chất vô cơ đơn giản như CO, CO₂, muối carbonate, muối cyanide, carbide...).\n' +
       '— Hoá học hữu cơ là ngành hoá học nghiên cứu các hợp chất hữu cơ.\n\n' +
-      'PHÂN LOẠI HỢP CHẤT HỮU CƠ:\n' +
+      '## Phân loại hợp chất hữu cơ\n' +
       '— Hydrocarbon: chỉ chứa hai nguyên tố Carbon (C) và Hydrogen (H) trong phân tử (ví dụ: CH₄, C₂H₄, C₆H₆).\n' +
       '— Dẫn xuất của hydrocarbon: ngoài C và H, trong phân tử còn có các nguyên tố khác như O, N, S, Halogen... (ví dụ: C₂H₅OH, CH₃COOH, C₆H₅NH₂).\n\n' +
-      'ĐẶC ĐIỂM CHUNG CỦA HỢP CHẤT HỮU CƠ:\n' +
+      '## Đặc điểm chung của hợp chất hữu cơ\n' +
       '— Cấu tạo: Liên kết hoá học chủ yếu là liên kết cộng hoá trị.\n' +
       '— Tính chất vật lí: Nhiệt độ nóng chảy và nhiệt độ sôi thấp (dễ bay hơi), hầu hết không tan hoặc ít tan trong nước, tan nhiều trong dung môi hữu cơ.\n' +
       '— Tính chất hoá học: Thường kém bền nhiệt (dễ cháy); phản ứng hoá học xảy ra chậm, theo nhiều hướng khác nhau tạo ra hỗn hợp sản phẩm (hiệu suất không cao).',
@@ -91,16 +91,16 @@ export const HOA11_C3_LESSONS: ChemLesson[] = [
       'Làm thế nào để lấy tinh dầu nguyên chất từ hoa bưởi tươi, hay tách cồn ra khỏi hỗn hợp cồn và ' +
       'nước? Nhà hoá học dùng các phương pháp vật lí dựa trên khác biệt về tính chất giữa các chất.',
     theory:
-      'PHƯƠNG PHÁP CHƯNG CẤT (Distillation):\n' +
+      '## Phương pháp chưng cất (Distillation)\n' +
       '— Nguyên lí: Dựa trên sự khác biệt về NHIỆT ĐỘ SÔI của các chất trong hỗn hợp lỏng.\n' +
       '— Cách làm: Đun sôi hỗn hợp lỏng, chất có nhiệt độ sôi thấp hơn sẽ bay hơi trước, dẫn hơi qua ống sinh hàn để ngưng tụ thành chất lỏng tinh khiết (chưng cất phân đoạn dùng cho các chất có nhiệt độ sôi gần nhau, chưng cất lôi cuốn hơi nước dùng cho tinh dầu).\n\n' +
-      'PHƯƠNG PHÁP CHIẾT (Extraction):\n' +
+      '## Phương pháp chiết (Extraction)\n' +
       '— Nguyên lí: Dựa trên sự khác biệt về ĐỘ TAN của các chất trong hai dung môi không trộn lẫn vào nhau (thường là nước và dung môi hữu cơ như ether, chloroform).\n' +
       '— Thiết bị: Dùng phễu chiết để tách riêng lớp dung dịch phía trên và lớp dung dịch phía dưới.\n\n' +
-      'PHƯƠNG PHÁP KẾT TINH (Crystallization):\n' +
+      '## Phương pháp kết tinh (Crystallization)\n' +
       '— Nguyên lí: Dựa trên sự khác biệt về ĐỘ TAN của chất rắn theo NHIỆT ĐỘ.\n' +
       '— Cách làm: Hoà tan chất rắn bẩn vào dung môi nóng tạo dung dịch bão hoà, lọc nóng để bỏ tạp chất không tan, để nguội cho chất cần tinh chế kết tinh lại dưới dạng tinh thể sạch, lọc lấy tinh thể.\n\n' +
-      'PHƯƠNG PHÁP SẮC KÍ CỘT (Column Chromatography):\n' +
+      '## Phương pháp sắc kí cột (Column Chromatography)\n' +
       '— Nguyên lí: Dựa trên sự khác biệt về khả năng HẤP PHỤ của pha tĩnh (như silica gel) và khả năng hoà tan trong pha động (dung môi) của các chất cần tách.',
     workedExample: {
       problem:
@@ -619,13 +619,13 @@ export const HOA11_C3_LESSONS: ChemLesson[] = [
       'Làm thế nào nhà hoá học biết một phân tử chứa chính xác bao nhiêu nguyên tử C, H, O? ' +
       'Bằng cách đốt cháy chất đó để định lượng, kết hợp phân tích phổ khối lượng (MS) hiện đại.',
     theory:
-      'CÔNG THỨC ĐƠN GIẢN NHẤT (Empirical Formula):\n' +
+      '## Công thức đơn giản nhất (Empirical Formula)\n' +
       '— Công thức đơn giản nhất cho biết tỉ lệ số nguyên tử của các nguyên tố trong phân tử (ở dạng số nguyên tối giản).\n' +
       '— Cách thiết lập cho chất CxHyOz: x : y : z = nC : nH : nO = (%C / 12) : (%H / 1) : (%O / 16).\n\n' +
-      'CÔNG THỨC PHÂN TỬ (Molecular Formula):\n' +
+      '## Công thức phân tử (Molecular Formula)\n' +
       '— Công thức phân tử cho biết số lượng nguyên tử thực tế của mỗi nguyên tố trong một phân tử chất.\n' +
       '— Công thức phân tử là bội số nguyên của công thức đơn giản nhất: (Công thức đơn giản nhất)n.\n\n' +
-      'XÁC ĐỊNH KHỐI LƯỢNG PHÂN TỬ BẰNG PHỔ KHỐI LƯỢNG (MS):\n' +
+      '## Xác định khối lượng phân tử bằng phổ khối lượng (MS)\n' +
       '— Phương pháp phổ khối lượng (Mass Spectrometry - MS) được dùng để xác định phân tử khối của chất hữu cơ.\n' +
       '— Trên giản đồ phổ MS, mảnh ion phân tử [M⁺] có giá trị m/z lớn nhất (thường ở ngoài cùng bên phải) tương ứng với khối lượng phân tử của chất đó.',
     workedExample: {
@@ -697,17 +697,17 @@ export const HOA11_C3_LESSONS: ChemLesson[] = [
       'Ethanol (cồn) và dimethyl ether có cùng công thức phân tử C₂H₆O. Nhưng ethanol là chất lỏng, còn ' +
       'dimethyl ether là chất khí dùng làm nhiên liệu. Khác biệt nằm ở trật tự liên kết giữa các nguyên tử.',
     theory:
-      'THUYẾT CẤU TẠO HOÁ HỌC (Butlerov):\n' +
+      '## Thuyết cấu tạo hoá học (Butlerov)\n' +
       '1. Trong phân tử hợp chất hữu cơ, các nguyên tử liên kết với nhau theo ĐÚNG THỨ TỰ và bằng hoá trị của chúng. Carbon luôn có hoá trị IV, Hydrogen hoá trị I, Oxygen hoá trị II, Nitrogen hoá trị III.\n' +
       '2. Nguyên tử Carbon không chỉ liên kết với nguyên tử của nguyên tố khác mà còn có thể liên kết trực tiếp với nhau tạo thành MẠCH CARBON (mạch hở không phân nhánh, mạch hở phân nhánh, mạch vòng).\n' +
       '3. Tính chất của chất phụ thuộc vào THÀNH PHẦN phân tử và CẤU TẠO hoá học (thứ tự liên kết).\n\n' +
-      'ĐỒNG PHÂN (Isomerism):\n' +
+      '## Đồng phân (Isomerism)\n' +
       '— Đồng phân là các chất khác nhau có cùng công thức phân tử nhưng khác nhau về cấu tạo hoá học (nên tính chất khác nhau).\n' +
       '— Ví dụ: CH₃-CH₂-OH (ethanol) và CH₃-O-CH₃ (dimethyl ether) là đồng phân của nhau.\n\n' +
-      'ĐỒNG ĐẲNG (Homology):\n' +
+      '## Đồng đẳng (Homology)\n' +
       '— Đồng đẳng là các chất có cấu tạo và tính chất hoá học tương tự nhau, nhưng thành phần phân tử hơn kém nhau một hay nhiều nhóm −CH₂−.\n' +
       '— Ví dụ: CH₄, C₂H₆, C₃H₈... lập thành dãy đồng đẳng alkane.\n\n' +
-      'PHỔ HỒNG NGOẠI (IR):\n' +
+      '## Phổ hồng ngoại (IR)\n' +
       '— Phổ hồng ngoại (Infrared Spectroscopy - IR) được dùng để xác định các nhóm chức đặc trưng trong phân tử (ví dụ: nhóm −OH có tín hiệu đặc trưng ở vùng 3200 - 3600 cm⁻¹; nhóm C=O ở vùng 1600 - 1850 cm⁻¹).',
     workedExample: {
       problem:
@@ -1536,7 +1536,7 @@ export const HOA11_C3_LESSONS: ChemLesson[] = [
       'Chương 3 mở ra cánh cổng vào thế giới Hoá học hữu cơ rộng lớn, trang bị các công cụ định lượng ' +
       'và tư duy cấu trúc phân tử để ta bước tiếp vào các nhóm hydrocarbon cụ thể.',
     theory:
-      'TÓM TẮT NỘI DUNG CHƯƠNG 3:\n' +
+      '## Tóm tắt nội dung chương 3\n' +
       '1. Hợp chất hữu cơ là hợp chất của Carbon. Chia làm Hydrocarbon (C, H) và Dẫn xuất (chứa O, N, S, halogen...).\n' +
       '2. Bốn phương pháp tinh chế: Chưng cất (nhiệt độ sôi), Chiết (độ tan trong dung môi), Kết tinh (độ tan rắn theo nhiệt độ), Sắc kí cột (khả năng hấp phụ).\n' +
       '3. Công thức phân tử CxHyOz tính từ tỉ lệ phần trăm khối lượng: x : y : z = %C/12 : %H/1 : %O/16. Phân tử khối xác định bằng phổ khối lượng (MS) từ đỉnh ion phân tử [M⁺].\n' +

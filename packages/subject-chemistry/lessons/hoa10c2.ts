@@ -583,14 +583,14 @@ export const HOA10_C2_LESSONS: ChemLesson[] = [
       'khí hiếm gần như trơ tuyệt đối? Xu hướng biến đổi tuần hoàn giải thích được điều này ' +
       'mà không cần học thuộc từng nguyên tố.',
     theory:
-      'BÁN KÍNH NGUYÊN TỬ:\n' +
+      '## Bán kính nguyên tử\n' +
       '— Trong MỘT CHU KÌ (trái → phải): điện tích hạt nhân tăng, lực hút electron mạnh hơn ' +
       '⇒ bán kính GIẢM DẦN.\n' +
       '— Trong MỘT NHÓM (trên → dưới): số lớp electron tăng ⇒ bán kính TĂNG DẦN.\n\n' +
-      'ĐỘ ÂM ĐIỆN (khả năng hút electron về mình khi tạo liên kết):\n' +
+      '## Độ âm điện (khả năng hút electron về mình khi tạo liên kết)\n' +
       '— Trong một chu kì (trái → phải): độ âm điện TĂNG DẦN (ngược xu hướng bán kính).\n' +
       '— Trong một nhóm (trên → dưới): độ âm điện GIẢM DẦN.\n\n' +
-      'TÍNH KIM LOẠI / PHI KIM:\n' +
+      '## Tính kim loại / phi kim\n' +
       '— Trong một chu kì (trái → phải): tính kim loại GIẢM, tính phi kim TĂNG.\n' +
       '— Trong một nhóm (trên → dưới): tính kim loại TĂNG, tính phi kim GIẢM.\n\n' +
       'Nguyên tố có độ âm điện lớn nhất trong bảng tuần hoàn là Fluorine (F). Nguyên tố có ' +

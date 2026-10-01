@@ -276,15 +276,15 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Bằng chứng tiến hoá',
     hook: 'Cánh chim, tay người và vây cá voi làm ba việc hoàn toàn khác nhau, vậy mà bên trong lại xếp cùng một bộ xương theo cùng một thứ tự. Vì sao vậy? Đây chính là bằng chứng giải phẫu so sánh mạnh nhất cho thấy các loài có chung một tổ tiên.',
     theory:
-      'BẰNG CHỨNG GIẢI PHẪU SO SÁNH:\n' +
+      '## Bằng chứng giải phẫu so sánh\n' +
       '— Cơ quan tương đồng (Homologous organs): Các cơ quan ở các loài khác nhau có cùng nguồn gốc phát sinh nhưng có thể thực hiện các chức năng hoàn toàn khác nhau do đã phân hoá thích nghi với môi trường sống khác nhau.\n' +
       '  + Ý nghĩa: Chứng minh nguồn gốc chung từ một tổ tiên.\n  + Ví dụ: Tay người, cánh chim, vây cá voi, chân trước mèo đều là chi trước của động vật có xương sống.\n' +
       '— Cơ quan thoái hoá (Vestigial organs): Cơ quan không còn giữ chức năng như tổ tiên nhưng vẫn để lại dấu vết trên cơ thể.\n  + Ví dụ: Ruột thừa, xương cụt ở người; xương chân sau thoái hoá ở cá voi; cánh không bay được của đà điểu.\n\n' +
-      'BẰNG CHỨNG PHÔI SINH HỌC:\n' +
+      '## Bằng chứng phôi sinh học\n' +
       '— Phôi của các loài động vật có xương sống trong giai đoạn đầu phát triển rất giống nhau (đều có túi mang, đuôi...). Phôi loài càng gần gũi nhau thì càng giống nhau ở giai đoạn càng muộn. Chứng tỏ xuất phát từ tổ tiên chung.\n\n' +
-      'BẰNG CHỨNG ĐỊA LÝ SINH VẬT HỌC:\n' +
+      '## Bằng chứng địa lý sinh vật học\n' +
       '— Sự phân bố địa lý của các loài phản ánh lịch sử tiến hoá. Các loài sinh vật phân bố gần nhau về địa lý thường có họ hàng tiến hoá gần nhau hơn. Ví dụ hệ động vật đặc hữu độc đáo ở Australia do lục địa bị cô lập.\n\n' +
-      'BẰNG CHỨNG SINH HỌC PHÂN TỬ:\n' +
+      '## Bằng chứng sinh học phân tử\n' +
       '— Mức độ giống nhau về trình tự nucleotit ADN hay trình tự axit amin trong protein (như cytochrome C, hemoglobin) phản ánh quan hệ họ hàng: trình tự càng giống nhau thì loài càng họ hàng gần.\n' +
       '— Bằng chứng sắc nét nhất và định lượng được vì dựa trên dữ liệu phân tử khách quan.',
     workedExample: {
@@ -577,17 +577,17 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Học thuyết tiến hoá của Darwin',
     hook: 'Darwin đã quan sát 13 loài chim sẻ ở quần đảo Galapagos và nhận ra rằng chúng đều có chung một tổ tiên nhưng đã phân hoá thành các loài khác nhau nhờ chọn lọc tự nhiên trong hàng triệu năm.',
     theory:
-      'HỌC THUYẾT TIẾN HOÁ DARWIN (1859 — "Nguồn gốc các loài"):\n' +
+      '## Học thuyết tiến hoá Darwin (1859 — "Nguồn gốc các loài")\n' +
       '— Hai nội dung cốt lõi:\n' +
       '  1. Các loài sinh vật không cố định bất biến mà đều có chung nguồn gốc từ một tổ tiên và phân nhánh tiến hoá dần dần thành đa dạng loài.\n' +
       '  2. Chọn lọc tự nhiên là nhân tố chủ yếu thúc đẩy quá trình tiến hoá.\n\n' +
-      'BIẾN DỊ CÁ THỂ (Individual variation):\n' +
+      '## Biến dị cá thể (Individual variation)\n' +
       '— Trong quần thể sinh vật, cá thể nào cũng có sự sai khác (biến dị) với nhau về mọi tính trạng (hình thái, sinh lý, sinh thái).\n' +
       '— Biến dị là nguyên liệu cho chọn lọc tự nhiên tác động.\n\n' +
-      'CHỌN LỌC TỰ NHIÊN (Natural selection):\n' +
+      '## Chọn lọc tự nhiên (Natural selection)\n' +
       '— Tự nhiên luôn chọn lọc giữ lại những cá thể có các biến dị có lợi (thích nghi tốt nhất với môi trường hiện tại) giúp chúng sống sót và sinh sản nhiều hơn, đồng thời đào thải các cá thể có biến dị bất lợi.\n' +
       '— Qua nhiều thế hệ chọn lọc liên tiếp, quần thể tích luỹ ngày càng nhiều biến dị có lợi, dần dần khác biệt với quần thể gốc và có thể hình thành loài mới.\n\n' +
-      'HẠN CHẾ CỦA HỌC THUYẾT DARWIN:\n' +
+      '## Hạn chế của học thuyết Darwin\n' +
       '— Darwin giải thích được quá trình tiến hoá thích nghi nhưng chưa giải thích được nguồn gốc phát sinh biến dị cá thể và cơ chế di truyền chúng từ thế hệ này sang thế hệ khác (do thời đó chưa có khoa học di truyền).',
     workedExample: {
       problem:
@@ -853,10 +853,10 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Thuyết tiến hoá tổng hợp hiện đại và các nhân tố tiến hoá',
     hook: 'Thuyết tiến hoá hiện đại kết hợp học thuyết Darwin với di truyền học Mendel và di truyền quần thể, tạo ra bức tranh hoàn chỉnh về cơ chế tiến hoá ở cấp độ phân tử và quần thể.',
     theory:
-      'THUYẾT TIẾN HOÁ TỔNG HỢP HIỆN ĐẠI (The Modern Synthesis):\n' +
+      '## Thuyết tiến hoá tổng hợp hiện đại (The Modern Synthesis)\n' +
       '— Tiến hoá là sự thay đổi tần số alen và thành phần kiểu gen của quần thể qua các thế hệ.\n' +
       '— Đơn vị tiến hoá cơ sở: Quần thể (không phải cá thể hay loài).\n\n' +
-      'NĂM NHÂN TỐ TIẾN HOÁ CHÍNH:\n' +
+      '## Năm nhân tố tiến hoá chính\n' +
       '1. Đột biến (Mutation):\n' +
       '   — Tạo ra alen mới → Nguyên liệu sơ cấp chủ yếu cho tiến hoá.\n' +
       '   — Tần số đột biến rất thấp (10⁻⁶ đến 10⁻⁴/gen/thế hệ) nhưng vì quần thể lớn nên lượng đột biến phát sinh đáng kể.\n' +
@@ -1330,9 +1330,9 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Hình thành loài và tiến hoá lớn',
     hook: 'Làm thế nào một loài ban đầu có thể phân hoá thành nhiều loài khác nhau? Đây là câu hỏi cốt lõi của sinh học tiến hoá, được trả lời thông qua cơ chế hình thành loài.',
     theory:
-      'LOÀI VÀ TIÊU CHÍ PHÂN BIỆT LOÀI:\n' +
+      '## Loài và tiêu chí phân biệt loài\n' +
       '— Loài sinh học: Nhóm quần thể có thể giao phối với nhau sinh ra con hữu thụ, nhưng cách ly sinh sản với các nhóm khác.\n\n' +
-      'QUÁ TRÌNH HÌNH THÀNH LOÀI (Speciation):\n' +
+      '## Quá trình hình thành loài (Speciation)\n' +
       '1. Hình thành loài khác khu địa lý (Allopatric speciation):\n' +
       '   — Cơ chế: Quần thể bị chia cắt bởi rào cản địa lý (núi, biển, sa mạc). Hai quần thể con cách ly tiến hoá độc lập dưới áp lực chọn lọc khác nhau. Qua thời gian dài, tích luỹ đủ sự sai khác di truyền để trở thành hai loài cách ly sinh sản.\n' +
       '   — Đây là con đường hình thành loài phổ biến nhất ở động vật.\n' +
@@ -1340,7 +1340,7 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
       '   — Cơ chế không cần cách ly địa lý:\n' +
       '     + Đa bội hoá: Đột biến đa bội tạo ra cá thể đa bội không giao phối được với quần thể gốc lưỡng bội (cách ly sau hợp tử), đặc biệt phổ biến ở thực vật. Ví dụ: lúa mì bánh mì 6n hình thành từ lai xa + đa bội hoá.\n' +
       '     + Cách ly tập tính: Một phần quần thể phát sinh đột biến làm thay đổi đặc điểm nhận dạng bạn tình (màu sắc, tiếng hót, mùi hương), dẫn đến cách ly giao phối.\n\n' +
-      'TIẾN HOÁ LỚN (Macroevolution):\n' +
+      '## Tiến hoá lớn (Macroevolution)\n' +
       '— Sự hình thành các taxon trên loài (chi, họ, bộ, lớp, ngành) qua các khoảng thời gian địa chất dài hàng triệu năm.\n' +
       '— Được minh chứng bằng hồ sơ hoá thạch (fossil record) ghi lại lịch sử tiến hoá.',
     workedExample: {
@@ -1767,12 +1767,12 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Nguồn gốc sự sống và tiến hoá của sinh giới qua các đại địa chất',
     hook: 'Từ một môi trường nguyên thuỷ giàu hoá chất nhưng không có oxy, sự sống trên Trái Đất đã xuất hiện cách đây khoảng 3,8 tỉ năm và tiến hoá qua hàng trăm triệu năm thành muôn loài như ngày nay.',
     theory:
-      'NGUỒN GỐC SỰ SỐNG (Thuyết tiến hoá hoá học):\n' +
+      '## Nguồn gốc sự sống (Thuyết tiến hoá hoá học)\n' +
       '— Thuyết tiến hoá hoá học (Oparin – Haldane): Sự sống hình thành theo 3 giai đoạn từ vật chất vô sinh dưới điều kiện Trái Đất nguyên thuỷ (không có oxy, giàu CH₄, NH₃, H₂O, H₂, tia tử ngoại mạnh, sét...).\n' +
       '  1. Tiến hoá hoá học: Từ chất vô cơ đơn giản → phân tử hữu cơ đơn giản (amino acid, base nitrogen, đường...) → polymer (protein, nucleic acid) dưới tác động của năng lượng tự nhiên.\n' +
       '  2. Tiến hoá tiền sinh học: Các polymer liên kết tạo ra giọt coaxecva (coacervate) — cấu trúc có màng ngăn cách với môi trường ngoài và chứa enzyme thô sơ.\n' +
       '  3. Tiến hoá sinh học: Hình thành tế bào sơ khai có khả năng tự nhân bản ADN và trao đổi chất.\n\n' +
-      'CÁC ĐẠI ĐỊA CHẤT LƯỢC SỬ:\n' +
+      '## Các đại địa chất lược sử\n' +
       '— Đại Thái cổ (~3,8 tỉ năm trước): Xuất hiện tế bào nhân sơ đầu tiên (vi khuẩn cổ, vi khuẩn lam).\n' +
       '— Đại Nguyên sinh (~2,5 tỉ → 540 triệu năm): Xuất hiện tế bào nhân thực đơn bào. Oxi bắt đầu tích luỹ trong khí quyển do vi khuẩn lam quang hợp.\n' +
       '— Đại Cổ sinh (~541 → 252 triệu năm): Bùng nổ sinh vật đa bào. Thực vật, động vật tiến hoá lên cạn. Cuối đại xảy ra tuyệt chủng hàng loạt lớn nhất trong lịch sử (96% loài biển).\n' +
@@ -2143,16 +2143,16 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Sinh thái học và sinh thái học cá thể',
     hook: 'Tại sao cây rừng ở Trường Sơn có lá to xum xuê trong khi cây xương rồng sa mạc lại biến lá thành gai nhọn? Sinh thái học cá thể giải thích sự thích nghi của sinh vật với môi trường.',
     theory:
-      'SINH THÁI HỌC (Ecology):\n' +
+      '## Sinh thái học (Ecology)\n' +
       '— Là khoa học nghiên cứu mối quan hệ qua lại giữa sinh vật với môi trường sống và giữa các sinh vật với nhau.\n\n' +
-      'MÔI TRƯỜNG VÀ CÁC NHÂN TỐ SINH THÁI:\n' +
+      '## Môi trường và các nhân tố sinh thái\n' +
       '— Môi trường (Environment): Toàn bộ các nhân tố xung quanh sinh vật tác động lên đời sống của chúng.\n' +
       '— Nhân tố sinh thái: Bao gồm nhân tố vô sinh (abiotic: ánh sáng, nhiệt độ, nước, đất, không khí...) và nhân tố hữu sinh (biotic: quan hệ giữa sinh vật với sinh vật, gồm cả con người).\n\n' +
-      'GIỚI HẠN SINH THÁI (Ecological range / Tolerance range):\n' +
+      '## Giới hạn sinh thái (Ecological range / Tolerance range)\n' +
       '— Là khoảng giá trị của một nhân tố sinh thái mà trong đó sinh vật có thể tồn tại và phát triển bình thường theo thời gian.\n' +
       '— Điểm thuận lợi nhất trong giới hạn sinh thái gọi là điểm tối ưu (optimum).\n' +
       '— Ổ sinh thái (Ecological niche): Không gian sinh thái mà ở đó tất cả các nhân tố sinh thái của môi trường đều ở mức thuận lợi cho loài sinh vật đó; phân biệt với nơi ở (habitat = địa điểm vật lý).\n\n' +
-      'THÍCH NGHI CỦA SINH VẬT VỚI ÁNH SÁNG VÀ NHIỆT ĐỘ:\n' +
+      '## Thích nghi của sinh vật với ánh sáng và nhiệt độ\n' +
       '— Nhóm cây ưa sáng: Lá nhỏ, cutin dày, mọc ở nơi quang đãng.\n' +
       '— Nhóm cây ưa bóng (chịu bóng): Lá to, cutin mỏng, diệp lục nhiều để hấp thụ ánh sáng yếu.\n' +
       '— Sinh vật biến nhiệt: Nhiệt độ cơ thể phụ thuộc môi trường (bò sát, ếch, cá...).\n' +
@@ -2478,9 +2478,9 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Quần thể sinh vật và các đặc trưng cơ bản',
     hook: 'Tại sao dân số thế giới tăng chậm trong hàng ngàn năm nhưng chỉ mất 200 năm gần đây đã tăng từ 1 tỉ lên 8 tỉ người? Câu trả lời nằm trong học thuyết sinh trưởng quần thể.',
     theory:
-      'QUẦN THỂ (Population):\n' +
+      '## Quần thể (Population)\n' +
       '— Là tập hợp cá thể cùng loài, sống trong một khoảng không gian nhất định, có khả năng sinh sản và tạo thế hệ mới.\n\n' +
-      'CÁC ĐẶC TRƯNG CƠ BẢN CỦA QUẦN THỂ:\n' +
+      '## Các đặc trưng cơ bản của quần thể\n' +
       '1. Kích thước quần thể (N): Tổng số cá thể trong quần thể.\n' +
       '2. Mật độ quần thể: Số cá thể/đơn vị diện tích (hoặc thể tích). Phản ánh mức độ sử dụng nguồn sống.\n' +
       '3. Tỉ lệ giới tính: Tỉ lệ đực/cái trong quần thể.\n' +
@@ -2489,7 +2489,7 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
       '   — Tháp tuổi ổn định: Nhóm tuổi phân bố đồng đều → quần thể ổn định.\n' +
       '   — Tháp tuổi suy giảm: Nhóm tuổi già chiếm đa số → quần thể suy giảm.\n' +
       '5. Sự phân bố cá thể: Phân bố đều, ngẫu nhiên, hay theo nhóm.\n\n' +
-      'TĂNG TRƯỞNG QUẦN THỂ:\n' +
+      '## Tăng trưởng quần thể\n' +
       '— Tăng trưởng theo tiềm năng sinh học (đường cong hình J): Xảy ra trong điều kiện nguồn sống không giới hạn; quần thể tăng theo hàm mũ.\n' +
       '— Tăng trưởng thực tế (đường cong hình S/Logistic): Xảy ra trong môi trường thực tế có giới hạn nguồn sống. Quần thể tăng chậm → tăng nhanh → chậm dần → ổn định ở mức sức chứa môi trường K (carrying capacity).',
     workedExample: {
@@ -2553,13 +2553,13 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Quần xã sinh vật và các mối quan hệ trong quần xã',
     hook: 'Trong rừng nhiệt đới, hàng ngàn loài sinh vật sống cùng nhau với một mạng lưới quan hệ phức tạp — từ cạnh tranh khốc liệt đến hội sinh, ký sinh và cộng sinh đôi bên cùng có lợi.',
     theory:
-      'QUẦN XÃ (Community):\n' +
+      '## Quần xã (Community)\n' +
       '— Là tập hợp các quần thể của nhiều loài sinh vật khác nhau cùng sống trong một không gian nhất định, có mối quan hệ gắn bó với nhau như một thể thống nhất.\n\n' +
-      'CÁC ĐẶC TRƯNG CỦA QUẦN XÃ:\n' +
+      '## Các đặc trưng của quần xã\n' +
       '— Đa dạng loài (Diversity): Số loài và số cá thể mỗi loài trong quần xã.\n' +
       '— Loài ưu thế (Dominant species): Loài có số lượng cá thể hoặc sinh khối lớn nhất.\n' +
       '— Loài chủ chốt (Keystone species): Loài có ảnh hưởng lớn đến cấu trúc quần xã không tương xứng với số lượng của chúng.\n\n' +
-      'CÁC MỐI QUAN HỆ GIỮA CÁC LOÀI:\n' +
+      '## Các mối quan hệ giữa các loài\n' +
       '1. Quan hệ cộng sinh (Mutualism +/+): Cả hai loài đều có lợi. VD: Nốt sần Rhizobium-đậu, tảo-nấm (địa y), cá hề-hải quỳ.\n' +
       '2. Quan hệ hội sinh (Commensalism +/0): Một loài có lợi, loài kia không lợi không hại. VD: Phong lan bám cây gỗ lớn, cá ép bám cá mập.\n' +
       '3. Quan hệ ký sinh (Parasitism +/-): Một loài có lợi (ký sinh trùng), một loài bị hại (vật chủ). VD: Sán ký sinh trong ruột người; virus ký sinh tế bào.\n' +
@@ -3265,13 +3265,13 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Hệ sinh thái',
     hook: 'Một ao cá nhỏ hay rừng nhiệt đới rộng lớn đều là hệ sinh thái — một đơn vị chức năng hoàn chỉnh trong đó sinh vật và môi trường liên tục trao đổi vật chất và năng lượng.',
     theory:
-      'HỆ SINH THÁI (Ecosystem):\n' +
+      '## Hệ sinh thái (Ecosystem)\n' +
       '— Là tập hợp quần xã sinh vật và môi trường vô sinh của chúng trong một khu vực nhất định, tương tác với nhau tạo thành hệ thống hoàn chỉnh và tương đối ổn định.\n' +
       '— Hai loại: Hệ sinh thái tự nhiên (rừng, biển, đồng cỏ) và hệ sinh thái nhân tạo (ao cá nuôi, ruộng lúa, đô thị).\n\n' +
-      'THÀNH PHẦN CẤU TRÚC HỆ SINH THÁI:\n' +
+      '## Thành phần cấu trúc hệ sinh thái\n' +
       '1. Thành phần vô sinh (Abiotic): Đất, nước, ánh sáng, nhiệt độ, muối khoáng, khí...\n' +
       '2. Thành phần hữu sinh (Biotic): Sinh vật sản xuất (thực vật, vi khuẩn quang hợp — tự dưỡng), sinh vật tiêu thụ (động vật ăn thực vật, động vật ăn thịt), sinh vật phân giải (vi khuẩn, nấm phân hủy xác).\n\n' +
-      'CHUỖI THỨC ĂN VÀ LƯỚI THỨC ĂN:\n' +
+      '## Chuỗi thức ăn và lưới thức ăn\n' +
       '— Chuỗi thức ăn: Dãy các loài sinh vật mà loài trước là thức ăn của loài sau. Có hai loại:\n' +
       '  + Chuỗi bắt đầu bằng sinh vật sản xuất (cỏ → sâu → ếch → rắn).\n' +
       '  + Chuỗi bắt đầu bằng mùn bã hữu cơ (detritus → giun đất → chim).\n' +
@@ -3680,20 +3680,20 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Chu trình sinh địa hoá và sinh quyển',
     hook: 'Carbon trong CO₂ bạn thở ra ngày hôm nay có thể đã từng là một phần của cơ thể khủng long 66 triệu năm trước. Đó là nhờ chu trình tuần hoàn vật chất kỳ diệu trong sinh quyển.',
     theory:
-      'SINH QUYỂN (Biosphere):\n' +
+      '## Sinh quyển (Biosphere)\n' +
       '— Là toàn bộ các hệ sinh thái trên Trái Đất, bao gồm lớp không khí, nước và đất nơi sự sống tồn tại.\n\n' +
-      'CHU TRÌNH SINH ĐỊA HOÁ (Biogeochemical cycles):\n' +
+      '## Chu trình sinh địa hoá (Biogeochemical cycles)\n' +
       'Là sự tuần hoàn vật chất trong tự nhiên, qua các thành phần hữu sinh và vô sinh của hệ sinh thái.\n\n' +
-      'CHU TRÌNH CARBON:\n' +
+      '## Chu trình carbon\n' +
       '— CO₂ từ khí quyển được thực vật và vi khuẩn quang hợp hấp thụ tổng hợp thành chất hữu cơ (C₆H₁₂O₆).\n' +
       '— Chất hữu cơ truyền qua chuỗi thức ăn. Sinh vật hô hấp giải phóng CO₂ trở lại khí quyển.\n' +
       '— Vi sinh vật phân giải xác chết → CO₂.\n' +
       '— Carbon trong than đá, dầu mỏ (nhiên liệu hoá thạch) bị giữ lại qua hàng triệu năm; đốt cháy nhiên liệu giải phóng CO₂ → tăng hiệu ứng nhà kính.\n\n' +
-      'CHU TRÌNH NITROGEN:\n' +
+      '## Chu trình nitrogen\n' +
       '— N₂ chiếm 78% khí quyển nhưng hầu hết sinh vật không sử dụng trực tiếp được.\n' +
       '— Cố định nitrogen: Vi khuẩn cố định đạm (Rhizobium, Azotobacter) chuyển N₂ → NH₃/NH₄⁺ (dạng mà thực vật hấp thụ được). Ngoài ra, sét trong khí quyển cũng oxi hoá một phần N₂ thành NO rồi NO₂, theo nước mưa xuống đất thành NO₃⁻.\n' +
       '— Nitrat hoá: vi khuẩn nitrat hoá (Nitrosomonas, Nitrobacter) oxi hoá NH₄⁺ → NO₂⁻ → NO₃⁻ — đây là dạng cây hấp thụ nhiều nhất.\n— Phản nitrat hoá: vi khuẩn phản nitrat hoá khử NO₃⁻ → N₂ trả lại khí quyển, khép kín chu trình (nhưng cũng làm đất mất đạm khi ngập úng, thiếu khí).\n\n' +
-      'CHU TRÌNH NƯỚC:\n' +
+      '## Chu trình nước\n' +
       '— Bay hơi (từ biển, đất) → Ngưng tụ (mây) → Mưa → Thấm đất, chảy mặt về biển.',
     workedExample: {
       problem:
@@ -3756,15 +3756,15 @@ export const SINH12_C2_LESSONS: BiologyLesson[] = [
     title: 'Bảo vệ đa dạng sinh học và môi trường',
     hook: 'Mỗi ngày, Trái Đất mất đi khoảng 30–150 loài sinh vật do hoạt động của con người. Bảo vệ đa dạng sinh học không chỉ là đạo đức mà còn là điều kiện sống còn của chính chúng ta.',
     theory:
-      'ĐA DẠNG SINH HỌC (Biodiversity):\n' +
+      '## Đa dạng sinh học (Biodiversity)\n' +
       '— Bao gồm: Đa dạng di truyền (genetic diversity), đa dạng loài (species diversity), đa dạng hệ sinh thái (ecosystem diversity).\n\n' +
-      'NGUYÊN NHÂN MẤT ĐA DẠNG SINH HỌC:\n' +
+      '## Nguyên nhân mất đa dạng sinh học\n' +
       '1. Mất và suy thoái môi trường sống: Phá rừng, chuyển đất ngập nước thành nông nghiệp, đô thị hoá.\n' +
       '2. Khai thác quá mức: Đánh bắt cá vượt sản lượng bền vững, săn bắt động vật hoang dã.\n' +
       '3. Ô nhiễm môi trường: Hoá chất nông nghiệp, nhựa đại dương, ô nhiễm không khí.\n' +
       '4. Loài ngoại lai xâm lấn: Loài nhập khẩu không có thiên địch cạnh tranh đào thải loài bản địa.\n' +
       '5. Biến đổi khí hậu toàn cầu: Nhiệt độ tăng phá vỡ chu kỳ sinh học, thay đổi phân bố loài.\n\n' +
-      'BIỆN PHÁP BẢO VỆ ĐA DẠNG SINH HỌC:\n' +
+      '## Biện pháp bảo vệ đa dạng sinh học\n' +
       '1. Bảo tồn tại chỗ (In-situ): Thành lập các khu bảo tồn thiên nhiên, vườn quốc gia, hành lang sinh thái.\n' +
       '2. Bảo tồn chuyển chỗ (Ex-situ): Vườn thú, ngân hàng gene, vườn thực vật, nuôi nhân tạo ngoài môi trường tự nhiên.\n' +
       '3. Pháp luật và chính sách: Công ước CITES về buôn bán quốc tế động thực vật hoang dã nguy cấp.\n' +

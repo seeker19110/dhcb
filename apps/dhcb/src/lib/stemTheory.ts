@@ -1,15 +1,17 @@
 // stemTheory — tách phần LÝ THUYẾT của bài STEM (chuỗi thô trong `packages/subject-*/lessons`)
 // thành khối có cấu trúc để trang bài dựng đúng thẻ HTML.
 //
-// VÌ SAO (audit UI/UX 2026-09-30 M15, đo lại 2026-10-01): lý thuyết in thẳng bằng
-// `whitespace-pre-line`, nên 573 dòng "ĐỊNH NGHĨA SỰ RƠI TỰ DO:" (Lý 225 · Hoá 136 · Sinh 212) chỉ
-// là chữ thường viết hoa giữa đoạn — không phải tiêu đề (WCAG 1.3.1), trình đọc màn hình không
-// nhảy theo mục được, mắt không thấy chỗ một mục bắt đầu. Ký hiệu chỉ số dưới viết thô `v_tb`,
-// `t_1` (~2.000 chỗ) đọc như lỗi gõ.
+// VÌ SAO (audit UI/UX 2026-09-30 M15, đo lại 2026-10-01): lý thuyết từng in thẳng bằng
+// `whitespace-pre-line`, nên 575 dòng "ĐỊNH NGHĨA SỰ RƠI TỰ DO:" (Lý · Hoá · Sinh) chỉ là chữ viết
+// hoa giữa đoạn — không phải tiêu đề (WCAG 1.3.1), trình đọc màn hình không nhảy theo mục được,
+// mắt không thấy chỗ một mục bắt đầu. Ký hiệu chỉ số dưới viết thô `v_tb`, `t_1` (~2.000 chỗ) đọc
+// như lỗi gõ.
 //
-// CỐ Ý KHÔNG đổi chữ hoa → chữ thường. Đổi tự động sẽ sai tên riêng (Newton, Le Chatelier),
-// viết tắt (ADN, CAM, MRI) và cả từ tiếng Việt một chữ cái ("Y học") — đó là việc sửa NỘI DUNG,
-// phải làm ở dữ liệu nguồn có người duyệt, không để giao diện đoán. File này chỉ đổi CẤU TRÚC.
+// QUY ƯỚC TIÊU ĐỀ MỤC (2026-10-01, đợt 0470): dòng mở đầu bằng `## ` — dấu RÕ RÀNG do người soạn
+// đặt, kiểu Markdown. Trước đó tiêu đề được ĐOÁN từ "dòng toàn chữ hoa kết thúc bằng hai chấm";
+// cách đoán đó buộc dữ liệu phải viết HOA toàn bộ (khó đọc, mất phân biệt `t`/`T`, Newton/newton),
+// nên dữ liệu đã được chuyển sang viết hoa đầu câu + `## ` (giữ nguyên tên riêng/viết tắt, có bảng
+// đối chiếu ở changelog 0470). Cổng `stemTheory.test.ts` chặn tiêu đề kiểu cũ quay lại.
 //
 // Toàn HÀM THUẦN, không đụng React — test chạy được trên toàn bộ dữ liệu thật.
 
@@ -17,28 +19,12 @@ export type TheoryBlock = { kind: 'heading'; text: string } | { kind: 'para'; te
 
 export type InlinePart = { kind: 'text'; text: string } | { kind: 'sub'; base: string; sub: string }
 
-/** Dòng mở đầu bằng dấu gạch/số thứ tự là MỤC trong danh sách, không phải tiêu đề. */
-const MO_DAU_MUC = /^(?:[—–\-•]|\d+[.)])/u
-/** Tiêu đề dài hơn mức này gần như chắc chắn là một câu viết hoa để nhấn mạnh. */
-const TIEU_DE_DAI_TOI_DA = 160
-const SO_CHU_CAI_TOI_THIEU = 3
+/** Dấu mở đầu dòng tiêu đề mục. */
+export const DAU_TIEU_DE = '## '
 
-/** Có phải chữ cái (có dạng hoa/thường) không — đúng cho cả chữ có dấu tiếng Việt. */
-function laChuCai(c: string): boolean {
-  return c.toLowerCase() !== c.toUpperCase()
-}
-
-/**
- * Một dòng là TIÊU ĐỀ MỤC khi: kết thúc bằng dấu hai chấm, không phải mục danh sách, và phần chữ
- * NGOÀI ngoặc đơn toàn chữ hoa. Phần trong ngoặc được phép viết thường — đó là chú thích
- * ("GIA TỐC RƠI TỰ DO (g):", "QUÁ TRÌNH HÌNH THÀNH LOÀI (Speciation):").
- */
+/** Một dòng là TIÊU ĐỀ MỤC khi mở đầu bằng `## ` và còn chữ phía sau. */
 export function laTieuDeLyThuyet(line: string): boolean {
-  const s = line.trim()
-  if (!s.endsWith(':') || s.length > TIEU_DE_DAI_TOI_DA || MO_DAU_MUC.test(s)) return false
-  const ngoaiNgoac = s.slice(0, -1).replace(/\([^()]*\)/gu, '')
-  const chuCai = [...ngoaiNgoac].filter(laChuCai)
-  return chuCai.length >= SO_CHU_CAI_TOI_THIEU && chuCai.every((c) => c === c.toUpperCase())
+  return line.startsWith(DAU_TIEU_DE) && line.slice(DAU_TIEU_DE.length).trim() !== ''
 }
 
 /**
@@ -57,7 +43,7 @@ export function phanTichLyThuyet(theory: string): TheoryBlock[] {
       dongDoan()
     } else if (laTieuDeLyThuyet(line)) {
       dongDoan()
-      khoi.push({ kind: 'heading', text: line.trim().slice(0, -1).trimEnd() })
+      khoi.push({ kind: 'heading', text: line.slice(DAU_TIEU_DE.length).trim() })
     } else {
       doan.push(line)
     }

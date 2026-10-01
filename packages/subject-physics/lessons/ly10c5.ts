@@ -146,11 +146,11 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
       'Một chiếc tàu thuỷ siêu trọng di chuyển rất chậm vẫn có thể tông sập cầu cảng, và một viên đạn súng nhỏ xíu bay tốc độ cao ' +
       'mang sức phá huỷ cực lớn. Cả hai đều mang một đại lượng cơ học đặc trưng gọi là Động lượng.',
     theory:
-      'ĐỊNH NGHĨA ĐỘNG LƯỢNG (MOMENTUM):\n' +
+      '## Định nghĩa động lượng (momentum)\n' +
       '— Động lượng của một vật có khối lượng m đang chuyển động với vận tốc vectơ v là đại lượng đo bằng tích của khối lượng và vectơ vận tốc của vật.\n' +
       '— Công thức vectơ: vectơ p = m.vectơ v.\n' +
       '— Đặc điểm: Động lượng là đại lượng vectơ có cùng hướng với vận tốc. Đơn vị trong hệ SI: kilôgam mét trên giây (kg.m/s) hoặc Newton giây (N.s).\n\n' +
-      'XUNG LƯỢNG CỦA LỰC (IMPULSE OF FORCE):\n' +
+      '## Xung lượng của lực (impulse of force)\n' +
       '— Khi một lực vectơ F tác dụng lên vật trong khoảng thời gian ngắn Δt, tích vectơ F.Δt gọi là xung lượng của lực trong khoảng thời gian đó. Đơn vị: N.s.\n' +
       '— Dạng khác của Định luật 2 Newton: vectơ F = Δvectơ p / Δt.\n' +
       '— Ý nghĩa: Độ biến thiên động lượng của vật bằng xung lượng của lực tác dụng lên vật: Δvectơ p = vectơ F.Δt.',
@@ -355,13 +355,13 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
       'Khi một khẩu đại bác khổng lồ bắn một quả đạn nặng đi thẳng về phía trước, cả khẩu đại bác sẽ bị giật mạnh lùi lại phía sau. ' +
       'Định luật bảo toàn động lượng chính là chìa khóa giải thích hiện tượng giật lùi và nguyên lí bay của tên lửa.',
     theory:
-      'HỆ KÍN (HỆ CÔ LẬP):\n' +
+      '## Hệ kín (hệ cô lập)\n' +
       '— Hệ gồm nhiều vật tương tác với nhau mà không chịu tác dụng của ngoại lực, hoặc các ngoại lực cân bằng nhau (hợp ngoại lực bằng 0).\n\n' +
-      'ĐỊNH LUẬT BẢO TOÀN ĐỘNG LƯỢNG:\n' +
+      '## Định luật bảo toàn động lượng\n' +
       '— Phát biểu: Tổng động lượng của một hệ kín là một đại lượng bảo toàn (không đổi theo thời gian).\n' +
       "— Biểu thức cho hệ 2 vật: vectơ p₁ + vectơ p₂ = vectơ p₁'" +
       " + vectơ p₂' hay m₁.vectơ v₁ + m₂.vectơ v₂ = m₁.vectơ v₁' + m₂.vectơ v₂'.\n\n" +
-      'ỨNG DỤNG CỦA ĐỊNH LUẬT:\n' +
+      '## Ứng dụng của định luật\n' +
       "1. Va chạm mềm: Hai vật va chạm rồi dính vào nhau chuyển động cùng vận tốc v'.\n" +
       "   — Công thức: v' = (m₁.v₁ + m₂.v₂) / (m₁ + m₂) (dạng đại số trên trục thẳng).\n" +
       '2. Chuyển động bằng phản lực: Một phần của hệ tách ra và phóng đi về một hướng, làm phần còn lại chuyển động về hướng ngược lại (ví dụ: súng giật khi bắn, tên lửa phụt luồng khí nóng về phía sau).',
@@ -637,15 +637,15 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
       'Làm thế nào để đo đạc và kiểm chứng định luật bảo toàn động lượng trong phòng thí nghiệm khi thời gian va chạm xảy ra chỉ trong tích tắc? ' +
       'Sử dụng băng đệm khí và cổng quang điện chính là lời giải.',
     theory:
-      'NGUYÊN TẮC THỰC HÀNH VA CHẠM ĐỆM KHÍ:\n' +
+      '## Nguyên tắc thực hành va chạm đệm khí\n' +
       '— Băng đệm khí thổi luồng hơi nâng các xe trượt lên, triệt tiêu ma sát trượt giúp hệ hai xe trượt gần như là hệ kín hoàn hảo.\n' +
       '— Sử dụng hai cổng quang điện kết nối đồng hồ hiện số.\n' +
       '  — Tốc độ xe trượt: v = d / t (d là độ rộng tấm bản nhựa chắn sáng gắn trên xe, t là thời gian chắn cổng quang).\n\n' +
-      'PHÉP ĐO VA CHẠM MỀM (Hai xe dính nhau):\n' +
+      '## Phép đo va chạm mềm (Hai xe dính nhau)\n' +
       '— Mắc miếng dính velcro lên mặt tiếp xúc hai xe để chúng dính nhau sau va chạm.\n' +
       "— Đo tốc độ xe 1 trước va chạm v₁ và tốc độ hai xe dính nhau v' sau va chạm.\n" +
       "— Kiểm tra: m₁.v₁ ≈ (m₁ + m₂).v'.\n\n" +
-      'PHÉP ĐO VA CHẠM ĐÀN HỒI (Hai xe nảy nhau):\n' +
+      '## Phép đo va chạm đàn hồi (Hai xe nảy nhau)\n' +
       '— Mắc lò xo hoặc đệm cao su lên mặt tiếp xúc.\n' +
       "— Đo tốc độ v₁, v₂ trước va chạm và v₁', v₂' sau va chạm.\n" +
       "— Kiểm tra: m₁.v₁ + m₂.v₂ ≈ m₁.v₁' + m₂.v₂'.",

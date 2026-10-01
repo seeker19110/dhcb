@@ -296,12 +296,12 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
     title: 'Khái quát về vi sinh vật',
     hook: 'Vi sinh vật siêu nhỏ bé, mắt thường không thể thấy được, nhưng chúng chiếm sinh khối khổng lồ và đóng vai trò quyết định trong việc tuần hoàn các nguyên tố hóa học trên Trái Đất.',
     theory:
-      'KHÁI NIỆM VI SINH VẬT:\n' +
+      '## Khái niệm vi sinh vật\n' +
       '— Vi sinh vật (Microorganism) là những sinh vật có kích thước siêu nhỏ (tính bằng micrometer), cấu tạo đơn bào hoặc đa bào đơn giản (nhân sơ hoặc nhân thực), có khả năng hấp thụ và chuyển hóa chất dinh dưỡng nhanh, sinh trưởng và sinh sản rất nhanh, phân bố rộng rãi trong tự nhiên.\n' +
       '— Các nhóm vi sinh vật chính:\n' +
       '  + Vi sinh vật nhân sơ: Vi khuẩn (Bacteria), Cổ khuẩn (Archaea).\n' +
       '  + Vi sinh vật nhân thực: Vi tảo (Microalgae), Nấm men (Yeast), Nấm sợi, Động vật nguyên sinh (Protozoa).\n\n' +
-      'CÁC KIỂU DINH DƯỠNG CỦA VI SINH VẬT:\n' +
+      '## Các kiểu dinh dưỡng của vi sinh vật\n' +
       'Dựa vào nguồn năng lượng và nguồn carbon sử dụng, vi sinh vật được chia thành 4 kiểu dinh dưỡng chính:\n' +
       '1. Quang tự dưỡng (Photoautotrophy):\n' +
       '   — Nguồn năng lượng: Ánh sáng.\n' +
@@ -612,10 +612,10 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
     title: 'Trao đổi chất, sinh trưởng và sinh sản ở vi sinh vật',
     hook: 'Tại sao thức ăn để ngoài không khí rất nhanh bị ôi thiu? Đó là do tốc độ sinh trưởng và phân chia tế bào cực nhanh của vi sinh vật dưới điều kiện thuận lợi.',
     theory:
-      'QUÁ TRÌNH TỔNG HỢP VÀ PHÂN GIẢI Ở VI SINH VẬT:\n' +
+      '## Quá trình tổng hợp và phân giải ở vi sinh vật\n' +
       '— Tổng hợp: Vi sinh vật tổng hợp protein, nucleic acid, carbohydrate, lipid để kiến tạo tế bào. Nhiều nhóm có khả năng tự tổng hợp các amino acid thiết yếu.\n' +
       '— Phân giải: Vi sinh vật tiết enzyme ngoại bào (protease, amylase, lipase, cellulase...) để phân giải các chất hữu cơ phức tạp trong môi trường thành chất đơn giản, sau đó hấp thụ qua màng sinh chất.\n\n' +
-      'SINH TRƯỞNG CỦA QUẦN THỂ VI SINH VẬT:\n' +
+      '## Sinh trưởng của quần thể vi sinh vật\n' +
       'Sinh trưởng của vi sinh vật được định nghĩa là sự gia tăng số lượng tế bào của quần thể.\n' +
       '1. Nuôi cấy không liên tục (Batch culture): Không bổ sung chất dinh dưỡng mới và không lấy đi chất thải sinh ra. Quần thể trải qua 4 pha sinh trưởng:\n' +
       '   — Pha tiềm phát (Lag phase): Tế bào thích nghi với môi trường mới, không phân chia số lượng, enzyme được tổng hợp mạnh mẽ.\n' +
@@ -623,7 +623,7 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
       '   — Pha cân bằng (Stationary phase): Tốc độ sinh sản bằng tốc độ chết đi. Số lượng tế bào đạt cực đại và không đổi do dinh dưỡng giảm dần, chất độc tích lũy.\n' +
       '   — Pha suy vong (Decline phase): Số lượng tế bào chết vượt trội tế bào sinh ra do dinh dưỡng cạn kiệt, chất độc quá nhiều.\n' +
       '2. Nuôi cấy liên tục (Continuous culture): Bổ sung chất dinh dưỡng mới liên tục và lấy ra lượng dịch nuôi cấy tương đương. Quần thể luôn duy trì ở pha lũy thừa, ứng dụng thu sinh khối và chất kháng sinh.\n\n' +
-      'HÌNH THỨC SINH SẢN Ở VI SINH VẬT:\n' +
+      '## Hình thức sinh sản ở vi sinh vật\n' +
       '— Vi sinh vật nhân sơ: Phân đôi (phổ biến nhất), nảy chồi và hình thành bào tử sinh sản (như xạ khuẩn). Lưu ý: Nội bào tử (Endospore) ở vi khuẩn chỉ là dạng nghỉ chống chịu điều kiện bất lợi, không phải bào tử sinh sản.\n' +
       '— Vi sinh vật nhân thực: Sinh sản vô tính (phân đôi, nảy chồi, tạo bào tử vô tính) và sinh sản hữu tính (bằng bào tử hữu tính hoặc tiếp hợp).',
     workedExample: {
@@ -963,10 +963,10 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
     title: 'Vai trò và ứng dụng của vi sinh vật',
     hook: 'Sữa chua thơm ngon, nước mắm đậm đà, hay các loại thuốc kháng sinh cứu sống hàng triệu người đều là sản phẩm từ hoạt động chuyển hóa của các vi sinh vật nhỏ bé.',
     theory:
-      'VAI TRÒ CỦA VI SINH VẬT TRONG TỰ NHIÊN:\n' +
+      '## Vai trò của vi sinh vật trong tự nhiên\n' +
       '— Phân giải các hợp chất hữu cơ (xác động thực vật) thành chất vô cơ cung cấp cho thực vật, khép kín chu trình tuần hoàn vật chất.\n' +
       '— Cố định nitrogen khí quyển (đạm) nhờ các vi khuẩn tự do (Azotobacter) hoặc cộng sinh (Rhizobium trong rễ cây họ Đậu), giúp tăng độ phì nhiêu của đất.\n\n' +
-      'ỨNG DỤNG CỦA VI SINH VẬT TRONG ĐỜI SỐNG:\n' +
+      '## Ứng dụng của vi sinh vật trong đời sống\n' +
       '1. Công nghệ thực phẩm:\n' +
       '   — Lên men lactic: Sản xuất sữa chua, muối dưa cà, nem chua nhờ vi khuẩn lactic (Lactobacillus).\n' +
       '   — Lên men ethanol: Sản xuất rượu, bia, bánh mì nhờ nấm men (Saccharomyces cerevisiae).\n' +
@@ -980,7 +980,7 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
       '4. Bảo vệ môi trường:\n' +
       '   — Xử lý nước thải bằng bể hiếu khí chứa bùn hoạt tính (chứa vi sinh vật phân hủy chất hữu cơ).\n' +
       '   — Xử lý tràn dầu bằng các chủng vi khuẩn phân hủy hydrocarbon.\n\n' +
-      'TÁC HẠI CỦA VI SINH VẬT:\n' +
+      '## Tác hại của vi sinh vật\n' +
       '— Gây bệnh truyền nhiễm cho con người (lao, tả, thương hàn), động vật và thực vật.\n' +
       '— Làm hư hỏng, ôi thiu thực phẩm, gây độc tố nấm mốc (aflatoxin ở lạc mốc).',
     workedExample: {
@@ -1044,10 +1044,10 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số phương pháp nghiên cứu vi sinh vật',
     hook: 'Làm thế nào để phân lập được một dòng vi khuẩn tinh khiết từ mẫu đất vườn? Điều này đòi hỏi những kỹ thuật vô trùng cực kỳ nghiêm ngặt và sự khéo léo trong thao tác.',
     theory:
-      'NGUYÊN TẮC VÔ TRÙNG TRONG NGHIÊN CỨU VI SINH VẬT:\n' +
+      '## Nguyên tắc vô trùng trong nghiên cứu vi sinh vật\n' +
       '— Khử trùng dụng cụ (đĩa Petri, ống nghiệm, que cấy) bằng cách hấp áp suất (autoclave) ở 121°C trong 15-20 phút hoặc sấy khô ở 160-180°C.\n' +
       '— Mọi thao tác cấy truyền vi sinh vật phải được thực hiện trong tủ cấy vô trùng hoặc bên cạnh ngọn lửa đèn cồn để tránh nhiễm chéo từ bào tử nấm/khuẩn ngoài không khí.\n\n' +
-      'MỘT SỐ PHƯƠNG PHÁP NGHIÊN CỨU CƠ BẢN:\n' +
+      '## Một số phương pháp nghiên cứu cơ bản\n' +
       '1. Phương pháp quan sát (Làm tiêu bản hiển vi):\n' +
       '   — Làm vết bôi vi khuẩn trên lam kính, cố định bằng nhiệt nhẹ.\n' +
       '   — Nhuộm màu (nhuộm đơn bằng xanh methylene hoặc nhuộm kép Gram). Nhuộm Gram giúp phân biệt vi khuẩn Gram dương (thành peptidoglycan dày, giữ màu tím kết tinh) và Gram âm (thành mỏng hơn có màng ngoài, bắt màu đỏ safranin sau khi tẩy cồn).\n' +
@@ -1509,15 +1509,15 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
     title: 'Khái quát về virus',
     hook: 'Virus không có cấu tạo tế bào, không thể tự sinh sản hay chuyển hóa năng lượng ở ngoài tế bào chủ. Chúng nằm ở ranh giới giữa vật thể vô sinh và sinh vật sống.',
     theory:
-      'KHÁI NIỆM VỀ VIRUS:\n' +
+      '## Khái niệm về virus\n' +
       '— Virus là thực thể chưa có cấu tạo tế bào, kích thước siêu hiển vi (dao động từ 10 nm đến 300 nm).\n' +
       '— Ký sinh nội bào bắt buộc: Virus hoàn toàn không có ribosome và các enzyme chuyển hóa vật chất độc lập, chúng chỉ có thể nhân lên bên trong tế bào sống của vật chủ bằng cách sử dụng vật chất và bộ máy sinh tổng hợp của tế bào chủ.\n\n' +
-      'CẤU TRÚC CHUNG CỦA VIRUS:\n' +
+      '## Cấu trúc chung của virus\n' +
       'Mọi virus đều gồm hai thành phần cơ bản:\n' +
       '1. Lõi acid nucleic: Là hệ gene của virus, có thể là DNA hoặc RNA, mạch đơn hoặc mạch kép (khác với sinh vật nhân thực/nhân sơ chỉ có genome DNA mạch kép).\n' +
       '2. Vỏ protein (capsid): Bao bọc lõi acid nucleic, được cấu tạo từ các đơn vị protein gọi là capsomer. Tổ hợp lõi và capsid gọi là nucleocapsid.\n' +
       '— Một số loại virus có thêm vỏ ngoài (envelope): cấu tạo bởi lớp lipid kép tương tự màng sinh chất và các gai glycoprotein nhô ra ngoài, đóng vai trò kháng nguyên giúp hấp phụ đặc hiệu vào tế bào chủ.\n\n' +
-      'CHU TRÌNH NHÂN LÊN CỦA VIRUS TRONG TẾ BÀO CHỦ:\n' +
+      '## Chu trình nhân lên của virus trong tế bào chủ\n' +
       'Gồm 5 giai đoạn liên tiếp:\n' +
       '1. Hấp phụ (Attachment): Gai glycoprotein hoặc protein bề mặt của virus liên kết đặc hiệu với thụ thể trên màng tế bào chủ (như chìa khóa và ổ khóa).\n' +
       '2. Xâm nhập (Entry): Virus đưa toàn bộ hạt virion hoặc chỉ bơm lõi acid nucleic vào bên trong tế bào chất.\n' +
@@ -1816,15 +1816,15 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
     title: 'Một số bệnh do virus và các thành tựu nghiên cứu ứng dụng virus',
     hook: 'Từ các bệnh cúm mùa, sốt xuất huyết, đến đại dịch COVID-19 nguy hiểm, virus đã gây tổn thất khổng lồ cho nhân loại. Tuy nhiên, chúng ta cũng đang ứng dụng chính cấu trúc đặc biệt của chúng để cứu người.',
     theory:
-      'CÁC BỆNH TRUYỀN NHIỄM DO VIRUS GÂY RA Ở NGƯỜI:\n' +
+      '## Các bệnh truyền nhiễm do virus gây ra ở người\n' +
       '— Lây qua đường hô hấp: Cúm, Sởi, COVID-19, Thủy đậu.\n' +
       '— Lây qua đường tiêu hóa: Tiêu chảy cấp do Rotavirus, viêm gan A.\n' +
       '— Lây qua đường máu, quan hệ tình dục, từ mẹ sang con: HIV/AIDS, viêm gan B, viêm gan C.\n' +
       '— Lây qua vết cắn của vật trung gian (véc tơ): Sốt xuất huyết (muỗi vằn lây truyền virus Dengue), bệnh Dại (chó, mèo mang virus dại truyền qua vết cắn).\n\n' +
-      'CƠ CHẾ PHÒNG CHỐNG BỆNH DO VIRUS:\n' +
+      '## Cơ chế phòng chống bệnh do virus\n' +
       '— Sử dụng Vaccine: Biện pháp hiệu quả nhất để chủ động phòng bệnh. Vaccine kích thích cơ thể sinh kháng thể và tế bào nhớ miễn dịch chống lại virus khi có sự xâm nhiễm thực tế.\n' +
       '— Không dùng thuốc kháng sinh điều trị bệnh do virus vì kháng sinh chỉ tác động lên các đích đặc hiệu của vi khuẩn (như tổng hợp vách peptidoglycan, ribosome nhân sơ...).\n\n' +
-      'ỨNG DỤNG CỦA VIRUS TRONG Y HỌC VÀ ĐỜI SỐNG:\n' +
+      '## Ứng dụng của virus trong y học và đời sống\n' +
       '1. Sản xuất chế phẩm sinh học (interferon, hormone insulin): Sử dụng phage làm vectơ chuyển gene mong muốn vào vi khuẩn để sản xuất số lượng lớn.\n' +
       '2. Liệu pháp gene (Gene therapy): Dùng virus đã được vô hiệu hóa khả năng gây độc làm phương tiện vận chuyển đưa gene lành tích hợp vào hệ gene người bệnh nhằm sửa chữa các lỗi di truyền.\n' +
       '3. Sản xuất thuốc trừ sâu sinh học: Sử dụng các virus diệt côn trùng hại (như Baculovirus) để phun cho cây trồng, an toàn với môi trường và sức khỏe con người.',
@@ -2287,10 +2287,10 @@ export const SINH10_C4_LESSONS: BiologyLesson[] = [
       'Thực hành: Điều tra một số bệnh do virus gây ra và nhân giống cây trồng bằng nuôi cấy mô',
     hook: 'Làm thế nào để điều tra dịch tễ học về tình hình bệnh truyền nhiễm do virus ở trường học hoặc địa phương? Và làm sao nhân bản hàng ngàn cây lan quý từ một đỉnh sinh trưởng nhỏ bé?',
     theory:
-      'ĐIỀU TRA BỆNH TRUYỀN NHIỄM DO VIRUS GÂY RA:\n' +
+      '## Điều tra bệnh truyền nhiễm do virus gây ra\n' +
       '— Phương pháp dịch tễ cơ bản: Thiết kế phiếu khảo sát, thu thập số liệu từ trạm y tế địa phương, trường học, hộ gia đình về số ca mắc, đối tượng mắc, triệu chứng và đường lây nhiễm.\n' +
       '— Mục tiêu: Đánh giá thực trạng dịch bệnh, vẽ biểu đồ diễn biến ca bệnh theo thời gian, đề xuất các khuyến nghị vệ sinh dịch tễ phù hợp.\n\n' +
-      'KỸ THUẬT NHÂN GIỐNG CÂY TRỒNG BẰNG NUÔI CẤY MÔ (TẾ BÀO THỰC VẬT):\n' +
+      '## Kỹ thuật nhân giống cây trồng bằng nuôi cấy mô (tế bào thực vật)\n' +
       'Dựa trên tính toàn năng của tế bào thực vật: Mỗi tế bào sống đều mang toàn bộ lượng thông tin di truyền của loài, trong điều kiện thích hợp có thể phản biệt hóa rồi tái biệt hóa để hình thành cây con hoàn chỉnh.\n' +
       '— Quy trình nhân giống cơ bản:\n' +
       '  1. Chọn và khử trùng mẫu cấy (thường lấy đỉnh sinh trưởng chứa tế bào phân sinh sạch virus).\n' +

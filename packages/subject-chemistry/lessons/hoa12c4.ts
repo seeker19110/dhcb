@@ -15,17 +15,17 @@ export const HOA12_C4_LESSONS: ChemLesson[] = [
       'Túi nilon, sợi vải nhân tạo và lốp xe cao su đều cấu tạo từ các phân tử khổng lồ có hàng vạn nguyên tử liên kết với nhau.' +
       ' Chúng được các nhà hoá học gọi chung là polymer.',
     theory:
-      'KHÁI NIỆM VÀ PHÂN LOẠI:\n' +
+      '## Khái niệm và phân loại\n' +
       '— Polymer là những hợp chất có khối lượng phân tử rất lớn do nhiều đơn vị cơ bản (gọi là mắt xích) liên kết với nhau tạo nên. Monomer là những phân tử nhỏ phản ứng tạo nên polymer.\n' +
       '— Phân loại theo nguồn gốc:\n' +
       '  1. Polymer thiên nhiên: Có sẵn trong tự nhiên (như tinh bột, cellulose, bông, tơ tằm, cao su thiên nhiên).\n' +
       '  2. Polymer tổng hợp: Do con người tự tổng hợp từ các chất hoá học (như PE, PVC, nylon-6,6, cao su Buna).\n' +
       '  3. Polymer bán tổng hợp (nhân tạo): Lấy polymer thiên nhiên chế hoá hoá học một phần (như tơ viscose, tơ acetate).\n\n' +
-      'ĐẶC ĐIỂM CẤU TRÚC:\n' +
+      '## Đặc điểm cấu trúc\n' +
       '— Mạch không phân nhánh: như PE, PVC, amylose, cellulose.\n' +
       '— Mạch phân nhánh: như amylopectin, glycogen.\n' +
       '— Mạch mạng không gian (khâu mạch): như cao su lưu hoá, nhựa bakelite.\n\n' +
-      'PHƯƠNG PHÁP TỔNG HỢP:\n' +
+      '## Phương pháp tổng hợp\n' +
       '1. Phản ứng trùng hợp: Là quá trình kết hợp nhiều phân tử nhỏ giống nhau hoặc tương tự nhau (monomer) thành phân tử lớn (polymer), không tách ra phân tử nhỏ nào.\n' +
       '   — Điều kiện monomer: Phân tử phải có liên kết bội kém bền (C=C, C≡C) hoặc vòng kém bền (như ethylene, vinyl chloride, styrene).\n' +
       '2. Phản ứng trùng ngưng: Là quá trình kết hợp nhiều phân tử monomer thành phân tử polymer đồng thời giải phóng các phân tử nhỏ khác (thường là H₂O).\n' +
@@ -591,7 +591,7 @@ export const HOA12_C4_LESSONS: ChemLesson[] = [
       'Chất dẻo làm đồ gia dụng, tơ sợi dệt quần áo ấm, cao su làm lốp xe chịu lực, keo dán gắn kết vật liệu. ' +
       'Mọi vật liệu hiện đại này đều được làm từ polymer chế hoá phù hợp.',
     theory:
-      'CHẤT DẺO (Plastics):\n' +
+      '## Chất dẻo (Plastics)\n' +
       '— Là những vật liệu polymer có tính dẻo (bị biến dạng khi chịu tác dụng của nhiệt, áp lực bên ngoài và vẫn giữ nguyên sự biến dạng đó khi thôi tác dụng).\n' +
       '— Các chất dẻo phổ biến: Polyethylene (PE), Poly(vinyl chloride) (PVC), Poly(methyl methacrylate) (PMMA — thuỷ tinh hữu cơ, tên thương mại Plexiglas), Poly(tetrafluoroethylene) (Teflon - chảo chống dính).\n\n' +
       'TƠ (Fibers):\n' +
@@ -599,7 +599,7 @@ export const HOA12_C4_LESSONS: ChemLesson[] = [
       '— Tơ polyamide (chứa nhóm −CO−NH−): tơ nylon-6, nylon-6,6. Kém bền với nhiệt, acid, base do nhóm amide bị thuỷ phân.\n' +
       '   * Nylon-6,6 trùng ngưng từ acid adipic HOOC−(CH₂)₄−COOH và hexamethylenediamine H₂N−(CH₂)₆−NH₂.\n' +
       '— Tơ vinylic: tơ nitron (hay olon), dai, ấm, giữ nhiệt tốt, dùng dệt len nhân tạo, trùng hợp từ acrylonitrile CH₂=CH−CN.\n\n' +
-      'CAO SU (Rubbers):\n' +
+      '## Cao su (Rubbers)\n' +
       '— Là vật liệu polymer có tính đàn hồi (khả năng khôi phục hình dạng ban đầu sau khi chịu tác dụng lực).\n' +
       '— Cao su thiên nhiên: polymer của isoprene (cis-polyisoprene).\n' +
       '— Cao su tổng hợp: Cao su Buna (trùng hợp butadiene), cao su Buna-S (đồng trùng hợp butadiene và styrene), cao su Buna-N (đồng trùng hợp butadiene và acrylonitrile).\n' +
@@ -1187,7 +1187,7 @@ export const HOA12_C4_LESSONS: ChemLesson[] = [
       'Chương 4 đi một mạch từ những phân tử nhỏ là monomer đến các vật liệu quen thuộc quanh ta: chất dẻo, tơ sợi và cao su. ' +
       'Bài này hệ thống lại toàn bộ chặng đường đó.',
     theory:
-      'HỆ THỐNG HOÁ KIẾN THỨC CHƯƠNG 4:\n' +
+      '## Hệ thống hoá kiến thức chương 4\n' +
       '1. Khái niệm polymer: phân tử rất lớn gồm n mắt xích giống nhau nối lại. Có 3 nguồn gốc: thiên nhiên, tổng hợp, bán tổng hợp (viscose, acetate). Có 3 dạng mạch: mạch thẳng, mạch phân nhánh (amylopectin), mạng không gian (cao su lưu hoá, bakelite).\n' +
       '2. Phương pháp tổng hợp: Trùng hợp (mở liên kết bội của monomer rồi nối lại, không tách phân tử nhỏ nào); Trùng ngưng (nối các monomer có ít nhất hai nhóm chức, đồng thời tách ra phân tử nhỏ, thường là H₂O).\n' +
       '3. Vật liệu polymer: Chất dẻo (PE, PVC, PMMA, Teflon); Cao su (thiên nhiên isoprene, tổng hợp Buna, Buna-S, Buna-N); Tơ (thiên nhiên bông/tơ tằm, bán tổng hợp viscose/acetate, tổng hợp nylon-6, nylon-6,6, tơ nitron).',

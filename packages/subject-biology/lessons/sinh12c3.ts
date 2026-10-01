@@ -13,16 +13,16 @@ export const SINH12_C3_LESSONS: BiologyLesson[] = [
     title: 'Sinh thái học phục hồi và bảo tồn',
     hook: 'Rừng ngập mặn Cần Giờ từng bị chất diệt cỏ huỷ gần như trắng trong chiến tranh. Từ năm 1978, TP. Hồ Chí Minh trồng lại đước trên hàng chục nghìn hecta; tới năm 2000 nơi đây được UNESCO công nhận là khu dự trữ sinh quyển đầu tiên của Việt Nam. Câu hỏi đáng hỏi là: vì sao trồng lại đước thì cua, cá, chim cũng tự quay về, trong khi trồng lại bạch đàn trên đất trống thì không?',
     theory:
-      'SINH THÁI HỌC PHỤC HỒI LÀ GÌ:\n' +
+      '## Sinh thái học phục hồi là gì\n' +
       '— Là lĩnh vực ứng dụng hiểu biết sinh thái để giúp một hệ sinh thái đã bị suy thoái, hư hại hoặc phá huỷ quay trở lại trạng thái gần với trạng thái tự nhiên ban đầu về cấu trúc và chức năng.\n' +
       '— VÌ SAO phục hồi được: quần xã không phải tập hợp các loài rời rạc mà là một mạng lưới quan hệ dinh dưỡng và quan hệ hỗ trợ. Nếu khôi phục được NHÓM LOÀI NỀN TẢNG tạo ra môi trường sống (rừng đước tạo bãi bùn yếm khí, tán che, rễ chống sóng), thì các loài phụ thuộc sẽ tự tìm về theo con đường phát tán tự nhiên. Đây chính là lí do phục hồi Cần Giờ có hiệu quả — người ta không trồng cua, mà trồng lại thứ tạo ra nơi ở cho cua.\n' +
       '— ĐIỀU KIỆN để phục hồi thành công: (1) còn nguồn giống hoặc quần thể lân cận để phát tán tới; (2) nền đất/nước chưa bị biến đổi vượt ngưỡng không đảo ngược (nhiễm mặn nặng, xói trơ đá mẹ, kim loại nặng tồn dư); (3) loại bỏ hoặc giảm được tác nhân gây suy thoái ban đầu — phục hồi mà vẫn còn nguyên nguyên nhân thì chỉ tốn tiền.\n' +
       '— GIỚI HẠN quan trọng: hệ phục hồi hiếm khi giống hệt hệ gốc. Thành phần loài, tuổi cây, cấu trúc tầng, đất thường vẫn khác; nhiều chức năng (tích luỹ carbon trong đất, quần xã nấm rễ) cần hàng chục tới hàng trăm năm. Do đó BẢO VỆ hệ còn nguyên vẹn luôn rẻ và chắc chắn hơn phục hồi hệ đã mất.\n\n' +
-      'CÁC BIỆN PHÁP PHỤC HỒI THƯỜNG DÙNG:\n' +
+      '## Các biện pháp phục hồi thường dùng\n' +
       '1. Phục hồi thụ động (khoanh nuôi tái sinh tự nhiên): loại bỏ tác nhân gây hại rồi để diễn thế thứ sinh tự chạy. Rẻ nhất, dùng khi nguồn giống tại chỗ còn tốt.\n' +
       '2. Phục hồi chủ động: trồng lại loài bản địa, cải tạo nền đất, tái thả loài đã biến mất tại chỗ. Dùng khi nguồn giống đã cạn hoặc đất đã biến đổi.\n' +
       '3. Kiểm soát loài ngoại lai xâm lấn (ốc bươu vàng, cây mai dương, tôm hùm đất) — nếu bỏ qua bước này, loài ngoại lai sẽ chiếm chỗ ngay khi hệ vừa mở ra.\n\n' +
-      'BẢO TỒN ĐA DẠNG SINH HỌC — HAI HÌNH THỨC:\n' +
+      '## Bảo tồn đa dạng sinh học — hai hình thức\n' +
       '— Bảo tồn nguyên vị (in situ): giữ loài ngay trong môi trường sống tự nhiên của nó, qua vườn quốc gia, khu bảo tồn thiên nhiên, khu dự trữ sinh quyển. ƯU điểm quyết định: giữ được cả quần thể lẫn quan hệ sinh thái và áp lực chọn lọc tự nhiên, nên loài vẫn tiếp tục tiến hoá thích nghi. Đây là hình thức được ưu tiên.\n' +
       '— Bảo tồn chuyển vị (ex situ): đưa loài ra khỏi nơi sống tự nhiên — vườn thú, vườn thực vật, ngân hàng hạt giống, ngân hàng gene, nuôi cấy mô. Chỉ là giải pháp bổ trợ hoặc tình thế khi nơi ở tự nhiên không còn an toàn, vì quần thể nuôi nhốt thường nhỏ, dễ giao phối gần và mất dần các đặc điểm thích nghi hoang dã.\n\n' +
       'Ở Việt Nam: Luật Đa dạng sinh học, hệ thống hơn 30 vườn quốc gia (Cúc Phương, Cát Tiên, Ba Bể, Phong Nha - Kẻ Bàng…), Sách Đỏ Việt Nam xếp hạng mức đe doạ của các loài làm căn cứ ưu tiên bảo vệ.',
@@ -496,14 +496,14 @@ export const SINH12_C3_LESSONS: BiologyLesson[] = [
     title: 'Phát triển bền vững và dấu chân sinh thái',
     hook: 'Đồng bằng sông Cửu Long từng được xem là vựa lúa vô tận. Nhưng khi tăng lên ba vụ lúa một năm nhờ đê bao khép kín, phù sa không còn vào ruộng, đất bạc màu dần, phải bón thêm phân, chi phí tăng mà lợi nhuận không tăng tương ứng. Sản lượng năm nay tăng, còn khả năng sản xuất của mười năm sau thì giảm — đó chính là câu hỏi trung tâm của phát triển bền vững.',
     theory:
-      'PHÁT TRIỂN BỀN VỮNG:\n' +
+      '## Phát triển bền vững\n' +
       '— Định nghĩa (Uỷ ban Brundtland, 1987): phát triển đáp ứng nhu cầu của thế hệ hiện tại mà KHÔNG làm tổn hại đến khả năng đáp ứng nhu cầu của các thế hệ tương lai.\n' +
       '— Ba trụ cột phải cân bằng đồng thời: KINH TẾ (hiệu quả, sinh kế), XÃ HỘI (công bằng, sức khoẻ, văn hoá) và MÔI TRƯỜNG (giữ được vốn tự nhiên). Thiếu bất kì trụ nào thì không gọi là bền vững: tăng trưởng mà huỷ môi trường chỉ là vay nợ tương lai; giữ môi trường mà dân không có sinh kế thì áp lực khai thác sẽ quay lại ngay.\n\n' +
-      'CƠ SỞ SINH THÁI HỌC CỦA TÍNH BỀN VỮNG:\n' +
+      '## Cơ sở sinh thái học của tính bền vững\n' +
       '— Mỗi hệ sinh thái có SỨC CHỨA (khả năng cung cấp tài nguyên và hấp thụ chất thải) hữu hạn. Khai thác dưới mức tái tạo thì nguồn lợi tự bù lại; vượt mức tái tạo thì quần thể bị khai thác suy giảm và có thể không hồi phục.\n' +
       '— Ví dụ then chốt — khai thác cá: nếu chỉ đánh bắt cá lớn đã sinh sản ít nhất một lần, quần thể vẫn tự bù. Nhưng dùng lưới mắt nhỏ hoặc xung điện bắt cả cá con thì đàn bố mẹ tương lai bị lấy đi, sản lượng vài vụ đầu có thể cao rồi sụp hẳn — sản lượng cao NHẤT THỜI không phải bằng chứng của khai thác bền vững.\n' +
       '— DẤU CHÂN SINH THÁI (ecological footprint): diện tích đất và mặt nước có năng suất sinh học cần thiết để cung cấp tài nguyên và hấp thụ chất thải cho một người/một quốc gia. So sánh dấu chân sinh thái với năng lực sinh học sẵn có cho biết đang sống trong hay vượt "ngân sách" sinh thái.\n\n' +
-      'CÁC HƯỚNG HÀNH ĐỘNG:\n' +
+      '## Các hướng hành động\n' +
       '1. Sử dụng tài nguyên tái tạo trong ngưỡng tái tạo (khai thác gỗ theo luân kì, đánh bắt theo hạn ngạch và mùa vụ, cấm lưới mắt nhỏ).\n' +
       '2. Giảm phát thải và chuyển sang năng lượng tái tạo, hạn chế nhiên liệu hoá thạch để giảm nóng lên toàn cầu — vấn đề đặc biệt sát sườn với Việt Nam vì nước biển dâng đe doạ trực tiếp Đồng bằng sông Cửu Long.\n' +
       '3. Kinh tế tuần hoàn: tái chế, tái sử dụng, giảm rác thải nhựa, biến phụ phẩm nông nghiệp (rơm rạ, trấu, vỏ cà phê) thành nguyên liệu thay vì đốt bỏ.\n' +

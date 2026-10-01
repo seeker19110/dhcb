@@ -284,15 +284,15 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Cảm ứng ở thực vật',
     hook: 'Tại sao ngọn cây luôn hướng về phía cửa sổ có ánh sáng, còn rễ cây lại đâm sâu xuống đất? Đó là nhờ hướng động — kiểu cảm ứng giúp cây sinh trưởng về phía có lợi cho mình.',
     theory:
-      'KHÁI NIỆM CẢM ỨNG Ở THỰC VẬT:\n' +
+      '## Khái niệm cảm ứng ở thực vật\n' +
       '— Cảm ứng ở thực vật là khả năng tiếp nhận và phản ứng lại các kích thích của môi trường (ánh sáng, trọng lực, nước, hóa chất, cơ học) để tồn tại và phát triển.\n\n' +
-      'HƯỚNG ĐỘNG (Phản ứng có hướng của cây đối với kích thích):\n' +
+      '## Hướng động (Phản ứng có hướng của cây đối với kích thích)\n' +
       '1. Hướng sáng (Phototropism): Thân uốn cong về nguồn sáng (hướng sáng dương) do hormone auxin di chuyển sang phía tối làm tế bào phía tối kéo dài nhanh hơn. Rễ cây hướng sáng âm.\n' +
       '2. Hướng trọng lực / Hướng đất (Gravitropism): Rễ mọc hướng xuống đất (hướng trọng lực dương) để bám giữ và hút nước. Thân mọc hướng ngược lên (hướng trọng lực âm).\n' +
       '3. Hướng hóa (Chemotropism): Rễ cây hướng tới nguồn dinh dưỡng (phân bón, chất hữu cơ - hướng hóa dương) và tránh xa nguồn chất độc hại (hướng hóa âm).\n' +
       '4. Hướng nước (Hydrotropism): Rễ cây uốn cong sinh trưởng về phía có nguồn nước.\n' +
       '5. Hướng tiếp xúc (Thigmotropism): Phản ứng sinh trưởng đối với sự tiếp xúc cơ học (ví dụ tua cuốn của cây leo như mướp, bầu, bí quấn quanh giá thể).\n\n' +
-      'ỨNG ĐỘNG (Phản ứng không có hướng của cây đối với kích thích):\n' +
+      '## Ứng động (Phản ứng không có hướng của cây đối với kích thích)\n' +
       '1. Ứng động sinh trưởng: Liên quan đến sự kéo dài tế bào không đều ở mặt trên và mặt dưới của cơ quan (ví dụ hiện tượng nở hoa và khép hoa của hoa mười giờ, bồ công anh theo chu kỳ ngày đêm).\n' +
       '2. Ứng động không sinh trưởng: Không liên quan đến sự phân chia tế bào mà do sự thay đổi sức trương nước đột ngột ở các tế bào chuyên hóa (ví dụ hiện tượng khép lá của cây trinh nữ khi va chạm, hiện tượng bắt mồi ở cây gọng vó).',
     workedExample: {
@@ -355,15 +355,15 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về cảm ứng ở thực vật',
     hook: 'Hãy tự tay gieo những hạt đậu và quan sát phản ứng uốn cong tìm ánh sáng hay cắm rễ xuống đất của chúng thông qua các thí nghiệm trực quan sinh động.',
     theory:
-      'THÍ NGHIỆM CHỨNG MINH HƯỚNG SÁNG CỦA THÂN CÂY:\n' +
+      '## Thí nghiệm chứng minh hướng sáng của thân cây\n' +
       '— Chuẩn bị: Gieo hạt đậu xanh trong hai hộp bìa các-tông: Hộp A bịt kín hoàn toàn; Hộp B khoét một lỗ tròn đường kính 2 cm ở thành bên. Đặt cả hai hộp ở cùng một chỗ có nắng, xoay hộp B sao cho ánh sáng chiếu thẳng vào lỗ khoét.\n' +
       '— Tiến hành: Tưới ẩm đất hàng ngày. Sau 3-5 ngày, mở hộp quan sát.\n' +
       '— Hiện tượng: Cây trong hộp A mọc vống thẳng lên, thân yếu, lá có màu nhạt (vàng úa). Cây trong hộp B mọc nghiêng và ngọn uốn cong hướng ra ngoài qua lỗ khoét.\n\n' +
-      'THÍ NGHIỆM CHỨNG MINH HƯỚNG TRỌNG LỰC CỦA RỄ CÂY:\n' +
+      '## Thí nghiệm chứng minh hướng trọng lực của rễ cây\n' +
       '— Chuẩn bị: Gieo hạt ngô hoặc đậu xanh trên đĩa Petri lót bông ẩm cho đến khi rễ mọc dài 1-2 cm.\n' +
       '— Tiến hành: Đặt đĩa Petri thẳng đứng trên giá đỡ sao cho rễ hướng xuống đất. Sau đó, xoay đĩa Petri 90 độ để các rễ nằm ngang, giữ ẩm bông và quan sát sau 24-48 giờ.\n' +
       '— Hiện tượng: Các đỉnh rễ uốn cong 90 độ đâm thẳng xuống đất theo hướng trọng lực; thân mầm uốn cong hướng lên trên ngược chiều trọng lực.\n\n' +
-      'THÍ NGHIỆM QUAN SÁT ỨNG ĐỘNG KHÔNG SINH TRƯỞNG (CÂY TRINH NỮ):\n' +
+      '## Thí nghiệm quan sát ứng động không sinh trưởng (cây trinh nữ)\n' +
       '— Dùng đầu ngón tay hoặc que kích thích nhẹ lên đầu lá chét của cây trinh nữ (Mimosa pudica). Quan sát tốc độ khép lá chét và rủ cuống lá. Đo thời gian để lá mở lại bình thường (thường sau 10-15 phút).',
     workedExample: {
       problem:
@@ -429,19 +429,19 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Cảm ứng ở động vật',
     hook: 'Khi bạn vô tình chạm tay vào vật nóng, ngay lập tức tay bạn rụt lại một cách vô thức. Đó là một cung phản xạ cảm ứng bảo vệ cơ thể khỏi tổn thương.',
     theory:
-      'TIẾN HÓA CỦA HỆ THẦN KINH Ở ĐỘNG VẬT:\n' +
+      '## Tiến hóa của hệ thần kinh ở động vật\n' +
       '1. Chưa có hệ thần kinh (Động vật đơn bào): Phản ứng bằng chuyển động cả tế bào hướng tới hoặc tránh xa kích thích.\n' +
       '2. Hệ thần kinh dạng lưới (Ruột khoang - Thủy tức): Các tế bào thần kinh phân bố rải rác khắp cơ thể tạo mạng lưới liên kết. Kích thích tại một điểm làm toàn bộ cơ thể co rút lại (độ chính xác thấp, tiêu tốn năng lượng).\n' +
       '3. Hệ thần kinh dạng chuỗi hạch (Giun, Thân mềm, Chân khớp): Tế bào thần kinh tập trung thành các hạch thần kinh dọc cơ thể. Phản ứng cục bộ theo từng vùng (tiết kiệm năng lượng và chính xác hơn).\n' +
       '4. Hệ thần kinh dạng ống (Động vật có xương sống): Gồm thần kinh trung ương (não bộ, tủy sống) và thần kinh ngoại biên. Phản ứng vô cùng nhanh chóng, chính xác nhờ các phản xạ.\n\n' +
-      'CUNG PHẢN XẠ (Hành trình của cảm ứng thần kinh):\n' +
+      '## Cung phản xạ (Hành trình của cảm ứng thần kinh)\n' +
       'Cơ chế cảm ứng ở động vật có hệ thần kinh là phản xạ. Phản xạ được thực hiện qua một cung phản xạ gồm 5 bộ phận:\n' +
       '1. Bộ phận tiếp nhận kích thích (Thụ thể ở da, mắt, tai...).\n' +
       '2. Đường dẫn truyền hướng tâm (Sợi thần kinh cảm giác mang thông tin về trung ương).\n' +
       '3. Bộ phận phân tích và tổng hợp (Não bộ và tủy sống xử lý thông tin, quyết định hành động).\n' +
       '4. Đường dẫn truyền li tâm (Sợi thần kinh vận động mang lệnh đi).\n' +
       '5. Bộ phận thực hiện (Cơ co bóp hoặc Tuyến tiết dịch).\n\n' +
-      'PHÂN LOẠI PHẢN XẠ:\n' +
+      '## Phân loại phản xạ\n' +
       '— Phản xạ không điều kiện: Phản xạ bẩm sinh, di truyền, bền vững, mang tính chủng loại, do tủy sống hoặc trụ não điều khiển (ví dụ: rụt tay khi nóng, tiết nước bọt khi thức ăn chạm lưỡi).\n' +
       '— Phản xạ có điều kiện: Phản xạ học tập được, hình thành trong đời sống cá thể, không bền vững (dễ mất nếu không củng cố), do vỏ não điều khiển (ví dụ: nghe tiếng còi xe biết tránh đường, tiết nước bọt khi nghe nhắc đến chanh chua).',
     workedExample: {
@@ -695,15 +695,15 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về cảm ứng ở động vật',
     hook: 'Làm thế nào để đo thời gian phản xạ của mắt, kiểm tra phản xạ xương bánh chè hay quan sát hành vi học tập đơn giản ở động vật nuôi?',
     theory:
-      'THÍ NGHIỆM PHẢN XẠ XƯƠNG BÁNH CHÈ (ĐẦU GỐI) Ở NGƯỜI:\n' +
+      '## Thí nghiệm phản xạ xương bánh chè (đầu gối) ở người\n' +
       '— Nguyên tắc: Kích thích cơ học vào gân cơ tứ đầu đùi kích hoạt phản xạ tủy làm co cơ kéo cẳng chân đá lên.\n' +
       '— Tiến trình: Người được đo ngồi thả lỏng hoàn toàn trên ghế cao, hai chân buông thõng tự do. Người làm thí nghiệm dùng búa y tế gõ nhẹ và chính xác vào dây chằng dưới xương bánh chè.\n' +
       '— Hiện tượng: Cẳng chân người được đo tự động đá nhẹ về phía trước một cách vô thức. Đây là phản xạ không điều kiện tủy sống.\n\n' +
-      'THÍ NGHIỆM PHẢN XẠ ĐỒNG TỬ MẮT VỚI ÁNH SÁNG:\n' +
+      '## Thí nghiệm phản xạ đồng tử mắt với ánh sáng\n' +
       '— Nguyên tắc: Đồng tử co hoặc dãn để điều hòa lượng ánh sáng đi vào mắt nhằm bảo vệ võng mạc.\n' +
       '— Tiến trình: Cho người được đo ngồi trong phòng tối nhẹ. Dùng đèn pin chiếu nhẹ từ bên cạnh vào mắt họ trong vài giây rồi tắt.\n' +
       '— Hiện tượng: Khi chiếu đèn, đồng tử (con ngươi) co nhỏ lại rõ rệt; khi tắt đèn, đồng tử dãn to ra.\n\n' +
-      'KHẢO SÁT TẬP TÍNH HỌC TẬP (PHẢN XẠ CÓ ĐIỀU KIỆN) Ở ĐỘNG VẬT:\n' +
+      '## Khảo sát tập tính học tập (phản xạ có điều kiện) ở động vật\n' +
       '— Quan sát cách huấn luyện cá cảnh (cá vàng) nổi lên ăn khi gõ vào thành bể. Âm thanh gõ (kích thích có điều kiện) kết hợp lặp lại nhiều lần với việc cho ăn (kích thích không điều kiện) giúp cá hình thành phản xạ nổi lên ngay khi nghe tiếng gõ mà chưa có thức ăn.',
     workedExample: {
       problem:
@@ -1085,17 +1085,17 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Sinh trưởng và phát triển ở thực vật',
     hook: 'Một hạt sồi nhỏ có thể lớn lên thành một cây cổ thụ khổng lồ thọ hàng trăm tuổi nhờ hoạt động phân chia của các tế bào mô phân sinh và hormone thực vật.',
     theory:
-      'ĐỊNH NGHĨA SINH TRƯỞNG VÀ PHÁT TRIỂN:\n' +
+      '## Định nghĩa sinh trưởng và phát triển\n' +
       '— Sinh trưởng: Sự tăng lên về kích thước, thể tích và khối lượng của cơ thể thực vật do sự tăng số lượng và kích thước tế bào.\n' +
       '— Phát triển: Quá trình biến đổi về chất bao gồm sự phân hóa tế bào, phát sinh hình thái cơ quan mới và sự ra hoa, tạo quả.\n\n' +
-      'MÔ PHÂN SINH (Meristems):\n' +
+      '## Mô phân sinh (Meristems)\n' +
       'Là nhóm các tế bào thực vật chưa phân hóa, luôn duy trì khả năng phân chia nguyên phân tạo tế bào mới. Gồm các nhóm chính:\n' +
       '1. Mô phân sinh đỉnh (nằm ở đỉnh rễ, đỉnh ngọn thân): Giúp cây sinh trưởng sơ cấp (kéo dài chiều dài của thân, rễ). Có ở cả cây Một lá mầm và Hai lá mầm.\n' +
       '2. Mô phân sinh bên (tầng phát sinh mạch dẫn, tầng phát sinh vỏ): Giúp cây sinh trưởng thứ cấp (làm thân, rễ to ngang ra). Chủ yếu có ở cây Hai lá mầm thân gỗ lâu năm, hình thành các vòng năm gỗ.\n' +
       '3. Mô phân sinh lóng: Giúp kéo dài các lóng của thân (chỉ có ở cây Một lá mầm như tre, mía, lúa).\n\n' +
-      'HORMONE THỰC VẬT (Phytohormones):\n' +
+      '## Hormone thực vật (Phytohormones)\n' +
       '— Nhóm kích thích sinh trưởng:\n  + Auxin (IAA): Kích thích giãn dài tế bào thân, tạo rễ phụ, gây hiện tượng ưu thế đỉnh (ức chế chồi bên).\n  + Gibberellin (GA): Kích thích kéo dài thân lóng, phá ngủ hạt, kích nảy mầm.\n  + Cytokinin: Kích thích phân chia tế bào mạnh mẽ, kích thích tạo chồi, làm chậm lão hóa lá.\n— Nhóm ức chế sinh trưởng:\n  + Abscisic acid (ABA): Kích thích rụng lá, gây ngủ của hạt, điều khiển đóng khí khổng khi cây thiếu nước.\n  + Ethylene (dạng khí): Thúc đẩy quá trình chín của quả, gây rụng lá, hoa.\n\n' +
-      'NHÂN TỐ ĐIỀU HÒA SỰ RA HOA:\n' +
+      '## Nhân tố điều hòa sự ra hoa\n' +
       '— Quang chu kỳ: Sự ra hoa của cây phụ thuộc vào độ dài ngày và đêm tương đối (gồm cây ngày ngắn, cây ngày dài, cây trung tính).\n' +
       '— Phytochrom: Sắc tố cảm nhận quang chu kỳ ở lá cây (tồn tại ở dạng hấp thụ ánh sáng đỏ P_R và đỏ xa P_FR).\n' +
       '— Xuân hóa (Vernalization): Hiện tượng một số loài cây chỉ ra hoa sau khi trải qua giai đoạn nhiệt độ thấp kéo dài (ví dụ lúa mì mùa đông).',
@@ -1158,10 +1158,10 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về sinh trưởng và phát triển ở thực vật',
     hook: 'Làm thế nào để đo đạc và vẽ biểu đồ đường cong sinh trưởng của cây đậu, hay chứng minh hormone ethylene có khả năng thúc đẩy quả chín siêu tốc?',
     theory:
-      'THÍ NGHIỆM ĐO TỐC ĐỘ SINH TRƯỞNG CHIỀU CAO THÂN CÂY:\n' +
+      '## Thí nghiệm đo tốc độ sinh trưởng chiều cao thân cây\n' +
       '— Nguyên tắc: Sinh trưởng của thân cây diễn ra liên tục theo thời gian, đo đạc chiều cao định kỳ để vẽ biểu đồ biểu diễn quy luật sinh trưởng.\n' +
       '— Tiến trình:\n  1. Gieo hạt đậu xanh vào 2 chậu đất ẩm. Sau khi hạt nảy mầm và mọc cây con cao khoảng 2 cm, chọn các cây đồng đều để theo dõi.\n  2. Dùng thước dây mềm đo chiều cao cây (từ gốc sát mặt đất đến đỉnh sinh trưởng) hàng ngày vào một giờ cố định (ví dụ 8 giờ sáng) liên tục trong 10 ngày.\n  3. Ghi số liệu vào bảng và vẽ đồ thị tăng trưởng theo ngày.\n— Kết quả: Đường cong đồ thị có dạng hình chữ S (Sigmoid): Giai đoạn đầu sinh trưởng chậm, sau đó tăng tốc cực nhanh ở giai đoạn giữa, và chậm dần lại khi cây trưởng thành.\n\n' +
-      'THÍ NGHIỆM TÁC ĐỘNG CỦA ETHYLENE ĐỐI VỚI SỰ CHÍN CỦA QUẢ:\n' +
+      '## Thí nghiệm tác động của ethylene đối với sự chín của quả\n' +
       '— Nguyên tắc: Quả chín giải phóng khí ethylene tự nhiên ra xung quanh. Khí này khuếch tán kích thích các quả xanh khác chín nhanh hơn.\n' +
       '— Tiến trình:\n  1. Chuẩn bị 2 túi nilon trong suốt kín. Túi A cho vào 1 quả chuối xanh + 1 quả táo đã chín vàng (hoặc quả chuối đã chín trứng cuốc). Túi B chỉ cho 1 quả chuối xanh đơn lẻ.\n  2. Buộc chặt miệng cả hai túi, đặt ở nhiệt độ phòng.\n  3. Quan sát trạng thái vỏ chuối sau 24 giờ, 48 giờ.\n— Kết quả: Quả chuối xanh ở túi A (có quả chín) chuyển sang màu vàng chín nhanh hơn rõ rệt so với quả chuối xanh ở túi B.',
     workedExample: {
@@ -1543,7 +1543,7 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Sinh trưởng và phát triển ở động vật',
     hook: 'Một chú nòng nọc tiêu biến dần cái đuôi, mọc chân rồi nhảy lên cạn thành chú ếch xanh, hay sâu bướm lột xác hóa nhộng thành bướm xinh đẹp. Đó là những quá trình phát triển biến thái đầy kỳ diệu.',
     theory:
-      'CÁC KIỂU PHÁT TRIỂN Ở ĐỘNG VẬT:\n' +
+      '## Các kiểu phát triển ở động vật\n' +
       '1. Phát triển không qua biến thái:\n' +
       '   — Đặc điểm: Con non sinh ra có hình dạng, cấu tạo cơ thể tương tự như con trưởng thành (chỉ khác về kích thước và sự hoàn thiện cơ quan sinh dục).\n' +
       '   — Đại diện: Đa số động vật có xương sống (thú, người, chim, bò sát) và nhiều loài không xương sống.\n' +
@@ -1553,7 +1553,7 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
       '3. Phát triển qua biến thái không hoàn toàn:\n' +
       '   — Đặc điểm: Con non (ấu trùng) có hình dạng cấu tạo gần giống con trưởng thành nhưng chưa hoàn thiện (ví dụ chưa có cánh, chưa chín sinh dục). Trải qua nhiều lần lột xác mới biến đổi thành con trưởng thành.\n' +
       '   — Đại diện: Châu chấu, gián, chuồn chuồn, tôm, cua.\n\n' +
-      'HORMONE ĐIỀU HÒA SINH TRƯỞNG PHÁT TRIỂN Ở ĐỘNG VẬT:\n' +
+      '## Hormone điều hòa sinh trưởng phát triển ở động vật\n' +
       '1. Động vật có xương sống:\n' +
       '   — Hormone sinh trưởng (GH - từ tuyến yên): Kích thích phân chia tế bào, tăng trưởng xương và cơ bắp.\n' +
       '   — Thyroxine (từ tuyến giáp): Kích thích chuyển hóa tế bào; ở lưỡng cư, kích thích nòng nọc biến thái thành ếch.\n' +
@@ -1775,15 +1775,15 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Quan sát các giai đoạn sinh trưởng, phát triển ở động vật và vẽ vòng đời',
     hook: 'Làm thế nào để phân biệt sâu bướm, nhộng, bướm trưởng thành và phác họa sơ đồ vòng đời sinh động của chúng phục vụ học tập?',
     theory:
-      'VÒNG ĐỜI BIẾN THÁI HOÀN TOÀN Ở CÔN TRÙNG (BƯỚM CẢI):\n' +
+      '## Vòng đời biến thái hoàn toàn ở côn trùng (bướm cải)\n' +
       'Trải qua 4 giai đoạn rõ rệt:\n' +
       '1. Trứng bướm: Được đẻ ở mặt dưới lá rau cải.\n' +
       '2. Sâu non (Ấu trùng): Hình dạng sâu bò, ăn lá cây liên tục để tích lũy dinh dưỡng, lột xác 4-5 lần để tăng kích thước. Đây là giai đoạn phá hoại mùa màng nặng nề nhất.\n' +
       '3. Nhộng: Sâu non hóa nhộng trong kén tĩnh lặng, không ăn uống nhưng bên trong diễn ra sự tái cấu trúc toàn diện cơ thể.\n' +
       '4. Bướm trưởng thành: Có cánh bay lượn, chuyển sang ăn mật hoa, thụ phấn cho cây và sinh sản đẻ trứng kết thúc vòng đời.\n\n' +
-      'VÒNG ĐỜI BIẾN THÁI HOÀN TOÀN Ở LƯỠNG CƯ (ẾCH ĐỒNG):\n' +
+      '## Vòng đời biến thái hoàn toàn ở lưỡng cư (ếch đồng)\n' +
       'Trứng thụ tinh (dưới nước) → Nòng nọc (sống dưới nước, thở mang, có đuôi bơi) → Nòng nọc mọc chân sau → Mọc chân trước và tiêu biến đuôi → Ếch con nhảy lên cạn (thở phổi và da) → Ếch trưởng thành sinh sản.\n\n' +
-      'VÒNG ĐỜI BIẾN THÁI KHÔNG HOÀN TOÀN Ở CÔN TRÙNG (CHÂU CHẤU):\n' +
+      '## Vòng đời biến thái không hoàn toàn ở côn trùng (châu chấu)\n' +
       'Trứng → Ấu trùng (châu chấu non chưa có cánh, cấu tạo gần giống mẹ) → Lột xác 5-6 lần (mỗi lần cánh dài ra một ít) → Châu chấu trưởng thành có cánh dài và cơ quan sinh dục hoàn chỉnh.',
     workedExample: {
       problem:
@@ -2241,10 +2241,10 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Sinh sản ở thực vật',
     hook: 'Hạt phấn nhỏ bé cuốn theo chiều gió tiếp xúc đầu nhụy, thực hiện quá trình thụ tinh kép độc đáo để kết trái ngọt chứa đầy chất dinh dưỡng nuôi phôi.',
     theory:
-      'SINH SẢN VÔ TÍNH Ở THỰC VẬT (không có sự kết hợp giao tử):\n' +
+      '## Sinh sản vô tính ở thực vật (không có sự kết hợp giao tử)\n' +
       '— Hình thức tự nhiên (sinh sản sinh dưỡng): Sinh sản bằng bào tử (rêu, dương xỉ) hoặc bằng các cơ quan sinh dưỡng như rễ củ (khoai lang), thân bò (dâu tây), thân rễ (gừng), lá (thuốc bỏng).\n' +
       '— Hình thức nhân tạo (ứng dụng): Giâm cành, chiết cành, ghép cành, ghép mắt và nuôi cấy mô tế bào thực vật.\n\n' +
-      'SINH SẢN HỮU TÍNH Ở THỰC VẬT HẠT KÍN (có thụ tinh):\n' +
+      '## Sinh sản hữu tính ở thực vật hạt kín (có thụ tinh)\n' +
       '1. Cấu tạo hoa: Nhị hoa gồm chỉ nhị và bao phấn; trong bao phấn có các hạt phấn, nơi sinh ra giao tử đực. Nhụy hoa gồm đầu nhụy, vòi nhụy và bầu nhụy; trong bầu nhụy có noãn, bên trong noãn là túi phôi chứa tế bào trứng (giao tử cái).\n' +
       '2. Thụ phấn (Pollination): Sự phát tán hạt phấn từ bao phấn tiếp xúc với đầu nhụy (tự thụ phấn hoặc thụ phấn chéo nhờ gió, nước, côn trùng).\n' +
       '3. Thụ tinh kép (Double Fertilization - đặc trưng của thực vật hạt kín):\n' +
@@ -2320,10 +2320,10 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
       '— Chọn cành bưởi/cam to bằng ngón tay cái. Dùng dao sắc khoanh vỏ hai vòng cách nhau bằng 1.5 - 2 lần đường kính cành, bóc lớp vỏ ra.\n' +
       '— Cạo sạch lớp chất nhầy bám quanh lõi gỗ (lớp tượng tầng cambium) để ngăn cành liền vỏ lại.\n' +
       '— Đắp bùn ao phơi khô trộn rơm băm nhỏ hoặc mụn xơ dừa ẩm bao quanh vết cạo thành bầu đất tròn. Bọc nilon bảo vệ bầu, buộc chặt dây hai đầu. Khi rễ đâm ra ngoài bầu đất có màu vàng nâu, cắt cành chiết đem trồng.\n\n' +
-      'KỸ THUẬT THỰC HÀNH GHÉP MẮT (GHÉP CHỮ T):\n' +
+      '## Kỹ thuật thực hành ghép mắt (ghép chữ T)\n' +
       '— Trên gốc ghép, rạch vỏ hình chữ T, dùng mũi dao cạy nhẹ vỏ hai bên chữ T.\n' +
       '— Cắt lấy mắt ghép (có kèm một mảnh vỏ nhỏ và chồi ngủ) từ cây giống tốt. Luồn mắt ghép vào khe chữ T trên gốc ghép sao cho các lớp cambium áp sát nhau. Buộc chặt nilon giữ ẩm.\n\n' +
-      'THỤ PHẤN NHÂN TẠO:\n' +
+      '## Thụ phấn nhân tạo\n' +
       '— Hái hoa đực mới nở của cây bí/bầu, ngắt bỏ cánh hoa phơi bao phấn. Quét nhẹ bao phấn đực lên đầu nhụy của hoa cái đã nở chín vào buổi sáng sớm (khi đầu nhụy còn dịch nhầy bám dính tốt).',
     workedExample: {
       problem:
@@ -2791,12 +2791,12 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Sinh sản ở động vật',
     hook: 'Từ những quả trứng thụ tinh ngoài nước đến sự bảo vệ phôi thai tuyệt đối trong tử cung mẹ qua nhau thai, động vật đã tiến hóa những cơ chế sinh sản vô cùng kỳ diệu.',
     theory:
-      'SINH SẢN VÔ TÍNH Ở ĐỘNG VẬT (không có sự kết hợp giao tử):\n' +
+      '## Sinh sản vô tính ở động vật (không có sự kết hợp giao tử)\n' +
       '— Phân đôi (Fission): Tế bào mẹ co thắt phân chia thành 2 cá thể con bằng nhau (ở trùng biến hình, trùng đế giày, trùng roi).\n' +
       '— Nảy chồi (Budding): Một phần cơ thể mẹ phát triển lồi ra thành chồi, lớn lên tách ra thành cá thể độc lập (ở thủy tức, san hô).\n' +
       '— Phân mảnh (Fragmentation): Cơ thể mẹ tách ra thành nhiều mảnh, mỗi mảnh tái sinh thành một cơ thể mới (ở bọt biển, sao biển, giun dẹp).\n' +
       '— Trinh sản (Parthenogenesis): Trứng không qua thụ tinh vẫn phát triển thành cá thể mới (ở ong và kiến, cá thể đó là con đực đơn bội n; ngoài ra còn gặp ở một số loài rệp và thằn lằn).\n\n' +
-      'SINH SẢN HỮU TÍNH Ở ĐỘNG VẬT (có kết hợp giao tử đực n và cái n):\n' +
+      '## Sinh sản hữu tính ở động vật (có kết hợp giao tử đực n và cái n)\n' +
       '1. Các hình thức thụ tinh:\n' +
       '   — Thụ tinh ngoài: Trứng và tinh trùng gặp nhau ngoài cơ thể con cái (trong nước, gặp ở cá, lưỡng cư). Hiệu suất thấp, cần nhiều giao tử.\n' +
       '   — Thụ tinh trong: Tinh trùng gặp trứng trong đường sinh dục con cái (ở thú, chim, bò sát, côn trùng). Hiệu suất thụ tinh cao, tiết kiệm tinh trùng.\n' +
@@ -2804,7 +2804,7 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
       '   — Đẻ trứng (Oviparous): Phôi phát triển trong trứng ngoài cơ thể mẹ nhờ chất dinh dưỡng lòng đỏ (bò sát, chim, lưỡng cư, cá).\n' +
       '   — Đẻ trứng thai (Ovoviviparous): Trứng thụ tinh giữ lại trong ống sinh sản của mẹ tự nở thành con rồi chui ra ngoài, không trao đổi chất với mẹ (một số loài cá mập, rắn).\n' +
       '   — Đẻ con (Viviparous): Phôi phát triển trong tử cung mẹ, trao đổi chất và nhận dinh dưỡng trực tiếp qua nhau thai (thú có nhau).\n\n' +
-      'CƠ CHẾ ĐIỀU HÒA SINH SẢN (ở người):\n' +
+      '## Cơ chế điều hòa sinh sản (ở người)\n' +
       '— Ở Nam: Vùng dưới đồi tiết GnRH kích thích tuyến yên tiết FSH (kích thích tế bào Sertoli sinh tinh) và LH (kích thích tế bào kẽ Leydig tiết Testosterone kích hoạt sinh tinh và đặc điểm sinh dục nam).\n' +
       '— Ở Nữ: Tuyến yên tiết FSH (kích thích nang trứng chín tiết Estrogen) và LH (gây chín, rụng trứng và tạo thể vàng tiết Progesterone). Nồng độ Estrogen/Progesterone cao sẽ ức chế ngược tuyến yên giảm tiết FSH/LH (đây là cơ sở của thuốc tránh thai hằng ngày).',
     workedExample: {
@@ -2869,7 +2869,7 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
       'Thực hành: Khảo sát hiện tượng thụ tinh ở động vật và tìm hiểu các biện pháp tránh thai',
     hook: 'Tìm hiểu các biện pháp tránh thai khoa học hiện đại, cơ chế hoạt động của bao cao su, thuốc nội tiết hay vòng tránh thai để bảo vệ sức khỏe sinh sản.',
     theory:
-      'CƠ CHẾ CỦA CÁC BIỆN PHÁP TRÁNH THAI HIỆN ĐẠI:\n' +
+      '## Cơ chế của các biện pháp tránh thai hiện đại\n' +
       '1. Bao cao su (Condom):\n' +
       '   — Cơ chế: Ngăn chặn cơ học không cho tinh trùng tiếp xúc với trứng.\n' +
       '   — Ưu điểm nổi bật: Là biện pháp duy nhất ngăn ngừa hiệu quả các bệnh lây truyền qua đường tình dục (STDs/STIs như HIV, lậu, giang mai, sùi mào gà).\n' +
@@ -3237,12 +3237,12 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Mối quan hệ giữa các quá trình sinh lý trong cơ thể sinh vật',
     hook: 'Khi bạn chạy bộ, tim đập dồn dập, phổi thở gấp, tuyến mồ hôi hoạt động mạnh để làm mát. Tất cả các hệ cơ quan đang phối hợp nhịp nhàng dưới sự chỉ huy của hệ thần kinh và nội tiết.',
     theory:
-      'CƠ THỂ THỰC VẬT LÀ MỘT THỂ THỐNG NHẤT:\n' +
+      '## Cơ thể thực vật là một thể thống nhất\n' +
       'Mọi hoạt động sinh lý của thực vật đều có mối liên quan mật thiết và phụ thuộc lẫn nhau:\n' +
       '— Hệ rễ hấp thụ nước và ion khoáng cung cấp nguyên liệu cho lá quang hợp ở trên.\n' +
       '— Lá quang hợp tổng hợp chất hữu cơ (đường sucrose) vận chuyển qua mạch rây đi xuống nuôi dưỡng tế bào rễ sinh trưởng.\n' +
       '— Hoạt động hô hấp tế bào ở rễ phân giải chất hữu cơ tạo ATP cung cấp năng lượng cho rễ chủ động hút khoáng.\n  + Nếu lá ngừng quang hợp hoặc rễ ngừng hút nước, toàn bộ cây sẽ ngừng sinh trưởng và chết.\n\n' +
-      'CƠ THỂ ĐỘNG VẬT LÀ MỘT THỂ THỐNG NHẤT:\n' +
+      '## Cơ thể động vật là một thể thống nhất\n' +
       'Sự phối hợp nhịp nhàng giữa các hệ cơ quan đảm bảo duy trì cân bằng nội môi dưới sự điều khiển của hệ thần kinh và hệ nội tiết:\n' +
       '— Hệ tiêu hóa lấy chất dinh dưỡng, hệ hô hấp lấy khí O₂ cung cấp cho hệ tuần hoàn.\n' +
       '— Hệ tuần hoàn vận chuyển O₂ và dinh dưỡng đến từng tế bào phục vụ hô hấp tế bào tạo năng lượng ATP.\n' +
@@ -3313,7 +3313,7 @@ export const SINH11_C2_LESSONS: BiologyLesson[] = [
     title: 'Một số ngành nghề liên quan đến sinh học cơ thể',
     hook: 'Hiểu biết sâu sắc về sinh học cơ thể mở ra cánh cửa dẫn đến những ngành nghề đầy hứa hẹn: bác sĩ cứu người, kỹ sư nông nghiệp xanh, hay nhà nghiên cứu công nghệ sinh học.',
     theory:
-      'CÁC LĨNH VỰC NGÀNH NGHỀ LIÊN QUAN ĐẾN SINH HỌC CƠ THỂ:\n' +
+      '## Các lĩnh vực ngành nghề liên quan đến sinh học cơ thể\n' +
       '1. Nhóm ngành Y - Dược học (Medicine & Pharmacy):\n' +
       '   — Nội dung: Bác sĩ, dược sĩ, điều dưỡng viên sử dụng kiến thức giải phẫu sinh lý người để chẩn đoán bệnh, điều trị, bào chế thuốc và chăm sóc sức khỏe cộng đồng.\n' +
       '2. Nhóm ngành Nông - Lâm - Thủy sản (Agriculture & Forestry):\n' +

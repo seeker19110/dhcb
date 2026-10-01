@@ -182,19 +182,19 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Chiếc xích đu đung đưa, dây đàn ghi-ta rung động hay quả lắc đồng hồ tích tắc qua lại đều là dao động cơ. ' +
       'Dạng dao động cơ đơn giản và nền tảng nhất chính là dao động điều hoà.',
     theory:
-      'DAO ĐỘNG CƠ (MECHANICAL OSCILLATION):\n' +
+      '## Dao động cơ (mechanical oscillation)\n' +
       '— Dao động cơ là chuyển động lặp đi lặp lại của một vật quanh một vị trí cân bằng xác định.\n' +
       '— Dao động tuần hoàn là dao động mà sau những khoảng thời gian bằng nhau gọi là chu kì, vật trở lại vị trí cũ theo hướng cũ.\n\n' +
-      'DAO ĐỘNG ĐIỀU HOÀ (SIMPLE HARMONIC MOTION):\n' +
+      '## Dao động điều hoà (simple harmonic motion)\n' +
       '— Là dao động tuần hoàn mà li độ (toạ độ của vật tính từ vị trí cân bằng) là một hàm cosin hoặc sin của thời gian.\n' +
       '— Phương trình li độ: x = A.cos(ωt + φ).\n\n' +
-      'CÁC ĐẠI LƯỢNG TRONG PHƯƠNG TRÌNH:\n' +
+      '## Các đại lượng trong phương trình\n' +
       '1. x: Li độ của vật (đơn vị: m hoặc cm). Biểu diễn khoảng cách và chiều lệch từ vị trí cân bằng.\n' +
       '2. A: Biên độ dao động (A > 0, cùng đơn vị với x). Là độ lệch cực đại của vật khỏi vị trí cân bằng.\n' +
       '3. ω: Tần số góc (đơn vị: rad/s). Đo tốc độ biến đổi pha của dao động.\n' +
       '4. (ωt + φ): Pha của dao động tại thời điểm t (đơn vị: rad). Xác định trạng thái dao động (vị trí, chiều chuyển động) tại t.\n' +
       '5. φ: Pha ban đầu (đơn vị: rad). Xác định trạng thái của vật tại thời điểm khởi đầu t = 0.\n\n' +
-      'CHU KÌ VÀ TẦN SỐ:\n' +
+      '## Chu kì và tần số\n' +
       '— Chu kì (T): Thời gian vật thực hiện một dao động toàn phần. Công thức: T = 2π / ω (đơn vị: s).\n' +
       '— Tần số (f): Số dao động toàn phần vật thực hiện trong một giây. Công thức: f = 1 / T = ω / 2π (đơn vị: Hz).',
     workedExample: {
@@ -505,11 +505,11 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Làm thế nào để xác định chính xác li độ hay hướng chuyển động của một vật dao động siêu nhanh tại một thời điểm bất kì? ' +
       'Các nhà khoa học sử dụng mối liên hệ hình học tuyệt vời giữa chuyển động tròn đều và dao động điều hoà.',
     theory:
-      'ĐƯỜNG TRÒN LƯỢNG GIÁC (REFERENCE CIRCLE):\n' +
+      '## Đường tròn lượng giác (reference circle)\n' +
       '— Một điểm M chuyển động tròn đều trên đường tròn bán kính A với tốc độ góc ω.\n' +
       '— Hình chiếu P của điểm M lên một đường kính của đường tròn sẽ dao động điều hoà quanh tâm O với phương trình x = A.cos(ωt + φ).\n' +
       '— Do đó, biên độ dao động bằng đúng bán kính đường tròn (A = R), và tần số góc của dao động bằng đúng tốc độ góc quay của M.\n\n' +
-      'ĐỘ LỆCH PHA GIỮA HAI DAO ĐỘNG (PHASE DIFFERENCE):\n' +
+      '## Độ lệch pha giữa hai dao động (phase difference)\n' +
       '— Cho hai dao động cùng tần số góc: x₁ = A₁.cos(ωt + φ₁) và x₂ = A₂.cos(ωt + φ₂).\n' +
       '— Độ lệch pha: Δφ = φ₂ - φ₁.\n' +
       '  — Nếu Δφ > 0: Dao động 2 nhanh pha (sớm pha) hơn dao động 1.\n' +
@@ -910,13 +910,13 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Trong lúc vật dao động điều hoà qua lại, tốc độ của nó thay đổi thế nào? Gia tốc của nó hướng về đâu? ' +
       'Phép đạo hàm theo thời gian sẽ cho ta câu trả lời.',
     theory:
-      'VẬN TỐC TRONG DAO ĐỘNG ĐIỀU HOÀ (VELOCITY):\n' +
+      '## Vận tốc trong dao động điều hoà (velocity)\n' +
       '— Vận tốc v là đạo hàm bậc nhất của li độ theo thời gian:\n' +
       "  v = x' = -ω.A.sin(ωt + φ) = ω.A.cos(ωt + φ + π/2).\n" +
       '— Tính chất: Vận tốc biến thiên điều hoà cùng tần số với li độ nhưng sớm pha hơn li độ một góc π/2.\n' +
       '  — Ở vị trí cân bằng (x = 0): Vận tốc có độ lớn cực đại v_max = ω.A.\n' +
       '  — Ở vị trí biên (x = ±A): Vận tốc bằng không (v = 0).\n\n' +
-      'GIA TỐC TRONG DAO ĐỘNG ĐIỀU HOÀ (ACCELERATION):\n' +
+      '## Gia tốc trong dao động điều hoà (acceleration)\n' +
       '— Gia tốc a là đạo hàm bậc nhất của vận tốc (đạo hàm bậc hai của li độ) theo thời gian:\n' +
       '  a = v\' = x" = -ω².A.cos(ωt + φ) = -ω².x = ω².A.cos(ωt + φ + π).\n' +
       '— Tính chất: Gia tốc biến thiên điều hoà cùng tần số nhưng ngược pha với li độ (sớm pha π/2 so với vận tốc).\n' +
@@ -985,12 +985,12 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Làm thế nào để kết nối các thông số li độ, vận tốc, gia tốc mà không cần biết thời gian t? ' +
       'Các hệ thức độc lập thời gian sẽ là chìa khoá để giải quyết mọi bài tập.',
     theory:
-      'HỆ THỨC ĐỘC LẬP VỚI THỜI GIAN (TIME-INDEPENDENT EQUATION):\n' +
+      '## Hệ thức độc lập với thời gian (time-independent equation)\n' +
       '— Từ hai phương trình vuông pha:\n' +
       '  (x / A)² + (v / v_max)² = 1 ⇔ (x / A)² + (v / ωA)² = 1.\n' +
       '— Viết lại công thức tính biên độ A: A² = x² + v² / ω².\n' +
       '— Mối liên hệ gia tốc và li độ: a = -ω².x.\n\n' +
-      'PHƯƠNG PHÁP XÁC ĐỊNH TRẠNG THÁI DAO ĐỘNG TẠI THỜI ĐIỂM T:\n' +
+      '## Phương pháp xác định trạng thái dao động tại thời điểm t\n' +
       '— Bước 1: Xác định phương trình dao động x = A.cos(ωt + φ).\n' +
       '— Bước 2: Thay thời điểm t vào phương trình li độ và phương trình vận tốc v = -ωA.sin(ωt + φ).\n' +
       '— Bước 3: Xác định dấu của v để biết chiều chuyển động (v > 0: theo chiều dương, v < 0: theo chiều âm).',
@@ -1230,17 +1230,17 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Khi chơi xích đu, lúc bạn ở vị trí cao nhất, bạn dừng lại một khoảnh khắc (vận tốc bằng 0), nhưng khi rơi xuống điểm thấp nhất, ' +
       'bạn bay với tốc độ tối đa. Đó chính là sự biến đổi nhịp nhàng giữa Động năng và Thế năng.',
     theory:
-      'ĐỘNG NĂNG TRONG DAO ĐỘNG ĐIỀU HOÀ (KINETIC ENERGY):\n' +
+      '## Động năng trong dao động điều hoà (kinetic energy)\n' +
       '— Là động năng của chất điểm khối lượng m chuyển động với vận tốc v:\n' +
       '  W_đ = 1/2.m.v² = 1/2.m.ω².A².sin²(ωt + φ).\n\n' +
-      'THẾ NĂNG TRONG DAO ĐỘNG ĐIỀU HOÀ (POTENTIAL ENERGY):\n' +
+      '## Thế năng trong dao động điều hoà (potential energy)\n' +
       '— Thế năng đàn hồi hoặc thế năng trọng trường quy về li độ x của vật:\n' +
       '  W_t = 1/2.m.ω².x² = 1/2.m.ω².A².cos²(ωt + φ).\n\n' +
-      'CƠ NĂNG VÀ SỰ BẢO TOÀN CƠ NĂNG (MECHANICAL ENERGY):\n' +
+      '## Cơ năng và sự bảo toàn cơ năng (mechanical energy)\n' +
       '— Cơ năng W là tổng động năng và thế năng:\n' +
       '  W = W_đ + W_t = 1/2.m.ω².A² = hằng số.\n' +
       '— Khi không có lực ma sát cản trở, cơ năng của vật dao động điều hoà được bảo toàn, tỉ lệ với bình phương biên độ dao động.\n\n' +
-      'CHU KÌ BIẾN THIÊN CỦA NĂNG LƯỢNG:\n' +
+      '## Chu kì biến thiên của năng lượng\n' +
       '— Trong khi li độ biến thiên tuần hoàn với chu kì T, tần số f, thì động năng và thế năng biến thiên tuần hoàn với:\n' +
       "  — Chu kì: T' = T / 2.\n" +
       "  — Tần số: f' = 2f; Tần số góc: ω' = 2ω.",
@@ -1585,15 +1585,15 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Tại sao chiếc xích đu nếu không đẩy sẽ dừng lại? Và tại sao một cây cầu thép vững chắc có thể đổ sập ' +
       'chỉ vì một cơn gió nhẹ thổi đúng nhịp? Đó là những bài học thực tế về tắt dần, cưỡng bức và cộng hưởng.',
     theory:
-      'DAO ĐỘNG TẮT DẦN (DAMPED OSCILLATION):\n' +
+      '## Dao động tắt dần (damped oscillation)\n' +
       '— Là dao động có biên độ và năng lượng giảm dần theo thời gian do tác dụng của lực cản/lực ma sát của môi trường.\n' +
       '— Lực cản càng lớn, quá trình tắt dần càng nhanh. Ứng dụng: Thiết bị giảm xóc ô tô, xe máy, cửa đóng tự động.\n\n' +
-      'DAO ĐỘNG DUY TRÌ (MAINTAINED OSCILLATION):\n' +
+      '## Dao động duy trì (maintained oscillation)\n' +
       '— Được bù đắp năng lượng đúng bằng phần mất đi sau mỗi chu kì mà không làm thay đổi chu kì riêng của hệ. Ứng dụng: Quả lắc đồng hồ.\n\n' +
-      'DAO ĐỘNG CƯỠNG BỨC (FORCED OSCILLATION):\n' +
+      '## Dao động cưỡng bức (forced oscillation)\n' +
       '— Là dao động của hệ dưới tác dụng của ngoại lực biến thiên tuần hoàn F = F_o.cos(2πf.t).\n' +
       '— Đặc điểm: Dao động cưỡng bức có biên độ không đổi và tần số bằng đúng tần số f của lực cưỡng bức bên ngoài.\n\n' +
-      'HIỆN TƯỢNG CỘNG HƯỞNG (RESONANCE):\n' +
+      '## Hiện tượng cộng hưởng (resonance)\n' +
       '— Hiện tượng biên độ của dao động cưỡng bức đạt giá trị cực đại khi tần số f của ngoại lực tuần hoàn bằng đúng tần số riêng f_o của hệ dao động.\n' +
       '— Ý nghĩa và tác hại: Có hại làm nứt gãy cầu, nhà, bệ máy nếu tần số rung khớp tần số riêng. Có ích trong nhạc cụ (hộp đàn), chọn sóng đài vô tuyến.',
     workedExample: {
@@ -1664,12 +1664,12 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       'Làm thế nào để tìm vị trí mà ở đó động năng lớn gấp ba lần thế năng? Hay thế năng lớn gấp đôi động năng? ' +
       'Chúng ta sẽ học phương pháp đại số giải nhanh các bài toán năng lượng.',
     theory:
-      'CÔNG THỨC LIÊN HỆ ĐỘNG NĂNG VÀ THẾ NĂNG:\n' +
+      '## Công thức liên hệ động năng và thế năng\n' +
       '— Từ hệ thức bảo toàn cơ năng: W = W_đ + W_t.\n' +
       '— Khi động năng bằng n lần thế năng (W_đ = n.W_t):\n' +
       '  W = (n + 1).W_t ⇔ 1/2.m.ω².A² = (n + 1) * 1/2.m.ω².x²\n' +
       '  ⇒ x = ± A / √(n + 1).\n\n' +
-      'CÁC VỊ TRÍ ĐẶC BIỆT THƯỜNG GẶP:\n' +
+      '## Các vị trí đặc biệt thường gặp\n' +
       '1. Động năng bằng thế năng (W_đ = W_t ⇔ n = 1):\n' +
       '   x = ± A / √2 ≈ ± 0,707.A.\n' +
       '2. Động năng gấp 3 lần thế năng (W_đ = 3.W_t ⇔ n = 3):\n' +

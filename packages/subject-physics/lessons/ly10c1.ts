@@ -13,13 +13,13 @@ export const LY10_C1_LESSONS: PhysicsLesson[] = [
       'Từ quả táo rơi từ trên cây đến sự chuyển động của các thiên hà xa xôi, mọi hiện tượng tự nhiên ' +
       'đều tuân theo những quy luật vật lí nhất định. Vật lí học chính là chìa khóa mở cánh cửa hiểu biết vũ trụ.',
     theory:
-      'ĐỐI TƯỢNG VÀ PHƯƠNG PHÁP NGHIÊN CỨU VẬT LÍ:\n' +
+      '## Đối tượng và phương pháp nghiên cứu vật lí\n' +
       '— Đối tượng nghiên cứu: Các dạng vận động của vật chất và năng lượng trong tự nhiên.\n' +
       '— Phân ngành Vật lí chính: Cơ học, Nhiệt học, Quang học, Điện và Từ học, Vật lí hạt nhân, Cơ học lượng tử.\n' +
       '— Hai phương pháp nghiên cứu chính bổ trợ cho nhau:\n' +
       '  1. Phương pháp thực nghiệm: Sử dụng các quan sát và thí nghiệm thực tế để kiểm chứng giả thuyết hoặc phát hiện quy luật mới.\n' +
       '  2. Phương pháp lí thuyết: Sử dụng mô hình toán học và suy luận logic để dự đoán các hiện tượng mới và giải thích quy luật đã có.\n\n' +
-      'VAI TRÒ CỦA VẬT LÍ TRONG CUỘC SỐNG VÀ CÔNG NGHỆ:\n' +
+      '## Vai trò của vật lí trong cuộc sống và công nghệ\n' +
       '— Vật lí là nền tảng của nhiều ngành kĩ thuật và công nghệ (điện tử, tự động hoá, hàng không, viễn thông).\n' +
       '— Ứng dụng trong y học (chẩn đoán hình ảnh bằng tia X, MRI, siêu âm) và nông nghiệp, môi trường.',
     workedExample: {
@@ -91,15 +91,15 @@ export const LY10_C1_LESSONS: PhysicsLesson[] = [
       'Thực hành thí nghiệm giúp chúng ta kiểm chứng lí thuyết, nhưng các thiết bị điện áp cao, tia laser hay nguồn nhiệt ' +
       'có thể gây nguy hiểm nghiêm trọng nếu không tuân thủ nghiêm ngặt các quy tắc an toàn.',
     theory:
-      'QUY TẮC AN TOÀN CHUNG:\n' +
+      '## Quy tắc an toàn chung\n' +
       '— Không tự ý cắm điện hoặc bật công tắc nguồn thiết bị khi chưa có sự đồng ý của giáo viên.\n' +
       '— Kiểm tra các thông số kĩ thuật (giới hạn đo, điện áp định mức) trước khi kết nối thiết bị.\n' +
       '— Bố trí thiết bị gọn gàng, tránh xa mép bàn và các chất dễ cháy nổ.\n\n' +
-      'AN TOÀN ĐIỆN VÀ THIẾT BỊ ĐO:\n' +
+      '## An toàn điện và thiết bị đo\n' +
       '— Luôn ngắt công tắc nguồn điện trước khi thay đổi sơ đồ mạch điện hoặc lắp ráp linh kiện.\n' +
       '— Tránh tiếp xúc trực tiếp với dây dẫn trần hoặc các phần kim loại mang điện áp trên 40V.\n' +
       '— Không sử dụng thiết bị đo (như ampe kế) vượt quá thang đo cho phép để tránh cháy hỏng.\n\n' +
-      'CÁC BIỂN CẢNH BÁO THƯỜNG GẶP:\n' +
+      '## Các biển cảnh báo thường gặp\n' +
       '— Hình tam giác viền đen nền vàng: Cảnh báo nguy hiểm (điện cao thế, bề mặt nóng, tia laser, chất phóng xạ).\n' +
       '— Hình tròn viền đỏ nền trắng: Biển báo cấm (cấm lửa, cấm chạm vào điện).',
     workedExample: {
@@ -169,13 +169,13 @@ export const LY10_C1_LESSONS: PhysicsLesson[] = [
       'Không có phép đo Vật lí nào thu được kết quả hoàn hảo 100%. Mọi số liệu thực tế luôn kèm theo một độ lệch gọi là sai số. ' +
       'Học cách tính và trình bày sai số là kĩ năng căn bản nhất để phân biệt khoa học thực thụ với suy đoán.',
     theory:
-      'PHÉP ĐO TRỰC TIẾP VÀ PHÉP ĐO GIÁN TIẾP:\n' +
+      '## Phép đo trực tiếp và phép đo gián tiếp\n' +
       '— Phép đo trực tiếp: Đọc kết quả trực tiếp từ dụng cụ đo (đo chiều dài bằng thước, đo thời gian bằng đồng hồ).\n' +
       '— Phép đo gián tiếp: Tính toán giá trị qua công thức liên hệ với các đại lượng đo trực tiếp (đo vận tốc v = s/t thông qua s và t).\n\n' +
-      'PHÂN LOẠI SAI SỐ:\n' +
+      '## Phân loại sai số\n' +
       '1. Sai số hệ thống (Systematic error): Do đặc điểm cấu tạo dụng cụ (lệch điểm 0). Sai số hệ thống của dụng cụ thường được lấy bằng một nửa hoặc một độ chia nhỏ nhất của dụng cụ (gọi là sai số dụng cụ Δx_dc).\n' +
       '2. Sai số ngẫu nhiên (Random error): Do hạn chế giác quan, phản xạ, hoặc điều kiện môi trường thay đổi đột ngột. Khắc phục bằng cách đo nhiều lần.\n\n' +
-      'CÔNG THỨC TÍNH SAI SỐ PHÉP ĐO TRỰC TIẾP (Đo n lần):\n' +
+      '## Công thức tính sai số phép đo trực tiếp (Đo n lần)\n' +
       '— Giá trị trung bình: x̄ = (x₁ + x₂ + ... + x_n) / n.\n' +
       '— Sai số tuyệt đối của mỗi lần đo: Δx_i = |x̄ - x_i|.\n' +
       '— Sai số ngẫu nhiên trung bình: Δx_tb = (Δx₁ + Δx₂ + ... + Δx_n) / n.\n' +

@@ -15,11 +15,11 @@ export const HOA12_C3_LESSONS: ChemLesson[] = [
       'Mùi tanh đặc trưng của cá là do các phân tử amine gây ra (như trimethylamine). ' +
       'Để giảm bớt mùi tanh này khi kho cá, ta thường nấu chung với các chất có vị chua như giấm hoặc nước khế.',
     theory:
-      'KHÁI NIỆM VÀ PHÂN LOẠI:\n' +
+      '## Khái niệm và phân loại\n' +
       '— Amine là hợp chất hữu cơ thu được khi thay thế một hoặc nhiều nguyên tử hydrogen trong phân tử NH₃ bằng một hoặc nhiều gốc hydrocarbon.\n' +
       "— Phân loại theo bậc amine (bằng số gốc hydrocarbon liên kết với nguyên tử N): Amine bậc I (R−NH₂), Amine bậc II (R−NH−R'), Amine bậc III (R−N(R')−R\").\n" +
       '— Phân loại theo gốc hydrocarbon: Aliphatic amine (amine béo, vd: methylamine, ethylamine) và Aromatic amine (amine thơm, vd: aniline C₆H₅NH₂).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC CỦA AMINE:\n' +
+      '## Tính chất hoá học của amine\n' +
       '1. Tính base yếu (do nguyên tử N còn một cặp electron chưa liên kết, sẵn sàng nhận proton):\n' +
       '   — Aliphatic amine có tính base mạnh hơn NH₃, làm quỳ tím hoá xanh, phenolphthalein hoá hồng, phản ứng dễ dàng với acid tạo muối.\n' +
       '   — Aniline (amine thơm) có tính base rất yếu (yếu hơn NH₃) do vòng benzene hút electron, không làm đổi màu quỳ tím hay phenolphthalein. Aniline phản ứng được với acid mạnh (như HCl) tạo muối tan: C₆H₅NH₂ + HCl → C₆H₅NH₃Cl (phenylammonium chloride).\n' +
@@ -505,7 +505,7 @@ export const HOA12_C3_LESSONS: ChemLesson[] = [
       'Bột ngọt (mì chính) chính là muối sodium của glutamic acid — một amino acid rất phổ biến. ' +
       'Các amino acid nối với nhau bằng liên kết peptide để tạo nên protein của cơ thể.',
     theory:
-      'AMINO ACID:\n' +
+      '## Amino acid\n' +
       '— Khái niệm: Là hợp chất hữu cơ tạp chức, phân tử chứa đồng thời nhóm amino (−NH₂) và nhóm carboxyl (−COOH).\n' +
       '— Trạng thái: Chất rắn kết tinh, vị hơi ngọt, nhiệt độ nóng chảy cao (do tồn tại ở dạng ion lưỡng cực H₃N⁺−CH(R)−COO⁻).\n' +
       '— Các amino acid thường gặp (bắt buộc nhớ cấu trúc và phân tử khối):\n' +
@@ -515,7 +515,7 @@ export const HOA12_C3_LESSONS: ChemLesson[] = [
       '  4. Glutamic acid (Glu): HOOC−(CH₂)₂−CH(NH₂)−COOH (2 nhóm −COOH, 1 nhóm −NH₂, M = 147).\n' +
       '  5. Lysine (Lys): H₂N−(CH₂)₄−CH(NH₂)−COOH (1 nhóm −COOH, 2 nhóm −NH₂, M = 146).\n' +
       '— Tính chất hoá học: Có tính lưỡng tính (phản ứng với cả acid và base mạnh). Dung dịch Gly, Ala, Val trung tính; Glu có tính acid (quỳ hoá đỏ); Lys có tính base (quỳ hoá xanh).\n\n' +
-      'PEPTIDE:\n' +
+      '## Peptide\n' +
       '— Khái niệm: Là hợp chất chứa từ 2 đến 50 mắt xích α-amino acid liên kết với nhau bằng các liên kết peptide −CO−NH−.\n' +
       '— Phản ứng màu biuret (nhận biết peptide): Các peptide chứa từ 3 mắt xích trở lên (tripeptide trở lên) phản ứng với Cu(OH)₂ trong môi trường kiềm tạo dung dịch màu TÍM đặc trưng. Dipeptide không có phản ứng này.',
     workedExample: {
@@ -983,14 +983,14 @@ export const HOA12_C3_LESSONS: ChemLesson[] = [
       'Lòng trắng trứng đông tụ thành thể rắn màu trắng khi chiên nóng. Tóc và tơ nhện dẻo dai ' +
       'đều là protein. Enzyme là các xúc tác sinh học giúp cơ thể ta tiêu hoá thức ăn chỉ trong vài giờ.',
     theory:
-      'PROTEIN (Chất đạm):\n' +
+      '## Protein (Chất đạm)\n' +
       '— Khái niệm: Là những polypeptide cao phân tử, khối lượng phân tử từ vài chục nghìn đến hàng triệu g/mol.\n' +
       '— Phân loại: Protein đơn giản (chỉ chứa các gốc α-amino acid, vd: albumin của lòng trắng trứng) và Protein phức tạp (có thêm thành phần phi protein như nucleic acid, lipid, carbohydrate...).\n\n' +
-      'TÍNH CHẤT CỦA PROTEIN:\n' +
+      '## Tính chất của protein\n' +
       '1. Sự đông tụ (denaturation): Dưới tác dụng của nhiệt độ, acid, base hoặc muối kim loại nặng, protein bị mất cấu trúc không gian ba chiều tự nhiên và đông tụ lại thành chất rắn vô định hình (vd: trứng chín, sữa chua đông tụ).\n' +
       '2. Phản ứng thuỷ phân: Phân huỷ nhờ acid, base hoặc enzyme tạo thành các chuỗi peptide ngắn và cuối cùng là hỗn hợp các α-amino acid.\n' +
       '3. Phản ứng màu biuret: Tạo phức màu tím đặc trưng với Cu(OH)₂ trong môi trường kiềm.\n\n' +
-      'ENZYME VÀ VAI TRÒ SINH HỌC:\n' +
+      '## Enzyme và vai trò sinh học\n' +
       '— Enzyme là những chất hầu hết có bản chất protein, xúc tác cho các phản ứng hoá sinh trong cơ thể sinh vật với hiệu quả cực cao và tính chọn lọc tuyệt đối (hoạt động theo cơ chế khớp khít "chìa khoá - ổ khoá" tại trung tâm hoạt động).',
     workedExample: {
       problem:
@@ -1603,7 +1603,7 @@ export const HOA12_C3_LESSONS: ChemLesson[] = [
       'Hệ thống hoá thế giới hợp chất hữu cơ chứa nitrogen — cầu nối trực tiếp giữa hoá học hữu cơ thuần tuý ' +
       'với thế giới sinh học sống động.',
     theory:
-      'HỆ THỐNG HOÁ KIẾN THỨC CHƯƠNG 3:\n' +
+      '## Hệ thống hoá kiến thức chương 3\n' +
       '1. Amine (R−NH₂): Có tính base (béo > NH₃ > thơm). Aniline có tính base yếu không đổi màu quỳ, tạo kết tủa trắng với nước bromine.\n' +
       '2. Amino acid: Có nhóm −NH₂ và −COOH. Tính chất lưỡng tính. Trạng thái ion lưỡng cực rắn. Gly (75), Ala (89), Val (117), Glu (147, quỳ hoá đỏ), Lys (146, quỳ hoá xanh).\n' +
       '3. Peptide: Liên kết −CO−NH− giữa các α-amino acid. Phản ứng màu biuret tạo dung dịch màu tím (tripeptide trở lên). Thuỷ phân cắt liên kết peptide.\n' +

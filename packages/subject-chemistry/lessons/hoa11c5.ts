@@ -15,9 +15,9 @@ export const HOA11_C5_LESSONS: ChemLesson[] = [
       'Chảo chống dính Teflon bền bỉ và ống nhựa PVC dẻo dai đều là polymer được tổng hợp từ dẫn xuất halogen. ' +
       'Các hợp chất này mang nhiều ứng dụng quan trọng lẫn thách thức môi trường.',
     theory:
-      'KHÁI NIỆM:\n' +
+      '## Khái niệm\n' +
       '— Dẫn xuất halogen là hợp chất thu được khi thay thế một hay nhiều nguyên tử hydrogen trong phân tử hydrocarbon bằng một hay nhiều nguyên tử halogen (F, Cl, Br, I).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC (Hai phản ứng quan trọng):\n' +
+      '## Tính chất hoá học (Hai phản ứng quan trọng)\n' +
       '1. Phản ứng thế nhóm halogen bằng nhóm OH (phản ứng thuỷ phân):\n' +
       '   — Dẫn xuất halogen đun nóng với dung dịch kiềm (NaOH, KOH) tạo thành alcohol và muối halide.\n' +
       '   — Phương trình tổng quát: R−X + NaOH → R−OH + NaX (t°).\n' +
@@ -464,13 +464,13 @@ export const HOA11_C5_LESSONS: ChemLesson[] = [
       'Ethanol có trong bia rượu là chất lỏng quen thuộc, nhưng methanol (cồn công nghiệp) chỉ hơn kém ' +
       'một nhóm CH₂ lại là chất độc chết người gây mù loà. Sự hiểu biết về alcohol giúp bảo vệ mạng sống của chúng ta.',
     theory:
-      'KHÁI NIỆM VÀ PHÂN LOẠI:\n' +
+      '## Khái niệm và phân loại\n' +
       '— Alcohol là hợp chất hữu cơ có nhóm hydroxyl (−OH) liên kết trực tiếp với nguyên tử carbon no.\n' +
       '— Công thức chung của alcohol no, đơn chức, mạch hở: CₙH₂ₙ₊₁OH (n ≥ 1).\n' +
       '— Polyalcohol là alcohol có nhiều nhóm −OH (ví dụ: ethylene glycol C₂H₄(OH)₂, glycerol C₃H₅(OH)₃).\n\n' +
-      'TÍNH CHẤT VẬT LÍ (Liên kết hydrogen):\n' +
+      '## Tính chất vật lí (Liên kết hydrogen)\n' +
       '— Ở điều kiện thường, các alcohol là chất lỏng hoặc rắn. Nhiệt độ sôi và độ tan trong nước của alcohol cao hơn nhiều so với hydrocarbon có cùng phân tử khối vì các phân tử alcohol tạo được LIÊN KẾT HYDROGEN liên phân tử với nhau và với nước.\n\n' +
-      'TÍNH CHẤT HOÁ HỌC:\n' +
+      '## Tính chất hoá học\n' +
       '1. Phản ứng thế nguyên tử H của nhóm −OH: Tác dụng với kim loại kiềm giải phóng H₂: R−OH + Na → R−ONa + 1/2 H₂.\n' +
       '2. Phản ứng oxi hoá không hoàn toàn bởi CuO (t°):\n' +
       '   — Alcohol bậc I tạo aldehyde: R−CH₂OH + CuO → R−CHO + Cu + H₂O.\n' +
@@ -1003,12 +1003,12 @@ export const HOA11_C5_LESSONS: ChemLesson[] = [
       'Phenol là chất sát trùng lâu đời nhất loài người tìm ra, nhưng nó có thể gây bỏng da nghiêm trọng. ' +
       'Khác với alcohol, phenol có tính acid yếu do ảnh hưởng qua lại giữa vòng benzene và nhóm −OH.',
     theory:
-      'KHÁI NIỆM:\n' +
+      '## Khái niệm\n' +
       '— Phenol là những hợp chất hữu cơ trong phân tử có nhóm hydroxyl (−OH) liên kết trực tiếp với nguyên tử carbon của vòng benzene. Chất đơn giản nhất là C₆H₅OH (phenol).\n\n' +
-      'ẢNH HƯỞNG QUA LẠI GIỮA VÒNG BENZENE VÀ NHÓM −OH:\n' +
+      '## Ảnh hưởng qua lại giữa vòng benzene và nhóm −OH\n' +
       '— Nhóm −OH đẩy electron vào vòng benzene làm tăng mật độ electron trong vòng, đặc biệt ở các vị trí o- và p-, làm phản ứng thế vào vòng dễ hơn benzene.\n' +
       '— Vòng benzene hút electron làm liên kết O−H của nhóm −OH phân cực mạnh hơn so với alcohol, khiến nguyên tử H trở nên linh động hơn (thể hiện tính acid yếu).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC:\n' +
+      '## Tính chất hoá học\n' +
       '1. Tính acid yếu (mạnh hơn alcohol nhưng yếu hơn carbonic acid H₂CO₃):\n' +
       '   — Phenol phản ứng với dung dịch kiềm tạo muối phenolate: C₆H₅OH + NaOH → C₆H₅ONa + H₂O.\n' +
       '   — Muối sodium phenolate dễ bị khí CO₂ và nước đẩy ngược lại tạo phenol (dung dịch đục): C₆H₅ONa + CO₂ + H₂O → C₆H₅OH↓ (vẩn đục) + NaHCO₃.\n' +
@@ -1571,7 +1571,7 @@ export const HOA11_C5_LESSONS: ChemLesson[] = [
       'Chương 5 hệ thống hoá các dẫn xuất chứa oxygen và halogen — cầu nối từ hydrocarbon sang các ' +
       'hợp chất carbonyl sẽ học tiếp ở chương sau.',
     theory:
-      'TỔNG KẾT SO SÁNH DẪN XUẤT HALOGEN, ALCOHOL, PHENOL:\n' +
+      '## Tổng kết so sánh dẫn xuất halogen, alcohol, phenol\n' +
       '1. Dẫn xuất halogen (R−X): Có phản ứng thế halogen bằng −OH (NaOH loãng, t°) và phản ứng tách HX (KOH/ethanol, t° - tuân theo quy tắc Zaitsev).\n' +
       '2. Alcohol (R−OH): Có nhóm −OH gắn carbon no. Nhiệt độ sôi cao nhờ liên kết hydrogen. Tác dụng với Na. Oxi hoá bởi CuO tạo aldehyde (bậc I) hoặc ketone (bậc II). Tách nước tạo alkene (170 °C) hoặc ether (140 °C).\n' +
       '3. Phenol (C₆H₅OH): Có nhóm −OH gắn trực tiếp vòng benzene. Có tính acid yếu (tác dụng với NaOH, bị CO₂ đẩy ra khỏi muối). Dễ thế vòng thơm (phản ứng nước bromine tạo kết tủa trắng, phản ứng HNO₃ đặc tạo kết tủa vàng).\n' +

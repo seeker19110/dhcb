@@ -17,32 +17,55 @@ const ghep = (ps: InlinePart[]) =>
   ps.map((p) => (p.kind === 'text' ? p.text : `${p.base}_${p.sub}`)).join('')
 
 describe('laTieuDeLyThuyet', () => {
-  it('nhận dòng viết hoa kết thúc bằng hai chấm, kể cả có chú thích viết thường trong ngoặc', () => {
-    expect(laTieuDeLyThuyet('ĐỊNH NGHĨA SỰ RƠI TỰ DO:')).toBe(true)
-    expect(laTieuDeLyThuyet('GIA TỐC RƠI TỰ DO (g):')).toBe(true)
-    expect(laTieuDeLyThuyet('QUÁ TRÌNH HÌNH THÀNH LOÀI (Speciation):')).toBe(true)
-    expect(laTieuDeLyThuyet('SACCHAROSE (C₁₂H₂₂O₁₁ = 342):')).toBe(true)
+  it('nhận dòng mở đầu bằng "## " có chữ phía sau', () => {
+    expect(laTieuDeLyThuyet('## Định nghĩa sự rơi tự do')).toBe(true)
+    expect(laTieuDeLyThuyet('## Gia tốc rơi tự do (g)')).toBe(true)
   })
 
-  it('KHÔNG nhận câu thường, mục danh sách, hay dòng có chữ thường ngoài ngoặc', () => {
+  it('KHÔNG nhận dòng thường, dấu "##" thiếu khoảng trắng hay rỗng, kể cả dòng viết HOA kiểu cũ', () => {
     expect(laTieuDeLyThuyet('Lý thuyết:')).toBe(false)
-    expect(laTieuDeLyThuyet('— GHÉP SONG SONG (hai lò xo):')).toBe(false)
-    expect(laTieuDeLyThuyet('1. NGUYÊN LÝ CHUNG:')).toBe(false)
-    expect(laTieuDeLyThuyet('PHẢN ỨNG CỦA NaOH:')).toBe(false)
-    expect(laTieuDeLyThuyet('ĐỊNH NGHĨA: chuyển động có vận tốc đổi')).toBe(false)
-    expect(laTieuDeLyThuyet('AB:')).toBe(false)
+    expect(laTieuDeLyThuyet('##Định nghĩa')).toBe(false)
+    expect(laTieuDeLyThuyet('##   ')).toBe(false)
+    expect(laTieuDeLyThuyet('ĐỊNH NGHĨA SỰ RƠI TỰ DO:')).toBe(false)
+  })
+})
+
+/**
+ * Luật nhận tiêu đề KIỂU CŨ (trước 2026-10-01): dòng kết thúc bằng hai chấm, phần chữ ngoài ngoặc
+ * toàn HOA. Giữ ở đây CHỈ để làm cổng: dữ liệu không được viết tiêu đề theo kiểu đó nữa.
+ */
+function laTieuDeKieuCu(line: string): boolean {
+  const s = line.trim()
+  if (!s.endsWith(':') || s.length > 160 || /^(?:[—–\-•]|\d+[.)])/u.test(s)) return false
+  const chuCai = [...s.slice(0, -1).replace(/\([^()]*\)/gu, '')].filter(
+    (c) => c.toLowerCase() !== c.toUpperCase(),
+  )
+  return chuCai.length >= 3 && chuCai.every((c) => c === c.toUpperCase())
+}
+
+describe('quy ước tiêu đề trong dữ liệu (đợt 0470)', () => {
+  it('DỮ LIỆU THẬT: không còn dòng tiêu đề viết HOA kiểu cũ — tiêu đề mục phải dùng "## "', () => {
+    const conSot = MOI_BAI.flatMap((bai) =>
+      bai.theory
+        .split('\n')
+        .filter(laTieuDeKieuCu)
+        .map((l) => `${bai.id}: ${l}`),
+    )
+    // Viết hoa toàn dòng làm mất phân biệt hoa/thường (t ≠ T, Newton, ADN) và khó đọc. Thêm mục
+    // mới: viết "## Tiêu đề viết hoa đầu câu" — xem docs/changelog/0470-*.md.
+    expect(conSot).toEqual([])
   })
 })
 
 describe('phanTichLyThuyet', () => {
   it('tách tiêu đề và đoạn; giữ xuống dòng của các mục trong đoạn', () => {
     const khoi = phanTichLyThuyet(
-      'ĐỊNH NGHĨA:\n— Ý một.\n— Ý hai.\n\nCÔNG THỨC (g):\n1. v = g.t\n2. h = 0,5.g.t²',
+      '## Định nghĩa\n— Ý một.\n— Ý hai.\n\n## Công thức (g)\n1. v = g.t\n2. h = 0,5.g.t²',
     )
     expect(khoi).toEqual([
-      { kind: 'heading', text: 'ĐỊNH NGHĨA' },
+      { kind: 'heading', text: 'Định nghĩa' },
       { kind: 'para', text: '— Ý một.\n— Ý hai.' },
-      { kind: 'heading', text: 'CÔNG THỨC (g)' },
+      { kind: 'heading', text: 'Công thức (g)' },
       { kind: 'para', text: '1. v = g.t\n2. h = 0,5.g.t²' },
     ])
   })
@@ -54,7 +77,7 @@ describe('phanTichLyThuyet', () => {
   it(`DỮ LIỆU THẬT (${MOI_BAI.length} bài): không mất một ký tự chữ nào của lý thuyết`, () => {
     for (const bai of MOI_BAI) {
       const khoi = phanTichLyThuyet(bai.theory)
-      const conLai = khoi.map((k) => (k.kind === 'heading' ? `${k.text}:` : k.text)).join('\n')
+      const conLai = khoi.map((k) => (k.kind === 'heading' ? `## ${k.text}` : k.text)).join('\n')
       // So phần không phải khoảng trắng: bộ tách chỉ được bỏ dòng trống và khoảng trắng đầu/cuối
       // dòng tiêu đề, không được bỏ/đổi chữ.
       expect(conLai.replace(/\s+/gu, ''), bai.id).toBe(bai.theory.replace(/\s+/gu, ''))

@@ -158,18 +158,18 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Tại sao một cây cầu treo mỏng manh lại có thể đỡ được đoàn xe tải nặng hàng chục tấn? ' +
       'Bí quyết nằm ở sự phối hợp của các lực căng dây cáp để tổng hợp thành một lực cân bằng hoàn hảo.',
     theory:
-      'KHÁI NIỆM VỀ LỰC VÀ ĐIỀU KIỆN CÂN BẰNG:\n' +
+      '## Khái niệm về lực và điều kiện cân bằng\n' +
       '— Lực (F) là đại lượng vectơ đặc trưng cho tác dụng của vật này lên vật khác, kết quả gây ra gia tốc hoặc làm vật biến dạng. Đơn vị: Newton (N).\n' +
       '— Giá của lực: Đường thẳng mang vectơ lực.\n' +
       '— Hệ lực cân bằng: Các lực cùng tác dụng lên một vật và không gây gia tốc cho vật (vật đứng yên hoặc thẳng đều).\n\n' +
-      'TỔNG HỢP LỰC (Quy tắc hình bình hành):\n' +
+      '## Tổng hợp lực (Quy tắc hình bình hành)\n' +
       '— Tổng hợp lực là thay thế nhiều lực tác dụng đồng thời vào một vật bằng một lực duy nhất có tác dụng giống hệt.\n' +
       '— Quy tắc hình bình hành: Vectơ F = vectơ F₁ + vectơ F₂. Độ lớn tổng hợp:\n' +
       '  — Khi cùng chiều: F = F₁ + F₂.\n' +
       '  — Khi ngược chiều: F = |F₁ - F₂|.\n' +
       '  — Khi vuông góc: F = √(F₁² + F₂²).\n' +
       '  — Tổng quát: F = √(F₁² + F₂² + 2.F₁.F₂.cos α) (α là góc giữa hai lực).\n\n' +
-      'PHÂN TÍCH LỰC:\n' +
+      '## Phân tích lực\n' +
       '— Phân tích lực là thay thế một lực bằng hai hoặc nhiều lực thành phần có tác dụng giống hệt lực đó. Thường phân tích theo hai phương vuông góc Ox và Oy để giải toán: F_x = F.cos α, F_y = F.sin α.',
     workedExample: {
       problem:
@@ -382,11 +382,11 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Nếu bạn phóng một con tàu vũ trụ vào không gian sâu thẳm, nó sẽ bay mãi mãi theo một đường thẳng mà không cần bất kì động cơ nào chạy. ' +
       'Tại sao trên Trái Đất, mọi vật di chuyển lại dừng lại nếu ta ngừng đẩy?',
     theory:
-      'QUÁN TÍNH (INERTIA):\n' +
+      '## Quán tính (inertia)\n' +
       '— Quán tính là xu hướng bảo toàn trạng thái đứng yên hoặc chuyển động thẳng đều ban đầu của vật.\n\n' +
-      'ĐỊNH LUẬT 1 NEWTON (ĐỊNH LUẬT QUÁN TÍNH):\n' +
+      '## Định luật 1 Newton (định luật quán tính)\n' +
       '— Phát biểu: Nếu một vật không chịu tác dụng của lực nào hoặc chịu tác dụng của các lực có hợp lực bằng không, thì vật đang đứng yên sẽ tiếp tục đứng yên, vật đang chuyển động sẽ tiếp tục chuyển động thẳng đều.\n\n' +
-      'Ý NGHĨA CỦA ĐỊNH LUẬT:\n' +
+      '## Ý nghĩa của định luật\n' +
       '— Lực không phải là nguyên nhân duy trì chuyển động, mà lực là nguyên nhân làm thay đổi vận tốc (gây ra gia tốc) của vật.\n' +
       '— Khối lượng của vật là đại lượng đặc trưng cho mức độ quán tính của vật (khối lượng càng lớn, quán tính càng lớn, vật càng khó thay đổi vận tốc).',
     workedExample: {
@@ -625,11 +625,11 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Đẩy một chiếc xe đẩy siêu thị trống không rất dễ dàng. Nhưng nếu chiếc xe chất đầy hàng hoá nặng nề, bạn cần dùng một lực lớn hơn nhiều ' +
       'chỉ để làm nó bắt đầu chuyển động. Định luật 2 Newton sẽ giải thích mối liên hệ này bằng toán học.',
     theory:
-      'ĐỊNH LUẬT 2 NEWTON:\n' +
+      '## Định luật 2 Newton\n' +
       '— Phát biểu: Gia tốc của một vật cùng hướng với lực tác dụng lên vật. Độ lớn của gia tốc tỉ lệ thuận với độ lớn của lực tác dụng và tỉ lệ nghịch với khối lượng của vật.\n' +
       '— Công thức vectơ: vectơ a = vectơ F / m hay vectơ F = m.vectơ a.\n' +
       '— Trong trường hợp vật chịu tác dụng của nhiều lực: vectơ F_hl = m.vectơ a (với F_hl là hợp lực của tất cả các lực tác dụng).\n\n' +
-      'MỐI QUAN HỆ GIỮA KHỐI LƯỢNG VÀ GIA TỐC:\n' +
+      '## Mối quan hệ giữa khối lượng và gia tốc\n' +
       '— Khối lượng (m) là đại lượng vô hướng dương đặc trưng cho mức độ quán tính (sức ì) của vật. Với cùng một lực tác dụng, vật có khối lượng lớn hơn sẽ nhận gia tốc nhỏ hơn (tỉ lệ nghịch).',
     workedExample: {
       problem:
@@ -913,12 +913,12 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Khi một chú chim đập cánh xuống không khí, không khí đẩy chú chim bay lên cao. Khi một tên lửa phụt luồng khí nóng ' +
       'xuống phía dưới, nó vọt thẳng lên trời. Tại sao lực luôn xuất hiện theo từng cặp như vậy?',
     theory:
-      'SỰ TƯƠNG TÁC GIỮA CÁC VẬT:\n' +
+      '## Sự tương tác giữa các vật\n' +
       '— Lực không bao giờ xuất hiện đơn lẻ mà luôn xuất hiện theo cặp tương tác hai chiều giữa hai vật.\n\n' +
-      'ĐỊNH LUẬT 3 NEWTON (ĐỊNH LUẬT TƯƠNG TÁC):\n' +
+      '## Định luật 3 Newton (định luật tương tác)\n' +
       '— Phát biểu: Trong mọi trường hợp, khi vật A tác dụng lên vật B một lực, thì vật B cũng tác dụng lại vật A một lực. Hai lực này là hai lực trực đối (cùng giá, cùng độ lớn nhưng ngược chiều).\n' +
       '— Công thức: vectơ F_AB = - vectơ F_BA (vectơ lực A tác dụng lên B bằng trừ vectơ lực B tác dụng lên A).\n\n' +
-      'LỰC VÀ PHẢN LỰC (ACTION & REACTION):\n' +
+      '## Lực và phản lực (action & reaction)\n' +
       '— Đặc điểm của cặp lực và phản lực:\n' +
       '  1. Xuất hiện và mất đi đồng thời.\n' +
       '  2. Cùng giá, cùng độ lớn nhưng ngược chiều (trực đối).\n' +
@@ -1175,7 +1175,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Tại sao mọi thứ trên Trái Đất luôn rơi xuống mặt đất mà không bay lên trời? Và điều gì giữ cho một người leo núi ' +
       'lửng lơ trên vách đá nhờ một sợi dây thừng?',
     theory:
-      'TRỌNG LỰC (GRAVITY) VÀ TRỌNG LƯỢNG (WEIGHT):\n' +
+      '## Trọng lực (gravity) và trọng lượng (weight)\n' +
       '— Trọng lực (vectơ P) là lực hút của Trái Đất tác dụng lên vật, gây ra gia tốc rơi tự do cho vật.\n' +
       '  — Điểm đặt: Tại trọng tâm (center of gravity) của vật.\n' +
       '  — Phương: Thẳng đứng. Chiều: Từ trên xuống dưới (hướng về tâm Trái Đất).\n' +
@@ -1187,7 +1187,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'vì g thay đổi. Bạn 50 kg trên Trái Đất có P = 500 N; lên Mặt Trăng (g ≈ 1,6 m/s²) vẫn 50 kg nhưng P chỉ còn 80 N.\n' +
       '  — VÌ SAO hay nhầm: cái cân trong nhà thực ra đo LỰC ép lên mặt cân rồi tự chia cho g để hiện ra số kg. ' +
       'Đưa đúng cái cân đó lên Mặt Trăng thì nó sẽ hiện sai, vì nó vẫn chia cho g của Trái Đất.\n\n' +
-      'LỰC CĂNG DÂY (TENSION FORCE):\n' +
+      '## Lực căng dây (tension force)\n' +
       '— Khi một sợi dây bị kéo căng, nó tác dụng lên các vật gắn với hai đầu dây các lực căng dây (vectơ T).\n' +
       '— Đặc điểm lực căng dây:\n' +
       '  — Điểm đặt: Tại điểm dây tiếp xúc với vật.\n' +
@@ -1435,12 +1435,12 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Nếu không có lực ma sát, bạn sẽ không thể bước đi mà sẽ trượt ngã ngay lập tức, lốp xe ô tô sẽ quay tít tại chỗ và ' +
       'mọi đinh vít sẽ tuột khỏi tường. Lực ma sát xuất hiện như thế nào?',
     theory:
-      'KHÁI NIỆM LỰC MA SÁT TRƯỢT:\n' +
+      '## Khái niệm lực ma sát trượt\n' +
       '— Xuất hiện ở mặt tiếp xúc khi một vật trượt trên bề mặt của vật khác, có hướng ngược hướng chuyển động trượt.\n\n' +
-      'CÔNG THỨC LỰC MA SÁT TRƯỢT:\n' +
+      '## Công thức lực ma sát trượt\n' +
       '— F_mst = μ_t.N (μ_t là hệ số ma sát trượt; N là độ lớn áp lực / phản lực vuông góc của bề mặt tác dụng lên vật).\n' +
       '  — Hệ số ma sát trượt μ_t: Không có đơn vị, phụ thuộc vào bản chất và tình trạng của hai bề mặt tiếp xúc (độ nhám, chất liệu).\n\n' +
-      'LỰC MA SÁT NGHỈ (STATIC FRICTION):\n' +
+      '## Lực ma sát nghỉ (static friction)\n' +
       '— Xuất hiện ở mặt tiếp xúc khi vật chịu lực tác dụng song song mặt tiếp xúc nhưng chưa chuyển động. Có xu hướng giữ vật đứng yên.\n' +
       '— Độ lớn lực ma sát nghỉ bằng độ lớn của lực kéo song song mặt tiếp xúc (F_msn = F_keo). Ma sát nghỉ cực đại lớn hơn ma sát trượt một chút.',
     workedExample: {
@@ -1698,12 +1698,12 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Tại sao khi nhảy dù, dù mở ra lại giúp người nhảy rơi xuống rất chậm và an toàn thay vì lao thẳng xuống đất? ' +
       'Đó là nhờ lực cản của không khí — một dạng lực cản chất lưu bảo vệ chúng ta.',
     theory:
-      'LỰC CẢN CỦA CHẤT LƯU (FLUID RESISTANCE):\n' +
+      '## Lực cản của chất lưu (fluid resistance)\n' +
       '— Khi một vật chuyển động trong chất lưu (chất khí hoặc chất lỏng), nó luôn chịu một lực cản ngược hướng chuyển động.\n' +
       '— Lực cản phụ thuộc vào: Vận tốc của vật (tốc độ càng nhanh lực cản càng lớn), hình dạng vật (thân thuôn dài, mũi vuốt nhọn thì lực cản nhỏ), kích thước diện tích cản, và độ nhớt của chất lưu.\n\n' +
-      'VẬN TỐC GIỚI HẠN (TERMINAL VELOCITY):\n' +
+      '## Vận tốc giới hạn (terminal velocity)\n' +
       '— Khi vật rơi trong chất lưu, vận tốc tăng dần làm lực cản tăng dần. Đến khi lực cản bằng trọng lực, hợp lực bằng 0 → Vật chuyển động thẳng đều với vận tốc không đổi gọi là vận tốc giới hạn.\n\n' +
-      'LỰC NÂNG CỦA CHẤT LƯU (LIFT FORCE):\n' +
+      '## Lực nâng của chất lưu (lift force)\n' +
       '— Khi vật chuyển động trong chất lưu, có thể xuất hiện lực vuông góc với hướng chuyển động, có tác dụng nâng vật lên ' +
       '(ví dụ: lực nâng của không khí lên cánh máy bay, lực nâng của nước lên cánh lái tàu ngầm).\n' +
       '— Chú ý phân biệt: lực nâng này chỉ có khi vật CHUYỂN ĐỘNG trong chất lưu, khác hẳn lực đẩy Archimedes — ' +
@@ -1775,7 +1775,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Làm thế nào để tìm gia tốc của một chiếc hộp gỗ đang trượt xuống một dốc nghiêng có ma sát? ' +
       'Hãy học phương pháp sơ đồ phân tích lực — công cụ mạnh mẽ nhất để giải mọi bài toán cơ học.',
     theory:
-      'PHƯƠNG PHÁP ĐỘNG LỰC HỌC (free-body diagram):\n' +
+      '## Phương pháp động lực học (free-body diagram)\n' +
       '1. Chọn vật nghiên cứu, vẽ hệ trục toạ độ Đề-các thích hợp (thường Ox trùng hướng chuyển động, Oy vuông góc).\n' +
       '2. Xác định và vẽ tất cả các lực tác dụng lên vật (Trọng lực P, Phản lực N, Ma sát F_ms, Lực kéo F_k).\n' +
       '3. Viết phương trình Định luật 2 Newton dạng vectơ: vectơ F_hl = m.vectơ a.\n' +
@@ -2027,13 +2027,13 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Tại sao khi mở cửa, ta luôn đẩy ở tay nắm sát mép ngoài cánh cửa thay vì đẩy ở gần bản lề? ' +
       'Hiệu quả làm quay của lực không chỉ phụ thuộc vào độ mạnh của lực mà còn phụ thuộc vào một khoảng cách đặc biệt.',
     theory:
-      'MOMENT LỰC (TORQUE):\n' +
+      '## Moment lực (torque)\n' +
       '— Moment lực là đại lượng đặc trưng cho tác dụng làm quay của lực và được đo bằng tích của lực với cánh tay đòn của nó.\n' +
       '— Công thức: M = F.d.\n' +
       '  — F: Độ lớn lực tác dụng (N).\n' +
       '  — d (Cánh tay đòn): Khoảng cách từ trục quay đến giá của lực (m).\n' +
       '— Đơn vị trong hệ SI: Newton mét (N.m).\n\n' +
-      'QUY TẮC MOMENT LỰC (ĐIỀU KIỆN CÂN BẰNG CỦA VẬT CÓ TRỤC QUAY CỐ ĐỊNH):\n' +
+      '## Quy tắc moment lực (điều kiện cân bằng của vật có trục quay cố định)\n' +
       '— Một vật có trục quay cố định ở trạng thái cân bằng khi tổng các moment lực có xu hướng làm vật quay theo chiều kim đồng hồ bằng tổng các moment lực có xu hướng làm vật quay ngược chiều kim đồng hồ:\n' +
       '  — Σ M_thuan = Σ M_nguoc.\n' +
       '— Quy tắc này còn áp dụng cho cả vật không có trục quay cố định nếu xuất hiện trục quay tạm thời.',
@@ -2101,12 +2101,12 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       'Làm thế nào để chứng minh quy tắc hình bình hành lực không chỉ là lí thuyết trên giấy? ' +
       'Hãy dùng các lực kế thực tế và vẽ bản đồ lực để tự mình kiểm chứng định luật Vật lí cơ bản này.',
     theory:
-      'NGUYÊN TẮC THỰC HÀNH TỔNG HỢP LỰC:\n' +
+      '## Nguyên tắc thực hành tổng hợp lực\n' +
       '— Mắc hai lực kế đo hai lực thành phần vectơ F₁ và vectơ F₂ đồng quy tác dụng lên một chiếc vòng nhỏ đặt phẳng làm điểm đồng quy.\n' +
       '— Mắc lực kế thứ ba đo lực đối cân bằng vectơ F₃ sao cho vòng nhẫn đứng yên hoàn toàn ở tâm.\n' +
       '— Khi vòng nhẫn cân bằng: vectơ F₁ + vectơ F₂ + vectơ F₃ = vectơ 0 => vectơ F₁ + vectơ F₂ = - vectơ F₃.\n' +
       '— Vẽ các vectơ lực lên giấy theo đúng tỉ lệ độ lớn và hướng thực tế, dựng hình bình hành để đối chiếu đường chéo hợp lực vectơ F_hl của F₁ và F₂ với vectơ đối của F₃.\n\n' +
-      'ĐIỀU KIỆN ĐẠT ĐỘ CHÍNH XÁC CAO:\n' +
+      '## Điều kiện đạt độ chính xác cao\n' +
       '— Đặt các lực kế nằm phẳng trên mặt bảng để tránh sai số trọng lượng bản thân lực kế.\n' +
       '— Đọc số chỉ lực kế theo hướng nhìn vuông góc với mặt số.',
     workedExample: {

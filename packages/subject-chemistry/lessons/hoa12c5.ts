@@ -15,17 +15,17 @@ export const HOA12_C5_LESSONS: ChemLesson[] = [
       'Pin điện thoại và pin lithium-ion trên xe điện hoạt động dựa trên sự chuyển dịch tự phát của electron' +
       ' giữa hai điện cực. Làm thế nào để ta đo lường và tính toán được hiệu điện thế của nguồn điện này?',
     theory:
-      'THẾ ĐIỆN CỰC CHUẨN (E°):\n' +
+      '## Thế điện cực chuẩn (E°)\n' +
       '— Thế điện cực chuẩn của kim loại (E°_Mⁿ⁺/M) đặc trưng cho khả năng khử của kim loại ở trạng thái đơn chất và khả năng oxi hoá của ion kim loại đó trong dung dịch nước ở điều kiện chuẩn.\n' +
       '— Điện cực hydrogen chuẩn (viết tắt SHE, từ standard hydrogen electrode) được quy ước có thế điện cực bằng 0,00 V, lấy làm mốc so sánh cho mọi điện cực khác.\n' +
       '— Ý nghĩa: Trị số E° càng âm thì kim loại có tính khử càng mạnh, ion của nó có tính oxi hoá càng yếu; trị số E° càng dương thì kim loại có tính khử càng yếu, ion của nó có tính oxi hoá càng mạnh.\n\n' +
-      'PIN ĐIỆN HOÁ (Galvanic Cell):\n' +
+      '## Pin điện hoá (Galvanic Cell)\n' +
       '— Là thiết bị biến năng lượng của phản ứng oxi hoá - khử tự phát thành điện năng.\n' +
       '— Cấu tạo (ví dụ Pin Daniell Zn-Cu):\n' +
       '  1. Anode (cực âm): làm bằng kim loại có tính khử mạnh hơn (Zn), nơi xảy ra quá trình oxi hoá: Zn → Zn²⁺ + 2e.\n' +
       '  2. Cathode (cực dương): làm bằng kim loại có tính khử yếu hơn (Cu), nơi xảy ra quá trình khử: Cu²⁺ + 2e → Cu.\n' +
       '  3. Cầu muối: ngăn hai dung dịch điện li trộn lẫn nhau nhưng cho phép ion di chuyển qua để duy trì trung hoà điện tích.\n\n' +
-      'SUẤT ĐIỆN ĐỘNG CHUẨN CỦA PIN (E°_pin):\n' +
+      '## Suất điện động chuẩn của pin (E°_pin)\n' +
       '— Suất điện động chuẩn là hiệu điện thế cực đại giữa hai điện cực của pin điện hoá ở điều kiện chuẩn.\n' +
       '— Công thức: E°_pin = E°_catot − E°_anot = E°_dương − E°_âm.\n' +
       '— Ví dụ pin Zn-Cu: E°_pin = E°_Cu²⁺/Cu − E°_Zn²⁺/Zn = 0,34 − (−0,76) = 1,10 V.',
@@ -535,15 +535,15 @@ export const HOA12_C5_LESSONS: ChemLesson[] = [
       'Pin điện biến hoá năng thành điện năng. Điện phân đi theo chiều ngược lại: dùng dòng điện để ép một phản ứng ' +
       'vốn không tự xảy ra phải xảy ra. Nhờ nó, con người luyện được nhôm, sản xuất khí chlorine và mạ vàng đồ trang sức.',
     theory:
-      'KHÁI NIỆM ĐIỆN PHÂN:\n' +
+      '## Khái niệm điện phân\n' +
       '— Điện phân là quá trình oxi hoá - khử xảy ra trên bề mặt các điện cực dưới tác dụng của dòng điện một chiều đi qua chất điện li nóng chảy hoặc dung dịch chất điện li.\n\n' +
-      'SỰ KHÁC BIỆT ĐIỆN CỰC TRONG ĐIỆN PHÂN:\n' +
+      '## Sự khác biệt điện cực trong điện phân\n' +
       '— Anode (cực dương nối với cực dương nguồn điện): Xảy ra quá trình OXI HOÁ. Chất nhường electron là anion (như Cl⁻); với anion SO₄²⁻, NO₃⁻ thì chúng KHÔNG bị oxi hoá mà nước bị oxi hoá thay (2H₂O → O₂ + 4H⁺ + 4e); còn nếu anode không phải điện cực trơ thì chính kim loại anode bị oxi hoá, tan ra.\n' +
       '— Cathode (cực âm nối với cực âm nguồn điện): Xảy ra quá trình KHỬ (cation kim loại nhận electron; với cation rất khó bị khử như Na⁺, K⁺ thì nước bị khử thay, thoát khí H₂).\n\n' +
-      'ĐIỆN PHÂN NÓNG CHẢY (Luyện kim mạnh):\n' +
+      '## Điện phân nóng chảy (Luyện kim mạnh)\n' +
       '— Dùng để điều chế các kim loại có tính khử mạnh (như Na, K, Ca, Mg, Al) từ muối halide hoặc oxide nóng chảy.\n' +
       '   Ví dụ điện phân Al₂O₃ nóng chảy, có thêm cryolite Na₃AlF₆ làm chất trợ chảy để hạ nhiệt độ nóng chảy (không phải chất xúc tác): 2Al₂O₃ → 4Al (ở cathode) + 3O₂ (ở anode).\n\n' +
-      'ĐỊNH LUẬT FARADAY VỀ ĐIỆN PHÂN:\n' +
+      '## Định luật Faraday về điện phân\n' +
       '— Khối lượng chất giải phóng ở điện cực tỉ lệ thuận với điện lượng đi qua bình điện phân.\n' +
       '— Công thức Faraday: m = (A * I * t) / (n * F).\n' +
       '  Trong đó: m là khối lượng chất giải phóng (gam); A là khối lượng mol nguyên tử của chất (g/mol); I là cường độ dòng điện (Ampere, A); t là thời gian điện phân (giây, s); n là số electron trao đổi của nguyên tử/ion; F là hằng số Faraday (96500 C/mol).',
@@ -1006,7 +1006,7 @@ export const HOA12_C5_LESSONS: ChemLesson[] = [
       'Chương 5 nối hai chiều giữa điện năng và hoá năng: pin đi từ phản ứng ra dòng điện, điện phân đi từ dòng điện ra phản ứng. ' +
       'Bài này gom lại các công thức dùng để tính toán cho cả hai chiều.',
     theory:
-      'TỔNG KẾT KIẾN THỨC CHƯƠNG 5:\n' +
+      '## Tổng kết kiến thức chương 5\n' +
       '1. Thế điện cực chuẩn (E°): Chỉ số so sánh độ mạnh/yếu của cặp oxi hoá - khử so với SHE (0,00 V). E° âm hơn → kim loại tính khử mạnh hơn. E° dương hơn → ion tính oxi hoá mạnh hơn.\n' +
       '2. Pin điện hoá: Phản ứng tự phát phát ra dòng điện. E°_pin = E°_catot − E°_anot (luôn dương). Cực âm (anode) xảy ra oxi hoá, cực dương (cathode) xảy ra khử.\n' +
       '3. Điện phân: Cưỡng bức bằng dòng điện. Cực dương (anode) xảy ra oxi hoá, cực âm (cathode) xảy ra khử. Điện phân dung dịch NaCl có màng ngăn tạo NaOH, Cl₂ (ở anode) và H₂ (ở cathode).\n' +

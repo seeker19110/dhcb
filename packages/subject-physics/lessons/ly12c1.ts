@@ -964,15 +964,15 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Tại sao nước đá để ngoài phòng lại tan thành nước lỏng, rồi đun nóng nước lỏng lại biến thành hơi nước? ' +
       'Mọi chất quanh ta đều được cấu tạo từ các hạt chuyển động không ngừng, và trạng thái của chúng phụ thuộc vào nhiệt độ và lực liên kết phân tử.',
     theory:
-      'MÔ HÌNH ĐỘNG HỌC PHÂN TỬ VỀ CẤU TRÚC CHẤT:\n' +
+      '## Mô hình động học phân tử về cấu trúc chất\n' +
       '1. Các chất được cấu tạo từ các hạt riêng biệt gọi là phân tử (hoặc nguyên tử, ion).\n' +
       '2. Các phân tử chuyển động không ngừng, chuyển động này càng nhanh thì nhiệt độ của chất càng cao (chuyển động nhiệt).\n' +
       '3. Giữa các phân tử có các lực tương tác (lực hút và lực đẩy phân tử).\n\n' +
-      'BA THỂ CỦA CHẤT (RẮN - LỎNG - KHÍ):\n' +
+      '## Ba thể của chất (rắn - lỏng - khí)\n' +
       '— Thể rắn: Các phân tử ở rất gần nhau, sắp xếp có trật tự, chỉ dao động xung quanh các vị trí cân bằng cố định. Do đó, chất rắn có thể tích và hình dạng xác định.\n' +
       '— Thể lỏng: Lực liên kết yếu hơn ở thể rắn, các phân tử vẫn sát nhau nhưng vị trí cân bằng của chúng luôn thay đổi (các phân tử trượt lên nhau và đổi chỗ cho nhau). Do đó, chất lỏng có thể tích xác định nhưng hình dạng không xác định (phụ thuộc bình chứa).\n' +
       '— Thể khí: Lực tương tác phân tử rất yếu, các phân tử ở xa nhau và chuyển động hỗn loạn không ngừng. Chất khí không có thể tích và hình dạng xác định, luôn chiếm toàn bộ thể tích bình chứa.\n\n' +
-      'SỰ CHUYỂN THỂ (PHASE TRANSITIONS):\n' +
+      '## Sự chuyển thể (phase transitions)\n' +
       '— Nóng chảy (rắn -> lỏng) & Đông đặc (lỏng -> rắn).\n' +
       '— Hoá hơi (lỏng -> khí; gồm bay hơi ở bề mặt và sôi ở cả trong lòng chất lỏng) & Ngưng tụ (khí -> lỏng).\n' +
       '— Thăng hoa (rắn -> khí) & Ngưng kết (khí -> rắn).',
@@ -1377,13 +1377,13 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Xoa mạnh hai bàn tay vào nhau trong ngày đông lạnh giá giúp tay ấm lên. ' +
       'Dưới góc độ vật lí, ta đã thực hiện công lên tay để làm tăng nội năng và nhiệt độ của chúng.',
     theory:
-      'KHÁI NIỆM NỘI NĂNG (INTERNAL ENERGY):\n' +
+      '## Khái niệm nội năng (internal energy)\n' +
       '— Nội năng (U) của một hệ là tổng động năng của chuyển động hỗn loạn không ngừng của các phân tử cấu tạo nên hệ và thế năng tương tác giữa chúng.\n' +
       '— Nội năng phụ thuộc vào nhiệt độ (T) và thể tích (V) của hệ: U = f(T, V).\n\n' +
-      'CÁC CÁCH LÀM BIẾN ĐỔI NỘI NĂNG:\n' +
+      '## Các cách làm biến đổi nội năng\n' +
       '1. Thực hiện công (Doing work): Có sự chuyển hoá năng lượng từ cơ năng sang nội năng (ví dụ cọ xát, nén khí).\n' +
       '2. Truyền nhiệt (Heat transfer): Không có sự chuyển hoá năng lượng mà chỉ có sự truyền nội năng từ vật này sang vật khác (nhiệt lượng Q).\n\n' +
-      'ĐỊNH LUẬT I NHIỆT ĐỘNG LỰC HỌC:\n' +
+      '## Định luật I nhiệt động lực học\n' +
       '— Phát biểu: Độ biến thiên nội năng của hệ bằng tổng công và nhiệt lượng mà hệ nhận được.\n' +
       '— Công thức: ΔU = A + Q.\n' +
       '— Quy ước dấu:\n' +
@@ -1725,13 +1725,13 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Làm thế nào định nghĩa chính xác trạng thái "nóng" và "lạnh" một cách khoa học? ' +
       'Tại sao thang đo Kelvin bắt đầu từ độ không tuyệt đối -273,15 °C? Hãy cùng khám phá thế giới nhiệt độ.',
     theory:
-      'KHÁI NIỆM NHIỆT ĐỘ VÀ CÂN BẰNG NHIỆT:\n' +
+      '## Khái niệm nhiệt độ và cân bằng nhiệt\n' +
       '— Nhiệt độ là đại lượng vật lí đặc trưng cho mức độ nóng lạnh của vật, đo bằng động năng trung bình của chuyển động nhiệt phân tử.\n' +
       '— Trạng thái cân bằng nhiệt: Khi hai vật tiếp xúc nhiệt đạt cùng nhiệt độ, không còn sự truyền nhiệt ròng giữa chúng.\n\n' +
-      'CÁC THANG NHIỆT ĐỘ THÔNG DỤNG:\n' +
+      '## Các thang nhiệt độ thông dụng\n' +
       '1. Thang Celsius (t, °C): Lấy nhiệt độ nóng chảy của nước đá nguyên chất làm mốc 0 °C, nhiệt độ sôi của nước làm mốc 100 °C (ở áp suất tiêu chuẩn).\n' +
       '2. Thang Kelvin (T, K): Là thang nhiệt độ tuyệt đối trong hệ SI. Độ không tuyệt đối (0 K) là nhiệt độ thấp nhất trên lí thuyết, nơi mọi chuyển động nhiệt phân tử ngừng lại.\n\n' +
-      'HỆ THỨC CHUYỂN ĐỔI GIỮA CELSIUS VÀ KELVIN:\n' +
+      '## Hệ thức chuyển đổi giữa Celsius và Kelvin\n' +
       '— T (K) = t (°C) + 273,15  (Thường làm tròn thành T = t + 273).\n' +
       '— Lưu ý về độ chênh lệch nhiệt độ: Khoảng chia của 1 độ C bằng đúng khoảng chia của 1 Kelvin, tức là: ΔT (K) = Δt (°C).',
     workedExample: {
@@ -2061,7 +2061,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Tại sao bãi cát ngoài bờ biển lại nóng bỏng chân dưới ánh nắng mặt trời, trong khi nước biển sát cạnh bên vẫn mát rượi? ' +
       'Nước có khả năng trữ nhiệt rất lớn, hay nói cách khác là có Nhiệt dung riêng cao vượt trội.',
     theory:
-      'ĐỊNH NGHĨA NHIỆT DUNG RIÊNG (SPECIFIC HEAT CAPACITY):\n' +
+      '## Định nghĩa nhiệt dung riêng (specific heat capacity)\n' +
       '— Nhiệt dung riêng (c) của một chất là nhiệt lượng cần thiết để làm cho 1 kg chất đó tăng thêm 1 K (hoặc 1 °C).\n' +
       '— Công thức tính nhiệt lượng thu vào hay toả ra khi thay đổi nhiệt độ:\n' +
       '  Q = m * c * Δt  = m * c * (t₂ - t₁).\n' +
@@ -2495,7 +2495,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Nhiệt lượng này đã đi đâu? Nó được dùng để phá vỡ liên kết giữa các phân tử trong chất rắn, cho chúng chuyển sang thể lỏng.',
     theory:
       'Nhiệt lượng cần cung cấp để làm nóng chảy hoàn toàn một đơn vị khối lượng chất rắn ở nhiệt độ nóng chảy gọi là Nhiệt nóng chảy riêng.\n\n' +
-      'CÔNG THỨC NHIỆT NÓNG CHẢY (LATENT HEAT OF FUSION):\n' +
+      '## Công thức nhiệt nóng chảy (latent heat of fusion)\n' +
       '— Q = λ * m.\n' +
       '  — Q: Nhiệt lượng cần cung cấp để chất rắn nóng chảy hoàn toàn (J).\n' +
       '  — λ: Nhiệt nóng chảy riêng của chất rắn (đơn vị: J/kg).\n' +
@@ -2912,7 +2912,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Sự chuyển thể từ lỏng sang hơi cần hấp thụ một lượng năng lượng lớn để giải phóng các phân tử lỏng thoát ra ngoài.',
     theory:
       'Nhiệt lượng cần cung cấp để hoá hơi hoàn toàn một đơn vị khối lượng chất lỏng ở nhiệt độ sôi gọi là Nhiệt hoá hơi riêng.\n\n' +
-      'CÔNG THỨC NHIỆT HOÁ HƠI (LATENT HEAT OF VAPORIZATION):\n' +
+      '## Công thức nhiệt hoá hơi (latent heat of vaporization)\n' +
       '— Q = L * m.\n' +
       '  — Q: Nhiệt lượng cần cung cấp để chất lỏng hoá hơi hoàn toàn ở nhiệt độ sôi (J).\n' +
       '  — L: Nhiệt hoá hơi riêng của chất lỏng (đơn vị: J/kg).\n' +
@@ -3288,11 +3288,11 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       'Luyện tập giải các bài toán trao đổi nhiệt phức tạp như pha trộn nước, đá tan chảy ' +
       'hay tính toán hiệu suất đun nấu sẽ giúp bạn củng cố sâu sắc kiến thức nhiệt học.',
     theory:
-      'PHƯƠNG TRÌNH CÂN BẰNG NHIỆT (HEAT EQUILIBRIUM):\n' +
+      '## Phương trình cân bằng nhiệt (heat equilibrium)\n' +
       '— Khi không có thất thoát nhiệt ra môi trường ngoài: Q_toả = Q_thu.\n' +
       '  — Vật toả nhiệt (nhiệt độ cao giảm xuống t_cânbằng): Q_toả = m * c * (t_đầu - t_cânbằng).\n' +
       '  — Vật thu nhiệt (nhiệt độ thấp tăng lên t_cânbằng): Q_thu = m * c * (t_cânbằng - t_đầu) + Q_chuyểnthể (nếu có chuyển thể đá tan/nước sôi).\n\n' +
-      'HIỆU SUẤT ĐUN NẤU (HEATING EFFICIENCY):\n' +
+      '## Hiệu suất đun nấu (heating efficiency)\n' +
       '— H = (Q_ích / Q_toànphần) * 100%.\n' +
       '  — Q_ích: Nhiệt lượng làm nóng nước/vật cần nấu đun.\n' +
       '  — Q_toànphần: Nhiệt năng do nhiên liệu toả ra hoặc điện năng tiêu thụ.',

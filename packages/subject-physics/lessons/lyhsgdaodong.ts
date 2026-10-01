@@ -29,12 +29,12 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       '  Nhận xét: ghép nối tiếp thì hệ MỀM HƠN cả lò xo mềm nhất, chu kì TĂNG. Trực giác: nối dài thêm thì dễ kéo giãn hơn.\n' +
       '— MẸO NHỚ AN TOÀN: đừng nhớ công thức, hãy nhớ ĐẠI LƯỢNG NÀO CHUNG. Cùng độ giãn → cộng lực → cộng k. ' +
       'Cùng lực → cộng độ giãn → cộng 1/k.\n\n' +
-      'HỆ QUẢ VỀ CHU KÌ (hay dùng để giải nhanh):\n' +
+      '## Hệ quả về chu kì (hay dùng để giải nhanh)\n' +
       '— Cùng một vật m, nếu treo riêng từng lò xo cho chu kì T₁, T₂ thì:\n' +
       '  Ghép nối tiếp: T² = T₁² + T₂².  Ghép song song: 1/T² = 1/T₁² + 1/T₂².\n' +
       '— Cắt một lò xo có độ cứng k, chiều dài tự nhiên l₀ thành đoạn dài l thì đoạn đó có độ cứng k′ = k·l₀/l ' +
       '(độ cứng tỉ lệ NGHỊCH với chiều dài, vì cùng một lực thì đoạn ngắn giãn ít hơn).\n\n' +
-      'ĐIỀU KIỆN ÁP DỤNG VÀ GIỚI HẠN:\n' +
+      '## Điều kiện áp dụng và giới hạn\n' +
       '— Mọi công thức trên chỉ đúng trong giới hạn đàn hồi (định luật Hooke còn nghiệm đúng) và khi khối lượng lò xo ' +
       'không đáng kể so với vật.\n' +
       '— Với con lắc lò xo THẲNG ĐỨNG, chu kì vẫn là T = 2π√(m/k) và không phụ thuộc g; g chỉ làm vị trí cân bằng ' +
@@ -141,11 +141,11 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       'Ý TƯỞNG CỐT LÕI: con lắc đơn không "biết" lực nào đang kéo nó; nó chỉ cảm nhận TỔNG các lực không đổi đặt lên vật. ' +
       'Gộp tất cả các lực không đổi đó lại thành một lực duy nhất gọi là trọng lực hiệu dụng, rồi dùng nguyên công thức cũ ' +
       'với g thay bằng g hiệu dụng.\n\n' +
-      'CÔNG THỨC TỔNG QUÁT:\n' +
+      '## Công thức tổng quát\n' +
       '— vectơ P_hd = vectơ P + vectơ F_lạ, với F_lạ là lực quán tính (−m·a₀), lực điện (q·E), lực đẩy Ác-si-mét…\n' +
       '— g_hd = |vectơ P_hd| / m, và chu kì T = 2π√(l / g_hd).\n' +
       '— Vị trí cân bằng mới nằm dọc theo phương của P_hd, không còn thẳng đứng nữa. Con lắc dao động quanh vị trí MỚI đó.\n\n' +
-      'BA TRƯỜNG HỢP THƯỜNG GẶP:\n' +
+      '## Ba trường hợp thường gặp\n' +
       '1. Lực lạ THẲNG ĐỨNG (thang máy): g_hd = g ± a₀. Dấu cộng khi gia tốc a₀ hướng LÊN, dấu trừ khi a₀ hướng XUỐNG. ' +
       'Chú ý phân biệt CHIỀU GIA TỐC với CHIỀU VẬN TỐC: thang máy đi xuống CHẬM DẦN có gia tốc hướng LÊN, nên g_hd = g + a₀ ' +
       'và chu kì GIẢM — đây là chỗ mất điểm kinh điển.\n' +
@@ -252,7 +252,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       'tăng biên độ lên quá một ngưỡng nào đó, sách bắt đầu trượt và văng khỏi ván. Ngưỡng ấy ở đâu, và vì sao lại tồn tại ' +
       'một ngưỡng? Đây là dạng bài xuất hiện đều đặn ở kì thi quốc gia, thường ghép thêm một va chạm ngay giữa lúc dao động.',
     theory:
-      'PHẦN 1 — ĐIỀU KIỆN ĐỂ HAI VẬT CÙNG DAO ĐỘNG MÀ KHÔNG TRƯỢT LÊN NHAU:\n' +
+      '## Phần 1 — điều kiện để hai vật cùng dao động mà không trượt lên nhau\n' +
       '— Khi cả hệ (khối lượng M + m) dao động điều hoà với tần số góc ω = √(k/(M+m)), mọi phần tử của hệ đều có ' +
       'cùng gia tốc a = −ω²·x, đạt độ lớn cực đại a_max = ω²·A ở hai vị trí biên.\n' +
       '— Hãy hỏi: LỰC NÀO gây ra gia tốc đó cho vật m nằm trên? Chỉ có duy nhất lực ma sát nghỉ do vật dưới tác dụng. ' +
@@ -262,7 +262,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       '— ĐIỀU KIỆN KHÔNG TRƯỢT: m·ω²·A ≤ μ·m·g. Khối lượng m triệt tiêu, còn lại A ≤ μ·g/ω². ' +
       'Diễn giải: vật nặng hay nhẹ không quan trọng; cái quyết định là biên độ, tần số và hệ số ma sát.\n' +
       '— Nơi trượt xảy ra đầu tiên luôn là VỊ TRÍ BIÊN (gia tốc lớn nhất), không phải vị trí cân bằng — nhiều bạn đoán ngược.\n\n' +
-      'PHẦN 2 — VA CHẠM GIỮA LÚC ĐANG DAO ĐỘNG:\n' +
+      '## Phần 2 — va chạm giữa lúc đang dao động\n' +
       '— Va chạm diễn ra trong thời gian rất ngắn nên trong lúc va chạm ta dùng BẢO TOÀN ĐỘNG LƯỢNG (lực lò xo hữu hạn, ' +
       'không kịp gây xung lượng đáng kể), còn cơ năng thì không bảo toàn nếu va chạm mềm.\n' +
       '— Sau va chạm hệ có khối lượng mới nên tần số góc mới ω′ = √(k/(M+m)); biên độ mới tính từ trạng thái ngay sau ' +
