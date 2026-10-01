@@ -182,7 +182,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   **[2026-10-01] Một phần U9 + M15 đã làm** ([audit đồng nhất bố cục](docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md),
   `docs/changelog/0467-*.md`, PR #1200): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
   chỉ số dưới (M15 phần cấu trúc), nút Back header đúng đích ở 21 trang, chế độ tập trung + "Bài
-  sau" cho bài hội thoại. **Đợt 2 (`docs/changelog/0469-*.md`)**: chủ dự án giao "chọn theo đề xuất
+  sau" cho bài hội thoại. **Đợt 2 (`docs/changelog/0469-*.md`, PR #1202)**: chủ dự án giao "chọn theo đề xuất
   tốt nhất" → nút chính mọi trang môn dùng màu accent (xanh lá dành cho nghĩa "đúng"), tiêu đề bài
   Lập trình hiện trong nội dung, nhãn gói ở thanh bên đọc gói thật (M8 phần thanh bên), khổ đọc
   60ch cho trang Lập trình (M22). **Việc kế tiếp:** PR nội dung riêng — 573 tiêu đề lý thuyết STEM

@@ -1,6 +1,6 @@
 # 0469 — Đồng nhất đợt 2: một màu nút chính cho mọi môn, tiêu đề bài Lập trình hiện trong nội dung, nhãn gói thật ở thanh bên, khổ đọc trang Lập trình (2026-10-01)
 
-- **Ngày:** 2026-10-01 · **PR:** (điền khi tạo) · **Loại:** `refactor(ui)`.
+- **Ngày:** 2026-10-01 · **PR:** [#1202](https://github.com/seeker19110/dhcb/pull/1202) · **Loại:** `refactor(ui)`.
 - **Nối tiếp:** audit đồng nhất bố cục [`docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md`](../audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md)
   §4 (đợt 0467, PR #1200).
 - **Quyết định sản phẩm:** chủ dự án giao "chọn theo đề xuất tốt nhất rồi tiếp tục" (2026-10-01).
