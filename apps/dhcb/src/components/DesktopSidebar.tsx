@@ -10,6 +10,12 @@
 // nằm ở biến CSS `--sidebar-w` (index.css) và nội dung trang chừa chỗ bằng
 // `lg:pl-[var(--sidebar-w)]` (App.tsx), nên chỉ cần đổi một thuộc tính data là cả trang
 // tự co giãn theo, không component nào phải biết về component nào.
+//
+// [2026-10-01, audit đồng nhất bố cục] Dải 1024–1279px (Material 3 "expanded") MẶC ĐỊNH thu gọn
+// về dạng biểu tượng. Đo thật: ở 1024px thanh bên mở rộng 256px + cột mục lục/bước của trang bài
+// học ép cột bài còn ~424px — hẹp hơn cả máy tính bảng 768px. Mở rộng ở dải này là việc TẠM
+// (không ghi localStorage, tự thu lại khi chọn một trang): lựa chọn đã lưu chỉ áp từ 1280px, để
+// người bấm "mở rộng" ở màn 1440px không vô tình ép cột chữ khi sang laptop 1024px.
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -35,6 +41,7 @@ import {
   type NavChild,
 } from '../lib/navTree'
 import { STUDIOS, NAV_HIDDEN_PATHS } from '../lib/studios'
+import { useMediaQuery } from '../lib/useIsDesktopViewport'
 import {
   COMPANION_PATHS,
   LEARNING_PATHS,
@@ -46,6 +53,8 @@ import {
 } from '../lib/navPaths'
 
 const STORAGE_KEY = 'ui_sidebar_collapsed'
+/** Dải desktop HẸP (1024–1279px): sidebar mặc định thu gọn — xem chú thích đầu file. */
+const NARROW_DESKTOP_QUERY = '(max-width: 1279px)'
 
 interface Item {
   to: string
@@ -143,7 +152,14 @@ function readCollapsed(): boolean {
 export default function DesktopSidebar() {
   const { user } = useAuth()
   const location = useLocation()
-  const [collapsed, setCollapsed] = useState(readCollapsed)
+  // Lựa chọn ĐÃ LƯU — chỉ áp từ 1280px.
+  const [savedCollapsed, setSavedCollapsed] = useState(readCollapsed)
+  // Mở rộng TẠM ở dải hẹp: nhớ ĐƯỜNG DẪN lúc bấm mở, không ghi localStorage. Người dùng mở rộng
+  // để tìm một trang; sang trang khác (bằng sidebar, nút Back hay liên kết trong nội dung) thì
+  // đường dẫn đổi → tự thu lại, trả chỗ cho nội dung. Không cần effect hay bắt sự kiện bấm.
+  const [narrowExpandedAt, setNarrowExpandedAt] = useState<string | null>(null)
+  const isNarrowDesktop = useMediaQuery(NARROW_DESKTOP_QUERY)
+  const collapsed = isNarrowDesktop ? narrowExpandedAt !== location.pathname : savedCollapsed
   const [openGroups, setOpenGroups] = useState<string[]>(readOpenGroups)
 
   // Trang đăng nhập/onboarding không có sidebar → nội dung không được chừa lề trái.
@@ -160,7 +176,11 @@ export default function DesktopSidebar() {
   if (hidden) return null
 
   function toggle() {
-    setCollapsed((c) => {
+    if (isNarrowDesktop) {
+      setNarrowExpandedAt(collapsed ? location.pathname : null)
+      return
+    }
+    setSavedCollapsed((c) => {
       const next = !c
       try {
         localStorage.setItem(STORAGE_KEY, next ? '1' : '0')

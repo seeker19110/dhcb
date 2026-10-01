@@ -21,7 +21,34 @@ function render(pathname: string) {
   )
 }
 
-beforeEach(() => localStorage.clear())
+/**
+ * Giả bề rộng cửa sổ cho `matchMedia` (chỉ hiểu `min-width`/`max-width` theo px — đúng hai dạng
+ * app dùng). Cần vì sidebar THU GỌN mặc định ở dải 1024–1279px (audit 2026-10-01), mà happy-dom
+ * mặc định rộng 1024px: không cố định thì mọi test cấu trúc cây bên dưới chạy ở dải hẹp.
+ */
+function setViewportWidth(width: number) {
+  vi.stubGlobal('matchMedia', (query: string) => {
+    const min = /min-width:\s*(\d+)px/.exec(query)
+    const max = /max-width:\s*(\d+)px/.exec(query)
+    const matches = (!min || width >= Number(min[1])) && (!max || width <= Number(max[1]))
+    return {
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }
+  })
+}
+
+beforeEach(() => {
+  localStorage.clear()
+  // Các test cấu trúc cây canh sidebar MỞ RỘNG — bề rộng desktop phổ biến nhất.
+  setViewportWidth(1440)
+})
 
 describe('DesktopSidebar — Tiếng Anh là một môn trong Góc học tập', () => {
   it('không còn mục "Học Tiếng Anh" ở nhóm Không Gian Nền Tảng', () => {
@@ -167,5 +194,31 @@ describe('DesktopSidebar — P1-7: 10 → 6 mục cấp 1', () => {
   it('AC-6: link "Nâng cấp" vẫn tồn tại (href="/nang-cap")', () => {
     const html = render('/tien-do')
     expect(html).toContain('href="/nang-cap"')
+  })
+})
+
+// [2026-10-01, audit đồng nhất bố cục] Dải 1024–1279px: sidebar mở rộng 256px ép cột bài học còn
+// ~424px (đo trên ảnh chụp). Mặc định thu gọn ở dải này, lựa chọn đã lưu chỉ áp từ 1280px.
+describe('DesktopSidebar — dải desktop hẹp 1024–1279px', () => {
+  it('1024px: mặc định thu gọn (nhãn chỉ còn cho trình đọc màn hình, không mở nhóm con)', () => {
+    setViewportWidth(1024)
+    const html = render('/goc-hoc-tap/english/lo-trinh/a1')
+    expect(html).toContain('aria-label="Mở rộng thanh điều hướng"')
+    expect(html).not.toContain('Lộ trình CEFR')
+    // Icon-only vẫn phải có tên đọc được.
+    expect(html).toContain('<span class="sr-only">Góc học tập</span>')
+  })
+
+  it('1024px: lựa chọn "mở rộng" đã lưu ở màn rộng KHÔNG ép mở ở màn hẹp', () => {
+    localStorage.setItem('ui_sidebar_collapsed', '0')
+    setViewportWidth(1279)
+    expect(render('/tien-do')).toContain('aria-label="Mở rộng thanh điều hướng"')
+  })
+
+  it('1280px: giữ hành vi cũ — mặc định mở rộng, tôn trọng lựa chọn thu gọn đã lưu', () => {
+    setViewportWidth(1280)
+    expect(render('/tien-do')).toContain('aria-label="Thu gọn thanh điều hướng"')
+    localStorage.setItem('ui_sidebar_collapsed', '1')
+    expect(render('/tien-do')).toContain('aria-label="Mở rộng thanh điều hướng"')
   })
 })

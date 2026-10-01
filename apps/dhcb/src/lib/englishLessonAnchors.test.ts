@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { prevNext } from '@dhcb/core-learner/outline/outlineNav'
 import {
+  cayBaiHoiThoai,
   docThamSoBai,
   giaiNeoBaiAnh,
   kieuCuonTheoDoc,
@@ -108,5 +110,38 @@ describe('kieuCuonTheoDoc — giảm chuyển động', () => {
   it('môi trường không có matchMedia → smooth', () => {
     vi.stubGlobal('matchMedia', undefined)
     expect(kieuCuonTheoDoc()).toBe('smooth')
+  })
+})
+
+// [2026-10-01, audit đồng nhất bố cục] Bài hội thoại dùng chung "Bài trước / Bài sau" với STEM.
+describe('cayBaiHoiThoai — cây phẳng cho Bài trước / Bài sau', () => {
+  const ds = [
+    { id: 1, title: 'Giới thiệu bản thân' },
+    { id: 2, title: 'Một ngày bình thường' },
+    { id: 7, title: 'Đi khám bệnh' },
+  ]
+
+  it('bài giữa có cả bài trước lẫn bài sau theo ĐÚNG thứ tự chỉ mục (không theo số id)', () => {
+    const cay = cayBaiHoiThoai(ds, '/goc-hoc-tap/english/bai-hoc', '?lesson=2')
+    const { prev, next } = prevNext(cay, '2')
+    expect(prev?.title).toBe('Giới thiệu bản thân')
+    expect(next?.title).toBe('Đi khám bệnh')
+  })
+
+  it('liên kết giữ tham số khác, thay `lesson` và mở ở đầu bài (#dau-bai)', () => {
+    const cay = cayBaiHoiThoai(ds, '/goc-hoc-tap/english/bai-hoc', '?dir=B&lesson=1')
+    const { next } = prevNext(cay, '1')
+    expect(next?.href).toBe('/goc-hoc-tap/english/bai-hoc?dir=B&lesson=2#dau-bai')
+  })
+
+  it('bài đầu không có bài trước, bài cuối không có bài sau; mã lạ → không gì cả', () => {
+    const cay = cayBaiHoiThoai(ds, '/p', '')
+    expect(prevNext(cay, '1').prev).toBeUndefined()
+    expect(prevNext(cay, '7').next).toBeUndefined()
+    expect(prevNext(cay, '99')).toEqual({})
+  })
+
+  it('chỉ mục rỗng (đang tải) vẫn là cây hợp lệ, không lá nào', () => {
+    expect(cayBaiHoiThoai([], '/p', '').nodes).toHaveLength(1)
   })
 })

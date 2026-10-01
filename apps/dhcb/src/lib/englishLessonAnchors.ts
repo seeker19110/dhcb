@@ -14,6 +14,8 @@
 //     Số lượt chỉ ổn định trong cùng phiên bản nội dung: chưa có id lượt bền vững, nên không
 //     hứa link lượt còn đúng sau khi giáo trình được sửa.
 
+import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
+
 /** Tên tham số query mang mã bài. */
 export const THAM_SO_BAI = 'lesson'
 
@@ -101,4 +103,45 @@ export function kieuCuonTheoDoc(): ScrollBehavior {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return giam ? 'auto' : 'smooth'
+}
+
+/**
+ * Cây mục lục PHẲNG của các bài hội thoại — để bài hội thoại dùng CHUNG nút "Bài trước / Bài sau"
+ * (`OutlinePrevNext`) với bài STEM và bài Lập trình, thay vì tự chế một kiểu điều hướng riêng.
+ *
+ * [2026-10-01, audit đồng nhất bố cục] Trước đây học xong bài hội thoại không có lối sang bài kế:
+ * phải cuộn lên đầu trang (desktop) hoặc về danh sách rồi tìm lại (mobile), trong khi hai môn kia
+ * đều có. Liên kết kèm `#dau-bai` để bài mới mở ở ĐẦU bài (logic neo của `LessonView` focus và
+ * cuộn tới tiêu đề) — không có hash thì trang giữ nguyên chỗ cuộn ở cuối bài cũ.
+ *
+ * @param ds chỉ mục bài theo đúng thứ tự hiển thị trong danh sách
+ * @param pathname/search vị trí hiện tại — giữ mọi tham số query khác, chỉ thay `lesson`
+ */
+export function cayBaiHoiThoai(
+  ds: readonly { id: number; title: string }[],
+  pathname: string,
+  search: string,
+): Outline {
+  const goc: OutlineNode = {
+    nodeId: 'hoi-thoai',
+    subjectId: 'english',
+    kind: 'level',
+    title: 'Bài hội thoại',
+    order: 0,
+    availability: 'available',
+    progress: 'unknown',
+  }
+  const la = ds.map((bai, i): OutlineNode => ({
+    nodeId: `hoi-thoai-${bai.id}`,
+    parentId: goc.nodeId,
+    subjectId: 'english',
+    contentId: String(bai.id),
+    kind: 'lesson',
+    title: bai.title,
+    order: i,
+    href: `${pathname}${searchVoiBai(search, bai.id)}#${NEO_BAI_ANH.dauBai}`,
+    availability: 'available',
+    progress: 'unknown',
+  }))
+  return { rootId: goc.nodeId, subjectId: 'english', nodes: [goc, ...la], builtAt: 0 }
 }

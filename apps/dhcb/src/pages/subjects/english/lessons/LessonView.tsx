@@ -9,7 +9,7 @@
 // chấm hiện TẠI CHỖ ở `#ket-qua` (không thay cả màn như trước) để hội thoại và đích lượt vẫn còn.
 
 import { useState, useRef, useEffect, useMemo, useCallback, useEffectEvent } from 'react'
-import type { PointerEvent } from 'react'
+import type { PointerEvent, ReactNode } from 'react'
 import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import { Play, Pause, Square, Volume2, ChevronUp, ChevronDown } from 'lucide-react'
 import {
@@ -59,6 +59,7 @@ export function LessonView({
   userId,
   onBack,
   variant = 'mobile',
+  footer,
 }: {
   lesson: Lesson
   isA: boolean
@@ -76,6 +77,11 @@ export function LessonView({
    *   để vẫn bám theo, còn nút "← Danh sách" bỏ đi vì danh sách hiện sẵn bên trái.
    */
   variant?: 'mobile' | 'desktop'
+  /**
+   * Khối cuối bài, nằm TRONG vùng cuộn của bài (mobile cuộn nội bộ — đặt ngoài là không bao giờ
+   * cuộn tới). Dùng cho "Bài trước / Bài sau" (audit đồng nhất bố cục 2026-10-01).
+   */
+  footer?: ReactNode
 }) {
   const isDesktopPane = variant === 'desktop'
   // Phân giọng cho từng nhân vật — RANDOM trong số giọng gói hiện tại cho phép (đúng giới
@@ -705,7 +711,10 @@ export function LessonView({
           <h1
             id={NEO_BAI_ANH.dauBai}
             tabIndex={-1}
-            className="text-lg font-bold leading-snug text-white focus:outline-none focus-visible:underline"
+            // [2026-10-01, audit đồng nhất bố cục] Cùng thang chữ tiêu đề bài với bài STEM
+            // (`text-2xl sm:text-3xl font-extrabold`) — trước đây 18px, nhỏ hơn cả tiêu đề mục
+            // "Lý thuyết" bên môn Lý (20px), nên ba môn có ba cỡ tiêu đề bài khác nhau.
+            className="text-2xl sm:text-3xl font-extrabold leading-tight text-white focus:outline-none focus-visible:underline"
           >
             {isA ? `Bài ${lesson.id}: ${lesson.title}` : `Lesson ${lesson.id}: ${lesson.title}`}
           </h1>
@@ -872,6 +881,7 @@ export function LessonView({
               </div>
             )}
           </section>
+          {footer && <div className="mt-8">{footer}</div>}
         </div>
       </div>
 

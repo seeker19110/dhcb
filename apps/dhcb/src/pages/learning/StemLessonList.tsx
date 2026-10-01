@@ -48,7 +48,10 @@ export default function StemLessonList() {
 
   return (
     <>
-      <Layout />
+      {/* [2026-10-01] Đốt cuối = chính trang này → nút Back ghi "← {môn}" và về trang môn
+          (trước đây ghi "← Góc học tập" mà bấm lại về Trang chủ). Không truyền `title`: tiêu đề
+          đã là <h1> ngay dưới. */}
+      <Layout crumbs={[{ label: `Bài học môn ${subject.label}`, to: '' }]} />
       <PageShell width="standard">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-content">
           Bài học môn {subject.label}

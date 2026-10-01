@@ -6,7 +6,7 @@ import { useAuth } from '../context/useAuth'
 import { getStreak } from '../lib/storage'
 import ThemeToggle from './ThemeToggle'
 import OfflineStatusBanner from './OfflineStatusBanner'
-import { buildCrumbs, type Crumb } from '../lib/breadcrumb'
+import { buildCrumbs, defaultBackDestination, type Crumb } from '../lib/breadcrumb'
 import { useIsDesktopViewport } from '../lib/useIsDesktopViewport'
 
 /**
@@ -106,6 +106,11 @@ export default function Layout({
   // bên dưới — bỏ luôn Breadcrumb, một nút Back với NHÃN ĐÚNG đã trả lời đủ "đi đâu tiếp".
   const ancestors = buildCrumbs(location.pathname, title, crumbs).slice(0, -1)
   const backLabel = ancestors[ancestors.length - 1]?.label ?? T.home
+  // [2026-10-01, audit đồng nhất bố cục] Đích MẶC ĐỊNH của nút Back = đúng đốt cha đang làm
+  // nhãn. Trước đây mặc định cứng là '/', nên 21 trang không truyền `onBack`/`backTo` có nút
+  // ghi "← Vật lý" / "← Tiến độ" / "← Hồ sơ" mà bấm lại về Trang chủ — nhãn nói một đằng, nút
+  // làm một nẻo. Trang có cha là Trang chủ (Hồ sơ, Tiến độ…) vẫn về '/' như cũ.
+  const backDest = backTo ?? defaultBackDestination(ancestors)
 
   // Phím tắt toàn cục (PR 4, thiết kế lại web cho desktop) — Layout render ở MỌI trang nên
   // đây là chỗ gắn 1 lần duy nhất, không phải lặp lại ở từng trang.
@@ -233,7 +238,7 @@ export default function Layout({
         {/* Back / Logo */}
         {back ? (
           <button
-            onClick={onBack ?? (() => nav(backTo ?? '/'))}
+            onClick={onBack ?? (() => nav(backDest))}
             aria-label={backLabel}
             // GIỮ hiện ở mọi kích thước — nhiều trang truyền `onBack` riêng để lùi ĐÚNG một
             // bậc theo phân cấp của trang đó (vd bài học Lập trình lùi về đúng chặng, không

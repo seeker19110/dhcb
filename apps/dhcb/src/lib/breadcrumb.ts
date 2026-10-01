@@ -204,3 +204,16 @@ export function buildCrumbs(
   if (last) trail[trail.length - 1] = { ...last, to: '' }
   return trail
 }
+
+/**
+ * Đích MẶC ĐỊNH của nút Back ở header: đốt cha gần nhất — đúng đốt đang làm NHÃN của nút.
+ *
+ * Nhãn và đích phải lấy từ CÙNG một nguồn: trước 2026-10-01 nhãn lấy từ đây còn đích mặc định
+ * là '/' cứng, nên trang không tự truyền đích có nút ghi "← Vật lý" mà bấm lại về Trang chủ.
+ * Không có đốt cha (Trang chủ) hoặc đốt cha không có liên kết thì về '/'.
+ *
+ * @param ancestors kết quả `buildCrumbs(...)` đã bỏ đốt cuối (trang hiện tại)
+ */
+export function defaultBackDestination(ancestors: readonly Crumb[]): string {
+  return ancestors[ancestors.length - 1]?.to || '/'
+}
