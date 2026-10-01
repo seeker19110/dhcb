@@ -1,6 +1,6 @@
 # 0467 — Tích hợp OpenCodeReview (alibaba) vào `/review` ở chế độ delegation (2026-10-01)
 
-- **Ngày:** 2026-10-01 · **PR:** (điền khi tạo) · **Loại:** `chore(review)`.
+- **Ngày:** 2026-10-01 · **PR:** [#1199](https://github.com/seeker19110/dhcb/pull/1199) · **Loại:** `chore(review)`.
 - **Quyết định:** [`docs/adr/0012-open-code-review-delegation.md`](../adr/0012-open-code-review-delegation.md)
 
 ## Việc đã làm
