@@ -1,6 +1,6 @@
 # 0467 — Audit đồng nhất bố cục + sửa khung bài học: nút Back đúng đích, thanh bên 1024px, Bài sau cho hội thoại, lý thuyết STEM có tiêu đề (2026-10-01)
 
-- **Ngày:** 2026-10-01 · **PR:** (điền khi tạo) · **Loại:** `refactor(ui)` — sửa bố cục/điều hướng
+- **Ngày:** 2026-10-01 · **PR:** [#1200](https://github.com/seeker19110/dhcb/pull/1200) · **Loại:** `refactor(ui)` — sửa bố cục/điều hướng
   theo audit trong phiên, không có đặc tả trước.
 - **Báo cáo audit:** [`docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md`](../audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md)
   — nối tiếp audit 09-30 (0466), đi sâu vào câu hỏi "các môn có cùng một khung học không".

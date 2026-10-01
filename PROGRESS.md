@@ -180,7 +180,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   định sản phẩm. U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding)
   cần chủ dự án quyết trước.
   **[2026-10-01] Một phần U9 + M15 đã làm** ([audit đồng nhất bố cục](docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md),
-  `docs/changelog/0467-*.md`): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
+  `docs/changelog/0467-*.md`, PR #1200): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
   chỉ số dưới (M15 phần cấu trúc), nút Back header đúng đích ở 21 trang, chế độ tập trung + "Bài
   sau" cho bài hội thoại. **Việc kế tiếp của nhánh này** (báo cáo đó §4): tiêu đề bài Lập trình
   trong nội dung; khối "Học tiếp" dùng chung các trang môn — **chờ chủ dự án chốt màu nút chính**
