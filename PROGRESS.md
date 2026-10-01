@@ -694,6 +694,13 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `docs/specs/2026-09-06-tach-applied-knowledge-theo-simulator.md`). Phần dở còn lại
   `lessons/LessonView.tsx` 1.016 dòng cũng đã tách: chế độ Đóng vai ra hook `useRolePlay` + 3
   component, còn 699 dòng (`0282`, đặc tả `docs/specs/2026-09-06-tach-dong-vai-lesson-view.md`).
+- **Đợt 2 tích hợp ECC — CHỜ chủ dự án quyết** (đợt 1 xong ở changelog `0468`, ADR-0013; chi
+  tiết `docs/research/ecc-everything-claude-code.md` mục 6): (1) Claude Code **không nạp**
+  `.agents/skills/` → rà nội dung (vd `life-career-strategic-advisor` còn mô tả trụ đã xoá) rồi
+  chuyển sang `.claude/skills/` hoặc bỏ; (2) rút gọn CLAUDE.md (~51 nghìn ký tự nạp mỗi phiên);
+  (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src` — PR riêng vì đổi luật lint;
+  (4) hook chặn `curl … | sh` (luật quyền không khớp được lệnh có `|`); (5) bản nhắc mềm của
+  GateGuard cho file hotspot; (6) hai người rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`

@@ -450,7 +450,7 @@ Làm khung dashboard 1 lần, các hạng mục sau chỉ cần thêm tab, đỡ
   pattern, không bịa cách mới).
 - Điều hướng: thêm link "Quản trị" trong menu chỉ hiện với email nằm trong danh sách admin —
   nhưng vì client không biết `ADMIN_EMAILS`, cách đơn giản nhất: **luôn hiện link, để server tự
-  chặn** (đã là hành vi hiện tại của `/admin-settings`) — không thêm logic ẩn/hiện phức t​ tạp ở
+  chặn** (đã là hành vi hiện tại của `/admin-settings`) — không thêm logic ẩn/hiện phức tạp ở
   client cho việc này.
 
 **Tiêu chí chấp nhận:**

@@ -100,6 +100,12 @@ Ba chế độ:
 
 Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt trong `.agents/skills/`:
 
+> **Kiểm thực tế 2026-10-01 (ADR-0013):** Claude Code **KHÔNG tự nạp** `.agents/skills/` — nó chỉ
+> tìm skill ở `.claude/skills/<tên>/SKILL.md` (tài liệu chính thức). Phiên Claude chỉ dùng bộ dưới
+> đây khi tự mở đúng file. Chưa chuyển sang `.claude/skills/` vì vài bản đã lỗi thời (vd
+> `life-career-strategic-advisor` còn mô tả trụ Career/Life đã xoá 2026-09-20) — cần rà nội dung
+> trước, chờ chủ dự án quyết.
+
 1. `autonomous-agent-orchestrator`: Vòng lặp tự trị 5 bước, Multi-Agent Delphi Consensus, Zero-Trust Tool Synthesizer, REM Consolidation.
 2. `financial-security-sentinel`: VietQR Webhook HMAC-SHA256, Idempotency, Prompt Caching Gateway, Referral VIP, Streak Freeze Vault.
 3. `pedagogy-linguistics-master`: Sư phạm song ngữ 2 chiều, CEFR A1-C2, CAT IRT 3PL, BKT DAG, Acoustic GOP, Echo Shadowing.
@@ -221,13 +227,18 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   `/adr` (tạo ADR — bản ghi quyết định kiến trúc khó đảo, xem `docs/adr/`) · `/contract` (chốt
   schema Postgres/API TRƯỚC khi code) · `/grill` (phỏng vấn dồn dập làm rõ ý tưởng trước khi
   hành động, kỹ thuật cụ thể cho mục 12 "dừng và hỏi") · `/review` (đọc-hiểu logic/thiết kế trước
-  khi mở PR, khác `/gate` chỉ chạy máy). Dùng thay vì tự nhớ quy trình mỗi lần.
+  khi mở PR, khác `/gate` chỉ chạy máy) · **thêm 2026-10-01 (chuyển thể từ ECC, ADR-0013):**
+  `/build-fix` (gỡ cổng đỏ ở máy/CI với diff tối thiểu, không nới cổng) · `/learn` (rút bài học
+  của phiên thành mục `TRAPS.md`, chờ người dùng duyệt mới ghi). Dùng thay vì tự nhớ quy trình mỗi lần.
   7 file `.claude/agents/*.md` điều phối 3 tầng theo route độ phức tạp
   (`complex-implementer`/`coordinator`/`mechanical-worker`/`qa-verifier`/`reviewer`/
   `spec-executor`/`standard-worker` — xem `docs/framework/KIEN-TRUC-DIEU-PHOI-3-TANG.md`) +
   **3 subagent tiện ích thêm 2026-09-21** ngoài bảng route đó, gọi trực tiếp khi cần:
   `lookup` (tra cứu read-only, Haiku) · `version-check` (xác minh phiên bản qua nguồn sống,
-  Haiku) · `security-reviewer` (rà bảo mật độc lập trên diff, Sonnet, dùng trong `/review`). Đây
+  Haiku) · `security-reviewer` (rà bảo mật độc lập trên diff, Sonnet, dùng trong `/review`) +
+  **3 cái chuyển thể từ ECC 2026-10-01:** `build-error-resolver` (gỡ cổng đỏ, Sonnet, dùng trong
+  `/build-fix`) · `silent-failure-hunter` (săn lỗi bị nuốt + rào an ninh/tiền fail-open, chỉ đọc)
+  · `database-reviewer` (rà SQL/migration Postgres tự host, không RLS, chỉ đọc). Đây
   là lớp **khác** 10 skill ở mục 2.1 (skill = kiến thức miền, agent = vai trò điều phối/thực thi
   việc) — dùng song song, không thay thế nhau.
 - **OpenCodeReview ở chế độ delegation (2026-10-01, ADR-0012):** `/review` lấy danh sách file +
@@ -274,6 +285,16 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
 Build `npm run build` · Type `npm run typecheck` · Lint `npm run lint` (0 cảnh báo) · Format `npm run format` _(sau khi thêm Prettier)_ · Test `npm test`. Ngoài ra: tự đọc lại diff (đúng mục tiêu, không sửa nhầm); xóa `console.log` debug/code chết; không bí mật trong code; mọi input đã validate; mọi thao tác có thể lỗi đã xử lý; commit message theo **conventional commits**. Nếu `git diff --stat` hiện `Bin` ở một file mã nguồn → file lẫn ký tự điều khiển (NUL…), diff thành nhị phân **không review được**: dùng escape (`\u0000`) thay vì gõ ký tự thật, rồi kiểm lại bằng `file <path>`.
 
 **Từ 2026-09-19, hook PreToolUse `.claude/hooks/pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ** (không chạy `build` ở đây — quá chậm cho mỗi commit, vẫn bắt buộc ở CI job `build` + checklist merge). Bỏ qua có chủ đích: `git commit --no-verify`. Hook `.claude/hooks/block-dangerous-git.sh` cũng chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/`push --force`/`merge --abort` (thi hành mục 11 bằng máy, không chỉ bằng văn bản).
+
+**Từ 2026-10-01 (chuyển thể từ ECC, ADR-0013):** hook PreToolUse `.claude/hooks/config-protection.sh`
+canh Edit/Write vào một CỔNG (cấu hình lint/format/coverage, test canh luật
+`scripts/*-policy.test.ts`, cổng a11y, workflow CI, `.husky/`, chính các hook) theo **hai nấc**:
+lần đầu chạm cổng đó trong phiên → **từ chối** kèm lý do (phải nói rõ với người dùng sửa gì + vì
+sao rồi mới thử lại), từ lần sau → **hỏi quyền**. Không chỉ "hỏi" vì đo thật ở phiên cloud auto
+mode: `ask` của hook không hiện hộp hỏi nào. Bỏ qua có chủ đích: `ALLOW_GATE_EDIT=1`. Hook
+PostToolUse `.claude/hooks/auto-format.sh` chạy Prettier ngay sau mỗi lần sửa file (báo lại cho
+Claude nếu Prettier gặp lỗi cú pháp). Đọc `.env`/`.env.*` (trừ `.env.example`) luôn phải hỏi
+(`permissions.ask`). `scripts/agent-config-security.test.ts` canh tất cả những điều này trong CI.
 
 **Chống đặc tả "nói suông" (thêm 2026-09-19):** `npm run check:specs` (chạy trong CI job `audit`, chặn merge) kiểm mọi đường dẫn ở cột "Đường dẫn file" của đặc tả ĐÃ "Approved for implementation" (`docs/specs/*.md`) có tồn tại thật — xem `scripts/check-spec-paths.ts`.
 
