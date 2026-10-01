@@ -172,6 +172,13 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-09-30] Sửa theo audit UI/UX chuẩn 2026** ([báo cáo](docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md),
+  `docs/changelog/0466-*.md`, PR #1197): 8 critical · 22 major · 14 minor, chia **9 đợt U1–U9** (mục 12 báo
+  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **Chờ chủ dự án chọn đợt bắt đầu.** Đợt U1
+  (viền focus, toast, manifest, tiêu đề trang, `<main>`), U2 (form xác thực + hub tràn ngang),
+  U3 (14 trang tương phản + đưa vào cổng) và U4 (ngôn ngữ trang) làm được ngay, không cần quyết
+  định sản phẩm. U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding)
+  cần chủ dự án quyết trước.
 - **[2026-09-23] Kế hoạch nâng cấp UI/UX và sư phạm sau audit**:
   [goal 5 đợt](docs/goals/2026-09-23-uiux-su-pham.md) và
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).
@@ -705,6 +712,20 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-09-30 · audit UI/UX, changelog `0466`] Ba việc kiểm tay trên production** (phiên AI
+  không tới được production vì chính sách mạng của môi trường chặn `*.donghanhcungban.org`):
+  1. **Hub có trong `ALLOWED_ORIGINS` không.** `DEFAULT_ALLOWED_ORIGINS`
+     (`packages/core-auth/security.ts`) không có `https://hub.donghanhcungban.org`. Nếu `.env` trên
+     VPS cũng không liệt kê hub thì đăng nhập ở hub trả 403. Kiểm:
+     `grep ALLOWED_ORIGINS /var/www/dhcb/.env`.
+  2. **Bảng `plan_marketing_bullets` còn câu Free cũ không.** Seed `0025` ghi "+5 lượt AI/ngày…
+     tối đa 35 lượt trong 7 ngày", trong khi Free nay là 30 lượt/ngày. Trang giá đọc từ bảng này,
+     nên nói sai với người dùng. Kiểm:
+     `select plan, text_vi from plan_marketing_bullets where plan = 'free';`. Sửa câu chữ là
+     quyết định của chủ dự án (đợt U5).
+  3. **Chạy `npm run cwv:prod` từ máy có mạng** để có Core Web Vitals thật. Số trong báo cáo là số
+     LAB: LCP trượt 2,5 s ở mọi trang app trong điều kiện Slow 4G.
+
 - **[2026-09-27 · audit bảo mật lần hai, changelog `0465`] BA việc tay trên VPS — làm NGAY sau khi
   PR vá merge + deploy xong** (code đã vá, nhưng ba chỗ này nằm ngoài repo):
   1. **Xoay khoá VAPID (khoá cũ đã lộ trong lịch sử git public).** Trên VPS:
@@ -1063,6 +1084,24 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   Actions mới biết production bị "đứng" so với `main`. Chưa làm — để mở nếu thấy cần.
 
 ## Nợ kỹ thuật còn mở
+
+- 🔴 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` +
+  `docs/changelog/0466-*.md`] App CHƯA đạt WCAG 2.2 AA trên toàn bộ trang** (đo trên backend
+  thật, 61 route + hub). Tám lỗi critical:
+  - (C1) viền focus 2,65:1 ở Blue sky và 2,70:1 ở Nhi đồng, dưới mức 3:1;
+  - (C2) toast không có `aria-live` và tự tắt sau 4 giây;
+  - (C3) form đăng nhập/đăng ký/đặt lại/hub thiếu nhãn và `autocomplete`;
+  - (C4) 14 trang trượt axe AA mà không nằm trong cổng — kể cả nút "Nâng cấp VIP";
+  - (C5) `lang` không theo ngôn ngữ giao diện/nội dung;
+  - (C6) hub tràn ngang ở 320/390px;
+  - (C7) PWA khoá hướng dọc;
+  - (C8) 13 route dùng chung tiêu đề lỗi thời.
+
+  Kèm ba lỗi nói sai với người dùng. Thanh bên ghi cứng "Free · Nâng cấp" và trang giá còn hạn
+  mức Free cũ (seed `0025`). Hợp đồng hạn mức server `{free, vip}` ↔ client theo chế độ đã lệch,
+  không có Zod (Tiến độ hiện "0/"). Bản tin Trang chủ đếm mục tiêu của trụ đã xoá. Cổng hiện tại
+  không thấy các lỗi này vì quét dữ liệu giả và một danh sách trang cố định — sáu cổng đề xuất ở
+  mục 11 báo cáo. Kế hoạch trả nợ: đợt U1–U9 ở mục "Tiếp theo".
 
 - 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt
   vá 7 lỗ hổng.** (1) **Kênh vị trí thu hồi chậm**: người đã RỜI chuyến mà giữ socket mở vẫn
