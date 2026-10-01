@@ -1,0 +1,52 @@
+{
+  "include": ["postgres/migrations/*.sql", "apps/dhcb/src/prompts/**/*.ts"],
+  "exclude": [
+    "**/__snapshots__/**",
+    "apps/dhcb/public/data/**",
+    "packages/subject-programming/lessonsLazy.ts",
+    "**/dist/**",
+    "dist-server/**"
+  ],
+  "rules": [
+    {
+      "path": "postgres/migrations/*.sql",
+      "rule": "Migration Postgres của DHCB (chạy tự động qua scripts/deploy.sh). Bắt buộc:\n- LŨY ĐẲNG: chạy lại lần hai không lỗi (CREATE ... IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, DROP ... IF EXISTS, ON CONFLICT DO NOTHING).\n- Không sửa migration đã có số nhỏ hơn bản mới nhất — thay đổi phải là file mới.\n- Thao tác phá dữ liệu (DROP TABLE/COLUMN, đổi kiểu cột, xoá hàng) phải được gắn cờ HIGH và nêu cách rollback.\n- Bảng chứa dữ liệu người dùng phải có user_id và index phù hợp truy vấn theo user_id.\n- Thời gian dùng timestamptz (UTC), không timestamp không múi giờ.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "apps/server/src/api/**/*.ts",
+      "rule": "Handler API của DHCB (Express 5, Postgres tự host, KHÔNG có Row Level Security). Bắt buộc:\n- Mọi handler đọc/ghi dữ liệu người dùng phải gọi validateAuth() và lọc truy vấn bằng user_id lấy TỪ TOKEN, không bao giờ từ body/query của client. Thiếu là lỗi security CRITICAL (IDOR).\n- Body/query/params phải validate bằng Zod trước khi dùng; không ép kiểu `as` lên dữ liệu ngoài.\n- SQL chỉ dùng truy vấn tham số hoá ($1, $2...), không nối chuỗi.\n- Mọi lệnh gọi AI (chat, STT, TTS) phải đi qua bộ đếm/giới hạn lượt Free (30/ngày) vs VIP; gọi AI không đếm lượt là lỗi HIGH (tốn tiền thật).\n- Webhook thanh toán SePay: kiểm chữ ký HMAC và idempotency (xử lý hai lần cùng giao dịch không cộng hai lần).\n- Không log secret, token, mật khẩu, nội dung dữ liệu cá nhân.\n- Mọi nhánh lỗi trả mã HTTP đúng và thông báo không lộ chi tiết nội bộ.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "apps/dhcb/src/prompts/**/*.ts",
+      "rule": "Prompt gửi AI của môn Anh. Thay đổi ở đây PHẢI đi kèm: cập nhật golden snapshot (apps/dhcb/src/prompts/__snapshots__/golden.test.ts.snap) và bảng eval `npm run eval:tutor` trong mô tả PR. Kiểm: giữ đúng hai chiều học A (Việt học Anh: giải thích bằng tiếng Việt) và B (người nước ngoài học Việt: giải thích bằng tiếng Anh) — không được hard-code một chiều; không chèn dữ liệu người dùng vào prompt mà không giới hạn độ dài/không thoát (prompt injection).",
+      "merge_system_rule": true
+    },
+    {
+      "path": "packages/subject-programming/feedbackPrompt.ts",
+      "rule": "Prompt nhận xét code của môn Lập trình. Bất biến: không lộ lời giải, phản hồi bằng tiếng Việt, gợi ý phải có câu hỏi gợi mở. Thay đổi phải kèm kết quả `npm run eval:code-feedback` trong mô tả PR.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "packages/**/*.{ts,tsx}",
+      "rule": "Gói workspace @dhcb/*. Bắt buộc:\n- Không import từ apps/ hoặc api/ (luật phụ thuộc).\n- Import xuyên gói dùng `@dhcb/<gói>/<file>` (không bare `@dhcb/<gói>` — rolldown/Vite 8 gãy build; không đuôi .js). Import nội bộ gói dùng đường tương đối CÓ đuôi .js.\n- TypeScript strict, không `any`; dữ liệu ngoài validate bằng Zod.\n- Logic nghiệp vụ: rà ca biên rỗng, null vs 0, thời gian UTC, race/idempotency.\n- Chỗ nào xử lý hồ sơ năng lực: giới tính KHÔNG được dùng làm trục kỳ vọng; con số năng lực không được lộ ra giao diện.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "apps/{dhcb,hub}/src/**/*.{ts,tsx}",
+      "rule": "Frontend React 19 + Tailwind 4 của DHCB. Bắt buộc:\n- Không tin client: kiểm quyền, đếm lượt, gọi AI chỉ ở server; client không được giữ secret.\n- Màu dùng token `--a-*`/`--z-*`, không hard-code màu; `text-white` bị đảo ở theme sáng — nền tối cố định phải dùng `text-[#fff]`. Phải đạt AA ở cả 3 theme (blue-sky, dark-blue, kid).\n- A11y: phần tử tương tác có nhãn truy cập, vùng chạm ≥ 44px, ảnh có alt, không dùng div làm nút.\n- Mọi thao tác mạng/AI có trạng thái tải/rỗng/lỗi trên UI.\n- URL có id nội dung có tiêu đề phải dựng qua hàm dùng chung (buildSlugSegment, apps/dhcb/src/lib/programmingRoutes.ts), không ghép chuỗi rải rác.\n- Không import `@dhcb/subject-programming/lessons` (registry 3 MB) vào app — dùng `lessonsLoader`.\n- Chuỗi giao diện tiếng Việt phải có dấu, đúng chính tả.",
+      "merge_system_rule": true
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "rule": "CI của DHCB. Bất biến (test scripts/ci-workflow-policy.test.ts canh): job `quality` và `e2e` là required check — KHÔNG đổi id; job con mới phải nằm trong `needs` của một trong hai; E2E chia shard với fail-fast: false; upload artifact chỉ `if: failure()`. Không thêm bước nối đuôi vào job đã dài.",
+      "merge_system_rule": true
+    },
+    {
+      "path": "**/*",
+      "rule": "Quy ước chung DHCB: không bí mật trong code (dùng biến môi trường); không số/chuỗi ma thuật; không lặp logic; mọi thao tác có thể lỗi đều có nhánh xử lý. Chỉ báo vấn đề có thật và chỉ đúng dòng — ưu tiên độ chính xác hơn số lượng.",
+      "merge_system_rule": true
+    }
+  ]
+}

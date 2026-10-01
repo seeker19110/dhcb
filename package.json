@@ -38,6 +38,8 @@
     "check:specs": "tsx scripts/check-spec-paths.ts",
     "check:protocol": "tsx scripts/protocol-check.ts",
     "check:docs": "bash scripts/check-docs-consistency.sh",
+    "review:ocr": "npx -y @alibaba-group/open-code-review@1.12.11",
+    "review:ocr:preview": "npx -y @alibaba-group/open-code-review@1.12.11 delegate preview --from origin/main --to HEAD",
     "maintain": "bash scripts/maintenance-sweep.sh",
     "shots:learning-ux": "tsx scripts/shots-learning-ux.ts",
     "shots:lesson-anim": "tsx --tsconfig tsconfig.base.json scripts/shots-lesson-animations.ts",
