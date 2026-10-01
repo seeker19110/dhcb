@@ -230,6 +230,10 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   Haiku) · `security-reviewer` (rà bảo mật độc lập trên diff, Sonnet, dùng trong `/review`). Đây
   là lớp **khác** 10 skill ở mục 2.1 (skill = kiến thức miền, agent = vai trò điều phối/thực thi
   việc) — dùng song song, không thay thế nhau.
+- **OpenCodeReview ở chế độ delegation (2026-10-01, ADR-0012):** `/review` lấy danh sách file +
+  luật DHCB theo đường dẫn từ `.opencodereview/rule.json` qua `npm run review:ocr:preview` và
+  `npm run review:ocr -- delegate rule <file...>` — không gọi LLM, không tốn lượt AI. Thêm luật
+  dự án theo vùng code thì sửa file đó (luật `**/*` luôn đứng cuối — `scripts/ocr-rules-policy.test.ts`).
 - **`npm run check:docs`** (`scripts/check-docs-consistency.sh`, thêm 2026-09-21, áp từ
   `seeker19110/projects-template`) — đối chiếu máy hai chiều lệnh ↔ CLAUDE.md và subagent
   frontmatter `name:` ↔ tên file, bắt lỗi kiểu "thêm lệnh mà quên khai trong CLAUDE.md". Chạy

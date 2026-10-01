@@ -16,6 +16,20 @@ thay thế nhau. (Nguồn: `seeker19110/projects-template` `.claude/commands/rev
 - Mặc định: diff hiện tại so với `main` (`git diff origin/main...HEAD`).
 - Người dùng chỉ định PR/nhánh/đường dẫn cụ thể → dùng đúng phạm vi đó.
 
+## Bước 1b — Lấy danh sách file + luật bằng OpenCodeReview (delegation, không tốn API)
+
+Theo ADR-0012. OCR chỉ làm phần chắc chắn (lọc file, khớp luật theo `.opencodereview/rule.json`),
+**không gọi LLM**:
+
+```bash
+npm run -s review:ocr:preview -- --format json          # file cần review (mặc định origin/main..HEAD)
+npm run -s review:ocr -- delegate rule --format json <file...>   # luật DHCB + luật ngôn ngữ cho từng nhóm file
+```
+
+Lập checklist MỌI file trong `reviewable_files`; mỗi file kết thúc là `reviewed` hoặc `skipped`
+kèm lý do. Dùng luật của nhóm file làm checklist khi đọc diff ở Bước 2. Cuối báo cáo ghi
+`reviewed/total` (độ phủ) — không được im lặng bỏ file.
+
 ## Bước 2 — Gọi skill `code-review`
 
 Dùng `Skill(code-review)` ở effort phù hợp độ rủi ro của diff (mặc định `medium`; nâng `high`
