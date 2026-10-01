@@ -1,6 +1,6 @@
 # 0470 — Tiêu đề lý thuyết STEM: 575 dòng VIẾT HOA → viết hoa đầu câu + dấu `## ` rõ ràng (2026-10-01)
 
-- **Ngày:** 2026-10-01 · **PR:** (điền khi tạo) · **Loại:** `refactor(content)`. Đây là đợt nội
+- **Ngày:** 2026-10-01 · **PR:** [#1203](https://github.com/seeker19110/dhcb/pull/1203) · **Loại:** `refactor(content)`. Đây là đợt nội
   dung, tách khỏi đợt giao diện 0469 để diff nội dung đọc riêng được.
 - **Nối tiếp:** audit đồng nhất bố cục 2026-10-01 §4.3 (đợt 0467) + audit 09-30 M15. Chủ dự án
   giao "chọn theo đề xuất tốt nhất" (2026-10-01).
