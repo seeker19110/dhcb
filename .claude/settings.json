@@ -11,7 +11,16 @@
       "Bash(git push:*)",
       "mcp__github__create_pull_request"
     ],
-    "ask": ["Bash(git merge:*)", "Bash(gh pr merge:*)", "mcp__github__merge_pull_request"]
+    "ask": [
+      "Bash(git merge:*)",
+      "Bash(gh pr merge:*)",
+      "mcp__github__merge_pull_request",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)"
+    ]
   },
   "hooks": {
     "SessionStart": [
@@ -26,6 +35,18 @@
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/block-dangerous-git.sh" },
           { "type": "command", "command": "bash .claude/hooks/pre-commit-gate.sh" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/config-protection.sh" }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/auto-format.sh", "timeout": 30 }
         ]
       }
     ],

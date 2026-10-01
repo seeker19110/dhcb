@@ -34,6 +34,33 @@ function bytesCam(buf: Buffer): Map<number, number> {
   return out
 }
 
+/**
+ * Ký tự ĐỊNH DẠNG vô hình (Unicode Cf) — người review không thấy, nhưng trình biên dịch và mô
+ * hình AI thì đọc: zero-width space/non-joiner, word joiner, BOM, điều khiển hướng chữ bidi
+ * ("Trojan Source", CVE-2021-42574). CHO PHÉP U+200D (zero-width joiner): emoji ghép như 👩‍💼
+ * cần nó. Khai bằng MÃ ĐIỂM số, không bằng escape kiểu backslash-u: công cụ ghi file của tác tử
+ * từng giải mã escape đó thành ký tự thật (changelog 0468). Thêm 2026-10-01 sau khi quét toàn
+ * repo thấy một zero-width space lạc làm vỡ chữ trong docs/research/uiux-va-giao-dien.md.
+ */
+const VO_HINH: ReadonlyArray<readonly [number, number]> = [
+  [0x200b, 0x200c],
+  [0x2060, 0x2060],
+  [0xfeff, 0xfeff],
+  [0x202a, 0x202e],
+  [0x2066, 0x2069],
+]
+const VO_HINH_RE = new RegExp(
+  `[${VO_HINH.map(([lo, hi]) => `${String.fromCodePoint(lo)}-${String.fromCodePoint(hi)}`).join('')}]`,
+  'u',
+)
+
+/** Dòng đầu tiên chứa ký tự định dạng vô hình; 0 = sạch. */
+function dongVoHinh(text: string): number {
+  const m = VO_HINH_RE.exec(text)
+  if (!m) return 0
+  return text.slice(0, m.index).split(String.fromCodePoint(0x0a)).length
+}
+
 /** Dòng đầu tiên dính byte cấm — báo đủ để người sửa nhảy thẳng tới chỗ đó. */
 function dongDauTien(buf: Buffer): number {
   let line = 1
@@ -73,6 +100,28 @@ describe('file nguồn không chứa ký tự điều khiển', () => {
       viPham.push(`${f}:${dongDauTien(buf)} — ${mo}`)
     }
     // In thẳng danh sách: người sửa thấy ngay file nào, dòng nào, byte nào.
+    expect(viPham).toEqual([])
+  }, 30_000)
+
+  it('bộ dò ký tự vô hình bắt ký tự thật, bỏ qua ZWJ của emoji ghép', () => {
+    expect(dongVoHinh(`a${String.fromCodePoint(0x202e)}b`)).toBe(1)
+    expect(dongVoHinh(`x${String.fromCodePoint(0x0a)}y${String.fromCodePoint(0x200b)}`)).toBe(2)
+    expect(dongVoHinh(`👩${String.fromCodePoint(0x200d)}💼`)).toBe(0)
+    expect(dongVoHinh('Tiếng Việt có dấu — bình thường')).toBe(0)
+  })
+
+  it('không file nào có ký tự định dạng vô hình (zero-width, BOM, bidi)', () => {
+    const viPham: string[] = []
+    for (const f of files) {
+      let text: string
+      try {
+        text = readFileSync(f, 'utf8')
+      } catch {
+        continue // file đã xoá trong thư mục làm việc — không phải việc của test này
+      }
+      const dong = dongVoHinh(text)
+      if (dong > 0) viPham.push(`${f}:${dong}`)
+    }
     expect(viPham).toEqual([])
   }, 30_000)
 })

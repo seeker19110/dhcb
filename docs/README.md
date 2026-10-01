@@ -16,7 +16,7 @@
 | `changelog/`                                          | Nhật ký từng đợt việc, mỗi PR một file (`npm run changelog`)                                               |
 | `specs/`                                              | Đặc tả từng tính năng đã/đang thi hành (cổng `feat(` cần link)                                             |
 | `research/`                                           | Đặc tả nghiên cứu: năng lực theo tuổi, đồng hành, thanh toán…                                              |
-| `adr/`                                                | Quyết định kiến trúc lớn (0001–0004)                                                                       |
+| `adr/`                                                | Quyết định kiến trúc lớn, đánh số tăng dần (xem `ls docs/adr/`; mới nhất: 0013 tích hợp ECC)               |
 | `templates/`                                          | Khuôn đặc tả tính năng + khuôn DESIGN_SPEC + khuôn ADR                                                     |
 | `AI_DEVELOPMENT_PROTOCOL.md`                          | Quy trình "kín" 5 vai: state machine, hợp đồng artifact, khoá file, cổng QA, quyền sửa, điều kiện PR/merge |
 | `AI_DEVELOPMENT_PIPELINES.md`                         | Chọn model/effort theo rủi ro cho từng bước (bổ sung cho PROTOCOL, không thay)                             |
