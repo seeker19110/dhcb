@@ -15,11 +15,11 @@ export const HOA11_C2_LESSONS: ChemLesson[] = [
       'Khí nitrogen chiếm tới 78% thể tích không khí xung quanh ta, nhưng con người và thực vật ' +
       'không thể trực tiếp "hít thở" để lấy đạm. Lý do là liên kết ba siêu bền giữa hai nguyên tử.',
     theory:
-      'TRẠNG THÁI TỰ NHIÊN VÀ CẤU TẠO:\n' +
+      '## Trạng thái tự nhiên và cấu tạo\n' +
       '— Nitrogen (N) thuộc nhóm VA, chu kì 2. Phân tử nitrogen gồm 2 nguyên tử (N₂).\n' +
       '— Công thức electron: :N⋮⋮N:; công thức cấu tạo: N≡N.\n' +
       '— Năng lượng liên kết rất lớn (946 kJ/mol) làm N₂ rất bền ở nhiệt độ thường (trơ về mặt hoá học).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC CƠ BẢN:\n' +
+      '## Tính chất hoá học cơ bản\n' +
       'Nitrogen vừa có tính khử, vừa có tính oxi hoá (do số oxi hoá 0 là trung gian, có thể giảm xuống −3 hoặc tăng lên +1, +2, +3, +4, +5).\n' +
       '1. Tính oxi hoá (thể hiện khi tác dụng với chất khử mạnh hơn như kim loại, hydrogen):\n' +
       '   — Tác dụng với hydrogen ở nhiệt độ cao, áp suất cao, xúc tác: N₂ + 3H₂ ⇌ 2NH₃ (phản ứng thuận nghịch, toả nhiệt).\n' +
@@ -373,13 +373,13 @@ export const HOA11_C2_LESSONS: ChemLesson[] = [
       'Ammonia là một trong những hoá chất được sản xuất nhiều nhất thế giới, vì nó là nguyên liệu ' +
       'làm phân đạm nuôi sống khoảng một nửa dân số toàn cầu. Khí này có mùi khai đặc trưng.',
     theory:
-      'AMMONIA (NH₃):\n' +
+      '## Ammonia (NH₃)\n' +
       '— Cấu tạo: Nguyên tử N liên kết với 3 nguyên tử H bằng liên kết cộng hoá trị phân cực. Phân tử có hình chóp tam giác. Nguyên tử N còn một cặp electron chưa tham gia liên kết.\n' +
       '— Tính chất vật lí: Khí không màu, mùi khai và xốc, nhẹ hơn không khí. NH₃ tan RẤT NHIỀU trong nước do tạo liên kết hydrogen mạnh với nước.\n' +
       '— Tính chất hoá học:\n' +
       '  1. Tính base yếu: Dung dịch NH₃ làm quỳ tím hoá xanh, phenolphthalein hoá hồng. Tác dụng với acid tạo muối ammonium: NH₃ + HCl → NH₄Cl.\n' +
       '  2. Tính khử (do N có số oxi hoá cực tiểu −3): Phản ứng cháy trong oxygen: 4NH₃ + 3O₂ → 2N₂ + 6H₂O (nhiệt độ cao).\n\n' +
-      'MUỐI AMMONIUM (chứa ion NH₄⁺):\n' +
+      '## Muối ammonium (chứa ion NH₄⁺)\n' +
       '— Tính chất: Đều dễ tan trong nước, điện li mạnh thành ion: NH₄Cl → NH₄⁺ + Cl⁻.\n' +
       '— Phản ứng với dung dịch kiềm (dùng để nhận biết ion ammonium): NH₄⁺ + OH⁻ → NH₃↑ + H₂O (khí thoát ra mùi khai, làm quỳ tím ẩm hoá xanh).\n' +
       '— Kém bền nhiệt (bị phân huỷ khi đun nóng): NH₄Cl(r) → NH₃(k) + HCl(k).',
@@ -806,16 +806,16 @@ export const HOA11_C2_LESSONS: ChemLesson[] = [
       'Acid nitric (HNO₃) vừa là acid mạnh, vừa là chất oxi hoá cực mạnh. Nó hoà tan được cả đồng (Cu) ' +
       '— kim loại mà acid HCl trong dạ dày cũng phải "bó tay".',
     theory:
-      'CÁC OXIDE CỦA NITROGEN (NOx):\n' +
+      '## Các oxide của nitrogen (NOx)\n' +
       '— Gồm: N₂O (khí cười), NO (không màu, hoá nâu ngoài không khí), NO₂ (màu nâu đỏ, độc), N₂O₄ (không màu).\n' +
       '— Khí NOx phát thải từ động cơ đốt trong, nhà máy nhiệt điện là nguyên nhân chính gây mưa acid và khói mù quang hoá.\n\n' +
-      'ACID NITRIC (HNO₃):\n' +
+      '## Acid nitric (HNO₃)\n' +
       '1. Tính acid mạnh: Là một trong các acid vô cơ mạnh nhất, điện li hoàn toàn: HNO₃ → H⁺ + NO₃⁻.\n' +
       '2. Tính oxi hoá mạnh (đặc trưng nhất):\n' +
       '   — Do N có số oxi hoá cực đại +5 trong HNO₃, nó luôn bị khử xuống số oxi hoá thấp hơn (NO₂, NO, N₂O, N₂, NH₄⁺).\n' +
       '   — Oxi hoá hầu hết kim loại (trừ vàng Au, bạch kim Pt) tạo muối nitrate của kim loại có số oxi hoá cao nhất, KHÔNG giải phóng khí H₂.\n' +
       '   — HNO₃ đặc tạo khí NO₂ màu nâu đỏ; HNO₃ loãng tạo khí NO không màu hoá nâu.\n\n' +
-      'HIỆN TƯỢNG MƯA ACID:\n' +
+      '## Hiện tượng mưa acid\n' +
       '— Mưa acid là nước mưa có pH < 5,6, hình thành do các khí thải độc hại như SO₂ và NOx tan trong nước mưa tạo thành acid mạnh tương ứng (H₂SO₄, HNO₃).' +
       ' Tác hại: tàn phá rừng, huỷ hoại sinh vật thuỷ sinh, ăn mòn công trình kiến trúc bằng đá và kim loại.',
     workedExample: {
@@ -1338,12 +1338,12 @@ export const HOA11_C2_LESSONS: ChemLesson[] = [
       'Lưu huỳnh (Sulfur) là chất rắn màu vàng, gắn liền với núi lửa và là thành phần của thuốc súng đen.' +
       ' Khi đốt cháy lưu huỳnh, ta thu được khí SO₂ có mùi hắc nghẹt thở.',
     theory:
-      'ĐƠN CHẤT SULFUR (S):\n' +
+      '## Đơn chất sulfur (S)\n' +
       '— Cấu tạo: Ở nhiệt độ thường gồm 8 nguyên tử liên kết vòng (S₈), thường viết đơn giản là S.\n' +
       '— Tính chất hoá học: Có số oxi hoá trung gian 0, nên vừa có tính oxi hoá vừa có tính khử.\n' +
       '  1. Tính oxi hoá: Tác dụng với kim loại tạo muối sulfide: Fe + S → FeS (t °C); tác dụng với thuỷ ngân ngay ở nhiệt độ thường (dùng để thu gom thuỷ ngân rơi vãi): Hg + S → HgS.\n' +
       '  2. Tính khử: Tác dụng với chất oxi hoá mạnh (như O₂): S + O₂ → SO₂ (t °C).\n\n' +
-      'SULFUR DIOXIDE (SO₂):\n' +
+      '## Sulfur dioxide (SO₂)\n' +
       '— Tính chất vật lí: Khí không màu, mùi hắc, nặng hơn không khí, độc, tan nhiều trong nước, tạo dung dịch acid yếu là sulfurous acid (H₂SO₃).\n' +
       '— Tính chất hoá học:\n' +
       '  1. Là acidic oxide: Tác dụng với dung dịch base tạo muối sulfite/hydrogen sulfite.\n' +
@@ -1773,12 +1773,12 @@ export const HOA11_C2_LESSONS: ChemLesson[] = [
       'Sulfuric acid (H₂SO₄) đậm đặc háo nước đến mức có thể "hút" nước từ phân tử đường ăn (sucrose), ' +
       'biến đống đường trắng tinh thành một cột than đen xì bốc khói nóng bỏng.',
     theory:
-      'SULFURIC ACID (H₂SO₄):\n' +
+      '## Sulfuric acid (H₂SO₄)\n' +
       '— Dung dịch loãng: Mang đầy đủ tính chất chung của acid mạnh (đổi màu quỳ tím sang đỏ; tác dụng với kim loại đứng trước hydrogen, giải phóng H₂; tác dụng với base, basic oxide, muối).\n' +
       '— Dung dịch đặc (tính chất riêng):\n' +
       '  1. Tính oxi hoá cực mạnh (do S⁺⁶ ở số oxi hoá cao nhất): Tác dụng hầu hết kim loại (trừ Au, Pt) giải phóng sản phẩm khử như SO₂, S, H₂S; không tạo khí H₂. Thụ động hoá Al, Fe, Cr trong H₂SO₄ đặc, nguội.\n' +
       '  2. Tính háo nước mạnh: Chiếm nước từ chất hữu cơ (như tinh bột, đường...) làm chất đó hoá đen (hoá than). Khi pha loãng, phải rót TỪ TỪ acid đặc vào nước dọc theo đũa thuỷ tinh và khuấy đều; KHÔNG được làm ngược lại, vì nước sẽ sôi bùng và bắn acid ra ngoài gây bỏng nặng.\n\n' +
-      'MUỐI SULFATE VÀ NHẬN BIẾT ION SULFATE (SO₄²⁻):\n' +
+      '## Muối sulfate và nhận biết ion sulfate (SO₄²⁻)\n' +
       '— Hầu hết muối sulfate đều dễ tan. Ngoại lệ: BaSO₄ và PbSO₄ không tan (BaSO₄ là kết tủa trắng, không tan cả trong acid mạnh); CaSO₄ và Ag₂SO₄ ít tan.\n' +
       '— Nhận biết ion SO₄²⁻: Dùng ion Ba²⁺ (từ dung dịch BaCl₂ hoặc Ba(OH)₂), phản ứng tạo kết tủa trắng BaSO₄ không tan trong acid mạnh: Ba²⁺ + SO₄²⁻ → BaSO₄↓.',
     workedExample: {
@@ -2149,7 +2149,7 @@ export const HOA11_C2_LESSONS: ChemLesson[] = [
       'Chương 2 giới thiệu hai phi kim rất quan trọng: nitrogen và sulfur. ' +
       'Các hợp chất của chúng chi phối cả nông nghiệp và công nghiệp nặng.',
     theory:
-      'HỆ THỐNG HOÁ KIẾN THỨC CHƯƠNG 2:\n' +
+      '## Hệ thống hoá kiến thức chương 2\n' +
       '1. Nitrogen (N₂): trơ ở nhiệt độ thường do liên kết ba N≡N. Có cả tính khử và tính oxi hoá.\n' +
       '2. Ammonia (NH₃): phân tử phân cực, có tính base yếu và tính khử. Muối ammonium kém bền nhiệt, giải phóng NH₃ khi đun nóng với kiềm.\n' +
       '3. Nitric acid (HNO₃): acid mạnh, chất oxi hoá cực mạnh. Oxi hoá hầu hết kim loại lên hoá trị cao nhất mà không tạo H₂.\n' +

@@ -132,7 +132,7 @@ export const HOA_HSG_DUNG_DICH_LESSONS: ChemLesson[] = [
       'A⁻ + H⁺ → HA. Thêm OH⁻ vào thì acid HA trung hoà: HA + OH⁻ → A⁻ + H₂O. Trong cả hai ' +
       'trường hợp, cái thay đổi chỉ là TỈ LỆ [A⁻]/[HA] chứ không phải [H⁺] — mà pH lại phụ ' +
       'thuộc tỉ lệ đó theo hàm logarit nên biến động rất ít.\n\n' +
-      'PHƯƠNG TRÌNH HENDERSON–HASSELBALCH:\n\n' +
+      '## Phương trình Henderson–Hasselbalch\n\n' +
       '    pH = pKa + log([A⁻]/[HA])\n\n' +
       'Ba hệ quả nên thuộc:\n' +
       '— Khi [A⁻] = [HA] thì pH = pKa. Đây là điểm đệm tốt nhất.\n' +

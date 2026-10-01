@@ -15,16 +15,16 @@ export const HOA12_C1_LESSONS: ChemLesson[] = [
       'Mùi chuối chín thơm phức là do isoamyl acetate, mùi hoa nhài dịu nhẹ là benzyl acetate. ' +
       'Đó đều là các ester — hợp chất chịu trách nhiệm cho các hương thơm ngọt ngào trong tự nhiên.',
     theory:
-      'KHÁI NIỆM VÀ DANH PHÁP ESTER:\n' +
+      '## Khái niệm và danh pháp ester\n' +
       "— Khi thay thế nhóm −OH ở nhóm carboxyl của carboxylic acid bằng nhóm −OR' của alcohol ta thu được ester. Công thức tổng quát đơn giản nhất: RCOOR'.\n" +
       '— Công thức chung của ester no, đơn chức, mạch hở: CₙH₂ₙO₂ (n ≥ 2).\n' +
       '— Gọi tên ester: [Tên gốc alkyl R\'] + [Tên gốc acid RCOO] (đuôi "ate"). Ví dụ: CH₃COOC₂H₅ gọi là ethyl acetate.\n\n' +
-      'TÍNH CHẤT HOÁ HỌC CỦA ESTER:\n' +
+      '## Tính chất hoá học của ester\n' +
       '1. Phản ứng thuỷ phân trong môi trường acid (thuận nghịch, t°, xúc tác H₂SO₄):\n' +
       "   RCOOR' + H₂O ⇌ RCOOH + R'OH.\n" +
       '2. Phản ứng thuỷ phân trong môi trường kiềm (một chiều, phản ứng xà phòng hoá, t°):\n' +
       "   RCOOR' + NaOH → RCOONa (muối của acid) + R'OH.\n\n" +
-      'KHÁI NIỆM VÀ PHÂN LOẠI LIPID (CHẤT BÉO):\n' +
+      '## Khái niệm và phân loại lipid (chất béo)\n' +
       '— Lipid là những hợp chất hữu cơ có trong tế bào sống, không tan trong nước nhưng tan nhiều trong dung môi hữu cơ không phân cực.\n' +
       '— Chất béo (triglyceride) là triester của glycerol với các acid béo (acid đơn chức, mạch carbon dài, không phân nhánh, có số C chẵn từ C12 đến C24).\n' +
       '— Các acid béo thường gặp: palmitic acid (C₁₅H₃₁COOH) và stearic acid (C₁₇H₃₅COOH) là acid béo no; oleic acid (C₁₇H₃₃COOH) và linoleic acid (C₁₇H₃₁COOH) là acid béo không no.\n' +
@@ -399,15 +399,15 @@ export const HOA12_C1_LESSONS: ChemLesson[] = [
       'Nước thông thường không thể tự gột rửa các vết dầu mỡ bám bẩn. Nhưng xà phòng có thể kéo bay ' +
       'dầu mỡ dễ dàng nhờ cấu trúc phân tử mang hai đầu "đối lập" kì lạ.',
     theory:
-      'KHÁI NIỆM VỀ XÀ PHÒNG VÀ CHẤT GIẶT RỬA TỔNG HỢP:\n' +
+      '## Khái niệm về xà phòng và chất giặt rửa tổng hợp\n' +
       '— Xà phòng: là hỗn hợp các muối sodium hoặc potassium của các acid béo (thường là sodium stearate, sodium palmitate...).\n' +
       '— Chất giặt rửa tổng hợp: là chất giặt rửa được tổng hợp hoá học từ dầu mỏ (ví dụ: sodium alkylbenzene sulfonate).\n\n' +
-      'CẤU TRÚC PHÂN TỬ VÀ CƠ CHẾ GIẶT RỬA:\n' +
+      '## Cấu trúc phân tử và cơ chế giặt rửa\n' +
       '— Phân tử chất giặt rửa gồm hai phần chính:\n' +
       '  1. Đầu ưa nước (hydrophilic): là nhóm phân cực (như −COONa, −SO₃Na) dễ tan trong nước.\n' +
       '  2. Đuôi kị nước (hydrophobic): là gốc hydrocarbon dài, không phân cực, dễ tan trong dầu mỡ.\n\n' +
       '— Cơ chế tẩy rửa: Đuôi kị nước đâm sâu vào vết dầu mỡ bám trên vải, đầu ưa nước hướng ra ngoài nước lỏng. Lực khuấy nhẹ làm dầu mỡ phân tán thành những hạt micelle rất nhỏ lơ lửng trong nước và bị rửa trôi đi.\n\n' +
-      'SO SÁNH XÀ PHÒNG VÀ CHẤT GIẶT RỬA TỔNG HỢP:\n' +
+      '## So sánh xà phòng và chất giặt rửa tổng hợp\n' +
       '— Ưu điểm chất giặt rửa tổng hợp: Không bị mất tác dụng trong nước cứng (nước chứa nhiều ion Ca²⁺, Mg²⁺) vì muối calcium, magnesium của sulfonate tan được trong nước. Xà phòng bị mất tác dụng trong nước cứng do tạo kết tủa dạng cặn của muối carboxylate của Ca²⁺/Mg²⁺.',
     workedExample: {
       problem: 'Giải thích vì sao xà phòng mất khả năng giặt rửa khi dùng trong nước cứng.',
@@ -1018,7 +1018,7 @@ export const HOA12_C1_LESSONS: ChemLesson[] = [
       'Chương 1 trang bị kiến thức về ester và lipid — hai lớp chất gắn liền với dinh dưỡng hằng ngày ' +
       'và với ngành công nghiệp xà phòng, chất tẩy rửa.',
     theory:
-      'HỆ THỐNG HOÁ KIẾN THỨC CHƯƠNG 1:\n' +
+      '## Hệ thống hoá kiến thức chương 1\n' +
       "1. Ester (RCOOR'): No đơn chức CₙH₂ₙO₂ (n≥2). Thuỷ phân acid (⇌ tạo acid + alcohol), thuỷ phân kiềm (xà phòng hoá → muối + alcohol).\n" +
       '2. Lipid (chất béo): Triester của glycerol và acid béo. Thể lỏng (không no, dầu ăn), thể rắn (no, mỡ). Phản ứng hydrogen hoá chuyển chất béo lỏng thành chất béo rắn.\n' +
       '3. Xà phòng: Muối carboxylate của kiềm với acid béo. Mất tác dụng trong nước cứng.\n' +

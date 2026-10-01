@@ -33,11 +33,11 @@ export const HOA_HSG_HUU_CO_LESSONS: ChemLesson[] = [
       'rồi n(O) = m(O)/16. Nếu ra n(O) = 0 (hoặc âm một chút do làm tròn) thì X chỉ gồm C và H.\n' +
       'Cách thứ hai, thường nhanh hơn khi đề cho số mol O₂: bảo toàn nguyên tố O ⇒ ' +
       'n(O trong X) + 2·n(O₂) = 2·n(CO₂) + n(H₂O).\n\n' +
-      'HAI BƯỚC CUỐI:\n' +
+      '## Hai bước cuối\n' +
       '1. Lập công thức ĐƠN GIẢN NHẤT từ tỉ lệ nguyên tối giản n(C) : n(H) : n(O).\n' +
       '2. Dùng phân tử khối M để nhân lên thành công thức PHÂN TỬ. Không có M thì chỉ dừng ' +
       'được ở công thức đơn giản nhất — đây là giới hạn phải nêu rõ khi trình bày lời giải.\n\n' +
-      'KIỂM TRA TÍNH HỢP LÍ (bước mà học sinh hay bỏ, giám khảo lại hay trừ điểm):\n' +
+      '## Kiểm tra tính hợp lí (bước mà học sinh hay bỏ, giám khảo lại hay trừ điểm)\n' +
       '— Độ bất bão hoà k = (2C + 2 + N − H)/2 phải là số nguyên không âm. k = 0 là mạch hở no; ' +
       'k = 1 có một liên kết đôi hoặc một vòng; k = 4 thường báo hiệu vòng benzene.\n' +
       '— Số H phải cùng tính chẵn lẻ với quy tắc hoá trị (hợp chất chỉ chứa C, H, O thì số H ' +

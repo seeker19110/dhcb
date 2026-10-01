@@ -208,10 +208,10 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       'Gắng sức đẩy một bức tường đá nặng suốt một tiếng đồng hồ khiến bạn mệt lử, nhưng dưới góc nhìn Vật lí, bạn lại chưa thực hiện một "công" nào. ' +
       'Tại sao định nghĩa về công trong Vật lí lại nghiêm ngặt đến vậy?',
     theory:
-      'NĂNG LƯỢNG (ENERGY):\n' +
+      '## Năng lượng (energy)\n' +
       '— Năng lượng là một đại lượng đặc trưng cho khả năng thực hiện công của hệ.\n' +
       '— Định luật bảo toàn năng lượng: Năng lượng không tự sinh ra cũng không tự mất đi, nó chỉ truyền từ vật này sang vật khác hoặc chuyển hoá từ dạng này sang dạng khác.\n\n' +
-      'CÔNG CƠ HỌC (WORK):\n' +
+      '## Công cơ học (work)\n' +
       '— Công cơ học là số đo phần năng lượng được truyền từ vật này sang vật khác trong tương tác lực cơ học.\n' +
       '— Công thức tính công của lực F không đổi làm vật dịch chuyển quãng đường s thẳng (góc α giữa lực vectơ F và hướng chuyển động):\n' +
       '  — A = F.s.cos α.\n' +
@@ -438,13 +438,13 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       'Một người thợ cần cả ngày để cuốc xong mảnh vườn, trong khi chiếc máy cày chỉ mất 15 phút. ' +
       'Cả hai đều thực hiện cùng một lượng công như nhau, nhưng máy cày có một đại lượng vượt trội hơn hẳn: Công suất.',
     theory:
-      'ĐỊNH NGHĨA CÔNG SUẤT (POWER):\n' +
+      '## Định nghĩa công suất (power)\n' +
       '— Công suất là đại lượng đặc trưng cho tốc độ thực hiện công của lực, đo bằng công thực hiện được trong một đơn vị thời gian.\n' +
       '— Công thức tính công suất trung bình: 𝒫 = A / t.\n' +
       '— Đơn vị đo trong hệ SI: Watt (kí hiệu là W), với 1 W = 1 J/s.\n' +
       '  — Đơn vị ngoài hệ SI thường gặp là mã lực: mã lực Anh (horsepower, HP) có 1 HP ≈ 746 W, ' +
       'còn mã lực Pháp (cheval-vapeur, CV) có 1 CV ≈ 736 W.\n\n' +
-      'MỐI LIÊN HỆ GIỮA CÔNG SUẤT, LỰC VÀ VẬN TỐC:\n' +
+      '## Mối liên hệ giữa công suất, lực và vận tốc\n' +
       '— Khi lực F cùng hướng với vận tốc v của vật, ta có: 𝒫 = A / t = (F.s) / t = F.v.\n' +
       '— Công thức này giải thích tại sao khi xe lên dốc, để tăng lực kéo F giúp xe leo dốc khỏe hơn, người lái xe phải về số thấp để giảm vận tốc v của xe (giữ công suất 𝒫 động cơ tối đa không đổi).',
     workedExample: {
@@ -661,11 +661,11 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       'Một viên đạn nhỏ đang bay có thể xuyên thủng tấm thép dày nhờ mang động năng lớn. ' +
       'Một hồ chứa nước trên đỉnh núi cao lại chứa đựng một lượng thế năng khổng lồ sẵn sàng chạy máy phát điện. Hai dạng năng lượng này tích luỹ thế nào?',
     theory:
-      'ĐỘNG NĂNG (KINETIC ENERGY):\n' +
+      '## Động năng (kinetic energy)\n' +
       '— Động năng (W_đ) là dạng năng lượng mà một vật có được do nó đang chuyển động.\n' +
       '— Công thức tính động năng: W_đ = 0,5.m.v².\n' +
       '— Định lí động năng: Độ biến thiên động năng của một vật bằng công của các ngoại lực tác dụng lên vật: A = W_đ2 - W_đ1.\n\n' +
-      'THẾ NĂNG TRỌNG TRƯỜNG (GRAVITATIONAL POTENTIAL ENERGY):\n' +
+      '## Thế năng trọng trường (gravitational potential energy)\n' +
       '— Thế năng trọng trường (W_t) là dạng năng lượng tương tác giữa Trái Đất và vật, phụ thuộc vào vị trí của vật trong trọng trường.\n' +
       '— Công thức tính thế năng trọng trường ở độ cao h so với mốc thế năng đã chọn: W_t = m.g.h.\n' +
       '  — h: Độ cao của vật so với mốc chọn làm thế năng bằng 0 (hướng lên trên h dương, hướng xuống dưới h âm).',
@@ -858,13 +858,13 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       'Khi tàu lượn siêu tốc lao dốc từ đỉnh cao nhất, nó chạy nhanh dần lên. Thế năng tích tụ ở đỉnh đã biến đi đâu? ' +
       'Nó đã chuyển hoá thành động năng, đúng theo định luật bảo toàn cơ năng.',
     theory:
-      'KHÁI NIỆM CƠ NĂNG (MECHANICAL ENERGY):\n' +
+      '## Khái niệm cơ năng (mechanical energy)\n' +
       '— Cơ năng (W) là tổng động năng và thế năng của vật: W = W_đ + W_t = 0,5.m.v² + m.g.h.\n\n' +
-      'ĐỊNH LUẬT BẢO TOÀN CƠ NĂNG:\n' +
+      '## Định luật bảo toàn cơ năng\n' +
       '— Phát biểu: Khi một vật chuyển động trong trọng trường chỉ chịu tác dụng của trọng lực (không có lực cản, lực ma sát), thì cơ năng của vật là một đại lượng bảo toàn (không đổi theo thời gian).\n' +
       '— Biểu thức: W = W_đ + W_t = hằng số.\n' +
       '  — Hệ quả: Động năng cực đại tại vị trí thế năng cực tiểu (mặt đất), thế năng cực đại tại vị trí động năng cực tiểu (đỉnh cao nhất).\n\n' +
-      'ẢNH HƯỞNG CỦA LỰC MA SÁT (LỰC KHÔNG THẾ):\n' +
+      '## Ảnh hưởng của lực ma sát (lực không thế)\n' +
       '— Nếu vật chịu thêm lực cản, ma sát, cơ năng không bảo toàn. Độ biến thiên cơ năng bằng công của lực ma sát: A_ms = W₂ - W₁ (cơ năng hao hụt chuyển thành nhiệt năng).',
     workedExample: {
       problem:
@@ -1074,7 +1074,7 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       'Không một động cơ nào trong thực tế có hiệu suất 100%. Phần lớn điện năng cung cấp cho bóng đèn sợi đốt bị biến thành nhiệt nóng vô ích thay vì phát sáng. ' +
       'Làm thế nào để đo lường mức độ hữu ích của máy móc?',
     theory:
-      'KHÁI NIỆM HIỆU SUẤT (EFFICIENCY):\n' +
+      '## Khái niệm hiệu suất (efficiency)\n' +
       '— Hiệu suất (H) là tỉ số giữa năng lượng có ích (hoặc công có ích) tạo ra và năng lượng toàn phần (hoặc công toàn phần) cung cấp cho thiết bị.\n' +
       '— Công thức tính hiệu suất:\n' +
       '  — Theo công cơ học: H = (A_ich / A_tp) * 100%.\n' +

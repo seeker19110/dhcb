@@ -28,7 +28,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       'nhưng KHÔNG bao giờ cho ra lực căng dây, vì lực căng đã bị triệt tiêu mất.\n' +
       '— Cách 2 (TÁCH từng vật): viết định luật 2 Newton riêng cho mỗi vật, lực căng dây trở thành ngoại lực và hiện ra ' +
       'trong phương trình. Đây là cách duy nhất tìm được lực căng, phản lực, hay điều kiện để dây không đứt.\n\n' +
-      'QUY TRÌNH BỐN BƯỚC (làm đúng thứ tự thì không sai dấu):\n' +
+      '## Quy trình bốn bước (làm đúng thứ tự thì không sai dấu)\n' +
       '1. Chọn CHIỀU DƯƠNG cho từng vật theo đúng chiều nó thật sự chuyển động. Với hệ qua ròng rọc, chiều dương của hai vật ' +
       'nằm trên hai phương khác nhau — điều đó hoàn toàn được phép, miễn là nhất quán.\n' +
       '2. Vẽ đủ lực đặt LÊN TỪNG VẬT, không vẽ lẫn lực đặt lên vật khác. Mẹo rà: mỗi lực phải trả lời được câu hỏi ' +
@@ -134,7 +134,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       'đứng yên ở vị trí lệch đó suốt thời gian xe tăng tốc. Với bạn, chai nước đang CÂN BẰNG — nhưng hai lực quen thuộc ' +
       '(trọng lực và lực căng dây) rõ ràng không thể cân bằng nhau khi dây lệch. Vậy còn lực thứ ba nào nữa?',
     theory:
-      'HỆ QUY CHIẾU QUÁN TÍNH VÀ PHI QUÁN TÍNH:\n' +
+      '## Hệ quy chiếu quán tính và phi quán tính\n' +
       '— Hệ quy chiếu quán tính là hệ mà trong đó định luật 1 Newton nghiệm đúng (mặt đất, hoặc bất cứ hệ nào chuyển động ' +
       'thẳng đều so với mặt đất).\n' +
       '— Hệ quy chiếu PHI QUÁN TÍNH là hệ gắn với vật đang có gia tốc (xe tăng tốc, thang máy khởi động, đĩa quay). ' +
@@ -147,7 +147,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       'Đây là điểm khác biệt căn bản với mọi lực thật (hấp dẫn, đàn hồi, ma sát) vốn luôn đi theo cặp trực đối.\n' +
       '— GIỚI HẠN: chỉ dùng được khi đã khai báo rõ "xét trong hệ quy chiếu gắn với…". Viết lực quán tính vào một bài giải ' +
       'lấy mặt đất làm mốc là sai về bản chất, dù đôi khi ra đúng số.\n\n' +
-      'TRỌNG LỰC HIỆU DỤNG:\n' +
+      '## Trọng lực hiệu dụng\n' +
       '— Trong hệ phi quán tính, trọng lực và lực quán tính luôn đi cùng nhau nên ta gộp lại thành trọng lực hiệu dụng: ' +
       'vectơ P_hd = vectơ P + vectơ F_qt, ứng với gia tốc trọng trường hiệu dụng g_hd = |vectơ g − vectơ a₀|.\n' +
       '— Hệ quả rất hay dùng: với xe chạy ngang có gia tốc a₀, dây treo lệch góc α với tan α = a₀/g, và lực căng ' +
@@ -255,7 +255,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       'bằng định luật 2 Newton trở nên rối rắm vì gia tốc của vật phải tính trong hệ đang chuyển động. Đây là dạng bài ' +
       'gần như năm nào cũng gặp ở kì thi cấp quốc gia, và chìa khoá là hai định luật bảo toàn.',
     theory:
-      'VÌ SAO CHỌN BẢO TOÀN CHỨ KHÔNG CHỌN ĐỘNG LỰC HỌC:\n' +
+      '## Vì sao chọn bảo toàn chứ không chọn động lực học\n' +
       '— Định luật bảo toàn chỉ so sánh trạng thái ĐẦU với trạng thái CUỐI, nên ta không cần biết quá trình ở giữa diễn ra ' +
       'phức tạp thế nào — trong khi viết định luật 2 Newton thì phải mô tả từng thời điểm.\n' +
       '— Với hệ vật + nêm trên sàn nhẵn, hai định luật bảo toàn dưới đây cho đủ hai phương trình để tìm hai ẩn vận tốc.\n\n' +

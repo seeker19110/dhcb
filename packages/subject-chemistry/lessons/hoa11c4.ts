@@ -15,14 +15,14 @@ export const HOA11_C4_LESSONS: ChemLesson[] = [
       'Khí gas nấu ăn hằng ngày chứa propane và butane. Xăng chạy xe máy chứa chủ yếu hexane và octane. ' +
       'Tất cả chúng đều thuộc dòng hydrocarbon no được gọi là alkane.',
     theory:
-      'KHÁI NIỆM VÀ ĐỒNG PHÂN:\n' +
+      '## Khái niệm và đồng phân\n' +
       '— Alkane là các hydrocarbon no, mạch hở, chỉ có liên kết đơn C−C và C−H trong phân tử.\n' +
       '— Công thức chung: CₙH₂ₙ₊₂ (n ≥ 1).\n' +
       '— Đồng phân: Từ C₄H₁₀ trở đi có đồng phân mạch carbon (mạch thẳng và mạch phân nhánh).\n\n' +
-      'DANH PHÁP (Tên thay thế theo IUPAC):\n' +
+      '## Danh pháp (Tên thay thế theo IUPAC)\n' +
       '— Tên 10 alkane mạch thẳng đầu tiên: Methane (C1), Ethane (C2), Propane (C3), Butane (C4), Pentane (C5), Hexane (C6), Heptane (C7), Octane (C8), Nonane (C9), Decane (C10).\n' +
       '— Nguyên tắc gọi tên alkane mạch nhánh: Chọn mạch dài nhất làm mạch chính → Đánh số C mạch chính từ đầu gần nhánh hơn → Đọc tên: [Vị trí nhánh]-[Tên nhánh][Tên alkane mạch chính].\n\n' +
-      'TÍNH CHẤT HOÁ HỌC:\n' +
+      '## Tính chất hoá học\n' +
       'Alkane khá trơ về mặt hoá học, phản ứng đặc trưng là phản ứng thế.\n' +
       '1. Phản ứng thế halogen (clo hoá, brom hoá): Nguyên tử H ở carbon bậc cao hơn dễ bị thế hơn nguyên tử H ở carbon bậc thấp.\n' +
       '   Ví dụ: CH₄ + Cl₂ → CH₃Cl + HCl (chiếu sáng).\n' +
@@ -535,10 +535,10 @@ export const HOA11_C4_LESSONS: ChemLesson[] = [
       'Khí ethylene là một hormone thực vật tự nhiên giúp thúc quả chín nhanh. Trái cây xanh xếp cùng ' +
       'vài quả chín sẽ chín nhanh hơn nhờ khí ethylene giải phóng ra.',
     theory:
-      'KHÁI NIỆM PHÂN LOẠI:\n' +
+      '## Khái niệm phân loại\n' +
       '— Alkene: hydrocarbon không no, mạch hở, có 1 liên kết đôi C=C. Công thức chung: CₙH₂ₙ (n ≥ 2).\n' +
       '— Alkyne: hydrocarbon không no, mạch hở, có 1 liên kết ba C≡C. Công thức chung: CₙH₂ₙ₋₂ (n ≥ 2).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC (Đặc trưng là phản ứng cộng):\n' +
+      '## Tính chất hoá học (Đặc trưng là phản ứng cộng)\n' +
       'Do có liên kết pi (π) kém bền trong liên kết đôi hoặc liên kết ba, chúng dễ tham gia phản ứng cộng để đạt trạng thái no bền vững hơn.\n' +
       '1. Phản ứng cộng H₂, X₂ (nước Bromine):\n' +
       '   — Alkene và alkyne làm MẤT MÀU nước bromine ngay ở điều kiện thường (dùng để nhận biết hydrocarbon không no).\n' +
@@ -889,11 +889,11 @@ export const HOA11_C4_LESSONS: ChemLesson[] = [
       'Benzene có cấu trúc vòng lục giác hoàn hảo với hệ liên kết bền vững khác thường. Nhờ độ bền này, ' +
       'nó là dung môi công nghiệp cực tốt, nhưng lại cực độc đối với con người.',
     theory:
-      'CẤU TẠO PHÂN TỬ BENZENE (C₆H₆):\n' +
+      '## Cấu tạo phân tử benzene (C₆H₆)\n' +
       '— Phân tử benzene gồm 6 nguyên tử C tạo thành một vòng sáu cạnh đều nằm trên một mặt phẳng. Hệ liên kết pi (π) liên hợp khép kín tạo nên cấu trúc vòng siêu bền (nhân thơm).\n\n' +
-      'DANH PHÁP ARENE:\n' +
+      '## Danh pháp arene\n' +
       '— Dãy đồng đẳng arene gồm benzene (C₆H₆) và các alkylbenzene (toluene C₆H₅-CH₃, xylene C₆H₄(CH₃)₂...).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC (Tính thơm: dễ thế, khó cộng, bền với chất oxi hoá):\n' +
+      '## Tính chất hoá học (Tính thơm: dễ thế, khó cộng, bền với chất oxi hoá)\n' +
       '1. Phản ứng thế ở nhân thơm (tính chất đặc trưng):\n' +
       '   — Thế halogen (brom hoá): Benzene phản ứng với Br₂ khan khi có xúc tác FeBr₃ tạo bromobenzene: C₆H₆ + Br₂ → C₆H₅Br + HBr.\n' +
       '   — Phản ứng nitro hoá: Phản ứng với hỗn hợp HNO₃ đặc / H₂SO₄ đặc tạo nitrobenzene.\n' +
@@ -1436,7 +1436,7 @@ export const HOA11_C4_LESSONS: ChemLesson[] = [
       'Ôn tập và đối chiếu bốn dãy hydrocarbon quan trọng nhất: alkane (no), alkene và alkyne (không no), ' +
       'arene (thơm). Khác biệt về cấu tạo tạo nên tính chất hoá học đặc trưng của từng dãy.',
     theory:
-      'TỔNG KẾT SO SÁNH CÁC LỚP HYDROCARBON:\n' +
+      '## Tổng kết so sánh các lớp hydrocarbon\n' +
       '1. Alkane (CₙH₂ₙ₊₂): Chỉ chứa liên kết đơn C−C, C−H. Phản ứng thế halogen (chiếu sáng) đặc trưng. Đốt cháy cho nCO₂ < nH₂O.\n' +
       '2. Alkene (CₙH₂ₙ): Có 1 liên kết đôi C=C (chứa 1 liên kết pi kém bền). Phản ứng cộng (H₂, Br₂, HX, H₂O) đặc trưng, phản ứng trùng hợp. Làm mất màu nước Bromine và dung dịch KMnO₄.\n' +
       '3. Alkyne (CₙH₂ₙ₋₂): Có 1 liên kết ba C≡C (chứa 2 liên kết pi kém bền). Phản ứng cộng tương tự alkene. Riêng alk-1-yne thế AgNO₃/NH₃ tạo kết tủa vàng nhạt.\n' +

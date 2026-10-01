@@ -525,10 +525,10 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
     title: 'Khái niệm sơ lược về hạt nhân. Cấu trúc hạt nhân',
     hook: 'Tại tâm của mỗi nguyên tử có một hạt nhân vô cùng nhỏ bé và đậm đặc, chiếm tới hơn 99.9% khối lượng nguyên tử nhưng kích thước chỉ bằng một phần một trăm nghìn kích thước nguyên tử.',
     theory:
-      'KÍCH THƯỚC HẠT NHÂN:\n' +
+      '## Kích thước hạt nhân\n' +
       '— Hạt nhân nguyên tử có kích thước rất nhỏ so với kích thước nguyên tử (nhỏ hơn khoảng 10⁵ lần).\n' +
       '— Bán kính hạt nhân R được ước lượng phụ thuộc vào số khối A theo công thức: R ≈ 1.2 * 10⁻¹⁵ * A^(1/3) (m).\n\n' +
-      'CẤU TẠO HẠT NHÂN:\n' +
+      '## Cấu tạo hạt nhân\n' +
       '— Hạt nhân được cấu tạo từ các hạt nucleon, gồm hai loại:\n' +
       '  1. Proton (ký hiệu là p): mang điện tích dương +e (e ≈ 1.6 * 10⁻¹⁹ C), khối lượng mp ≈ 1.00728 amu.\n' +
       '  2. Neutron (ký hiệu là n): không mang điện, khối lượng mn ≈ 1.00866 amu.\n' +
@@ -537,7 +537,7 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
       '  + Z: số hiệu nguyên tử (số proton, số điện tích hạt nhân, số thứ tự trong bảng tuần hoàn).\n' +
       '  + A: số khối (tổng số nucleon).\n' +
       '— Số neutron trong hạt nhân là N = A - Z.\n\n' +
-      'ĐỒNG VỊ:\n' +
+      '## Đồng vị\n' +
       '— Các hạt nhân của cùng một nguyên tố có cùng số proton Z nhưng khác nhau số neutron N (dẫn đến số khối A khác nhau) gọi là các đồng vị.\n' +
       '— Ví dụ: Hiđrô có 3 đồng vị là Hiđrô thường _1^1 H, Đơteri _1^2 H (kí hiệu là D) và Triti _1^3 H (kí hiệu là T).',
     workedExample: {
@@ -993,18 +993,18 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
     title: 'Lực hạt nhân. Năng lượng liên kết hạt nhân',
     hook: 'Các hạt proton trong hạt nhân đều mang điện tích dương và đẩy nhau bằng một lực tĩnh điện cực mạnh. Lực nào đã thắng lực đẩy này để giữ chúng liên kết chặt chẽ trong hạt nhân? Đó là lực hạt nhân.',
     theory:
-      'LỰC HẠT NHÂN (LỰC TƯƠNG TÁC MẠNH):\n' +
+      '## Lực hạt nhân (lực tương tác mạnh)\n' +
       '— Lực hạt nhân: Là lực hút gắn kết các nucleon trong hạt nhân để tạo thành một cấu trúc bền vững.\n' +
       '— Đặc điểm:\n' +
       '  + Không có cùng bản chất với lực tĩnh điện hay lực hấp dẫn.\n  + Là lực tầm ngắn: chỉ có tác dụng trong phạm vi cỡ kích thước hạt nhân (khoảng 10⁻¹⁵ m), ra xa hơn là gần như không còn.\n  + Không phụ thuộc vào điện tích của nucleon (lực hút giữa p-p, n-n, p-n có độ lớn như nhau).\n\n' +
-      'ĐỘ HỤT KHỐI (delta m):\n' +
+      '## Độ hụt khối (delta m)\n' +
       '— Khối lượng của một hạt nhân luôn nhỏ hơn tổng khối lượng của các nucleon cấu tạo nên nó một lượng là delta m:\n' +
       '  dm = [Z * mp + (A - Z) * mn] - m_hn > 0\n\n' +
-      'NĂNG LƯỢNG LIÊN KẾT (Elk):\n' +
+      '## Năng lượng liên kết (Elk)\n' +
       '— Năng lượng liên kết: Là năng lượng toả ra khi các nucleon liên kết lại với nhau tạo thành hạt nhân, hoặc năng lượng tối thiểu cần cung cấp để tách hạt nhân thành các nucleon riêng rẽ.\n' +
       '  Elk = dm * c²\n' +
       '— Nếu dm tính bằng đơn vị amu thì Elk = dm * 931.5 (MeV) (với 1 amu * c² ≈ 931.5 MeV).\n\n' +
-      'NĂNG LƯỢNG LIÊN KẾT RIÊNG (Elkr):\n' +
+      '## Năng lượng liên kết riêng (Elkr)\n' +
       '— Năng lượng liên kết riêng: Là năng lượng liên kết tính trên một nucleon:\n' +
       '  Elkr = Elk / A\n' +
       '— Năng lượng liên kết riêng đặc trưng cho mức độ bền vững của hạt nhân. Hạt nhân có năng lượng liên kết riêng càng lớn thì càng bền vững (các hạt nhân bền vững nhất ở giữa bảng tuần hoàn có 50 < A < 80, ví dụ Fe-56).',
@@ -1542,17 +1542,17 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
       'Trong các phản ứng hoá học, các nguyên tử chỉ sắp xếp lại liên kết và giữ nguyên bản chất. ' +
       'Nhưng trong phản ứng hạt nhân, các nguyên tố có thể biến đổi hoàn toàn thành các nguyên tố khác, giải phóng nguồn năng lượng khổng lồ.',
     theory:
-      'PHÂN LOẠI PHẢN ỨNG HẠT NHÂN:\n' +
+      '## Phân loại phản ứng hạt nhân\n' +
       '— Phản ứng tự phát: Quá trình phân rã của một hạt nhân không bền vững tự động biến đổi thành hạt nhân khác (phóng xạ).\n' +
       '— Phản ứng kích thích: Quá trình các hạt nhân tương tác với nhau để biến đổi thành các hạt nhân khác.\n\n' +
-      'CÁC ĐỊNH LUẬT BẢO TOÀN TRONG PHẢN ỨNG HẠT NHÂN:\n' +
+      '## Các định luật bảo toàn trong phản ứng hạt nhân\n' +
       'Xét phản ứng: _Z1^A1 A + _Z2^A2 B -> _Z3^A3 C + _Z4^A4 D\n' +
       '— Định luật bảo toàn số khối (số nucleon): A1 + A2 = A3 + A4\n' +
       '— Định luật bảo toàn điện tích (số hiệu Z): Z1 + Z2 = Z3 + Z4\n' +
       '— Định luật bảo toàn động lượng: p_A + p_B = p_C + p_D\n' +
       '— Định luật bảo toàn năng lượng toàn phần.\n' +
       '— Chú ý: Không có định luật bảo toàn khối lượng nghỉ, không bảo toàn số hạt proton hay neutron riêng rẽ.\n\n' +
-      'NĂNG LƯỢNG PHẢN ỨNG HẠT NHÂN (delta E):\n' +
+      '## Năng lượng phản ứng hạt nhân (delta E)\n' +
       '  dE = (m_truoc - m_sau) * c²\n' +
       '— dE > 0: Phản ứng toả năng lượng.\n' +
       '— dE < 0: Phản ứng thu năng lượng.',
@@ -1903,14 +1903,14 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
     title: 'Hiện tượng phóng xạ',
     hook: 'Vào cuối thế kỷ 19, Marie Curie và các nhà khoa học phát hiện ra rằng một số nguyên tố nặng có thể tự phát ra các tia bức xạ mắt thường không nhìn thấy được và biến đổi thành nguyên tố khác. Hiện tượng tự phát này được gọi là phóng xạ.',
     theory:
-      'ĐỊNH NGHĨA HIỆN TƯỢNG PHÓNG XẠ:\n' +
+      '## Định nghĩa hiện tượng phóng xạ\n' +
       '— Phóng xạ: Là quá trình phân rã tự phát của một hạt nhân không bền vững thành hạt nhân khác, đồng thời phát ra các tia phóng xạ.\n\n' +
-      'CÁC DẠNG TIA PHÓNG XẠ CHÍNH:\n' +
+      '## Các dạng tia phóng xạ chính\n' +
       '— Phóng xạ Alpha (alpha): Phát ra hạt nhân Heli _2^4 He. Phương trình: _Z^A X -> _(Z-2)^(A-4) Y + _2^4 He. Đâm xuyên yếu, bị lệch trong điện trường.\n' +
       '— Phóng xạ Beta (beta):\n' +
       '  + Beta trừ: phát ra hạt electron e-. _Z^A X -> _(Z+1)^A Y + e-.\n  + Beta cộng: phát ra hạt positron e+. _Z^A X -> _(Z-1)^A Y + e+.\n  + Đâm xuyên trung bình, bị lệch mạnh trong điện trường.\n' +
       '— Phóng xạ Gamma (gamma): Bức xạ điện từ bước sóng cực ngắn (photon năng lượng cao). Không làm thay đổi cấu trúc hạt nhân, không bị lệch trong điện trường, đâm xuyên rất mạnh.\n\n' +
-      'ĐỊNH LUẬT PHÓNG XẠ:\n' +
+      '## Định luật phóng xạ\n' +
       'Số hạt nhân (hoặc khối lượng) còn lại sau thời gian t:\n' +
       '  N(t) = N0 * 2^(-t/T) = N0 * e^(-lambda * t)\n' +
       '  m(t) = m0 * 2^(-t/T) = m0 * e^(-lambda * t)\n' +
@@ -2782,12 +2782,12 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
       'Năng lượng hạt nhân có hai nguồn khai thác chính: phân tách các hạt nhân rất nặng (phân hạch - dùng trong lò phản ứng hạt nhân) và ' +
       'hợp nhất các hạt nhân rất nhẹ ở nhiệt độ cực cao (nhiệt hạch - phản ứng đang thắp sáng Mặt Trời).',
     theory:
-      'PHẢN ỨNG PHÂN HẠCH:\n' +
+      '## Phản ứng phân hạch\n' +
       '— Định nghĩa: Phản ứng phân hạch là hiện tượng một hạt nhân rất nặng (như U-235, Pu-239) hấp thụ một neutron chậm rồi vỡ thành hai hạt nhân trung bình, giải phóng 2-3 neutron và toả ra năng lượng rất lớn (~200 MeV/hạt nhân).\n\n' +
-      'PHẢN ỨNG DÂY CHUYỀN (CHAIN REACTION):\n' +
+      '## Phản ứng dây chuyền (chain reaction)\n' +
       '— Gọi k là hệ số nhân neutron trung bình:\n' +
       '  + k < 1: Phản ứng tắt ngay.\n  + k = 1: Phản ứng tự duy trì ổn định (nhà máy điện hạt nhân).\n  + k > 1: Phản ứng tăng bùng nổ mất kiểm soát (bom nguyên tử).\n\n' +
-      'PHẢN ỨNG NHIỆT HẠCH:\n' +
+      '## Phản ứng nhiệt hạch\n' +
       '— Định nghĩa: Phản ứng nhiệt hạch là phản ứng kết hợp hai hạt nhân rất nhẹ (đồng vị H) thành hạt nhân nặng hơn ở nhiệt độ cực kì cao (hàng chục đến hàng trăm triệu độ C).\n' +
       '— Phương trình tiêu biểu: _1^2 H + _1^3 H -> _2^4 He + _0^1 n + 17.6 MeV.\n' +
       '— Ưu điểm: Năng lượng toả ra cực lớn, nguồn nhiên liệu gần như vô tận (đồng vị hiđrô lấy từ nước biển), sạch và ít phế thải phóng xạ hơn phân hạch.',
@@ -2859,7 +2859,7 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
     title: 'Bài tập về vật lí hạt nhân',
     hook: 'Luyện tập giải các bài tập tính toán độ hụt khối, năng lượng liên kết, năng lượng phản ứng hạt nhân và ứng dụng định luật phóng xạ.',
     theory:
-      'CÁC CÔNG THỨC TRỌNG TÂM CẦN NHỚ:\n' +
+      '## Các công thức trọng tâm cần nhớ\n' +
       '1. Độ hụt khối: dm = Z.mp + (A-Z).mn - m_hn\n' +
       '2. Năng lượng liên kết: Elk = dm * c² = dm * 931.5 MeV (với dm tính bằng amu)\n' +
       '3. Năng lượng liên kết riêng: Elkr = Elk / A\n' +

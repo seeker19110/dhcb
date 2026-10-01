@@ -142,14 +142,14 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       'Khi khí sinh công A′ thì A = −A′. Cách viết tương đương rất hay dùng khi giải chu trình: Q = ΔU + A′.\n' +
       '— Sai lầm nhiều nhất KHÔNG nằm ở công thức mà ở quy ước dấu. Hãy chọn MỘT quy ước và ghi rõ ở đầu bài giải, ' +
       'rồi lập bảng bốn cột (quá trình | ΔU | A′ | Q) cho từng nhánh — làm vậy thì không bao giờ lẫn.\n\n' +
-      'NỘI NĂNG CỦA KHÍ LÍ TƯỞNG ĐƠN NGUYÊN TỬ:\n' +
+      '## Nội năng của khí lí tưởng đơn nguyên tử\n' +
       '— U = (3/2)·n·R·T = (3/2)·p·V. Dạng thứ hai cực tiện khi làm chu trình vì tránh phải tính nhiệt độ: ' +
       'ΔU = (3/2)·Δ(p·V), chỉ cần nhân hai con số ở mỗi đỉnh của chu trình.\n' +
       '— VÌ SAO nội năng chỉ phụ thuộc nhiệt độ: khí lí tưởng bỏ qua tương tác giữa các phân tử nên không có thế năng ' +
       'tương tác, toàn bộ nội năng là động năng chuyển động nhiệt, mà động năng đó tỉ lệ với T.\n' +
       '— GIỚI HẠN: hệ số 3/2 chỉ đúng cho khí ĐƠN NGUYÊN TỬ (He, Ar). Khí hai nguyên tử (O₂, N₂) ở nhiệt độ thường có ' +
       'thêm bậc tự do quay nên U = (5/2)·n·R·T. Đề thi luôn nói rõ loại khí; đọc sót là sai toàn bài.\n\n' +
-      'HIỆU SUẤT CHU TRÌNH:\n' +
+      '## Hiệu suất chu trình\n' +
       '— H = A′/Q_thu, trong đó A′ là công khí sinh ra trong cả chu trình (diện tích hình kín) và Q_thu là TỔNG nhiệt lượng ' +
       'khí NHẬN VÀO, chỉ cộng các nhánh có Q > 0.\n' +
       '— Bẫy thường gặp: lấy Q_thu là tổng đại số của mọi Q. Sai, vì mẫu số phải là năng lượng ta phải TRẢ TIỀN để mua ' +
@@ -261,7 +261,7 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       'nên lực từ luôn NGƯỢC chiều vận tốc, đóng vai trò một lực cản.\n' +
       '— Điểm mấu chốt khiến bài này khác mọi bài động lực học lớp 10: lực cản TỈ LỆ THUẬN VỚI VẬN TỐC, ' +
       'nên gia tốc không phải hằng số và không được dùng các công thức chuyển động biến đổi đều.\n\n' +
-      'PHƯƠNG TRÌNH CHUYỂN ĐỘNG VÀ VẬN TỐC GIỚI HẠN:\n' +
+      '## Phương trình chuyển động và vận tốc giới hạn\n' +
       '— Định luật 2 Newton: m·dv/dt = F − B²·l²·v/R.\n' +
       '— Lúc đầu v = 0 nên chưa có lực cản, gia tốc lớn nhất a₀ = F/m. Thanh càng nhanh thì lực cản càng lớn, gia tốc càng ' +
       'giảm dần. Đến khi lực cản cân bằng đúng lực kéo thì gia tốc bằng 0 và vận tốc ngừng tăng:\n' +

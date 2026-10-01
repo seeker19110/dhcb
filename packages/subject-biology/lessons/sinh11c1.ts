@@ -11,16 +11,16 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Khái quát về trao đổi chất và chuyển hóa năng lượng ở sinh vật',
     hook: 'Mọi sinh vật sống, từ cái cây nhỏ bé đến cơ thể con người, đều giống như một nhà máy hóa chất hoạt động không ngừng để chuyển hóa vật chất và năng lượng duy trì sự sống.',
     theory:
-      'KHÁI NIỆM TRAO ĐỔI CHẤT VÀ CHUYỂN HÓA NĂNG LƯỢNG:\n' +
+      '## Khái niệm trao đổi chất và chuyển hóa năng lượng\n' +
       '— Trao đổi chất ở tế bào gồm hai quá trình đối lập nhưng thống nhất:\n' +
       '  + Đồng hóa (Anabolism): Quá trình tổng hợp các chất hữu cơ phức tạp từ các chất đơn giản, đồng thời tích lũy năng lượng dưới dạng liên kết hóa học.\n' +
       '  + Dị hóa (Catabolism): Quá trình phân giải các chất hữu cơ phức tạp thành chất đơn giản, đồng thời giải phóng năng lượng chứa trong các liên kết hóa học thành ATP và nhiệt năng.\n' +
       '— Ba vai trò chính: Cung cấp nguyên liệu xây dựng tế bào; cung cấp năng lượng cho mọi hoạt động sống (ATP); đào thải các chất cặn bã, độc hại ra ngoài môi trường.\n\n' +
-      'PHƯƠNG THỨC DINH DƯỠNG CỦA SINH VẬT:\n' +
+      '## Phương thức dinh dưỡng của sinh vật\n' +
       'Dựa vào nguồn carbon và nguồn năng lượng, sinh vật được chia thành hai nhóm lớn:\n' +
       '1. Sinh vật tự dưỡng (Autotrophs): Tự tổng hợp chất hữu cơ từ các chất vô cơ. Gồm quang tự dưỡng (dùng ánh sáng, ví dụ: thực vật, vi khuẩn lam) và hóa tự dưỡng (dùng năng lượng phản ứng hóa học vô cơ, ví dụ: vi khuẩn nitrat hóa).\n' +
       '2. Sinh vật dị dưỡng (Heterotrophs): Lấy chất hữu cơ có sẵn từ sinh vật khác. Gồm quang dị dưỡng (vi khuẩn không lưu huỳnh màu tía) và hóa dị dưỡng (động vật, nấm, hầu hết vi khuẩn).\n\n' +
-      'BA GIAI ĐOẠN TRAO ĐỔI CHẤT Ở SINH VẬT ĐA BÀO:\n' +
+      '## Ba giai đoạn trao đổi chất ở sinh vật đa bào\n' +
       '— Giai đoạn 1: Trao đổi chất giữa môi trường ngoài và cơ thể (lấy thức ăn, nước, muối khoáng, khí O₂ và thải phân, nước tiểu, CO₂... qua các hệ cơ quan hô hấp, tiêu hóa, bài tiết).\n' +
       '— Giai đoạn 2: Vận chuyển các chất giữa các cơ quan trong cơ thể (nhờ hệ tuần hoàn vận chuyển chất dinh dưỡng, O₂ đến tế bào và mang chất thải từ tế bào đến cơ quan bài tiết).\n' +
       '— Giai đoạn 3: Trao đổi chất và năng lượng ở cấp độ tế bào (được thực hiện thông qua các phản ứng đồng hóa và dị hóa nội bào, trong đó hô hấp tế bào đóng vai trò trung tâm tạo ATP).',
@@ -423,11 +423,11 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Trao đổi nước và khoáng ở thực vật',
     hook: 'Làm thế nào nước từ dưới lòng đất sâu có thể di chuyển ngược chiều trọng lực lên tận ngọn cây cao hàng trăm mét? Đó là nhờ một hệ thống bơm sinh học và lực kéo vật lý tinh vi.',
     theory:
-      'HẤP THỤ NƯỚC VÀ KHOÁNG Ở RỄ:\n' +
+      '## Hấp thụ nước và khoáng ở rễ\n' +
       '— Cơ quan hấp thụ chính: Tế bào lông hút ở miền hút của rễ. Lông hút làm tăng diện tích tiếp xúc giữa rễ và đất.\n' +
       '— Cơ chế hấp thụ nước: Nước được hấp thụ thụ động theo cơ chế thẩm thấu (đi từ nơi có thế nước cao trong đất vào nơi có thế nước thấp trong tế bào lông hút do dịch bào lông hút ưu trương).\n' +
       '— Cơ chế hấp thụ khoáng: Gồm hấp thụ thụ động (khuếch tán theo građien nồng độ) và hấp thụ chủ động (vận chuyển ngược građien nồng độ, cần protein vận chuyển và tiêu tốn năng lượng ATP).\n\n' +
-      'VẬN CHUYỂN VẬT CHẤT TRONG CÂY:\n' +
+      '## Vận chuyển vật chất trong cây\n' +
       '1. Dòng mạch gỗ (Xylem): Vận chuyển nước, ion khoáng và một số chất hữu cơ tổng hợp từ rễ lên thân, lá.\n' +
       '   — Cấu tạo mạch gỗ: Các tế bào chết gồm quản bào và mạch ống liên kết đầu nối đầu thành ống rỗng liên tục.\n' +
       '   — Động lực dòng mạch gỗ: Kết hợp 3 lực:\n' +
@@ -437,7 +437,7 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
       '2. Dòng mạch rây (Phloem): Vận chuyển các chất hữu cơ tổng hợp từ lá (cơ quan nguồn) đến các cơ quan dự trữ hoặc sinh trưởng như rễ, củ, quả (cơ quan chứa).\n' +
       '   — Cấu tạo mạch rây: Tế bào sống gồm ống rây (không nhân) và tế bào kèm.\n' +
       '   — Động lực dòng mạch rây: Chênh lệch áp suất thẩm thấu giữa cơ quan nguồn và cơ quan chứa.\n\n' +
-      'THOÁT HƠI NƯỚC Ở LÁ:\n' +
+      '## Thoát hơi nước ở lá\n' +
       '— Vai trò: Tạo lực kéo dòng mạch gỗ; làm giảm nhiệt độ bề mặt lá; tạo điều kiện cho khí khổng mở để CO₂ khuếch tán vào lá thực hiện quang hợp.\n' +
       '— Con đường thoát hơi nước:\n' +
       '  + Qua khí khổng (chủ yếu): Tốc độ lớn, được điều tiết bằng sự đóng mở khí khổng (tế bào hạt đậu no nước -> thành mỏng căng cong làm khí khổng mở; mất nước -> thành mỏng duỗi thẳng làm khí khổng đóng).\n' +
@@ -906,13 +906,13 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về trao đổi nước và khoáng ở thực vật',
     hook: 'Làm thế nào để trực tiếp quan sát hiện tượng co nguyên sinh của tế bào thực vật, hay chứng minh sự chênh lệch thoát hơi nước ở hai mặt lá?',
     theory:
-      'THÍ NGHIỆM CO NGUYÊN SINH VÀ PHẢN CO NGUYÊN SINH:\n' +
+      '## Thí nghiệm co nguyên sinh và phản co nguyên sinh\n' +
       '— Nguyên tắc: Dựa trên sự di chuyển của nước qua màng sinh chất bán thấm tùy thuộc vào thế nước của môi trường ngoài tế bào.\n' +
       '— Tiến trình thí nghiệm co nguyên sinh:\n' +
       '  1. Bóc lớp biểu bì mặt dưới lá cây thuốc bỏng, hoặc lớp biểu bì vảy củ hành tía (loại hành có màu tím tự nhiên), đặt lên lam kính có giọt nước cất, đậy lamen và quan sát dưới kính hiển vi. Tế bào bình thường căng nước.\n' +
       '  2. Nhỏ dung dịch sucrose 10% hoặc NaCl loãng vào một rìa lamen, dùng giấy thấm hút nước ở rìa đối diện để kéo dung dịch lan qua khắp mẫu biểu bì. Quan sát: không bào co nhỏ lại, màng sinh chất tách dần khỏi thành tế bào (hiện tượng co nguyên sinh).\n' +
       '— Tiến trình phản co nguyên sinh: Nhỏ tiếp nước cất vào một rìa lamen, thấm dung dịch muối ra. Quan sát: nước thẩm thấu vào tế bào làm không bào và tế bào chất nở ra sát thành tế bào.\n\n' +
-      'THÍ NGHIỆM SO SÁNH TỐC ĐỘ THOÁT HƠI NƯỚC Ở HAI MẶT LÁ:\n' +
+      '## Thí nghiệm so sánh tốc độ thoát hơi nước ở hai mặt lá\n' +
       '— Nguyên tắc: Cobalt chloride (CoCl₂) khi khô có màu xanh da trời, khi gặp nước chuyển sang màu hồng.\n' +
       '— Tiến trình: Kẹp hai tấm giấy thấm tẩm CoCl₂ khô (màu xanh) vào mặt trên và mặt dưới của một chiếc lá trên cây. Ép chặt bằng lam kính và kẹp định vị. Đo thời gian giấy chuyển từ xanh sang hồng.\n' +
       '— Kết quả: Giấy kẹp ở mặt dưới lá chuyển sang màu hồng nhanh hơn mặt trên (đối với cây hai lá mầm) vì mặt dưới có nhiều khí khổng hơn.',
@@ -980,20 +980,20 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Quang hợp ở thực vật',
     hook: 'Lá cây hấp thụ năng lượng mặt trời để biến CO₂ và nước thành chất dinh dưỡng hữu cơ và giải phóng oxi. Quá trình quang hợp duy trì toàn bộ sự sống trên Trái Đất.',
     theory:
-      'KHÁI NIỆM QUANG HỢP:\n' +
+      '## Khái niệm quang hợp\n' +
       '— Phương trình tổng quát: 6CO₂ + 6H₂O + Ánh sáng → C₆H₁₂O₆ + 6O₂.\n' +
       '— Bộ phận quang hợp chính: Lá cây. Bào quan thực hiện: Lục lạp (Chloroplast).\n\n' +
-      'HỆ SẮC TỐ QUANG HỢP (nằm trên màng thylakoid):\n' +
+      '## Hệ sắc tố quang hợp (nằm trên màng thylakoid)\n' +
       '— Sắc tố chính: Diệp lục (Chlorophyll), gồm diệp lục a và diệp lục b. Trong đó, diệp lục a ở trung tâm phản ứng trực tiếp nhận năng lượng ánh sáng và biến đổi thành năng lượng hóa học (ATP, NADPH).\n' +
       '— Sắc tố phụ: Carotenoid (gồm caroten và xanthophyll), hấp thụ ánh sáng ở bước sóng khác rồi truyền năng lượng cho diệp lục a, đồng thời bảo vệ diệp lục khỏi bị phân hủy dưới ánh sáng mạnh.\n\n' +
-      'HAI PHA CỦA QUANG HỢP:\n' +
+      '## Hai pha của quang hợp\n' +
       '1. Pha sáng (xảy ra trên màng thylakoid):\n' +
       '   — Điều kiện: Cần năng lượng ánh sáng.\n' +
       '   — Quá trình: Diệp lục hấp thụ ánh sáng thực hiện quang phân li nước (2H₂O → 4H⁺ + 4e⁻ + O₂), giải phóng O₂. Đồng thời tổng hợp ATP và NADPH.\n' +
       '2. Pha tối / Chu trình Calvin (xảy ra trong chất nền stroma):\n' +
       '   — Điều kiện: Không cần ánh sáng trực tiếp nhưng cần sản phẩm của pha sáng (ATP, NADPH).\n' +
       '   — Quá trình: Cố định CO₂ nhờ chu trình Calvin chuyển hóa thành chất hữu cơ (đường AlPG rồi thành Glucose).\n\n' +
-      'CÁC NHÓM THỰC VẬT C₃, C₄ VÀ CAM:\n' +
+      '## Các nhóm thực vật C₃, C₄ và CAM\n' +
       '— Thực vật C₃: Sống ở vùng ôn đới, cận nhiệt đới (lúa, khoai, sắn). Cố định CO₂ trực tiếp bằng chu trình Calvin tại tế bào mô giậu.\n' +
       '— Thực vật C₄: Sống ở vùng nhiệt đới nóng ẩm (mía, ngô, rau dền). Có năng suất quang hợp cao vì thực hiện con đường cố định CO₂ hai giai đoạn (ở tế bào mô giậu và tế bào bao bó mạch), không xảy ra hô hấp sáng.\n' +
       '— Thực vật CAM: Thực vật mọng nước sống ở sa mạc hoặc khô hạn (xương rồng, dứa, lô hội). Đóng khí khổng ban ngày để tiết kiệm nước, chỉ mở khí khổng ban đêm để lấy CO₂ tích trữ dưới dạng axit hữu cơ (malate). Ban ngày giải phóng CO₂ từ axit này đưa vào chu trình Calvin.',
@@ -1405,14 +1405,14 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về quang hợp ở thực vật',
     hook: 'Làm thế nào để chứng minh lá cây cần ánh sáng để tổng hợp tinh bột, hay chiết xuất các chất màu diệp lục ra khỏi lá cây?',
     theory:
-      'THÍ NGHIỆM CHỨNG MINH LÁ CÂY TẠO TINH BỘT KHI QUANG HỢP:\n' +
+      '## Thí nghiệm chứng minh lá cây tạo tinh bột khi quang hợp\n' +
       '— Nguyên tắc: Tinh bột gặp dung dịch iốt chuyển thành màu xanh tím đặc trưng.\n' +
       '— Tiến trình:\n' +
       '  1. Bịt một phần lá cây khoai lang hoặc thiết mộc lan bằng băng giấy đen cả hai mặt, để cây trong bóng tối 2 ngày, sau đó đưa ra nắng chiếu sáng 6-8 giờ.\n' +
       '  2. Ngắt lá thí nghiệm, luộc sôi trong nước 5 phút, sau đó cho vào ống nghiệm chứa cồn 90% đun cách thủy để tẩy sạch diệp lục (lá có màu trắng ngà).\n' +
       '  3. Rửa lá bằng nước ấm rồi nhỏ dung dịch iốt lên bề mặt lá.\n' +
       '— Hiện tượng: Phần lá không bị che phủ (quang hợp bình thường) chuyển sang màu xanh tím đậm; phần lá bị bịt giấy đen không đổi màu (giữ màu trắng ngà của lá tẩy diệp lục).\n\n' +
-      'THÍ NGHIỆM TÁCH CHIẾT SẮC TỐ QUANG HỢP:\n' +
+      '## Thí nghiệm tách chiết sắc tố quang hợp\n' +
       '— Nguyên tắc: Sắc tố quang hợp tan trong dung môi hữu cơ (cồn, acetone) nhưng không tan trong nước.\n' +
       '— Tiến trình: Giã nát lá xanh với một lượng nhỏ cồn 90% hoặc acetone, lọc dịch chiết bằng giấy lọc. Ta thu được dịch sắc tố màu xanh lục đậm.\n' +
       '— Phân tách bằng sắc ký giấy: Nhỏ một giọt dịch chiết sắc tố lên giấy sắc ký, đặt đuôi giấy tiếp xúc với dung môi chạy sắc ký (ví dụ hỗn hợp ether dầu hỏa và acetone). Các sắc tố di chuyển với tốc độ khác nhau do độ tan và lực liên kết với giấy khác nhau, tách thành các vạch màu rõ rệt (carotene màu cam ở trên cùng, xanthophyll màu vàng, diệp lục a màu xanh lục, diệp lục b màu xanh vàng ở dưới cùng).',
@@ -1796,10 +1796,10 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Hô hấp ở thực vật',
     hook: 'Hạt giống khi nảy mầm tỏa ra một lượng nhiệt lớn và giải phóng nhiều CO₂. Đó chính là hoạt động hô hấp mạnh mẽ giúp cây lấy năng lượng phá vỡ vỏ hạt.',
     theory:
-      'BẢN CHẤT CỦA HÔ HẤP Ở THỰC VẬT:\n' +
+      '## Bản chất của hô hấp ở thực vật\n' +
       '— Định nghĩa: Là quá trình oxy hóa sinh học các chất hữu cơ (chủ yếu là glucose) diễn ra trong tế bào thực vật, tạo ra năng lượng dưới dạng ATP cung cấp cho các hoạt động sống, đồng thời giải phóng nhiệt năng, CO₂ và H₂O.\n' +
       '— Phương trình: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + Năng lượng (ATP + Nhiệt).\n\n' +
-      'CÁC CON ĐƯỜNG HÔ HẤP Ở THỰC VẬT:\n' +
+      '## Các con đường hô hấp ở thực vật\n' +
       '1. Hô hấp hiếu khí (khi có O₂): Con đường chủ yếu của cây.\n' +
       '   — Diễn ra trong tế bào chất và ti thể qua 3 giai đoạn:\n' +
       '     + Đường phân (trong tế bào chất): Glucose → 2 Axit pyruvic (pyruvate) + 2 ATP + 2 NADH.\n' +
@@ -1807,7 +1807,7 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
       '     + Chuỗi truyền electron hô hấp (trên màng trong ti thể): NADH và FADH₂ nhường electron giải phóng năng lượng tổng hợp khoảng 26-28 ATP (tổng cả quá trình tạo khoảng 30-32 ATP/glucose).\n' +
       '2. Phân giải kị khí / Lên men (khi thiếu O₂ - ví dụ cây bị ngập úng hoặc hạt ngâm nước):\n' +
       '   — Diễn ra trong tế bào chất: Đường phân tạo axit pyruvic, sau đó axit pyruvic lên men tạo rượu ethanol hoặc axit lactic. Chỉ thu được vỏn vẹn 2 ATP từ đường phân.\n\n' +
-      'VAI TRÒ CỦA HÔ HẤP:\n' +
+      '## Vai trò của hô hấp\n' +
       '— Cung cấp năng lượng ATP cho các quá trình sinh lý của cây (như rễ chủ động hấp thụ ion khoáng, sinh tổng hợp chất, sinh trưởng).\n' +
       '— Giải phóng nhiệt năng giúp duy trì nhiệt độ cơ thể thực vật, thuận lợi cho các phản ứng enzym.\n' +
       '— Tạo ra các chất hữu cơ trung gian là nguyên liệu cho các quá trình tổng hợp các chất khác.',
@@ -1872,15 +1872,15 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về hô hấp ở thực vật',
     hook: 'Làm thế nào để chứng minh hạt đang nảy mầm tỏa nhiệt ấm áp, hay chứng tỏ hạt hút khí oxi khi hô hấp làm giọt nước màu dịch chuyển?',
     theory:
-      'THÍ NGHIỆM CHỨNG MINH HÔ HẤP TỎA NHIỆT:\n' +
+      '## Thí nghiệm chứng minh hô hấp tỏa nhiệt\n' +
       '— Nguyên tắc: Quá trình hô hấp giải phóng một phần năng lượng dưới dạng nhiệt năng. Hạt nảy mầm có tốc độ hô hấp cực lớn.\n' +
       '— Tiến trình: Cho hạt đậu xanh đang nảy mầm vào phích nước giữ nhiệt, cắm nhiệt kế vào giữa khối hạt và nút bông kín miệng phích. Bình đối chứng chứa hạt luộc chín để nguội. Theo dõi nhiệt độ sau vài giờ.\n' +
       '— Kết quả: Bình chứa hạt nảy mầm có nhiệt độ tăng lên rõ rệt (ví dụ từ 28°C lên 38°C); bình đối chứng chứa hạt chín nhiệt độ không đổi.\n\n' +
-      'THÍ NGHIỆM CHỨNG MINH HÔ HẤP THẢI CO₂:\n' +
+      '## Thí nghiệm chứng minh hô hấp thải CO₂\n' +
       '— Nguyên tắc: CO₂ tác dụng với nước vôi trong tạo kết tủa trắng CaCO₃ làm đục nước vôi.\n' +
       '— Tiến trình: Đặt hạt nảy mầm vào bình thủy tinh kín. Sau 2 giờ, dùng hệ thống ống dẫn khí ép không khí từ bình hạt sục qua ống nghiệm đựng nước vôi trong Ca(OH)₂.\n' +
       '— Kết quả: Nước vôi trong bị vẩn đục trắng nhanh chóng.\n\n' +
-      'THÍ NGHIỆM ĐO LƯỢNG O₂ TIÊU THỤ CỦA HẠT NẢY MẦM:\n' +
+      '## Thí nghiệm đo lượng O₂ tiêu thụ của hạt nảy mầm\n' +
       '— Nguyên tắc: Hô hấp tiêu thụ O₂ làm thể tích khí trong bình giảm. Cần loại bỏ CO₂ thải ra bằng chất hấp thụ để đo chính xác.\n' +
       '— Tiến trình: Đặt hạt nảy mầm vào bình thủy tinh nút kín, bên trong bình có treo một cốc nhỏ đựng dung dịch KOH (để hấp thụ CO₂ thải ra). Nút cao su của bình có cắm một ống thủy tinh nằm ngang có chứa một giọt nước màu làm áp kế.\n' +
       '— Kết quả: Giọt nước màu dịch chuyển dần về phía trong bình, chứng tỏ thể tích khí trong bình giảm do O₂ bị hạt hấp thụ.',
@@ -2413,12 +2413,12 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Dinh dưỡng và tiêu hóa ở động vật',
     hook: 'Tại sao trâu bò chỉ ăn cỏ khô nghèo dinh dưỡng vẫn phát triển béo tốt, còn con người ăn cỏ thì không thể tiêu hóa được? Bí mật nằm ở cấu trúc dạ dày và vi sinh vật cộng sinh.',
     theory:
-      'CÁC HÌNH THỨC TIÊU HÓA Ở ĐỘNG VẬT:\n' +
+      '## Các hình thức tiêu hóa ở động vật\n' +
       '— Tiêu hóa nội bào (trong tế bào): Thức ăn được bao bọc trong không bào tiêu hóa, nhờ enzyme thủy phân của lysosome phân giải (gặp ở động vật đơn bào như trùng biến hình, trùng đế giày).\n' +
       '— Tiêu hóa ngoại bào (ngoài tế bào):\n' +
       '  + Trong túi tiêu hóa: Thức ăn được biến đổi hóa học nhờ enzyme tiết ra từ thành túi tiêu hóa, sau đó hấp thụ chất đơn giản (ở ruột khoang, giun dẹp).\n' +
       '  + Trong ống tiêu hóa: Thức ăn đi một chiều qua ống (miệng -> thực quản -> dạ dày -> ruột -> hậu môn). Quá trình tiêu hóa cơ học (nhai, bóp) và hóa học (enzyme amylase, pepsin, trypsin...) phân giải thức ăn thành dạng hấp thụ được.\n\n' +
-      'ĐẶC ĐIỂM TIÊU HÓA Ở THÚ ĂN THỊT VÀ THÚ ĂN THỰC VẬT:\n' +
+      '## Đặc điểm tiêu hóa ở thú ăn thịt và thú ăn thực vật\n' +
       '1. Thú ăn thịt (hổ, sư tử):\n' +
       '   — Răng: Răng nanh sắc nhọn cắm xé mồi, răng trước hàm và răng hàm có gờ sắc để cắt thịt.\n' +
       '   — Dạ dày: Dạ dày đơn, to, cơ khỏe. Tiết nhiều HCl và pepsin dịch vị.\n' +
@@ -2789,9 +2789,9 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Hô hấp ở động vật',
     hook: 'Giun đất thở bằng da, châu chấu thở bằng ống khí, cá thở bằng mang, còn chim và thú thở bằng phổi. Sự đa dạng của các cơ quan hô hấp phản ánh sự thích nghi tuyệt vời với môi trường sống.',
     theory:
-      'VAI TRÒ CỦA TRAO ĐỔI KHÍ Ở ĐỘNG VẬT:\n' +
+      '## Vai trò của trao đổi khí ở động vật\n' +
       '— Lấy khí O₂ từ môi trường ngoài cung cấp cho hô hấp tế bào tạo ATP, đồng thời thải khí CO₂ sinh ra từ quá trình dị hóa tế bào ra ngoài.\n\n' +
-      'CÁC HÌNH THỨC TRAO ĐỔI KHÍ Ở ĐỘNG VẬT:\n' +
+      '## Các hình thức trao đổi khí ở động vật\n' +
       '1. Qua bề mặt cơ thể:\n' +
       '   — Đặc điểm: Khí O₂ và CO₂ khuếch tán trực tiếp qua da ẩm ướt.\n' +
       '   — Đại diện: Giun đất, giun dẹp, thủy tức. Động vật lưỡng cư (ếch) kết hợp da và phổi.\n' +
@@ -2868,14 +2868,14 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Tuần hoàn ở động vật',
     hook: 'Tim của bạn đập khoảng 100.000 lần mỗi ngày, bơm máu đi qua hệ thống mạch dài gần 100.000 km để nuôi dưỡng từng tế bào trong cơ thể.',
     theory:
-      'CÁC DẠNG HỆ TUẦN HOÀN:\n' +
+      '## Các dạng hệ tuần hoàn\n' +
       '— Hệ tuần hoàn hở (thân mềm, chân khớp): Máu được tim bơm vào động mạch rồi tràn vào khoang cơ thể trộn với dịch mô thành hỗn hợp máu - dịch mô tiếp xúc trực tiếp tế bào, sau đó thu hồi về tim qua tĩnh mạch. Áp lực máu thấp, tốc độ chảy chậm.\n' +
       '— Hệ tuần hoàn kín (giun đất, bạch tuộc, động vật có xương sống): Máu chảy hoàn toàn trong mạch kín dưới áp lực cao, tốc độ nhanh. Gồm hai dạng:\n' +
       '  + Tuần hoàn đơn (cá): Tim 2 ngăn (1 tâm nhĩ, 1 tâm thất), máu đi qua tim 1 lần trong mỗi chu kỳ tuần hoàn.\n  + Tuần hoàn kép (lưỡng cư, bò sát, chim, thú): Tim có 3 hoặc 4 ngăn, máu đi qua tim 2 lần qua hai vòng tuần hoàn (vòng tuần hoàn nhỏ qua phổi, vòng tuần hoàn lớn đi nuôi cơ thể).\n\n' +
-      'HOẠT ĐỘNG CỦA TIM:\n' +
+      '## Hoạt động của tim\n' +
       '— Tính tự động của tim: Khả năng co bóp tự động theo chu kỳ nhờ hệ dẫn truyền tim gồm: Nút xoang nhĩ (tự phát xung điện) → Nút nhĩ thất → Bó His → Mạng Purkinje.\n' +
       '— Chu kỳ hoạt động của tim ở người trưởng thành: Kéo dài khoảng 0.8 giây, gồm 3 pha: Pha co tâm nhĩ (0.1s) → Pha co tâm thất (0.3s) → Pha dãn chung (0.4s). Do thời gian nghỉ (0.4s) bằng thời gian co (0.1s + 0.3s) nên tim hoạt động suốt đời không mỏi.\n\n' +
-      'HOẠT ĐỘNG CỦA HỆ MẠCH:\n' +
+      '## Hoạt động của hệ mạch\n' +
       '— Huyết áp: Áp lực của máu tác dụng lên thành mạch. Giảm dần trong hệ mạch: Động mạch chủ > Động mạch nhỏ > Mao mạch > Tĩnh mạch > Tĩnh mạch chủ (thấp nhất).\n' +
       '— Vận tốc máu: Tốc độ máu chảy. Cao nhất ở động mạch lớn, giảm dần đến mao mạch (chậm nhất) rồi tăng dần ở tĩnh mạch. Vận tốc máu tỉ lệ nghịch với tổng diện tích mặt cắt của hệ mạch (tổng diện tích mao mạch lớn nhất nên máu chảy chậm nhất để thực hiện trao đổi chất).',
     workedExample: {
@@ -3250,13 +3250,13 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Thực hành: Một số thí nghiệm về tuần hoàn ở động vật',
     hook: 'Làm thế nào để đo chỉ số huyết áp của bản thân, tự đếm nhịp tim và quan sát dòng máu chảy trong mao mạch đuôi cá vàng dưới kính hiển vi?',
     theory:
-      'ĐO HUYẾT ÁP Ở NGƯỜI:\n' +
+      '## Đo huyết áp ở người\n' +
       '— Dụng cụ: Huyết áp kế cơ (hoặc điện tử) và ống nghe y tế.\n' +
       '— Các bước tiến hành đo bằng huyết áp kế cơ:\n' +
       '  1. Người được đo nằm hoặc ngồi thoải mái, quấn vòng bít (túi hơi cao su của huyết áp kế) quanh bắp tay, phía trên khuỷu tay 2-3 cm. Đặt loa ống nghe lên vị trí động mạch cánh tay.\n  2. Bơm khí vào vòng bít đến khi đồng hồ chỉ khoảng 160-180 mmHg để ép dừng hoàn toàn dòng máu động mạch.\n  3. Xả hơi từ từ qua van xả khí. Khi bắt đầu nghe thấy tiếng đập đầu tiên qua ống nghe, ghi lại số chỉ đồng hồ (Huyết áp tâm thu - tối đa).\n  4. Tiếp tục xả hơi. Khi tiếng đập nhỏ dần rồi biến mất hoàn toàn, ghi lại số chỉ đồng hồ (Huyết áp tâm trương - tối thiểu).\n  5. Kết quả bình thường ở thanh niên khỏe mạnh là khoảng 120/80 mmHg.\n\n' +
-      'ĐẾM NHỊP TIM (BẮT MẠCH):\n' +
+      '## Đếm nhịp tim (bắt mạch)\n' +
       '— Đếm nhịp tim: Dùng ngón trỏ và ngón giữa ấn nhẹ vào động mạch quay ở cổ tay hoặc động mạch cảnh ở cổ để đếm số nhịp mạch đập trong 1 phút.\n\n' +
-      'QUAN SÁT DÒNG MÁU Ở ĐUÔI CÁ VÀNG DƯỚI KÍNH HIỂN VI:\n' +
+      '## Quan sát dòng máu ở đuôi cá vàng dưới kính hiển vi\n' +
       '— Cách làm: Quấn con cá vàng nhỏ trong bông ẩm để giữ ẩm cho da, chừa phần đuôi. Đặt cá lên đĩa Petri hoặc lam kính lớn, dàn mỏng vây đuôi, nhỏ một giọt nước cất và đặt lamen lên.\n' +
       '— Quan sát dưới kính hiển vi ở vật kính 10x và 40x:\n  + Mao mạch: Các mạch máu nhỏ nhất, hồng cầu di chuyển chậm thành một hàng đơn lẻ.\n  + Động mạch: Máu chảy nhanh từ tim hướng ra đuôi.\n  + Tĩnh mạch: Máu chảy chậm hơn động mạch, hướng từ đuôi về tim.',
     workedExample: {
@@ -3646,14 +3646,14 @@ export const SINH11_C1_LESSONS: BiologyLesson[] = [
     title: 'Bài tiết và cân bằng nội môi',
     hook: 'Sau khi ăn nhiều đồ ngọt, tại sao lượng đường trong máu của bạn vẫn nhanh chóng trở lại mức ổn định? Đó là nhờ cơ chế cân bằng nội môi kì diệu được điều hòa bởi tuyến tụy, gan và thận.',
     theory:
-      'KHÁI NIỆM CÂN BẰNG NỘI MÔI:\n' +
+      '## Khái niệm cân bằng nội môi\n' +
       '— Cân bằng nội môi (Homeostasis) là sự duy trì ổn định môi trường trong cơ thể (máu, dịch mô, bạch huyết) về các chỉ số lý hóa (pH, áp suất thẩm thấu, nhiệt độ, nồng độ các chất...). Giúp tế bào hoạt động bình thường.\n\n' +
-      'CƠ CHẾ DUY TRÌ CÂN BẰNG NỘI MÔI:\n' +
+      '## Cơ chế duy trì cân bằng nội môi\n' +
       'Gồm 3 bộ phận chính phối hợp theo vòng liên hệ ngược:\n' +
       '1. Bộ phận tiếp nhận kích thích (Thụ thể ở da, cơ quan thụ cảm mạch máu...): Tiếp nhận biến động của môi trường trong hoặc ngoài, truyền xung thần kinh về bộ phận điều khiển.\n' +
       '2. Bộ phận điều khiển (Trung khu thần kinh ở não bộ, hành não hoặc tuyến nội tiết): Xử lý tín hiệu, gửi lệnh đến bộ phận thực hiện.\n' +
       '3. Bộ phận thực hiện (Thận, gan, phổi, tim, mạch máu...): Biến đổi hoạt động đưa môi trường trong về trạng thái cân bằng ổn định.\n\n' +
-      'VAI TRÒ CỦA THẬN VÀ GAN TRONG DUY TRÌ ÁP SUẤT THẨM THẤU:\n' +
+      '## Vai trò của thận và gan trong duy trì áp suất thẩm thấu\n' +
       '— Vai trò của Thận: Điều hòa lượng nước và muối khoáng.\n  + Khi áp suất thẩm thấu tăng (mất nước, ăn mặn): Vùng dưới đồi kích thích thùy sau tuyến yên tiết hormone ADH. ADH kích thích ống thận tăng tái hấp thu nước trả lại máu, làm giảm áp suất thẩm thấu và cô đặc nước tiểu.\n  + Khi áp suất thẩm thấu giảm (thừa nước): Tuyến yên giảm tiết ADH, thận giảm tái hấp thu nước, thải nước tiểu loãng.\n— Vai trò của Gan: Điều hòa nồng độ glucose trong máu luôn ở mức ổn định (~0.1%).\n  + Sau bữa ăn (glucose máu tăng): Tuyến tụy tiết Insulin kích thích gan biến đổi glucose thành glycogen dự trữ và tăng hấp thu glucose vào tế bào.\n  + Khi đói (glucose máu giảm): Tuyến tụy tiết Glucagon kích thích gan phân giải glycogen thành glucose giải phóng vào máu.\n\n' +
       'VAI TRÒ CỦA HỆ ĐỆM DUY TRÌ pH MÁU (ổn định ở mức 7.35 - 7.45):\n' +
       '— Hệ đệm hóa học: Hấp thu hoặc giải phóng ion H⁺ khi pH môi trường biến động. Gồm 3 hệ đệm chính: Hệ đệm Bicarbonate (H₂CO₃/HCO₃⁻), hệ đệm Phosphate (H₂PO₄⁻/HPO₄²⁻), và hệ đệm Protein (mạnh nhất do cấu trúc lưỡng tính của protein huyết tương).',

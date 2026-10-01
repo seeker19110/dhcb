@@ -15,11 +15,11 @@ export const HOA11_C6_LESSONS: ChemLesson[] = [
       'Dung dịch formalin dùng bảo quản mẫu sinh vật chứa formaldehyde. Nước rửa sơn móng tay có mùi ' +
       'hăng đặc trưng chứa acetone. Cả hai chất đều mang nhóm chức carbonyl.',
     theory:
-      'KHÁI NIỆM VÀ PHÂN LOẠI:\n' +
+      '## Khái niệm và phân loại\n' +
       '— Hợp chất carbonyl là hợp chất hữu cơ trong phân tử có chứa nhóm carbonyl (C=O).\n' +
       '— Aldehyde: nhóm carbonyl liên kết với ít nhất một nguyên tử hydrogen (R−CHO, với chất đơn giản nhất là HCHO).\n' +
       "— Ketone: nhóm carbonyl liên kết với hai gốc hydrocarbon (R−CO−R').\n\n" +
-      'TÍNH CHẤT HOÁ HỌC:\n' +
+      '## Tính chất hoá học\n' +
       '1. Phản ứng khử (cộng H₂):\n' +
       '   — Aldehyde bị khử bởi H₂ (Ni, t°) tạo alcohol bậc I: R−CHO + H₂ → R−CH₂OH.\n' +
       "   — Ketone bị khử bởi H₂ (Ni, t°) tạo alcohol bậc II: R−CO−R' + H₂ → R−CH(OH)−R'.\n" +
@@ -668,12 +668,12 @@ export const HOA11_C6_LESSONS: ChemLesson[] = [
       'Giấm ăn có vị chua thanh nhẹ nhờ chứa acetic acid. Kiến đốt truyền nọc độc formic acid gây sưng rát. ' +
       'Cả hai đều là acid hữu cơ, thuộc nhóm carboxylic acid.',
     theory:
-      'KHÁI NIỆM:\n' +
+      '## Khái niệm\n' +
       '— Carboxylic acid là hợp chất hữu cơ trong phân tử có nhóm carboxyl (−COOH) liên kết trực tiếp với nguyên tử carbon hoặc hydrogen.\n' +
       '— Công thức chung của acid no, đơn chức, mạch hở: CₙH₂ₙ₊₁COOH (n ≥ 0).\n\n' +
-      'TÍNH CHẤT VẬT LÍ (Nhiệt độ sôi rất cao):\n' +
+      '## Tính chất vật lí (Nhiệt độ sôi rất cao)\n' +
       '— Nhiệt độ sôi của carboxylic acid cao hơn alcohol có cùng phân tử khối vì các phân tử acid tạo được LIÊN KẾT HYDROGEN liên phân tử dạng vòng (dimer) hoặc dạng mạch bền vững hơn nhiều.\n\n' +
-      'TÍNH CHẤT HOÁ HỌC:\n' +
+      '## Tính chất hoá học\n' +
       '1. Tính acid yếu (đầy đủ tính chất acid):\n' +
       '   — Làm quỳ tím hoá đỏ. Tác dụng với kim loại giải phóng H₂: 2CH₃COOH + Zn → (CH₃COO)₂Zn + H₂.\n' +
       '   — Tác dụng với muối carbonate giải phóng khí CO₂ (dùng nhận biết acid): 2CH₃COOH + CaCO₃ → (CH₃COO)₂Ca + CO₂↑ + H₂O.\n' +
@@ -1287,7 +1287,7 @@ export const HOA11_C6_LESSONS: ChemLesson[] = [
       'Ôn tập và nối lại hai lớp dẫn xuất chứa oxygen quan trọng nhất: hợp chất carbonyl và carboxylic ' +
       'acid — chặng cuối của phần hoá học hữu cơ lớp 11.',
     theory:
-      'TỔNG KẾT KIẾN THỨC CHƯƠNG 6:\n' +
+      '## Tổng kết kiến thức chương 6\n' +
       "1. Hợp chất carbonyl: Có nhóm C=O. Gồm aldehyde (R−CHO) và ketone (R−CO−R').\n" +
       '   — Khử bởi H₂ tạo alcohol tương ứng.\n' +
       '   — Aldehyde có tính khử: tráng gương (tạo Ag), phản ứng Cu(OH)₂/NaOH nóng (tạo Cu₂O đỏ gạch). Ketone trơ với các phản ứng này.\n' +

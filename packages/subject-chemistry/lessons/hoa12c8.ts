@@ -15,13 +15,13 @@ export const HOA12_C8_LESSONS: ChemLesson[] = [
       'Sắt chế tạo máy móc, đồng dẫn điện, chromium chống gỉ sét, manganese tăng độ cứng của thép. ' +
       'Tất cả chúng đều là các kim loại chuyển tiếp nhóm d, nằm ở trung tâm bảng tuần hoàn.',
     theory:
-      'VỊ TRÍ VÀ CẤU HÌNH ELECTRON NGUYÊN TỬ:\n' +
+      '## Vị trí và cấu hình electron nguyên tử\n' +
       '— Kim loại chuyển tiếp d thuộc các nhóm từ IIIB đến IIB (tức nhóm 3 đến nhóm 12 của bảng tuần hoàn), nằm ở các chu kì 4, 5, 6, 7.\n' +
       '— Dãy chuyển tiếp thứ nhất nằm ở chu kì 4, từ Scandium (Sc, Z = 21) đến Zinc (Zn, Z = 30). Cấu hình electron hoá trị của chúng có dạng (n−1)d¹⁻¹⁰ns² (electron hoá trị nằm ở cả phân lớp d sát ngoài cùng lẫn phân lớp s ngoài cùng).\n' +
       '   * Ngoại lệ cấu hình bán bão hoà và bão hoà bền vững: Chromium (Cr, Z = 24): [Ar]3d⁵4s¹; Copper (Cu, Z = 29): [Ar]3d¹⁰4s¹.\n\n' +
-      'ĐẶC ĐIỂM TÍNH CHẤT VẬT LÍ:\n' +
+      '## Đặc điểm tính chất vật lí\n' +
       '— Đều là kim loại. So với kim loại nhóm IA và IIA, kim loại chuyển tiếp d có nhiệt độ nóng chảy cao hơn, độ cứng lớn hơn, khối lượng riêng lớn hơn nhiều, vì các electron ở phân lớp d cũng tham gia vào liên kết kim loại.\n\n' +
-      'ĐẶC ĐIỂM TÍNH CHẤT HOÁ HỌC:\n' +
+      '## Đặc điểm tính chất hoá học\n' +
       '1. Có nhiều trạng thái oxi hoá khác nhau trong các hợp chất (do các electron 3d có năng lượng gần với 4s, đều có thể tham gia liên kết). Ví dụ: Fe (+2, +3); Cu (+1, +2); Cr (+2, +3, +6); Mn (+2, +4, +6, +7).\n' +
       '2. Các hợp chất thường có màu sắc đặc trưng sinh động: dung dịch muối Cu²⁺ màu xanh lam; Fe³⁺ màu vàng nâu; Fe²⁺ màu xanh lục nhạt; ion MnO₄⁻ màu tím.',
     workedExample: {
@@ -658,7 +658,7 @@ export const HOA12_C8_LESSONS: ChemLesson[] = [
       'Chất hemoglobin trong máu người mang sắt (Fe²⁺) liên kết phối trí với khí oxygen để nuôi cơ thể.' +
       ' Chất diệp lục của cây xanh mang magnesium. Chúng đều thuộc một nhóm hợp chất đặc biệt gọi là phức chất.',
     theory:
-      'KHÁI NIỆM PHỨC CHẤT:\n' +
+      '## Khái niệm phức chất\n' +
       '— Phức chất (coordination compound) là hợp chất có chứa cầu phức, được hình thành từ một ion kim loại trung tâm liên kết với các phối tử xung quanh bằng liên kết phối trí.\n\n' +
       'CẤU TRÚC PHỨC CHẤT (ví dụ: [Cu(NH₃)₄]²⁺):\n' +
       '1. Ion trung tâm (central ion): Thường là cation kim loại chuyển tiếp d (như Cu²⁺, Ag⁺, Fe²⁺, Co³⁺) có các orbital trống.\n' +
@@ -1584,16 +1584,16 @@ export const HOA12_C8_LESSONS: ChemLesson[] = [
       'Nhỏ ammonia (amoniac) vào cốc dung dịch copper(II) sulfate CuSO₄ màu xanh nhạt: đầu tiên có kết tủa, ' +
       'nhỏ thêm nữa thì kết tủa lại tan hết và dung dịch chuyển màu xanh lam thẫm. Sự tạo phức chất đã làm đổi hẳn tính tan của hợp chất đồng.',
     theory:
-      'SỰ TẠO THÀNH PHỨC CHẤT TRONG DUNG DỊCH:\n' +
+      '## Sự tạo thành phức chất trong dung dịch\n' +
       '1. Phức chất của Copper (đồng):\n' +
       '   — Khi nhỏ dung dịch NH₃ từ từ vào dung dịch CuSO₄, ban đầu tạo kết tủa xanh nhạt Cu(OH)₂. Khi NH₃ dư, kết tủa tan tạo dung dịch phức chất màu xanh lam thẫm đặc trưng:\n' +
       '     Cu(OH)₂↓ + 4NH₃ → [Cu(NH₃)₄]²⁺ + 2OH⁻ (phức chất tetraamminecopper(II)).\n' +
       '2. Phức chất của Silver (bạc):\n' +
       '   — Kết tủa AgCl màu trắng ít tan trong nước, nhưng tan dễ dàng trong dung dịch NH₃ dư nhờ tạo phức chất không màu diamminesilver(I):\n' +
       '     AgCl↓ + 2NH₃ → [Ag(NH₃)₂]⁺ + Cl⁻.\n\n' +
-      'HẰNG SỐ BỀN (K_b):\n' +
+      '## Hằng số bền (K_b)\n' +
       '— Độ bền của phức chất trong dung dịch được đánh giá bằng hằng số bền K_b (hoặc hằng số tạo thành β). Trị số K_b càng lớn thì phức chất càng bền vững, phối tử khó bị thay thế bởi các tác nhân khác.\n\n' +
-      'ỨNG DỤNG CỦA PHỨC CHẤT:\n' +
+      '## Ứng dụng của phức chất\n' +
       '— Trong hoá phân tích: Nhận biết, tách và định lượng các ion kim loại (ví dụ: dùng thuốc thử Tollens chứa phức chất bạc để nhận biết aldehyde).\n' +
       '— Trong y học: Dùng chất tạo phức chelate (như muối EDTA) để giải độc kim loại nặng bằng cách "bẫy" ion kim loại độc hại thành phức chất tan, đào thải qua nước tiểu.\n' +
       '— Xúc tác trong công nghiệp hoá chất.',
@@ -2232,7 +2232,7 @@ export const HOA12_C8_LESSONS: ChemLesson[] = [
       'Chương 8 giới thiệu các kim loại chuyển tiếp d và phức chất — hai nội dung giải thích vì sao dung dịch muối kim loại lại có nhiều màu đến thế. ' +
       'Bài này ôn lại toàn bộ chương.',
     theory:
-      'HỆ THỐNG HOÁ KIẾN THỨC CHƯƠNG 8:\n' +
+      '## Hệ thống hoá kiến thức chương 8\n' +
       '1. Kim loại chuyển tiếp d chu kì 4 (Sc đến Zn): cấu hình electron hoá trị (n−1)d¹⁻¹⁰ns². Cr ([Ar]3d⁵4s¹) và Cu ([Ar]3d¹⁰4s¹) cấu hình đặc biệt. Tính chất: độ cứng cao, nóng chảy cao, nhiều số oxi hoá, hợp chất có màu đặc trưng.\n' +
       '2. Phức chất: Gồm ion trung tâm (cation d) liên kết phối trí với phối tử ligand (H₂O, NH₃, Cl⁻...). Số phối trí là số liên kết phối trí (2, 4, 6).\n' +
       '3. Sự tạo phức trong nước: Cu(OH)₂ tan trong NH₃ tạo [Cu(NH₃)₄]²⁺ màu xanh lam thẫm; AgCl tan trong NH₃ tạo [Ag(NH₃)₂]⁺ không màu.\n' +

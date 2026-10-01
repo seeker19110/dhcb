@@ -185,10 +185,10 @@ export const LY10_C6_LESSONS: PhysicsLesson[] = [
       'Cánh quạt tua bin điện gió quay đều đặn, hay Mặt Trăng quay quanh Trái Đất, đều vạch nên những đường tròn. ' +
       'Làm thế nào để tính toán quãng đường và tốc độ quay của chúng?',
     theory:
-      'ĐỊNH NGHĨA CHUYỂN ĐỘNG TRÒN ĐỀU:\n' +
+      '## Định nghĩa chuyển động tròn đều\n' +
       '— Chuyển động tròn là chuyển động có quỹ đạo là một đường tròn.\n' +
       '— Chuyển động tròn đều là chuyển động tròn có tốc độ dài không đổi (đi được những cung tròn có độ dài bằng nhau trong những khoảng thời gian bằng nhau).\n\n' +
-      'CÁC ĐẠI LƯỢNG ĐẶC TRƯNG:\n' +
+      '## Các đại lượng đặc trưng\n' +
       '1. Độ dịch chuyển góc (Δθ): Góc quét bởi bán kính nối từ tâm đến vật trong thời gian Δt. Đơn vị: Radian (rad). Hệ thức: π rad = 180°.\n' +
       '2. Tốc độ góc (ω): Đại lượng đo bằng độ dịch chuyển góc chia cho thời gian dịch chuyển góc tương ứng.\n' +
       '   — Công thức: ω = Δθ / Δt. Đơn vị: Radian trên giây (rad/s).\n' +
@@ -440,11 +440,11 @@ export const LY10_C6_LESSONS: PhysicsLesson[] = [
       'Khi ô tô đi qua khúc cua tròn, bánh xe bám chặt mặt đường nhờ lực ma sát hướng vào tâm cua. ' +
       'Nếu đường trơn trượt mất đi lực này, xe sẽ văng ra ngoài theo quán tính. Lực hướng vào tâm này là gì?',
     theory:
-      'GIA TỐC HƯỚNG TÂM (CENTRIPETAL ACCELERATION):\n' +
+      '## Gia tốc hướng tâm (centripetal acceleration)\n' +
       '— Trong chuyển động tròn đều, tuy tốc độ dài không đổi nhưng hướng vận tốc thay đổi liên tục, sinh ra gia tốc hướng tâm (vectơ a_ht).\n' +
       '— Hướng: Vectơ gia tốc hướng tâm luôn hướng vào tâm của đường tròn quỹ đạo.\n' +
       '— Độ lớn: a_ht = v² / r = ω².r.\n\n' +
-      'LỰC HƯỚNG TÂM (CENTRIPETAL FORCE):\n' +
+      '## Lực hướng tâm (centripetal force)\n' +
       '— Lực (hoặc hợp lực) tác dụng lên vật chuyển động tròn đều gây ra gia tốc hướng tâm gọi là lực hướng tâm.\n' +
       '— Hướng: Luôn hướng vào tâm quỹ đạo tròn.\n' +
       '— Độ lớn: F_ht = m.a_ht = m.v² / r = m.ω².r.\n' +

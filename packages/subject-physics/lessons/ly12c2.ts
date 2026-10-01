@@ -388,16 +388,16 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
       'Nếu bạn bóp một quả bóng bay đã bơm căng và buộc kín, bạn sẽ thấy quả bóng thu nhỏ lại nhưng vỏ bóng căng cứng hơn. ' +
       'Nếu bạn đun nóng một chai nhựa rỗng đậy kín, chai sẽ phồng lên. Những hiện tượng này tuân theo các định luật chất khí.',
     theory:
-      'CÁC THÔNG SỐ TRẠNG THÁI CỦA MỘT LƯỢNG KHÍ:\n' +
+      '## Các thông số trạng thái của một lượng khí\n' +
       '— Áp suất (p): Đơn vị chuẩn là Pascal (1 Pa = 1 N/m²), ngoài ra còn dùng atm, mmHg, bar (1 atm ≈ 1.013 * 10⁵ Pa, 1 bar = 10⁵ Pa).\n' +
       '— Thể tích (V): Đơn vị chuẩn là mét khối (m³), ngoài ra còn dùng lít (l), mililít (ml), xentimét khối (cm³). (1 m³ = 1000 lít).\n' +
       '— Nhiệt độ tuyệt đối (T): Đơn vị Kelvin (K). Công thức: T = t + 273 (với t là nhiệt độ Celsius).\n\n' +
-      'QUÁ TRÌNH ĐẲNG NHIỆT VÀ ĐỊNH LUẬT BOYLE:\n' +
+      '## Quá trình đẳng nhiệt và định luật Boyle\n' +
       '— Quá trình đẳng nhiệt: Quá trình biến đổi trạng thái của một lượng khí khi nhiệt độ được giữ không đổi.\n' +
       '— Định luật Boyle: Trong quá trình đẳng nhiệt của một lượng khí xác định, áp suất tỉ lệ nghịch với thể tích:\n' +
       '  p.V = hằng số  (hay  p1.V1 = p2.V2)\n' +
       '— Đường đẳng nhiệt: Trong hệ toạ độ (p, V), đường đẳng nhiệt là một nhánh của đường hypebol.\n\n' +
-      'QUÁ TRÌNH ĐẲNG ÁP VÀ ĐỊNH LUẬT CHARLES:\n' +
+      '## Quá trình đẳng áp và định luật Charles\n' +
       '— Quá trình đẳng áp: Quá trình biến đổi trạng thái của một lượng khí khi áp suất được giữ không đổi.\n' +
       '— Định luật Charles: Trong quá trình đẳng áp của một lượng khí xác định, thể tích tỉ lệ thuận với nhiệt độ tuyệt đối:\n' +
       '  V / T = hằng số  (hay  V1 / T1 = V2 / T2)\n' +
@@ -825,13 +825,13 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
       'Khi một khinh khí cầu bay lên cao, cả áp suất, thể tích và nhiệt độ của lượng khí bên trong đều thay đổi đồng thời. ' +
       'Để tìm mối liên hệ giữa cả 3 thông số này, chúng ta sử dụng một phương trình tổng quát gọi là phương trình trạng thái của khí lí tưởng.',
     theory:
-      'KHÁI NIỆM KHÍ LÍ TƯỞNG VÀ KHÍ THỰC:\n' +
+      '## Khái niệm khí lí tưởng và khí thực\n' +
       '— Khí lí tưởng: Là chất khí trong đó các phân tử được coi là các chất điểm, chỉ tương tác với nhau khi va chạm đàn hồi.\n' +
       '— Khí thực: Các khí tồn tại trong thực tế (như oxi, nitơ, cacbonic). Ở nhiệt độ và áp suất thông thường, khí thực gần đúng coi là khí lí tưởng.\n\n' +
-      'PHƯƠNG TRÌNH TRẠNG THÁI CỦA KHÍ LÍ TƯỞNG (PHƯƠNG TRÌNH CLAPEYRON):\n' +
+      '## Phương trình trạng thái của khí lí tưởng (phương trình Clapeyron)\n' +
       '— Với một lượng khí xác định chuyển từ trạng thái 1 (p1, V1, T1) sang trạng thái 2 (p2, V2, T2):\n' +
       '  p1.V1 / T1 = p2.V2 / T2 = hằng số\n\n' +
-      'PHƯƠNG TRÌNH CLAPEYRON - MENDELEEV:\n' +
+      '## Phương trình Clapeyron - Mendeleev\n' +
       '— Với một lượng khí bất kì có khối lượng m, số mol n = m / M:\n' +
       '  p.V = n.R.T = (m / M).R.T\n' +
       'Trong đó:\n' +
@@ -1681,16 +1681,16 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
       'Khi đứng trước gió hoặc bơm lốp xe, chúng ta cảm nhận được áp suất khí như một lực liên tục. ' +
       'Thực chất, áp suất này là kết quả của hàng tỉ tỉ hạt phân tử siêu nhỏ đang bắn phá và va đập liên tục vào da hay thành lốp xe.',
     theory:
-      'NỘI DUNG CƠ BẢN CỦA THUYẾT ĐỘNG HỌC PHÂN TỬ CHẤT KHÍ:\n' +
+      '## Nội dung cơ bản của thuyết động học phân tử chất khí\n' +
       '— Các chất khí được cấu tạo từ các phân tử có kích thước rất nhỏ so với khoảng cách giữa chúng.\n' +
       '— Các phân tử khí chuyển động hỗn loạn không ngừng; chuyển động này càng nhanh thì nhiệt độ của chất khí càng cao.\n' +
       '— Khi chuyển động hỗn loạn, các phân tử khí va chạm vào nhau và va chạm vào thành bình gây ra áp suất lên thành bình.\n\n' +
-      'CÔNG THỨC TÍNH ÁP SUẤT KHÍ THEO MÔ HÌNH ĐỘNG HỌC PHÂN TỬ:\n' +
+      '## Công thức tính áp suất khí theo mô hình động học phân tử\n' +
       '  p = (1/3).ρ.v_rms²\n' +
       'Trong đó:\n' +
       '— ρ: Khối lượng riêng của chất khí (kg/m³).\n' +
       '— v_rms²: Trung bình bình phương tốc độ của các phân tử khí (m²/s²).\n\n' +
-      'MỐI QUAN HỆ GIỮA ĐỘNG NĂNG PHÂN TỬ VÀ NHIỆT ĐỘ TUYỆT ĐỐI:\n' +
+      '## Mối quan hệ giữa động năng phân tử và nhiệt độ tuyệt đối\n' +
       '— Động năng tịnh tiến trung bình của phân tử khí tỉ lệ thuận với nhiệt độ tuyệt đối:\n' +
       '  E_d = (3/2).kB.T\n' +
       'Trong đó kB ≈ 1.38 * 10⁻²³ J/K là hằng số Boltzmann (kB = R / NA).\n' +
@@ -1764,7 +1764,7 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
       'Luyện tập giải các bài tập vận dụng các định luật chất khí, phương trình trạng thái và ' +
       'công thức động học phân tử là cách tốt nhất để nắm vững các đặc tính của chất khí trong thực tế.',
     theory:
-      'CÁC CÔNG THỨC TRỌNG TÂM CẦN NHỚ:\n' +
+      '## Các công thức trọng tâm cần nhớ\n' +
       '1. Định luật Boyle (Đẳng nhiệt): p1 * V1 = p2 * V2\n' +
       '2. Định luật Charles (Đẳng áp): V1 / T1 = V2 / T2\n' +
       '3. Phương trình trạng thái: p1 * V1 / T1 = p2 * V2 / T2\n' +

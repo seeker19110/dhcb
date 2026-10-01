@@ -15,14 +15,14 @@ export const HOA12_C2_LESSONS: ChemLesson[] = [
       'Nho chín có vị ngọt đậm đà nhờ đường glucose. Mật ong ngọt sắc lịm là do đường fructose. ' +
       'Đây là hai nguồn năng lượng carbohydrate đơn giản nhất nuôi sống tế bào.',
     theory:
-      'PHÂN LOẠI CARBOHYDRATE:\n' +
+      '## Phân loại carbohydrate\n' +
       '— Carbohydrate (tên gọi cũ: gluxit, saccarit) là những hợp chất hữu cơ tạp chức, thường có công thức chung Cₙ(H₂O)ₘ.\n' +
       '— Chia làm 3 nhóm chính: Monosaccharide (không bị thuỷ phân, vd: glucose, fructose); Disaccharide (thuỷ phân tạo 2 monosaccharide, vd: saccharose, maltose); Polysaccharide (thuỷ phân tạo nhiều monosaccharide, vd: tinh bột, cellulose).\n\n' +
-      'GLUCOSE VÀ FRUCTOSE (C₆H₁₂O₆ = 180):\n' +
+      '## Glucose và fructose (C₆H₁₂O₆ = 180)\n' +
       '— Glucose và fructose là hai chất đồng phân của nhau.\n' +
       '— Cấu trúc glucose: Là hợp chất tạp chức, dạng mạch hở là polyhydroxy aldehyde (có 5 nhóm −OH và 1 nhóm −CHO). Trong dung dịch, glucose tồn tại chủ yếu ở hai dạng vòng: α-glucose và β-glucose.\n' +
       '— Cấu trúc fructose: Dạng mạch hở là polyhydroxy ketone (có 5 nhóm −OH và 1 nhóm ketone C=O ở vị trí C số 2).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC CỦA GLUCOSE:\n' +
+      '## Tính chất hoá học của glucose\n' +
       '1. Tính chất của polyalcohol: Hoà tan Cu(OH)₂ ở nhiệt độ thường tạo dung dịch màu xanh lam thẫm (do có nhiều nhóm −OH kề nhau).\n' +
       '2. Tính chất của aldehyde: Phản ứng tráng bạc với thuốc thử Tollens (tạo gương Ag); phản ứng với Cu(OH)₂/NaOH nóng tạo kết tủa đỏ gạch Cu₂O.\n' +
       '   * Lưu ý: Fructose không có nhóm −CHO nhưng vẫn có phản ứng tráng bạc vì trong môi trường kiềm (NH₃), fructose chuyển hoá thuận nghịch thành glucose.\n' +
@@ -759,14 +759,14 @@ export const HOA12_C2_LESSONS: ChemLesson[] = [
       'Đường mía chúng ta ăn hằng ngày chứa chủ yếu saccharose. Mầm lúa mạch dùng để ủ bia ' +
       'chứa nhiều maltose. Đây là hai disaccharide phổ biến nhất.',
     theory:
-      'SACCHAROSE (C₁₂H₂₂O₁₁ = 342):\n' +
+      '## Saccharose (C₁₂H₂₂O₁₁ = 342)\n' +
       '— Trạng thái: Chất rắn kết tinh, không màu, vị ngọt, tan tốt trong nước (có nhiều trong cây mía, củ cải đường, hoa thốt nốt).\n' +
       '— Cấu trúc phân tử: Là disaccharide được cấu tạo từ 1 gốc α-glucose và 1 gốc β-fructose liên kết qua nguyên tử oxygen. Phân tử không có nhóm aldehyde (−CHO) tự do nên KHÔNG có phản ứng tráng bạc (được gọi là đường không khử).\n\n' +
-      'TÍNH CHẤT HOÁ HỌC CỦA SACCHAROSE:\n' +
+      '## Tính chất hoá học của saccharose\n' +
       '1. Tính chất của polyalcohol: Hoà tan Cu(OH)₂ ở nhiệt độ thường tạo dung dịch màu xanh lam thẫm.\n' +
       '2. Phản ứng thuỷ phân (tính chất quan trọng nhất, xúc tác acid hoặc enzyme):\n' +
       '   C₁₂H₂₂O₁₁ + H₂O → C₆H₁₂O₆ (glucose) + C₆H₁₂O₆ (fructose).\n\n' +
-      'MALTOSE (ĐỒNG PHÂN CỦA SACCHAROSE):\n' +
+      '## Maltose (đồng phân của saccharose)\n' +
       '— Cấu tạo từ 2 gốc α-glucose. Ở dạng mạch hở có chứa nhóm aldehyde tự do nên có tính khử (có phản ứng tráng bạc, hoà tan Cu(OH)₂ nóng tạo kết tủa đỏ gạch).',
     workedExample: {
       problem:
@@ -1259,12 +1259,12 @@ export const HOA12_C2_LESSONS: ChemLesson[] = [
       'Gạo tẻ chứa tinh bột — nguồn dự trữ năng lượng của cây lúa. Bông nõn chứa cellulose tinh khiết ' +
       '— bộ khung vách tế bào thực vật dai bền. Cả hai đều là những polysaccharide khổng lồ.',
     theory:
-      'TINH BỘT ((C₆H₁₀O₅)ₙ):\n' +
+      '## Tinh bột ((C₆H₁₀O₅)ₙ)\n' +
       '— Cấu trúc: Là polymer của các gốc α-glucose liên kết α-1,4-glycoside và α-1,6-glycoside. Gồm 2 dạng chính:\n' +
       '  1. Amylose: mạch không phân nhánh, xoắn lại thành hình lò xo.\n' +
       '  2. Amylopectin: mạch phân nhánh nhiều.\n' +
       '— Phản ứng đặc trưng: Tác dụng với Iodine (I₂) tạo phức màu xanh tím đặc trưng (ở nhiệt độ thường, đun nóng mất màu, nguội hiện lại). Phản ứng thuỷ phân đến cùng tạo glucose.\n\n' +
-      'CELLULOSE ((C₆H₁₀O₅)ₙ):\n' +
+      '## Cellulose ((C₆H₁₀O₅)ₙ)\n' +
       '— Cấu trúc: Là polymer của các gốc β-glucose liên kết β-1,4-glycoside tạo mạch thẳng, kéo sợi bền vững, không xoắn, không phân nhánh.\n' +
       '— Công thức cấu tạo: [C₆H₇O₂(OH)₃]ₙ (mỗi mắt xích có 3 nhóm −OH tự do).\n' +
       '— Phản ứng hoá học đặc trưng:\n' +
@@ -1898,7 +1898,7 @@ export const HOA12_C2_LESSONS: ChemLesson[] = [
       'Chương 2 dựng lại bức tranh toàn cảnh về carbohydrate — vừa là nguồn năng lượng chính của cơ thể, ' +
       'vừa là vật liệu dựng nên thân cây, sợi bông và trang giấy.',
     theory:
-      'TỔNG KẾT SO SÁNH CÁC CARBOHYDRATE THƯỜNG GẶP:\n' +
+      '## Tổng kết so sánh các carbohydrate thường gặp\n' +
       '1. Monosaccharide: Glucose và Fructose (C₆H₁₂O₆). Đều hoà tan Cu(OH)₂ xanh lam, đều tráng bạc (fructose tráng bạc trong môi trường kiềm).\n' +
       '2. Disaccharide: Saccharose (C₁₂H₂₂O₁₁). Hoà tan Cu(OH)₂ xanh lam. Không tráng bạc trực tiếp, thuỷ phân ra glucose + fructose.\n' +
       '3. Polysaccharide: Tinh bột và Cellulose ((C₆H₁₀O₅)ₙ). Thuỷ phân đến cùng đều tạo glucose. Tinh bột làm xanh tím iodine. Cellulose có 3 nhóm −OH tự do, phản ứng HNO₃ tạo thuốc súng không khói.',

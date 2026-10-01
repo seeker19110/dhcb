@@ -11,17 +11,17 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
     title: 'Giới thiệu khái quát môn Sinh học',
     hook: 'Từ thức ăn chúng ta ăn hằng ngày, các loại thuốc chữa bệnh, cho đến việc hiểu chính cơ thể mình, Sinh học là môn khoa học về sự sống.',
     theory:
-      'KHÁI NIỆM VÀ ĐỐI TƯỢNG CỦA SINH HỌC:\n' +
+      '## Khái niệm và đối tượng của sinh học\n' +
       '— Sinh học (Biology) là môn khoa học nghiên cứu về sự sống, cụ thể là các sinh vật và mối quan hệ giữa chúng với nhau cũng như với môi trường.\n' +
       '— Đối tượng nghiên cứu: Các sinh vật sống (thực vật, động vật, nấm, vi sinh vật) và các cấp độ tổ chức sống từ phân tử đến sinh quyển.\n\n' +
-      'CÁC PHÂN NGÀNH VÀ LĨNH VỰC NGHIÊN CỨU CHÍNH:\n' +
+      '## Các phân ngành và lĩnh vực nghiên cứu chính\n' +
       '— Thực vật học (Botany), Động vật học (Zoology), Vi sinh vật học (Microbiology), Di truyền học (Genetics), Sinh học tế bào (Cell Biology), Sinh học phân tử (Molecular Biology), Sinh thái học (Ecology).\n\n' +
-      'VAI TRÒ CỦA SINH HỌC TRONG CUỘC SỐNG:\n' +
+      '## Vai trò của sinh học trong cuộc sống\n' +
       '— Y học: Sản xuất thuốc, vaccine, liệu pháp gene, chẩn đoán bệnh.\n' +
       '— Nông nghiệp: Tạo giống cây trồng, vật nuôi năng suất cao, kháng bệnh.\n' +
       '— Công nghệ thực phẩm: Lên men sữa chua, bia, rượu, bảo quản thực phẩm.\n' +
       '— Bảo vệ môi trường: Xử lí ô nhiễm sinh học (bioremediation), bảo tồn đa dạng sinh học.\n\n' +
-      'PHÁT TRIỂN BỀN VỮNG VÀ ĐẠO ĐỨC SINH HỌC:\n' +
+      '## Phát triển bền vững và đạo đức sinh học\n' +
       '— Phát triển bền vững là sự phát triển nhằm thoả mãn nhu cầu của thế hệ hiện tại mà không làm tổn hại đến khả năng thoả mãn nhu cầu của các thế hệ tương lai. Sinh học đóng góp bằng cách bảo tồn tài nguyên, năng lượng sạch và đa dạng sinh học.\n' +
       '— Đạo đức sinh học (Bioethics) là những nguyên tắc, chuẩn mực đạo đức áp dụng trong các nghiên cứu và ứng dụng sinh học (ví dụ: nhân bản vô tính người, chỉnh sửa gene phôi thai).',
     workedExample: {
@@ -93,17 +93,17 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
       'Làm thế nào các nhà khoa học tìm ra vaccine phòng ngừa dịch bệnh hay giải mã được bộ gene người? ' +
       'Họ đều sử dụng một quy trình nghiên cứu khoa học nghiêm ngặt.',
     theory:
-      'CÁC PHƯƠNG PHÁP NGHIÊN CỨU VÀ HỌC TẬP SINH HỌC:\n' +
+      '## Các phương pháp nghiên cứu và học tập sinh học\n' +
       '1. Phương pháp quan sát: Sử dụng các giác quan hoặc dụng cụ hỗ trợ (kính hiển vi, kính lúp) để thu thập thông tin về hình thái, hành vi sinh vật.\n' +
       '2. Phương pháp làm việc phòng thí nghiệm: Thực hiện các phản ứng hoá sinh, nuôi cấy vi sinh vật, quan sát lát cắt tế bào trong môi trường kiểm soát.\n' +
       '3. Phương pháp thực nghiệm khoa học: Thiết kế và tiến hành thí nghiệm so sánh giữa lô đối chứng (control) và lô thí nghiệm để kiểm chứng giả thuyết.\n\n' +
-      'TIẾN TRÌNH NGHIÊN CỨU KHOA HỌC (SCIENTIFIC METHOD):\n' +
+      '## Tiến trình nghiên cứu khoa học (scientific method)\n' +
       '— Bước 1: Quan sát và đặt câu hỏi nghiên cứu.\n' +
       '— Bước 2: Xây dựng giả thuyết khoa học (một lời giải thích có thể kiểm chứng).\n' +
       '— Bước 3: Thiết kế và tiến hành thí nghiệm để kiểm chứng.\n' +
       '— Bước 4: Thu thập số liệu, phân tích kết quả và thảo luận.\n' +
       '— Bước 5: Báo cáo kết quả nghiên cứu và rút ra kết luận.\n\n' +
-      'CÁC THIẾT BỊ VÀ AN TOÀN TRONG PHÒNG THÍ NGHIỆM:\n' +
+      '## Các thiết bị và an toàn trong phòng thí nghiệm\n' +
       '— Kính hiển vi quang học, máy li tâm, micropipette, tủ cấy vô trùng.\n' +
       '— Quy tắc an toàn: Mặc áo bảo hộ (lab coat), đeo găng tay và kính bảo hộ; không ăn uống trong phòng thí nghiệm; tuân thủ quy trình xử lí hoá chất và sinh phẩm thải bỏ.',
     workedExample: {
@@ -638,9 +638,9 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
       'Cơ thể chúng ta được cấu tạo từ hàng nghìn tỉ tế bào liên kết chặt chẽ. ' +
       'Các tế bào lại được cấu tạo từ các bào quan, phân tử và nguyên tử. Hãy cùng tìm hiểu cấu trúc phân tầng kì diệu của sự sống.',
     theory:
-      'KHÁI NIỆM CẤP ĐỘ TỔ CHỨC SỐNG:\n' +
+      '## Khái niệm cấp độ tổ chức sống\n' +
       '— Cấp độ tổ chức sống là vị trí phân cấp của các hệ thống sống từ nhỏ đến lớn trong thế giới sống.\n\n' +
-      'SƠ ĐỒ CÁC CẤP ĐỘ TỔ CHỨC SỐNG:\n' +
+      '## Sơ đồ các cấp độ tổ chức sống\n' +
       '— Nguyên tử -> Phân tử -> Bào quan -> Tế bào -> Mô -> Cơ quan -> Hệ cơ quan -> Cơ thể -> Quần thể -> Quần xã -> Hệ sinh thái -> Sinh quyển.\n' +
       '— Các cấp độ tổ chức sống cơ bản (có thể hoạt động độc lập và thể hiện đầy đủ đặc tính của sự sống):\n' +
       '  1. Tế bào (Cell - cấp độ tổ chức cơ bản nhất).\n' +
@@ -648,7 +648,7 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
       '  3. Quần thể (Population).\n' +
       '  4. Quần xã (Community).\n' +
       '  5. Hệ sinh thái (Ecosystem).\n\n' +
-      'ĐẶC ĐIỂM CHUNG CỦA CÁC CẤP ĐỘ TỔ CHỨC SỐNG:\n' +
+      '## Đặc điểm chung của các cấp độ tổ chức sống\n' +
       '1. Tổ chức theo nguyên tắc thứ bậc (Hierarchical organization): Cấp dưới làm nền tảng xây dựng nên cấp trên. Cấp trên có những **đặc tính nổi trội** (emergent properties) mà cấp dưới không có.\n' +
       '2. Hệ thống mở và tự điều chỉnh (Open and self-regulating system): Thường xuyên trao đổi vật chất và năng lượng với môi trường; có khả năng tự điều chỉnh để duy trì trạng thái cân bằng động (homeostasis).\n' +
       '3. Liên tục tiến hoá: Mọi sinh vật đều có chung nguồn gốc nhưng không ngừng tiến hoá để thích nghi với môi trường sống.',
@@ -953,14 +953,14 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
       'Hơn 70% khối lượng cơ thể chúng ta là nước, và phần còn lại chủ yếu là các nguyên tố Carbon, Hydrogen, Oxygen, Nitrogen. ' +
       'Tại sao những nguyên tố này lại quan trọng đến thế?',
     theory:
-      'CÁC NGUYÊN TỐ HOÁ HỌC TRONG TẾ BÀO:\n' +
+      '## Các nguyên tố hoá học trong tế bào\n' +
       'Trong khoảng 25 nguyên tố cấu tạo nên sự sống, chúng được chia làm 2 nhóm chính:\n' +
       '1. Nguyên tố đa lượng (Macroelements): Chiếm tỉ lệ lớn (>= 0,01% khối lượng khô cơ thể). Ví dụ: C, H, O, N, P, S, Ca, K...\n' +
       '   — Vai trò: Cấu tạo nên các đại phân tử sinh học (carbohydrate, lipid, protein, nucleic acid), cấu trúc nên tế bào và bào quan.\n' +
       '   — Carbon (C) là nguyên tố quan trọng nhất vì có 4 electron hoá trị, dễ dàng hình thành liên kết cộng hoá trị bền vững với các nguyên tố khác, tạo nên mạch carbon vô cùng đa dạng.\n' +
       '2. Nguyên tố vi lượng (Microelements): Chiếm tỉ lệ nhỏ (< 0,01% khối lượng khô cơ thể). Ví dụ: Fe, Cu, Zn, Mn, I, F...\n' +
       '   — Vai trò: Tham gia cấu tạo hoặc hoạt hoá enzyme, hormone, sắc tố (ví dụ: Fe cấu tạo hemoglobin trong hồng cầu, I cấu tạo hormone tuyến giáp).\n\n' +
-      'NƯỚC VÀ VAI TRÒ CỦA NƯỚC ĐỐI VỚI TẾ BÀO:\n' +
+      '## Nước và vai trò của nước đối với tế bào\n' +
       '— Cấu trúc phân cực: Nguyên tử Oxygen có độ âm điện lớn hơn nguyên tử Hydrogen, hút electron lệch về phía mình, làm đầu Oxygen mang điện tích âm nhẹ, đầu Hydrogen mang điện tích dương nhẹ.\n' +
       '— Liên kết hydrogen: Nhờ tính phân cực, các phân tử nước hút nhau tạo thành các liên kết hydrogen linh động.\n' +
       '— Vai trò của nước:\n' +
@@ -1351,7 +1351,7 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
       'Carbohydrate, lipid, protein, nucleic acid là những khối lắp ghép tạo nên sự sống. ' +
       'Mỗi nhóm chất thực hiện những nhiệm vụ độc đáo và tối quan trọng trong từng tế bào.',
     theory:
-      'CÁC PHÂN TỬ SINH HỌC CHÍNH TRONG TẾ BÀO:\n' +
+      '## Các phân tử sinh học chính trong tế bào\n' +
       'Có 4 nhóm đại phân tử hữu cơ cấu tạo nên tế bào:\n' +
       '1. Carbohydrate (đường, chất bột đường): Cấu tạo từ C, H, O theo tỉ lệ khoảng 1:2:1.\n' +
       '   — Đường đơn (Monosaccharide): Glucose, Fructose, Galactose. Dùng làm nguồn năng lượng tức thời.\n' +
@@ -1432,7 +1432,7 @@ export const SINH10_C1_LESSONS: BiologyLesson[] = [
       'Làm thế nào để chứng minh củ khoai tây có chứa tinh bột, quả nho có đường khử hay lòng trắng trứng chứa protein? ' +
       'Chúng ta sử dụng các thuốc thử màu hoá học đặc trưng.',
     theory:
-      'NGUYÊN TẮC CÁC PHẢN ỨNG THỬ MÀU SINH HỌC:\n' +
+      '## Nguyên tắc các phản ứng thử màu sinh học\n' +
       '1. Nhận biết đường khử (glucose, fructose...):\n' +
       '   — Thuốc thử: Dung dịch Benedict (hoặc thuốc thử Fehling chứa ion Cu²⁺).\n' +
       '   — Hiện tượng: Khi đun nóng nhẹ hỗn hợp đường khử với thuốc thử Benedict, xuất hiện kết tủa đỏ gạch (Cu₂O) do đường khử đã khử ion Cu²⁺ xuống Cu⁺.\n' +
