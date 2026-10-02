@@ -1,6 +1,6 @@
 # 0478 — Chuyển skill đợt 2: `principal-engineer-architect` · `financial-security-sentinel` · `pedagogy-linguistics-master` (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `chore(skills)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1213](https://github.com/seeker19110/dhcb/pull/1213) · **Loại:** `chore(skills)`.
 - **Nối tiếp:** đợt 1 ở changelog 0477 (PR #1212), cùng phương án chủ dự án đã duyệt: rà, bỏ hoặc
   đánh dấu "chưa có" phần không tồn tại, sửa đường dẫn, chuyển sang `.claude/skills/`, giữ bản gương
   ở `.agents/skills/`.
