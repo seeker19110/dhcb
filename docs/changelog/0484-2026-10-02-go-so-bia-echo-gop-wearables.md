@@ -1,6 +1,6 @@
 # 0484 — Gỡ số bịa ở Echo Shadowing, "GOP Lab" và thẻ Wearables (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền khi tạo) · **Loại:** `fix(companion)`.
+- **Ngày:** 2026-10-02 · **PR:** #1219 · **Loại:** `fix(companion)`.
 - **Quyết định (chủ dự án chọn 2026-10-02, cho ba nợ 🔴 ghi ở 0478/0479/0481):**
   - Echo Shadowing: bỏ điểm, giữ bài luyện 3 pha;
   - GOP Lab: bỏ mọi con số, đổi thành gợi ý luyện âm;
