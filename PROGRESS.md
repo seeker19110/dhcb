@@ -706,7 +706,7 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `curl … | sh`; (5) nhắc mềm khi sửa file dùng chung (≥ 20 nơi import); bẫy escape → TRAPS mục 8.
   Còn lại: (1) Claude Code **không nạp** `.agents/skills/` → rà nội dung (vd
   `life-career-strategic-advisor` còn mô tả trụ đã xoá) rồi chuyển sang `.claude/skills/` hoặc bỏ;
-  (2) rút gọn CLAUDE.md (~51 nghìn ký tự nạp mỗi phiên) — **chờ chủ dự án duyệt kế hoạch**;
+  (2) rút gọn CLAUDE.md (~44 nghìn ký tự, ~52 KB nạp mỗi phiên) — **chờ chủ dự án duyệt kế hoạch**;
   (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src` — PR riêng vì đổi luật lint;
   (6) hai người rà độc lập (`santa-method`) cho nội dung học — chờ quyết.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần

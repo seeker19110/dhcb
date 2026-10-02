@@ -52,7 +52,7 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
 
 | Rủi ro                   | Bằng chứng                                                                                                                                                                                                                                                                                                                              |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phình ngữ cảnh           | 293 skill + 68 agent đều có mô tả nằm trong danh sách của mỗi phiên. Chính ECC dặn "start with the workflow you need, not the full catalog" và "install rules selectively". CLAUDE.md của DHCB đã ~51 nghìn ký tự nạp mỗi phiên.                                                                                                        |
+| Phình ngữ cảnh           | 293 skill + 68 agent đều có mô tả nằm trong danh sách của mỗi phiên. Chính ECC dặn "start with the workflow you need, not the full catalog" và "install rules selectively". CLAUDE.md của DHCB đã ~44 nghìn ký tự (~52 KB) nạp mỗi phiên.                                                                                               |
 | Mâu thuẫn luật DHCB      | `block-no-verify` chặn `--no-verify` — DHCB cho phép có chủ đích (CLAUDE.md mục 8). `build-error-resolver` gốc khuyên `rm -rf node_modules package-lock.json && npm install` — DHCB cấm (TRAPS.md mục 3). `database-reviewer` gốc dạy RLS/Supabase — DHCB đã rời Supabase (ADR-0009). Rules gốc đặt coverage 80% — DHCB là 93/89/93/93. |
 | Phần lớn không liên quan | Skill cho healthcare, trading, homelab, Laravel, Swift, Kotlin…                                                                                                                                                                                                                                                                         |
 | Chuỗi cung ứng           | Hook ECC là mã Node chạy trên máy người dùng (GateGuard một file ~1.960 dòng); bản thân README cảnh báo có bản sao giả chứa mã độc. Một người bảo trì chính, ra bản mỗi tuần.                                                                                                                                                           |
@@ -118,7 +118,7 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
 
 1. **Rà và chuyển `.agents/skills/` sang `.claude/skills/`** (hoặc xoá bản lỗi thời): làm bộ 10
    skill thật sự hoạt động, theo cổng chất lượng kiểu `skill-stocktake` của ECC.
-2. **Giảm CLAUDE.md** (~51 nghìn ký tự mỗi phiên): tách lịch sử/giải thích dài sang `docs/`, chỉ
+2. **Giảm CLAUDE.md** (~44 nghìn ký tự, ~52 KB mỗi phiên): tách lịch sử/giải thích dài sang `docs/`, chỉ
    giữ luật. Theo nguyên tắc "rules luôn nạp nên phải ít" của ECC.
 3. **Luật ESLint `no-console`** cho `apps/dhcb/src` + `apps/hub/src` (hiện còn đúng 1
    `console.log`) — thay cho hook cảnh báo `console.log` của ECC; phải là PR riêng vì đổi luật lint
