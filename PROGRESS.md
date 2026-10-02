@@ -707,10 +707,9 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 - **Đợt 2 tích hợp ECC** (đợt 1 ở changelog `0468`, ADR-0013; chi tiết
   `docs/research/ecc-everything-claude-code.md` mục 6). ✅ Xong ở `0469`: (4) hook chặn
   `curl … | sh`; (5) nhắc mềm khi sửa file dùng chung (≥ 20 nơi import); bẫy escape → TRAPS mục 8.
-  Còn lại: (1) Claude Code **không nạp** `.agents/skills/` → rà nội dung (vd
+  ✅ Xong ở `0470`: (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src`. Còn lại: (1) Claude Code **không nạp** `.agents/skills/` → rà nội dung (vd
   `life-career-strategic-advisor` còn mô tả trụ đã xoá) rồi chuyển sang `.claude/skills/` hoặc bỏ;
   (2) rút gọn CLAUDE.md (~44 nghìn ký tự, ~52 KB nạp mỗi phiên) — **chờ chủ dự án duyệt kế hoạch**;
-  (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src` — PR riêng vì đổi luật lint;
   (6) hai người rà độc lập (`santa-method`) cho nội dung học — chờ quyết.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
@@ -1103,6 +1102,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-02 — phát hiện khi rà `.agents/skills/`, changelog `0470`] STEM Scratchpad (Companion
+  › Labs) chấm MỌI bước giải là "đúng".** `StemScratchpadService.validateStep`
+  (`packages/core-ai/stemScratchpadService.ts`, gọi từ `apps/server/src/api/learning/stem-scratchpad.ts`)
+  chỉ nhận ra đúng hai câu gán cứng (`2x + 5 = 15` → `2x = 15 + 5`, và `H_2 + O_2 -> H_2O`) cùng lỗi
+  lệch ngoặc; mọi bước khác — kể cả SAI — đều trả `isValid: true` kèm "Bước biến đổi logic chính
+  xác. Bạn đang đi đúng hướng!" (confidence 0,95). Skill `stem-science-reasoning-master` mô tả nó
+  như bộ kiểm đại số/cân bằng nguyên tử thật. Với sản phẩm học tập đây là dạy SAI. **Gỡ — chờ chủ
+  dự án chọn:** (a) ẩn Scratchpad tới khi có bộ kiểm thật; hoặc (b) làm bộ kiểm tối thiểu thật
+  (so khớp tương đương biểu thức bằng thư viện CAS/kiểm tra số học, cân bằng nguyên tử) và trả
+  "chưa xác định" thay vì "đúng" khi không kiểm được.
 - 🔴 **[2026-10-02 — phát hiện khi rà `.agents/skills/`, changelog `0469`] Companion › studio
   "Tổng hợp" hiển thị điểm "phân tích cuộc sống" BỊA cho mọi người dùng.**
   `LifeSynthesisDashboard` gọi `GET /api/life-synthesis`

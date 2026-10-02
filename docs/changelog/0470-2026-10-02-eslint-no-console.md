@@ -13,6 +13,13 @@
   `scripts/` không áp — log ở đó vào PM2/stdout là có chủ đích.
 - CLAUDE.md mục 8: câu "xóa `console.log` debug" nay ghi rõ đã có lint chặn ở frontend.
 
+## Phát hiện kèm theo (ghi nợ 🔴 trong `PROGRESS.md`)
+
+Khi rà skill `stem-science-reasoning-master` để chuẩn bị đề xuất 1: STEM Scratchpad (Companion ›
+Labs) chấm MỌI bước giải là "đúng" — `StemScratchpadService.validateStep` chỉ nhận ra hai câu gán
+cứng và lỗi lệch ngoặc, còn lại luôn `isValid: true`. Chờ chủ dự án chọn ẩn tính năng hay làm
+bộ kiểm thật. Cùng `PROGRESS.md`: đánh dấu đề xuất 3 của đợt 2 đã xong.
+
 ## Bằng chứng
 
 - Frontend hiện KHÔNG còn `console.log/info/debug…` nào (chỉ `console.warn` 27 + `console.error` 27) → luật khoá trạng thái tốt lại, không phải sửa code nào.

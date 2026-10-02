@@ -120,7 +120,7 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
    skill thật sự hoạt động, theo cổng chất lượng kiểu `skill-stocktake` của ECC.
 2. **Giảm CLAUDE.md** (~44 nghìn ký tự, ~52 KB mỗi phiên): tách lịch sử/giải thích dài sang `docs/`, chỉ
    giữ luật. Theo nguyên tắc "rules luôn nạp nên phải ít" của ECC.
-3. **Luật ESLint `no-console`** cho `apps/dhcb/src` + `apps/hub/src` (hiện còn đúng 1
+3. ✅ (changelog 0470) **Luật ESLint `no-console`** cho `apps/dhcb/src` + `apps/hub/src` (hiện còn đúng 1
    `console.log`) — thay cho hook cảnh báo `console.log` của ECC; phải là PR riêng vì đổi luật lint
    (luật ghi ở đầu `eslint.config.js`).
 4. ✅ (changelog 0469) **Kiểm pipe-to-shell bằng hook** (`curl … | sh`) — vì luật quyền không
