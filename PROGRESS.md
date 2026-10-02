@@ -717,10 +717,13 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   sang `docs/claude-md-chi-tiet.md` (`npm run check:claude-md` chứng minh không mất dòng nào;
   `scripts/claude-md-split.test.ts` canh trần 34.000 ký tự). **Đang làm (chủ dự án duyệt
   2026-10-02):** (1) rà & viết lại `.agents/skills/` rồi chuyển sang `.claude/skills/`, bản
-  `.agents/` giữ làm gương trùng từng byte — **5/11 đã chuyển**: `0477` (`ui-ux`,
+  `.agents/` giữ làm gương trùng từng byte — **8/11 đã chuyển**: `0477` (`ui-ux`,
   `marketing-content-writer`), `0478` (`principal-engineer-architect`,
-  `financial-security-sentinel`, `pedagogy-linguistics-master`); cổng
-  `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn không tồn tại. Còn 6, chia 2 PR.
+  `financial-security-sentinel`, `pedagogy-linguistics-master`), `0479`
+  (`stem-science-reasoning-master`, `memory-palace-cognitive-scaffolder`,
+  `multimodal-realtime-voice-master`); cổng `scripts/skills-mirror.test.ts` chặn skill nhắc đường
+  dẫn không tồn tại. Còn 3 (`autonomous-agent-orchestrator`, `gamification-viral-growth-architect`,
+  `life-career-strategic-advisor`), 1 PR.
   Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
@@ -1113,6 +1116,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-02 — phát hiện khi rà skill `multimodal-realtime-voice-master`, changelog `0479`]
+  Studio Thử thách › Echo Shadowing hiện "Band" tính từ số NGẪU NHIÊN.** `EchoShadowingCard.tsx`
+  gửi `measuredLatencyMs`/`phonemeAccuracy` bằng `Math.random()` (chú thích ghi sẵn "380 - 460ms",
+  "88 - 98%"), server (`echoShadowingService.ts`) tính band từ đó — học viên thấy điểm không đo gì.
+  Cùng họ với nợ lab phát âm ngay dưới. **Gỡ — chờ chủ dự án chọn:** (a) bỏ điểm/band, giữ bài
+  luyện 3 pha; hoặc (b) đo thật độ trễ + độ khớp âm vị từ bản ghi âm (cần đặc tả).
+- 🟡 **[2026-10-02 — changelog `0479`] "Chỉ số tự nhận thức" của nhật ký phản tỉnh là đại lượng
+  thay thế bằng SỐ TỪ** (`metacognitiveReflectionService.ts`: `wordCount * 1.5 + 40` + thưởng theo
+  số bẫy nhận ra), không phải thang MAI chuẩn. Không dùng để xếp hạng/đưa lên màn hình chính; cân
+  nhắc đổi tên hoặc bỏ con số.
 - 🔴 **[2026-10-02 — phát hiện khi rà skill `pedagogy-linguistics-master`, changelog `0478`]
   Studio Thử thách › "Acoustic Phonetics & GOP Lab" hiển thị điểm BỊA cho mọi người dùng.**
   `packages/core-ai/acousticPhoneticsService.ts` (qua `/api/acoustic-phonetics`) đoán âm sai từ
