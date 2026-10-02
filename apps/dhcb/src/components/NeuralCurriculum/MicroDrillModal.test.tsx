@@ -18,8 +18,9 @@ const result: NeuralDrillReview = {
 }
 let container: HTMLDivElement
 let root: Root
+// Hộp thoại render qua portal vào document.body (changelog 0474), không nằm trong `container`.
 const button = (label: string) => {
-  const found = [...container.querySelectorAll('button')].find(
+  const found = [...document.body.querySelectorAll('button')].find(
     (element) => element.textContent?.trim() === label,
   )
   if (!found) throw new Error(`Thiếu nút ${label}`)
@@ -54,10 +55,10 @@ describe('MicroDrillModal — xác nhận từ server', () => {
     await act(async () => button('Hoàn tất').click())
     expect(onComplete).toHaveBeenCalledWith([{ drillId: drill.id, answer: drill.correctAnswer }])
     expect(button('Đang lưu…').disabled).toBe(true)
-    expect(container.textContent).not.toContain('Hoàn Tất Bài Luyện Vi Mô!')
+    expect(document.body.textContent).not.toContain('Hoàn Tất Bài Luyện Vi Mô!')
     await act(async () => finish?.(result))
-    expect(container.textContent).toContain('Hoàn Tất Bài Luyện Vi Mô!')
-    expect(container.textContent).toContain('Kết quả đã được lưu')
+    expect(document.body.textContent).toContain('Hoàn Tất Bài Luyện Vi Mô!')
+    expect(document.body.textContent).toContain('Kết quả đã được lưu')
   })
   it('lỗi giữ đáp án để retry và thông báo lần ôn không cộng điểm lặp', async () => {
     const onComplete = vi
@@ -71,10 +72,10 @@ describe('MicroDrillModal — xác nhận từ server', () => {
     )
     await act(async () => button(drill.correctAnswer).click())
     await act(async () => button('Hoàn tất').click())
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Chưa lưu được')
-    expect(container.textContent).not.toContain('Hoàn Tất Bài Luyện Vi Mô!')
+    expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Chưa lưu được')
+    expect(document.body.textContent).not.toContain('Hoàn Tất Bài Luyện Vi Mô!')
     await act(async () => button('Hoàn tất').click())
-    expect(container.textContent).toContain('điểm không cộng lặp')
+    expect(document.body.textContent).toContain('điểm không cộng lặp')
     expect(onComplete.mock.calls[0]).toEqual(onComplete.mock.calls[1])
   })
 })

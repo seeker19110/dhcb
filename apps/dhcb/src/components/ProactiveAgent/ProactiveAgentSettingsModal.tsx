@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ProactiveAgentConfig } from '@dhcb/core-contracts/proactiveAgent'
 import { updateProactiveConfigApi } from '../../lib/proactiveAgentApi.js'
 
@@ -45,7 +46,9 @@ export default function ProactiveAgentSettingsModal({
     }
   }
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md animate-fade-in">
       <div className="w-full max-w-md p-6 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-2xl space-y-5">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
@@ -160,6 +163,7 @@ export default function ProactiveAgentSettingsModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

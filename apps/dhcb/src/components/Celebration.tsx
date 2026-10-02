@@ -42,9 +42,10 @@ export default function Celebration({
     }
   }, [])
 
-  // Portal ra document.body: tổ tiên trong cây tab học có transform (animate-fade-in
-  // giữ translateY(0) vì fill-mode both) → thành containing block, làm `fixed`
-  // neo theo khối cha thay vì viewport. Portal thoát hẳn ra ngoài nên luôn phủ đúng.
+  // Portal ra document.body: tổ tiên có `transform` thành containing block, làm `fixed`
+  // neo theo khối cha thay vì viewport. Gốc của bẫy này (animate-fade-in giữ translateY(0)
+  // vì fill-mode both) đã gỡ ở changelog 0474, nhưng tổ tiên vẫn có `transform` TRONG lúc
+  // hoạt ảnh chạy — portal giữ lại để luôn phủ đúng.
   return createPortal(
     <div
       ref={overlayRef}

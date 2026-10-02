@@ -715,3 +715,39 @@ chậm: gửi payload lớn hơn bộ đệm pipe (64 KB) — `'x'.repeat(200_00
 `scripts/claude-hooks.test.ts` ca "mọi hook đọc hết stdin trước khi thoát" chạy TỪNG hook trong
 `.claude/hooks/` với payload 200 KB ở nhánh thoát sớm của nó (đã kiểm: hook cũ đỏ 5/7, hook đã
 sửa xanh 7/7). Thêm hook mới là tự động được kiểm.
+
+## 18. Lớp phủ `fixed inset-0` không phủ đúng cửa sổ — tổ tiên giữ `transform`, hoặc `space-y-*` cho nó lề dưới
+
+**Ngày/PR:** 2026-10-02, changelog `0474`. Lộ ra khi chụp ảnh Tầng 8b cho bảng nháp STEM
+(changelog `0473`): ở 1440px hộp thoại bị đẩy xuống nửa dưới màn hình, cắt mất danh sách bước,
+nền mờ không phủ sidebar. **Tái phát lần thứ ba**: hai lần trước đã vá CỤC BỘ mà không ai sửa
+gốc — `Celebration.tsx` phải portal ra `document.body`, `OfflineSyncIndicator.tsx` phải né
+`-translate-x-1/2`.
+
+**Khuôn lỗi:** hai bẫy riêng, cùng một triệu chứng.
+
+1. **Tổ tiên có `transform`.** `animate-fade-in` (cùng `fade-up`, `scale-in`…) chạy với
+   fill-mode `both`, nên sau khi chạy xong vẫn giữ `transform: translateY(0)` của khung cuối.
+   Phần tử có `transform` (hoặc `filter`, `backdrop-filter`, `contain: paint`, `will-change:
+transform`, và ở Tailwind 4 cả `translate`/`scale`/`rotate`) thành containing block cho mọi
+   con `position: fixed`. Kết quả: `fixed inset-0` phủ theo khung cha chứ không theo màn hình.
+2. **Lề từ `space-y-*`.** Tailwind 4 gán `margin-block-end` cho MỌI con trừ con cuối (xem khối
+   vá ở `apps/dhcb/src/index.css`). Lớp phủ là con trực tiếp của khung `space-y-4` thì nhận
+   `margin-bottom: 16px`, mà `fixed` với `inset: 0` tính cả lề → lớp phủ hụt 16px ở đáy.
+
+**Cách rà:** hộp thoại lệch/cắt, nền mờ không phủ hết trang, hay hở một dải ở đáy → đo khung
+lớp phủ, đừng đoán từ mã. Trong trình duyệt: `getBoundingClientRect()` của lớp phủ phải đúng
+`{x: 0, y: 0, width: innerWidth, height: innerHeight}`. Lệch `y`/`height` lớn → leo cây cha tìm
+`transform`/`filter`/`translate`… khác `none`. Hụt đúng 16px → xem `marginBottom` của chính lớp
+phủ. Danh sách lớp phủ còn render tại chỗ (chưa portal):
+`grep -rl "fixed inset-0" apps/dhcb/src --include=*.tsx | xargs grep -L createPortal`.
+
+**Cổng chốt chặn:**
+
+- `apps/dhcb/tailwind.config.js`: mọi hoạt ảnh chạy một lần dùng fill-mode `backwards`.
+  `apps/dhcb/src/lib/tailwindAnimations.test.ts` đỏ khi hoạt ảnh nào có khung cuối mang
+  `transform` mà dùng `both`/`forwards` (đã kiểm: đổi `fade-in` về `both` → đỏ).
+- Hộp thoại mở từ khung có bố cục riêng render qua `createPortal(…, document.body)`, như
+  `apps/dhcb/src/components/Modal.tsx`.
+- `e2e/studio-modal-overlay.spec.ts` mở hộp thoại ở hai studio, đo lớp phủ phải trùng khít cửa
+  sổ ở 1440px và 390px (đã kiểm: mã cũ đỏ với `y = 147`).

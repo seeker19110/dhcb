@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 import { X, Sparkles, Brain, AlertTriangle, Lightbulb, ChevronRight } from 'lucide-react'
 import {
@@ -72,7 +73,9 @@ export default function MetacognitiveReflectionModal({
     }
   }
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="relative w-full max-w-4xl max-h-[90dvh] bg-zinc-950 border border-teal-500/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-zinc-100">
         {/* Header */}
@@ -354,6 +357,7 @@ export default function MetacognitiveReflectionModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

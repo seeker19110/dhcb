@@ -1,5 +1,6 @@
 // apps/dhcb/src/components/PvPArena/PvPArenaLobbyModal.tsx — Sảnh Chờ & Bảng Xếp Hạng Đấu Trường PvP.
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
+import { createPortal } from 'react-dom'
 import { useState, useEffect } from 'react'
 import { useDialogBehavior } from '../useDialogBehavior'
 import { X, Trophy, Flame, Swords, ChevronRight } from 'lucide-react'
@@ -96,7 +97,9 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
     },
   ]
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <>
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in overflow-y-auto"
@@ -305,6 +308,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
           }}
         />
       )}
-    </>
+    </>,
+    document.body,
   )
 }

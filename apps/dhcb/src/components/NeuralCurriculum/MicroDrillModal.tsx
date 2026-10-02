@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useDialogBehavior } from '../useDialogBehavior'
 import {
   MicroDrillQuestion,
@@ -91,7 +92,9 @@ export default function MicroDrillModal({
     }
   }
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
       {...backdropProps}
@@ -229,6 +232,7 @@ export default function MicroDrillModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

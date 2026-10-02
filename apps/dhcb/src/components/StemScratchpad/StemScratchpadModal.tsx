@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useDialogBehavior } from '../useDialogBehavior'
 import {
   ketQuaBuoc,
@@ -134,7 +135,9 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
     }
   }
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     // role/aria-modal trước đây nằm nhầm ở LỚP NỀN (phủ kín màn hình); nay chuyển vào
     // đúng khung hộp thoại, kèm Escape + bẫy tiêu điểm + khoá cuộn nền.
     <div
@@ -311,6 +314,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

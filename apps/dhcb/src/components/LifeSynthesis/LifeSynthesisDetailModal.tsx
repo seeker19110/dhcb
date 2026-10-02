@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Compass, RefreshCw, TrendingUp, Zap, CheckCircle2 } from 'lucide-react'
 import type { LifeSynthesisReport, LifeDomainType } from '@dhcb/core-contracts/lifeSynthesis'
 import { generateCustomLifeSynthesisReport } from '../../lib/lifeSynthesisApi'
@@ -34,7 +35,9 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
     life: 'Đời sống',
   }
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
       <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-2xl w-full max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden">
         {/* Header */}
@@ -217,6 +220,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
