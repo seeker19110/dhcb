@@ -717,13 +717,14 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   sang `docs/claude-md-chi-tiet.md` (`npm run check:claude-md` chứng minh không mất dòng nào;
   `scripts/claude-md-split.test.ts` canh trần 34.000 ký tự). **Đang làm (chủ dự án duyệt
   2026-10-02):** (1) rà & viết lại `.agents/skills/` rồi chuyển sang `.claude/skills/`, bản
-  `.agents/` giữ làm gương trùng từng byte — **8/11 đã chuyển**: `0477` (`ui-ux`,
+  `.agents/` giữ làm gương trùng từng byte — **11/11 đã chuyển**: `0477` (`ui-ux`,
   `marketing-content-writer`), `0478` (`principal-engineer-architect`,
   `financial-security-sentinel`, `pedagogy-linguistics-master`), `0479`
   (`stem-science-reasoning-master`, `memory-palace-cognitive-scaffolder`,
-  `multimodal-realtime-voice-master`); cổng `scripts/skills-mirror.test.ts` chặn skill nhắc đường
-  dẫn không tồn tại. Còn 3 (`autonomous-agent-orchestrator`, `gamification-viral-growth-architect`,
-  `life-career-strategic-advisor`), 1 PR.
+  `multimodal-realtime-voice-master`), `0480` (`autonomous-agent-orchestrator`,
+  `gamification-viral-growth-architect`, `life-career-strategic-advisor`); cổng
+  `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn không tồn tại. CLAUDE.md §2.1 đã cập
+  nhật theo.
   Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
@@ -1116,6 +1117,21 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-02 — phát hiện khi rà skill `autonomous-agent-orchestrator`, changelog `0480`]
+  "Studio Điều Phối Agent Tự Trị" hiện kết quả DỰNG SẴN như agent đã chạy thật.**
+  `packages/core-personal/agentOrchestratorService.ts`: bấm "Khởi chạy Agent" → 5 bước luôn
+  `completed`, token/chi phí gán cứng, "Bảng đối soát 100% tiêu chí đạt chuẩn" soạn sẵn — không có
+  lệnh gọi AI nào. Thẻ vừa được dời sang studio "Kế hoạch" ở `0475` (PR #1210) mà chưa kiểm tính
+  trung thực. **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có thực thi thật; hoặc (b) làm thật
+  (gọi AI qua `checkAndConsumeUsage`, Zod, trạng thái đúng như đã xảy ra — cần đặc tả).
+- 🔴 **[2026-10-02 — changelog `0480`] Đấu trường PvP không cho biết đối thủ là AI.**
+  `pvpArenaService.ts` chỉ có đối thủ AI ("ghost rival"), nhưng màn trận đấu chỉ hiện tên kiểu
+  người thật ("Elena Oxford 🇬🇧", "Minh Cambridge") + avatar. **Gỡ:** thêm nhãn "Đối thủ AI" rõ
+  ràng ở màn ghép cặp và màn trận đấu (việc nhỏ, chỉ giao diện — chờ chủ dự án gật đầu vì đổi trải
+  nghiệm đang chạy).
+- 🟡 **[2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
+  xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
+  dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.
 - 🔴 **[2026-10-02 — phát hiện khi rà skill `multimodal-realtime-voice-master`, changelog `0479`]
   Studio Thử thách › Echo Shadowing hiện "Band" tính từ số NGẪU NHIÊN.** `EchoShadowingCard.tsx`
   gửi `measuredLatencyMs`/`phonemeAccuracy` bằng `Math.random()` (chú thích ghi sẵn "380 - 460ms",

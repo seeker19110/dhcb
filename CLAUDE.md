@@ -80,12 +80,13 @@ Ba chế độ:
   `docs/research/kien-truc-va-ha-tang.md` mục [1].** `docs/phases/00..45-*.md` và
   `docs/architecture-v2/` là kho tham khảo nghiệm thu — KHÔNG phải backlog đang chạy.
 
-## 2.1. Bộ skill miền (`.agents/skills/`)
+## 2.1. Bộ skill miền (`.claude/skills/`)
 
-10 bộ skill kiến thức miền nằm ở `.agents/skills/`. **Claude Code KHÔNG tự nạp thư mục này** —
-nó chỉ nạp `.claude/skills/<tên>/SKILL.md` (ADR-0013); phiên Claude chỉ dùng khi tự mở đúng file.
-Nhiều bản mô tả tính năng chưa có hoặc đã xoá — đang rà, viết lại rồi chuyển sang
-`.claude/skills/` (xem `PROGRESS.md`). Danh sách 10 skill: `docs/claude-md-chi-tiet.md` §2.1.
+11 skill kiến thức miền ở `.claude/skills/<tên>/SKILL.md` — Claude Code **tự nạp** (ADR-0013).
+Mỗi skill đã đối chiếu với mã (changelog 0477–0480) và ghi rõ phần "CHƯA CÓ"; khi skill lệch mã thì
+**mã thắng** — sửa skill. Bản gương trùng từng byte ở `.agents/skills/` cho công cụ khác;
+`scripts/skills-mirror.test.ts` canh gương + mọi đường dẫn trong repo mà skill nhắc tới. Sửa skill
+thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-tiet.md` §2.1.
 
 > Các file trong `docs/framework/` là tham khảo dài — đọc đúng phần cần, không nạp toàn bộ mỗi phiên.
 
