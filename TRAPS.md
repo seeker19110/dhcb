@@ -340,6 +340,27 @@ nháp đang gõ dở bỗng bị coi là stale. Cách gọn: tính hàm cho vài
 (chèn lại NUL thì đỏ đúng chỗ). `CLAUDE.md` mục 8 đã có câu cảnh báo bằng chữ từ trước — nó
 không đủ, vì cảnh báo bằng chữ thì người ta quên.
 
+**Tái phát 2026-10-01 — biến thể ký tự ĐỊNH DẠNG vô hình** (PR #1201, changelog `0468`). Viết
+bộ dò zero-width/bidi bằng escape (gạch chéo ngược + `u200B`) thì công cụ ghi file của tác tử
+giải mã thành ký tự vô hình THẬT — **ba lần trong một đợt**: file test, changelog, mô tả PR.
+Khác NUL ở chỗ nguy hiểm hơn: các ký tự này (U+200B–U+200D, U+2060, U+FEFF, U+202A–U+202E,
+U+2066–U+2069 — họ "Trojan Source") **không** làm `git diff` thành nhị phân và **không** bị cổng
+byte C0 ở trên bắt. Trong file TS/JS chỉ lint `no-irregular-whitespace` thấy; trong `.md`/JSON
+thì im lặng hoàn toàn — lượt quét toàn repo đầu tiên bắt thêm một zero-width space lạc làm vỡ
+chữ "phức tạp" trong `docs/research/uiux-va-giao-dien.md`, nằm đó từ #1143. Hai bài học thêm:
+
+- Ký tự đặc biệt trong bộ dò viết bằng **mã điểm số** (`0x200b`, `String.fromCodePoint(...)`),
+  KHÔNG bằng escape trong chuỗi/regex — xem cách viết `VO_HINH` trong
+  `scripts/no-control-chars.test.ts`.
+- Lệnh quét cũng có thể xanh giả: `grep -P` với lớp `\x{200B}…` mà **thiếu locale UTF-8** thì
+  báo lỗi "code point too large" (exit 2); gộp với `2>/dev/null` là không in gì → tưởng sạch.
+  Luôn chạy `LC_ALL=C.UTF-8 grep -nP '…' <file>` và phân biệt exit 1 (sạch) với exit 2 (lỗi).
+
+**Cổng chốt chặn (bổ sung):** `scripts/no-control-chars.test.ts` thêm ca quét ký tự định dạng
+vô hình trên mọi file nguồn (cho phép riêng ZWJ U+200D vì emoji ghép cần nó) + ca tự kiểm bộ
+dò; `scripts/agent-config-security.test.ts` quét riêng cấu hình tác tử và prompt gửi AI (không
+cho phép cả ZWJ).
+
 ## 9. Margin âm trên phần tử DÍNH → che mất dòng đầu của phần tử sau, và KHÔNG cổng nào bắt được
 
 **Ngày/PR:** mắc từ khi có `Modal` sticky header; vá cục bộ hai lần — S07-2 (#944, panel Mục lục)

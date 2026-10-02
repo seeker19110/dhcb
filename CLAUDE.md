@@ -295,6 +295,12 @@ mode: `ask` của hook không hiện hộp hỏi nào. Bỏ qua có chủ đích
 PostToolUse `.claude/hooks/auto-format.sh` chạy Prettier ngay sau mỗi lần sửa file (báo lại cho
 Claude nếu Prettier gặp lỗi cú pháp). Đọc `.env`/`.env.*` (trừ `.env.example`) luôn phải hỏi
 (`permissions.ask`). `scripts/agent-config-security.test.ts` canh tất cả những điều này trong CI.
+**Thêm 2026-10-02 (changelog 0469):** `.claude/hooks/block-pipe-to-shell.sh` chặn tải-rồi-chạy
+(`curl … | sh`, `sh -c "$(curl …)"`, `bash <(curl …)` — luật quyền không khớp được lệnh có `|`;
+cách đúng: tải về file, đọc, rồi chạy; bỏ qua có chủ đích `ALLOW_PIPE_TO_SHELL=1`) và
+`.claude/hooks/shared-file-reminder.sh` NHẮC (không chặn) chạy `npm run codemap -- impact` khi
+lần đầu sửa một file được ≥ 20 nơi import (đếm từ `.codemap/graph.json`; chưa có bản đồ thì im
+lặng). Test hành vi: `scripts/claude-hooks.test.ts`.
 
 **Chống đặc tả "nói suông" (thêm 2026-09-19):** `npm run check:specs` (chạy trong CI job `audit`, chặn merge) kiểm mọi đường dẫn ở cột "Đường dẫn file" của đặc tả ĐÃ "Approved for implementation" (`docs/specs/*.md`) có tồn tại thật — xem `scripts/check-spec-paths.ts`.
 
