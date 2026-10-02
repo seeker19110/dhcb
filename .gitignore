@@ -46,6 +46,10 @@ apps/dhcb/src/data/dictionary.backup.json
 !.claude/hooks/*.sh
 !.claude/commands
 !.claude/commands/*.md
+# Skill dự án (Claude Code chỉ nạp skill ở đây — ADR-0013). Bản gương ở .agents/skills/ cho
+# công cụ khác; scripts/skills-mirror.test.ts canh hai bản trùng nhau.
+!.claude/skills
+!.claude/skills/**
 !.claude/usage-budget.example.sh
 
 # File cũ đã xóa khỏi project, giữ tạm trên đĩa do hạn chế của sandbox — không commit
