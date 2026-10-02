@@ -1,6 +1,6 @@
 # 0476 — Rút gọn CLAUDE.md: giữ luật, dời nguyên văn lý do/lịch sử sang `docs/` (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `docs(claude-md)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1211](https://github.com/seeker19110/dhcb/pull/1211) · **Loại:** `docs(claude-md)`.
 - **Nối tiếp:** đề xuất (2) của đợt 2 tích hợp ECC (`docs/research/ecc-everything-claude-code.md`
   mục 6). Chủ dự án duyệt **"Đồng ý, làm 1 PR"**: dời NGUYÊN VĂN phần lịch sử/giải thích sang
   `docs/`, giữ luật + một dòng trỏ, có script kiểm không mất luật, `check:docs` vẫn xanh.
