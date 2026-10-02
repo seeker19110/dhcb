@@ -1,6 +1,6 @@
 # 0471 — Đồng nhất đợt 3: thanh công cụ bài hội thoại mobile gọn một hàng + khối "Học tiếp" dùng chung (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** _(điền khi tạo)_ · **Loại:** `refactor(ui)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1205](https://github.com/seeker19110/dhcb/pull/1205) · **Loại:** `refactor(ui)`.
 - **Nối tiếp:** audit đồng nhất bố cục 2026-10-01 (`docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md`)
   §4 mục 2 (khối "Học tiếp", vấn đề #9) và mục 5 (thanh công cụ mobile). Chủ dự án giao
   "chọn theo đề xuất tốt nhất rồi tiếp tục".
