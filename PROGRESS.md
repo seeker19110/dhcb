@@ -713,10 +713,12 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `curl … | sh`; (5) nhắc mềm khi sửa file dùng chung (≥ 20 nơi import); bẫy escape → TRAPS mục 8.
   ✅ Xong ở `0470`: (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src`. ✅ Xong ở
   `0473`: bảng nháp STEM thôi khen sai. ✅ Xong ở `0475`: gỡ studio "Tổng kết" (điểm bịa).
-  **Chủ dự án đã duyệt 2026-10-02, đang làm:** (1) rà & viết lại `.agents/skills/` rồi chuyển
-  sang `.claude/skills/` (giữ bản `.agents/`, nhiều PR nhỏ); (2) rút gọn CLAUDE.md (~44 nghìn ký
-  tự) — dời NGUYÊN VĂN phần lịch sử sang `docs/`, có script kiểm không mất luật. Còn chờ quyết:
-  (6) hai người rà độc lập (`santa-method`) cho nội dung học.
+  ✅ Xong ở `0476`: (2) rút gọn CLAUDE.md 43.964 → 31.784 ký tự, phần lý do/lịch sử dời NGUYÊN VĂN
+  sang `docs/claude-md-chi-tiet.md` (`npm run check:claude-md` chứng minh không mất dòng nào;
+  `scripts/claude-md-split.test.ts` canh trần 34.000 ký tự). **Chủ dự án đã duyệt 2026-10-02, đang
+  làm:** (1) rà & viết lại `.agents/skills/` rồi chuyển sang `.claude/skills/` (giữ bản
+  `.agents/`, nhiều PR nhỏ). Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho nội dung
+  học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
