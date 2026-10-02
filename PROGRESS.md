@@ -720,8 +720,8 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `.agents/` giữ làm gương trùng từng byte — **5/11 đã chuyển**: `0477` (`ui-ux`,
   `marketing-content-writer`), `0478` (`principal-engineer-architect`,
   `financial-security-sentinel`, `pedagogy-linguistics-master`); cổng
-  `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn không tồn tại. Còn 6, chia 2 PR. Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho
-  nội dung học.
+  `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn không tồn tại. Còn 6, chia 2 PR.
+  Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
