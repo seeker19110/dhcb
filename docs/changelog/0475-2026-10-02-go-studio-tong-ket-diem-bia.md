@@ -1,6 +1,6 @@
 # 0475 — Gỡ studio "Tổng kết" của Bạn Đồng Hành: thôi hiện điểm "phân tích cuộc sống" bịa (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `fix(companion)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1210](https://github.com/seeker19110/dhcb/pull/1210) · **Loại:** `fix(companion)`.
 - **Nối tiếp:** nợ 🔴 "studio Tổng hợp hiển thị điểm BỊA" ghi ở changelog `0469`. Chủ dự án chọn
   phương án **"Ẩn studio tới khi có dữ liệu thật"**: gỡ studio khỏi Companion, API trả lỗi rõ
   thay vì số bịa.
