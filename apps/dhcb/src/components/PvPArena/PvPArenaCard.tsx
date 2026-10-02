@@ -34,8 +34,8 @@ export default function PvPArenaCard() {
                 Đấu trường 1v1: từ vựng nhanh & bắt lỗi ngữ pháp
               </h3>
               <p className="text-xs sm:text-sm text-content-secondary mt-0.5 leading-relaxed">
-                Thi đấu phản xạ từ vựng 5s, bắt lỗi ngữ pháp cấp tốc, tích lũy điểm Rank Elo và leo
-                Top Bảng xếp hạng tuần.
+                Đấu với đối thủ AI: phản xạ từ vựng 5s, bắt lỗi ngữ pháp cấp tốc, tích lũy điểm Elo
+                và leo Bảng xếp hạng.
               </p>
             </div>
           </div>

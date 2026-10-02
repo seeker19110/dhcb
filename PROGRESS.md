@@ -1124,11 +1124,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   lệnh gọi AI nào. Thẻ vừa được dời sang studio "Kế hoạch" ở `0475` (PR #1210) mà chưa kiểm tính
   trung thực. **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có thực thi thật; hoặc (b) làm thật
   (gọi AI qua `checkAndConsumeUsage`, Zod, trạng thái đúng như đã xảy ra — cần đặc tả).
-- 🔴 **[2026-10-02 — changelog `0480`] Đấu trường PvP không cho biết đối thủ là AI.**
-  `pvpArenaService.ts` chỉ có đối thủ AI ("ghost rival"), nhưng màn trận đấu chỉ hiện tên kiểu
-  người thật ("Elena Oxford 🇬🇧", "Minh Cambridge") + avatar. **Gỡ:** thêm nhãn "Đối thủ AI" rõ
-  ràng ở màn ghép cặp và màn trận đấu (việc nhỏ, chỉ giao diện — chờ chủ dự án gật đầu vì đổi trải
-  nghiệm đang chạy).
+- 🟡 **[2026-10-02 — phát hiện khi sửa PvP ở changelog `0482`] Bảng xếp hạng PvP hiện TÊN THẬT
+  của người dùng cho mọi người chơi.** `realLeaderboard` (`apps/server/src/api/platform/pvp-arena.ts`)
+  lấy top 10 Elo kèm `coalesce(profiles.nickname, users.name)` — ai chưa đặt biệt danh thì lộ tên
+  tài khoản (thường là họ tên đầy đủ), không có bước đồng ý tham gia bảng xếp hạng. Đụng dữ liệu
+  người dùng thật → **chờ chủ dự án chọn:** (a) chỉ hiện biệt danh, ai chưa có thì hiện "Học viên
+  #N"; (b) thêm lựa chọn tham gia/ẩn khỏi bảng xếp hạng; (c) giữ nguyên.
 - 🟡 **[2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
   xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
   dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.

@@ -10,6 +10,7 @@ import {
   createPvPMatch,
   finalizePvPMatch,
   trailingCorrectStreak,
+  GHOST_RIVALS,
 } from './pvpArenaService.js'
 import { type PvPPlayerProfile } from '@dhcb/core-contracts/pvpArena'
 
@@ -64,6 +65,38 @@ describe('pvpArenaService (1v1 PvP & Ghost Matchmaking Engine)', () => {
     const rival = matchmakeGhostRival(player, 'vocab_speed_duel')
     expect(rival.isGhostBot).toBe(true)
     expect(Math.abs(rival.eloRating - player.eloRating)).toBeLessThanOrEqual(50)
+  })
+
+  // Changelog 0482: đấu trường CHỈ có đối thủ AI. Tên kiểu người thật + cờ quốc gia ("Elena Oxford
+  // 🇬🇧") từng khiến người học tưởng đấu với người; số trận/thắng của bot là số bịa.
+  it('mọi đối thủ AI đều mang tên bot rõ ràng, không cờ quốc gia, không lịch sử bịa', () => {
+    // Cờ quốc gia = cặp ký tự "regional indicator" U+1F1E6..U+1F1FF.
+    const CO_QUOC_GIA = /[\u{1F1E6}-\u{1F1FF}]/u
+    expect(GHOST_RIVALS.length).toBeGreaterThan(0)
+    for (const r of GHOST_RIVALS) {
+      expect(r.name).toMatch(/^Bot /)
+      // Dài hơn thì bị cắt ("Bot Phượn…") ở ô đối thủ màn 390px — đã thấy ở ảnh chụp Tầng 8b.
+      expect([...r.name].length).toBeLessThanOrEqual(12)
+      expect(r.avatar).not.toMatch(CO_QUOC_GIA)
+    }
+    const player: PvPPlayerProfile = {
+      id: 'p-1',
+      name: 'Tester',
+      avatar: '🌟',
+      eloRating: 1200,
+      rankTier: 'silver',
+      winStreak: 0,
+      totalMatches: 0,
+      wins: 0,
+      isGhostBot: false,
+    }
+    for (let i = 0; i < 30; i++) {
+      const rival = matchmakeGhostRival(player)
+      expect(rival.name).toMatch(/^Bot /)
+      expect(rival.totalMatches).toBe(0)
+      expect(rival.wins).toBe(0)
+      expect(rival.winStreak).toBe(0)
+    }
   })
 
   it('calculates round points factoring speed and streak', () => {

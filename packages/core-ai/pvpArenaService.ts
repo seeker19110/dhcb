@@ -205,14 +205,18 @@ const QUESTION_BANK: Record<PvPGameMode, PvPQuestionItem[]> = {
   ],
 }
 
-// Danh sách AI Ghost Rivals mô phỏng đối thủ thật
-const GHOST_RIVALS: Array<Omit<PvPPlayerProfile, 'id' | 'eloRating' | 'rankTier' | 'winStreak'>> = [
-  { name: 'CyberTutor Bot', avatar: '🤖', isGhostBot: true, totalMatches: 142, wins: 98 },
-  { name: 'Elena Oxford', avatar: '🇬🇧', isGhostBot: true, totalMatches: 89, wins: 62 },
-  { name: 'Speedy Phoenix', avatar: '🦅', isGhostBot: true, totalMatches: 210, wins: 145 },
-  { name: 'Minh Cambridge', avatar: '⚡', isGhostBot: true, totalMatches: 76, wins: 53 },
-  { name: 'Sora Nova', avatar: '🌟', isGhostBot: true, totalMatches: 115, wins: 80 },
-  { name: 'Dragon Master', avatar: '🐉', isGhostBot: true, totalMatches: 300, wins: 220 },
+// Đối thủ AI ("ghost rival") — đấu trường KHÔNG có người thật nào. Tên PHẢI cho thấy đây là
+// bot (chủ dự án chốt 2026-10-02, changelog 0482): bản trước dùng tên kiểu người thật + cờ quốc
+// gia ("Elena Oxford 🇬🇧", "Minh Cambridge") kèm số trận/thắng bịa, người học tưởng đang đấu với
+// người. Tên giữ ≤ 12 ký tự để không bị cắt ở ô đối thủ màn 390px. Test
+// `pvpArenaService.test.ts` canh luật này.
+export const GHOST_RIVALS: ReadonlyArray<Pick<PvPPlayerProfile, 'name' | 'avatar'>> = [
+  { name: 'Bot Tutor', avatar: '🤖' },
+  { name: 'Bot Oxford', avatar: '📘' },
+  { name: 'Bot Ưng', avatar: '🦅' },
+  { name: 'Bot Chớp', avatar: '⚡' },
+  { name: 'Bot Nova', avatar: '🌟' },
+  { name: 'Bot Rồng', avatar: '🐉' },
 ]
 
 export function getRankTierFromElo(elo: number): PvPRankTier {
@@ -266,9 +270,10 @@ export function matchmakeGhostRival(
     avatar: randomRival.avatar,
     eloRating: rivalElo,
     rankTier: getRankTierFromElo(rivalElo),
-    winStreak: Math.floor(Math.random() * 4),
-    totalMatches: randomRival.totalMatches,
-    wins: randomRival.wins,
+    // Bot không có lịch sử thi đấu — để 0 thay vì bịa số trận/thắng/chuỗi.
+    winStreak: 0,
+    totalMatches: 0,
+    wins: 0,
     isGhostBot: true,
   }
 }

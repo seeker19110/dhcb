@@ -3,10 +3,11 @@ import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 import { createPortal } from 'react-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useDialogBehavior } from '../useDialogBehavior'
-import { X, Zap, Flame, Timer, Sparkles, CheckCircle2, XCircle } from 'lucide-react'
+import { X, Flame, Timer, Sparkles, CheckCircle2, XCircle } from 'lucide-react'
 import { useToast } from '@core/ToastProvider'
 import type { PvPMatchState, PvPRoundAction } from '@dhcb/core-contracts/pvpArena'
 import { submitPvPRoundAction } from '../../lib/pvpArenaApi.js'
+import { formatEloDelta } from '../../lib/pvpEloDelta'
 
 interface PvPBattlefieldModalProps {
   initialMatch: PvPMatchState
@@ -123,6 +124,8 @@ export default function PvPBattlefieldModal({
 
   const p1Score = match.scores.player1Score
   const p2Score = match.scores.player2Score
+  // Chỉ có sau khi server chốt trận (`finalizePvPMatch`); chưa có thì không hiện số nào.
+  const eloDelta = match.eloChanges?.player1Delta ?? null
 
   // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
   // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
@@ -193,9 +196,14 @@ export default function PvPBattlefieldModal({
             VS
           </div>
 
-          {/* Đối thủ (Player 2 / Ghost Rival) */}
+          {/* Đối thủ (Player 2) — đấu trường chỉ có đối thủ AI, phải nói rõ (changelog 0482). */}
           <div className="flex items-center justify-end gap-3 p-3 rounded-2xl bg-purple-950/40 border border-purple-500/30 text-right">
             <div className="min-w-0 flex-1">
+              {match.player2.isGhostBot && (
+                <div className="text-[11px] font-black uppercase tracking-wide text-purple-300 theme-light:text-purple-800">
+                  Đối thủ AI
+                </div>
+              )}
               <div className="text-xs font-bold text-purple-300 theme-light:text-purple-800 truncate">
                 {match.player2.name}
               </div>
@@ -232,14 +240,14 @@ export default function PvPBattlefieldModal({
             </p>
 
             <div className="my-4 flex items-center justify-center gap-4 text-xs font-bold">
-              <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 theme-light:text-amber-900 border border-amber-500/30 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-400 theme-light:text-amber-900" />
-                <span>+{p1Score > p2Score ? 16 : p1Score === p2Score ? 0 : -14} Elo Rating</span>
-              </div>
-              <div className="px-3.5 py-1.5 rounded-xl bg-indigo-500/15 text-indigo-300 theme-light:text-indigo-800 border border-indigo-500/30 flex items-center gap-1.5">
-                <Zap className="w-4 h-4 text-indigo-400 theme-light:text-indigo-800" />
-                <span>+{match.rewardExp || 120} Exp</span>
-              </div>
+              {/* Elo THẬT server vừa cộng/trừ vào hồ sơ (changelog 0482). Bản trước hiện số gán
+                  cứng +16/0/-14 (thua ra "+-14") và "+120 Exp" không được cộng vào đâu cả. */}
+              {eloDelta !== null && (
+                <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 theme-light:text-amber-900 border border-amber-500/30 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400 theme-light:text-amber-900" />
+                  <span>{formatEloDelta(eloDelta)} Elo</span>
+                </div>
+              )}
             </div>
 
             <button
@@ -247,7 +255,7 @@ export default function PvPBattlefieldModal({
               onClick={onClose}
               className="tap-44 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black text-sm shadow-xl transition active:scale-95"
             >
-              Hoàn tất & Nhận Thưởng
+              Hoàn tất
             </button>
           </div>
         ) : (
