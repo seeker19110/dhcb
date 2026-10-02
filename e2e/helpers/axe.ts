@@ -3,7 +3,9 @@ import type { Page } from '@playwright/test'
 // Tắt animation/transition trước khi quét để axe đo TRẠNG THÁI CUỐI, không bắt
 // nhằm khung giữa của `animate-fade-in` (opacity 0→1) — lúc opacity ~0.6 màu chữ
 // trộn nền làm contrast tụt → vi phạm chập chờn (flaky).
-// fade-in dùng fill-mode 'both' nên ép duration 0s sẽ nhảy thẳng tới opacity 1.
+// Ép duration 0s: hoạt ảnh `both` nhảy thẳng tới khung cuối; ba hoạt ảnh xuất hiện (fade-in,
+// fade-up, scale-in — fill-mode `backwards` từ changelog 0474) về ngay style gốc. Cả hai đều là
+// trạng thái hiển thị đầy đủ (opacity 1).
 export async function freezeAnimations(page: Page): Promise<void> {
   await page.addStyleTag({
     content:

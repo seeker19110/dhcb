@@ -1,5 +1,6 @@
 // apps/dhcb/src/components/PvPArena/PvPBattlefieldModal.tsx — Sân Đấu Đối Kháng 1v1 PvP Trực Tiếp 60 FPS.
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
+import { createPortal } from 'react-dom'
 import { useState, useEffect, useRef } from 'react'
 import { useDialogBehavior } from '../useDialogBehavior'
 import { X, Zap, Flame, Timer, Sparkles, CheckCircle2, XCircle } from 'lucide-react'
@@ -123,7 +124,9 @@ export default function PvPBattlefieldModal({
   const p1Score = match.scores.player1Score
   const p2Score = match.scores.player2Score
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl animate-fade-in overflow-y-auto"
       {...backdropProps}
@@ -346,6 +349,7 @@ export default function PvPBattlefieldModal({
           )
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

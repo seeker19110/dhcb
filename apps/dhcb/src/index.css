@@ -571,9 +571,11 @@ html[data-kbd-nav][data-focus='1'] {
    ở Tiến độ, **6** ở Trợ giảng (`fade-in`, `fade-up`, `ping`, `bounce`, `pulse`).
    Người đã bật "giảm chuyển động" ở hệ điều hành vì chóng mặt/tiền đình vẫn thấy đủ.
 
-   Vì sao `0s` chứ không phải `none`: mọi hoạt ảnh của dự án khai báo `fill-mode: both`
-   (`tailwind.config.js`), nên duration 0 làm phần tử NHẢY THẲNG tới khung hình cuối —
-   tức trạng thái hiển thị đầy đủ. `animation: none` thì phần tử rơi về style gốc, dễ
+   Vì sao `0s` chứ không phải `none`: các hoạt ảnh khai báo `fill-mode: both`
+   (`tailwind.config.js`) thì duration 0 làm phần tử NHẢY THẲNG tới khung hình cuối —
+   tức trạng thái hiển thị đầy đủ. Ba hoạt ảnh xuất hiện (`fade-in`, `fade-up`,
+   `scale-in`) dùng `backwards` từ changelog 0474: duration 0 trả phần tử về style gốc,
+   vốn trùng khung cuối. `animation: none` thì phần tử rơi về style gốc, dễ
    sinh ca nội dung biến mất. Với hoạt ảnh lặp vô hạn, `iteration-count: 1` chặn luôn
    vòng lặp.
 

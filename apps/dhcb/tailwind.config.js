@@ -157,19 +157,28 @@ export default {
         },
       },
       animation: {
-        'fade-in': 'fade-in 0.35s ease-out both',
-        'fade-up': 'fade-up 0.4s ease-out both',
-        'scale-in': 'scale-in 0.25s ease-out both',
+        // Hoạt ảnh CHẠY MỘT LẦN dùng fill-mode `backwards`, KHÔNG dùng `both` (sửa 2026-10-02,
+        // changelog 0474). `both` giữ lại `transform` của khung cuối (translateY(0)/scale(1)) mãi
+        // mãi sau khi chạy xong. Phần tử có `transform` biến thành containing block nên mọi
+        // `position: fixed` bên trong neo theo NÓ thay vì màn hình: hộp thoại bị đẩy lệch, cắt
+        // mất nội dung, nền mờ không phủ hết trang. Đã vá cục bộ hai lần (Celebration phải
+        // portal, OfflineSyncIndicator phải né translate) trước khi tìm ra gốc — TRAPS mục 18.
+        // Khung cuối của các hoạt ảnh này trùng style gốc (opacity 1, không dịch/phóng), nên
+        // `backwards` cho cùng hình ảnh; chỉ khác là không để lại `transform`.
+        // Cổng canh: apps/dhcb/src/lib/tailwindAnimations.test.ts.
+        'fade-in': 'fade-in 0.35s ease-out backwards',
+        'fade-up': 'fade-up 0.4s ease-out backwards',
+        'scale-in': 'scale-in 0.25s ease-out backwards',
         'pulse-ring': 'pulse-ring 1.4s ease-out infinite',
         shimmer: 'shimmer 2s linear infinite',
-        'pop-correct': 'pop-correct 0.3s ease-out both',
-        shake: 'shake 0.35s ease-in-out both',
+        'pop-correct': 'pop-correct 0.3s ease-out backwards',
+        shake: 'shake 0.35s ease-in-out backwards',
         float: 'float 4s ease-in-out infinite',
         orbit: 'orbit 8s linear infinite',
         'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
         'companion-blink': 'companion-blink 6s ease-in-out infinite',
         'companion-dot': 'companion-dot 1.2s ease-in-out infinite',
-        'companion-cheer': 'companion-cheer 0.6s ease-out both',
+        'companion-cheer': 'companion-cheer 0.6s ease-out backwards',
       },
     },
   },

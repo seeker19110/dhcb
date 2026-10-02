@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 import { useDialogBehavior } from '../useDialogBehavior'
 import { X, Bot, Play, RefreshCw, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react'
@@ -81,7 +82,9 @@ export default function AgentOrchestratorModal({ onClose, onSessionCreated }: Pr
     }
   }
 
-  return (
+  // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
+  // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
       {...backdropProps}
@@ -323,6 +326,7 @@ export default function AgentOrchestratorModal({ onClose, onSessionCreated }: Pr
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
