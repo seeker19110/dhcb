@@ -11,10 +11,10 @@
 # (file cá nhân, không commit — đã nằm trong .gitignore qua ".claude/*").
 set -uo pipefail   # cố ý KHÔNG -e: không được làm chết phiên/lượt chạy
 
+payload="$(cat)"   # đọc HẾT stdin trước mọi `exit` sớm (tránh EPIPE cho bên gọi, changelog 0472)
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 command -v jq >/dev/null 2>&1 || exit 0
 
-payload="$(cat)"
 tp="$(printf '%s' "$payload" | jq -r '.transcript_path // empty' 2>/dev/null)"
 [ -n "$tp" ] || exit 0
 [ -x "$ROOT/scripts/usage-estimate.sh" ] || exit 0
