@@ -717,10 +717,11 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   sang `docs/claude-md-chi-tiet.md` (`npm run check:claude-md` chứng minh không mất dòng nào;
   `scripts/claude-md-split.test.ts` canh trần 34.000 ký tự). **Đang làm (chủ dự án duyệt
   2026-10-02):** (1) rà & viết lại `.agents/skills/` rồi chuyển sang `.claude/skills/`, bản
-  `.agents/` giữ làm gương trùng từng byte — **2/11 đã chuyển ở `0477`** (`ui-ux`,
-  `marketing-content-writer`); cổng `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn
-  không tồn tại. Còn 9, chia 3 PR. Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho
-  nội dung học.
+  `.agents/` giữ làm gương trùng từng byte — **5/11 đã chuyển**: `0477` (`ui-ux`,
+  `marketing-content-writer`), `0478` (`principal-engineer-architect`,
+  `financial-security-sentinel`, `pedagogy-linguistics-master`); cổng
+  `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn không tồn tại. Còn 6, chia 2 PR.
+  Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
@@ -1112,6 +1113,18 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-02 — phát hiện khi rà skill `pedagogy-linguistics-master`, changelog `0478`]
+  Studio Thử thách › "Acoustic Phonetics & GOP Lab" hiển thị điểm BỊA cho mọi người dùng.**
+  `packages/core-ai/acousticPhoneticsService.ts` (qua `/api/acoustic-phonetics`) đoán âm sai từ
+  CHÍNH TẢ của câu đã nhận dạng (`word.includes('th')`…) và tính "Điểm GOP" bằng công thức gán
+  cứng (`92 - idx * 3`, lệch thì 48), không đo âm thanh; giao diện vẫn ghi "Điểm GOP Tổng X/100" +
+  lưu loát/ngữ điệu dạng %. Cùng loại lỗi với 0473 (STEM) và 0475 (Tổng kết). **Gỡ — chờ chủ dự án
+  chọn:** (a) ẩn lab tới khi có chấm âm học thật (forced alignment); hoặc (b) bỏ mọi con số, đổi
+  nhãn thành "gợi ý luyện âm" và chỉ giữ ma trận lỗi L1 + mẹo đặt lưỡi.
+- 🟡 **[2026-10-02 — changelog `0478`] Edge AI phân loại ý định về các miền đã xoá.**
+  `classifyIntentEdge` (`apps/dhcb/src/lib/edgeAi/edgeAiService.ts`, regex — không phải model) vẫn
+  trả `career`/`startup`/`life` dù ba trụ đã gỡ 2026-09-20. Gỡ: bỏ ba nhánh đó (rơi về `general`)
+  và đối chiếu nơi tiêu thụ kết quả.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`] Bảng nháp STEM (Companion › Thử thách)
   chưa kiểm được bước giải ở giữa.** Lỗi 🔴 cũ (chấm MỌI bước là "đúng", "ĐÃ GIẢI XONG" bằng so
   chuỗi con) đã sửa: bước không kiểm được nay hiện "? Chưa tự kiểm được"; chỉ đáp số cuối khớp
