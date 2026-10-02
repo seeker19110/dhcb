@@ -8,7 +8,6 @@ import A2ANegotiatorCard from '../CompanionVoice/A2ANegotiatorCard'
 import ProactiveBriefingCard from '../ProactiveBriefingCard'
 import AmbientScreenCopilot from '../CompanionVoice/AmbientScreenCopilot'
 import NeuroAffectiveCard from '../CompanionVoice/NeuroAffectiveCard'
-import AgentOrchestratorCard from '../AgentOrchestrator/AgentOrchestratorCard'
 import ActionCanvasBanner from './ActionCanvasBanner'
 import type { ProactiveAgentState } from '@dhcb/core-contracts/proactiveAgent'
 
@@ -42,8 +41,8 @@ export default function StudioProactive({ proactiveState, navigate }: StudioProa
       <ProactiveBriefingCard />
       <AmbientScreenCopilot />
       <NeuroAffectiveCard />
-      {/* Dời từ studio "Tổng kết" đã gỡ (changelog 0475). */}
-      <AgentOrchestratorCard />
+      {/* Dời từ studio "Tổng kết" đã gỡ (changelog 0475). Thẻ "Điều Phối Agent" từng đứng đây đã
+          gỡ ở changelog 0481: nó hiện kết quả dựng sẵn như agent đã chạy thật. */}
       <ActionCanvasBanner navigate={navigate} />
     </div>
   )
