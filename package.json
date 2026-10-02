@@ -38,6 +38,7 @@
     "check:specs": "tsx scripts/check-spec-paths.ts",
     "check:protocol": "tsx scripts/protocol-check.ts",
     "check:docs": "bash scripts/check-docs-consistency.sh",
+    "check:claude-md": "tsx scripts/check-claude-md-moved.ts",
     "review:ocr": "npx -y @alibaba-group/open-code-review@1.12.11",
     "review:ocr:preview": "npx -y @alibaba-group/open-code-review@1.12.11 delegate preview --from origin/main --to HEAD",
     "maintain": "bash scripts/maintenance-sweep.sh",
