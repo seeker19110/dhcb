@@ -114,7 +114,7 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
    `2>/dev/null` thành xanh giả. Đã thêm quét ký tự định dạng vô hình toàn repo vào
    `scripts/no-control-chars.test.ts` — lượt quét đầu bắt được một zero-width space lạc thật.
 
-## 6. Đề xuất đợt 2 (chờ chủ dự án quyết — không tự làm)
+## 6. Đề xuất đợt 2
 
 1. **Rà và chuyển `.agents/skills/` sang `.claude/skills/`** (hoặc xoá bản lỗi thời): làm bộ 10
    skill thật sự hoạt động, theo cổng chất lượng kiểu `skill-stocktake` của ECC.
@@ -123,9 +123,11 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
 3. **Luật ESLint `no-console`** cho `apps/dhcb/src` + `apps/hub/src` (hiện còn đúng 1
    `console.log`) — thay cho hook cảnh báo `console.log` của ECC; phải là PR riêng vì đổi luật lint
    (luật ghi ở đầu `eslint.config.js`).
-4. **Kiểm pipe-to-shell bằng hook** (`curl … | sh`) — vì luật quyền không khớp được (mục 5.5).
-5. **Bản "nhắc mềm" của GateGuard**: lần đầu sửa một file nằm trong `npm run codemap -- hotspots`
-   thì nhắc chạy `codemap impact`, không chặn.
+4. ✅ (changelog 0469) **Kiểm pipe-to-shell bằng hook** (`curl … | sh`) — vì luật quyền không
+   khớp được (mục 5.5). Đã làm: `.claude/hooks/block-pipe-to-shell.sh`.
+5. ✅ (changelog 0469) **Bản "nhắc mềm" của GateGuard**: lần đầu sửa một file được ≥ 20 nơi
+   import (đếm từ `.codemap/graph.json`) thì nhắc chạy `codemap impact`, không chặn. Đã làm:
+   `.claude/hooks/shared-file-reminder.sh`.
 6. **`santa-method` cho nội dung học** (bài học, từ điển): hai người rà độc lập cùng thang 5 tiêu
    chuẩn của changelog 0406 trước khi phát hành.
 
