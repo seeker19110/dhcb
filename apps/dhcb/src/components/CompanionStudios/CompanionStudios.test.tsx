@@ -71,9 +71,6 @@ vi.mock('../CompanionVoice/AmbientScreenCopilot', () => ({
 vi.mock('../CompanionVoice/NeuroAffectiveCard', () => ({
   default: () => React.createElement('div', { 'data-testid': 'neuro-card' }),
 }))
-vi.mock('../AgentOrchestrator/AgentOrchestratorCard', () => ({
-  default: () => React.createElement('div', { 'data-testid': 'agent-card' }),
-}))
 
 describe('CompanionStudios', () => {
   it('renders StudioLoadingSkeleton with shimmering placeholders', () => {
@@ -106,11 +103,14 @@ describe('CompanionStudios', () => {
     expect(STUDIO_TABS_CONFIG.map((t) => t.id as string)).not.toContain('synthesis')
   })
 
-  it('StudioProactive giữ thẻ Agent và lối vào Action Canvas', () => {
+  // Changelog 0481: thẻ "Điều Phối Agent" gỡ vì hiện phiên agent DỰNG SẴN như đã chạy thật. Lối
+  // vào DUY NHẤT của Action Canvas phải còn.
+  it('StudioProactive không còn thẻ Agent, vẫn giữ lối vào Action Canvas', () => {
     const html = renderToStaticMarkup(
       React.createElement(StudioProactive, { proactiveState: null, navigate: vi.fn() }),
     )
-    expect(html).toContain('data-testid="agent-card"')
+    expect(html).not.toContain('Điều Phối Agent')
+    expect(html).not.toContain('Khởi chạy Agent')
     expect(html).toContain('Action Canvas')
     expect(html).toContain('Mở Workspace')
   })
