@@ -43,12 +43,13 @@ thắng** — sửa skill, đừng thiết kế theo skill.
    - Lab phát âm: `ArticulatoryPhoneticsVisualizer`, `AcousticPhoneticsLab`, `EchoShadowingCard`,
      `ScenarioHolodeckCard`.
 4. **Kế hoạch** (`StudioProactive.tsx`) — nudge 1-chạm (`ProactiveNudgeBanner`), `GoalAutoPilotCard`,
-   `NeuralMicroCurriculumCard` và các thẻ đón đầu; cuối studio là `AgentOrchestratorCard` +
-   `ActionCanvasBanner` (lối vào DUY NHẤT của `/action-canvas`).
+   `NeuralMicroCurriculumCard` và các thẻ đón đầu; cuối studio là `ActionCanvasBanner` (lối vào
+   DUY NHẤT của `/action-canvas`).
 
 **Đã GỠ — đừng thiết kế lại khi chưa có quyết định mới:** studio "Tổng kết" / Life Synthesis
 (bảng 5 miền Learning · Career · Work · Startup · Life hiện điểm BỊA, changelog 0475; ba trụ
-Career · Startup · Life đã xoá 2026-09-20).
+Career · Startup · Life đã xoá 2026-09-20) và thẻ "Studio Điều Phối Agent Tự Trị" (hiện phiên agent
+DỰNG SẴN như đã chạy thật, changelog 0481).
 
 **CHƯA CÓ trong mã** (bản cũ của skill từng mô tả như đã có): trình tạo ảnh "Story Canvas" chia
 sẻ Zalo/FB/Telegram (`ViralShareCardGenerator.tsx`).
