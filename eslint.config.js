@@ -71,6 +71,17 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 
+  {
+    // [2026-10-02, changelog 0470, đề xuất 3 của ADR-0013] CLAUDE.md mục 8 bắt "xoá console.log
+    // debug" nhưng trước đây chỉ là luật bằng chữ. Chặn bằng lint cho mã CHẠY TRONG TRÌNH DUYỆT
+    // người dùng (log debug lọt vào bundle = lộ dữ liệu ra DevTools + rác). Cho phép warn/error:
+    // đó là kênh báo lỗi có chủ đích (và Sentry bắt được). Server/packages/scripts KHÔNG áp: log
+    // ở đó đi vào PM2/stdout là có chủ đích; test được miễn.
+    files: ['apps/dhcb/src/**/*.{ts,tsx}', 'apps/hub/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: { 'no-console': ['error', { allow: ['warn', 'error'] }] },
+  },
+
   // Phải để SAU các bộ recommended: tắt các luật ESLint xung đột với Prettier (định dạng do
   // Prettier lo, ESLint không cảnh báo format nữa).
   prettier,
