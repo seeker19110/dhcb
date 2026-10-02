@@ -26,14 +26,18 @@ trả phí (ngày VIP)** → đọc skill `financial-security-sentinel` mục 2 
 
 **Thực tế ghép cặp:** **chỉ có đối thủ AI** ("ghost rival"):
 
-- `matchmakeGhostRival` chọn một nhân vật trong danh sách cố định ("Elena Oxford 🇬🇧", "Minh
-  Cambridge"…);
-- Elo của nhân vật lệch ±35 quanh người chơi;
+- `matchmakeGhostRival` chọn một bot trong `GHOST_RIVALS` ("Bot Oxford", "Bot Cambridge"…);
+- Elo của bot lệch ±35 quanh người chơi; số trận/thắng/chuỗi của bot luôn là 0;
 - **không có** hàng đợi người thật.
 
-**Luật trung thực (BẮT BUỘC):** người học phải biết đối thủ là AI. Hiện giao diện trận đấu chỉ hiện
-tên + avatar nhân vật, **không** báo là AI — nợ 🔴 trong `PROGRESS.md`. Mọi thay đổi màn PvP phải
-giữ hoặc thêm nhãn "Đối thủ AI". Không bịa số người chơi online, không mô tả là "đấu với người thật".
+**Luật trung thực (BẮT BUỘC, changelog 0482):**
+
+- tên bot bắt đầu bằng "Bot ", không dùng cờ quốc gia, không bịa lịch sử thi đấu (test
+  `pvpArenaService.test.ts` canh);
+- màn trận đấu hiện nhãn "Đối thủ AI"; thẻ và sảnh ghi "Đấu với đối thủ AI";
+- màn kết thúc chỉ hiện Elo **thật** server trả về (`match.eloChanges`), không hiện phần thưởng
+  chưa được cộng vào đâu (vd "Exp") — test `PvPBattlefieldModal.test.tsx` canh;
+- không bịa số người chơi online, không mô tả là "đấu với người thật".
 
 **3 chế độ** (`PvPGameModeSchema`):
 
@@ -52,6 +56,9 @@ Câu hỏi lấy từ ngân hàng theo chế độ, xáo thứ tự.
   `pvpArenaService.ts`); `S_A` = 1 thắng / 0,5 hoà / 0 thua.
 - Elo đấu với AI chỉ phản ánh phong độ trước bộ câu hỏi, **không** so được với người khác — đừng
   dựng bảng xếp hạng công khai từ con số này mà không nói rõ.
+- Bảng xếp hạng (`realLeaderboard` trong `apps/server/src/api/platform/pvp-arena.ts`) là top 10 Elo
+  **toàn thời gian** (không phải "tuần"), hiện biệt danh hoặc tên tài khoản cho mọi người chơi — nợ
+  🟡 quyền riêng tư trong `PROGRESS.md`; đừng mở rộng thêm thông tin cá nhân lên bảng này.
 - Ngưỡng bậc rank: đọc trong mã/hợp đồng, đừng chép bảng số vào đây.
 
 ---

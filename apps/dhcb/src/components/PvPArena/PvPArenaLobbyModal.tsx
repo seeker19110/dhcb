@@ -119,9 +119,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                 <h3 id={titleId} className="text-base sm:text-lg font-black text-white">
                   Đấu Trường 1v1 PvP Arena
                 </h3>
-                <p className="text-[11px] text-zinc-400">
-                  Đối kháng thời gian thực & Xếp hạng Elo Rating chuẩn quốc tế
-                </p>
+                <p className="text-[11px] text-zinc-400">Đấu với đối thủ AI · Xếp hạng Elo</p>
               </div>
             </div>
 
@@ -192,7 +190,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
               }`}
             >
               <Trophy className="w-3.5 h-3.5" />
-              <span>Bảng Xếp Hạng Tuần</span>
+              <span>Bảng Xếp Hạng</span>
             </button>
           </div>
 
