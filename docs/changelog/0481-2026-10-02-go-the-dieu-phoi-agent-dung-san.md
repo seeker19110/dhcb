@@ -1,6 +1,6 @@
 # 0481 — Gỡ thẻ "Studio Điều Phối Agent Tự Trị": thôi hiện phiên agent DỰNG SẴN như đã chạy thật (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `fix(companion)`.
+- **Ngày:** 2026-10-02 · **PR:** #1216 · **Loại:** `fix(companion)`.
 - **Quyết định:** chủ dự án chọn "Ẩn thẻ" (2026-10-02), xử lý nợ 🔴 phát hiện ở changelog 0480.
 
 ## Vấn đề
