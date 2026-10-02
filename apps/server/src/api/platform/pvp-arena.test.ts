@@ -1,6 +1,6 @@
 // api/pvp-arena.test.ts
 import { describe, it, expect, vi } from 'vitest'
-import handler from './pvp-arena.js'
+import handler, { leaderboardName } from './pvp-arena.js'
 
 vi.mock('@dhcb/core-auth/security', () => ({
   validateAuth: vi.fn().mockResolvedValue({ userId: 'u-test-123' }),
@@ -17,17 +17,20 @@ vi.mock('@dhcb/core-db/featureState', () => ({
   }),
 }))
 
-// pgPool: truy vấn leaderboard đọc từ store; truy vấn tên trả tên test.
+// pgPool: truy vấn leaderboard đọc từ store; truy vấn tên trả tên test. Ghi lại câu SQL đã chạy
+// để test kiểm bảng xếp hạng không đọc cột tên tài khoản.
+const executedSql = vi.hoisted(() => [] as string[])
 vi.mock('@dhcb/core-db/pgPool', () => ({
   getPgPool: () => ({
     query: vi.fn(async (sql: string) => {
+      executedSql.push(sql)
       if (sql.includes('feature_state')) {
         const rows = [...store.entries()]
           .filter(([k]) => k.endsWith('|pvp_profile'))
           .map(([k, state]) => ({
             user_id: k.split('|')[0],
             state,
-            display_name: k.startsWith('u-anon') ? null : 'Player Test',
+            nickname: k.startsWith('u-anon') ? null : 'Player Test',
           }))
         return { rows }
       }
@@ -334,7 +337,7 @@ describe('api/pvp-arena endpoint', () => {
     expect(res.status).toBe(400)
   })
 
-  it('leaderboard fallback tên "Học viên" khi user không có nickname/tên', async () => {
+  it('leaderboard fallback "Học viên #<hạng>" khi user chưa đặt biệt danh', async () => {
     store.clear()
     store.set('u-anon|pvp_profile', {
       avatar: '🐧',
@@ -347,7 +350,28 @@ describe('api/pvp-arena endpoint', () => {
       new Request('http://localhost/api/pvp-arena?action=leaderboard', { method: 'GET' }),
     )
     const { leaderboard } = await res.json()
-    expect(leaderboard[0].name).toBe('Học viên')
+    expect(leaderboard[0].name).toBe('Học viên #1')
     expect(leaderboard[0].winRate).toBe(75)
+  })
+
+  it('truy vấn bảng xếp hạng KHÔNG đọc tên tài khoản (users.name) — chỉ biệt danh', async () => {
+    executedSql.length = 0
+    await handler(
+      new Request('http://localhost/api/pvp-arena?action=leaderboard', { method: 'GET' }),
+    )
+    const leaderboardSql = executedSql.find((sql) => sql.includes('feature_state'))
+    expect(leaderboardSql).toBeDefined()
+    expect(leaderboardSql).not.toMatch(/u\.name/)
+  })
+})
+
+describe('leaderboardName', () => {
+  it('dùng biệt danh đã cắt khoảng trắng', () => {
+    expect(leaderboardName('  Mèo Học Bài ', 3)).toBe('Mèo Học Bài')
+  })
+  it('chưa có biệt danh, null hoặc chỉ khoảng trắng → "Học viên #<hạng>"', () => {
+    expect(leaderboardName(null, 2)).toBe('Học viên #2')
+    expect(leaderboardName(undefined, 5)).toBe('Học viên #5')
+    expect(leaderboardName('   ', 7)).toBe('Học viên #7')
   })
 })

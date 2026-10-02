@@ -6,6 +6,12 @@ bỏ). Thứ tự: như thứ tự cũ trong `PROGRESS.md`, mới hơn ở trên
 
 Khi đóng thêm một món nợ: cắt khối đó khỏi `PROGRESS.md`, dán vào ĐẦU danh sách dưới đây.
 
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0483`: chủ dự án chọn (a) chỉ biệt danh, chưa có thì "Học viên #N"] [2026-10-02 — phát hiện khi sửa PvP ở changelog `0482`] Bảng xếp hạng PvP hiện TÊN THẬT
+  của người dùng cho mọi người chơi.** `realLeaderboard` (`apps/server/src/api/platform/pvp-arena.ts`)
+  lấy top 10 Elo kèm `coalesce(profiles.nickname, users.name)` — ai chưa đặt biệt danh thì lộ tên
+  tài khoản (thường là họ tên đầy đủ), không có bước đồng ý tham gia bảng xếp hạng. Đụng dữ liệu
+  người dùng thật → **chờ chủ dự án chọn:** (a) chỉ hiện biệt danh, ai chưa có thì hiện "Học viên
+  #N"; (b) thêm lựa chọn tham gia/ẩn khỏi bảng xếp hạng; (c) giữ nguyên.
 - ✅ **[2026-09-14 → ĐÓNG 2026-09-26, `docs/changelog/0454-*.md`] Nhãn chữ
   trong hoạt ảnh khó đọc ở màn hình 390px.** Đo được **29/150 nhãn dài hơn 24 ký tự** ở cỡ chữ
   11–12 trong viewBox rộng 440 — trên điện thoại chúng co lại rất nhỏ. **KHÔNG phải lỗi mới**:
