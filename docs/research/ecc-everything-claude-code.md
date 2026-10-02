@@ -52,7 +52,7 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
 
 | Rủi ro                   | Bằng chứng                                                                                                                                                                                                                                                                                                                              |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phình ngữ cảnh           | 293 skill + 68 agent đều có mô tả nằm trong danh sách của mỗi phiên. Chính ECC dặn "start with the workflow you need, not the full catalog" và "install rules selectively". CLAUDE.md của DHCB đã ~51 nghìn ký tự nạp mỗi phiên.                                                                                                        |
+| Phình ngữ cảnh           | 293 skill + 68 agent đều có mô tả nằm trong danh sách của mỗi phiên. Chính ECC dặn "start with the workflow you need, not the full catalog" và "install rules selectively". CLAUDE.md của DHCB đã ~44 nghìn ký tự (~52 KB) nạp mỗi phiên.                                                                                               |
 | Mâu thuẫn luật DHCB      | `block-no-verify` chặn `--no-verify` — DHCB cho phép có chủ đích (CLAUDE.md mục 8). `build-error-resolver` gốc khuyên `rm -rf node_modules package-lock.json && npm install` — DHCB cấm (TRAPS.md mục 3). `database-reviewer` gốc dạy RLS/Supabase — DHCB đã rời Supabase (ADR-0009). Rules gốc đặt coverage 80% — DHCB là 93/89/93/93. |
 | Phần lớn không liên quan | Skill cho healthcare, trading, homelab, Laravel, Swift, Kotlin…                                                                                                                                                                                                                                                                         |
 | Chuỗi cung ứng           | Hook ECC là mã Node chạy trên máy người dùng (GateGuard một file ~1.960 dòng); bản thân README cảnh báo có bản sao giả chứa mã độc. Một người bảo trì chính, ra bản mỗi tuần.                                                                                                                                                           |
@@ -114,18 +114,20 @@ của mô hình là tài nguyên khan hiếm; thứ gì cần nhớ lâu thì gh
    `2>/dev/null` thành xanh giả. Đã thêm quét ký tự định dạng vô hình toàn repo vào
    `scripts/no-control-chars.test.ts` — lượt quét đầu bắt được một zero-width space lạc thật.
 
-## 6. Đề xuất đợt 2 (chờ chủ dự án quyết — không tự làm)
+## 6. Đề xuất đợt 2
 
 1. **Rà và chuyển `.agents/skills/` sang `.claude/skills/`** (hoặc xoá bản lỗi thời): làm bộ 10
    skill thật sự hoạt động, theo cổng chất lượng kiểu `skill-stocktake` của ECC.
-2. **Giảm CLAUDE.md** (~51 nghìn ký tự mỗi phiên): tách lịch sử/giải thích dài sang `docs/`, chỉ
+2. **Giảm CLAUDE.md** (~44 nghìn ký tự, ~52 KB mỗi phiên): tách lịch sử/giải thích dài sang `docs/`, chỉ
    giữ luật. Theo nguyên tắc "rules luôn nạp nên phải ít" của ECC.
 3. **Luật ESLint `no-console`** cho `apps/dhcb/src` + `apps/hub/src` (hiện còn đúng 1
    `console.log`) — thay cho hook cảnh báo `console.log` của ECC; phải là PR riêng vì đổi luật lint
    (luật ghi ở đầu `eslint.config.js`).
-4. **Kiểm pipe-to-shell bằng hook** (`curl … | sh`) — vì luật quyền không khớp được (mục 5.5).
-5. **Bản "nhắc mềm" của GateGuard**: lần đầu sửa một file nằm trong `npm run codemap -- hotspots`
-   thì nhắc chạy `codemap impact`, không chặn.
+4. ✅ (changelog 0469) **Kiểm pipe-to-shell bằng hook** (`curl … | sh`) — vì luật quyền không
+   khớp được (mục 5.5). Đã làm: `.claude/hooks/block-pipe-to-shell.sh`.
+5. ✅ (changelog 0469) **Bản "nhắc mềm" của GateGuard**: lần đầu sửa một file được ≥ 20 nơi
+   import (đếm từ `.codemap/graph.json`) thì nhắc chạy `codemap impact`, không chặn. Đã làm:
+   `.claude/hooks/shared-file-reminder.sh`.
 6. **`santa-method` cho nội dung học** (bài học, từ điển): hai người rà độc lập cùng thang 5 tiêu
    chuẩn của changelog 0406 trước khi phát hành.
 

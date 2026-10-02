@@ -704,13 +704,14 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `docs/specs/2026-09-06-tach-applied-knowledge-theo-simulator.md`). Phần dở còn lại
   `lessons/LessonView.tsx` 1.016 dòng cũng đã tách: chế độ Đóng vai ra hook `useRolePlay` + 3
   component, còn 699 dòng (`0282`, đặc tả `docs/specs/2026-09-06-tach-dong-vai-lesson-view.md`).
-- **Đợt 2 tích hợp ECC — CHỜ chủ dự án quyết** (đợt 1 xong ở changelog `0468`, ADR-0013; chi
-  tiết `docs/research/ecc-everything-claude-code.md` mục 6): (1) Claude Code **không nạp**
-  `.agents/skills/` → rà nội dung (vd `life-career-strategic-advisor` còn mô tả trụ đã xoá) rồi
-  chuyển sang `.claude/skills/` hoặc bỏ; (2) rút gọn CLAUDE.md (~51 nghìn ký tự nạp mỗi phiên);
+- **Đợt 2 tích hợp ECC** (đợt 1 ở changelog `0468`, ADR-0013; chi tiết
+  `docs/research/ecc-everything-claude-code.md` mục 6). ✅ Xong ở `0469`: (4) hook chặn
+  `curl … | sh`; (5) nhắc mềm khi sửa file dùng chung (≥ 20 nơi import); bẫy escape → TRAPS mục 8.
+  Còn lại: (1) Claude Code **không nạp** `.agents/skills/` → rà nội dung (vd
+  `life-career-strategic-advisor` còn mô tả trụ đã xoá) rồi chuyển sang `.claude/skills/` hoặc bỏ;
+  (2) rút gọn CLAUDE.md (~44 nghìn ký tự, ~52 KB nạp mỗi phiên) — **chờ chủ dự án duyệt kế hoạch**;
   (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src` — PR riêng vì đổi luật lint;
-  (4) hook chặn `curl … | sh` (luật quyền không khớp được lệnh có `|`); (5) bản nhắc mềm của
-  GateGuard cho file hotspot; (6) hai người rà độc lập (`santa-method`) cho nội dung học.
+  (6) hai người rà độc lập (`santa-method`) cho nội dung học — chờ quyết.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
@@ -1102,6 +1103,17 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-02 — phát hiện khi rà `.agents/skills/`, changelog `0469`] Companion › studio
+  "Tổng hợp" hiển thị điểm "phân tích cuộc sống" BỊA cho mọi người dùng.**
+  `LifeSynthesisDashboard` gọi `GET /api/life-synthesis`
+  (`apps/server/src/api/personal/life-synthesis.ts`) mà không gửi dữ liệu nào, nên
+  `generateLifeSynthesisReport` (`packages/core-personal/lifeSynthesisService.ts`) dùng số hoạt
+  động **gán cứng** (`learning: 12, career: 6, work: 15, startup: 4, life: 8`) kèm câu nhận xét
+  soạn sẵn ("Senior Specialist", "khảo sát 5 người dùng thử"…) — và vẫn chấm cả ba trụ
+  Career/Startup/Life đã xoá 2026-09-20 (ADR-0010). Trái "Luật số 1" (kết quả chẩn đoán không
+  phải bảng chấm điểm con người) và trái tính trung thực. **Gỡ — chờ chủ dự án chọn:** (a) ẩn
+  studio "Tổng hợp" tới khi có dữ liệu thật; hoặc (b) nối dữ liệu thật (Learning + Ghi chú) và bỏ
+  ba miền đã xoá.
 - 🔴 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` +
   `docs/changelog/0466-*.md`] App CHƯA đạt WCAG 2.2 AA trên toàn bộ trang** (đo trên backend
   thật, 61 route + hub). Tám lỗi critical:
