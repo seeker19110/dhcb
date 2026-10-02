@@ -1,6 +1,6 @@
 # 0473 — Bảng nháp STEM thôi khen sai: bước chưa kiểm được thì nói "chưa kiểm được" (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `fix(stem)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1208](https://github.com/seeker19110/dhcb/pull/1208) · **Loại:** `fix(stem)`.
 - **Nối tiếp:** nợ 🔴 "STEM Scratchpad chấm mọi bước là đúng" ghi ở changelog 0470 (đợt rà
   `.agents/skills/` khi tích hợp ECC). Chủ dự án chọn phương án **"Trả 'chưa kiểm được'"**: bước
   không kiểm được thì nói rõ, không khen đúng; giữ các kiểm tra thật.
