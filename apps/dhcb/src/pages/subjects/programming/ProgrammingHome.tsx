@@ -47,7 +47,7 @@ import {
   duongDanLoTrinh,
 } from '../../../lib/programmingRoutes'
 import { PageShell } from '@core/PageShell'
-import { buttonClass } from '@core/buttonStyles'
+import { ContinueCard } from '../../../components/learning/ContinueCard'
 
 const SO_KHOA_HIEN_TRUOC = 3
 const MUC_LUC = [
@@ -141,40 +141,34 @@ export default function ProgrammingHome() {
             </p>
           </section>
         ) : (
-          <section className="rounded-3xl border border-accent-500/40 bg-zinc-900 p-5 space-y-3 shadow-md">
-            <p className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">
-              {picked?.resuming ? 'Đang học dở' : 'Học tiếp'}
-            </p>
-            {item && picked && (
-              <>
-                <h2 className="text-lg font-bold text-white leading-snug">{item.title}</h2>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <LangBadge language={picked.lesson.language} />
-                  <span className="text-[11px] font-semibold text-zinc-400">
-                    Bậc {picked.levelId.toUpperCase()} — {picked.levelName}
-                  </span>
-                </div>
-              </>
-            )}
-            <button
-              onClick={() => item && nav(item.href)}
-              disabled={!item}
-              className={buttonClass({ variant: 'primary', size: 'lg', fullWidth: true })}
-            >
-              <Play className="w-4 h-4" />
-              <span>
-                {!loaded ? 'Đang tải…' : picked?.resuming ? 'Học tiếp' : 'Bắt đầu bài này'}
-              </span>
-            </button>
+          <ContinueCard
+            eyebrow={picked?.resuming ? 'Đang học dở' : 'Học tiếp'}
+            {...(item && picked
+              ? {
+                  title: item.title,
+                  meta: (
+                    <>
+                      <LangBadge language={picked.lesson.language} />
+                      <span className="text-[11px] font-semibold text-zinc-400">
+                        Bậc {picked.levelId.toUpperCase()} — {picked.levelName}
+                      </span>
+                    </>
+                  ),
+                }
+              : {})}
+            actionLabel={!loaded ? 'Đang tải…' : picked?.resuming ? 'Học tiếp' : 'Bắt đầu bài này'}
+            onAction={() => item && nav(item.href)}
+            disabled={!item}
+          >
             {done === 0 && loaded && (
               <button
                 onClick={() => nav(`${PROGRAMMING_PREFIX}/gioi-thieu`)}
-                className="tap-44 w-full text-center text-xs font-semibold text-zinc-400 hover:text-white underline underline-offset-2 transition"
+                className="tap-44 w-full text-center text-xs font-semibold text-zinc-400 hover:text-white underline underline-offset-2 transition sm:w-auto sm:text-left"
               >
                 Khoá học này là gì? Học xong được gì?
               </button>
             )}
-          </section>
+          </ContinueCard>
         )}
 
         {/* ② Tiến độ của BẠN — không phải tiến độ soạn bài */}

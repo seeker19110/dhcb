@@ -13,6 +13,7 @@ import { useState, useEffect, useDeferredValue, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import { Play, Loader2 } from 'lucide-react'
+import { ContinueRow } from '../../../components/learning/ContinueCard'
 import Layout from '../../../components/Layout'
 import { PageShell, MAIN_CONTENT_ID } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
@@ -245,22 +246,12 @@ export default function Lessons() {
 
   // Gợi ý "Tiếp tục bài N" — dùng chung cho cả màn danh sách mobile lẫn cột trái desktop.
   const continueCta = nextUnviewed && !query.trim() && (
-    <button
+    <ContinueRow
+      label={isA ? 'Tiếp tục' : 'Continue'}
+      title={isA ? `Bài ${nextUnviewed.id}: ${nextUnviewed.title}` : `Lesson ${nextUnviewed.id}`}
       onClick={() => chonBai(nextUnviewed)}
-      className="w-full flex items-center gap-3 bg-accent-500/10 hover:bg-accent-500/15 border border-accent-500/30 rounded-2xl px-4 py-3 mb-4 transition text-left"
-    >
-      <div className="w-9 h-9 rounded-xl bg-accent-500/20 flex items-center justify-center shrink-0">
-        <Play className="w-4 h-4 text-accent-400 theme-light:text-accent-800" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-accent-400 theme-light:text-accent-800 font-medium">
-          {isA ? 'Tiếp tục' : 'Continue'}
-        </p>
-        <p className="text-sm font-semibold text-white truncate">
-          {isA ? `Bài ${nextUnviewed.id}: ${nextUnviewed.title}` : `Lesson ${nextUnviewed.id}`}
-        </p>
-      </div>
-    </button>
+      className="mb-4"
+    />
   )
 
   // Thông báo mã bài sai — tại danh sách, focus heading (spec §2.7 mục 2).
@@ -324,7 +315,6 @@ export default function Lessons() {
         color={getColor(selectedMeta.id)}
         plan={user?.plan ?? 'free'}
         userId={uid}
-        onBack={veDanhSach}
         {...(variant === 'desktop' ? { variant } : {})}
         footer={
           <OutlinePrevNext
@@ -421,8 +411,20 @@ export default function Lessons() {
         {/* [2026-10-01, audit đồng nhất bố cục] `focus` như khuôn desktop và như bài STEM/Lập
             trình/truyện: trước đây riêng khuôn mobile này còn thanh điều hướng đáy + dải
             Reachability chiếm ~128px suốt buổi học. Thanh đáy ẩn thì `--bnav-h` = 0 (index.css)
-            nên khung cao cố định phía trên tự giãn hết màn. */}
-        <Layout backTo={duongDanMonTiengAnh()} back focus />
+            nên khung cao cố định phía trên tự giãn hết màn.
+            [2026-10-02] Nút Back của header lùi ĐÚNG một bước về danh sách bài (trước đây nhảy
+            thẳng về trang môn, còn thanh công cụ bài có thêm nút "← Danh sách" riêng — hai nút
+            quay lại cho hai đích, tốn một hàng trên màn nhỏ). `crumbs` chỉ để NHÃN nút nói đúng
+            nơi nó đưa về ("Danh sách bài hội thoại", như nhãn cột trái của khuôn desktop). */}
+        <Layout
+          onBack={veDanhSach}
+          back
+          focus
+          crumbs={[
+            { label: isA ? 'Danh sách bài hội thoại' : 'Dialogue list', to: location.pathname },
+            { label: selectedMeta?.title ?? (isA ? 'Bài hội thoại' : 'Dialogue'), to: '' },
+          ]}
+        />
         {/* <main> = đích "Bỏ qua tới nội dung chính" — khuôn này không đi qua `PageShell` nên
             phải tự dựng (trước đây trang không có landmark <main>, liên kết bỏ qua trỏ vào hư
             không). `min-h-0` cho vùng cuộn nội bộ của bài co đúng trong cột flex. */}

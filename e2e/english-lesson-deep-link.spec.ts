@@ -100,10 +100,11 @@ for (const width of [390, 1440]) {
         'aria-label',
         direction === 'A' ? 'Lượt 20 — Tom' : 'Turn 20 — Tom',
       )
-      // Đích không bị thanh điều khiển che.
+      // Đích không bị thanh điều khiển che. Đo CẢ thanh (không phải khung kính bên trong: mobile
+      // đã bỏ khung đó từ 2026-10-02, desktop vẫn còn) — mép dưới của thanh là thứ có thể che.
       const toolbarBottom = await page
-        .locator(`button:has-text("${direction === 'A' ? 'Trong bài' : 'In this lesson'}")`)
-        .evaluate((el) => el.closest('div.glass')!.getBoundingClientRect().bottom)
+        .getByTestId('thanh-dieu-khien-bai')
+        .evaluate((el) => el.getBoundingClientRect().bottom)
       const top = (await turn.boundingBox())!.y
       expect(top).toBeGreaterThanOrEqual(toolbarBottom)
       await page.reload()
@@ -409,7 +410,9 @@ async function axeAA(page: Page) {
 }
 
 for (const theme of ['blue-sky', 'dark-blue', 'kid'] as const) {
-  test(`a11y AA 390px ${theme}: menu Trong bài mở + kết quả nhúng`, async ({ page }) => {
+  test(`a11y AA 390px ${theme}: menu Trong bài mở + bảng Tuỳ chọn nghe + kết quả nhúng`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await setup(page, { theme })
     await fakeMic(page)
@@ -438,6 +441,11 @@ for (const theme of ['blue-sky', 'dark-blue', 'kid'] as const) {
     await page.getByRole('button', { name: 'Trong bài' }).click()
     expect(await axeAA(page)).toEqual([])
     await page.keyboard.press('Escape')
+    // Bảng "Tuỳ chọn nghe" của thanh công cụ mobile (2026-10-02): tốc độ · chế độ · giọng.
+    await page.getByRole('button', { name: 'Tuỳ chọn nghe' }).click()
+    await expect(page.getByRole('button', { name: 'Cài đặt giọng' })).toBeVisible()
+    expect(await axeAA(page)).toEqual([])
+    await page.getByRole('button', { name: 'Tuỳ chọn nghe' }).click()
     await page.getByRole('button', { name: 'Đóng vai' }).click()
     await page.getByRole('button', { name: 'Tom', exact: true }).click()
     await page.getByRole('button', { name: 'Bấm để nói câu này' }).click()

@@ -26,7 +26,22 @@ import { markViewed } from '../../../lib/viewedTracking'
 
 Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true)
 
-vi.mock('../../../components/Layout', () => ({ default: () => null }))
+// Layout giả: chỉ dựng nút Back khi trang truyền `onBack` — nhãn lấy từ đốt cha cuối của
+// `crumbs`, như Layout thật (khuôn mobile chi tiết bài dùng nó để về danh sách, 2026-10-02).
+vi.mock('../../../components/Layout', () => ({
+  default: ({
+    onBack,
+    crumbs,
+  }: {
+    onBack?: () => void
+    crumbs?: readonly { label: string; to: string }[]
+  }) =>
+    onBack ? (
+      <button type="button" onClick={onBack}>
+        {crumbs?.[crumbs.length - 2]?.label ?? 'Back'}
+      </button>
+    ) : null,
+}))
 
 const auth = vi.hoisted(() => ({ user: { id: 'u1', plan: 'vip' } as { id: string; plan: string } }))
 vi.mock('../../../context/useAuth', () => ({
@@ -322,7 +337,7 @@ describe('S09c — trang Bài hội thoại mẫu', () => {
     await waitUntil(() => byId('dau-bai') !== null, 'bài 1 sau thử lại')
   })
 
-  // ── History / Danh sách ────────────────────────────────────────────────────
+  // ── History / Danh sách (nút Back của header ở khuôn mobile) ───────────────
   it('"Danh sách" bỏ lesson + hash, giữ query khác, focus lại thẻ bài vừa mở', async () => {
     await open(`${ROUTE}?from=home&lesson=1#luot-3`)
     await waitUntil(() => byId('luot-3') !== null, 'render')
@@ -332,6 +347,38 @@ describe('S09c — trang Bài hội thoại mẫu', () => {
     expect(current().hash).toBe('')
     expect(navTypes[navTypes.length - 1]).toBe('PUSH')
     expect(document.activeElement?.id).toBe('lesson-card-1')
+  })
+
+  // ── Thanh công cụ mobile gọn một hàng (2026-10-02) ────────────────────────
+  it('mobile: tốc độ / chế độ nghe / cài đặt giọng nằm sau nút "Tuỳ chọn nghe"; desktop hiện thẳng', async () => {
+    await open(`${ROUTE}?lesson=1`)
+    await waitUntil(() => byId('dau-bai') !== null, 'bài 1')
+    const nutTuyChon = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Tuỳ chọn nghe"]',
+    )!
+    expect(nutTuyChon.getAttribute('aria-expanded')).toBe('false')
+    // Đóng thì không trỏ aria-controls vào phần tử không có trong DOM.
+    expect(nutTuyChon.hasAttribute('aria-controls')).toBe(false)
+    expect(buttonByText(/Cài đặt giọng/)).toBeUndefined()
+    expect(buttonByText(/^EN\+VI$/)).toBeUndefined()
+    // Nút về danh sách KHÔNG còn trong thanh công cụ — nút Back của header làm việc đó.
+    expect(buttonByText(/← Danh sách/)).toBeUndefined()
+
+    act(() => nutTuyChon.click())
+    expect(nutTuyChon.getAttribute('aria-expanded')).toBe('true')
+    const bang = byId(nutTuyChon.getAttribute('aria-controls')!)
+    expect(bang).not.toBeNull()
+    expect(bang!.textContent).toContain('Cài đặt giọng')
+    expect(bang!.textContent).toContain('EN+VI')
+
+    // Desktop: không có nút Tuỳ chọn, mọi điều khiển hiện thẳng trên thanh.
+    act(() => root.unmount())
+    root = createRoot(container)
+    vp.desktop = true
+    await open(`${ROUTE}?lesson=1`)
+    await waitUntil(() => byId('dau-bai') !== null, 'bài 1 desktop')
+    expect(container.querySelector('button[aria-label="Tuỳ chọn nghe"]')).toBeNull()
+    expect(buttonByText(/Cài đặt giọng/)).toBeDefined()
   })
 
   it('chọn bài trong danh sách push đúng một entry, không hash', async () => {
