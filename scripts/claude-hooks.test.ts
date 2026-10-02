@@ -2,8 +2,8 @@
 // `block-pipe-to-shell.sh` (chặn tải-rồi-chạy) và `shared-file-reminder.sh` (nhắc chạy
 // `codemap impact` khi sửa file dùng chung). Hook là mã chạy thật trên máy người dùng ở mọi
 // phiên — sai một regex là chặn oan lệnh hợp lệ hoặc để lọt lệnh nguy hiểm, nên mỗi nhánh có ca.
-import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -151,3 +151,45 @@ describe.runIf(hasJq || process.env.CI)('shared-file-reminder.sh', () => {
     expect(remind('packages/core-x/hot.ts', '')).toBeUndefined()
   })
 })
+
+// TRAPS.md mục 17: hook thoát (`exit`) TRƯỚC khi đọc hết stdin → bên gọi đang ghi payload nhận
+// EPIPE. CI của PR #1206 đỏ vì đúng lỗi này (test bật biến bỏ qua → hook thoát ngay). Payload 200 KB
+// vượt bộ đệm pipe 64 KB nên tranh chấp xảy ra CHẮC CHẮN thay vì chỉ khi máy chậm; mỗi hook được
+// đưa vào đúng nhánh thoát sớm của nó (thư mục dự án rỗng, biến bỏ qua bật, lệnh vô hại).
+describe.runIf(hasJq || process.env.CI)(
+  'mọi hook đọc hết stdin trước khi thoát (không EPIPE)',
+  () => {
+    const hooks = readdirSync(resolve(ROOT, '.claude/hooks')).filter((f) => f.endsWith('.sh'))
+    const emptyProject = mkdtempSync(join(tmpdir(), 'hook-epipe-'))
+    afterAll(() => rmSync(emptyProject, { recursive: true, force: true }))
+    const bigPayload = JSON.stringify({
+      session_id: `epipe-${process.pid}`,
+      transcript_path: '',
+      tool_name: 'Edit',
+      tool_input: { command: 'ls', file_path: '/khong-ton-tai/x.ts', pad: 'x'.repeat(200_000) },
+    })
+
+    it('có hook để kiểm', () => {
+      expect(hooks.length).toBeGreaterThanOrEqual(7)
+    })
+
+    it.each(hooks)('%s', (hook) => {
+      // execFileSync NÉM lỗi EPIPE — đúng cách test CI đã đỏ; spawnSync thì nuốt lỗi vào r.error.
+      expect(() =>
+        execFileSync('bash', [resolve(ROOT, '.claude/hooks', hook)], {
+          cwd: emptyProject,
+          input: bigPayload,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            CLAUDE_PROJECT_DIR: emptyProject,
+            GATE_ACK_DIR: emptyProject,
+            ALLOW_GATE_EDIT: '1',
+            ALLOW_PIPE_TO_SHELL: '1',
+            ALLOW_DANGEROUS_GIT: '1',
+          },
+        }),
+      ).not.toThrow()
+    })
+  },
+)

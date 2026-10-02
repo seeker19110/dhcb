@@ -19,10 +19,12 @@
 # Bỏ qua có chủ đích (chủ dự án tự chạy lệnh cài đã đọc kỹ): đặt ALLOW_PIPE_TO_SHELL=1.
 set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập phiên
 
+# Đọc HẾT stdin TRƯỚC mọi `exit` sớm — xem chú thích cùng chỗ trong config-protection.sh.
+payload="$(cat)"
 [ "${ALLOW_PIPE_TO_SHELL:-0}" = "1" ] && exit 0
 command -v jq >/dev/null 2>&1 || exit 0
 
-cmd="$(cat | jq -r '.tool_input.command // empty' 2>/dev/null)"
+cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 [ -n "$cmd" ] || exit 0
 
 # Bỏ thân heredoc — cùng cách với block-dangerous-git.sh.

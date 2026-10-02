@@ -25,11 +25,13 @@
 # Bỏ qua có chủ đích (vd chủ dự án đang tự sửa cổng): đặt ALLOW_GATE_EDIT=1 trong môi trường.
 set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập phiên
 
+# Đọc HẾT stdin TRƯỚC mọi `exit` sớm: thoát khi bên gọi còn đang ghi payload là làm bên đó dính
+# EPIPE — CI của PR #1206 đỏ vì đúng lỗi này (changelog 0472).
+payload="$(cat)"
 [ "${ALLOW_GATE_EDIT:-0}" = "1" ] && exit 0
 command -v jq >/dev/null 2>&1 || exit 0
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
-payload="$(cat)"
 file="$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
 [ -n "$file" ] || exit 0
 
