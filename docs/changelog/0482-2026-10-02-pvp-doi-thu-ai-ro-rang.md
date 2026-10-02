@@ -1,6 +1,6 @@
 # 0482 — Đấu trường PvP: nói rõ đối thủ là AI, hiện Elo thật thay số gán cứng (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `fix(pvp)`.
+- **Ngày:** 2026-10-02 · **PR:** #1217 · **Loại:** `fix(pvp)`.
 - **Quyết định:** chủ dự án chọn "Đổi hẳn tên nhân vật" (2026-10-02) cho nợ 🔴 ở changelog 0480.
 
 ## Vấn đề
