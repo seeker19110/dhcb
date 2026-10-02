@@ -151,7 +151,12 @@ export default async function handler(req: Request): Promise<Response> {
           book[prob.id] = prob
         }
 
-        const validation = StemScratchpadService.validateStep(prob.subject, latexInput, prob.steps)
+        const validation = StemScratchpadService.validateStep(
+          prob.subject,
+          latexInput,
+          prob.steps,
+          prob,
+        )
 
         const newStep = {
           stepNumber: prob.steps.length + 1,
@@ -162,12 +167,9 @@ export default async function handler(req: Request): Promise<Response> {
         }
         prob.steps.push(newStep)
 
-        if (
-          validation.isValid &&
-          (latexInput.includes('x = 5') ||
-            latexInput.includes('v = 10') ||
-            latexInput.includes('2H_2O'))
-        ) {
+        // Chỉ "giải xong" khi bộ kiểm khẳng định đúng đáp số. Trước 2026-10-02 so chuỗi con nên
+        // "x = 50" cũng được tính là xong (changelog 0473).
+        if (validation.status === 'valid') {
           prob.isSolved = true
         }
 

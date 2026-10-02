@@ -5,6 +5,7 @@ import {
   ScratchpadStepSchema,
   StemProblemStateSchema,
   ScratchpadStepValidationSchema,
+  ketQuaBuoc,
 } from './stemScratchpad.js'
 
 describe('STEM Scratchpad Contracts', () => {
@@ -56,5 +57,42 @@ describe('STEM Scratchpad Contracts', () => {
       updatedAt: '2026-08-20T00:00:00.000Z',
     }
     expect(StemProblemStateSchema.safeParse(state).success).toBe(true)
+  })
+
+  describe('ketQuaBuoc — kết luận hiển thị cho người học (changelog 0473)', () => {
+    const goc = { errorType: 'none' as const, feedback: 'x', confidence: 0 }
+
+    it('chưa có kết quả kiểm → unverified', () => {
+      expect(ketQuaBuoc(undefined)).toBe('unverified')
+    })
+
+    it('bản lưu cũ không có status (từng bị chấm "hợp lệ" giả) → unverified', () => {
+      expect(ketQuaBuoc({ ...goc, isValid: true, confidence: 0.95 })).toBe('unverified')
+    })
+
+    it('isValid false → invalid dù status ghi gì', () => {
+      expect(ketQuaBuoc({ ...goc, isValid: false })).toBe('invalid')
+      expect(ketQuaBuoc({ ...goc, isValid: false, status: 'valid' })).toBe('invalid')
+    })
+
+    it('status invalid → invalid kể cả khi isValid true (dữ liệu mâu thuẫn thì nghiêng về báo lỗi)', () => {
+      expect(ketQuaBuoc({ ...goc, isValid: true, status: 'invalid' })).toBe('invalid')
+    })
+
+    it('chỉ status valid tường minh mới là valid', () => {
+      expect(ketQuaBuoc({ ...goc, isValid: true, status: 'valid' })).toBe('valid')
+      expect(ketQuaBuoc({ ...goc, isValid: true, status: 'unverified' })).toBe('unverified')
+    })
+
+    it('schema nhận status mới và vẫn nhận bản cũ không có status', () => {
+      expect(
+        ScratchpadStepValidationSchema.safeParse({ ...goc, isValid: true, status: 'unverified' })
+          .success,
+      ).toBe(true)
+      expect(
+        ScratchpadStepValidationSchema.safeParse({ ...goc, isValid: true, status: 'dung' }).success,
+      ).toBe(false)
+      expect(ScratchpadStepValidationSchema.safeParse({ ...goc, isValid: true }).success).toBe(true)
+    })
   })
 })
