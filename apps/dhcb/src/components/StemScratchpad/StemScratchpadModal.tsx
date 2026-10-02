@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useDialogBehavior } from '../useDialogBehavior'
-import type {
-  StemProblemState,
-  ScratchpadStep,
-  StemSubjectType,
+import {
+  ketQuaBuoc,
+  type StemProblemState,
+  type ScratchpadStep,
+  type StemSubjectType,
+  type StepVerdict,
 } from '@dhcb/core-contracts/stemScratchpad'
 import {
   createStemProblemApi,
@@ -13,6 +15,35 @@ import {
 
 interface StemScratchpadModalProps {
   onClose: () => void
+}
+
+/**
+ * Cách hiển thị từng kết luận của bộ kiểm. `unverified` (vàng, "Chưa tự kiểm được") tách riêng
+ * khỏi `valid` (xanh lá = "đúng" — CLAUDE.md mục 4.8): bộ kiểm chưa chứng minh được bước nào
+ * đúng thì không được tô xanh (changelog 0473).
+ */
+const HIEN_THI_KET_QUA: Record<
+  StepVerdict,
+  { nhan: string; khung: string; huyHieu: string; phanHoi: string }
+> = {
+  valid: {
+    nhan: '✓ Hợp lệ',
+    khung: 'bg-emerald-950/20 border-emerald-500/30',
+    huyHieu: 'bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900',
+    phanHoi: 'bg-emerald-900/30 text-emerald-200 theme-light:text-emerald-900',
+  },
+  invalid: {
+    nhan: '✗ Cần chỉnh sửa',
+    khung: 'bg-rose-950/20 border-rose-500/30',
+    huyHieu: 'bg-rose-500/20 text-rose-300 theme-light:text-rose-900',
+    phanHoi: 'bg-rose-900/30 text-rose-200 theme-light:text-rose-900',
+  },
+  unverified: {
+    nhan: '? Chưa tự kiểm được',
+    khung: 'bg-amber-950/20 border-amber-500/30',
+    huyHieu: 'bg-amber-500/20 text-amber-300 theme-light:text-amber-900',
+    phanHoi: 'bg-amber-900/30 text-amber-200 theme-light:text-amber-900',
+  },
 }
 
 export default function StemScratchpadModal({ onClose }: StemScratchpadModalProps) {
@@ -194,54 +225,45 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                 Chưa có bước biến đổi nào. Hãy nhập biểu thức bước 1 bên dưới!
               </div>
             ) : (
-              problem?.steps.map((step: ScratchpadStep) => (
-                <div
-                  key={step.stepNumber}
-                  className={`p-3.5 rounded-2xl border ${
-                    step.validation?.isValid
-                      ? 'bg-emerald-950/20 border-emerald-500/30'
-                      : 'bg-rose-950/20 border-rose-500/30'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-zinc-300">Bước {step.stepNumber}:</span>
-                    <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                        step.validation?.isValid
-                          ? 'bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900'
-                          : 'bg-rose-500/20 text-rose-300 theme-light:text-rose-900'
-                      }`}
-                    >
-                      {step.validation?.isValid ? '✓ Hợp lệ' : '✗ Cần chỉnh sửa'}
-                    </span>
-                  </div>
-
-                  <div className="font-mono text-xs text-white bg-black/30 p-2 rounded-xl border border-white/5">
-                    {step.latexInput}
-                  </div>
-
-                  {step.explanation && (
-                    <p className="text-xs text-zinc-400 mt-1 italic">{step.explanation}</p>
-                  )}
-
-                  {step.validation && (
-                    <div
-                      className={`mt-2 text-xs p-2 rounded-xl ${
-                        step.validation.isValid
-                          ? 'bg-emerald-900/30 text-emerald-200 theme-light:text-emerald-900'
-                          : 'bg-rose-900/30 text-rose-200 theme-light:text-rose-900'
-                      }`}
-                    >
-                      {step.validation.feedback}
-                      {step.validation.suggestedCorrection && (
-                        <div className="mt-1 font-mono text-[11px] text-amber-300 theme-light:text-amber-900">
-                          Gợi ý: {step.validation.suggestedCorrection}
-                        </div>
-                      )}
+              problem?.steps.map((step: ScratchpadStep) => {
+                const hienThi = HIEN_THI_KET_QUA[ketQuaBuoc(step.validation)]
+                return (
+                  <div
+                    key={step.stepNumber}
+                    className={`p-3.5 rounded-2xl border ${hienThi.khung}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-zinc-300">
+                        Bước {step.stepNumber}:
+                      </span>
+                      <span
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${hienThi.huyHieu}`}
+                      >
+                        {hienThi.nhan}
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    <div className="font-mono text-xs text-white bg-black/30 p-2 rounded-xl border border-white/5">
+                      {step.latexInput}
+                    </div>
+
+                    {step.explanation && (
+                      <p className="text-xs text-zinc-400 mt-1 italic">{step.explanation}</p>
+                    )}
+
+                    {step.validation && (
+                      <div className={`mt-2 text-xs p-2 rounded-xl ${hienThi.phanHoi}`}>
+                        {step.validation.feedback}
+                        {step.validation.suggestedCorrection && (
+                          <div className="mt-1 font-mono text-[11px] text-amber-300 theme-light:text-amber-900">
+                            Gợi ý: {step.validation.suggestedCorrection}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
             )}
           </div>
 

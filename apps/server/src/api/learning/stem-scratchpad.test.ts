@@ -85,6 +85,35 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(stepData.validation.isValid).toBe(true)
   })
 
+  it('chỉ đánh dấu giải xong khi đáp số khớp NGUYÊN VẸN (không so chuỗi con)', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    const post = (action: string, body: unknown) =>
+      handler(
+        new Request(`http://localhost/api/stem-scratchpad?action=${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      ).then((r) => r.json())
+
+    const { problem } = await post('create_problem', {
+      subject: 'math',
+      title: 'Phương trình bậc nhất',
+      problemStatement: 'Tìm giá trị của x: 2x + 5 = 15',
+      problemLatex: '2x + 5 = 15',
+    })
+
+    const sai = await post('validate_step', { problemId: problem.id, latexInput: 'x = 50' })
+    expect(sai.isSolved).toBe(false)
+    expect(sai.validation.status).toBe('unverified')
+
+    const dung = await post('validate_step', { problemId: problem.id, latexInput: 'x = 5' })
+    expect(dung.isSolved).toBe(true)
+    expect(dung.validation.status).toBe('valid')
+  })
+
   it('handles OPTIONS request with 204', async () => {
     const res = await handler(
       new Request('http://localhost/api/stem-scratchpad', { method: 'OPTIONS' }),
@@ -150,17 +179,19 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     )
     expect(badStep.status).toBe(400)
 
-    // Validate step with fallback problem creation and solving condition
-    const solvedStep = await handler(
+    // Không có problemId → server tự dựng đề từ chính bước gửi lên. Đề đó KHÔNG có đáp số đã biết
+    // nên không bao giờ "giải xong" (trước changelog 0473, chỉ cần chứa chuỗi 'x = 5' là xong).
+    const fallbackStep = await handler(
       new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ latexInput: 'x = 5', explanation: 'Final answer' }),
       }),
     )
-    expect(solvedStep.status).toBe(200)
-    const solvedData = await solvedStep.json()
-    expect(solvedData.isSolved).toBe(true)
+    expect(fallbackStep.status).toBe(200)
+    const fallbackData = await fallbackStep.json()
+    expect(fallbackData.isSolved).toBe(false)
+    expect(fallbackData.validation.status).toBe('unverified')
 
     // Get hint (not found vs found)
     const notFoundHint = await handler(
@@ -176,7 +207,7 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       new Request('http://localhost/api/stem-scratchpad?action=get_hint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: solvedData.problem.id }),
+        body: JSON.stringify({ problemId: fallbackData.problem.id }),
       }),
     )
     expect(foundHint.status).toBe(200)
@@ -242,6 +273,8 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
           subject: 'math',
           title: 'Phương trình',
           problemStatement: '2x + 5 = 15',
+          // Đề mẫu có đáp số đã biết — chỉ đề như vậy mới "giải xong" được (changelog 0473).
+          problemLatex: '2x + 5 = 15',
         }),
       }),
     )

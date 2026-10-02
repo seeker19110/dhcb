@@ -711,10 +711,12 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 - **Đợt 2 tích hợp ECC** (đợt 1 ở changelog `0468`, ADR-0013; chi tiết
   `docs/research/ecc-everything-claude-code.md` mục 6). ✅ Xong ở `0469`: (4) hook chặn
   `curl … | sh`; (5) nhắc mềm khi sửa file dùng chung (≥ 20 nơi import); bẫy escape → TRAPS mục 8.
-  ✅ Xong ở `0470`: (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src`. Còn lại: (1) Claude Code **không nạp** `.agents/skills/` → rà nội dung (vd
-  `life-career-strategic-advisor` còn mô tả trụ đã xoá) rồi chuyển sang `.claude/skills/` hoặc bỏ;
-  (2) rút gọn CLAUDE.md (~44 nghìn ký tự, ~52 KB nạp mỗi phiên) — **chờ chủ dự án duyệt kế hoạch**;
-  (6) hai người rà độc lập (`santa-method`) cho nội dung học — chờ quyết.
+  ✅ Xong ở `0470`: (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src`. ✅ Xong ở
+  `0473`: bảng nháp STEM thôi khen sai. **Chủ dự án đã duyệt 2026-10-02, đang làm:** (1) rà & viết
+  lại `.agents/skills/` rồi chuyển sang `.claude/skills/` (giữ bản `.agents/`, nhiều PR nhỏ);
+  (2) rút gọn CLAUDE.md (~44 nghìn ký tự) — dời NGUYÊN VĂN phần lịch sử sang `docs/`, có script
+  kiểm không mất luật; ẩn studio "Tổng hợp" tới khi có dữ liệu thật. Còn chờ quyết: (6) hai người
+  rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
@@ -1106,16 +1108,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🔴 **[2026-10-02 — phát hiện khi rà `.agents/skills/`, changelog `0470`] STEM Scratchpad (Companion
-  › Labs) chấm MỌI bước giải là "đúng".** `StemScratchpadService.validateStep`
-  (`packages/core-ai/stemScratchpadService.ts`, gọi từ `apps/server/src/api/learning/stem-scratchpad.ts`)
-  chỉ nhận ra đúng hai câu gán cứng (`2x + 5 = 15` → `2x = 15 + 5`, và `H_2 + O_2 -> H_2O`) cùng lỗi
-  lệch ngoặc; mọi bước khác — kể cả SAI — đều trả `isValid: true` kèm "Bước biến đổi logic chính
-  xác. Bạn đang đi đúng hướng!" (confidence 0,95). Skill `stem-science-reasoning-master` mô tả nó
-  như bộ kiểm đại số/cân bằng nguyên tử thật. Với sản phẩm học tập đây là dạy SAI. **Gỡ — chờ chủ
-  dự án chọn:** (a) ẩn Scratchpad tới khi có bộ kiểm thật; hoặc (b) làm bộ kiểm tối thiểu thật
-  (so khớp tương đương biểu thức bằng thư viện CAS/kiểm tra số học, cân bằng nguyên tử) và trả
-  "chưa xác định" thay vì "đúng" khi không kiểm được.
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`] Bảng nháp STEM (Companion › Thử thách)
+  chưa kiểm được bước giải ở giữa.** Lỗi 🔴 cũ (chấm MỌI bước là "đúng", "ĐÃ GIẢI XONG" bằng so
+  chuỗi con) đã sửa: bước không kiểm được nay hiện "? Chưa tự kiểm được"; chỉ đáp số cuối khớp
+  nguyên vẹn đáp số của 3 đề mẫu mới là "✓ Hợp lệ". **Còn lại:** (1) muốn kiểm bước giữa thì cần
+  bộ giải ký hiệu (thay nghiệm vào hai vế, đếm nguyên tử) — tính năng mới, cần đặc tả; (2) hành
+  động `submit_solution` vẫn so chuỗi con với đề ngân hàng câu hỏi — giao diện CHƯA gọi, sửa khi
+  nối ngân hàng đề STEM vào giao diện.
 - 🔴 **[2026-10-02 — phát hiện khi rà `.agents/skills/`, changelog `0469`] Companion › studio
   "Tổng hợp" hiển thị điểm "phân tích cuộc sống" BỊA cho mọi người dùng.**
   `LifeSynthesisDashboard` gọi `GET /api/life-synthesis`
