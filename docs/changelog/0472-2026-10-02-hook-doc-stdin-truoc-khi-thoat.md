@@ -1,6 +1,6 @@
 # 0472 — Hook đọc hết stdin trước khi thoát: sửa EPIPE làm CI đỏ chập chờn (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền khi tạo PR) · **Loại:** `fix(harness)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1207](https://github.com/seeker19110/dhcb/pull/1207) · **Loại:** `fix(harness)`.
 - **Vì sao:** CI của PR #1206 đỏ ở job `unit`: `scripts/agent-config-security.test.ts › ALLOW_GATE_EDIT=1
 tắt hook có chủ đích` ném `spawnSync bash EPIPE`. Lỗi không thuộc #1206 — nằm trong hook
   `config-protection.sh` vào `main` từ PR #1201 (đợt `0468`, do chính mình viết).
