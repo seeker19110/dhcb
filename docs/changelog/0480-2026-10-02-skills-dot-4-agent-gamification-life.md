@@ -1,6 +1,6 @@
 # 0480 — Chuyển skill đợt 4 (cuối): `autonomous-agent-orchestrator` · `gamification-viral-growth-architect` · `life-career-strategic-advisor` — đủ 11/11 (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `chore(skills)`.
+- **Ngày:** 2026-10-02 · **PR:** #1215 · **Loại:** `chore(skills)`.
 - **Nối tiếp:** các đợt 0477 (#1212), 0478 (#1213), 0479. Đợt này hoàn tất đề xuất (1) của đợt 2
   tích hợp ECC: **11/11 skill** đã ở `.claude/skills/`, bản gương trùng từng byte ở `.agents/skills/`.
 
