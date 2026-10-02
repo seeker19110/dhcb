@@ -1117,13 +1117,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🔴 **[2026-10-02 — phát hiện khi rà skill `autonomous-agent-orchestrator`, changelog `0480`]
-  "Studio Điều Phối Agent Tự Trị" hiện kết quả DỰNG SẴN như agent đã chạy thật.**
-  `packages/core-personal/agentOrchestratorService.ts`: bấm "Khởi chạy Agent" → 5 bước luôn
-  `completed`, token/chi phí gán cứng, "Bảng đối soát 100% tiêu chí đạt chuẩn" soạn sẵn — không có
-  lệnh gọi AI nào. Thẻ vừa được dời sang studio "Kế hoạch" ở `0475` (PR #1210) mà chưa kiểm tính
-  trung thực. **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có thực thi thật; hoặc (b) làm thật
-  (gọi AI qua `checkAndConsumeUsage`, Zod, trạng thái đúng như đã xảy ra — cần đặc tả).
+- 🔴 **[2026-10-02 — phát hiện khi chụp ảnh Tầng 8b ở changelog `0481`] Thẻ "Wearables &
+  Circadian Bio-Adaptive MCP" (studio Kế hoạch) hiện số liệu sinh trắc BỊA.**
+  `WearablesSyncCard.tsx` gửi lên `/api/wearables-sync` HRV, nhịp tim nghỉ, điểm giấc ngủ, phút
+  ngủ sâu đều bằng `Math.random()`, rồi hiện huy hiệu "BIO-SYNC ACTIVE" + nút Apple HealthKit /
+  Oura / Garmin — không có tích hợp thiết bị nào. Cùng họ với Echo Shadowing và lab phát âm.
+  **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có tích hợp thật; hoặc (b) cho nhập tay và ghi
+  rõ là số tự khai.
 - 🔴 **[2026-10-02 — changelog `0480`] Đấu trường PvP không cho biết đối thủ là AI.**
   `pvpArenaService.ts` chỉ có đối thủ AI ("ghost rival"), nhưng màn trận đấu chỉ hiện tên kiểu
   người thật ("Elena Oxford 🇬🇧", "Minh Cambridge") + avatar. **Gỡ:** thêm nhãn "Đối thủ AI" rõ

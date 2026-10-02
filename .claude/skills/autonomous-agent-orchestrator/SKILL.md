@@ -31,28 +31,24 @@ mọi tác tử trong sản phẩm — giữ nguyên khi mở rộng.
 
 ---
 
-## 2. STUDIO ĐIỀU PHỐI AGENT — HIỆN LÀ DỰNG SẴN
+## 2. STUDIO ĐIỀU PHỐI AGENT — ĐÃ GỠ (changelog 0481)
 
-`packages/core-personal/agentOrchestratorService.ts` (API
-`apps/server/src/api/platform/agent-orchestrator.ts`), giao diện `AgentOrchestratorCard` +
-`AgentOrchestratorModal` (cuối studio "Kế hoạch").
+Bản trước là thẻ cuối studio "Kế hoạch": bấm "Khởi chạy Agent" thì nhận về 5 bước Plan → Execute →
+Verify → Reflect → Handoff **dựng sẵn** — mọi bước `completed`, token/chi phí gán cứng, kết quả soạn
+sẵn ("100% tiêu chí đạt chuẩn"), **không có lệnh gọi AI nào**. Chủ dự án chọn gỡ (2026-10-02):
 
-- **Thực tế:** 5 bước Plan → Execute → Verify → Reflect → Handoff được **dựng sẵn**:
-  - mọi bước `completed`;
-  - số token và chi phí gán cứng;
-  - kết quả soạn sẵn (vd "Bảng đối soát 100% tiêu chí đạt chuẩn");
-  - **không có lệnh gọi AI nào**.
+- thẻ, hộp thoại, client API, service và hợp đồng đã xoá;
+- `apps/server/src/api/platform/agent-orchestrator.ts` giữ route nhưng GET/POST trả **501
+  `AGENT_ORCHESTRATOR_UNAVAILABLE`**;
+- phiên cũ trong `platform.feature_state` (feature `agent_orchestrator`) chưa xoá.
 
-  Nợ 🔴 trong `PROGRESS.md`.
+**Luật:** đừng dựng lại giao diện "agent đã chạy/đã kiểm" nào khi chưa có thực thi thật. Làm thật thì
+cần đặc tả mới (`/contract` + `/consult`), và mỗi bước phải:
 
-- **Luật:** không thêm hiển thị "agent đã chạy/đã kiểm" nào nữa khi chưa có thực thi thật. Làm thật
-  thì mỗi bước phải:
-  - gọi AI qua đếm lượt (`checkAndConsumeUsage`);
-  - parse kết quả bằng Zod;
-  - ghi trạng thái **đúng như đã xảy ra**, kể cả thất bại.
-- Cấu hình giới hạn đã có trong hợp đồng (`budgetGuardrail`: `maxTokens`, `maxCostUsd`,
-  `maxExecutionSeconds`, `allowExternalTools`, `requireHumanApprovalAboveRisk`) — dùng lại khi
-  làm thật.
+- gọi AI qua đếm lượt (`checkAndConsumeUsage`);
+- parse kết quả bằng Zod;
+- ghi trạng thái **đúng như đã xảy ra**, kể cả thất bại;
+- có giới hạn token/chi phí/thời gian **được thi hành thật**, không chỉ khai báo trong hợp đồng.
 
 ---
 
