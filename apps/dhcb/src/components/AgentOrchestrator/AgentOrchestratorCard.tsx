@@ -27,13 +27,16 @@ export default function AgentOrchestratorCard() {
   return (
     <>
       <div className="rounded-3xl bg-zinc-950 border border-zinc-800 p-5 shadow-xl space-y-4 transition-all duration-300 hover:border-indigo-500/40">
-        <div className="flex items-center justify-between">
+        {/* Màn hẹp: header xếp dọc (khuôn S06d-b). Trước đây tiêu đề + huy hiệu + nút chung một hàng
+            nên tiêu đề bị ép thành 3 dòng ở 390px — lộ ra khi thẻ dời sang studio "Kế hoạch"
+            (changelog 0475), nơi cổng e2e đo header thẻ. */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-lg">
               <Cpu className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h3 className="text-sm font-bold text-zinc-100 tracking-tight">
                   Studio Điều Phối Agent Tự Trị
                 </h3>

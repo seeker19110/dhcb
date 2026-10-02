@@ -8,6 +8,8 @@ import A2ANegotiatorCard from '../CompanionVoice/A2ANegotiatorCard'
 import ProactiveBriefingCard from '../ProactiveBriefingCard'
 import AmbientScreenCopilot from '../CompanionVoice/AmbientScreenCopilot'
 import NeuroAffectiveCard from '../CompanionVoice/NeuroAffectiveCard'
+import AgentOrchestratorCard from '../AgentOrchestrator/AgentOrchestratorCard'
+import ActionCanvasBanner from './ActionCanvasBanner'
 import type { ProactiveAgentState } from '@dhcb/core-contracts/proactiveAgent'
 
 interface StudioProactiveProps {
@@ -40,6 +42,9 @@ export default function StudioProactive({ proactiveState, navigate }: StudioProa
       <ProactiveBriefingCard />
       <AmbientScreenCopilot />
       <NeuroAffectiveCard />
+      {/* Dời từ studio "Tổng kết" đã gỡ (changelog 0475). */}
+      <AgentOrchestratorCard />
+      <ActionCanvasBanner navigate={navigate} />
     </div>
   )
 }

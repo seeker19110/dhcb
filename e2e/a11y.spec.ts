@@ -589,9 +589,11 @@ for (const theme of THEMES) {
   })
 }
 
-// [S06c] Năm studio của Bạn Đồng Hành — trước đây cổng chỉ quét studio mặc định, nên 4 studio
+// [S06c] Các studio của Bạn Đồng Hành — trước đây cổng chỉ quét studio mặc định, nên 4 studio
 // còn lại chưa từng được đo (14 vi phạm tương phản sống sót tới 25/09, spec S06–S08 mục S06c).
-const COMPANION_STUDIOS = ['Trò chuyện', 'Ghi nhớ', 'Thử thách', 'Kế hoạch', 'Tổng kết']
+// Studio "Tổng kết" đã GỠ (changelog 0475); thẻ Agent + banner Action Canvas của nó dời sang
+// "Kế hoạch" nên vẫn được quét ở đây.
+const COMPANION_STUDIOS = ['Trò chuyện', 'Ghi nhớ', 'Thử thách', 'Kế hoạch']
 for (const theme of THEMES) {
   for (const studio of COMPANION_STUDIOS) {
     test(`a11y: Bạn Đồng Hành — studio ${studio}, theme=${theme}`, async ({ page }) => {

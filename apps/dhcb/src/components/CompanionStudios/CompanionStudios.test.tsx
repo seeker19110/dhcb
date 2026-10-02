@@ -4,6 +4,8 @@ import React from 'react'
 import StudioLoadingSkeleton from './StudioLoadingSkeleton'
 import StudioCognitive from './StudioCognitive'
 import StudioLabs from './StudioLabs'
+import StudioProactive from './StudioProactive'
+import { STUDIO_TABS_CONFIG } from './studioTypes'
 
 // Mock sub-components
 vi.mock('../MetacognitiveReflection/MetacognitiveJournalCard.js', () => ({
@@ -48,6 +50,31 @@ vi.mock('../CompanionVoice/ScenarioHolodeckCard.js', () => ({
     React.createElement('div', { 'data-testid': 'holodeck-card' }, 'ScenarioHolodeckCard'),
 }))
 
+vi.mock('../NeuralCurriculum/NeuralMicroCurriculumCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'neural-card' }),
+}))
+vi.mock('../CompanionVoice/WorkplaceHarvesterCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'harvester-card' }),
+}))
+vi.mock('../CompanionVoice/WearablesSyncCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'wearables-card' }),
+}))
+vi.mock('../CompanionVoice/A2ANegotiatorCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'a2a-card' }),
+}))
+vi.mock('../ProactiveBriefingCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'briefing-card' }),
+}))
+vi.mock('../CompanionVoice/AmbientScreenCopilot', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'ambient-card' }),
+}))
+vi.mock('../CompanionVoice/NeuroAffectiveCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'neuro-card' }),
+}))
+vi.mock('../AgentOrchestrator/AgentOrchestratorCard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'agent-card' }),
+}))
+
 describe('CompanionStudios', () => {
   it('renders StudioLoadingSkeleton with shimmering placeholders', () => {
     const html = renderToStaticMarkup(React.createElement(StudioLoadingSkeleton))
@@ -70,5 +97,21 @@ describe('CompanionStudios', () => {
     expect(html).toContain('data-testid="acoustic-lab"')
     expect(html).toContain('data-testid="echo-card"')
     expect(html).toContain('data-testid="holodeck-card"')
+  })
+
+  // Changelog 0475: studio "Tổng kết" gỡ vì bảng "phân tích cuộc sống" hiển thị điểm bịa. Hai thứ
+  // còn lại của nó (thẻ Agent, lối vào DUY NHẤT của Action Canvas) phải còn đường vào ở "Kế hoạch".
+  it('không còn studio "Tổng kết"', () => {
+    expect(STUDIO_TABS_CONFIG.map((t) => t.label)).not.toContain('Tổng kết')
+    expect(STUDIO_TABS_CONFIG.map((t) => t.id as string)).not.toContain('synthesis')
+  })
+
+  it('StudioProactive giữ thẻ Agent và lối vào Action Canvas', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(StudioProactive, { proactiveState: null, navigate: vi.fn() }),
+    )
+    expect(html).toContain('data-testid="agent-card"')
+    expect(html).toContain('Action Canvas')
+    expect(html).toContain('Mở Workspace')
   })
 })

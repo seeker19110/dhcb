@@ -22,6 +22,12 @@ export interface LifeSynthesisInput {
 }
 
 /**
+ * ⚠️ KHÔNG NỐI VÀO GIAO DIỆN NGƯỜI DÙNG THẬT (changelog 0475, 2026-10-02). Khi thiếu dữ liệu, hàm
+ * này dùng số hoạt động GÁN CỨNG, điểm mặc định (82/78), mục tiêu mẫu; còn câu nhận xét, khó
+ * khăn và khuyến nghị thì LUÔN soạn sẵn, không lấy từ dữ liệu. API `/api/life-synthesis` đã
+ * ngừng gọi hàm này (trả 501) và studio "Tổng kết" đã gỡ. Chỉ dùng lại khi có nguồn dữ liệu
+ * hoạt động thật VÀ đã viết lại phần câu chữ theo dữ liệu đó.
+ *
  * Thuật toán Tổng hợp Đa Miền (Cross-Domain Life Synthesis Engine V5.4)
  * Tổng hòa tín hiệu từ 5 miền (Học tập, Sự nghiệp, Công việc, Khởi nghiệp, Đời sống),
  * tính toán Holistic Alignment Score, Cognitive Resilience và trích xuất khuyến nghị chiến lược.

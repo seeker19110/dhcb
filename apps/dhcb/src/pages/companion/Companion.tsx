@@ -43,9 +43,6 @@ const StudioLabs = lazyWithRetry(() => import('../../components/CompanionStudios
 const StudioProactive = lazyWithRetry(
   () => import('../../components/CompanionStudios/StudioProactive'),
 )
-const StudioSynthesis = lazyWithRetry(
-  () => import('../../components/CompanionStudios/StudioSynthesis'),
-)
 
 export default function Companion() {
   usePageTitle('Bạn Đồng Hành | Đồng hành cùng bạn')
@@ -578,8 +575,6 @@ export default function Companion() {
           {activeStudio === 'proactive' && (
             <StudioProactive proactiveState={proactiveState} navigate={navigate} />
           )}
-
-          {activeStudio === 'synthesis' && <StudioSynthesis navigate={navigate} />}
         </Suspense>
       </PageShell>
 
