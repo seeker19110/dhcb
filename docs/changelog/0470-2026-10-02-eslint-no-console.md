@@ -1,6 +1,6 @@
 # 0470 — Luật ESLint `no-console` cho mã chạy trong trình duyệt (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền khi tạo PR) · **Loại:** `chore(lint)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1206](https://github.com/seeker19110/dhcb/pull/1206) · **Loại:** `chore(lint)`.
 - **Nền:** đề xuất 3 ở mục 6 của
   [`docs/research/ecc-everything-claude-code.md`](../research/ecc-everything-claude-code.md)
   (ADR-0013) — thay cho hook "cảnh báo console.log" của ECC bằng một cổng lint chặn CI. PR RIÊNG
