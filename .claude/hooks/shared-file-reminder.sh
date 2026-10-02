@@ -15,13 +15,13 @@ set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập ph
 # File có từ chừng này nơi import trở lên mới nhắc (≈ 42 file ở thời điểm 2026-10-01).
 NGUONG=20
 
+payload="$(cat)"   # đọc HẾT stdin trước mọi `exit` sớm (tránh EPIPE cho bên gọi, changelog 0472)
 command -v jq >/dev/null 2>&1 || exit 0
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 ROOT="${ROOT//\\//}"
 GRAPH="$ROOT/.codemap/graph.json"
 [ -f "$GRAPH" ] || exit 0
 
-payload="$(cat)"
 file="$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
 [ -n "$file" ] || exit 0
 file="${file//\\//}"

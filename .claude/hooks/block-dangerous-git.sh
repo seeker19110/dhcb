@@ -23,9 +23,9 @@
 # commit hook).
 set -uo pipefail   # cố ý KHÔNG -e: không được làm chết phiên (một hook lỗi không được sập session)
 
+payload="$(cat)"   # đọc HẾT stdin trước mọi `exit` sớm (tránh EPIPE cho bên gọi, changelog 0472)
 [ "${ALLOW_DANGEROUS_GIT:-0}" = "1" ] && exit 0
 
-payload="$(cat)"
 cmd=""
 if command -v jq >/dev/null 2>&1; then
   cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null)"

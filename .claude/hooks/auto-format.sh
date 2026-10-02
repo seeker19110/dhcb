@@ -15,12 +15,12 @@
 #     sửa là quá chậm; nó đã được `pre-commit-gate.sh` chặn ở lúc commit.
 set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập phiên
 
+payload="$(cat)"   # đọc HẾT stdin trước mọi `exit` sớm (tránh EPIPE cho bên gọi, changelog 0472)
 command -v jq >/dev/null 2>&1 || exit 0
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 PRETTIER="$ROOT/node_modules/.bin/prettier"
 [ -x "$PRETTIER" ] || exit 0   # chưa `npm ci` → im lặng, lint-staged/CI vẫn là tuyến sau
 
-payload="$(cat)"
 file="$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
 [ -n "$file" ] || exit 0
 ROOT="${ROOT//\\//}"           # Windows (Git Bash): `\` → `/`

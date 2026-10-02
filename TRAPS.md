@@ -693,3 +693,25 @@ HEADER gửi upstream — muốn chắc phải `proxy_set_header` ghi đè.
 **Cổng chốt chặn:** `scripts/nginx-proxy-headers.test.ts` (mọi `location` có `proxy_pass` phải
 ghi đè `X-Real-IP`/`CF-Connecting-IP`/`X-Forwarded-For` bằng `$remote_addr`) +
 `packages/core-http/http.test.ts` ca "gọi thẳng IP VPS kèm CF-Connecting-IP giả".
+
+## 17. Tiến trình con THOÁT trước khi đọc hết stdin → bên ghi nhận EPIPE, đỏ chập chờn theo tải máy
+
+**Ngày/PR:** 2026-10-02, CI của PR #1206 đỏ ở job `unit` (changelog `0472`). Lỗi nằm trong hook
+`.claude/hooks/config-protection.sh` vào `main` từ PR #1201 — xanh ở máy và ở CI của chính #1201,
+chỉ đỏ ở một PR sau, không liên quan.
+
+**Khuôn lỗi:** test gọi hook bằng `execFileSync('bash', [hook], { input: payload })` với biến bỏ
+qua `ALLOW_GATE_EDIT=1`. Dòng đầu hook là `[ "$ALLOW_GATE_EDIT" = 1 ] && exit 0` — thoát NGAY,
+trước `payload="$(cat)"`. Nếu tiến trình con kịp thoát trước khi Node ghi xong payload vào pipe,
+Node nhận `EPIPE` và `execFileSync` ném lỗi. Đây là tranh chấp thời gian: máy nhanh/payload nhỏ
+thì thắng, runner CI bận thì thua → "lúc đỏ lúc xanh", dễ bị đổ là flaky. Cùng lỗi có ở 5/7 hook
+(mọi lệnh `exit` sớm đứng trước `cat`: thiếu `jq`, thiếu Prettier, thiếu bản đồ codemap, biến bỏ qua).
+
+**Cách rà:** lỗi `spawnSync … EPIPE` / `write EPIPE` khi gọi tiến trình con có `input` → tìm
+nhánh `exit` đứng TRƯỚC chỗ đọc stdin trong tiến trình con. Tái hiện CHẮC CHẮN thay vì chờ máy
+chậm: gửi payload lớn hơn bộ đệm pipe (64 KB) — `'x'.repeat(200_000)` cho ra 20/20 lần EPIPE.
+
+**Cổng chốt chặn:** mọi hook đọc `payload="$(cat)"` ngay sau `set -uo pipefail`, trước mọi `exit`;
+`scripts/claude-hooks.test.ts` ca "mọi hook đọc hết stdin trước khi thoát" chạy TỪNG hook trong
+`.claude/hooks/` với payload 200 KB ở nhánh thoát sớm của nó (đã kiểm: hook cũ đỏ 5/7, hook đã
+sửa xanh 7/7). Thêm hook mới là tự động được kiểm.
