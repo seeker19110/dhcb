@@ -40,7 +40,7 @@ thắng** — sửa skill, đừng thiết kế theo skill.
    - `StemScratchpadCard` — bảng nháp STEM. **Bộ kiểm chỉ nhận ra vài lỗi cụ thể và đáp số của 3 đề
      mẫu**; bước khác hiện "? Chưa tự kiểm được" (changelog 0473). Đừng thiết kế UI hứa "kiểm tra
      hợp lệ đại số/hoá học tức thì".
-   - Lab phát âm: `ArticulatoryPhoneticsVisualizer`, `AcousticPhoneticsLab`, `EchoShadowingCard`,
+   - Lab phát âm: `ArticulatoryPhoneticsVisualizer`, `PronunciationHintsCard` (gợi ý, không điểm), `EchoShadowingCard` (3 pha, không điểm),
      `ScenarioHolodeckCard`.
 4. **Kế hoạch** (`StudioProactive.tsx`) — nudge 1-chạm (`ProactiveNudgeBanner`), `GoalAutoPilotCard`,
    `NeuralMicroCurriculumCard` và các thẻ đón đầu; cuối studio là `ActionCanvasBanner` (lối vào

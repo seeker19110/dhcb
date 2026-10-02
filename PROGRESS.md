@@ -1117,13 +1117,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🔴 **[2026-10-02 — phát hiện khi chụp ảnh Tầng 8b ở changelog `0481`] Thẻ "Wearables &
-  Circadian Bio-Adaptive MCP" (studio Kế hoạch) hiện số liệu sinh trắc BỊA.**
-  `WearablesSyncCard.tsx` gửi lên `/api/wearables-sync` HRV, nhịp tim nghỉ, điểm giấc ngủ, phút
-  ngủ sâu đều bằng `Math.random()`, rồi hiện huy hiệu "BIO-SYNC ACTIVE" + nút Apple HealthKit /
-  Oura / Garmin — không có tích hợp thiết bị nào. Cùng họ với Echo Shadowing và lab phát âm.
-  **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có tích hợp thật; hoặc (b) cho nhập tay và ghi
-  rõ là số tự khai.
 - 🟡 **[2026-10-02 — phát hiện khi sửa PvP ở changelog `0482`] Bảng xếp hạng PvP hiện TÊN THẬT
   của người dùng cho mọi người chơi.** `realLeaderboard` (`apps/server/src/api/platform/pvp-arena.ts`)
   lấy top 10 Elo kèm `coalesce(profiles.nickname, users.name)` — ai chưa đặt biệt danh thì lộ tên
@@ -1133,24 +1126,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 - 🟡 **[2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
   xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
   dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.
-- 🔴 **[2026-10-02 — phát hiện khi rà skill `multimodal-realtime-voice-master`, changelog `0479`]
-  Studio Thử thách › Echo Shadowing hiện "Band" tính từ số NGẪU NHIÊN.** `EchoShadowingCard.tsx`
-  gửi `measuredLatencyMs`/`phonemeAccuracy` bằng `Math.random()` (chú thích ghi sẵn "380 - 460ms",
-  "88 - 98%"), server (`echoShadowingService.ts`) tính band từ đó — học viên thấy điểm không đo gì.
-  Cùng họ với nợ lab phát âm ngay dưới. **Gỡ — chờ chủ dự án chọn:** (a) bỏ điểm/band, giữ bài
-  luyện 3 pha; hoặc (b) đo thật độ trễ + độ khớp âm vị từ bản ghi âm (cần đặc tả).
 - 🟡 **[2026-10-02 — changelog `0479`] "Chỉ số tự nhận thức" của nhật ký phản tỉnh là đại lượng
   thay thế bằng SỐ TỪ** (`metacognitiveReflectionService.ts`: `wordCount * 1.5 + 40` + thưởng theo
   số bẫy nhận ra), không phải thang MAI chuẩn. Không dùng để xếp hạng/đưa lên màn hình chính; cân
   nhắc đổi tên hoặc bỏ con số.
-- 🔴 **[2026-10-02 — phát hiện khi rà skill `pedagogy-linguistics-master`, changelog `0478`]
-  Studio Thử thách › "Acoustic Phonetics & GOP Lab" hiển thị điểm BỊA cho mọi người dùng.**
-  `packages/core-ai/acousticPhoneticsService.ts` (qua `/api/acoustic-phonetics`) đoán âm sai từ
-  CHÍNH TẢ của câu đã nhận dạng (`word.includes('th')`…) và tính "Điểm GOP" bằng công thức gán
-  cứng (`92 - idx * 3`, lệch thì 48), không đo âm thanh; giao diện vẫn ghi "Điểm GOP Tổng X/100" +
-  lưu loát/ngữ điệu dạng %. Cùng loại lỗi với 0473 (STEM) và 0475 (Tổng kết). **Gỡ — chờ chủ dự án
-  chọn:** (a) ẩn lab tới khi có chấm âm học thật (forced alignment); hoặc (b) bỏ mọi con số, đổi
-  nhãn thành "gợi ý luyện âm" và chỉ giữ ma trận lỗi L1 + mẹo đặt lưỡi.
 - 🟡 **[2026-10-02 — changelog `0478`] Edge AI phân loại ý định về các miền đã xoá.**
   `classifyIntentEdge` (`apps/dhcb/src/lib/edgeAi/edgeAiService.ts`, regex — không phải model) vẫn
   trả `career`/`startup`/`life` dù ba trụ đã gỡ 2026-09-20. Gỡ: bỏ ba nhánh đó (rơi về `general`)

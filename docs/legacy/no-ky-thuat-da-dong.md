@@ -6,6 +6,27 @@ bỏ). Thứ tự: như thứ tự cũ trong `PROGRESS.md`, mới hơn ở trên
 
 Khi đóng thêm một món nợ: cắt khối đó khỏi `PROGRESS.md`, dán vào ĐẦU danh sách dưới đây.
 
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0484`: chủ dự án chọn (a) ẩn thẻ — thẻ, service, hợp đồng đã xoá; `/api/wearables-sync` trả 501] [2026-10-02 — phát hiện khi chụp ảnh Tầng 8b ở changelog `0481`] Thẻ "Wearables &
+  Circadian Bio-Adaptive MCP" (studio Kế hoạch) hiện số liệu sinh trắc BỊA.**
+  `WearablesSyncCard.tsx` gửi lên `/api/wearables-sync` HRV, nhịp tim nghỉ, điểm giấc ngủ, phút
+  ngủ sâu đều bằng `Math.random()`, rồi hiện huy hiệu "BIO-SYNC ACTIVE" + nút Apple HealthKit /
+  Oura / Garmin — không có tích hợp thiết bị nào. Cùng họ với Echo Shadowing và lab phát âm.
+  **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có tích hợp thật; hoặc (b) cho nhập tay và ghi
+  rõ là số tự khai.
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0484`: chủ dự án chọn (a) bỏ điểm/band, giữ bài luyện 3 pha với giọng mẫu TTS; POST `/api/echo-shadowing` trả 501] [2026-10-02 — phát hiện khi rà skill `multimodal-realtime-voice-master`, changelog `0479`]
+  Studio Thử thách › Echo Shadowing hiện "Band" tính từ số NGẪU NHIÊN.** `EchoShadowingCard.tsx`
+  gửi `measuredLatencyMs`/`phonemeAccuracy` bằng `Math.random()` (chú thích ghi sẵn "380 - 460ms",
+  "88 - 98%"), server (`echoShadowingService.ts`) tính band từ đó — học viên thấy điểm không đo gì.
+  Cùng họ với nợ lab phát âm ngay dưới. **Gỡ — chờ chủ dự án chọn:** (a) bỏ điểm/band, giữ bài
+  luyện 3 pha; hoặc (b) đo thật độ trễ + độ khớp âm vị từ bản ghi âm (cần đặc tả).
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0484`: chủ dự án chọn (b) bỏ mọi con số, đổi thành thẻ "Gợi ý luyện âm" (`pronunciationHints.ts`); `/api/acoustic-phonetics` trả 501] [2026-10-02 — phát hiện khi rà skill `pedagogy-linguistics-master`, changelog `0478`]
+  Studio Thử thách › "Acoustic Phonetics & GOP Lab" hiển thị điểm BỊA cho mọi người dùng.**
+  `packages/core-ai/acousticPhoneticsService.ts` (qua `/api/acoustic-phonetics`) đoán âm sai từ
+  CHÍNH TẢ của câu đã nhận dạng (`word.includes('th')`…) và tính "Điểm GOP" bằng công thức gán
+  cứng (`92 - idx * 3`, lệch thì 48), không đo âm thanh; giao diện vẫn ghi "Điểm GOP Tổng X/100" +
+  lưu loát/ngữ điệu dạng %. Cùng loại lỗi với 0473 (STEM) và 0475 (Tổng kết). **Gỡ — chờ chủ dự án
+  chọn:** (a) ẩn lab tới khi có chấm âm học thật (forced alignment); hoặc (b) bỏ mọi con số, đổi
+  nhãn thành "gợi ý luyện âm" và chỉ giữ ma trận lỗi L1 + mẹo đặt lưỡi.
 - ✅ **[2026-09-14 → ĐÓNG 2026-09-26, `docs/changelog/0454-*.md`] Nhãn chữ
   trong hoạt ảnh khó đọc ở màn hình 390px.** Đo được **29/150 nhãn dài hơn 24 ký tự** ở cỡ chữ
   11–12 trong viewBox rộng 440 — trên điện thoại chúng co lại rất nhỏ. **KHÔNG phải lỗi mới**:

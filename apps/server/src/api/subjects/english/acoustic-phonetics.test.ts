@@ -19,7 +19,8 @@ describe('api/acoustic-phonetics', () => {
     expect(res.status).toBe(401)
   })
 
-  it('analyzes sentence acoustics and returns GOP report with 200', async () => {
+  // Changelog 0484: endpoint từng trả "Điểm GOP" gán bằng công thức cứng. Nay 501, không con số.
+  it('POST đã đăng nhập trả 501 kèm lời giải thích, KHÔNG trả điểm', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
       userId: '11111111-1111-4111-8111-111111111111',
     })
@@ -35,11 +36,11 @@ describe('api/acoustic-phonetics', () => {
     })
 
     const res = await handler(req)
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(501)
     const data = await res.json()
-    expect(data.overallGopScore).toBeDefined()
-    expect(data.phonemes.length).toBeGreaterThan(0)
-    expect(data.schemaVersion).toBe('v4.0.0')
+    expect(data.error).toBe('ACOUSTIC_SCORING_UNAVAILABLE')
+    expect(data.overallGopScore).toBeUndefined()
+    expect(data.phonemes).toBeUndefined()
   })
 
   it('handles OPTIONS preflight', async () => {
@@ -52,22 +53,5 @@ describe('api/acoustic-phonetics', () => {
     const req = new Request('http://localhost/api/acoustic-phonetics', { method: 'GET' })
     const res = await handler(req)
     expect(res.status).toBe(405)
-  })
-
-  it('rejects invalid payload with 400', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
-      userId: '11111111-1111-4111-8111-111111111111',
-    })
-
-    const req = new Request('http://localhost/api/acoustic-phonetics', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetSentence: '' }),
-    })
-
-    const res = await handler(req)
-    expect(res.status).toBe(400)
-    const data = await res.json()
-    expect(data.error).toBe('Invalid acoustic analysis payload')
   })
 })

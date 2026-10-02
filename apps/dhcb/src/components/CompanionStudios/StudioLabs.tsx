@@ -2,7 +2,7 @@ import PvPArenaCard from '../PvPArena/PvPArenaCard.js'
 import DebateArenaCard from '../DebateArena/DebateArenaCard.js'
 import StemScratchpadCard from '../StemScratchpad/StemScratchpadCard.js'
 import ArticulatoryPhoneticsVisualizer from '../CompanionVoice/ArticulatoryPhoneticsVisualizer.js'
-import AcousticPhoneticsLab from '../CompanionVoice/AcousticPhoneticsLab.js'
+import PronunciationHintsCard from '../CompanionVoice/PronunciationHintsCard.js'
 import EchoShadowingCard from '../CompanionVoice/EchoShadowingCard.js'
 import ScenarioHolodeckCard from '../CompanionVoice/ScenarioHolodeckCard.js'
 
@@ -13,7 +13,7 @@ export default function StudioLabs() {
       <DebateArenaCard />
       <StemScratchpadCard />
       <ArticulatoryPhoneticsVisualizer />
-      <AcousticPhoneticsLab />
+      <PronunciationHintsCard />
       <EchoShadowingCard />
       <ScenarioHolodeckCard />
     </div>

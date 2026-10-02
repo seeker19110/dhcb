@@ -73,13 +73,14 @@ dựng.
 
 ## 3. PHÁT ÂM & LUYỆN NÓI
 
-### A. Lab phân tích phát âm — thực tế là HEURISTIC
+### A. Gợi ý luyện âm — thực tế là HEURISTIC theo chữ viết
 
-`packages/core-ai/acousticPhoneticsService.ts` (gọi qua `/api/acoustic-phonetics`):
+`packages/core-ai/pronunciationHints.ts` (thẻ `PronunciationHintsCard.tsx`; thay "GOP Lab" ở
+changelog 0484, `/api/acoustic-phonetics` nay trả 501):
 
-- Đoán âm vị dễ sai từ **chính tả của câu đã nhận dạng** (từ có "th", "r", "ks"…), tra ma trận lỗi
-  điển hình của người Việt.
-- "Điểm GOP" là **công thức gán cứng**, không đo từ âm thanh.
+- Đoán âm dễ sai từ **chữ viết của câu mẫu** (từ có "th", "r", "sh", "x"…), tra ma trận lỗi điển
+  hình của người Việt. Không nghe giọng học viên.
+- **Không có con số nào** — bản cũ gán "Điểm GOP" bằng công thức cứng, đã gỡ.
 
 Hệ quả cho người thiết kế:
 
@@ -89,14 +90,17 @@ Hệ quả cho người thiết kế:
 - Muốn chấm phát âm thật thì cần forced alignment trên âm thanh — việc lớn, cần đặc tả. Nợ này ghi
   ở `PROGRESS.md`.
 
-Phần **có giá trị sư phạm thật** thì giữ: ma trận lỗi L1 tiếng Việt cho /θ/, /ð/, /æ/, /r/, /-ks/,
-/tʃ/, /dʒ/, /ʃ/, kèm mẹo đặt lưỡi.
+Phần **có giá trị sư phạm thật** được giữ: ma trận lỗi L1 tiếng Việt cho /θ/, /ð/, /æ/, /r/, /ʃ/,
+/ks/ cuối, kèm mẹo đặt lưỡi (`L1_PRONUNCIATION_PATTERNS`).
 
 ### B. Echo Shadowing 3 pha (`apps/dhcb/src/components/CompanionVoice/EchoShadowingCard.tsx`)
 
 1. **Nghe chủ động:** nghe audio mẫu bản ngữ, chú ý trọng âm và nhịp.
 2. **Nói đuổi:** nói theo audio mẫu với độ trễ ngắn, khớp trọng âm câu và chỗ ngắt hơi.
-3. **Nói độc lập:** thu âm tự nói, so với bản mẫu và chỉ ra từ cần luyện lại.
+3. **Nói độc lập:** tự nói, rồi nghe lại mẫu để so.
+
+Thẻ hiện tại **không ghi âm, không chấm** (changelog 0484): giọng mẫu đọc bằng TTS, học viên tự so.
+Chỉ thêm điểm khi đo được từ bản ghi âm thật.
 
 ---
 

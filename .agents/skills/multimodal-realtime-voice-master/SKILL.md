@@ -57,10 +57,11 @@ khẩu hình và các lab luyện phát âm.
 
 - **CHƯA CÓ:** worker DSP (tự tương quan F0, LPC formant F1/F2). Phân tích hiện chạy trên main thread
   và **không đo từ âm thanh**.
-- **Lab phát âm** (`packages/core-ai/acousticPhoneticsService.ts`, `AcousticPhoneticsLab.tsx`):
-  - đoán âm sai từ CHÍNH TẢ của câu đã nhận dạng;
-  - "Điểm GOP" là công thức gán cứng — nợ 🔴 trong `PROGRESS.md`;
-  - phần có giá trị thật để giữ: ma trận lỗi L1 tiếng Việt + mẹo đặt lưỡi.
+- **"GOP Lab" ĐÃ GỠ phần chấm (changelog 0484).** Bản cũ đoán âm sai từ chính tả và gán "Điểm GOP"
+  bằng công thức cứng. Nay là thẻ **"Gợi ý luyện âm"** (`PronunciationHintsCard.tsx` +
+  `packages/core-ai/pronunciationHints.ts`, hàm thuần chạy ở giao diện): chỉ ra âm người Việt hay
+  nhầm trong câu mẫu (ma trận lỗi L1) + mẹo đặt lưỡi, **không con số**. `/api/acoustic-phonetics`
+  trả 501.
 - Chấm phát âm thật cần forced alignment trên âm thanh (CTC/GOP đúng nghĩa) — việc lớn, cần đặc tả.
 
 ---
@@ -74,8 +75,8 @@ giao diện `apps/dhcb/src/components/CompanionVoice/EchoShadowingCard.tsx`.
   1. nghe chủ động;
   2. nói đuổi với độ trễ ngắn;
   3. nói độc lập rồi so với bản mẫu.
-- **Thực tế điểm số:** thẻ gửi lên độ trễ và độ chính xác âm vị là **số ngẫu nhiên**
-  (`Math.random()`), server tính "Band" từ đó — tức band hiện cho học viên **không đo gì cả**. Nợ 🔴
-  trong `PROGRESS.md`.
+- **Thực tế (changelog 0484):** thẻ là bài luyện 3 pha, giọng mẫu đọc bằng TTS (`speak`), **không
+  ghi âm, không chấm điểm**. Bản cũ hiện "Band" tính từ số `Math.random()` — đã gỡ; POST
+  `/api/echo-shadowing` trả 501.
 - **Luật:** không thêm điểm/band mới cho shadowing khi chưa đo được độ trễ và độ khớp âm vị từ bản
   ghi âm thật.

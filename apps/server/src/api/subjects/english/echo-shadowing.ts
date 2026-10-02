@@ -1,5 +1,4 @@
 // api/echo-shadowing.ts — V3 Real-Time Echo Shadowing Endpoint.
-import { getPgPool } from '@dhcb/core-db/pgPool'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -7,15 +6,8 @@ import {
   validateAuth,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getOrCreatePerson } from '@dhcb/core-personal/personService'
-import {
-  listShadowingPassages,
-  getShadowingPassage,
-  evaluateShadowingSession,
-} from '@dhcb/core-ai/echoShadowingService'
-import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
+import { listShadowingPassages, getShadowingPassage } from '@dhcb/core-ai/echoShadowingService'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
-import { readJsonBody } from '@dhcb/core-http/validation'
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -33,57 +25,39 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ error: 'Unauthorized' }, 401, headers)
   }
 
-  try {
-    const pool = getPgPool()
-    const person = await getOrCreatePerson(pool, auth.userId)
+  // Danh mục bài mẫu là dữ liệu tĩnh — không cần chạm CSDL (trước đây tạo hồ sơ `person` chỉ để
+  // truyền vào hàm chấm điểm đã gỡ ở changelog 0484).
+  if (req.method === 'GET') {
+    const url = new URL(req.url)
+    const passageId = url.searchParams.get('passageId')
 
-    if (req.method === 'GET') {
-      const url = new URL(req.url)
-      const passageId = url.searchParams.get('passageId')
-
-      if (passageId) {
-        const passage = getShadowingPassage(passageId)
-        if (!passage) {
-          return jsonResponse({ error: 'Không tìm thấy đoạn văn' }, 404, headers)
-        }
-        return jsonResponse({ passage }, 200, headers)
+    if (passageId) {
+      const passage = getShadowingPassage(passageId)
+      if (!passage) {
+        return jsonResponse({ error: 'Không tìm thấy đoạn văn' }, 404, headers)
       }
-
-      const passages = listShadowingPassages()
-      return jsonResponse({ passages }, 200, headers)
+      return jsonResponse({ passage }, 200, headers)
     }
 
-    if (req.method === 'POST') {
-      const bodyResult = await readJsonBody(req)
-      if (!bodyResult.ok) {
-        return jsonResponse({ error: bodyResult.error.message }, bodyResult.error.status, headers)
-      }
-
-      const body = bodyResult.raw as {
-        passageId: string
-        measuredLatencyMs?: number
-        phonemeAccuracy?: number
-      }
-
-      if (!body.passageId) {
-        return jsonResponse({ error: 'Thiếu passageId' }, 400, headers)
-      }
-
-      const session = evaluateShadowingSession(
-        person.id,
-        body.passageId,
-        body.measuredLatencyMs ?? 420,
-        body.phonemeAccuracy ?? 88,
-      )
-
-      return jsonResponse({ session }, 200, headers)
-    }
-
-    return jsonResponse({ error: 'Method not allowed' }, 405, headers)
-  } catch (err) {
-    if (isAppError(err)) {
-      return jsonResponse(toErrorBody(err), err.status, headers)
-    }
-    return jsonResponse({ error: 'Lỗi xử lý phản xạ Shadowing' }, 500, headers)
+    const passages = listShadowingPassages()
+    return jsonResponse({ passages }, 200, headers)
   }
+
+  // GỠ 2026-10-02 (changelog 0484, chủ dự án chọn "bỏ điểm, giữ bài luyện"). Trước đây POST trả
+  // "Band", độ trễ, độ đồng bộ nhịp tính từ hai con số client sinh bằng `Math.random()` — thẻ
+  // không ghi âm gì. Giữ nhánh để client cũ nhận lỗi rõ (501) thay vì 405 mơ hồ.
+  if (req.method === 'POST') {
+    return jsonResponse(
+      {
+        error: 'ECHO_SHADOWING_SCORING_UNAVAILABLE',
+        message:
+          'Bài nói đuổi chưa chấm điểm: bản trước hiện điểm tính từ số ngẫu nhiên chứ không đo ' +
+          'giọng nói của bạn.',
+      },
+      501,
+      headers,
+    )
+  }
+
+  return jsonResponse({ error: 'Method not allowed' }, 405, headers)
 }
