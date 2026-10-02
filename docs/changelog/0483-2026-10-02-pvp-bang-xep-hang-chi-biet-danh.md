@@ -1,6 +1,6 @@
 # 0483 — Bảng xếp hạng PvP chỉ hiện biệt danh, thôi lộ tên tài khoản (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền khi tạo) · **Loại:** `fix(pvp)`.
+- **Ngày:** 2026-10-02 · **PR:** #1218 · **Loại:** `fix(pvp)`.
 - **Quyết định:** chủ dự án chọn phương án (a) cho nợ 🟡 ghi ở changelog 0482: "chỉ biệt danh, ai
   chưa có thì hiện Học viên #N".
 
