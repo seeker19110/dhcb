@@ -643,10 +643,11 @@ for (const theme of THEMES) {
   })
 }
 
-// [S06d] Năm studio của Bạn Đồng Hành — ROUTES chỉ quét studio mặc định nên chữ đọc ở 4 studio
+// [S06d] Các studio của Bạn Đồng Hành — ROUTES chỉ quét studio mặc định nên chữ đọc ở các studio
 // còn lại chưa từng qua cổng 7:1 (S06c chỉ đưa chúng vào cổng AA). Cùng khuôn chờ theo trạng
-// thái với vòng COMPANION_STUDIOS ở e2e/a11y.spec.ts.
-const COMPANION_STUDIOS = ['Trò chuyện', 'Ghi nhớ', 'Thử thách', 'Kế hoạch', 'Tổng kết']
+// thái với vòng COMPANION_STUDIOS ở e2e/a11y.spec.ts. Studio "Tổng kết" đã GỠ (changelog 0475);
+// thẻ Agent + banner Action Canvas của nó dời sang "Kế hoạch" nên vẫn được quét.
+const COMPANION_STUDIOS = ['Trò chuyện', 'Ghi nhớ', 'Thử thách', 'Kế hoạch']
 for (const theme of THEMES) {
   for (const studio of COMPANION_STUDIOS) {
     test(`a11y AAA (nội dung + tiêu đề): Bạn Đồng Hành — studio ${studio}, theme=${theme}`, async ({

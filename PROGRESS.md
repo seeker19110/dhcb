@@ -694,9 +694,9 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `/api/life-synthesis` + `lifeGraphService` + bảng `personal.life_graph_*` (migration 0043) **cố
   ý GIỮ LẠI** — đó là đồ thị cá nhân/Learning chứ không phải trụ "Đời sống" (bảng nằm ở schema
   `personal`, không phải `life`): `learningGoalAdapter` → `/api/profile` chiếu learning goal vào
-  đó, `contextEngine` đọc nó theo consent `life_graph`, và studio "Tổng hợp" của Companion
-  (`StudioSynthesis`, đang chạy thật) gọi `/api/life-synthesis`. Xoá sẽ gãy các luồng Learning +
-  Companion đó, nên chờ quyết định riêng.
+  đó, `contextEngine` đọc nó theo consent `life_graph`. (`/api/life-synthesis` đã TẠM NGỪNG, trả 501
+  từ changelog `0475`; studio "Tổng kết" gọi nó đã gỡ.) Xoá sẽ gãy các luồng Learning + Companion
+  đó, nên chờ quyết định riêng.
 
 ### Ưu tiên 3 — kỹ thuật (nhỏ, đo được, không đổi hành vi)
 
@@ -712,11 +712,11 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `docs/research/ecc-everything-claude-code.md` mục 6). ✅ Xong ở `0469`: (4) hook chặn
   `curl … | sh`; (5) nhắc mềm khi sửa file dùng chung (≥ 20 nơi import); bẫy escape → TRAPS mục 8.
   ✅ Xong ở `0470`: (3) ESLint `no-console` cho `apps/dhcb/src` + `apps/hub/src`. ✅ Xong ở
-  `0473`: bảng nháp STEM thôi khen sai. **Chủ dự án đã duyệt 2026-10-02, đang làm:** (1) rà & viết
-  lại `.agents/skills/` rồi chuyển sang `.claude/skills/` (giữ bản `.agents/`, nhiều PR nhỏ);
-  (2) rút gọn CLAUDE.md (~44 nghìn ký tự) — dời NGUYÊN VĂN phần lịch sử sang `docs/`, có script
-  kiểm không mất luật; ẩn studio "Tổng hợp" tới khi có dữ liệu thật. Còn chờ quyết: (6) hai người
-  rà độc lập (`santa-method`) cho nội dung học.
+  `0473`: bảng nháp STEM thôi khen sai. ✅ Xong ở `0475`: gỡ studio "Tổng kết" (điểm bịa).
+  **Chủ dự án đã duyệt 2026-10-02, đang làm:** (1) rà & viết lại `.agents/skills/` rồi chuyển
+  sang `.claude/skills/` (giữ bản `.agents/`, nhiều PR nhỏ); (2) rút gọn CLAUDE.md (~44 nghìn ký
+  tự) — dời NGUYÊN VĂN phần lịch sử sang `docs/`, có script kiểm không mất luật. Còn chờ quyết:
+  (6) hai người rà độc lập (`santa-method`) cho nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
@@ -1115,17 +1115,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   bộ giải ký hiệu (thay nghiệm vào hai vế, đếm nguyên tử) — tính năng mới, cần đặc tả; (2) hành
   động `submit_solution` vẫn so chuỗi con với đề ngân hàng câu hỏi — giao diện CHƯA gọi, sửa khi
   nối ngân hàng đề STEM vào giao diện.
-- 🔴 **[2026-10-02 — phát hiện khi rà `.agents/skills/`, changelog `0469`] Companion › studio
-  "Tổng hợp" hiển thị điểm "phân tích cuộc sống" BỊA cho mọi người dùng.**
-  `LifeSynthesisDashboard` gọi `GET /api/life-synthesis`
-  (`apps/server/src/api/personal/life-synthesis.ts`) mà không gửi dữ liệu nào, nên
-  `generateLifeSynthesisReport` (`packages/core-personal/lifeSynthesisService.ts`) dùng số hoạt
-  động **gán cứng** (`learning: 12, career: 6, work: 15, startup: 4, life: 8`) kèm câu nhận xét
-  soạn sẵn ("Senior Specialist", "khảo sát 5 người dùng thử"…) — và vẫn chấm cả ba trụ
-  Career/Startup/Life đã xoá 2026-09-20 (ADR-0010). Trái "Luật số 1" (kết quả chẩn đoán không
-  phải bảng chấm điểm con người) và trái tính trung thực. **Gỡ — chờ chủ dự án chọn:** (a) ẩn
-  studio "Tổng hợp" tới khi có dữ liệu thật; hoặc (b) nối dữ liệu thật (Learning + Ghi chú) và bỏ
-  ba miền đã xoá.
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0475`] "Tổng hợp đa miền" (Life Synthesis) chờ
+  dữ liệu thật.** Lỗi 🔴 cũ (studio "Tổng kết" hiện điểm "phân tích cuộc sống" BỊA — 88/92/85 —
+  giống nhau cho mọi người dùng) đã gỡ: tab không còn, `/api/life-synthesis` trả 501 kèm lời giải
+  thích. Thẻ Agent + banner Action Canvas dời sang studio "Kế hoạch". **Muốn bật lại:** nối nguồn
+  hoạt động thật (Learning + Ghi chú), bỏ ba miền đã xoá (career/startup/life), VIẾT LẠI phần câu
+  chữ của `packages/core-personal/lifeSynthesisService.ts` (nhận xét, khó khăn, khuyến nghị đều
+  soạn sẵn) rồi mới gắn lại `LifeSynthesisDashboard`.
 - 🔴 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` +
   `docs/changelog/0466-*.md`] App CHƯA đạt WCAG 2.2 AA trên toàn bộ trang** (đo trên backend
   thật, 61 route + hub). Tám lỗi critical:

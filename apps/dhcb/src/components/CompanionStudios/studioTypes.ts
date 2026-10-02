@@ -6,13 +6,15 @@ import {
   Brain,
   Swords,
   Target,
-  Compass,
 } from 'lucide-react'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import type { InteractiveQuestion } from '@dhcb/core-contracts/interactiveQuestion'
 
-export type StudioTab = 'dialogue' | 'cognitive' | 'labs' | 'proactive' | 'synthesis'
+// Studio "Tổng kết" ('synthesis') đã GỠ 2026-10-02 (changelog 0475): bảng "phân tích cuộc sống"
+// của nó hiển thị điểm BỊA cho mọi người dùng. Thẻ Agent và banner Action Canvas dời sang "Kế
+// hoạch". Bật lại khi có nguồn dữ liệu hoạt động thật — xem nợ trong PROGRESS.md.
+export type StudioTab = 'dialogue' | 'cognitive' | 'labs' | 'proactive'
 
 // Trạng thái chế độ giọng nói của Companion — pipeline STT → LLM → TTS (KHÔNG streaming
 // audio "live"): ghi âm xong mới gửi nhận diện, gửi AI, rồi đọc câu trả lời.
@@ -78,5 +80,4 @@ export const STUDIO_TABS_CONFIG = [
   { id: 'cognitive' as const, label: 'Ghi nhớ', icon: Brain, badge: 'Hỏi đáp' },
   { id: 'labs' as const, label: 'Thử thách', icon: Swords, badge: 'STEM' },
   { id: 'proactive' as const, label: 'Kế hoạch', icon: Target, badge: 'Tự động' },
-  { id: 'synthesis' as const, label: 'Tổng kết', icon: Compass, badge: 'Tổng hợp' },
 ]

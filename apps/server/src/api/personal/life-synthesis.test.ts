@@ -18,46 +18,35 @@ describe('Life Synthesis API Handler (/api/life-synthesis)', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns synthesis report on GET with 200', async () => {
+  // Changelog 0475: API từng trả báo cáo dựng từ số GÁN CỨNG cho mọi người dùng. Nay tạm ngừng
+  // và nói rõ — không còn ca nào được trả số liệu.
+  it('GET trả 501 kèm lời giải thích, KHÔNG trả báo cáo', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
       userId: '11111111-1111-4111-8111-111111111111',
     })
-
-    const req = new Request('http://localhost/api/life-synthesis?timeframe=weekly', {
-      method: 'GET',
-    })
-
-    const res = await handler(req)
-    expect(res.status).toBe(200)
+    const res = await handler(
+      new Request('http://localhost/api/life-synthesis?timeframe=weekly', { method: 'GET' }),
+    )
+    expect(res.status).toBe(501)
     const data = await res.json()
-    expect(data.success).toBe(true)
-    expect(data.report.schemaVersion).toBe('v5.4.0')
-    expect(data.report.domainBreakdown).toHaveLength(5)
+    expect(data.error).toBe('LIFE_SYNTHESIS_UNAVAILABLE')
+    expect(data.message).toContain('chưa có dữ liệu hoạt động thật')
+    expect(data.report).toBeUndefined()
   })
 
-  it('generates custom synthesis report on POST with 200', async () => {
+  it('POST cũng trả 501, kể cả khi gửi kèm số liệu', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
       userId: '11111111-1111-4111-8111-111111111111',
     })
-
-    const req = new Request('http://localhost/api/life-synthesis', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        timeframe: 'monthly',
-        domainActivityCounts: {
-          learning: 25,
-          career: 12,
-        },
-        metacognitiveAwarenessIndex: 92,
+    const res = await handler(
+      new Request('http://localhost/api/life-synthesis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domainActivityCounts: { learning: 25 } }),
       }),
-    })
-
-    const res = await handler(req)
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.success).toBe(true)
-    expect(data.report.holisticAlignmentScore).toBeGreaterThan(0)
+    )
+    expect(res.status).toBe(501)
+    expect((await res.json()).report).toBeUndefined()
   })
 
   it('handles OPTIONS preflight', async () => {
@@ -73,20 +62,5 @@ describe('Life Synthesis API Handler (/api/life-synthesis)', () => {
     const req = new Request('http://localhost/api/life-synthesis', { method: 'DELETE' })
     const res = await handler(req)
     expect(res.status).toBe(405)
-  })
-
-  it('falls back to default timeframe when POST body is invalid JSON', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
-      userId: '11111111-1111-4111-8111-111111111111',
-    })
-    const req = new Request('http://localhost/api/life-synthesis', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{not valid json',
-    })
-    const res = await handler(req)
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.success).toBe(true)
   })
 })

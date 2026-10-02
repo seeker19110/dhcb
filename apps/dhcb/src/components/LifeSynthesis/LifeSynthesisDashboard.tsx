@@ -1,3 +1,5 @@
+// CHƯA GẮN vào giao diện từ 2026-10-02 (changelog 0475): API nguồn trả 501 vì chưa có dữ liệu
+// hoạt động thật (trước đó trả điểm bịa giống nhau cho mọi người dùng). Giữ mã để bật lại sau.
 import { useState, useEffect } from 'react'
 import {
   Sparkles,
