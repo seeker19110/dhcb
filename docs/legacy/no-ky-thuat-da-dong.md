@@ -6,6 +6,13 @@ bỏ). Thứ tự: như thứ tự cũ trong `PROGRESS.md`, mới hơn ở trên
 
 Khi đóng thêm một món nợ: cắt khối đó khỏi `PROGRESS.md`, dán vào ĐẦU danh sách dưới đây.
 
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0485`: miền đã xoá đổi về `general`, mẫu và phân loại chỉ còn learning/work/general] [2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
+  xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
+  dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0485`: miền đã xoá đổi về `general`, mẫu và phân loại chỉ còn learning/work/general] [2026-10-02 — changelog `0478`] Edge AI phân loại ý định về các miền đã xoá.**
+  `classifyIntentEdge` (`apps/dhcb/src/lib/edgeAi/edgeAiService.ts`, regex — không phải model) vẫn
+  trả `career`/`startup`/`life` dù ba trụ đã gỡ 2026-09-20. Gỡ: bỏ ba nhánh đó (rơi về `general`)
+  và đối chiếu nơi tiêu thụ kết quả.
 - ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0483`: chủ dự án chọn (a) chỉ biệt danh, chưa có thì "Học viên #N"] [2026-10-02 — phát hiện khi sửa PvP ở changelog `0482`] Bảng xếp hạng PvP hiện TÊN THẬT
   của người dùng cho mọi người chơi.** `realLeaderboard` (`apps/server/src/api/platform/pvp-arena.ts`)
   lấy top 10 Elo kèm `coalesce(profiles.nickname, users.name)` — ai chưa đặt biệt danh thì lộ tên

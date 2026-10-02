@@ -1117,6 +1117,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
+  từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
+  (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —
+  chỉ thay tiêu đề nút gốc. Câu chữ giao diện đã sửa thành "bản nháp sơ đồ từ khung mẫu" (không
+  còn hứa "AI phân rã"). **Muốn phân rã thật:** cần đặc tả (gọi AI có đếm lượt, rào chắn skill
+  `autonomous-agent-orchestrator`), hoặc chủ dự án chọn đổi khung mẫu thành canvas trống.
 - 🔴 **[2026-10-02 — phát hiện khi chụp ảnh Tầng 8b ở changelog `0481`] Thẻ "Wearables &
   Circadian Bio-Adaptive MCP" (studio Kế hoạch) hiện số liệu sinh trắc BỊA.**
   `WearablesSyncCard.tsx` gửi lên `/api/wearables-sync` HRV, nhịp tim nghỉ, điểm giấc ngủ, phút
@@ -1124,9 +1130,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   Oura / Garmin — không có tích hợp thiết bị nào. Cùng họ với Echo Shadowing và lab phát âm.
   **Gỡ — chờ chủ dự án chọn:** (a) ẩn thẻ tới khi có tích hợp thật; hoặc (b) cho nhập tay và ghi
   rõ là số tự khai.
-- 🟡 **[2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
-  xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
-  dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.
 - 🔴 **[2026-10-02 — phát hiện khi rà skill `multimodal-realtime-voice-master`, changelog `0479`]
   Studio Thử thách › Echo Shadowing hiện "Band" tính từ số NGẪU NHIÊN.** `EchoShadowingCard.tsx`
   gửi `measuredLatencyMs`/`phonemeAccuracy` bằng `Math.random()` (chú thích ghi sẵn "380 - 460ms",
@@ -1145,10 +1148,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   lưu loát/ngữ điệu dạng %. Cùng loại lỗi với 0473 (STEM) và 0475 (Tổng kết). **Gỡ — chờ chủ dự án
   chọn:** (a) ẩn lab tới khi có chấm âm học thật (forced alignment); hoặc (b) bỏ mọi con số, đổi
   nhãn thành "gợi ý luyện âm" và chỉ giữ ma trận lỗi L1 + mẹo đặt lưỡi.
-- 🟡 **[2026-10-02 — changelog `0478`] Edge AI phân loại ý định về các miền đã xoá.**
-  `classifyIntentEdge` (`apps/dhcb/src/lib/edgeAi/edgeAiService.ts`, regex — không phải model) vẫn
-  trả `career`/`startup`/`life` dù ba trụ đã gỡ 2026-09-20. Gỡ: bỏ ba nhánh đó (rơi về `general`)
-  và đối chiếu nơi tiêu thụ kết quả.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`] Bảng nháp STEM (Companion › Thử thách)
   chưa kiểm được bước giải ở giữa.** Lỗi 🔴 cũ (chấm MỌI bước là "đúng", "ĐÃ GIẢI XONG" bằng so
   chuỗi con) đã sửa: bước không kiểm được nay hiện "? Chưa tự kiểm được"; chỉ đáp số cuối khớp

@@ -55,7 +55,7 @@ Hành.
    có thật (OPFS ưu tiên, tự lùi về IndexedDB, rồi bộ nhớ trong test).
    - **CHƯA CÓ mô hình Edge AI nào để nạp.** `classifyIntentEdge` trong
      `apps/dhcb/src/lib/edgeAi/edgeAiService.ts` là **phân loại ý định bằng regex**, không phải suy
-     luận WebGPU; nó còn trả về các miền đã xoá (career/startup/life). Đừng mô tả hay thiết kế như
+     luận WebGPU; chỉ trả `learning`/`work`/`general` (changelog 0485). Đừng mô tả hay thiết kế như
      thể đã có model chạy trên trình duyệt.
 3. **Code-splitting & ngân sách kích thước:**
    - Các studio của Bạn Đồng Hành và trang nặng nạp lười qua `lazyWithRetry`

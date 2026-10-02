@@ -20,32 +20,28 @@ const DEFAULT_THEME = {
   glow: 'rgba(56, 189, 248, 0.2)',
 }
 
+// Màu + nhãn tiếng Việt theo miền. Chỉ còn hai trụ thật + `general` (changelog 0485); hợp đồng đã
+// đổi miền của ba trụ đã xoá về `general` khi đọc.
 const DOMAIN_COLORS: Record<string, { border: string; bg: string; text: string; glow: string }> = {
   learning: DEFAULT_THEME,
-  career: {
-    border: 'border-purple-500/40',
-    bg: 'bg-purple-950/40',
-    text: 'text-purple-400 theme-light:text-purple-800',
-    glow: 'rgba(168, 85, 247, 0.2)',
-  },
   work: {
     border: 'border-emerald-500/40',
     bg: 'bg-emerald-950/40',
     text: 'text-emerald-400 theme-light:text-emerald-900',
     glow: 'rgba(34, 197, 94, 0.2)',
   },
-  startup: {
-    border: 'border-orange-500/40',
-    bg: 'bg-orange-950/40',
-    text: 'text-orange-400 theme-light:text-orange-900',
-    glow: 'rgba(249, 115, 22, 0.2)',
+  general: {
+    border: 'border-purple-500/40',
+    bg: 'bg-purple-950/40',
+    text: 'text-purple-400 theme-light:text-purple-800',
+    glow: 'rgba(168, 85, 247, 0.2)',
   },
-  life: {
-    border: 'border-rose-500/40',
-    bg: 'bg-rose-950/40',
-    text: 'text-rose-400 theme-light:text-rose-900',
-    glow: 'rgba(244, 63, 94, 0.2)',
-  },
+}
+
+const DOMAIN_LABELS: Record<string, string> = {
+  learning: 'Học tập',
+  work: 'Ghi chú',
+  general: 'Chung',
 }
 
 export default function InteractiveCanvasViewport({
@@ -244,7 +240,7 @@ export default function InteractiveCanvasViewport({
                     ' bg-zinc-950/60 border border-zinc-800'
                   }
                 >
-                  {node.domain}
+                  {DOMAIN_LABELS[node.domain] ?? DOMAIN_LABELS.general}
                 </span>
                 <div className="flex items-center gap-1 text-[11px] text-zinc-400">
                   {node.assignedTo === 'companion_ai' ? (

@@ -1,4 +1,6 @@
 // packages/core-personal/actionCanvasService.ts — Động cơ Điều phối & Bố cục Không gian làm việc Tự trị V4.2.
+// Changelog 0485: mẫu canvas bỏ nút miền `life` ("Giấc ngủ 7.5h", "Focus Score 85+" — số không đo
+// từ đâu) và không còn gán nút vào các miền đã xoá (career/startup/life).
 import {
   ActionCanvasState,
   CanvasNode,
@@ -19,8 +21,8 @@ export class ActionCanvasService {
       id: '10000000-0000-4000-8000-000000000001',
       type: 'goal',
       title: goalPrompt,
-      content: 'Mục tiêu chiến lược tổng thể kết nối 5 miền tri thức cá nhân.',
-      domain: 'career',
+      content: 'Mục tiêu tổng thể, nối việc học với ghi chú công việc của bạn.',
+      domain: 'general',
       x: 400,
       y: 50,
       width: 260,
@@ -69,30 +71,12 @@ export class ActionCanvasService {
       updatedAt: now,
     }
 
-    const lifeNode: CanvasNode = {
-      id: '10000000-0000-4000-8000-000000000004',
-      type: 'task',
-      title: 'Tối ưu Khung giờ Vàng & Giấc ngủ 7.5h',
-      content: 'Học vào khung 06:30 - 07:30 sáng khi chỉ số Focus Score đạt 85+.',
-      domain: 'life',
-      x: 700,
-      y: 250,
-      width: 240,
-      height: 130,
-      color: '#f43f5e',
-      status: 'in_progress',
-      tags: ['circadian', 'wellbeing'],
-      assignedTo: 'user',
-      createdAt: now,
-      updatedAt: now,
-    }
-
     const decisionNode: CanvasNode = {
       id: '10000000-0000-4000-8000-000000000005',
       type: 'decision_bridge',
       title: 'Đánh giá Sẵn sàng Phỏng vấn Quốc tế',
       content: 'Chạy giả lập hội đồng Holodeck Panel Mock trước khi nộp hồ sơ.',
-      domain: 'career',
+      domain: 'general',
       x: 400,
       y: 450,
       width: 260,
@@ -121,13 +105,6 @@ export class ActionCanvasService {
         label: 'Dự án thực tế',
       },
       {
-        id: '20000000-0000-4000-8000-000000000003',
-        sourceNodeId: rootNode.id,
-        targetNodeId: lifeNode.id,
-        relationship: 'requires',
-        label: 'Năng lượng sinh học',
-      },
-      {
         id: '20000000-0000-4000-8000-000000000004',
         sourceNodeId: learningNode.id,
         targetNodeId: decisionNode.id,
@@ -147,7 +124,7 @@ export class ActionCanvasService {
       canvasId,
       personId,
       title: `Lộ trình: ${goalPrompt}`,
-      nodes: [rootNode, learningNode, workNode, lifeNode, decisionNode],
+      nodes: [rootNode, learningNode, workNode, decisionNode],
       edges,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
       lastEditedBy: 'companion_ai',
