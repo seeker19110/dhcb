@@ -1,6 +1,6 @@
 # 0474 — Hộp thoại ở các studio Bạn Đồng Hành phủ đúng cửa sổ: gỡ gốc bẫy `transform` của hoạt ảnh (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `fix(ui)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1209](https://github.com/seeker19110/dhcb/pull/1209) · **Loại:** `fix(ui)`.
 - **Nguồn:** lộ ra khi chụp ảnh Tầng 8b cho bảng nháp STEM (changelog `0473`, PR #1208).
 
 ## Vì sao
