@@ -8,10 +8,18 @@
 // hướng đều DỪNG phát/ghi âm và vô hiệu callback cũ (thế hệ `phatRef` + `useRolePlay`). Kết quả
 // chấm hiện TẠI CHỖ ở `#ket-qua` (không thay cả màn như trước) để hội thoại và đích lượt vẫn còn.
 
-import { useState, useRef, useEffect, useMemo, useCallback, useEffectEvent } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback, useEffectEvent, useId } from 'react'
 import type { PointerEvent, ReactNode } from 'react'
 import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
-import { Play, Pause, Square, Volume2, ChevronUp, ChevronDown } from 'lucide-react'
+import {
+  Play,
+  Pause,
+  Square,
+  Volume2,
+  ChevronUp,
+  ChevronDown,
+  SlidersHorizontal,
+} from 'lucide-react'
 import {
   speak,
   stopSpeaking,
@@ -57,7 +65,6 @@ export function LessonView({
   color,
   plan,
   userId,
-  onBack,
   variant = 'mobile',
   footer,
 }: {
@@ -66,7 +73,6 @@ export function LessonView({
   color: (typeof COLORS)[0]
   plan: Plan
   userId: string
-  onBack: () => void
   /**
    * Khuôn dựng — QUYẾT ĐỊNH BỞI JS chứ không phải `lg:` (xem luật của `TwoPane`).
    *
@@ -74,7 +80,10 @@ export function LessonView({
    *   bong bóng hội thoại cuộn NỘI BỘ. Đúng cho màn hình chỉ chứa được một thứ một lúc.
    * - `desktop`: nằm trong cột phải của master–detail. Ở đây trang đã cuộn theo cả trang rồi,
    *   nên cuộn nội bộ nữa là hai thanh cuộn lồng nhau; thanh điều khiển chuyển sang `sticky`
-   *   để vẫn bám theo, còn nút "← Danh sách" bỏ đi vì danh sách hiện sẵn bên trái.
+   *   để vẫn bám theo.
+   *
+   * Nút về danh sách KHÔNG nằm trong thanh công cụ nữa (2026-10-02): mobile dùng nút quay lại
+   * của header (`Layout onBack`), desktop có sẵn danh sách bên trái.
    */
   variant?: 'mobile' | 'desktop'
   /**
@@ -129,6 +138,9 @@ export function LessonView({
   // Panel "Cài đặt giọng" ẩn mặc định, bấm nhãn ở thanh control mới hiện; đặt xong 1 giọng thì
   // tự ẩn lại sau 3s (đỡ chiếm chỗ màn hình nhỏ).
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false)
+  // Bảng "Tuỳ chọn nghe" của thanh công cụ mobile (desktop luôn hiện thẳng).
+  const [tuyChonMo, setTuyChonMo] = useState(false)
+  const idTuyChon = useId()
   const hideVoiceSettingsRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(
     () => () => {
@@ -497,6 +509,91 @@ export function LessonView({
     { key: 'vi', label: 'VI' },
   ]
 
+  // ── Khối điều khiển phụ của thanh công cụ (tốc độ, chế độ nghe, giọng) ─────────────────
+  // [2026-10-02, audit đồng nhất bố cục] Ở mobile thanh công cụ đứng YÊN ở đầu màn (bài cuộn
+  // trong panel riêng) — trước đây 7 cụm điều khiển tràn 3 hàng, cao 167px ≈ 20% màn 844px
+  // suốt buổi học. Hàng chính nay chỉ giữ việc học chính (Trong bài · Phát · Đóng vai); các
+  // TUỲ CHỈNH gom vào bảng "Tuỳ chọn nghe" mở khi cần. Desktop đủ chỗ nên vẫn hiện thẳng.
+  // Tốc độ — chỉ hiện tốc độ hiện tại, vuốt lên/xuống (hoặc bấm mũi tên) để đổi.
+  const khoiTocDo = (
+    <div
+      onPointerDown={onSpeedPointerDown}
+      onPointerMove={onSpeedPointerMove}
+      onPointerUp={onSpeedPointerUp}
+      onPointerCancel={onSpeedPointerUp}
+      className="flex items-center gap-0.5 cursor-ns-resize touch-none select-none"
+      title={isA ? 'Vuốt lên/xuống để đổi tốc độ' : 'Swipe up/down to change speed'}
+    >
+      <button
+        type="button"
+        onClick={() => stepSpeed(-1)}
+        aria-label={isA ? 'Tốc độ chậm hơn' : 'Slower'}
+        className="tap-44 flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 rounded-lg transition"
+      >
+        <ChevronUp className="w-3.5 h-3.5" />
+      </button>
+      <span className="min-w-[30px] text-center px-1.5 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-200 theme-light:text-sky-900 border border-sky-500/40">
+        {speed}×
+      </span>
+      <button
+        type="button"
+        onClick={() => stepSpeed(1)}
+        aria-label={isA ? 'Tốc độ nhanh hơn' : 'Faster'}
+        className="tap-44 flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 rounded-lg transition"
+      >
+        <ChevronDown className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  )
+  // Chế độ nghe. `tap-44-coarse-y`: trên màn cảm ứng nút cao đủ 44px để bấm (mobile mở trong
+  // bảng "Tuỳ chọn nghe" nên không tốn chỗ hàng chính); với chuột giữ cỡ gọn như cũ.
+  const khoiCheDo = (
+    <div className="flex items-center gap-1">
+      <Volume2 className="w-3 h-3 text-zinc-400 shrink-0" />
+      {MODES.map((m) => (
+        <button
+          key={m.key}
+          onClick={() => changeMode(m.key)}
+          className={`tap-44-coarse-y flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
+            mode === m.key
+              ? 'bg-violet-500/20 text-violet-300 theme-light:text-violet-800 border border-violet-500/40'
+              : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          {m.label}
+        </button>
+      ))}
+    </div>
+  )
+  const nutCaiDatGiong = (
+    <button
+      type="button"
+      onClick={() => setVoiceSettingsOpen((o) => !o)}
+      aria-expanded={voiceSettingsOpen}
+      className={`tap-44-coarse-y flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
+        voiceSettingsOpen ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 hover:text-zinc-200'
+      }`}
+    >
+      {isA ? 'Cài đặt giọng' : 'Voice settings'}
+    </button>
+  )
+  const nutTuyChon = (
+    <button
+      type="button"
+      onClick={() => setTuyChonMo((o) => !o)}
+      aria-expanded={tuyChonMo}
+      // Chỉ trỏ tới bảng khi bảng đang hiện — đóng thì phần tử không có trong DOM.
+      aria-controls={tuyChonMo ? idTuyChon : undefined}
+      aria-label={isA ? 'Tuỳ chọn nghe' : 'Listening options'}
+      title={isA ? 'Tuỳ chọn nghe' : 'Listening options'}
+      className={`tap-44 flex items-center justify-center rounded-lg transition ${
+        tuyChonMo ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'
+      }`}
+    >
+      <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+    </button>
+  )
+
   const dsLuot: LuotTrongBai[] = lesson.turns.map((t, i) => ({
     soThuTu: i + 1,
     nhan: nhanLuot(i + 1, speakerName(t.speaker), isA),
@@ -510,29 +607,23 @@ export function LessonView({
           đúng header sticky cao 56px cộng khoảng thở, khớp `top-20` của cột phụ `TwoPane`. */}
       <div
         ref={toolbarRef}
+        data-testid="thanh-dieu-khien-bai"
         className={
           isDesktopPane
             ? 'sticky top-16 z-10 mb-4 rounded-2xl border border-zinc-800/60 bg-zinc-950/95 backdrop-blur-sm px-3 py-2.5'
-            : 'bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/40 px-4 py-2.5'
+            : 'bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/40 px-3 py-1.5'
         }
       >
         <div className={isDesktopPane ? '' : 'max-w-3xl mx-auto'}>
-          <div className="glass rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-            {/* Nút quay lại danh sách — CHỈ khuôn mobile. Ở desktop danh sách đứng sẵn bên
-                trái nên nút này vừa thừa vừa gây hiểu nhầm là sẽ rời trang. */}
-            {!isDesktopPane && (
-              <>
-                <button
-                  onClick={onBack}
-                  className="tap-44-y shrink-0 text-xs text-zinc-400 hover:text-white transition flex items-center gap-1"
-                >
-                  ← {isA ? 'Danh sách' : 'Back'}
-                </button>
-
-                <div className="h-3.5 w-px bg-zinc-700" />
-              </>
-            )}
-
+          {/* Desktop giữ khung kính; mobile bỏ lớp khung lồng trong thanh (luật "không lồng thẻ
+              trong thẻ", skill ui-ux §9.A.4) — lấy lại 24px ngang + 16px dọc cho hàng một dòng. */}
+          <div
+            className={
+              isDesktopPane
+                ? 'glass rounded-xl px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-2'
+                : 'flex flex-wrap items-center gap-x-1.5 gap-y-1'
+            }
+          >
             {/* [S09c] Các PHẦN của bài đang mở — luôn trong tầm tay trên thanh điều khiển. */}
             <TrongBaiHoiThoai isA={isA} luot={dsLuot} onChon={nhay} />
 
@@ -568,6 +659,8 @@ export function LessonView({
               {!isIdle && !rolePlay && (
                 <button
                   onClick={handleStop}
+                  aria-label={isA ? 'Dừng hẳn' : 'Stop'}
+                  title={isA ? 'Dừng hẳn' : 'Stop'}
                   className="tap-44 w-6 h-6 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
                 >
                   <Square className="w-3 h-3 fill-current" />
@@ -575,59 +668,18 @@ export function LessonView({
               )}
             </div>
 
-            <div className="h-3.5 w-px bg-zinc-700" />
+            {/* Tốc độ + chế độ nghe: hiện thẳng ở desktop; ở mobile nằm trong bảng "Tuỳ chọn". */}
+            {isDesktopPane && (
+              <>
+                <div className="h-3.5 w-px bg-zinc-700" />
+                {khoiTocDo}
+                <div className="h-3.5 w-px bg-zinc-700" />
+                {khoiCheDo}
+              </>
+            )}
 
-            {/* Tốc độ — chỉ hiện tốc độ hiện tại, vuốt lên/xuống (hoặc bấm mũi tên) để đổi */}
-            <div
-              onPointerDown={onSpeedPointerDown}
-              onPointerMove={onSpeedPointerMove}
-              onPointerUp={onSpeedPointerUp}
-              onPointerCancel={onSpeedPointerUp}
-              className="flex items-center gap-0.5 cursor-ns-resize touch-none select-none"
-              title={isA ? 'Vuốt lên/xuống để đổi tốc độ' : 'Swipe up/down to change speed'}
-            >
-              <button
-                type="button"
-                onClick={() => stepSpeed(-1)}
-                aria-label={isA ? 'Tốc độ chậm hơn' : 'Slower'}
-                className="tap-44 flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 rounded-lg transition"
-              >
-                <ChevronUp className="w-3.5 h-3.5" />
-              </button>
-              <span className="min-w-[30px] text-center px-1.5 py-0.5 rounded text-xs font-medium bg-sky-500/20 text-sky-200 theme-light:text-sky-900 border border-sky-500/40">
-                {speed}×
-              </span>
-              <button
-                type="button"
-                onClick={() => stepSpeed(1)}
-                aria-label={isA ? 'Tốc độ nhanh hơn' : 'Faster'}
-                className="tap-44 flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 rounded-lg transition"
-              >
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="h-3.5 w-px bg-zinc-700" />
-
-            {/* Chế độ nghe */}
-            <div className="flex items-center gap-1">
-              <Volume2 className="w-3 h-3 text-zinc-400 shrink-0" />
-              {MODES.map((m) => (
-                <button
-                  key={m.key}
-                  onClick={() => changeMode(m.key)}
-                  className={`px-1.5 py-0.5 rounded text-xs font-medium transition ${
-                    mode === m.key
-                      ? 'bg-violet-500/20 text-violet-300 theme-light:text-violet-800 border border-violet-500/40'
-                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="h-3.5 w-px bg-zinc-700" />
+            {/* Vạch ngăn chỉ ở desktop: mobile cần từng điểm ảnh để giữ một hàng. */}
+            {isDesktopPane && <div className="h-3.5 w-px bg-zinc-700" />}
 
             {/* Đóng vai — chỉ VIP. Free thấy nút khoá + link nâng cấp. */}
             <RolePlayToolbar
@@ -644,7 +696,9 @@ export function LessonView({
 
             {/* Nút mở/ẩn panel giọng — nằm ở phần còn dư của thanh control */}
             <div className="ml-auto flex items-center gap-2 shrink-0">
-              {(playing || rolePlay) && activeTurn !== null && (
+              {/* Số lượt "3/12": mobile chỉ hiện lúc đóng vai — lúc nghe, bong bóng đang phát đã
+                  sáng lên rồi, còn thêm số đếm là đẩy nút Tuỳ chọn xuống hàng thứ hai. */}
+              {(rolePlay || (playing && isDesktopPane)) && activeTurn !== null && (
                 <div className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse" />
                   <span className="text-[11px] text-zinc-400">
@@ -652,22 +706,22 @@ export function LessonView({
                   </span>
                 </div>
               )}
-              {!rolePlay && (
-                <button
-                  type="button"
-                  onClick={() => setVoiceSettingsOpen((o) => !o)}
-                  aria-expanded={voiceSettingsOpen}
-                  className={`px-1.5 py-0.5 rounded text-xs font-medium transition ${
-                    voiceSettingsOpen
-                      ? 'bg-zinc-800 text-zinc-200'
-                      : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {isA ? 'Cài đặt giọng' : 'Voice settings'}
-                </button>
-              )}
+              {!rolePlay && (isDesktopPane ? nutCaiDatGiong : nutTuyChon)}
             </div>
           </div>
+
+          {/* Bảng "Tuỳ chọn nghe" (mobile) — mở bằng nút trượt ở cuối hàng chính. */}
+          {!isDesktopPane && tuyChonMo && !rolePlay && (
+            <div
+              id={idTuyChon}
+              className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1 animate-fade-in"
+            >
+              {/* Không vạch ngăn: bảng tự xuống dòng theo bề rộng máy, vạch sẽ mồ côi ở cuối hàng. */}
+              {khoiTocDo}
+              {khoiCheDo}
+              {nutCaiDatGiong}
+            </div>
+          )}
 
           {rpError && (
             <p className="text-[11px] text-red-400 theme-light:text-red-700 mt-1.5 px-1">

@@ -28,7 +28,7 @@ import {
 } from 'lucide-react'
 import Layout from '../../../components/Layout.js'
 import { PageShell } from '@core/PageShell'
-import { buttonClass } from '@core/buttonStyles'
+import { ContinueCard } from '../../../components/learning/ContinueCard'
 import PricePromoBanner from '../../../components/PricePromoBanner.js'
 import RewardTipBanner from '../../../components/RewardTipBanner.js'
 import { getDirection } from '../../../lib/storage'
@@ -184,25 +184,16 @@ export default function EnglishHome() {
           </div>
 
           {continueLevelId && (
-            <div className="pt-2 border-t border-zinc-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">
-                  {isA ? 'Bài học tiếp theo theo lộ trình:' : 'Next roadmap lesson:'}
-                </p>
-                <p className="text-sm font-bold text-emerald-300 theme-light:text-emerald-800 truncate mt-0.5">
-                  {nextLabel || (isA ? 'Bắt đầu bài học mới' : 'Start new lesson')}
-                </p>
-              </div>
-              <button
-                onClick={goToNextStep}
-                // [2026-10-01, đồng nhất] Nút chính chuẩn (accent) như "Học tiếp" của môn Lập
-                // trình và "Vào môn" ở hub — trước đây riêng nút này xanh lá.
-                className={buttonClass({ variant: 'primary', className: 'shrink-0' })}
-              >
-                <span>{isA ? 'Tiếp tục học ngay' : 'Continue learning'}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+            // [2026-10-02] Khối "Học tiếp" dùng chung (ContinueCard) — cùng bố cục với trang môn
+            // Lập trình. Tên bài trước đây xanh lá: CLAUDE.md §4.8 dành xanh lá cho nghĩa "đúng".
+            <ContinueCard
+              frame="inset"
+              headingLevel={3}
+              eyebrow={isA ? 'Bài tiếp theo theo lộ trình' : 'Next roadmap lesson'}
+              title={nextLabel || (isA ? 'Bắt đầu bài học mới' : 'Start new lesson')}
+              actionLabel={isA ? 'Học tiếp' : 'Continue'}
+              onAction={goToNextStep}
+            />
           )}
         </section>
 

@@ -187,8 +187,12 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   Lập trình hiện trong nội dung, nhãn gói ở thanh bên đọc gói thật (M8 phần thanh bên), khổ đọc
   60ch cho trang Lập trình (M22). **Đợt nội dung (`docs/changelog/0470-*.md`, PR #1203)**: 575 tiêu đề lý
   thuyết STEM chuyển sang viết hoa đầu câu + dấu `## ` trong dữ liệu nguồn (giữ tên riêng/viết
-  tắt; cổng chặn kiểu viết HOA cũ quay lại) — M15 xong. **Việc kế tiếp:** khối "Học tiếp" dùng
-  chung một component cho các trang môn; thanh công cụ bài hội thoại mobile gọn một hàng.
+  tắt; cổng chặn kiểu viết HOA cũ quay lại) — M15 xong. **Đợt 3 (`docs/changelog/0471-*.md`)**:
+  thanh công cụ bài hội thoại mobile 167px → 57px một hàng (tuỳ chỉnh vào bảng "Tuỳ chọn nghe",
+  nút Back header về danh sách); khối "Học tiếp" dùng chung `ContinueCard`/`ContinueRow` cho trang
+  môn Tiếng Anh + Lập trình và ba danh sách (PR #1205). **Việc kế tiếp:** "Học tiếp" cho bốn môn STEM (cần
+  hàm "lá kế tiếp chưa xong" + chốt lớp mặc định); thống nhất tên "Bài học hôm nay" ↔ "Các bài hội
+  thoại mẫu thông dụng" và "Vật lý"/"Vật lí" trong đợt câu chữ.
 - **[2026-09-23] Kế hoạch nâng cấp UI/UX và sư phạm sau audit**:
   [goal 5 đợt](docs/goals/2026-09-23-uiux-su-pham.md) và
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).

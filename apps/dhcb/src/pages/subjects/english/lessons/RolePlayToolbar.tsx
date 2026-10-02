@@ -42,7 +42,7 @@ export function RolePlayToolbar({
               setRolePicker((o) => !o)
             }}
             aria-expanded={rolePicker}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+            className={`tap-44-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition ${
               rolePicker
                 ? 'bg-violet-500/20 text-violet-300 theme-light:text-violet-800'
                 : 'bg-zinc-800 text-zinc-300 hover:text-white'
@@ -107,7 +107,7 @@ export function RolePlayToolbar({
       {rolePlay && (
         <button
           onClick={stopRolePlay}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 theme-light:text-red-700 text-xs font-medium transition"
+          className="tap-44-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 theme-light:text-red-700 text-xs font-medium transition"
         >
           <Square className="w-3 h-3 fill-current" />
           {isA ? 'Dừng đóng vai' : 'Stop role-play'}

@@ -7,6 +7,7 @@ import { duongDanMonTiengAnh } from '../../../lib/subjectsHost'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Play, Square, Eye, EyeOff, ChevronRight, ChevronDown, Search } from 'lucide-react'
+import { ContinueRow } from '../../../components/learning/ContinueCard'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
 import { PageShell } from '@core/PageShell'
@@ -191,20 +192,11 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
   return (
     <div className="space-y-4">
       {nextUnviewed && !searching && (
-        <button
+        <ContinueRow
+          label={T.phrasesContinue}
+          title={nextUnviewed.starter}
           onClick={() => open(nextUnviewed)}
-          className="w-full flex items-center gap-3 bg-accent-500/10 hover:bg-accent-500/15 border border-accent-500/30 rounded-2xl px-4 py-3 transition text-left"
-        >
-          <div className="w-9 h-9 rounded-xl bg-accent-500/20 flex items-center justify-center shrink-0">
-            <Play className="w-4 h-4 text-accent-400 theme-light:text-accent-800" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-accent-400 theme-light:text-accent-800 font-medium">
-              {T.phrasesContinue}
-            </p>
-            <p className="text-sm font-semibold text-white truncate">{nextUnviewed.starter}</p>
-          </div>
-        </button>
+        />
       )}
 
       <div className="relative">

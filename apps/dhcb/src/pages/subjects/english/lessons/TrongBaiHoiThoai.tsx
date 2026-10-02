@@ -89,10 +89,12 @@ export function TrongBaiHoiThoai({
         aria-controls={idDanhSach}
         onClick={() => setMo((v) => !v)}
         onKeyDown={phim}
-        className="tap-44-y flex items-center gap-1.5 rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition"
+        className="tap-44 flex items-center justify-center gap-1.5 rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition"
       >
         <ListOrdered className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        {nhanKhoi}
+        {/* Màn hẹp hơn 390px (2026-10-02): chỉ còn biểu tượng để cả thanh điều khiển vừa MỘT hàng;
+            chữ vẫn là tên của nút cho trình đọc màn hình (`sr-only`), `tap-44` giữ vùng chạm 44px. */}
+        <span className="sr-only min-[390px]:not-sr-only">{nhanKhoi}</span>
       </button>
       {mo && (
         <nav

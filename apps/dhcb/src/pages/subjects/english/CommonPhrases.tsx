@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useDeferredValue } from 'react'
 import { duongDanMonTiengAnh } from '../../../lib/subjectsHost'
-import { Search, X, ChevronRight, Loader2, Play } from 'lucide-react'
+import { Search, X, ChevronRight, Loader2 } from 'lucide-react'
+import { ContinueRow } from '../../../components/learning/ContinueCard'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
 import { PageShell } from '@core/PageShell'
@@ -341,20 +342,11 @@ export default function CommonPhrases() {
 
           {/* Gợi ý "Tiếp tục" — chủ đề đầu tiên chưa xem, ẩn khi đang tìm kiếm */}
           {nextUnviewed && !search.trim() && (
-            <button
+            <ContinueRow
+              label={T.phrasesContinue}
+              title={nextUnviewed.starter}
               onClick={() => openSubject(nextUnviewed)}
-              className="w-full flex items-center gap-3 bg-accent-500/10 hover:bg-accent-500/15 border border-accent-500/30 rounded-2xl px-4 py-3 transition text-left"
-            >
-              <div className="w-9 h-9 rounded-xl bg-accent-500/20 flex items-center justify-center shrink-0">
-                <Play className="w-4 h-4 text-accent-400 theme-light:text-accent-800" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-accent-400 theme-light:text-accent-800 font-medium">
-                  {T.phrasesContinue}
-                </p>
-                <p className="text-sm font-semibold text-white truncate">{nextUnviewed.starter}</p>
-              </div>
-            </button>
+            />
           )}
 
           {/* Ô tìm kiếm — chỉ hiện ở trên trên desktop */}
