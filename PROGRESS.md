@@ -715,10 +715,12 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `0473`: bảng nháp STEM thôi khen sai. ✅ Xong ở `0475`: gỡ studio "Tổng kết" (điểm bịa).
   ✅ Xong ở `0476`: (2) rút gọn CLAUDE.md 43.964 → 31.784 ký tự, phần lý do/lịch sử dời NGUYÊN VĂN
   sang `docs/claude-md-chi-tiet.md` (`npm run check:claude-md` chứng minh không mất dòng nào;
-  `scripts/claude-md-split.test.ts` canh trần 34.000 ký tự). **Chủ dự án đã duyệt 2026-10-02, đang
-  làm:** (1) rà & viết lại `.agents/skills/` rồi chuyển sang `.claude/skills/` (giữ bản
-  `.agents/`, nhiều PR nhỏ). Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho nội dung
-  học.
+  `scripts/claude-md-split.test.ts` canh trần 34.000 ký tự). **Đang làm (chủ dự án duyệt
+  2026-10-02):** (1) rà & viết lại `.agents/skills/` rồi chuyển sang `.claude/skills/`, bản
+  `.agents/` giữ làm gương trùng từng byte — **2/11 đã chuyển ở `0477`** (`ui-ux`,
+  `marketing-content-writer`); cổng `scripts/skills-mirror.test.ts` chặn skill nhắc đường dẫn
+  không tồn tại. Còn 9, chia 3 PR. Còn chờ quyết: (6) hai người rà độc lập (`santa-method`) cho
+  nội dung học.
 - **Rà lại sau vài ngày:** log Redis (`pm2 logs dhcb --err`) sau khi VPS có swap — còn ~7 lần
   rớt/ngày thì đào tiếp, giảm hẳn thì đóng nợ (chi tiết ở "Nợ kỹ thuật còn mở").
 - **Đã kiểm 2026-09-06, KHÔNG cần làm:** (1) Zod — mọi handler API có đọc `req.body/query/params`
