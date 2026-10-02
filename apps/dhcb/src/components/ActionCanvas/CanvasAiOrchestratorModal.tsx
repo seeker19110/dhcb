@@ -63,10 +63,13 @@ export default function CanvasAiOrchestratorModal({
           </div>
           <div>
             <h3 id={titleId} className="text-base font-bold text-zinc-100">
-              AI Phân Rã & Tạo Không Gian Hành Động
+              Tạo Không Gian Hành Động
             </h3>
             <p className="text-xs text-zinc-400">
-              Bạn Đồng Hành AI sẽ tự động phân rã mục tiêu lớn thành đồ thị 5 miền liên kết.
+              {/* Changelog 0485: `synthesize` dựng từ KHUNG MẪU cố định, không gọi AI — câu cũ "AI tự
+                  động phân rã… 5 miền" nói sai cả hai ý. */}
+              Tạo bản nháp sơ đồ từ khung mẫu: mục tiêu của bạn ở gốc, kèm vài nút gợi ý để bạn sửa,
+              thêm, xoá.
             </p>
           </div>
         </div>
@@ -124,12 +127,12 @@ export default function CanvasAiOrchestratorModal({
               {loading ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Đang Phân Rã Đồ Thị...
+                  Đang tạo sơ đồ...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5" />
-                  Tạo Mạng Lưới Canvas
+                  Tạo bản nháp sơ đồ
                 </>
               )}
             </button>

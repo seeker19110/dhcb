@@ -160,4 +160,51 @@ describe('Action Canvas API Handler (/api/action-canvas)', () => {
     const res = await handler(req)
     expect(res.status).toBe(400)
   })
+
+  it('GET chuẩn hoá canvas cũ đã lưu: nút miền career/life đổi về general', async () => {
+    const userId = '33333333-3333-4333-8333-333333333333'
+    const now = new Date().toISOString()
+    const node = (id: string, domain: string) => ({
+      id,
+      type: 'task',
+      title: 'Nút cũ',
+      content: '',
+      domain,
+      x: 0,
+      y: 0,
+      width: 220,
+      height: 120,
+      color: '#00f0ff',
+      status: 'in_progress',
+      tags: [],
+      assignedTo: 'user',
+      createdAt: now,
+      updatedAt: now,
+    })
+    store.set(userId + '|action_canvas', {
+      canvasId: '44444444-4444-4444-8444-444444444444',
+      personId: userId,
+      title: 'Canvas cũ',
+      nodes: [
+        node('55555555-5555-4555-8555-555555555551', 'career'),
+        node('55555555-5555-4555-8555-555555555552', 'life'),
+        node('55555555-5555-4555-8555-555555555553', 'learning'),
+      ],
+      edges: [],
+      viewport: { zoom: 1, panX: 0, panY: 0 },
+      lastEditedBy: 'user',
+      schemaVersion: 'v4.2.0',
+      createdAt: now,
+      updatedAt: now,
+    })
+    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({ userId })
+    const res = await handler(new Request('http://localhost/api/action-canvas', { method: 'GET' }))
+    expect(res.status).toBe(200)
+    const { canvas } = await res.json()
+    expect(canvas.nodes.map((n: { domain: string }) => n.domain)).toEqual([
+      'general',
+      'general',
+      'learning',
+    ])
+  })
 })

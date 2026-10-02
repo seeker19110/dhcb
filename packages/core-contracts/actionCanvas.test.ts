@@ -7,6 +7,7 @@ import {
   CanvasEdgeSchema,
   ActionCanvasStateSchema,
   CanvasExportFormatSchema,
+  CanvasDomainSchema,
 } from './actionCanvas.js'
 
 describe('Action Canvas Contract (V4.2)', () => {
@@ -14,6 +15,18 @@ describe('Action Canvas Contract (V4.2)', () => {
     expect(CanvasNodeTypeSchema.parse('goal')).toBe('goal')
     expect(CanvasNodeTypeSchema.parse('mindmap_node')).toBe('mindmap_node')
     expect(() => CanvasNodeTypeSchema.parse('invalid_type')).toThrow()
+  })
+
+  // Changelog 0485: miền của trụ đã xoá đổi về `general` khi đọc (canvas lưu từ trước vẫn hợp lệ),
+  // giá trị lạ khác vẫn bị từ chối.
+  it('CanvasDomainSchema: learning/work/general giữ nguyên, career/startup/life → general', () => {
+    expect(CanvasDomainSchema.parse('learning')).toBe('learning')
+    expect(CanvasDomainSchema.parse('work')).toBe('work')
+    expect(CanvasDomainSchema.parse('general')).toBe('general')
+    for (const legacy of ['career', 'startup', 'life']) {
+      expect(CanvasDomainSchema.parse(legacy)).toBe('general')
+    }
+    expect(() => CanvasDomainSchema.parse('finance')).toThrow()
   })
 
   it('validates a complete CanvasNode', () => {

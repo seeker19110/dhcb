@@ -82,9 +82,9 @@ export default function ActionCanvas() {
     try {
       const newCanvas = await synthesizeGoalCanvas(prompt)
       setCanvas(newCanvas)
-      toast.success('Bạn Đồng Hành AI đã tạo mạng lưới mục tiêu mới!')
+      toast.success('Đã tạo bản nháp sơ đồ — sửa các nút cho khớp mục tiêu của bạn.')
     } catch {
-      toast.error('Lỗi khi phân rã mục tiêu.')
+      toast.error('Chưa tạo được sơ đồ. Thử lại nhé.')
     }
   }
 
@@ -210,7 +210,7 @@ export default function ActionCanvas() {
               className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500 to-blue-500 text-zinc-950 hover:opacity-90 shadow-md transition"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              AI Phân Rã Mục Tiêu
+              Tạo sơ đồ từ mục tiêu
             </button>
             <button
               type="button"
