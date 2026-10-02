@@ -1,6 +1,6 @@
 # 0479 — Chuyển skill đợt 3: `stem-science-reasoning-master` · `memory-palace-cognitive-scaffolder` · `multimodal-realtime-voice-master` (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `chore(skills)`.
+- **Ngày:** 2026-10-02 · **PR:** #1214 · **Loại:** `chore(skills)`.
 - **Nối tiếp:** đợt 1 (0477, PR #1212), đợt 2 (0478, PR #1213); cùng phương án chủ dự án đã duyệt.
 
 ## Kết quả rà từng skill (đối chiếu mã 2026-10-02)
