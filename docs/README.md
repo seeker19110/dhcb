@@ -10,6 +10,7 @@
 | File                                                  | Vai trò                                                                                                    |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `../CLAUDE.md`                                        | Luật làm việc hiện hành của AI (gọn, không lịch sử)                                                        |
+| `claude-md-chi-tiet.md`                               | Lý do, lịch sử, số đo của từng luật trong `CLAUDE.md` (dời nguyên văn, theo số mục §)                      |
 | `../PROGRESS.md`                                      | Trạng thái hiện tại: giai đoạn · tiếp theo · việc tay · nợ mở                                              |
 | `../PROJECT.md`                                       | Cái gì cần xây: MVP, schema, DoD                                                                           |
 | `research/kien-truc-va-ha-tang.md` mục [1]            | Kiến trúc chuẩn nền tảng (khuôn "thêm môn học mới")                                                        |
