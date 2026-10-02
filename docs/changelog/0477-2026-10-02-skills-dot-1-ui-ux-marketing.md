@@ -1,6 +1,6 @@
 # 0477 — Chuyển skill sang `.claude/skills/` đợt 1: `ui-ux` + `marketing-content-writer`, kèm cổng chống mô tả bịa (2026-10-02)
 
-- **Ngày:** 2026-10-02 · **PR:** (điền sau khi tạo) · **Loại:** `chore(skills)`.
+- **Ngày:** 2026-10-02 · **PR:** [#1212](https://github.com/seeker19110/dhcb/pull/1212) · **Loại:** `chore(skills)`.
 - **Nối tiếp:** đề xuất (1) đợt 2 tích hợp ECC (ADR-0013). Claude Code **không nạp**
   `.agents/skills/`; nó chỉ nạp `.claude/skills/<tên>/SKILL.md`. Chủ dự án chọn phương án **"Rà
   & viết lại rồi chuyển"**:
