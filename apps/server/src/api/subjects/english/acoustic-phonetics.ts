@@ -1,15 +1,6 @@
-// api/acoustic-phonetics.ts — API Endpoint phân tích âm học và tính điểm GOP V4.
+// api/acoustic-phonetics.ts — REST handler của "Acoustic Phonetics & GOP Lab" (ĐÃ GỠ phần chấm).
 import { jsonResponse } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
-import { analyzeAcousticPhonetics } from '@dhcb/core-ai/acousticPhoneticsService'
-import { z } from 'zod'
-
-const AcousticRequestSchema = z.object({
-  targetSentence: z.string().min(1).max(1000),
-  spokenTranscript: z.string().max(1000).optional(),
-  sessionId: z.string().uuid().optional(),
-  pcmAudioLengthMs: z.number().int().positive().optional(),
-})
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -25,20 +16,17 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ error: 'Unauthorized' }, 401)
   }
 
-  try {
-    const body = await req.json()
-    const parsed = AcousticRequestSchema.parse(body)
-
-    const report = analyzeAcousticPhonetics({
-      personId: auth.userId,
-      sessionId: parsed.sessionId,
-      targetSentence: parsed.targetSentence,
-      spokenTranscript: parsed.spokenTranscript,
-      pcmAudioLengthMs: parsed.pcmAudioLengthMs,
-    })
-
-    return jsonResponse(report, 200)
-  } catch (err) {
-    return jsonResponse({ error: 'Invalid acoustic analysis payload', details: String(err) }, 400)
-  }
+  // GỠ 2026-10-02 (changelog 0484, chủ dự án chọn "bỏ số, đổi thành gợi ý"). Trước đây endpoint
+  // đoán âm sai từ CHÍNH TẢ câu đã nhận dạng và gán "Điểm GOP" bằng công thức cứng (`92 - idx * 3`,
+  // lệch thì 48), không đo âm thanh. Gợi ý luyện âm nay tính ngay ở giao diện
+  // (`@dhcb/core-ai/pronunciationHints`), không qua server. Giữ route để client cũ nhận lỗi rõ.
+  return jsonResponse(
+    {
+      error: 'ACOUSTIC_SCORING_UNAVAILABLE',
+      message:
+        'Lab phát âm không còn chấm điểm: bản trước hiện điểm GOP gán sẵn chứ không đo giọng nói ' +
+        'của bạn. Xem phần "Gợi ý luyện âm" trong studio Thử thách.',
+    },
+    501,
+  )
 }

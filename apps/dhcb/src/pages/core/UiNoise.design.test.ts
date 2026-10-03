@@ -78,7 +78,6 @@ const ALLOWED_COLOR_SHADOW_COUNT: Record<string, number> = {
   'components/CompanionVoice/EchoShadowingCard.tsx': 1, // đoạn đang chọn
   'components/CompanionVoice/ScenarioHolodeckCard.tsx': 1, // kịch bản đang chọn
   'components/CompanionVoice/SocraticDiagnosticsCard.tsx': 1, // mục đang chọn
-  'components/CompanionVoice/WearablesSyncCard.tsx': 1, // nguồn đang chọn
   'components/CompanionVoice/WorkplaceHarvesterCard.tsx': 2, // 2 tab đang chọn
   'components/FeedbackModal.tsx': 1, // hạng mục phản hồi đang chọn
   'components/Home/HomeUniversalAiBar.tsx': 1, // đang lắng nghe (ghi âm)
@@ -134,7 +133,6 @@ const ALLOWED_PULSE_COUNT: Record<string, number> = {
   'components/CompanionStudios/StudioDialogue.tsx': 2, // voice.state đang hoạt động + nút "Dừng Ghi Âm"
   'components/CompanionVoice/AmbientScreenCopilot.tsx': 1, // đang chia sẻ màn hình (stream sống)
   'components/CompanionVoice/ArticulatoryPhoneticsVisualizer.tsx': 1, // minh hoạ dây thanh đang rung (thuộc tính âm vị thật)
-  'components/CompanionVoice/EchoShadowingCard.tsx': 2, // đang ghi âm (waveform + nút)
   'components/CompanionVoice/NeuroAffectiveCard.tsx': 1, // đang ở trạng thái flow đỉnh cao
   'components/CompanionVoice/ScenarioHolodeckCard.tsx': 1, // áp lực phiên mô phỏng đang tăng cao
   'components/CompanionVoice/SubconsciousInsightsCard.tsx': 1, // skeleton tải
@@ -159,7 +157,6 @@ const ALLOWED_PULSE_COUNT: Record<string, number> = {
 
 const ALLOWED_PING_COUNT: Record<string, number> = {
   'components/Companion3D/CyberTutorAvatar3D.tsx': 1, // đang nghe/đang nói (avatar 3D)
-  'components/CompanionVoice/EchoShadowingCard.tsx': 1, // đang ghi âm
   'components/Home/HomeUniversalAiBar.tsx': 1, // đang lắng nghe (ghi âm)
   'components/Layout.tsx': 1, // CHỈ LÀ CHÚ THÍCH ghi lại lý do đã gỡ, không phải mã thật
   'components/chat/PresenceDot.tsx': 1, // đang trực tuyến

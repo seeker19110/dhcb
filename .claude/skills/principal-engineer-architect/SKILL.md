@@ -48,8 +48,8 @@ Hành.
 1. **Web Worker — cái ĐANG CÓ:** `apps/dhcb/src/workers/` chạy code của học viên môn Lập trình
    ngoài main thread (JavaScript, Python qua Pyodide, SQL qua sql.js, bài DOM/FETCH qua
    `apps/dhcb/src/lib/pageWorkerRunner.ts`). Muốn thêm worker mới thì theo khuôn này.
-   - **CHƯA CÓ:** worker xử lý âm thanh (RMS, cao độ F0, formant F1/F2). Phân tích formant hiện
-     chạy trên main thread trong `apps/dhcb/src/components/CompanionVoice/AcousticPhoneticsLab.tsx`.
+   - **CHƯA CÓ:** worker xử lý âm thanh (RMS, cao độ F0, formant F1/F2). Không có phân tích
+     formant nào trong app ("GOP Lab" cũ chỉ gán số cứng, đã gỡ ở changelog 0484).
      Bản cũ của skill nhắc `audioDspWorker.ts` — file đó không tồn tại.
 2. **Lưu trữ cục bộ OPFS → IndexedDB → bộ nhớ:** `apps/dhcb/src/lib/edgeAi/edgeModelStorage.ts`
    có thật (OPFS ưu tiên, tự lùi về IndexedDB, rồi bộ nhớ trong test).

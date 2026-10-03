@@ -38,9 +38,9 @@ vi.mock('../CompanionVoice/ArticulatoryPhoneticsVisualizer.js', () => ({
       'ArticulatoryPhoneticsVisualizer',
     ),
 }))
-vi.mock('../CompanionVoice/AcousticPhoneticsLab.js', () => ({
+vi.mock('../CompanionVoice/PronunciationHintsCard.js', () => ({
   default: () =>
-    React.createElement('div', { 'data-testid': 'acoustic-lab' }, 'AcousticPhoneticsLab'),
+    React.createElement('div', { 'data-testid': 'pronunciation-hints' }, 'PronunciationHintsCard'),
 }))
 vi.mock('../CompanionVoice/EchoShadowingCard.js', () => ({
   default: () => React.createElement('div', { 'data-testid': 'echo-card' }, 'EchoShadowingCard'),
@@ -55,9 +55,6 @@ vi.mock('../NeuralCurriculum/NeuralMicroCurriculumCard', () => ({
 }))
 vi.mock('../CompanionVoice/WorkplaceHarvesterCard', () => ({
   default: () => React.createElement('div', { 'data-testid': 'harvester-card' }),
-}))
-vi.mock('../CompanionVoice/WearablesSyncCard', () => ({
-  default: () => React.createElement('div', { 'data-testid': 'wearables-card' }),
 }))
 vi.mock('../CompanionVoice/A2ANegotiatorCard', () => ({
   default: () => React.createElement('div', { 'data-testid': 'a2a-card' }),
@@ -91,7 +88,7 @@ describe('CompanionStudios', () => {
     expect(html).toContain('data-testid="debate-card"')
     expect(html).toContain('data-testid="scratchpad-card"')
     expect(html).toContain('data-testid="articulatory-card"')
-    expect(html).toContain('data-testid="acoustic-lab"')
+    expect(html).toContain('data-testid="pronunciation-hints"')
     expect(html).toContain('data-testid="echo-card"')
     expect(html).toContain('data-testid="holodeck-card"')
   })

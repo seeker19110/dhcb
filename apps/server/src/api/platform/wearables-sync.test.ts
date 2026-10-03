@@ -1,116 +1,57 @@
+// api/wearables-sync.test.ts
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const authState: { user: { userId: string } | null } = {
-  user: { userId: 'user-1' },
-}
-let rateLimitOk = true
-
-vi.mock('@dhcb/core-auth/security', () => ({
-  getCorsHeaders: () => ({}),
-  SECURITY_HEADERS: {},
-  checkRateLimit: async () => rateLimitOk,
-  validateAuth: async () => authState.user,
-  logSecurityEvent: () => {},
-}))
-
-vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
-
-const getOrCreatePerson = vi.fn()
-vi.mock('@dhcb/core-personal/personService', () => ({
-  getOrCreatePerson: (...a: unknown[]) => getOrCreatePerson(...a),
-}))
-
 import handler from './wearables-sync.js'
+import * as security from '@dhcb/core-auth/security'
 
-const PERSON = '11111111-1111-4111-8111-111111111111'
+const USER = { userId: '11111111-1111-4111-8111-111111111111' }
 
-function req(method: string, body?: unknown) {
-  return new Request('http://localhost/api/wearables-sync', {
-    method,
-    ...(body === undefined
-      ? {}
-      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
-  })
-}
-
-describe('api/wearables-sync', () => {
+describe('Wearables Sync API Handler (/api/wearables-sync)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    authState.user = { userId: 'user-1' }
-    rateLimitOk = true
-    getOrCreatePerson.mockResolvedValue({ id: PERSON })
+    vi.restoreAllMocks()
   })
 
-  it('handles GET current bio stream and circadian window', async () => {
-    const res = await handler(req('GET'))
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.bio).toBeDefined()
-    expect(data.window).toBeDefined()
-  })
-
-  it('handles POST sync bio data and re-evaluate circadian window', async () => {
+  it('OPTIONS trả 204', async () => {
     const res = await handler(
-      req('POST', {
-        source: 'oura_ring',
-        hrvMs: 78,
-        restingHeartRateBpm: 50,
-        sleepQualityScore: 94,
-        deepSleepMinutes: 120,
-      }),
+      new Request('http://localhost/api/wearables-sync', { method: 'OPTIONS' }),
     )
-    expect(res.status).toBe(201)
-    const data = await res.json()
-    expect(data.bio.source).toBe('oura_ring')
-    expect(data.window.currentCognitiveBand).toBe('peak_analytical')
-  })
-
-  it('returns 401 when unauthorized', async () => {
-    authState.user = null
-    const res = await handler(req('GET'))
-    expect(res.status).toBe(401)
-  })
-
-  it('handles OPTIONS request with 204', async () => {
-    const res = await handler(req('OPTIONS'))
     expect(res.status).toBe(204)
   })
 
-  it('returns 429 when rate limit exceeded', async () => {
-    rateLimitOk = false
-    const res = await handler(req('GET'))
-    expect(res.status).toBe(429)
+  it('từ chối khi chưa đăng nhập (401)', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce(null)
+    const res = await handler(new Request('http://localhost/api/wearables-sync', { method: 'GET' }))
+    expect(res.status).toBe(401)
   })
 
-  it('returns 400 when POST body is invalid JSON', async () => {
-    const badReq = new Request('http://localhost/api/wearables-sync', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: 'invalid-json{',
-    })
-    const res = await handler(badReq)
-    expect(res.status).toBe(400)
+  // Changelog 0484: API từng nhận số sinh trắc NGẪU NHIÊN từ client và trả "khung giờ học" tính từ
+  // đó. Nay gỡ và nói rõ — không còn ca nào trả số liệu sinh trắc.
+  it('GET trả 501 kèm lời giải thích, KHÔNG trả số sinh trắc', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce(USER)
+    const res = await handler(new Request('http://localhost/api/wearables-sync', { method: 'GET' }))
+    expect(res.status).toBe(501)
+    const data = await res.json()
+    expect(data.error).toBe('WEARABLES_UNAVAILABLE')
+    expect(data.message).toContain('ngẫu nhiên')
+    expect(data.bio).toBeUndefined()
+    expect(data.window).toBeUndefined()
   })
 
-  it('handles POST with default source when source is not provided', async () => {
+  it('POST cũng trả 501, kể cả khi gửi đủ trường hợp lệ', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce(USER)
     const res = await handler(
-      req('POST', {
-        hrvMs: 65,
+      new Request('http://localhost/api/wearables-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'oura', hrvMs: 70, restingHeartRateBpm: 55 }),
       }),
     )
-    expect(res.status).toBe(201)
-    const data = await res.json()
-    expect(data.bio.source).toBe('apple_health')
+    expect(res.status).toBe(501)
+    expect((await res.json()).bio).toBeUndefined()
   })
 
-  it('returns 405 for unsupported method like PUT', async () => {
-    const res = await handler(req('PUT'))
+  it('phương thức khác trả 405', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce(USER)
+    const res = await handler(new Request('http://localhost/api/wearables-sync', { method: 'PUT' }))
     expect(res.status).toBe(405)
-  })
-
-  it('handles unexpected internal error with 500', async () => {
-    getOrCreatePerson.mockRejectedValueOnce(new Error('DB crash'))
-    const res = await handler(req('GET'))
-    expect(res.status).toBe(500)
   })
 })

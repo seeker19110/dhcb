@@ -1,8 +1,41 @@
-import { useState } from 'react'
-import { Mic, Play, Award, Sparkles, Zap, RotateCcw, Volume2, AlertTriangle } from 'lucide-react'
-import { ShadowingPassageSchema, type ShadowingSession } from '@dhcb/core-contracts/echoShadowing'
+import { useEffect, useState } from 'react'
+import {
+  Play,
+  Square,
+  Zap,
+  RotateCcw,
+  ChevronRight,
+  ChevronLeft,
+  Volume2,
+  AlertTriangle,
+} from 'lucide-react'
+import { ShadowingPassageSchema } from '@dhcb/core-contracts/echoShadowing'
 import LoadError from '../LoadError'
 import { useCatalogList } from '../../lib/useCatalogList'
+import { speak, stopSpeaking } from '../../lib/tts'
+
+// Phương pháp nói đuổi 3 pha (skill `multimodal-realtime-voice-master` mục 5). Thẻ KHÔNG ghi âm và
+// KHÔNG chấm điểm: bản trước hiện "Band" tính từ số `Math.random()` (changelog 0484) — học viên tự
+// so giọng mình với bản mẫu.
+const SHADOWING_PHASES = [
+  {
+    title: 'Nghe chủ động',
+    guide: 'Nghe mẫu 1–2 lần, mắt nhìn theo chữ. Để ý chỗ nhấn giọng và chỗ ngắt hơi.',
+    playLabel: 'Nghe mẫu',
+  },
+  {
+    title: 'Nói đuổi',
+    guide:
+      'Phát mẫu rồi nói theo ngay sau giọng đọc, chậm hơn khoảng nửa giây. Chưa cần đúng từng từ — giữ nhịp là chính.',
+    playLabel: 'Phát mẫu để nói đuổi',
+  },
+  {
+    title: 'Tự nói',
+    guide:
+      'Tự đọc to cả đoạn, không nghe mẫu. Xong thì nghe lại mẫu để so: chỗ nào nhịp hoặc âm của bạn còn khác?',
+    playLabel: 'Nghe lại mẫu để so',
+  },
+] as const
 
 export default function EchoShadowingCard() {
   // Danh sách bài mẫu: trạng thái tải/lỗi/rỗng tách bạch (trước đây lỗi tải để thân thẻ trống trơn).
@@ -13,46 +46,40 @@ export default function EchoShadowingCard() {
   )
   const passages = catalog.status === 'ready' ? catalog.items : []
   const [selectedId, setSelectedId] = useState<string>('jobs_stanford_commencement')
-  const [isRecording, setIsRecording] = useState<boolean>(false)
-  const [sessionResult, setSessionResult] = useState<ShadowingSession | null>(null)
-  const [isEvaluating, setIsEvaluating] = useState<boolean>(false)
-  // Lỗi khi CHẤM lượt vừa luyện (khác lỗi tải danh sách bài mẫu ở trên).
-  const [evalError, setEvalError] = useState<string | null>(null)
-  // Độ "nhiễu" trang trí cho 28 thanh sóng âm — random 1 LẦN qua lazy initializer
-  // (Math.random là hàm không thuần, không được gọi trực tiếp trong lúc render).
-  const [barJitter] = useState<number[]>(() => Array.from({ length: 28 }, () => Math.random() * 30))
+  const [phase, setPhase] = useState<number>(0)
+  const [isPlaying, setIsPlaying] = useState<boolean>(false)
+  const [playError, setPlayError] = useState<string | null>(null)
 
   const currentPassage = passages.find((p) => p.id === selectedId) || passages[0]
+  const currentPhase = SHADOWING_PHASES[phase] ?? SHADOWING_PHASES[0]
+  const isLastPhase = phase === SHADOWING_PHASES.length - 1
 
-  const handleStartShadowing = async () => {
-    setIsRecording(true)
-    setSessionResult(null)
-    setEvalError(null)
+  // Rời thẻ thì dừng giọng đọc đang phát.
+  useEffect(() => () => stopSpeaking(), [])
 
-    // Giả lập phiên thu âm shadowing 5 giây
-    setTimeout(async () => {
-      setIsRecording(false)
-      setIsEvaluating(true)
-      try {
-        const res = await fetch('/api/echo-shadowing', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            passageId: currentPassage?.id || 'jobs_stanford_commencement',
-            measuredLatencyMs: Math.floor(Math.random() * 80) + 380, // 380 - 460ms
-            phonemeAccuracy: Math.floor(Math.random() * 10) + 88, // 88 - 98%
-          }),
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        setSessionResult(data.session)
-      } catch {
-        // Trước đây lỗi chỉ ra console → nút trở lại như chưa bấm, người học không biết vì sao.
-        setEvalError('Chưa chấm được lượt vừa rồi. Kiểm tra kết nối mạng rồi luyện lại nhé.')
-      } finally {
-        setIsEvaluating(false)
-      }
-    }, 4500)
+  const resetPractice = () => {
+    stopSpeaking()
+    setIsPlaying(false)
+    setPhase(0)
+    setPlayError(null)
+  }
+
+  const handlePlay = async () => {
+    if (!currentPassage) return
+    if (isPlaying) {
+      stopSpeaking()
+      setIsPlaying(false)
+      return
+    }
+    setPlayError(null)
+    setIsPlaying(true)
+    try {
+      await speak(currentPassage.targetText, 'en-US')
+    } catch {
+      setPlayError('Chưa phát được giọng mẫu. Kiểm tra loa/kết nối rồi thử lại nhé.')
+    } finally {
+      setIsPlaying(false)
+    }
   }
 
   return (
@@ -71,16 +98,17 @@ export default function EchoShadowingCard() {
               </span>
             </div>
             <p className="text-xs text-content-secondary">
-              Huấn luyện phản xạ tai-miệng đồng bộ & đo lường độ lệch âm học thời gian thực
+              Luyện phản xạ tai–miệng theo 3 pha: nghe, nói đuổi, tự nói
             </p>
           </div>
         </div>
 
-        {sessionResult && (
+        {phase > 0 && (
           <button
-            onClick={() => setSessionResult(null)}
-            className="p-1.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
-            title="Luyện lại"
+            onClick={resetPractice}
+            className="tap-44 p-1.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
+            title="Luyện lại từ pha 1"
+            aria-label="Luyện lại từ pha 1"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -117,8 +145,7 @@ export default function EchoShadowingCard() {
                 key={p.id}
                 onClick={() => {
                   setSelectedId(p.id)
-                  setSessionResult(null)
-                  setEvalError(null)
+                  resetPractice()
                 }}
                 aria-pressed={isSelected}
                 className={`tap-44-y px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all border ${
@@ -141,7 +168,7 @@ export default function EchoShadowingCard() {
             <div className="flex items-center justify-between text-xs text-content-secondary">
               <span className="font-semibold text-content-secondary">{currentPassage.title}</span>
               <span className="text-[11px] px-2 py-0.5 rounded bg-surface-raised text-content-secondary">
-                BPM {currentPassage.bpmPacing} • {currentPassage.speakerAccent.toUpperCase()}
+                Nhịp {currentPassage.bpmPacing} BPM
               </span>
             </div>
             <p className="text-sm font-medium text-content leading-relaxed italic">
@@ -149,39 +176,50 @@ export default function EchoShadowingCard() {
             </p>
           </div>
 
-          {/* Realtime Dual Waveform Visualizer */}
-          <div className="p-4 rounded-xl bg-surface-raised border border-line-subtle relative overflow-hidden flex flex-col justify-center items-center h-28">
-            {isRecording ? (
-              <div className="flex items-center gap-1.5 h-16 w-full justify-center">
-                {Array.from({ length: 28 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1.5 bg-gradient-to-t from-sky-500 to-emerald-400 rounded-full animate-pulse"
-                    style={{
-                      height: `${Math.max(15, Math.sin(i * 0.5) * 55 + (barJitter[i] ?? 0))}px`,
-                      animationDelay: `${i * 60}ms`,
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-content-secondary">
-                <Volume2 className="w-6 h-6 text-sky-400 theme-light:text-sky-900/60" />
-                <span className="text-xs">
-                  Nhấn bắt đầu để nghe mẫu và nhại lại đồng thời (trễ 0.4s)
-                </span>
-              </div>
-            )}
+          {/* Bài luyện 3 pha */}
+          <ol className="grid grid-cols-3 gap-2" aria-label="Các pha luyện nói đuổi">
+            {SHADOWING_PHASES.map((p, i) => (
+              <li
+                key={p.title}
+                aria-current={i === phase ? 'step' : undefined}
+                className={`p-2 rounded-lg border text-center text-xs font-semibold ${
+                  i === phase
+                    ? 'bg-sky-950/60 theme-light:bg-sky-100 border-sky-400 text-sky-200 theme-light:text-sky-900'
+                    : 'bg-surface-raised border-line-subtle text-content-secondary'
+                }`}
+              >
+                {i + 1}. {p.title}
+              </li>
+            ))}
+          </ol>
 
-            {isRecording && (
-              <div className="absolute bottom-2 right-3 text-[11px] text-emerald-400 theme-light:text-emerald-900 font-bold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                Đang đo lường phản xạ giọng nói...
-              </div>
-            )}
+          <div className="p-4 rounded-xl bg-surface-raised border border-line-subtle space-y-3">
+            <div className="flex items-start gap-2">
+              <Volume2
+                className="w-4 h-4 mt-0.5 shrink-0 text-sky-400 theme-light:text-sky-900"
+                aria-hidden
+              />
+              <p className="text-sm text-content leading-relaxed">{currentPhase.guide}</p>
+            </div>
+            <button
+              onClick={handlePlay}
+              className="w-full py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-[#fff]"
+            >
+              {isPlaying ? (
+                <>
+                  <Square className="w-4 h-4 fill-current" />
+                  <span>Dừng giọng mẫu</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>{currentPhase.playLabel}</span>
+                </>
+              )}
+            </button>
           </div>
 
-          {evalError && (
+          {playError && (
             <div
               role="alert"
               className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2"
@@ -190,79 +228,41 @@ export default function EchoShadowingCard() {
                 className="w-4 h-4 mt-0.5 shrink-0 text-red-400 theme-light:text-red-900"
                 aria-hidden
               />
-              <p className="text-xs text-content">{evalError}</p>
+              <p className="text-xs text-content">{playError}</p>
             </div>
           )}
 
-          {/* Action Button */}
-          {!sessionResult && (
+          <div className="flex gap-2">
             <button
-              onClick={handleStartShadowing}
-              disabled={isRecording || isEvaluating}
-              className={`w-full py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all ${
-                isRecording
-                  ? 'bg-rose-600 text-[#fff] animate-pulse'
-                  : 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-[#fff]'
-              }`}
+              onClick={() => setPhase((p) => Math.max(0, p - 1))}
+              disabled={phase === 0}
+              className="tap-44-y flex-1 px-3 py-2 rounded-xl text-xs font-semibold border border-line-subtle bg-surface-raised text-content-secondary hover:text-content disabled:opacity-50 flex items-center justify-center gap-1"
             >
-              {isRecording ? (
-                <>
-                  <Mic className="w-4 h-4" />
-                  <span>Đang Shadowing... Hãy nhại lại ngay!</span>
-                </>
-              ) : isEvaluating ? (
-                <>
-                  <Sparkles className="w-4 h-4 animate-spin" />
-                  <span>Đang phân tích độ lệch âm học và nhịp điệu...</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Bắt đầu Luyện Shadowing Siêu Tốc</span>
-                </>
-              )}
+              <ChevronLeft className="w-4 h-4" aria-hidden />
+              Pha trước
             </button>
-          )}
+            {isLastPhase ? (
+              <button
+                onClick={resetPractice}
+                className="tap-44-y flex-1 px-3 py-2 rounded-xl text-xs font-semibold border border-sky-400 bg-sky-950/60 theme-light:bg-sky-100 text-sky-200 theme-light:text-sky-900 flex items-center justify-center gap-1"
+              >
+                <RotateCcw className="w-4 h-4" aria-hidden />
+                Luyện lại từ đầu
+              </button>
+            ) : (
+              <button
+                onClick={() => setPhase((p) => Math.min(SHADOWING_PHASES.length - 1, p + 1))}
+                className="tap-44-y flex-1 px-3 py-2 rounded-xl text-xs font-semibold border border-sky-400 bg-sky-950/60 theme-light:bg-sky-100 text-sky-200 theme-light:text-sky-900 flex items-center justify-center gap-1"
+              >
+                Pha tiếp
+                <ChevronRight className="w-4 h-4" aria-hidden />
+              </button>
+            )}
+          </div>
 
-          {/* Session Result HUD */}
-          {sessionResult && (
-            <div className="p-4 rounded-xl bg-gradient-to-br from-sky-950/60 to-blue-950/60 border border-sky-500/40 space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-sky-400 theme-light:text-sky-900" />
-                  <h4 className="text-sm font-bold text-[#fff]">Kết Quả Shadowing Chuẩn Xác</h4>
-                </div>
-                <div className="text-lg font-black text-sky-400 theme-light:text-sky-900 bg-sky-400/10 px-3 py-1 rounded-lg border border-sky-400/30">
-                  Band: {sessionResult.overallShadowingBand}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="p-2.5 rounded-lg bg-surface-raised border border-line-subtle">
-                  <div className="text-[11px] text-content-secondary">Độ trễ bắt nhịp</div>
-                  <div className="text-xs font-bold text-sky-300 theme-light:text-sky-900">
-                    {sessionResult.averageDriftLatencyMs} ms
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-raised border border-line-subtle">
-                  <div className="text-[11px] text-content-secondary">Đồng bộ nhịp điệu</div>
-                  <div className="text-xs font-bold text-emerald-300 theme-light:text-emerald-900">
-                    {sessionResult.rhythmSyncScore}%
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-lg bg-surface-raised border border-line-subtle">
-                  <div className="text-[11px] text-content-secondary">Độ trôi chảy</div>
-                  <div className="text-xs font-bold text-indigo-300 theme-light:text-indigo-800">
-                    {sessionResult.fluencyScore}%
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs text-content-secondary leading-relaxed italic">
-                💡 {sessionResult.coachingFeedback}
-              </p>
-            </div>
-          )}
+          <p className="text-xs text-content-secondary">
+            Thẻ này không ghi âm và không chấm điểm — bạn tự so giọng mình với bản mẫu.
+          </p>
         </div>
       )}
     </div>

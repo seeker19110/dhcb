@@ -1,6 +1,7 @@
-// packages/core-contracts/echoShadowing.ts — Hợp đồng dữ liệu cho Real-Time Echo Shadowing Engine V3.
+// packages/core-contracts/echoShadowing.ts — Hợp đồng dữ liệu bài mẫu cho bài luyện nói đuổi.
+// Changelog 0484: bỏ `ShadowingSessionSchema`/`AcousticDriftSampleSchema` — kết quả "chấm" cũ tính
+// từ số ngẫu nhiên, không đo gì.
 import { z } from 'zod'
-import { IsoDateTimeSchema, UuidSchema } from './shared.js'
 
 export const SHADOWING_SCHEMA_VERSION = 'v3.0.0'
 
@@ -28,31 +29,3 @@ export const ShadowingPassageSchema = z
   .strict()
 
 export type ShadowingPassage = z.infer<typeof ShadowingPassageSchema>
-
-export const AcousticDriftSampleSchema = z
-  .object({
-    timeOffsetMs: z.number().nonnegative(),
-    driftLatencyMs: z.number().nonnegative(),
-    phonemeMatchScore: z.number().min(0).max(100),
-  })
-  .strict()
-
-export type AcousticDriftSample = z.infer<typeof AcousticDriftSampleSchema>
-
-export const ShadowingSessionSchema = z
-  .object({
-    sessionId: UuidSchema,
-    personId: UuidSchema,
-    passageId: z.string().min(1).max(50),
-    averageDriftLatencyMs: z.number().nonnegative(),
-    rhythmSyncScore: z.number().min(0).max(100),
-    fluencyScore: z.number().min(0).max(100),
-    overallShadowingBand: z.number().min(0).max(9.0),
-    driftSamples: z.array(AcousticDriftSampleSchema),
-    coachingFeedback: z.string().min(1).max(1000),
-    createdAt: IsoDateTimeSchema,
-    schemaVersion: z.literal(SHADOWING_SCHEMA_VERSION),
-  })
-  .strict()
-
-export type ShadowingSession = z.infer<typeof ShadowingSessionSchema>

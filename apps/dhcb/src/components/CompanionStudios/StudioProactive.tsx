@@ -3,7 +3,6 @@ import ProactiveNudgeBanner from '../ProactiveAgent/ProactiveNudgeBanner'
 import GoalAutoPilotCard from '../ProactiveAgent/GoalAutoPilotCard'
 import NeuralMicroCurriculumCard from '../NeuralCurriculum/NeuralMicroCurriculumCard'
 import WorkplaceHarvesterCard from '../CompanionVoice/WorkplaceHarvesterCard'
-import WearablesSyncCard from '../CompanionVoice/WearablesSyncCard'
 import A2ANegotiatorCard from '../CompanionVoice/A2ANegotiatorCard'
 import ProactiveBriefingCard from '../ProactiveBriefingCard'
 import AmbientScreenCopilot from '../CompanionVoice/AmbientScreenCopilot'
@@ -36,13 +35,13 @@ export default function StudioProactive({ proactiveState, navigate }: StudioProa
 
       <NeuralMicroCurriculumCard />
       <WorkplaceHarvesterCard />
-      <WearablesSyncCard />
       <A2ANegotiatorCard />
       <ProactiveBriefingCard />
       <AmbientScreenCopilot />
       <NeuroAffectiveCard />
-      {/* Dời từ studio "Tổng kết" đã gỡ (changelog 0475). Thẻ "Điều Phối Agent" từng đứng đây đã
-          gỡ ở changelog 0481: nó hiện kết quả dựng sẵn như agent đã chạy thật. */}
+      {/* Dời từ studio "Tổng kết" đã gỡ (changelog 0475). Thẻ "Điều Phối Agent" (changelog 0481) và
+          thẻ "Wearables" (changelog 0484) từng đứng trong studio này đã gỡ: chúng hiện kết quả
+          dựng sẵn/số ngẫu nhiên như thể đã chạy thật. */}
       <ActionCanvasBanner navigate={navigate} />
     </div>
   )

@@ -13,16 +13,7 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
-vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
-
-const getOrCreatePerson = vi.fn()
-vi.mock('@dhcb/core-personal/personService', () => ({
-  getOrCreatePerson: (...a: unknown[]) => getOrCreatePerson(...a),
-}))
-
 import handler from './echo-shadowing.js'
-
-const PERSON = '11111111-1111-4111-8111-111111111111'
 
 function req(method: string, body?: unknown, searchParams?: string) {
   const url = searchParams
@@ -41,7 +32,6 @@ describe('api/echo-shadowing', () => {
     vi.clearAllMocks()
     authState.user = { userId: 'user-1' }
     rateLimitOk = true
-    getOrCreatePerson.mockResolvedValue({ id: PERSON })
   })
 
   it('handles GET list of passages and single passage', async () => {
@@ -56,7 +46,9 @@ describe('api/echo-shadowing', () => {
     expect(singleData.passage.title).toContain('Steve Jobs')
   })
 
-  it('handles POST evaluate shadowing session', async () => {
+  // Changelog 0484: POST từng trả "Band" tính từ số ngẫu nhiên client gửi lên. Nay 501, không trả
+  // bất kỳ con số nào — kể cả khi gửi đủ trường.
+  it('POST trả 501 kèm lời giải thích, KHÔNG trả kết quả chấm', async () => {
     const res = await handler(
       req('POST', {
         passageId: 'jobs_stanford_commencement',
@@ -64,10 +56,11 @@ describe('api/echo-shadowing', () => {
         phonemeAccuracy: 93,
       }),
     )
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(501)
     const data = await res.json()
-    expect(data.session).toBeDefined()
-    expect(data.session.rhythmSyncScore).toBeGreaterThanOrEqual(80)
+    expect(data.error).toBe('ECHO_SHADOWING_SCORING_UNAVAILABLE')
+    expect(data.message).toContain('ngẫu nhiên')
+    expect(data.session).toBeUndefined()
   })
 
   it('returns 401 when unauthorized', async () => {
@@ -92,27 +85,8 @@ describe('api/echo-shadowing', () => {
     expect(res.status).toBe(404)
   })
 
-  it('returns 400 on invalid POST body or missing passageId', async () => {
-    const badJsonReq = new Request('http://localhost/api/echo-shadowing', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: 'bad-json{',
-    })
-    const res1 = await handler(badJsonReq)
-    expect(res1.status).toBe(400)
-
-    const res2 = await handler(req('POST', {}))
-    expect(res2.status).toBe(400)
-  })
-
   it('returns 405 for unsupported method like PUT', async () => {
     const res = await handler(req('PUT'))
     expect(res.status).toBe(405)
-  })
-
-  it('handles unexpected internal error with 500', async () => {
-    getOrCreatePerson.mockRejectedValueOnce(new Error('DB failure'))
-    const res = await handler(req('GET'))
-    expect(res.status).toBe(500)
   })
 })
