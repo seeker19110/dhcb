@@ -1,6 +1,6 @@
 # 0486 — Gộp 5 bản nâng phụ thuộc của Dependabot vào một PR, dựng lại lockfile trên `main` (2026-10-03)
 
-- **Ngày:** 2026-10-03 · **PR:** (điền khi tạo) · **Loại:** `chore(deps)`.
+- **Ngày:** 2026-10-03 · **PR:** #1221 · **Loại:** `chore(deps)`.
 - **Phạm vi:** dọn các PR Dependabot đang treo. Chủ dự án giao "làm tất cả" (2026-10-02).
 
 ## Vấn đề
