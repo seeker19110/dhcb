@@ -40,6 +40,7 @@ import {
   type StartActionResult,
 } from '../../lib/intent/pickStartAction'
 import { buildIntentOutlines } from '../../lib/intent/buildIntentOutlines'
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 
 // Nhãn môn — lấy đúng chữ của registry (`@dhcb/core-learner/subjectRegistry`), khai lại ở đây để
 // trang không phải kéo cả registry vào chunk. S05-2 sẽ gộp về MỘT nguồn danh mục.
@@ -225,7 +226,11 @@ export default function StartByIntent() {
 
   if (dangMo) {
     return (
-      <main className="min-h-dvh flex items-center justify-center p-5 pb-32">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none min-h-dvh flex items-center justify-center p-5 pb-32"
+      >
         <p role="status" className="text-sm text-zinc-300 flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
           Đang mở…
@@ -237,7 +242,11 @@ export default function StartByIntent() {
   // ── Màn GỢI Ý: đúng MỘT việc nổi bật ────────────────────────────────────
   if (!dangHoi) {
     return (
-      <main className="min-h-dvh flex items-center justify-center p-5 pb-32">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none min-h-dvh flex items-center justify-center p-5 pb-32"
+      >
         <div className="w-full max-w-md space-y-4 animate-fade-in">
           <h1 className="text-xl font-semibold text-white">Mình gợi ý bắt đầu từ đây nhé?</h1>
 
@@ -319,7 +328,11 @@ export default function StartByIntent() {
   const laBuocCuoi = stepIndex >= steps.length - 1
 
   return (
-    <main className="min-h-dvh flex items-center justify-center p-5 pb-32">
+    <main
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className="focus:outline-none min-h-dvh flex items-center justify-center p-5 pb-32"
+    >
       <div className="w-full max-w-md space-y-5 animate-fade-in">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-accent-400" aria-hidden="true" />

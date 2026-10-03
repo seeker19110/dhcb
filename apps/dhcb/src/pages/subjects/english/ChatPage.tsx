@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { useSearchParams } from 'react-router-dom'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
@@ -55,7 +56,11 @@ export default function ChatPage() {
       {/* [P2-2, audit 2026-09-22] Header trước đây chỉ có mũi tên, không tiêu đề/h1. */}
       <Layout title="Tin nhắn" />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-0 sm:px-4 pt-2 sm:pt-4 pb-[calc(1rem+var(--bnav-h))] flex flex-col">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none flex-1 max-w-6xl w-full mx-auto px-0 sm:px-4 pt-2 sm:pt-4 pb-[calc(1rem+var(--bnav-h))] flex flex-col"
+      >
         <h1 className="sr-only">Tin nhắn</h1>
         {/* Khung chat 2 cột trên desktop, 1 cột trên mobile */}
         <div className="flex-1 flex w-full rounded-none sm:rounded-2xl border-0 sm:border border-white/10 bg-zinc-900/40 backdrop-blur-md overflow-hidden shadow-2xl h-[calc(100dvh-3.5rem-var(--bnav-h))] sm:h-[calc(100dvh-5.5rem-var(--bnav-h))]">

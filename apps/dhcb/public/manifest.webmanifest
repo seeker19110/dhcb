@@ -1,12 +1,12 @@
 {
   "name": "Đồng Hành Cùng Bạn — Nền tảng đồng hành cá nhân",
   "short_name": "Đồng Hành AI",
-  "description": "Đồng Hành Cùng Bạn — nền tảng đồng hành cá nhân: Học tập, Sự nghiệp, Công việc, Khởi nghiệp, Đời sống, cùng Bạn Đồng Hành (AI hiểu ngữ cảnh cả năm trụ)",
+  "description": "Đồng Hành Cùng Bạn — nền tảng đồng hành cá nhân: Học tập và Ghi chú, cùng Bạn Đồng Hành (AI hiểu ngữ cảnh việc học và ghi chú của bạn)",
   "lang": "vi",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#09090b",
   "theme_color": "#09090b",
   "icons": [

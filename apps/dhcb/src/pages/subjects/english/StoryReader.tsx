@@ -25,6 +25,7 @@ import {
   resumeCurrentAudio,
   unlockAudio,
 } from '../../../lib/tts'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 export default function StoryReader() {
   const { id: slugParam } = useParams<{ id: string }>()
@@ -38,6 +39,7 @@ export default function StoryReader() {
   const isDesktop = useIsDesktopViewport()
 
   const [story, setStory] = useState<Story | null>(null)
+  usePageTitle(story ? (isA ? story.titleEn : story.titleVi) : 'Truyện song ngữ')
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [showTranslation, setShowTranslation] = useState(false) // mặc định ẨN — trang luyện nghe
@@ -458,7 +460,7 @@ export default function StoryReader() {
                   <div
                     ref={resumeNoticeRef}
                     tabIndex={-1}
-                    className="flex flex-wrap items-center gap-2 rounded-xl border border-accent-500/30 bg-accent-500/10 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                    className="flex flex-wrap items-center gap-2 rounded-xl border border-accent-500/30 bg-accent-500/10 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                   >
                     <p className="text-xs text-zinc-200">
                       {isA

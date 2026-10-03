@@ -231,7 +231,9 @@ html[data-kbd-nav][data-focus='1'] {
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    outline: 2px solid rgb(var(--a-500));
+    /* Token riêng theo theme thay cho --a-500: ở Blue sky/Nhi đồng a-500 chỉ 2,65–2,70:1 so với
+       nền, dưới sàn 3:1 của WCAG 1.4.11 (audit 2026-09-30 C1). */
+    outline: 2px solid rgb(var(--focus-ring));
     outline-offset: 2px;
   }
 

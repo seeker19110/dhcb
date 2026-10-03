@@ -102,7 +102,7 @@ export default function SubjectSpaceList({
       >
         <button
           onClick={() => nav(entry.ctaPath)}
-          className="min-h-11 w-full flex items-start gap-3.5 text-left group focus-visible:ring-2 focus-visible:ring-accent-500 rounded-xl"
+          className="min-h-11 w-full flex items-start gap-3.5 text-left group focus-visible:ring-2 focus-visible:ring-focus-ring rounded-xl"
           aria-label={`Vào không gian ${entry.label}`}
         >
           <div
@@ -175,7 +175,7 @@ export default function SubjectSpaceList({
             onClick={() => setExpanded((current) => !current)}
             aria-expanded={effectiveExpanded}
             aria-controls="home-subjects-revealed"
-            className="tap-44 w-full mt-2 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-colors focus-visible:ring-2 focus-visible:ring-accent-500"
+            className="tap-44 w-full mt-2 py-2.5 rounded-xl text-sm font-medium text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-colors focus-visible:ring-2 focus-visible:ring-focus-ring"
           >
             {expanded ? 'Thu gọn danh sách môn' : `Xem tất cả (${ordered.length} môn)`}
           </button>

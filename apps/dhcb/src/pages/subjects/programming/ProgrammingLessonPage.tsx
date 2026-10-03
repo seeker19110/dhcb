@@ -87,6 +87,7 @@ import {
   parsonsShuffle,
   type TestCaseResult,
 } from '@dhcb/subject-programming/grading'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 // 6 màn hình phủ 8 bước sư phạm (①② gộp một màn; ⑧ SRS chạy ngầm khi đạt bài Make).
 // `graded` = bước có chấm (pha TRẢ) · `startsPhase` = vẽ vạch ngăn phía trước (luật N3).
@@ -146,6 +147,9 @@ export default function ProgrammingLessonPage() {
   const { search, hash } = useLocation()
   const lessonId = lessonSlugParam ? idFromSlugSegment(lessonSlugParam) : undefined
   const trangThai = useProgrammingLesson(lessonId)
+  usePageTitle(
+    `${trangThai.status === 'ready' && trangThai.lesson ? trangThai.lesson.title : 'Bài học'} | Môn Lập trình`,
+  )
   // Ngữ cảnh khoá ngắn (`?khoa=git`) — mã lạ trả `undefined`, trang lặng lẽ dùng cây bậc.
   const courseId = maKhoaTuQuery(new URLSearchParams(search))
 
@@ -555,7 +559,7 @@ function LessonBody({
               <h1
                 id={LESSON_HEAD_ANCHOR}
                 tabIndex={-1}
-                className="text-2xl sm:text-3xl font-extrabold leading-tight text-content rounded-lg scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                className="text-2xl sm:text-3xl font-extrabold leading-tight text-content rounded-lg scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
               >
                 {lesson.title}
               </h1>
@@ -963,7 +967,7 @@ function TieuDeBuoc({
     <Tag
       id={id}
       tabIndex={-1}
-      className={`${level === 2 ? 't-h3' : 't-label'} text-content rounded-lg scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400`}
+      className={`${level === 2 ? 't-h3' : 't-label'} text-content rounded-lg scroll-mt-24 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring`}
     >
       {children}
     </Tag>

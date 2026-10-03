@@ -99,7 +99,7 @@ export function TwoPane({
           // bị che, WCAG 2.4.11).
           mainRef.current?.focus({ preventScroll: true })
         }}
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-accent-500 focus:text-[#09090b] focus:font-semibold focus:text-sm focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent-300"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-accent-500 focus:text-[#09090b] focus:font-semibold focus:text-sm focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-focus-ring"
       >
         {skipRailLabel}
       </a>

@@ -21,6 +21,7 @@ import { buildCourseOutline } from '../../../lib/outline/programmingOutline'
 import { useProgrammingOutlineCtx } from '../../../lib/useProgrammingOutlineCtx'
 import { LoiTienDo } from '../../../components/OutlinePane'
 import { useOutlinePane } from '../../../components/useOutlinePane'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 const TEN_MUC_LUC = 'Mục lục khoá học'
 
@@ -30,6 +31,7 @@ export default function ProgrammingCoursePage() {
   // ra đúng khoá, rồi được chuyển hướng về URL chuẩn ngay bên dưới.
   const { courseId: courseSlugParam } = useParams<{ courseId: string }>()
   const course = courseSlugParam ? getShortCourse(idFromSlugSegment(courseSlugParam)) : undefined
+  usePageTitle(`${course?.title ?? 'Khoá ngắn'} | Môn Lập trình`)
   const isDesktop = useIsDesktopViewport()
   // Hook phải chạy TRƯỚC mọi nhánh return sớm (luật hook của React).
   const outlineCtx = useProgrammingOutlineCtx()

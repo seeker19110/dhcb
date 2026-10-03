@@ -6,6 +6,7 @@
 // tới bảng giá. Trang này nới bề rộng ở desktop (`lg:max-w-6xl`) để UpgradeSection bung
 // `lg:grid-cols-4`; Hồ sơ giữ bản rút gọn có nút dẫn sang đây.
 
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import Layout from '../../components/Layout'
 import UpgradeSection from '../../components/UpgradeSection'
 import PricePromoBanner from '../../components/PricePromoBanner'
@@ -24,7 +25,11 @@ export default function Pricing() {
     <div className="min-h-dvh bg-zinc-950">
       <Layout title={isA ? 'Nâng cấp gói' : 'Upgrade your plan'} />
 
-      <main className="max-w-3xl lg:max-w-6xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))] space-y-6">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-3xl lg:max-w-6xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))] space-y-6"
+      >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
           {isA ? 'Nâng cấp gói' : 'Upgrade your plan'}
         </h1>

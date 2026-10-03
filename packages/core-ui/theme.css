@@ -67,6 +67,9 @@
   --a-700: 14 116 144;
   --a-800: 21 94 117;
   --a-900: 22 78 99;
+  /* Viền focus bàn phím (WCAG 1.4.11 ≥ 3:1 trên nền trang/thẻ/ô nổi) — = a-500, 7,4:1 trên nền trang.
+     Cổng: apps/dhcb/src/lib/themeContrast.test.ts. */
+  --focus-ring: 6 182 212;
   --glow-accent: 0.4;
   --theme-color: #0e1726;
   /* Bo góc gọn hơn Tailwind mặc định một nấc — thẻ trông như tấm panel, không phải viên
@@ -130,6 +133,9 @@
   --a-700: 3 105 161;
   --a-800: 7 89 133;
   --a-900: 12 74 110;
+  /* Viền focus bàn phím (WCAG 1.4.11 ≥ 3:1 trên nền trang/thẻ/ô nổi) — = a-700; a-500 cũ chỉ 2,65:1 (audit 2026-09-30 C1), nay 5,68:1.
+     Cổng: apps/dhcb/src/lib/themeContrast.test.ts. */
+  --focus-ring: 3 105 161;
   --glow-accent: 0.35;
   --theme-color: #f0f9ff;
   /* Token ấm Companion (P0-2) — xem giải thích ở khối dark-blue phía trên. */
@@ -170,6 +176,9 @@
   --a-700: 154 52 18;
   --a-800: 154 52 18;
   --a-900: 124 45 18;
+  /* Viền focus bàn phím (WCAG 1.4.11 ≥ 3:1 trên nền trang/thẻ/ô nổi) — = a-700; a-500 cũ chỉ 2,70:1 (audit 2026-09-30 C1), nay 7,05:1.
+     Cổng: apps/dhcb/src/lib/themeContrast.test.ts. */
+  --focus-ring: 154 52 18;
   --glow-accent: 0.5;
   --theme-color: #fffbeb;
   /* Token ấm Companion (P0-2) — CHỌN HỒNG ĐẬM, khác cam của accent theme này (đính chính §1

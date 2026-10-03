@@ -44,6 +44,7 @@ import {
   type SpecBrief,
   type SpecModuleDetail,
 } from '@dhcb/subject-programming/specializations/stageDetails'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 /** Ô đánh dấu xong một mục tiến độ. Đã xong thì KHÔNG bỏ được — cùng bất biến với server. */
 function DoneToggle({ done, label, onDone }: { done: boolean; label: string; onDone: () => void }) {
@@ -243,6 +244,7 @@ export default function ProgrammingSpecStagePage() {
         .trim()
         .toLowerCase(),
   )
+  usePageTitle(`${stage && spec ? `${stage.name} — ${spec.name}` : 'Chặng học'} | Môn Lập trình`)
   const detail = stage ? getSpecStageDetail(stage.id) : undefined
 
   const [progress, setProgress] = useState<ProgrammingLessonProgress[]>([])

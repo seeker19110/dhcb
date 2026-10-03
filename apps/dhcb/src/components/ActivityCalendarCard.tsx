@@ -220,7 +220,7 @@ export default function ActivityCalendarCard({
               : { gridColumnStart: calendar.firstColumn + 1 }
             : undefined
         }
-        className={`${isDesktop ? 'w-4 h-4' : 'w-11 h-11'} rounded-[4px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ${heatColor(d.count)} ${
+        className={`${isDesktop ? 'w-4 h-4' : 'w-11 h-11'} rounded-[4px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring ${heatColor(d.count)} ${
           isSel ? 'ring-2 ring-accent-300' : isLast ? 'ring-1 ring-accent-400/70' : ''
         }`}
       />

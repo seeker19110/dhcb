@@ -2,6 +2,7 @@
 // Trang DEMO ẨN — chỉ vào được qua URL trực tiếp (/avatar-demo), KHÔNG có trong menu/BottomNav,
 // KHÔNG gắn vào luồng Luyện nói thật. Xem docs/research/dac-ta-avatar-ai-noi-chuyen-2026-07-28.md
 // (mục 5, bước 1 "PoC nhỏ") — chứng minh cơ chế viseme animation chạy đúng trước khi mở rộng.
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { useState } from 'react'
 import { usePageTitle } from '../../lib/usePageTitle'
 import Layout from '../../components/Layout'
@@ -104,7 +105,11 @@ export default function AvatarDemo() {
   return (
     <>
       <Layout title="PoC — Avatar AI nói chuyện" />
-      <main className="max-w-lg mx-auto px-4 pt-6 pb-[calc(2rem+var(--bnav-h))]">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-lg mx-auto px-4 pt-6 pb-[calc(2rem+var(--bnav-h))]"
+      >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
           PoC — Avatar AI nói chuyện
         </h1>

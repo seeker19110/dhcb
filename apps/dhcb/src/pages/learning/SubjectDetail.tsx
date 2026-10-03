@@ -32,6 +32,7 @@ import type { SubjectManifest } from '@dhcb/core-contracts/subjectManifest'
 import { goToSubjects } from '../../lib/subjectsHost'
 import { isAppHostSubject, subjectHomePath } from '@dhcb/core-learner/subjectHome'
 import { duongDanDanhSachBai, getStemSubject } from '../../lib/stemLessonRoutes'
+import { usePageTitle } from '../../lib/usePageTitle'
 
 interface SolvedStep {
   title: string
@@ -54,6 +55,7 @@ export default function SubjectDetail() {
   // đã đặt route riêng cho chúng, nhánh này chỉ chạm tới khi ai đó dựng URL lạ. Đi thẳng tới
   // trang chủ môn thay vì fetch manifest rồi vẽ tab "Giải đề"/"Lớp 12" vô nghĩa cho Tiếng Anh.
   const ownHome = subjectId && isAppHostSubject(subjectId) ? subjectHomePath(subjectId) : null
+  usePageTitle((subjectId && getStemSubject(subjectId)?.label) || 'Môn học')
   // [Trả nợ S03-1, 2026-09-15] Ba trạng thái tách bạch thay cho một biến `subject | null`.
   // Trước đây effect bắt MỌI lỗi bằng `.catch(() => goToSubjects(nav))`: mất mạng, 503 hay
   // payload sai đều đá người dùng ngược về danh sách môn, không một lời giải thích — người

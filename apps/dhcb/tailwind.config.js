@@ -49,6 +49,10 @@ export default {
           800: 'rgb(var(--a-800) / <alpha-value>)',
           900: 'rgb(var(--a-900) / <alpha-value>)',
         },
+        // Viền focus bàn phím — token riêng theo theme, đạt ≥ 3:1 (WCAG 1.4.11) ở cả 3 theme,
+        // cổng `apps/dhcb/src/lib/themeContrast.test.ts`. Dùng `focus-visible:ring-focus-ring`
+        // thay cho `ring-accent-300/400/500` (2,65:1 hoặc thấp hơn ở theme sáng — audit 2026-09-30 C1).
+        'focus-ring': 'rgb(var(--focus-ring) / <alpha-value>)',
         // ── TOKEN NGỮ NGHĨA (thêm 2026-09-02, đợt 1 thiết kế lại desktop) ─────────────
         // Đặt tên theo VAI TRÒ thay vì theo bậc màu, để chọn đúng là mặc định: mỗi tên
         // dưới đây đã được đo đạt ngưỡng WCAG trên cả 5 theme (scripts/contrast-audit.ts).

@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { isValidNewPassword } from '@core/clientAuth'
 // src/pages/ResetPassword.tsx — Trang đích của link "Đặt mật khẩu mới" gửi qua email
 // (xem api/_lib/passwordReset.ts). Route /reset-password?token=... KHÔNG cần đăng nhập.
@@ -60,7 +61,11 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 focus:outline-none"
+      >
         <p className="text-zinc-300 text-sm text-center max-w-sm">
           {isA
             ? 'Link không hợp lệ — thiếu mã xác nhận. Hãy mở link từ email gửi tới bạn.'
@@ -73,13 +78,17 @@ export default function ResetPassword() {
         >
           {isA ? 'Về trang đăng nhập' : 'Back to login'}
         </button>
-      </div>
+      </main>
     )
   }
 
   if (done) {
     return (
-      <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 text-center">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 focus:outline-none text-center"
+      >
         <div className="w-14 h-14 rounded-2xl bg-accent-500/15 text-accent-400 flex items-center justify-center mb-4">
           <KeyRound className="w-7 h-7" />
         </div>
@@ -98,12 +107,16 @@ export default function ResetPassword() {
         >
           {isA ? 'Đăng nhập ngay' : 'Sign in now'}
         </button>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4">
+    <main
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 focus:outline-none"
+    >
       <div className="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl shadow-black/40">
         <h1 className="text-xl font-bold text-white mb-1">
           {isA ? 'Đặt mật khẩu mới' : 'Set a new password'}
@@ -161,6 +174,6 @@ export default function ResetPassword() {
           </Button>
         </form>
       </div>
-    </div>
+    </main>
   )
 }

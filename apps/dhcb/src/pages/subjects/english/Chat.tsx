@@ -40,6 +40,7 @@ import {
   type Direction,
   type EvaluationResult,
 } from '../../../types'
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 
 // Số lượt trao đổi tối thiểu trước khi cho phép chấm điểm — tránh chấm khi mới 1 câu.
 const MIN_TURNS_TO_GRADE = 3
@@ -778,183 +779,195 @@ export default function Chat() {
         }
       />
 
-      {!session ? (
-        <div className="flex-1 flex flex-col overflow-y-auto">
-          {/* Tiêu đề trang — ngay dưới AppHeader, cỡ chữ lớn */}
-          <div className="max-w-sm mx-auto w-full px-4 pt-5">
-            <h1 tabIndex={-1} className="sr-only focus:outline-none">
-              {isA ? 'Chat với gia sư' : 'Chat with tutor'}
-            </h1>
-          </div>
-          <SetupScreen
-            onStart={startSession}
-            loading={loading}
-            error={error}
-            dir={dir}
-            defaultLevel={onboarding?.level}
-            practiceWords={practiceWords}
-          />
-
-          {prevSessions.length > 0 && (
-            <div className="max-w-sm mx-auto w-full px-4 pb-8 animate-fade-in delay-200">
-              <p className="text-xs text-zinc-400 mb-2 font-medium">
-                {isA ? 'Hội thoại gần đây' : 'Recent sessions'}
-              </p>
-              {prevSessions.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setSession(s)}
-                  className="w-full text-left glass rounded-xl px-4 py-3 mb-2 hover:bg-zinc-800/60 transition group"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-zinc-300 font-medium">
-                      {situationLabel(s.situation, dir)}
-                    </p>
-                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition -rotate-90" />
-                  </div>
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    {s.messages.length} {isA ? 'tin nhắn' : 'messages'} ·{' '}
-                    {new Date(s.createdAt).toLocaleDateString(isA ? 'vi-VN' : 'en-US')}
-                  </p>
-                </button>
-              ))}
+      {/* Đích của liên kết "Bỏ qua tới nội dung chính" (WCAG 2.4.1, audit 2026-09-30 M7) — trước
+          đây trang không có <main>, người dùng bàn phím phải Tab qua cả thanh bên. */}
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="flex-1 flex flex-col min-h-0 focus:outline-none"
+      >
+        {!session ? (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Tiêu đề trang — ngay dưới AppHeader, cỡ chữ lớn */}
+            <div className="max-w-sm mx-auto w-full px-4 pt-5">
+              <h1 tabIndex={-1} className="sr-only focus:outline-none">
+                {isA ? 'Chat với gia sư' : 'Chat with tutor'}
+              </h1>
             </div>
-          )}
-        </div>
-      ) : evaluation ? (
-        <EvaluationResultView
-          evaluation={evaluation}
-          onClose={() => setEvaluation(null)}
-          dir={dir}
-        />
-      ) : (
-        <>
-          {/* Desktop (lg+): hội thoại bên trái + cột "Sửa lỗi & giải thích" ghim bên phải —
+            <SetupScreen
+              onStart={startSession}
+              loading={loading}
+              error={error}
+              dir={dir}
+              defaultLevel={onboarding?.level}
+              practiceWords={practiceWords}
+            />
+
+            {prevSessions.length > 0 && (
+              <div className="max-w-sm mx-auto w-full px-4 pb-8 animate-fade-in delay-200">
+                <p className="text-xs text-zinc-400 mb-2 font-medium">
+                  {isA ? 'Hội thoại gần đây' : 'Recent sessions'}
+                </p>
+                {prevSessions.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSession(s)}
+                    className="w-full text-left glass rounded-xl px-4 py-3 mb-2 hover:bg-zinc-800/60 transition group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-zinc-300 font-medium">
+                        {situationLabel(s.situation, dir)}
+                      </p>
+                      <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition -rotate-90" />
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      {s.messages.length} {isA ? 'tin nhắn' : 'messages'} ·{' '}
+                      {new Date(s.createdAt).toLocaleDateString(isA ? 'vi-VN' : 'en-US')}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : evaluation ? (
+          <EvaluationResultView
+            evaluation={evaluation}
+            onClose={() => setEvaluation(null)}
+            dir={dir}
+          />
+        ) : (
+          <>
+            {/* Desktop (lg+): hội thoại bên trái + cột "Sửa lỗi & giải thích" ghim bên phải —
               mobile giữ nguyên 1 cột như cũ (mỗi lỗi vẫn hiện ngay dưới tin nhắn, xem Bubble).
               Cột phải chỉ THÊM VÀO, không thay thế: người dùng desktop khỏi phải cuộn lên
               tìm lại lời sửa của câu trước khi so với câu hiện tại. */}
-          <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 max-w-3xl lg:max-w-5xl mx-auto w-full lg:px-4 lg:pt-3 overflow-hidden">
-            <div className="flex-1 min-h-0 px-4 py-4 lg:p-0 space-y-3 overflow-y-auto">
-              {session.messages.map((m, i) => (
-                <Bubble
-                  key={m.id}
-                  msg={m}
-                  isNew={i >= lastIdx}
-                  dir={dir}
-                  userId={user.id}
-                  isDesktop={isDesktop}
-                  userInput={
-                    session.messages[i - 1]?.role === 'user' ? session.messages[i - 1]!.content : ''
-                  }
-                />
-              ))}
-              {loading && <TypingDots />}
-              {/* Lỗi gọi AI: hiện bảng lỗi kèm nút "Thử lại" thay vì một dòng chữ chết —
+            <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 max-w-3xl lg:max-w-5xl mx-auto w-full lg:px-4 lg:pt-3 overflow-hidden">
+              <div className="flex-1 min-h-0 px-4 py-4 lg:p-0 space-y-3 overflow-y-auto">
+                {session.messages.map((m, i) => (
+                  <Bubble
+                    key={m.id}
+                    msg={m}
+                    isNew={i >= lastIdx}
+                    dir={dir}
+                    userId={user.id}
+                    isDesktop={isDesktop}
+                    userInput={
+                      session.messages[i - 1]?.role === 'user'
+                        ? session.messages[i - 1]!.content
+                        : ''
+                    }
+                  />
+                ))}
+                {loading && <TypingDots />}
+                {/* Lỗi gọi AI: hiện bảng lỗi kèm nút "Thử lại" thay vì một dòng chữ chết —
                   câu vừa gõ được gửi lại chứ không bắt học viên gõ tay. */}
-              {error && !limitHit && (
-                <LoadError message={error} onRetry={retryLastSend} retrying={loading} />
-              )}
-              {limitHit && (
-                <div className="text-center text-xs text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
-                  {isA
-                    ? 'Bạn đã dùng hết lượt hôm nay. Quay lại vào ngày mai nhé!'
-                    : "You've used all your sessions today. Come back tomorrow!"}
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </div>
-
-            {isDesktop && <FeedbackPanel messages={session.messages} dir={dir} userId={user.id} />}
-          </div>
-
-          <div className="sticky bottom-0 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/60 px-4 py-3 pb-safe">
-            {/* Cùng bề rộng với cột hội thoại phía trên (max-w-3xl lg:max-w-5xl) — trước
-                đây thanh nhập bị hẹp hơn nên lệch hẳn sang trái ở desktop. */}
-            <div className="max-w-3xl lg:max-w-5xl mx-auto flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setSession(null)
-                  setError('')
-                  setLimitHit(false)
-                }}
-                className="tap-44 flex items-center justify-center p-2.5 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition shrink-0 hover:bg-zinc-800/50"
-                title={isA ? 'Hội thoại mới' : 'New session'}
-                aria-label={isA ? 'Hội thoại mới' : 'New session'}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-
-              {userTurns >= MIN_TURNS_TO_GRADE && (
-                <button
-                  onClick={endAndGrade}
-                  disabled={loading || evaluating || limitHit || isThrottled}
-                  className="tap-44 flex items-center justify-center p-2.5 text-zinc-400 hover:text-violet-400 border border-zinc-800/80 hover:border-violet-500/50 rounded-xl transition shrink-0 hover:bg-zinc-800/50 disabled:opacity-50"
-                  title={isA ? 'Kết thúc & chấm điểm' : 'End & grade conversation'}
-                  aria-label={isA ? 'Kết thúc & chấm điểm' : 'End & grade conversation'}
-                >
-                  {evaluating ? (
-                    <span className="w-4 h-4 border-2 border-zinc-500/40 border-t-zinc-300 rounded-full animate-spin block" />
-                  ) : (
-                    <Award className="w-4 h-4" />
-                  )}
-                </button>
-              )}
-
-              <input
-                id="message-input"
-                name="message"
-                // Đánh dấu ô nhập CHÍNH của trang — Layout dùng để đưa con trỏ về đây
-                // khi bấm phím tắt "/".
-                data-primary-input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={() => {
-                  // GIỮ vá tạm này: `visualViewport.resize` chỉ bắn SAU khi bàn phím
-                  // trượt lên xong (~300ms trên iOS), nên lần mở đầu tiên vẫn cần cuộn
-                  // chủ động; hook useVisualViewportHeight lo phần co khung sau đó.
-                  setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 300)
-                }}
-                onKeyDown={(e) => {
-                  const isMobile = window.matchMedia('(pointer: coarse)').matches
-                  if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    sendMessage()
-                  }
-                }}
-                placeholder={isA ? 'Nhập tiếng Anh...' : 'Type in Vietnamese...'}
-                disabled={loading || limitHit || isThrottled}
-                inputMode="text"
-                className="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-800/80 rounded-xl px-4 py-2.5 text-base sm:text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition disabled:opacity-50"
-              />
-
-              <button
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || loading || limitHit || isThrottled}
-                className="tap-44 flex items-center justify-center p-2.5 bg-gradient-to-br from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-40 text-white rounded-xl transition shrink-0 shadow-md active:scale-95 relative"
-                aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
-              >
-                <Send className="w-4 h-4" />
-                {isThrottled && throttleCountdown > 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[11px] font-bold text-white">
-                    {throttleCountdown}s
+                {error && !limitHit && (
+                  <LoadError message={error} onRetry={retryLastSend} retrying={loading} />
+                )}
+                {limitHit && (
+                  <div className="text-center text-xs text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+                    {isA
+                      ? 'Bạn đã dùng hết lượt hôm nay. Quay lại vào ngày mai nhé!'
+                      : "You've used all your sessions today. Come back tomorrow!"}
                   </div>
                 )}
-              </button>
+                <div ref={bottomRef} />
+              </div>
 
-              <button
-                onClick={requestAiFollowUp}
-                disabled={loading || limitHit || isThrottled}
-                className="tap-44 flex items-center justify-center p-2.5 text-zinc-400 hover:text-amber-400 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl transition shrink-0 hover:bg-zinc-800/50 disabled:opacity-40"
-                title={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
-                aria-label={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
-              >
-                <Sparkles className="w-4 h-4" />
-              </button>
+              {isDesktop && (
+                <FeedbackPanel messages={session.messages} dir={dir} userId={user.id} />
+              )}
             </div>
-          </div>
-        </>
-      )}
+
+            <div className="sticky bottom-0 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/60 px-4 py-3 pb-safe">
+              {/* Cùng bề rộng với cột hội thoại phía trên (max-w-3xl lg:max-w-5xl) — trước
+                đây thanh nhập bị hẹp hơn nên lệch hẳn sang trái ở desktop. */}
+              <div className="max-w-3xl lg:max-w-5xl mx-auto flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setSession(null)
+                    setError('')
+                    setLimitHit(false)
+                  }}
+                  className="tap-44 flex items-center justify-center p-2.5 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition shrink-0 hover:bg-zinc-800/50"
+                  title={isA ? 'Hội thoại mới' : 'New session'}
+                  aria-label={isA ? 'Hội thoại mới' : 'New session'}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+
+                {userTurns >= MIN_TURNS_TO_GRADE && (
+                  <button
+                    onClick={endAndGrade}
+                    disabled={loading || evaluating || limitHit || isThrottled}
+                    className="tap-44 flex items-center justify-center p-2.5 text-zinc-400 hover:text-violet-400 border border-zinc-800/80 hover:border-violet-500/50 rounded-xl transition shrink-0 hover:bg-zinc-800/50 disabled:opacity-50"
+                    title={isA ? 'Kết thúc & chấm điểm' : 'End & grade conversation'}
+                    aria-label={isA ? 'Kết thúc & chấm điểm' : 'End & grade conversation'}
+                  >
+                    {evaluating ? (
+                      <span className="w-4 h-4 border-2 border-zinc-500/40 border-t-zinc-300 rounded-full animate-spin block" />
+                    ) : (
+                      <Award className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+
+                <input
+                  id="message-input"
+                  name="message"
+                  // Đánh dấu ô nhập CHÍNH của trang — Layout dùng để đưa con trỏ về đây
+                  // khi bấm phím tắt "/".
+                  data-primary-input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onFocus={() => {
+                    // GIỮ vá tạm này: `visualViewport.resize` chỉ bắn SAU khi bàn phím
+                    // trượt lên xong (~300ms trên iOS), nên lần mở đầu tiên vẫn cần cuộn
+                    // chủ động; hook useVisualViewportHeight lo phần co khung sau đó.
+                    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 300)
+                  }}
+                  onKeyDown={(e) => {
+                    const isMobile = window.matchMedia('(pointer: coarse)').matches
+                    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      sendMessage()
+                    }
+                  }}
+                  placeholder={isA ? 'Nhập tiếng Anh...' : 'Type in Vietnamese...'}
+                  disabled={loading || limitHit || isThrottled}
+                  inputMode="text"
+                  className="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-800/80 rounded-xl px-4 py-2.5 text-base sm:text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition disabled:opacity-50"
+                />
+
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={!input.trim() || loading || limitHit || isThrottled}
+                  className="tap-44 flex items-center justify-center p-2.5 bg-gradient-to-br from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-40 text-white rounded-xl transition shrink-0 shadow-md active:scale-95 relative"
+                  aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
+                >
+                  <Send className="w-4 h-4" />
+                  {isThrottled && throttleCountdown > 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[11px] font-bold text-white">
+                      {throttleCountdown}s
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  onClick={requestAiFollowUp}
+                  disabled={loading || limitHit || isThrottled}
+                  className="tap-44 flex items-center justify-center p-2.5 text-zinc-400 hover:text-amber-400 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl transition shrink-0 hover:bg-zinc-800/50 disabled:opacity-40"
+                  title={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
+                  aria-label={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }

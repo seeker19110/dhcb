@@ -16,6 +16,8 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const AA_NORMAL_TEXT = 4.5
+/** WCAG 1.4.11 Non-text Contrast: thành phần giao diện và chỉ báo trạng thái (gồm viền focus) ≥ 3:1. */
+const AA_NON_TEXT = 3
 
 type Rgb = [number, number, number]
 
@@ -100,7 +102,9 @@ function readThemeTokens(): Map<string, Map<string, Rgb>> {
 
   for (const block of css.matchAll(/\[data-theme='([^']+)'\]\s*\{([\s\S]*?)\n\}/g)) {
     const tokens = new Map<string, Rgb>()
-    for (const token of block[2].matchAll(/--([az]-\d+|c-white):\s*(\d+)\s+(\d+)\s+(\d+)/g)) {
+    for (const token of block[2].matchAll(
+      /--([az]-\d+|c-white|focus-ring):\s*(\d+)\s+(\d+)\s+(\d+)/g,
+    )) {
       tokens.set(token[1], [Number(token[2]), Number(token[3]), Number(token[4])])
     }
     themes.set(block[1], tokens)
@@ -167,5 +171,30 @@ describe('danh sách nợ KNOWN_LOW phải luôn đúng thực tế', () => {
       expect(tokens!.get(fg), `token không tồn tại: ${fg} (${key})`).toBeDefined()
       expect(tokens!.get(bg), `token không tồn tại: ${bg} (${key})`).toBeDefined()
     }
+  })
+})
+
+// Audit 2026-09-30 C1: viền focus dùng --a-500 chỉ đạt 2,65:1 (Blue sky) và 2,70:1 (Nhi đồng) so
+// với nền — người dùng bàn phím mất dấu vị trí ở theme mặc định. Nay mỗi theme có token
+// `--focus-ring` riêng (packages/core-ui/theme.css), cổng này khoá nó ≥ 3:1 trên mọi bề mặt có
+// phần tử nhận focus: nền trang, thẻ, ô nổi. axe KHÔNG đo được viền focus nên phải chặn ở đây.
+describe('viền focus (--focus-ring) — đạt WCAG 1.4.11 ở MỌI theme', () => {
+  for (const [theme, tokens] of THEMES) {
+    for (const bg of ['z-950', 'z-900', 'z-800'] as const) {
+      it(`${theme}: viền focus trên bg-${bg} ≥ 3:1`, () => {
+        const ring = tokens.get('focus-ring')
+        const background = tokens.get(bg)
+        expect(ring, `${theme} thiếu --focus-ring`).toBeDefined()
+        expect(background, `thiếu --${bg}`).toBeDefined()
+        expect(contrastRatio(ring!, background!)).toBeGreaterThanOrEqual(AA_NON_TEXT)
+      })
+    }
+  }
+
+  it('index.css vẽ viền focus bằng --focus-ring, không quay lại --a-500', () => {
+    const css = readFileSync(path.join(import.meta.dirname, '..', 'index.css'), 'utf8')
+    const outlines = [...css.matchAll(/outline:\s*2px solid rgb\(var\(--([a-z0-9-]+)\)\)/g)]
+    expect(outlines.length).toBeGreaterThan(0)
+    for (const m of outlines) expect(m[1]).toBe('focus-ring')
   })
 })

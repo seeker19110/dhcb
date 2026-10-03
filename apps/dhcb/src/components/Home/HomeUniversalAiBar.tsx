@@ -349,7 +349,7 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
             promptToggleFocusedRef.current = false
           }}
           onClick={() => setExpanded((current) => !current)}
-          className="tap-44 mt-1 w-full rounded-xl border border-zinc-800 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-white focus-visible:ring-2 focus-visible:ring-accent-500"
+          className="tap-44 mt-1 w-full rounded-xl border border-zinc-800 px-3 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-white focus-visible:ring-2 focus-visible:ring-focus-ring"
         >
           {expanded ? 'Ẩn gợi ý nhanh' : `Xem ${PROMPT_CHIPS.length} gợi ý nhanh`}
         </button>
