@@ -84,15 +84,23 @@ function toApiProfile(userId: string, name: string, p: StoredPvPProfile): PvPPla
   }
 }
 
+// Tên trên bảng xếp hạng (người khác nhìn thấy): CHỈ biệt danh người dùng tự đặt. Không bao giờ
+// dùng `users.name` — tên tài khoản thường là họ tên đầy đủ, người dùng chưa đồng ý công khai
+// (chủ dự án chốt 2026-10-02). Chưa có biệt danh → "Học viên #<hạng>".
+export function leaderboardName(nickname: string | null | undefined, rank: number): string {
+  const trimmed = nickname?.trim()
+  return trimmed ? trimmed : `Học viên #${rank}`
+}
+
 // Leaderboard THẬT: top 10 Elo từ feature_state (mọi người chơi từng vào PvP đều có dòng).
 async function realLeaderboard(): Promise<PvPLeaderboardEntry[]> {
   const pool = getPgPool()
   const { rows } = await pool.query<{
     user_id: string
     state: StoredPvPProfile
-    display_name: string | null
+    nickname: string | null
   }>(
-    `select fs.user_id, fs.state, coalesce(p.nickname, u.name) as display_name
+    `select fs.user_id, fs.state, p.nickname
        from platform.feature_state fs
        join public.users u on u.id = fs.user_id
        left join public.profiles p on p.user_id = fs.user_id
@@ -104,7 +112,7 @@ async function realLeaderboard(): Promise<PvPLeaderboardEntry[]> {
   return rows.map((r, i) => ({
     rank: i + 1,
     playerId: r.user_id,
-    name: r.display_name || 'Học viên',
+    name: leaderboardName(r.nickname, i + 1),
     avatar: r.state.avatar || '🦁',
     eloRating: r.state.eloRating,
     rankTier: getRankTierFromElo(r.state.eloRating),

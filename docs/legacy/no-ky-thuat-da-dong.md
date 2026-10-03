@@ -27,6 +27,19 @@ Khi đóng thêm một món nợ: cắt khối đó khỏi `PROGRESS.md`, dán v
   lưu loát/ngữ điệu dạng %. Cùng loại lỗi với 0473 (STEM) và 0475 (Tổng kết). **Gỡ — chờ chủ dự án
   chọn:** (a) ẩn lab tới khi có chấm âm học thật (forced alignment); hoặc (b) bỏ mọi con số, đổi
   nhãn thành "gợi ý luyện âm" và chỉ giữ ma trận lỗi L1 + mẹo đặt lưỡi.
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0485`: miền đã xoá đổi về `general`, mẫu và phân loại chỉ còn learning/work/general] [2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
+  xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
+  dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0485`: miền đã xoá đổi về `general`, mẫu và phân loại chỉ còn learning/work/general] [2026-10-02 — changelog `0478`] Edge AI phân loại ý định về các miền đã xoá.**
+  `classifyIntentEdge` (`apps/dhcb/src/lib/edgeAi/edgeAiService.ts`, regex — không phải model) vẫn
+  trả `career`/`startup`/`life` dù ba trụ đã gỡ 2026-09-20. Gỡ: bỏ ba nhánh đó (rơi về `general`)
+  và đối chiếu nơi tiêu thụ kết quả.
+- ✅ **[ĐÃ ĐÓNG 2026-10-02 — changelog `0483`: chủ dự án chọn (a) chỉ biệt danh, chưa có thì "Học viên #N"] [2026-10-02 — phát hiện khi sửa PvP ở changelog `0482`] Bảng xếp hạng PvP hiện TÊN THẬT
+  của người dùng cho mọi người chơi.** `realLeaderboard` (`apps/server/src/api/platform/pvp-arena.ts`)
+  lấy top 10 Elo kèm `coalesce(profiles.nickname, users.name)` — ai chưa đặt biệt danh thì lộ tên
+  tài khoản (thường là họ tên đầy đủ), không có bước đồng ý tham gia bảng xếp hạng. Đụng dữ liệu
+  người dùng thật → **chờ chủ dự án chọn:** (a) chỉ hiện biệt danh, ai chưa có thì hiện "Học viên
+  #N"; (b) thêm lựa chọn tham gia/ẩn khỏi bảng xếp hạng; (c) giữ nguyên.
 - ✅ **[2026-09-14 → ĐÓNG 2026-09-26, `docs/changelog/0454-*.md`] Nhãn chữ
   trong hoạt ảnh khó đọc ở màn hình 390px.** Đo được **29/150 nhãn dài hơn 24 ký tự** ở cỡ chữ
   11–12 trong viewBox rộng 440 — trên điện thoại chúng co lại rất nhỏ. **KHÔNG phải lỗi mới**:

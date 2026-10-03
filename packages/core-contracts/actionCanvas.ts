@@ -16,7 +16,17 @@ export const CanvasNodeTypeSchema = z.enum([
 
 export type CanvasNodeType = z.infer<typeof CanvasNodeTypeSchema>
 
-export const CanvasDomainSchema = z.enum(['learning', 'career', 'work', 'startup', 'life'])
+// Miền của một nút: hai trụ còn thật (Learning, Ghi chú = `work`) + `general`. Ba trụ Career ·
+// Startup · Life đã gỡ 2026-09-20 — canvas người dùng LƯU từ trước vẫn có thể chứa ba giá trị đó,
+// nên chúng được đổi về `general` khi đọc thay vì bị từ chối (lưu lại canvas cũ không lỗi 400).
+// Changelog 0485.
+export const CANVAS_DOMAINS = ['learning', 'work', 'general'] as const
+const LEGACY_CANVAS_DOMAINS = new Set(['career', 'startup', 'life'])
+
+export const CanvasDomainSchema = z.preprocess(
+  (value) => (typeof value === 'string' && LEGACY_CANVAS_DOMAINS.has(value) ? 'general' : value),
+  z.enum(CANVAS_DOMAINS),
+)
 
 export type CanvasDomain = z.infer<typeof CanvasDomainSchema>
 

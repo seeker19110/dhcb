@@ -13,6 +13,16 @@ import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
 
 const FEATURE = 'action_canvas'
 
+// Đọc canvas đã lưu và chuẩn hoá qua hợp đồng: canvas lưu trước 2026-10-02 có thể còn nút gán miền
+// đã xoá (career/startup/life) — hợp đồng đổi chúng về `general` (changelog 0485). Bản lưu không
+// khớp hợp đồng vì lý do khác thì trả nguyên văn như trước, không làm mất dữ liệu của người dùng.
+async function readCanvas(personId: string): Promise<ActionCanvasState | null> {
+  const stored = await getFeatureState<ActionCanvasState>(personId, FEATURE)
+  if (!stored) return null
+  const parsed = ActionCanvasStateSchema.safeParse(stored)
+  return parsed.success ? parsed.data : stored
+}
+
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: getCorsHeaders(req) })
@@ -32,7 +42,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (req.method === 'GET') {
     const existing =
-      (await getFeatureState<ActionCanvasState>(personId, FEATURE)) ||
+      (await readCanvas(personId)) ||
       ActionCanvasService.synthesizeCrossDomainGoalCanvas({
         canvasId: '11111111-1111-4111-8111-111111111111',
         personId,
@@ -65,7 +75,7 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'auto_layout') {
-        const existing = await getFeatureState<ActionCanvasState>(personId, FEATURE)
+        const existing = await readCanvas(personId)
         if (!existing) {
           return jsonResponse({ error: 'canvas_not_found' }, 404)
         }
@@ -83,7 +93,7 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'export') {
-        const existing = await getFeatureState<ActionCanvasState>(personId, FEATURE)
+        const existing = await readCanvas(personId)
         if (!existing) {
           return jsonResponse({ error: 'canvas_not_found' }, 404)
         }

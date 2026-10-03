@@ -1117,23 +1117,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟡 **[2026-10-02 — phát hiện khi sửa PvP ở changelog `0482`] Bảng xếp hạng PvP hiện TÊN THẬT
-  của người dùng cho mọi người chơi.** `realLeaderboard` (`apps/server/src/api/platform/pvp-arena.ts`)
-  lấy top 10 Elo kèm `coalesce(profiles.nickname, users.name)` — ai chưa đặt biệt danh thì lộ tên
-  tài khoản (thường là họ tên đầy đủ), không có bước đồng ý tham gia bảng xếp hạng. Đụng dữ liệu
-  người dùng thật → **chờ chủ dự án chọn:** (a) chỉ hiện biệt danh, ai chưa có thì hiện "Học viên
-  #N"; (b) thêm lựa chọn tham gia/ẩn khỏi bảng xếp hạng; (c) giữ nguyên.
-- 🟡 **[2026-10-02 — changelog `0480`] Action Canvas dựng nút gán vào miền `career`/`life` đã
-  xoá** (`packages/core-personal/actionCanvasService.ts`, mẫu nút). Gỡ cùng đợt với nợ Edge AI bên
-  dưới: đổi sang miền còn tồn tại hoặc bỏ trường miền.
+- 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
+  từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
+  (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —
+  chỉ thay tiêu đề nút gốc. Câu chữ giao diện đã sửa thành "bản nháp sơ đồ từ khung mẫu" (không
+  còn hứa "AI phân rã"). **Muốn phân rã thật:** cần đặc tả (gọi AI có đếm lượt, rào chắn skill
+  `autonomous-agent-orchestrator`), hoặc chủ dự án chọn đổi khung mẫu thành canvas trống.
 - 🟡 **[2026-10-02 — changelog `0479`] "Chỉ số tự nhận thức" của nhật ký phản tỉnh là đại lượng
   thay thế bằng SỐ TỪ** (`metacognitiveReflectionService.ts`: `wordCount * 1.5 + 40` + thưởng theo
   số bẫy nhận ra), không phải thang MAI chuẩn. Không dùng để xếp hạng/đưa lên màn hình chính; cân
   nhắc đổi tên hoặc bỏ con số.
-- 🟡 **[2026-10-02 — changelog `0478`] Edge AI phân loại ý định về các miền đã xoá.**
-  `classifyIntentEdge` (`apps/dhcb/src/lib/edgeAi/edgeAiService.ts`, regex — không phải model) vẫn
-  trả `career`/`startup`/`life` dù ba trụ đã gỡ 2026-09-20. Gỡ: bỏ ba nhánh đó (rơi về `general`)
-  và đối chiếu nơi tiêu thụ kết quả.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`] Bảng nháp STEM (Companion › Thử thách)
   chưa kiểm được bước giải ở giữa.** Lỗi 🔴 cũ (chấm MỌI bước là "đúng", "ĐÃ GIẢI XONG" bằng so
   chuỗi con) đã sửa: bước không kiểm được nay hiện "? Chưa tự kiểm được"; chỉ đáp số cuối khớp

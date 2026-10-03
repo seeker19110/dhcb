@@ -57,8 +57,9 @@ Câu hỏi lấy từ ngân hàng theo chế độ, xáo thứ tự.
 - Elo đấu với AI chỉ phản ánh phong độ trước bộ câu hỏi, **không** so được với người khác — đừng
   dựng bảng xếp hạng công khai từ con số này mà không nói rõ.
 - Bảng xếp hạng (`realLeaderboard` trong `apps/server/src/api/platform/pvp-arena.ts`) là top 10 Elo
-  **toàn thời gian** (không phải "tuần"), hiện biệt danh hoặc tên tài khoản cho mọi người chơi — nợ
-  🟡 quyền riêng tư trong `PROGRESS.md`; đừng mở rộng thêm thông tin cá nhân lên bảng này.
+  **toàn thời gian** (không phải "tuần"), CHỈ hiện biệt danh người dùng tự đặt (`profiles.nickname`),
+  chưa có thì "Học viên #<hạng>" (`leaderboardName`, changelog 0483). **Không bao giờ** đưa
+  `users.name` (thường là họ tên đầy đủ) hay thông tin cá nhân khác lên bảng này — test canh.
 - Ngưỡng bậc rank: đọc trong mã/hợp đồng, đừng chép bảng số vào đây.
 
 ---

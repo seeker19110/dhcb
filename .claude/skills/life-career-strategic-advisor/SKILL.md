@@ -23,10 +23,8 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
   **quyết định sản phẩm lớn**, đảo ngược một ADR → dừng và hỏi chủ dự án (CLAUDE.md mục 12). Không
   tự dựng lại dưới tên khác.
 - Thấy mã còn sót **miền đã xoá** (`career`/`startup`/`life`) thì ghi nợ hoặc gỡ, không mở rộng
-  thêm. Chỗ sót đã biết (2026-10-02):
-  - `classifyIntentEdge` trong `apps/dhcb/src/lib/edgeAi/edgeAiService.ts`;
-  - mẫu nút của Action Canvas;
-  - `packages/core-personal/lifeSynthesisService.ts` (không còn được gọi, giữ có cảnh báo).
+  thêm. `classifyIntentEdge` và mẫu nút Action Canvas đã gỡ ở changelog 0485. Chỗ sót còn biết:
+  `packages/core-personal/lifeSynthesisService.ts` (không còn được gọi, giữ có cảnh báo).
 - **Không hiển thị điểm tổng hợp "cuộc sống"** (HAS / LSI / CRS, xác suất về đích) khi chưa có nguồn
   dữ liệu hoạt động thật. `/api/life-synthesis` hiện trả 501 có chủ đích.
 - Luật năng lực cá nhân vẫn áp dụng nếu có ngày quay lại mảng này:
@@ -42,8 +40,11 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
 `apps/dhcb/src/components/ActionCanvas/`. Lối vào duy nhất là banner cuối studio "Kế hoạch".
 
 - `synthesizeCrossDomainGoalCanvas` dựng đồ thị nút **từ mẫu** theo câu mục tiêu:
-  `goal` → `task` → `decision_bridge` → `metric`. Đây không phải phân tích AI; mẫu còn gán nút vào
-  miền `career`/`life` đã xoá (nợ 🟡 trong `PROGRESS.md`).
+  `goal` → `task` → `decision_bridge`. Đây không phải phân tích AI — giao diện gọi là "bản nháp sơ
+  đồ từ khung mẫu" (changelog 0485).
+- Miền của nút (`CanvasDomainSchema`): chỉ `learning` · `work` (Ghi chú) · `general`. Canvas lưu từ
+  trước có `career`/`startup`/`life` được hợp đồng đổi về `general` khi đọc — **đừng** bỏ bước đổi
+  này (lưu lại canvas cũ sẽ lỗi 400).
 - `autoLayoutCanvasNodes` xếp bố cục cây chống chồng lấn.
 - `exportCanvasToMarkdown` xuất Markdown.
 - Sửa canvas thì giữ nhãn trung thực: đồ thị là **khung gợi ý**, không phải kế hoạch được AI

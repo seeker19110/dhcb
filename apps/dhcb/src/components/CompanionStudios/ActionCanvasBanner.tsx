@@ -29,7 +29,7 @@ export default function ActionCanvasBanner({ navigate }: ActionCanvasBannerProps
             </span>
           </h4>
           <p className="text-xs text-content-secondary mt-0.5">
-            Phác thảo sơ đồ tư duy, phân rã mục tiêu 5 miền và kết nối tương tác trực quan cùng AI.
+            Phác thảo sơ đồ tư duy, chia mục tiêu thành việc học và việc cần làm, kéo thả trực quan.
           </p>
         </div>
       </div>

@@ -47,7 +47,9 @@ export async function loadCachedEdgeModel(version: string = 'v1.0'): Promise<Arr
 }
 
 export interface EdgeIntentResult {
-  domain: 'learning' | 'career' | 'work' | 'startup' | 'life' | 'general'
+  // Chỉ còn hai trụ thật: Learning và Ghi chú (`work`). Ba trụ Career · Startup · Life đã gỡ
+  // 2026-09-20 — câu hỏi về chúng rơi về `general` (changelog 0485).
+  domain: 'learning' | 'work' | 'general'
   intent: string
   confidence: number // 0.0 -> 1.0
   source: 'edge_slm' | 'cloud_gateway'
@@ -133,18 +135,6 @@ export function classifyIntentEdge(text: string): EdgeIntentResult {
         : 'learning.study_concept'
     confidence = 0.95
   } else if (
-    /cv|resume|phỏng vấn|interview|sự nghiệp|nghề nghiệp|việc làm|job|thăng tiến|kỹ năng|salary/i.test(
-      lower,
-    )
-  ) {
-    domain = 'career'
-    intent = /cv|resume/i.test(lower)
-      ? 'career.review_cv'
-      : /phỏng vấn|interview/i.test(lower)
-        ? 'career.mock_interview'
-        : 'career.skill_gap_analysis'
-    confidence = 0.92
-  } else if (
     /dự án|công việc|task|nhiệm vụ|meeting|họp|deadline|kanban|báo cáo|tài liệu|notion|jira/i.test(
       lower,
     )
@@ -156,24 +146,6 @@ export function classifyIntentEdge(text: string): EdgeIntentResult {
         ? 'work.task_management'
         : 'work.project_plan'
     confidence = 0.9
-  } else if (
-    /khởi nghiệp|startup|kinh doanh|mô hình|business|khách hàng|mvp|thị trường|doanh thu|hypothesis/i.test(
-      lower,
-    )
-  ) {
-    domain = 'startup'
-    intent = /mô hình|canvas/i.test(lower)
-      ? 'startup.business_model'
-      : 'startup.validate_hypothesis'
-    confidence = 0.91
-  } else if (
-    /thói quen|sức khỏe|tập thể dục|ngủ|tài chính|tiết kiệm|chi tiêu|tâm trạng|habit|wellbeing/i.test(
-      lower,
-    )
-  ) {
-    domain = 'life'
-    intent = /thói quen|habit/i.test(lower) ? 'life.habit_track' : 'life.wellbeing_check'
-    confidence = 0.88
   }
 
   const endTime = typeof performance !== 'undefined' ? performance.now() : Date.now()
