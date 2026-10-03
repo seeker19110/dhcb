@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { isValidNewPassword } from '@core/clientAuth'
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
@@ -262,7 +263,12 @@ export default function Login() {
     'w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-accent-500/70 focus:bg-zinc-800 transition'
 
   return (
-    <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    // <main> = đích của liên kết "Bỏ qua tới nội dung chính" (WCAG 2.4.1, audit 2026-09-30 M7).
+    <main
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 relative overflow-hidden focus:outline-none"
+    >
       {/* Gradient blobs nền */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-accent-500 rounded-full blur-[140px] opacity-[0.07] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-sky-500 rounded-full blur-[140px] opacity-[0.07] translate-x-1/2 translate-y-1/2 pointer-events-none" />
@@ -541,6 +547,6 @@ export default function Login() {
           )
         })}
       </div>
-    </div>
+    </main>
   )
 }

@@ -22,12 +22,14 @@ import {
 import { getSpecStage } from '@dhcb/subject-programming/specializations/registry'
 import { idFromSlugSegment } from '@core/slug'
 import { PROGRAMMING_PREFIX, duongDanLoTrinh } from '../../../lib/programmingRoutes'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 export default function ProgrammingPathDiagnostic() {
   const nav = useNavigate()
   const { pathId } = useParams()
   const { user } = useAuth()
   const path = getLearningPath(idFromSlugSegment(pathId ?? ''))
+  usePageTitle(`${path ? `Chẩn đoán: ${path.title}` : 'Chẩn đoán lộ trình'} | Môn Lập trình`)
 
   const [chosen, setChosen] = useState<Record<string, number>>({})
   const [submitted, setSubmitted] = useState(false)

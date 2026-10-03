@@ -110,7 +110,7 @@ export default function DashboardWeeklyOverview({
 
       <button
         onClick={onChangeGoal}
-        className="min-h-11 px-2 -ml-2 text-xs font-medium text-accent-400 theme-light:text-accent-800 hover:underline mt-2 inline-flex items-center gap-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+        className="min-h-11 px-2 -ml-2 text-xs font-medium text-accent-400 theme-light:text-accent-800 hover:underline mt-2 inline-flex items-center gap-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
       >
         {vi ? 'Đổi mục tiêu ở Hồ sơ →' : 'Change goal in Profile →'}
       </button>
@@ -123,7 +123,7 @@ export default function DashboardWeeklyOverview({
           aria-expanded={calendarExpanded}
           aria-controls="dashboard-calendar-panel"
           onClick={toggleCalendar}
-          className="min-h-11 w-full rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+          className="min-h-11 w-full rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
         >
           {calendarExpanded
             ? vi

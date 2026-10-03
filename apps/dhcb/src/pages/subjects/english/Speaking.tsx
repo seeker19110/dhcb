@@ -50,6 +50,7 @@ import {
   type Direction,
   type EvaluationResult,
 } from '../../../types'
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 
 // Số lượt trao đổi tối thiểu trước khi cho phép chấm điểm — tránh chấm khi mới 1 câu.
 const MIN_TURNS_TO_GRADE = 3
@@ -1093,324 +1094,334 @@ export default function Speaking() {
         }
       />
 
-      {!session ? (
-        <div className="flex-1 flex flex-col overflow-y-auto">
-          {/* Tiêu đề trang — ngay dưới AppHeader, cỡ chữ lớn */}
-          <div className="max-w-sm mx-auto w-full px-4 pt-5">
-            <h1 tabIndex={-1} className="sr-only focus:outline-none">
-              {isA ? 'Luyện nói song ngữ' : 'Bilingual Speaking'}
-            </h1>
+      {/* Đích của liên kết "Bỏ qua tới nội dung chính" (WCAG 2.4.1, audit 2026-09-30 M7) — trước
+          đây trang không có <main>, người dùng bàn phím phải Tab qua cả thanh bên. */}
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="flex-1 flex flex-col min-h-0 focus:outline-none"
+      >
+        {!session ? (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Tiêu đề trang — ngay dưới AppHeader, cỡ chữ lớn */}
+            <div className="max-w-sm mx-auto w-full px-4 pt-5">
+              <h1 tabIndex={-1} className="sr-only focus:outline-none">
+                {isA ? 'Luyện nói song ngữ' : 'Bilingual Speaking'}
+              </h1>
+            </div>
+            <SetupScreen
+              onStart={startSession}
+              loading={loading}
+              error={error}
+              dir={dir}
+              defaultLevel={onboarding?.level}
+              practiceWords={practiceWords}
+            />
           </div>
-          <SetupScreen
-            onStart={startSession}
-            loading={loading}
-            error={error}
+        ) : evaluation ? (
+          <EvaluationResultView
+            evaluation={evaluation}
+            onClose={() => setEvaluation(null)}
             dir={dir}
-            defaultLevel={onboarding?.level}
-            practiceWords={practiceWords}
           />
-        </div>
-      ) : evaluation ? (
-        <EvaluationResultView
-          evaluation={evaluation}
-          onClose={() => setEvaluation(null)}
-          dir={dir}
-        />
-      ) : (
-        <>
-          {/* Desktop (lg+): hội thoại nói + nút mic bên trái, cột "Sửa lỗi & giải thích" ghim
+        ) : (
+          <>
+            {/* Desktop (lg+): hội thoại nói + nút mic bên trái, cột "Sửa lỗi & giải thích" ghim
               bên phải (cuộn riêng) — mobile giữ nguyên 1 cột dọc như cũ (lời sửa vẫn nằm ngay
               dưới từng lượt nói của AI, xem SpeakBubble). Cùng khuôn với Chat.tsx. */}
-          <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 max-w-3xl lg:max-w-5xl mx-auto w-full lg:px-4 lg:pt-3 overflow-hidden">
-            <div className="flex-1 min-h-0 px-4 py-4 lg:p-0 space-y-3 overflow-y-auto">
-              {session.messages.map((m, i) => (
-                <SpeakBubble
-                  key={m.id}
-                  msg={m}
-                  isNew={i >= lastIdx}
-                  onPlay={m.role === 'assistant' ? () => playMsg(m) : undefined}
+            <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 max-w-3xl lg:max-w-5xl mx-auto w-full lg:px-4 lg:pt-3 overflow-hidden">
+              <div className="flex-1 min-h-0 px-4 py-4 lg:p-0 space-y-3 overflow-y-auto">
+                {session.messages.map((m, i) => (
+                  <SpeakBubble
+                    key={m.id}
+                    msg={m}
+                    isNew={i >= lastIdx}
+                    onPlay={m.role === 'assistant' ? () => playMsg(m) : undefined}
+                    wordSync={speaking ? wordSync : null}
+                    dir={dir}
+                    userId={user.id}
+                    isDesktop={isDesktop}
+                    userInput={
+                      session.messages[i - 1]?.role === 'user'
+                        ? session.messages[i - 1]!.content
+                        : ''
+                    }
+                  />
+                ))}
+                {loading && <TypingDots />}
+                {transcript && (
+                  <div className="flex justify-end animate-fade-in">
+                    <div className="max-w-[78%] bg-sky-600/20 border border-sky-500/25 text-sky-300 theme-light:text-sky-800 rounded-2xl rounded-br-sm px-4 py-2.5 text-sm italic break-words">
+                      {transcript}…
+                    </div>
+                  </div>
+                )}
+                {pendingConfirm && (
+                  <div className="flex flex-col items-end gap-2 animate-fade-in">
+                    <div className="max-w-[78%] bg-sky-600/20 border border-sky-500/25 text-sky-300 theme-light:text-sky-800 rounded-2xl rounded-br-sm px-4 py-2.5 text-sm break-words">
+                      {pendingConfirm}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-zinc-400">
+                        {isA
+                          ? `Tự gửi sau ${pendingCountdown}s...`
+                          : `Sending in ${pendingCountdown}s...`}
+                      </span>
+                      <button
+                        onClick={cancelPendingConfirm}
+                        className="tap-44 text-xs font-medium text-red-400 theme-light:text-red-900 border border-red-500/30 hover:bg-red-500/10 rounded-full px-3 py-1.5 transition"
+                      >
+                        {isA ? 'Ghi lại' : 'Re-record'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {error && (
+                  <p className="text-center text-xs text-red-400 theme-light:text-red-700 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2">
+                    {error}
+                  </p>
+                )}
+                {limitHit && (
+                  <div className="text-center text-xs text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+                    {isA
+                      ? 'Bạn đã dùng hết lượt hôm nay. Quay lại vào ngày mai.'
+                      : "You've used all sessions today. Come back tomorrow."}
+                  </div>
+                )}
+                <div ref={bottomRef} />
+              </div>
+
+              {isDesktop && (
+                <SpeakFeedbackPanel
+                  messages={session.messages}
                   wordSync={speaking ? wordSync : null}
                   dir={dir}
                   userId={user.id}
-                  isDesktop={isDesktop}
-                  userInput={
-                    session.messages[i - 1]?.role === 'user' ? session.messages[i - 1]!.content : ''
-                  }
                 />
-              ))}
-              {loading && <TypingDots />}
-              {transcript && (
-                <div className="flex justify-end animate-fade-in">
-                  <div className="max-w-[78%] bg-sky-600/20 border border-sky-500/25 text-sky-300 theme-light:text-sky-800 rounded-2xl rounded-br-sm px-4 py-2.5 text-sm italic break-words">
-                    {transcript}…
-                  </div>
-                </div>
               )}
-              {pendingConfirm && (
-                <div className="flex flex-col items-end gap-2 animate-fade-in">
-                  <div className="max-w-[78%] bg-sky-600/20 border border-sky-500/25 text-sky-300 theme-light:text-sky-800 rounded-2xl rounded-br-sm px-4 py-2.5 text-sm break-words">
-                    {pendingConfirm}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400">
-                      {isA
-                        ? `Tự gửi sau ${pendingCountdown}s...`
-                        : `Sending in ${pendingCountdown}s...`}
-                    </span>
-                    <button
-                      onClick={cancelPendingConfirm}
-                      className="tap-44 text-xs font-medium text-red-400 theme-light:text-red-900 border border-red-500/30 hover:bg-red-500/10 rounded-full px-3 py-1.5 transition"
-                    >
-                      {isA ? 'Ghi lại' : 'Re-record'}
-                    </button>
-                  </div>
-                </div>
-              )}
-              {error && (
-                <p className="text-center text-xs text-red-400 theme-light:text-red-700 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2">
-                  {error}
-                </p>
-              )}
-              {limitHit && (
-                <div className="text-center text-xs text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
-                  {isA
-                    ? 'Bạn đã dùng hết lượt hôm nay. Quay lại vào ngày mai.'
-                    : "You've used all sessions today. Come back tomorrow."}
-                </div>
-              )}
-              <div ref={bottomRef} />
             </div>
 
-            {isDesktop && (
-              <SpeakFeedbackPanel
-                messages={session.messages}
-                wordSync={speaking ? wordSync : null}
-                dir={dir}
-                userId={user.id}
-              />
-            )}
-          </div>
-
-          <div className="sticky bottom-0 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/60 px-4 py-4 pb-safe">
-            {/* Cùng bề rộng với khung hội thoại phía trên (max-w-3xl lg:max-w-5xl) — nếu để
+            <div className="sticky bottom-0 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/60 px-4 py-4 pb-safe">
+              {/* Cùng bề rộng với khung hội thoại phía trên (max-w-3xl lg:max-w-5xl) — nếu để
                 hẹp hơn thì thanh mic bị lệch sang trái ở desktop. */}
-            <div className="max-w-3xl lg:max-w-5xl mx-auto">
-              {userTurns >= MIN_TURNS_TO_GRADE && (
-                <div className="flex justify-center mb-3">
-                  <button
-                    onClick={endAndGrade}
-                    disabled={loading || evaluating || limitHit || isThrottled}
-                    className="tap-44 flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-violet-400 border border-zinc-800/80 hover:border-violet-500/50 rounded-full px-4 py-2 transition hover:bg-zinc-800/50 disabled:opacity-50"
-                  >
-                    {evaluating ? (
-                      <span className="w-3.5 h-3.5 border-2 border-zinc-500/40 border-t-zinc-300 rounded-full animate-spin shrink-0" />
-                    ) : (
-                      <Award className="w-3.5 h-3.5 shrink-0" />
-                    )}
-                    {isA ? 'Kết thúc & chấm điểm' : 'End & grade conversation'}
-                  </button>
-                </div>
-              )}
-              {sttSupported ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex items-center justify-between w-full max-w-sm">
+              <div className="max-w-3xl lg:max-w-5xl mx-auto">
+                {userTurns >= MIN_TURNS_TO_GRADE && (
+                  <div className="flex justify-center mb-3">
                     <button
-                      onClick={() => {
-                        stopSpeaking()
-                        setSession(null)
-                      }}
-                      className="tap-44 p-3 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition hover:bg-zinc-800/50"
-                      title={isA ? 'Phòng mới' : 'New room'}
-                      aria-label={isA ? 'Phòng mới' : 'New room'}
+                      onClick={endAndGrade}
+                      disabled={loading || evaluating || limitHit || isThrottled}
+                      className="tap-44 flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-violet-400 border border-zinc-800/80 hover:border-violet-500/50 rounded-full px-4 py-2 transition hover:bg-zinc-800/50 disabled:opacity-50"
                     >
-                      <Plus className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={toggleRecord}
-                      disabled={
-                        loading || limitHit || processing || isThrottled || !!pendingConfirm
-                      }
-                      aria-label={
-                        recording
-                          ? isA
-                            ? 'Dừng ghi âm'
-                            : 'Stop recording'
-                          : isA
-                            ? 'Bắt đầu ghi âm'
-                            : 'Start recording'
-                      }
-                      className={`relative w-20 h-20 rounded-full flex items-center justify-center transition shadow-xl disabled:opacity-40 active:scale-95 ${
-                        recording
-                          ? 'bg-red-500 shadow-red-500/40'
-                          : 'bg-gradient-to-br from-sky-500 to-cyan-400'
-                      }`}
-                    >
-                      {recording && (
-                        <>
-                          <span className="absolute inset-0 rounded-full bg-red-400 animate-pulse-ring" />
-                          <span className="absolute inset-0 rounded-full bg-red-400 animate-pulse-ring delay-[400ms]" />
-                          <span className="absolute inset-0 rounded-full bg-red-400 animate-pulse-ring delay-[800ms]" />
-                        </>
-                      )}
-                      {recording ? (
-                        <MicOff className="w-8 h-8 text-white relative z-10" />
+                      {evaluating ? (
+                        <span className="w-3.5 h-3.5 border-2 border-zinc-500/40 border-t-zinc-300 rounded-full animate-spin shrink-0" />
                       ) : (
-                        <Mic className="w-8 h-8 text-white" />
+                        <Award className="w-3.5 h-3.5 shrink-0" />
                       )}
-                      {isThrottled && throttleCountdown > 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full text-white font-bold text-lg">
-                          {throttleCountdown}s
-                        </div>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setMuted((m) => !m)
-                        stopSpeaking()
-                        setSpeaking(false)
-                      }}
-                      aria-label={
-                        muted ? (isA ? 'Bật âm thanh' : 'Unmute') : isA ? 'Tắt âm thanh' : 'Mute'
-                      }
-                      className={`tap-44 p-3 border rounded-xl transition ${
-                        muted
-                          ? 'text-zinc-400 border-zinc-800/80'
-                          : speaking
-                            ? 'text-sky-400 theme-light:text-sky-800 border-sky-500/40 bg-sky-500/10'
-                            : 'text-zinc-400 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-800/50'
-                      }`}
-                    >
-                      {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </button>
-
-                    <button
-                      onClick={requestAiFollowUp}
-                      disabled={loading || limitHit || isThrottled || !!pendingConfirm}
-                      title={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
-                      aria-label={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
-                      className="tap-44 p-3 text-zinc-400 hover:text-amber-400 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl transition hover:bg-zinc-800/50 disabled:opacity-40"
-                    >
-                      <Sparkles className="w-4 h-4" />
+                      {isA ? 'Kết thúc & chấm điểm' : 'End & grade conversation'}
                     </button>
                   </div>
+                )}
+                {sttSupported ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex items-center justify-between w-full max-w-sm">
+                      <button
+                        onClick={() => {
+                          stopSpeaking()
+                          setSession(null)
+                        }}
+                        className="tap-44 p-3 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition hover:bg-zinc-800/50"
+                        title={isA ? 'Phòng mới' : 'New room'}
+                        aria-label={isA ? 'Phòng mới' : 'New room'}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
 
-                  <p className="text-center text-xs text-zinc-400">
-                    {recording
-                      ? isA
-                        ? '🔴 Đang ghi... nhấn lại để dừng'
-                        : '🔴 Recording… tap to stop'
-                      : processing
+                      <button
+                        onClick={toggleRecord}
+                        disabled={
+                          loading || limitHit || processing || isThrottled || !!pendingConfirm
+                        }
+                        aria-label={
+                          recording
+                            ? isA
+                              ? 'Dừng ghi âm'
+                              : 'Stop recording'
+                            : isA
+                              ? 'Bắt đầu ghi âm'
+                              : 'Start recording'
+                        }
+                        className={`relative w-20 h-20 rounded-full flex items-center justify-center transition shadow-xl disabled:opacity-40 active:scale-95 ${
+                          recording
+                            ? 'bg-red-500 shadow-red-500/40'
+                            : 'bg-gradient-to-br from-sky-500 to-cyan-400'
+                        }`}
+                      >
+                        {recording && (
+                          <>
+                            <span className="absolute inset-0 rounded-full bg-red-400 animate-pulse-ring" />
+                            <span className="absolute inset-0 rounded-full bg-red-400 animate-pulse-ring delay-[400ms]" />
+                            <span className="absolute inset-0 rounded-full bg-red-400 animate-pulse-ring delay-[800ms]" />
+                          </>
+                        )}
+                        {recording ? (
+                          <MicOff className="w-8 h-8 text-white relative z-10" />
+                        ) : (
+                          <Mic className="w-8 h-8 text-white" />
+                        )}
+                        {isThrottled && throttleCountdown > 0 && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full text-white font-bold text-lg">
+                            {throttleCountdown}s
+                          </div>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setMuted((m) => !m)
+                          stopSpeaking()
+                          setSpeaking(false)
+                        }}
+                        aria-label={
+                          muted ? (isA ? 'Bật âm thanh' : 'Unmute') : isA ? 'Tắt âm thanh' : 'Mute'
+                        }
+                        className={`tap-44 p-3 border rounded-xl transition ${
+                          muted
+                            ? 'text-zinc-400 border-zinc-800/80'
+                            : speaking
+                              ? 'text-sky-400 theme-light:text-sky-800 border-sky-500/40 bg-sky-500/10'
+                              : 'text-zinc-400 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-800/50'
+                        }`}
+                      >
+                        {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      </button>
+
+                      <button
+                        onClick={requestAiFollowUp}
+                        disabled={loading || limitHit || isThrottled || !!pendingConfirm}
+                        title={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
+                        aria-label={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
+                        className="tap-44 p-3 text-zinc-400 hover:text-amber-400 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl transition hover:bg-zinc-800/50 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <p className="text-center text-xs text-zinc-400">
+                      {recording
                         ? isA
-                          ? '⏳ Đang nhận diện giọng nói...'
-                          : '⏳ Transcribing...'
-                        : speaking
+                          ? '🔴 Đang ghi... nhấn lại để dừng'
+                          : '🔴 Recording… tap to stop'
+                        : processing
                           ? isA
-                            ? '🔊 AI đang đọc...'
-                            : '🔊 AI speaking...'
-                          : isA
-                            ? 'Nhấn mic để nói tiếng Anh'
-                            : 'Tap mic to speak Vietnamese'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        stopSpeaking()
-                        setSession(null)
-                      }}
-                      aria-label={isA ? 'Phòng mới' : 'New room'}
-                      className="tap-44 p-3 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition shrink-0 hover:bg-zinc-800/50"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                    <input
-                      id="speaking-input"
-                      name="input"
-                      value={typedInput}
-                      onChange={(e) => setTypedInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        const isMobile = window.matchMedia('(pointer: coarse)').matches
-                        if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
+                            ? '⏳ Đang nhận diện giọng nói...'
+                            : '⏳ Transcribing...'
+                          : speaking
+                            ? isA
+                              ? '🔊 AI đang đọc...'
+                              : '🔊 AI speaking...'
+                            : isA
+                              ? 'Nhấn mic để nói tiếng Anh'
+                              : 'Tap mic to speak Vietnamese'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          stopSpeaking()
+                          setSession(null)
+                        }}
+                        aria-label={isA ? 'Phòng mới' : 'New room'}
+                        className="tap-44 p-3 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition shrink-0 hover:bg-zinc-800/50"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                      <input
+                        id="speaking-input"
+                        name="input"
+                        value={typedInput}
+                        onChange={(e) => setTypedInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          const isMobile = window.matchMedia('(pointer: coarse)').matches
+                          if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            if (typedInput.trim()) {
+                              sendUserSpeech(typedInput.trim())
+                              setTypedInput('')
+                            }
+                          }
+                        }}
+                        placeholder={
+                          isA
+                            ? 'Gõ tiếng Anh thay vì nói...'
+                            : 'Type Vietnamese instead of speaking...'
+                        }
+                        disabled={loading || limitHit || isThrottled}
+                        inputMode="text"
+                        className="flex-1 bg-zinc-900/80 border border-zinc-800/80 rounded-xl px-4 py-2.5 text-base sm:text-sm text-white placeholder:text-zinc-400 outline-none focus:border-sky-500/60 transition disabled:opacity-50"
+                      />
+                      <button
+                        onClick={() => {
                           if (typedInput.trim()) {
                             sendUserSpeech(typedInput.trim())
                             setTypedInput('')
                           }
+                        }}
+                        disabled={!typedInput.trim() || loading || limitHit || isThrottled}
+                        aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
+                        className="tap-44 p-3 bg-gradient-to-br from-sky-600 to-cyan-500 disabled:opacity-40 text-white rounded-xl transition shrink-0"
+                      >
+                        <Send className="w-4 h-4" />
+                        {isThrottled && throttleCountdown > 0 && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[11px] font-bold text-white">
+                            {throttleCountdown}s
+                          </div>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMuted((m) => !m)
+                          stopSpeaking()
+                          setSpeaking(false)
+                        }}
+                        aria-label={
+                          muted ? (isA ? 'Bật âm thanh' : 'Unmute') : isA ? 'Tắt âm thanh' : 'Mute'
                         }
-                      }}
-                      placeholder={
-                        isA
-                          ? 'Gõ tiếng Anh thay vì nói...'
-                          : 'Type Vietnamese instead of speaking...'
-                      }
-                      disabled={loading || limitHit || isThrottled}
-                      inputMode="text"
-                      className="flex-1 bg-zinc-900/80 border border-zinc-800/80 rounded-xl px-4 py-2.5 text-base sm:text-sm text-white placeholder:text-zinc-400 outline-none focus:border-sky-500/60 transition disabled:opacity-50"
-                    />
-                    <button
-                      onClick={() => {
-                        if (typedInput.trim()) {
-                          sendUserSpeech(typedInput.trim())
-                          setTypedInput('')
-                        }
-                      }}
-                      disabled={!typedInput.trim() || loading || limitHit || isThrottled}
-                      aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
-                      className="tap-44 p-3 bg-gradient-to-br from-sky-600 to-cyan-500 disabled:opacity-40 text-white rounded-xl transition shrink-0"
-                    >
-                      <Send className="w-4 h-4" />
-                      {isThrottled && throttleCountdown > 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[11px] font-bold text-white">
-                          {throttleCountdown}s
-                        </div>
+                        className={`tap-44 p-3 border rounded-xl transition shrink-0 ${muted ? 'text-zinc-400 border-zinc-800/80' : 'text-zinc-400 border-zinc-800/80 hover:border-zinc-700'}`}
+                      >
+                        {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={requestAiFollowUp}
+                        disabled={loading || limitHit || isThrottled}
+                        title={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
+                        aria-label={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
+                        className="tap-44 p-3 text-zinc-400 hover:text-amber-400 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl transition shrink-0 disabled:opacity-40"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-center text-xs text-zinc-400">
+                      {isA ? (
+                        <>
+                          Trình duyệt không hỗ trợ mic — dùng{' '}
+                          <strong className="text-zinc-400">Chrome</strong>
+                        </>
+                      ) : (
+                        <>
+                          Browser doesn't support mic — use{' '}
+                          <strong className="text-zinc-400">Chrome</strong>
+                        </>
                       )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMuted((m) => !m)
-                        stopSpeaking()
-                        setSpeaking(false)
-                      }}
-                      aria-label={
-                        muted ? (isA ? 'Bật âm thanh' : 'Unmute') : isA ? 'Tắt âm thanh' : 'Mute'
-                      }
-                      className={`tap-44 p-3 border rounded-xl transition shrink-0 ${muted ? 'text-zinc-400 border-zinc-800/80' : 'text-zinc-400 border-zinc-800/80 hover:border-zinc-700'}`}
-                    >
-                      {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={requestAiFollowUp}
-                      disabled={loading || limitHit || isThrottled}
-                      title={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
-                      aria-label={isA ? 'AI phản hồi (gợi ý tiếp)' : 'AI follow-up suggestion'}
-                      className="tap-44 p-3 text-zinc-400 hover:text-amber-400 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl transition shrink-0 disabled:opacity-40"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                    </button>
+                    </p>
                   </div>
-                  <p className="text-center text-xs text-zinc-400">
-                    {isA ? (
-                      <>
-                        Trình duyệt không hỗ trợ mic — dùng{' '}
-                        <strong className="text-zinc-400">Chrome</strong>
-                      </>
-                    ) : (
-                      <>
-                        Browser doesn't support mic — use{' '}
-                        <strong className="text-zinc-400">Chrome</strong>
-                      </>
-                    )}
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </main>
     </div>
   )
 }

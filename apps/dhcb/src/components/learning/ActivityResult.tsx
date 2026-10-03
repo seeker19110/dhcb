@@ -175,7 +175,7 @@ export default function ActivityResult(props: ActivityResultProps) {
       <div
         ref={tomTatRef}
         tabIndex={-1}
-        className="scroll-mt-24 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+        className="scroll-mt-24 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
       >
         {/* Vùng SỐNG DUY NHẤT của màn kết quả, chỉ bọc câu tổng kết: trình đọc màn hình đọc ngay
             phán quyết, còn danh sách từng câu để người học tự đọc. Mở/đóng lời giải không chạm

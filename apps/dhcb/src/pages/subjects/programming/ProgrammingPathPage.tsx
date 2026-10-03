@@ -63,6 +63,7 @@ import {
 import { duongDanChangTheoId, duongDanHuongTheoChangId } from '../../../lib/programmingRoutesSpec'
 import PathStageQuiz from '../../../components/PathStageQuiz'
 import PathArtifactVault from '../../../components/PathArtifactVault'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 export default function ProgrammingPathPage() {
   const nav = useNavigate()
@@ -74,6 +75,7 @@ export default function ProgrammingPathPage() {
   const [foundationProgress, setFoundationProgress] = useState<ProgrammingLessonProgress[]>([])
 
   const path = getLearningPath(idFromSlugSegment(pathSlugParam ?? ''))
+  usePageTitle(`${path ? `Lộ trình: ${path.title}` : 'Lộ trình'} | Môn Lập trình`)
 
   const reloadPathProgress = () => {
     if (!user || !path) return

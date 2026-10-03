@@ -21,6 +21,7 @@ import { buildLevelOutline } from '../../../lib/outline/programmingOutline'
 import { useProgrammingOutlineCtx } from '../../../lib/useProgrammingOutlineCtx'
 import { LoiTienDo } from '../../../components/OutlinePane'
 import { useOutlinePane } from '../../../components/useOutlinePane'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 export default function ProgrammingLevelPage() {
   const nav = useNavigate()
@@ -29,6 +30,9 @@ export default function ProgrammingLevelPage() {
   // đúng bậc rồi được chuyển hướng về URL chuẩn.
   const { levelId: levelSlugParam } = useParams<{ levelId: string }>()
   const level = levelSlugParam ? getProgrammingLevel(idFromSlugSegment(levelSlugParam)) : undefined
+  usePageTitle(
+    `${level ? `Bậc ${level.id.toUpperCase()} — ${level.name}` : 'Bậc học'} | Môn Lập trình`,
+  )
   // Tiến độ + bản đồ khoá: MỘT hook dùng chung với trang bài và trang khoá ngắn (S07-2), để
   // ba trang không lệch nhau về luật chống hồi tố và về cách phân biệt lỗi mạng với chưa học.
   const outlineCtx = useProgrammingOutlineCtx()

@@ -275,7 +275,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
                 type="button"
                 onClick={() => void runPushOperation(retryOperation, true)}
                 disabled={pushLoading}
-                className="min-h-11 mt-1 px-4 rounded-xl font-semibold text-accent-400 theme-light:text-accent-800 hover:bg-zinc-800/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
+                className="min-h-11 mt-1 px-4 rounded-xl font-semibold text-accent-400 theme-light:text-accent-800 hover:bg-zinc-800/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring disabled:opacity-50"
               >
                 {isA ? 'Thử lại' : 'Retry'}
               </button>

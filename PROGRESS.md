@@ -174,7 +174,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-09-30] Sửa theo audit UI/UX chuẩn 2026** ([báo cáo](docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md),
   `docs/changelog/0466-*.md`, PR #1197): 8 critical · 22 major · 14 minor, chia **9 đợt U1–U9** (mục 12 báo
-  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **Chờ chủ dự án chọn đợt bắt đầu.** Đợt U1
+  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **[2026-10-03] U1 xong** (`docs/changelog/0487-*.md`: viền focus, toast, manifest, tiêu đề trang, `<main>`/skip link + 2 cổng mới). **Kế tiếp: U2.** Đợt U1
   (viền focus, toast, manifest, tiêu đề trang, `<main>`), U2 (form xác thực + hub tràn ngang),
   U3 (14 trang tương phản + đưa vào cổng) và U4 (ngôn ngữ trang) làm được ngay, không cần quyết
   định sản phẩm. U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding)
@@ -1144,14 +1144,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 - 🔴 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` +
   `docs/changelog/0466-*.md`] App CHƯA đạt WCAG 2.2 AA trên toàn bộ trang** (đo trên backend
   thật, 61 route + hub). Tám lỗi critical:
-  - (C1) viền focus 2,65:1 ở Blue sky và 2,70:1 ở Nhi đồng, dưới mức 3:1;
-  - (C2) toast không có `aria-live` và tự tắt sau 4 giây;
+  - ~~(C1) viền focus 2,65:1 ở Blue sky và 2,70:1 ở Nhi đồng~~ — ✅ đợt U1 (changelog `0487`);
+  - ~~(C2) toast không có `aria-live` và tự tắt sau 4 giây~~ — ✅ đợt U1;
   - (C3) form đăng nhập/đăng ký/đặt lại/hub thiếu nhãn và `autocomplete`;
   - (C4) 14 trang trượt axe AA mà không nằm trong cổng — kể cả nút "Nâng cấp VIP";
   - (C5) `lang` không theo ngôn ngữ giao diện/nội dung;
   - (C6) hub tràn ngang ở 320/390px;
-  - (C7) PWA khoá hướng dọc;
-  - (C8) 13 route dùng chung tiêu đề lỗi thời.
+  - ~~(C7) PWA khoá hướng dọc~~ — ✅ đợt U1;
+  - ~~(C8) 13 route dùng chung tiêu đề lỗi thời~~ — ✅ đợt U1 (kèm M7 skip link/`<main>`).
+
+  **Còn mở:** C3, C4, C5, C6 → đợt U2–U4.
 
   Kèm ba lỗi nói sai với người dùng. Thanh bên ghi cứng "Free · Nâng cấp" và trang giá còn hạn
   mức Free cũ (seed `0025`). Hợp đồng hạn mức server `{free, vip}` ↔ client theo chế độ đã lệch,

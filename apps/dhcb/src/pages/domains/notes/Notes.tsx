@@ -47,12 +47,14 @@ import {
   type WorkMeeting,
   type WorkDocument,
 } from '@dhcb/core-contracts/work'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 // Ngưỡng cảnh báo đếm ký tự: chỉ hiện khi người dùng đã dùng quá 80% hạn mức. Hiện sớm hơn
 // thì con số chỉ làm nhiễu ô nhập (luật "chống nhiễu giao diện" — UiNoise.design.test.ts).
 const NOTE_COUNTER_THRESHOLD = Math.floor(NOTE_CONTENT_MAX_LENGTH * 0.8)
 
 export default function Notes() {
+  usePageTitle('Ghi chú')
   const nav = useNavigate()
   const toast = useToast()
   const [activeTab, setActiveTab] = useState<'tasks' | 'projects' | 'meetings' | 'documents'>(

@@ -88,7 +88,7 @@ Mọi màn hình hoặc component có tương tác/tải dữ liệu phải xử
 
 ## 4. VI TƯƠNG TÁC & HIỆU ỨNG VẬT LÝ (MICRO-INTERACTIONS & MOTION)
 
-- **Nút bấm & Card tương tác:** Đầy đủ `hover:border-accent-500/50`, `active:scale-[0.98]`, `focus-visible:ring-2 focus-visible:ring-accent-500`, `disabled:opacity-50 disabled:pointer-events-none`.
+- **Nút bấm & Card tương tác:** Đầy đủ `hover:border-accent-500/50`, `active:scale-[0.98]`, viền focus mặc định của `index.css` (outline màu token `--focus-ring`, đạt ≥ 3:1 ở cả 3 theme — cổng `themeContrast.test.ts`; **đừng** tự đặt `ring-accent-500`, ở Blue sky/Nhi đồng nó chỉ 2,65–2,70:1, audit 2026-09-30 C1), `disabled:opacity-50 disabled:pointer-events-none`.
 - **Chuyển động (Motion Ergonomics):** Chỉ transition đúng thuộc tính có ý nghĩa (`transition-colors`, `transition-transform`, `transition-opacity`); tránh `transition-all`. Motion phải interruptible và có nhánh `motion-reduce:` khi phù hợp.
 - **A11y:** Mọi nút Icon-only phải có `aria-label` và `title` rõ nghĩa cho Screen Readers.
 

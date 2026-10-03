@@ -310,7 +310,7 @@ export default function DashboardEnglishDetails({
               <h3
                 id="dashboard-weekly-credit-heading"
                 tabIndex={-1}
-                className="text-[11px] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded-md"
+                className="text-[11px] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-md"
               >
                 <MessageCircle className="w-3.5 h-3.5 text-accent-400 shrink-0 mt-0.5" />
                 <span>{vi ? 'Lượt AI hôm nay' : 'AI credits today'}</span>
@@ -337,7 +337,7 @@ export default function DashboardEnglishDetails({
                   ref={weeklyCreditRetryRef}
                   type="button"
                   onClick={onRetryWeeklyCredit}
-                  className="min-h-11 px-2 text-sm font-semibold text-accent-300 theme-light:text-accent-800 rounded-lg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                  className="min-h-11 px-2 text-sm font-semibold text-accent-300 theme-light:text-accent-800 rounded-lg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                 >
                   {vi ? 'Thử lại' : 'Retry'}
                 </button>
@@ -352,7 +352,7 @@ export default function DashboardEnglishDetails({
                   type="button"
                   aria-disabled="true"
                   onClick={onRetryWeeklyCredit}
-                  className="min-h-11 px-2 text-sm font-semibold text-zinc-400 rounded-lg cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                  className="min-h-11 px-2 text-sm font-semibold text-zinc-400 rounded-lg cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                 >
                   {vi ? 'Đang thử lại…' : 'Retrying…'}
                 </button>
@@ -409,7 +409,7 @@ export default function DashboardEnglishDetails({
         aria-expanded={expanded}
         aria-controls={PANEL_ID}
         onClick={handleToggle}
-        className="min-h-11 w-full rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-4"
+        className="min-h-11 w-full rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring mt-4"
       >
         {expanded
           ? vi
@@ -515,7 +515,7 @@ export default function DashboardEnglishDetails({
             <h3
               id="dashboard-cefr-heading"
               tabIndex={-1}
-              className="text-sm font-semibold text-zinc-300 flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+              className="text-sm font-semibold text-zinc-300 flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
             >
               <GraduationCap className="w-4 h-4 text-accent-400" />{' '}
               {vi ? 'Lộ trình CEFR' : 'CEFR Roadmap'}
@@ -544,7 +544,7 @@ export default function DashboardEnglishDetails({
                     type="button"
                     aria-disabled="true"
                     onClick={onRetryCefr}
-                    className="min-h-11 px-3 text-sm font-semibold text-zinc-400 rounded-lg cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                    className="min-h-11 px-3 text-sm font-semibold text-zinc-400 rounded-lg cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                   >
                     {vi ? 'Đang thử lại…' : 'Retrying…'}
                   </button>
@@ -563,7 +563,7 @@ export default function DashboardEnglishDetails({
                   ref={cefrRetryRef}
                   type="button"
                   onClick={onRetryCefr}
-                  className="min-h-11 px-3 text-sm font-semibold text-accent-300 theme-light:text-accent-800 rounded-lg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                  className="min-h-11 px-3 text-sm font-semibold text-accent-300 theme-light:text-accent-800 rounded-lg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                 >
                   {vi ? 'Thử lại' : 'Retry'}
                 </button>

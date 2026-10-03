@@ -104,6 +104,7 @@ import { useLearningSession } from '../../../lib/useLearningSession'
 import { PageShell } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
 import { countBadgeClass, badgeCount } from '@core/badgeStyles'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 // % an toàn (0 khi total = 0, không chia cho 0).
 const pct = (done: number, total: number) => (total > 0 ? Math.round((done / total) * 100) : 0)
@@ -269,6 +270,7 @@ export default function CefrLevelPage() {
 
   const uid = user?.id ?? ''
   const level = levels.find((l) => l.id === (levelId ?? '').toUpperCase())
+  usePageTitle(level ? `Trình độ ${level.id} | Môn Tiếng Anh` : 'Lộ trình CEFR | Môn Tiếng Anh')
 
   // Hội thoại của TOÀN CẤP (mọi unit) — dùng cho tab "Nghe" (③ N3, dictation lấy
   // câu từ hội thoại). Tải riêng theo cấp (giống CefrExam.tsx) — chỉ chạy khi có

@@ -59,6 +59,7 @@ import {
   duongDanHuong,
 } from '../../../lib/programmingRoutes'
 import { getProgrammingLevel } from '@dhcb/subject-programming/curriculum'
+import { usePageTitle } from '../../../lib/usePageTitle'
 
 const TIER_LABEL: Record<string, string> = {
   s1: 'Chặng 1 — căn bản',
@@ -252,6 +253,7 @@ export default function ProgrammingSpecializationPage() {
   const { specId: specSlugParam } = useParams<{ specId: string }>()
   const { user } = useAuth()
   const spec = getSpecialization(idFromSlugSegment(specSlugParam ?? ''))
+  usePageTitle(`${spec?.name ?? 'Hướng chuyên sâu'} | Môn Lập trình`)
   const [progress, setProgress] = useState<SpecProgressSnapshot>(EMPTY_SPEC_PROGRESS)
   const [dangLuu, setDangLuu] = useState(false)
 

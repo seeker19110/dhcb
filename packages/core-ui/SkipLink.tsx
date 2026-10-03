@@ -40,7 +40,7 @@ export function SkipLink({ label = 'Bỏ qua tới nội dung chính' }: SkipLin
       // `sr-only` khi chưa có tiêu điểm, hiện đầy đủ khi được Tab tới. KHÔNG dùng
       // `display:none`/`visibility:hidden` — hai thứ đó gỡ luôn phần tử khỏi thứ tự Tab,
       // tức là liên kết sẽ không bao giờ nhận được tiêu điểm để mà hiện ra.
-      className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-accent-500 focus:text-[#09090b] focus:font-semibold focus:text-sm focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-accent-300"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-accent-500 focus:text-[#09090b] focus:font-semibold focus:text-sm focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-focus-ring"
     >
       {label}
     </a>

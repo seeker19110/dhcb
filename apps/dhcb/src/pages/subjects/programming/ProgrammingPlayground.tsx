@@ -2,6 +2,7 @@
 // Python chạy NGAY TRONG TRÌNH DUYỆT (Pyodide WASM trong Web Worker, tự host —
 // xem lib/pythonRunner.ts). Kèm 10 bài mẫu bậc P1 để vọc trước khi bài học đầy đủ
 // (khuôn 8 bước) vào ở PR-L3/L4.
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Play, Square, Loader2, Terminal, Keyboard, ListOrdered } from 'lucide-react'
@@ -74,7 +75,11 @@ export default function ProgrammingPlayground() {
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
       <Layout onBack={() => nav(PROGRAMMING_PREFIX)} title="Chạy thử Python" />
 
-      <main className="max-w-4xl mx-auto px-4 pt-6 pb-[calc(2rem+var(--bnav-h))] space-y-5">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-4xl mx-auto px-4 pt-6 pb-[calc(2rem+var(--bnav-h))] space-y-5"
+      >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
           Chạy thử Python
         </h1>
