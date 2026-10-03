@@ -42,8 +42,8 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-const alertRegion = () => container.querySelector('[role="alert"]')
-const statusRegion = () => container.querySelector('[role="status"][aria-live="polite"]')
+const alertRegion = () => container.querySelector('[aria-live="assertive"]')
+const statusRegion = () => container.querySelector('[aria-live="polite"]')
 
 describe('ToastProvider — vùng thông báo đọc được', () => {
   it('hai vùng live có sẵn trong DOM ngay cả khi chưa có toast nào', () => {
@@ -52,7 +52,12 @@ describe('ToastProvider — vùng thông báo đọc được', () => {
     expect(alertRegion()?.textContent).toBe('')
   })
 
-  it('lỗi vào vùng alert; thành công/thông tin vào vùng status', async () => {
+  it('vùng live KHÔNG mang role alert/status (tránh "alert" rỗng trên mọi trang)', () => {
+    expect(container.querySelector('[role="alert"]')).toBeNull()
+    expect(container.querySelector('[role="status"]')).toBeNull()
+  })
+
+  it('lỗi vào vùng assertive; thành công/thông tin vào vùng polite', async () => {
     await act(async () => {
       api.error('Mất mạng')
       api.success('Đã lưu')

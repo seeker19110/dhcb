@@ -88,17 +88,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           có header — phần safe-area chỉ cộng thêm, không làm toast tụt quá xa. */}
       <div className="fixed top-14 inset-x-0 z-[100] flex flex-col items-center gap-2 px-4 pt-3 pt-safe pointer-events-none">
         {/* Hai vùng thông báo LUÔN có mặt trong DOM (WCAG 4.1.3): trình đọc màn hình chỉ đọc nội
-            dung được THÊM vào một vùng live đã tồn tại sẵn. Lỗi đi vùng `alert` (đọc ngay, ngắt
-            lời), thành công/thông tin đi vùng `status` (đọc khi rảnh). Trước đây không có vùng
+            dung được THÊM vào một vùng live đã tồn tại sẵn. Lỗi đi vùng `assertive` (đọc ngay, ngắt
+            lời), thành công/thông tin đi vùng `polite` (đọc khi rảnh). Cố ý KHÔNG gắn `role="alert"`/
+            `role="status"`: vùng rỗng có mặt ở MỌI trang, gắn role thì mỗi trang mọc thêm một "alert"
+            trống và trùng với thông báo lỗi/tải của chính trang (E2E strict mode bắt được). Trước đây không có vùng
             live nào nên 117 lời gọi toast.error không bao giờ được đọc (audit 2026-09-30 C2). */}
-        <div role="alert" className="flex w-full flex-col items-center gap-2">
+        <div aria-live="assertive" className="flex w-full flex-col items-center gap-2">
           {toasts
             .filter((t) => t.kind === 'error')
             .map((t) => (
               <ToastItem key={t.id} toast={t} onClose={remove} />
             ))}
         </div>
-        <div role="status" aria-live="polite" className="flex w-full flex-col items-center gap-2">
+        <div aria-live="polite" className="flex w-full flex-col items-center gap-2">
           {toasts
             .filter((t) => t.kind !== 'error')
             .map((t) => (
