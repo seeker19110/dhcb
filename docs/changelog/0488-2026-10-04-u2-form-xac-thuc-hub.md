@@ -1,6 +1,6 @@
 # 0488 — Đợt U2 audit UI/UX: form xác thực có nhãn, hub hết tràn ngang, hub đạt axe (2026-10-04)
 
-- **Ngày:** 2026-10-04 · **PR:** (điền khi tạo) · **Loại:** `fix(a11y)`.
+- **Ngày:** 2026-10-04 · **PR:** #1223 · **Loại:** `fix(a11y)`.
 - **Phạm vi:** đợt U2 trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` mục 12: C3 + C6 +
   phần hub của C4 (`link-name`, tương phản chữ "Bắt đầu"). Không cần chủ dự án quyết.
 
