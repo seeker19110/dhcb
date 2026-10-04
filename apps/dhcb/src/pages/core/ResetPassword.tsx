@@ -128,37 +128,53 @@ export default function ResetPassword() {
         </p>
 
         <form onSubmit={submit} className="space-y-3">
-          <div className="relative">
-            <input
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={
-                isA ? 'Mật khẩu mới (ít nhất 15 ký tự)' : 'New password (at least 15 characters)'
-              }
-              aria-label={isA ? 'Mật khẩu mới' : 'New password'}
-              minLength={15}
-              // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
-              // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
-              // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
-              // eslint-disable-next-line jsx-a11y/no-autofocus
-              autoFocus
-              required
-              className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-3 pr-11 text-sm text-zinc-100 outline-none focus:border-accent-500/70"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw((p) => !p)}
-              aria-label={showPw ? T.hidePassword : T.showPassword}
-              aria-pressed={showPw}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300 p-0.5"
-            >
-              {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+          <div>
+            <label htmlFor="new-password" className="block text-xs font-medium text-zinc-300 mb-1">
+              {isA ? 'Mật khẩu mới' : 'New password'}
+            </label>
+            <div className="relative">
+              <input
+                id="new-password"
+                name="new-password"
+                type={showPw ? 'text' : 'password'}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={
+                  isA ? 'Mật khẩu mới (ít nhất 15 ký tự)' : 'New password (at least 15 characters)'
+                }
+                aria-invalid={error !== ''}
+                aria-describedby="new-password-hint"
+                minLength={15}
+                // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
+                // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
+                // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
+                // eslint-disable-next-line jsx-a11y/no-autofocus
+                autoFocus
+                required
+                className="w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-3 pr-11 text-sm text-zinc-100 outline-none focus:border-accent-500/70"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((p) => !p)}
+                aria-label={showPw ? T.hidePassword : T.showPassword}
+                aria-pressed={showPw}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300 p-0.5"
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {/* Luật mật khẩu hiện cố định, không biến mất khi gõ như placeholder (WCAG 3.3.2). */}
+            <p id="new-password-hint" className="mt-1.5 text-xs text-zinc-400">
+              {isA ? 'Mật khẩu tối thiểu 15 ký tự.' : 'Password must be at least 15 characters.'}
+            </p>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400 theme-light:text-red-900">
+            <div
+              role="alert"
+              className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400 theme-light:text-red-900"
+            >
               {error}
             </div>
           )}
