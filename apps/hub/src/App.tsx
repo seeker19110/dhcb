@@ -274,14 +274,21 @@ function Navbar({ stats }: { stats: HubStats | null }) {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-zinc-950/85 border-b border-zinc-800/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-        <a href="/" className="flex items-center gap-2.5 group shrink-0">
+        {/* aria-label: dưới 560px chữ thương hiệu ẩn đi (nhường chỗ cho cụm nút bên phải, tránh
+            tràn ngang ở 320/390px — audit 2026-09-30 C6) nên liên kết cần tên đọc được riêng
+            (WCAG 2.4.4/4.1.2, axe link-name). */}
+        <a
+          href="/"
+          aria-label="Đồng hành cùng bạn — trang chủ"
+          className="flex items-center gap-2.5 group shrink-0"
+        >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-accent-500 to-accent-400 flex items-center justify-center shadow-lg shadow-accent-500/20 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 text-zinc-950" />
+            <Sparkles className="w-5 h-5 text-[#09090b]" />
           </div>
-          <div className="flex flex-col">
+          <div className="hidden min-[560px]:flex flex-col">
             <span className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5">
               Đồng hành cùng bạn
-              <span className="text-[11px] uppercase font-semibold px-1.5 py-0.5 rounded bg-accent-500/10 text-accent-300 theme-light:text-accent-800 border border-accent-500/25">
+              <span className="hidden md:inline text-[11px] uppercase font-semibold px-1.5 py-0.5 rounded bg-accent-500/10 text-accent-300 theme-light:text-accent-800 border border-accent-500/25">
                 Nền tảng
               </span>
             </span>
@@ -322,7 +329,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               </a>
               <a
                 href={APP_URL}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 shadow-md shadow-accent-500/20 transition-all hover:scale-[1.02]"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 transition-all hover:scale-[1.02]"
               >
                 <span>Vào nền tảng</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -338,7 +345,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               </a>
               <a
                 href={START_URL}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 shadow-md shadow-accent-500/20 hover:shadow-accent-500/30 transition-all hover:scale-[1.02]"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 hover:shadow-accent-500/30 transition-all hover:scale-[1.02]"
               >
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -404,7 +411,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 font-bold text-base shadow-lg shadow-accent-500/25 hover:shadow-accent-500/35 transition-all hover:scale-[1.02]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 hover:shadow-accent-500/35 transition-all hover:scale-[1.02]"
           >
             <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu — khoảng 90 giây'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -735,7 +742,7 @@ function SubjectsSection() {
             onClick={() => setActive(s.id)}
             className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
               active === s.id
-                ? 'bg-accent-500 text-zinc-950 shadow-lg shadow-accent-500/20 scale-105'
+                ? 'bg-accent-500 text-[#09090b] shadow-lg shadow-accent-500/20 scale-105'
                 : 'bg-zinc-900 text-zinc-200 hover:text-white hover:bg-zinc-800 border border-zinc-800'
             }`}
           >
@@ -745,7 +752,7 @@ function SubjectsSection() {
               <span
                 className={`text-[11px] px-1.5 py-0.5 rounded font-semibold ${
                   active === s.id
-                    ? 'bg-zinc-950/15 text-zinc-950'
+                    ? 'bg-[#09090b]/15 text-[#09090b]'
                     : 'bg-accent-500/15 text-accent-200 theme-light:text-accent-800 border border-accent-500/25'
                 }`}
               >
@@ -755,7 +762,7 @@ function SubjectsSection() {
               <span
                 className={`text-[11px] px-1.5 py-0.5 rounded ${
                   active === s.id
-                    ? 'bg-zinc-950/15 text-zinc-950'
+                    ? 'bg-[#09090b]/15 text-[#09090b]'
                     : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
                 }`}
               >
@@ -765,7 +772,7 @@ function SubjectsSection() {
               <span
                 className={`text-[11px] px-1.5 py-0.5 rounded ${
                   active === s.id
-                    ? 'bg-zinc-950/15 text-zinc-950'
+                    ? 'bg-[#09090b]/15 text-[#09090b]'
                     : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
                 }`}
               >
@@ -831,7 +838,7 @@ function SubjectsSection() {
           <div className="flex flex-wrap items-center gap-3">
             <a
               href={current.ctaUrl}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 font-bold text-sm sm:text-base transition-all shadow-md shadow-accent-500/20 hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition-all shadow-md shadow-accent-500/20 hover:scale-[1.02]"
             >
               <span>{current.ctaLabel}</span>
               <ArrowRight className="w-4 h-4" />
@@ -853,7 +860,7 @@ function SubjectsSection() {
           <div className="flex flex-wrap items-center gap-3">
             <a
               href={current.startWithUrl}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 font-bold text-sm sm:text-base transition-all shadow-md shadow-accent-500/20 hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition-all shadow-md shadow-accent-500/20 hover:scale-[1.02]"
             >
               <span>Bắt đầu với {current.name}</span>
               <ArrowRight className="w-4 h-4" />
@@ -929,7 +936,7 @@ function HowItWorksSection() {
               key={s.n}
               className="bg-zinc-900/70 rounded-2xl p-6 border border-zinc-800 relative flex flex-col"
             >
-              <div className="w-10 h-10 rounded-full bg-accent-500 text-zinc-950 font-extrabold flex items-center justify-center mb-4 text-lg">
+              <div className="w-10 h-10 rounded-full bg-accent-500 text-[#09090b] font-extrabold flex items-center justify-center mb-4 text-lg">
                 {s.n}
               </div>
               <h3 className="text-lg font-bold text-white mb-2">{s.title}</h3>
@@ -941,7 +948,7 @@ function HowItWorksSection() {
         <div className="mt-10 text-center">
           <a
             href={START_URL}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 font-bold text-base shadow-lg shadow-accent-500/25 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition-all hover:scale-[1.02]"
           >
             <span>Bắt đầu ngay</span>
             <ArrowRight className="w-4 h-4" />
@@ -1010,7 +1017,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
         </div>
 
         <div className="bg-gradient-to-b from-zinc-900 via-zinc-900 to-accent-500/10 rounded-2xl p-6 sm:p-8 border-2 border-accent-500/60 shadow-xl shadow-accent-500/10 flex flex-col justify-between relative">
-          <div className="absolute -top-3 right-6 bg-accent-500 text-zinc-950 font-bold text-[11px] uppercase tracking-wider px-3 py-0.5 rounded-full shadow">
+          <div className="absolute -top-3 right-6 bg-accent-500 text-[#09090b] font-bold text-[11px] uppercase tracking-wider px-3 py-0.5 rounded-full shadow">
             Khuyên dùng
           </div>
           <div>
@@ -1049,7 +1056,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
           </div>
           <a
             href={isLoggedIn ? PROFILE_URL : `${APP_URL}/login`}
-            className="w-full py-3.5 px-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-center font-bold text-sm text-zinc-950 shadow-md shadow-accent-500/25 transition block hover:scale-[1.02]"
+            className="w-full py-3.5 px-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-center font-bold text-sm text-[#09090b] shadow-md shadow-accent-500/25 transition block hover:scale-[1.02]"
           >
             {isLoggedIn ? 'Xem giá & nâng cấp trong hồ sơ →' : 'Đăng nhập để xem bảng giá →'}
           </a>
@@ -1163,7 +1170,7 @@ function CtaBanner({ stats }: { stats: HubStats | null }) {
           </p>
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 font-bold text-base shadow-lg shadow-accent-500/25 transition-all hover:scale-105"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition-all hover:scale-105"
           >
             <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu miễn phí'}</span>
             <ArrowRight className="w-4 h-4" />

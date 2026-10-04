@@ -39,6 +39,8 @@ const DEFAULT_REDIRECT_URL =
   (import.meta.env.VITE_ENGLISH_APP_URL as string | undefined) ||
   'https://en-vi.donghanhcungban.org/'
 
+type AuthField = 'name' | 'email' | 'password'
+
 export default function HubLogin() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
@@ -46,6 +48,8 @@ export default function HubLogin() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  // Ô nhập nào đang sai — chỉ để gắn aria-invalid (WCAG 3.3.1), không đổi logic kiểm hợp lệ.
+  const [invalidFields, setInvalidFields] = useState<AuthField[]>([])
   const [successMsg, setSuccessMsg] = useState('')
   const [loading, setLoading] = useState(false)
   const [forgotSending, setForgotSending] = useState(false)
@@ -106,27 +110,32 @@ export default function HubLogin() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setInvalidFields([])
     setSuccessMsg('')
     setLoading(true)
     try {
       if (mode === 'register') {
         if (!isValidNewPassword(password)) {
           setError('Mật khẩu tối thiểu 15 ký tự, tối đa 72 byte UTF-8')
+          setInvalidFields(['password'])
           return
         }
         if (!name.trim()) {
           setError('Vui lòng nhập họ và tên của bạn.')
+          setInvalidFields(['name'])
           return
         }
         const u = await register(email.trim(), name.trim(), password)
         if (!u) {
           setError('Email này đã được sử dụng hoặc thông tin không hợp lệ.')
+          setInvalidFields(['email'])
           return
         }
       } else {
         const u = await login(email.trim(), password)
         if (!u) {
           setError('Email hoặc mật khẩu không chính xác.')
+          setInvalidFields(['email', 'password'])
           return
         }
       }
@@ -236,6 +245,7 @@ export default function HubLogin() {
     }
   }
 
+  const labelCls = 'block text-xs font-medium text-zinc-300 mb-1'
   const inputCls =
     'w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-accent-500/70 focus:bg-zinc-800 transition'
 
@@ -261,9 +271,13 @@ export default function HubLogin() {
 
       {/* Logo & Brand Title */}
       <div className="mb-6 text-center animate-fade-in">
-        <a href="/" className="inline-flex items-center gap-2 mb-3 group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-500 to-accent-400 flex items-center justify-center text-zinc-950 shadow-xl shadow-accent-500/30 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-6 h-6 text-zinc-950" />
+        <a
+          href="/"
+          aria-label="Đồng hành cùng bạn — về trang chủ"
+          className="inline-flex items-center gap-2 mb-3 group"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-500 to-accent-400 flex items-center justify-center text-[#09090b] shadow-xl shadow-accent-500/30 group-hover:scale-105 transition-transform">
+            <Sparkles className="w-6 h-6 text-[#09090b]" />
           </div>
         </a>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -309,7 +323,7 @@ export default function HubLogin() {
             <div className="space-y-2 pt-2">
               <a
                 href={targetRedirectUrl}
-                className="w-full inline-flex items-center justify-center gap-2 bg-accent-500 hover:bg-accent-400 text-zinc-950 font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-accent-500/20 active:scale-[0.98]"
+                className="w-full inline-flex items-center justify-center gap-2 bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-accent-500/20 active:scale-[0.98]"
               >
                 <span>Tiếp tục vào nền tảng</span>
                 <ArrowRight className="w-4 h-4" />
@@ -335,9 +349,11 @@ export default function HubLogin() {
                 <button
                   key={m}
                   type="button"
+                  aria-pressed={mode === m}
                   onClick={() => {
                     setMode(m)
                     setError('')
+                    setInvalidFields([])
                     setSuccessMsg('')
                   }}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
@@ -353,57 +369,87 @@ export default function HubLogin() {
 
             <form onSubmit={submit} className="space-y-3">
               {mode === 'register' && (
+                <div>
+                  <label htmlFor="hub-name" className={labelCls}>
+                    Họ và tên
+                  </label>
+                  <input
+                    id="hub-name"
+                    name="name"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Họ và tên của bạn"
+                    aria-invalid={invalidFields.includes('name')}
+                    className={inputCls}
+                    required
+                    // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
+                    // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
+                    // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
+                    // eslint-disable-next-line jsx-a11y/no-autofocus
+                    autoFocus
+                  />
+                </div>
+              )}
+              <div>
+                <label htmlFor="hub-email" className={labelCls}>
+                  Email
+                </label>
                 <input
-                  id="hub-name"
-                  name="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Họ và tên của bạn"
+                  id="hub-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Địa chỉ email"
+                  aria-invalid={invalidFields.includes('email')}
                   className={inputCls}
                   required
-                  // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
-                  // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
-                  // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
+                  // Trang đăng nhập chỉ có một việc để làm; đưa tiêu điểm vào ô email giúp người dùng
+                  // bàn phím khỏi phải Tab qua thanh điều hướng (audit 2026-09-05, F1).
                   // eslint-disable-next-line jsx-a11y/no-autofocus
-                  autoFocus
+                  autoFocus={mode === 'login'}
                 />
-              )}
-              <input
-                id="hub-email"
-                name="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Địa chỉ email"
-                className={inputCls}
-                required
-                // Trang đăng nhập chỉ có một việc để làm; đưa tiêu điểm vào ô email giúp người dùng
-                // bàn phím khỏi phải Tab qua thanh điều hướng (audit 2026-09-05, F1).
-                // eslint-disable-next-line jsx-a11y/no-autofocus
-                autoFocus={mode === 'login'}
-              />
-              <div className="relative">
-                <input
-                  id="hub-password"
-                  name="password"
-                  minLength={mode === 'register' ? 15 : 1}
-                  type={showPw ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'register' ? 'Mật khẩu (ít nhất 15 ký tự)' : 'Mật khẩu'}
-                  /* pr-12: chừa chỗ cho nút hiện/ẩn mật khẩu nay rộng 44px (tap-44). */
-                  className={`${inputCls} pr-12`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw((p) => !p)}
-                  aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                  /* tap-44 thay cho h-8 w-8 (32px) — dưới sàn vùng chạm 44px. */
-                  className="tap-44 absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
-                >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              </div>
+              <div>
+                <label htmlFor="hub-password" className={labelCls}>
+                  Mật khẩu
+                </label>
+                <div className="relative">
+                  <input
+                    id="hub-password"
+                    name="password"
+                    minLength={mode === 'register' ? 15 : 1}
+                    type={showPw ? 'text' : 'password'}
+                    // Đăng ký → gợi ý mật khẩu mới; đăng nhập → điền mật khẩu đã lưu.
+                    autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mật khẩu"
+                    aria-invalid={invalidFields.includes('password')}
+                    aria-describedby={mode === 'register' ? 'hub-password-hint' : undefined}
+                    /* pr-12: chừa chỗ cho nút hiện/ẩn mật khẩu nay rộng 44px (tap-44). */
+                    className={`${inputCls} pr-12`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((p) => !p)}
+                    aria-label={showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    aria-pressed={showPw}
+                    /* tap-44 thay cho h-8 w-8 (32px) — dưới sàn vùng chạm 44px. */
+                    className="tap-44 absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
+                  >
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {/* Luật mật khẩu hiện cố định (không biến mất khi gõ như placeholder) — WCAG 3.3.2. */}
+                {mode === 'register' && (
+                  <p id="hub-password-hint" className="mt-1.5 text-xs text-zinc-400">
+                    Mật khẩu tối thiểu 15 ký tự.
+                  </p>
+                )}
               </div>
 
               {mode === 'login' && (
@@ -418,7 +464,10 @@ export default function HubLogin() {
               )}
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400 theme-light:text-red-800 leading-relaxed">
+                <div
+                  role="alert"
+                  className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400 theme-light:text-red-800 leading-relaxed"
+                >
                   {error}
                 </div>
               )}
@@ -432,11 +481,11 @@ export default function HubLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-50 text-zinc-950 font-bold py-3 rounded-xl text-sm transition active:scale-[0.98] mt-1 shadow-lg shadow-accent-500/20"
+                className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-50 text-[#09090b] font-bold py-3 rounded-xl text-sm transition active:scale-[0.98] mt-1 shadow-lg shadow-accent-500/20"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-zinc-950/30 border-t-zinc-950 rounded-full animate-spin inline-block" />
+                    <span className="w-4 h-4 border-2 border-[#09090b]/30 border-t-[#09090b] rounded-full animate-spin inline-block" />
                     Đang xử lý...
                   </span>
                 ) : mode === 'login' ? (
