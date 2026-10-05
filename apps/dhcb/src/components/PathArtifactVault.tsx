@@ -1,6 +1,6 @@
 // PathArtifactVault — "Hồ sơ bằng chứng" của một lộ trình mục tiêu (đợt 3/4). Người học tự
 // khai artifact (link + ghi chú) cuối mỗi giai đoạn — KHÔNG chấm bằng AI (quyết định đặc tả).
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Award, Trash2, Plus, Loader2 } from 'lucide-react'
 import {
   fetchPathArtifacts,
@@ -23,6 +23,13 @@ export default function PathArtifactVault({ pathId, phases }: Props) {
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // [U3, audit UI/UX 2026-09-30 C4] Ô chọn giai đoạn từng KHÔNG có nhãn (axe `select-name`,
+  // critical): trình đọc màn hình chỉ đọc "hộp kết hợp" mà không nói chọn cái gì. Hai ô nhập
+  // chỉ có placeholder — mất ngay khi gõ (WCAG 3.3.2). Nay mỗi ô có <label> hiện, nối bằng id.
+  const fieldId = useId()
+  const phaseFieldId = `${fieldId}-giai-doan`
+  const urlFieldId = `${fieldId}-link`
+  const noteFieldId = `${fieldId}-ghi-chu`
 
   useEffect(() => {
     void fetchPathArtifacts(pathId).then((a) => {
@@ -65,7 +72,11 @@ export default function PathArtifactVault({ pathId, phases }: Props) {
       </p>
 
       <div className="space-y-2 rounded-2xl bg-zinc-950 border border-zinc-800 p-3">
+        <label htmlFor={phaseFieldId} className="block text-xs font-semibold text-zinc-200">
+          Giai đoạn
+        </label>
         <select
+          id={phaseFieldId}
           value={phaseId}
           onChange={(e) => setPhaseId(e.target.value)}
           className="tap-44 w-full rounded-xl bg-zinc-900 border border-zinc-800 px-3 py-2.5 text-sm text-zinc-100"
@@ -76,14 +87,22 @@ export default function PathArtifactVault({ pathId, phases }: Props) {
             </option>
           ))}
         </select>
+        <label htmlFor={urlFieldId} className="block text-xs font-semibold text-zinc-200">
+          Link bằng chứng
+        </label>
         <input
+          id={urlFieldId}
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://…"
           className="tap-44 w-full rounded-xl bg-zinc-900 border border-zinc-800 px-3 py-2.5 text-sm text-zinc-100"
         />
+        <label htmlFor={noteFieldId} className="block text-xs font-semibold text-zinc-200">
+          Ghi chú
+        </label>
         <input
+          id={noteFieldId}
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}

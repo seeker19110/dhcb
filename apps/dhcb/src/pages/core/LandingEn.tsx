@@ -142,7 +142,7 @@ export default function LandingEn() {
           <section className="mt-10 rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4 lg:mt-0 lg:p-6">
             <div className="flex items-start gap-3">
               <Volume2 className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
-              <p className="text-sm text-zinc-300 lg:text-base lg:leading-relaxed">
+              <p className="text-sm text-zinc-300 theme-light:text-zinc-700 lg:text-base lg:leading-relaxed">
                 <strong className="text-zinc-100 theme-light:text-zinc-900">
                   What's different:
                 </strong>{' '}
@@ -157,7 +157,7 @@ export default function LandingEn() {
 
         {/* 3 chế độ — ba lựa chọn NGANG HÀNG nhau nên xếp ngang ở desktop. */}
         <section className="mt-8 lg:mt-16">
-          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500 theme-light:text-zinc-600">
             Three practice modes
           </h2>
           <div className="mt-4 space-y-3 lg:mt-8 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">

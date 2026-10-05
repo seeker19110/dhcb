@@ -146,7 +146,7 @@ export default function Landing() {
           <section className="mt-10 rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4 lg:mt-0 lg:p-6">
             <div className="flex items-start gap-3">
               <Volume2 className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
-              <p className="text-sm text-zinc-300 lg:text-base lg:leading-relaxed">
+              <p className="text-sm text-zinc-300 theme-light:text-zinc-700 lg:text-base lg:leading-relaxed">
                 <strong className="text-zinc-100 theme-light:text-zinc-900">Điểm khác biệt:</strong>{' '}
                 AI không chỉ sửa lỗi bằng chữ — mà còn{' '}
                 <strong>đọc to lời giải thích bằng giọng tiếng Việt</strong>, trong khi hội thoại
@@ -159,7 +159,7 @@ export default function Landing() {
         {/* 3 chế độ — một cột ở mobile, ba cột ngang ở desktop: ba chế độ là các lựa chọn NGANG
             HÀNG nhau, xếp dọc làm chúng trông như ba bước nối tiếp. */}
         <section className="mt-8 lg:mt-16">
-          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500 theme-light:text-zinc-600">
             3 chế độ luyện tập
           </h2>
           <div className="mt-4 space-y-3 lg:mt-8 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">
