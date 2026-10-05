@@ -90,5 +90,16 @@
   Số đo khớp audit: 20 câu, 5 mẫu ngữ pháp, 8 tiêu đề.
 
 - Spec mới trên nhánh: **10/10** ✅.
+- Cổng chạy trên nhánh đã gộp `main` (gồm U2 #1223):
+  - typecheck (đã xoá `dist`) ✅;
+  - lint ✅;
+  - `test:coverage`: 788 file / 18457 test ✅;
+  - build ✅.
+- E2E `lang-of-parts.spec.ts` + `a11y.spec.ts` (có luật axe `html-has-lang` / `valid-lang`):
+  **207/207** ✅.
+- Trước khi gộp, đã chạy thêm `a11y-aaa`, `mobile-layout-guards`, `landmark-title`,
+  `english-lesson-deep-link`. Lần chạy dài 30 phút có 12 ca đỏ:
+  - 10 ca do máy chủ dev bị `timeout` giết giữa chừng (`ERR_CONNECTION_REFUSED`) hoặc máy quá tải;
+  - chạy lại riêng thì xanh hết.
 - Tầng 8b: chụp bài hội thoại `lesson=1` ở 1440px và 390px, trước (bản sao `main`) và sau. Ảnh
   **trùng từng byte** (sha256 giống nhau), tức thêm `lang` không đổi giao diện.
