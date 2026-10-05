@@ -174,11 +174,18 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-09-30] Sửa theo audit UI/UX chuẩn 2026** ([báo cáo](docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md),
   `docs/changelog/0466-*.md`, PR #1197): 8 critical · 22 major · 14 minor, chia **9 đợt U1–U9** (mục 12 báo
-  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **[2026-10-03] U1 xong** (`docs/changelog/0487-*.md`: viền focus, toast, manifest, tiêu đề trang, `<main>`/skip link + 2 cổng mới). **Kế tiếp: U2.** Đợt U1
-  (viền focus, toast, manifest, tiêu đề trang, `<main>`), U2 (form xác thực + hub tràn ngang),
-  U3 (14 trang tương phản + đưa vào cổng) và U4 (ngôn ngữ trang) làm được ngay, không cần quyết
-  định sản phẩm. U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding)
-  cần chủ dự án quyết trước.
+  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **Đã xong 6/9 đợt (2026-10-03 → 2026-10-05):**
+  - U1 #1222 (`0487`): viền focus, toast, manifest, tiêu đề trang, `<main>`/skip link;
+  - U2 #1223 (`0488`): form xác thực, hub tràn ngang;
+  - U3 #1231 (`0489`): 14 trang tương phản, đưa vào cổng;
+  - U4 #1229 (`0490`): ngôn ngữ trang/đoạn;
+  - U6 #1234 (`0491`): khung nhìn thấp, gỡ Reachability, giảm chuyển động, màu cưỡng bức, lịch 24px;
+  - U8 (`0492`, PR đợt này): thuật ngữ nội bộ, mã enum, chữ Viết Hoa Mỗi Chữ, nguồn truyện.
+
+  Kèm #1232 (`0493`): thứ bậc tiêu đề ở Góc học tập và trang môn STEM.
+  **Kế tiếp:** U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding) — cần
+  chủ dự án quyết trước. Việc cơ học đề xuất ở U6: chuyển 501 chỗ `text-[Npx]` sang rem, rồi hạ
+  danh sách nợ trong `FontSizeRem.design.test.ts` về 0.
   **[2026-10-01] Một phần U9 + M15 đã làm** ([audit đồng nhất bố cục](docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md),
   `docs/changelog/0467-*.md`, PR #1200): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
   chỉ số dưới (M15 phần cấu trúc), nút Back header đúng đích ở 21 trang, chế độ tập trung + "Bài
@@ -193,6 +200,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   môn Tiếng Anh + Lập trình và ba danh sách (PR #1205). **Việc kế tiếp:** "Học tiếp" cho bốn môn STEM (cần
   hàm "lá kế tiếp chưa xong" + chốt lớp mặc định); thống nhất tên "Bài học hôm nay" ↔ "Các bài hội
   thoại mẫu thông dụng" và "Vật lý"/"Vật lí" trong đợt câu chữ.
+
 - **[2026-09-23] Kế hoạch nâng cấp UI/UX và sư phạm sau audit**:
   [goal 5 đợt](docs/goals/2026-09-23-uiux-su-pham.md) và
   [baseline F1–F8](docs/research/2026-09-23-uiux-su-pham-baseline.md).
@@ -1146,14 +1154,15 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   thật, 61 route + hub). Tám lỗi critical:
   - ~~(C1) viền focus 2,65:1 ở Blue sky và 2,70:1 ở Nhi đồng~~ — ✅ đợt U1 (changelog `0487`);
   - ~~(C2) toast không có `aria-live` và tự tắt sau 4 giây~~ — ✅ đợt U1;
-  - (C3) form đăng nhập/đăng ký/đặt lại/hub thiếu nhãn và `autocomplete`;
-  - (C4) 14 trang trượt axe AA mà không nằm trong cổng — kể cả nút "Nâng cấp VIP";
-  - (C5) `lang` không theo ngôn ngữ giao diện/nội dung;
-  - (C6) hub tràn ngang ở 320/390px;
+  - ~~(C3) form đăng nhập/đăng ký/đặt lại/hub thiếu nhãn và `autocomplete`~~ — ✅ đợt U2 (`0488`);
+  - ~~(C4) 14 trang trượt axe AA mà không nằm trong cổng — kể cả nút "Nâng cấp VIP"~~ — ✅ đợt U3 (`0489`);
+  - ~~(C5) `lang` không theo ngôn ngữ giao diện/nội dung~~ — ✅ đợt U4 (`0490`);
+  - ~~(C6) hub tràn ngang ở 320/390px~~ — ✅ đợt U2;
   - ~~(C7) PWA khoá hướng dọc~~ — ✅ đợt U1;
   - ~~(C8) 13 route dùng chung tiêu đề lỗi thời~~ — ✅ đợt U1 (kèm M7 skip link/`<main>`).
 
-  **Còn mở:** C3, C4, C5, C6 → đợt U2–U4.
+  **Cả 8 lỗi critical đã đóng (2026-10-05).** Còn các lỗi major/minor của đợt U5, U7, U9 — cần chủ
+  dự án quyết trước.
 
   Kèm ba lỗi nói sai với người dùng. Thanh bên ghi cứng "Free · Nâng cấp" và trang giá còn hạn
   mức Free cũ (seed `0025`). Hợp đồng hạn mức server `{free, vip}` ↔ client theo chế độ đã lệch,

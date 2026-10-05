@@ -55,7 +55,8 @@ Cập nhật theo: 2 spec E2E (`cefr-tab-touch-target`, `admin`) và các test c
   script sinh để lần sinh sau không quay lại.
 - Phát hiện thêm cùng loại lộ tên mô hình ở 32 truyện: "English version written by Opus (2026)",
   "Opus kể lại bằng lời văn riêng", "Opus tự kể lại", "Opus soạn tay 2026" thay bằng "Đồng Hành"
-  (không nêu tên mô hình). Không đổi nội dung bản dịch.
+  (không nêu tên mô hình). Không đổi nội dung bản dịch. Chủ dự án duyệt phần suy rộng này ngày
+  2026-10-05 ("sửa luôn").
 
 ### 6. Cổng
 
