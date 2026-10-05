@@ -1,6 +1,6 @@
 # 0491 — Đợt U6 audit UI/UX: tuỳ chọn người dùng — khung nhìn thấp, gỡ Reachability, giảm chuyển động, màu cưỡng bức, rem, lịch 24px (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** (điền khi tạo) · **Loại:** `fix(a11y)`.
+- **Ngày:** 2026-10-05 · **PR:** #1234 · **Loại:** `fix(a11y)`.
 - **Phạm vi:** đợt U6 trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` mục 12 (M1–M6 ở
   mục 5 "Khả năng tiếp cận và tuỳ chọn người dùng") cộng cổng (f) ở mục 11 (test cấm cỡ chữ px).
 - **Quyết định M2: chủ dự án chọn GỠ HẲN tính năng "Reachability", 2026-10-05** (audit để ngỏ
