@@ -139,8 +139,8 @@ export default function AdminFeedbackPanel() {
             <div>
               <h3 className="font-bold text-white text-base">
                 {activeTab === 'user'
-                  ? 'Ý Kiến Đóng Góp & Đề Xuất Tính Năng'
-                  : 'Phản Hồi 👎 Chất Lượng Gia Sư AI'}
+                  ? 'Ý kiến đóng góp & đề xuất tính năng'
+                  : 'Phản hồi 👎 chất lượng gia sư AI'}
               </h3>
               <p className="text-xs text-zinc-400">
                 {activeTab === 'user'

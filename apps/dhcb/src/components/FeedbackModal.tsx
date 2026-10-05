@@ -136,7 +136,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
             </div>
             <div>
               <h3 id={titleId} className="text-lg font-bold text-white">
-                {isA ? 'Đã Tiếp Nhận Ý Kiến Của Bạn!' : 'Feedback Received!'}
+                {isA ? 'Đã tiếp nhận ý kiến của bạn!' : 'Feedback Received!'}
               </h3>
               <p className="text-sm text-zinc-400 mt-1 max-w-sm mx-auto">
                 {isA
@@ -302,7 +302,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
                   ) : (
                     <Send className="w-3.5 h-3.5" />
                   )}
-                  {isA ? 'Gửi Đóng Góp' : 'Submit Feedback'}
+                  {isA ? 'Gửi đóng góp' : 'Submit Feedback'}
                 </button>
               </div>
             </div>

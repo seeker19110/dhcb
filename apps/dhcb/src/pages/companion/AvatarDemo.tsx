@@ -104,18 +104,18 @@ export default function AvatarDemo() {
 
   return (
     <>
-      <Layout title="PoC — Avatar AI nói chuyện" />
+      <Layout title="Thử nghiệm — Avatar AI nói chuyện" />
       <main
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
         className="focus:outline-none max-w-lg mx-auto px-4 pt-6 pb-[calc(2rem+var(--bnav-h))]"
       >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
-          PoC — Avatar AI nói chuyện
+          Thử nghiệm — Avatar AI nói chuyện
         </h1>
         <ComingSoonBanner
           isA
-          note="Avatar AI nói chuyện đang ở giai đoạn thử nghiệm (PoC): mới chứng minh cơ chế khẩu hình chạy đúng, chưa nối vào luồng Luyện nói thật. Bản hoàn chỉnh sẽ ra mắt sau."
+          note="Avatar AI nói chuyện đang ở giai đoạn thử nghiệm: mới chứng minh cơ chế khẩu hình chạy đúng, chưa nối vào luồng Luyện nói thật. Bản hoàn chỉnh sẽ ra mắt sau."
         />
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 flex flex-col items-center gap-5">
           <AvatarSpeaking audioEl={audioEl} timeline={timeline} isPlaying={isPlaying} />

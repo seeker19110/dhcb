@@ -24,7 +24,7 @@ export default function ShareProgress({ userId, isA, onClose }: Props) {
   const shareLink = window.location.origin
 
   const shareText = isA
-    ? `🇻🇳→🇺🇸 Tôi đang học tiếng Anh với AI Gia sư!\n📚 Đã học: ${learned} từ\n🔥 Streak: ${streak} ngày liên tiếp\n👉 ${shareLink}`
+    ? `🇻🇳→🇺🇸 Tôi đang học tiếng Anh với AI Gia sư!\n📚 Đã học: ${learned} từ\n🔥 Chuỗi học: ${streak} ngày liên tiếp\n👉 ${shareLink}`
     : `🇺🇸→🇻🇳 I'm learning Vietnamese with AI Tutor!\n📚 Words learned: ${learned}\n🔥 Streak: ${streak} days\n👉 ${shareLink}`
 
   // Chỉ tạo QR khi người dùng mở tab QR — tránh tốn công vẽ nếu họ không cần.

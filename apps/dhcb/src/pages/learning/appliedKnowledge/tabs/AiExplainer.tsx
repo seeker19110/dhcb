@@ -42,7 +42,7 @@ export function AiExplainer() {
           <Sparkles className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-base font-bold">Trợ Lý AI Giải Đáp Bản Chất Đời Sống</h3>
+          <h3 className="text-base font-bold">Trợ lý AI giải đáp bản chất đời sống</h3>
           <p className="text-xs text-zinc-400">
             Đặt bất kỳ câu hỏi nào về tính ứng dụng của kiến thức vào cuộc sống
           </p>
@@ -89,7 +89,7 @@ export function AiExplainer() {
       {/* AI Answer Box */}
       {aiAnswer && (
         <div className="p-5 rounded-2xl bg-zinc-950 border border-accent-500/40 text-sm space-y-3 animate-in fade-in">
-          <div className="flex items-center gap-2 text-accent-400 theme-light:text-accent-800 font-bold text-xs uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-accent-400 theme-light:text-accent-800 font-bold text-xs">
             <Sparkles className="w-4 h-4" /> Phân tích chuyên sâu từ Đồng Hành AI
           </div>
           <div className="text-zinc-200 leading-relaxed whitespace-pre-line">{aiAnswer}</div>

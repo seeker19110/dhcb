@@ -139,7 +139,7 @@ type NhapCap = z.infer<typeof nhapCapSchema>
 const NHAN_TAB: Record<StudyTab, string> = {
   lessons: 'Bài học',
   today: 'Hôm nay',
-  srs: 'Ôn SRS',
+  srs: 'Ôn lại',
   hard: 'Từ khó',
   quiz: 'Kiểm tra',
   listening: 'Nghe',
@@ -270,7 +270,7 @@ export default function CefrLevelPage() {
 
   const uid = user?.id ?? ''
   const level = levels.find((l) => l.id === (levelId ?? '').toUpperCase())
-  usePageTitle(level ? `Trình độ ${level.id} | Môn Tiếng Anh` : 'Lộ trình CEFR | Môn Tiếng Anh')
+  usePageTitle(level ? `Trình độ ${level.id} | Môn tiếng Anh` : 'Lộ trình CEFR | Môn tiếng Anh')
 
   // Hội thoại của TOÀN CẤP (mọi unit) — dùng cho tab "Nghe" (③ N3, dictation lấy
   // câu từ hội thoại). Tải riêng theo cấp (giống CefrExam.tsx) — chỉ chạy khi có
@@ -841,7 +841,7 @@ export default function CefrLevelPage() {
     {
       key: 'srs',
       icon: Brain,
-      labelA: 'Ôn SRS',
+      labelA: 'Ôn lại',
       labelB: 'SRS',
       badge: srsDue,
       active: 'bg-sky-500/20 text-sky-300 theme-light:text-sky-800 border border-sky-500/40',
@@ -1393,7 +1393,7 @@ function UnitSection({
   const stepLabel = (nameVi: string, nameEn: string) => {
     step += 1
     return (
-      <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">
+      <p className="text-[11px] font-semibold text-zinc-400 mb-1.5">
         {step} · {isA ? nameVi : nameEn}
       </p>
     )
@@ -1402,7 +1402,7 @@ function UnitSection({
   return (
     <div id={`cefr-unit-${unit.id}`} className="glass rounded-2xl p-4 scroll-mt-20">
       <div className="flex items-center gap-2 mb-3">
-        <span className={`text-[11px] font-bold uppercase tracking-wide ${accent.text}`}>
+        <span className={`text-[11px] font-bold ${accent.text}`}>
           {isA ? 'Phần' : 'Part'} {index + 1}
         </span>
         <span className="text-xl">{unit.emoji}</span>

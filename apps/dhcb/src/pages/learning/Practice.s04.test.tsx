@@ -89,7 +89,7 @@ async function renderPage() {
 
 function openPronunciation(view: HTMLElement) {
   const button = [...view.querySelectorAll('button')].find((b) =>
-    /Chấm Phát Âm Từ Vựng|Word pronunciation/.test(b.textContent ?? ''),
+    /Chấm phát âm từ vựng|Word pronunciation/.test(b.textContent ?? ''),
   )
   expect(button).toBeDefined()
   expect(button?.disabled).toBe(false)

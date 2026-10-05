@@ -172,9 +172,9 @@ describe('buildCrumbs', () => {
 
   it('Luyện tập là hub đa môn — không còn công cụ Tiếng Anh nào lồng dưới nó', () => {
     for (const p of ['/tro-truyen', '/luyen-noi', '/tu-dien', '/thu-thach']) {
-      expect(buildCrumbs(p).map((c) => c.label)).not.toContain('Phòng Luyện Tập')
+      expect(buildCrumbs(p).map((c) => c.label)).not.toContain('Phòng luyện tập')
     }
-    expect(buildCrumbs('/luyen-tap').map((c) => c.label)).toEqual(['Trang chủ', 'Phòng Luyện Tập'])
+    expect(buildCrumbs('/luyen-tap').map((c) => c.label)).toEqual(['Trang chủ', 'Phòng luyện tập'])
   })
 })
 

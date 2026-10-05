@@ -293,13 +293,13 @@ export default function Practice() {
       <Layout
         back={false}
         title={
-          isUiVi ? 'Phòng Luyện Tập Đa Môn & Sửa Lỗi' : 'Multi-Subject Practice & Mistake Studio'
+          isUiVi ? 'Phòng luyện tập đa môn & sửa lỗi' : 'Multi-Subject Practice & Mistake Studio'
         }
       />
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Trung tâm luyện tập, nhiều thẻ → width standard. */}
       <PageShell width="standard" baseWidth="max-w-3xl" className="space-y-7">
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
-          {isUiVi ? 'Phòng Luyện Tập Đa Môn & Sửa Lỗi' : 'Multi-Subject Practice & Mistake Studio'}
+          {isUiVi ? 'Phòng luyện tập đa môn & sửa lỗi' : 'Multi-Subject Practice & Mistake Studio'}
         </h1>
 
         {/* ── BANNER SPOTLIGHT: SỔ TAY SỬA LỖI ĐA MÔN & CUNG ĐIỆN TRÍ NHỚ ──
@@ -318,7 +318,7 @@ export default function Practice() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-bold text-content text-base">Sổ Tay Sửa Lỗi Đa Môn AI</h3>
+                <h3 className="font-bold text-content text-base">Sổ tay sửa lỗi đa môn AI</h3>
               </div>
               <p className="text-xs text-content-secondary leading-relaxed max-w-xl">
                 Tự động tổng hợp các bẫy biến đổi Toán - Lý - Hóa, lỗi phát âm IPA, sai ngữ pháp
@@ -330,7 +330,7 @@ export default function Practice() {
             onClick={() => nav(duongDanSoTayLoiSai())}
             className="tap-44 w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-400 text-black font-bold text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95 shrink-0"
           >
-            <span>Mở Sổ Lỗi & Ôn Tập</span>
+            <span>Mở sổ lỗi & ôn tập</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -370,9 +370,9 @@ export default function Practice() {
             </div>
           )}
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+            <h2 className="text-xs font-bold text-zinc-300 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-sky-400" />
-              {isUiVi ? '1. 8 Chế Độ Luyện Tập Phản Xạ Nhanh' : '1. Eight quick practice modes'}
+              {isUiVi ? '1. 8 chế độ luyện tập phản xạ nhanh' : '1. Eight quick practice modes'}
             </h2>
           </div>
 
@@ -388,7 +388,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors truncate">
-                  {isUiVi ? 'Nghe Đoán Từ Vựng' : 'Listen and guess vocabulary'}
+                  {isUiVi ? 'Nghe đoán từ vựng' : 'Listen and guess vocabulary'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi ? 'Nghe phát âm, chọn nghĩa đúng' : 'Listen and choose the meaning'}
@@ -408,7 +408,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors truncate">
-                  {isUiVi ? 'Sắp Xếp Câu Hoàn Chỉnh' : 'Put the sentence in order'}
+                  {isUiVi ? 'Sắp xếp câu hoàn chỉnh' : 'Put the sentence in order'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi
@@ -430,7 +430,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors truncate">
-                  {isUiVi ? 'Nghe & Viết Chính Tả' : 'Listen and type'}
+                  {isUiVi ? 'Nghe & viết chính tả' : 'Listen and type'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi
@@ -452,7 +452,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
-                  {isUiVi ? 'Điền Từ Ngữ Cảnh' : 'Fill in the blank'}
+                  {isUiVi ? 'Điền từ ngữ cảnh' : 'Fill in the blank'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi
@@ -474,7 +474,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">
-                  {isUiVi ? 'Chấm Phát Âm Từ Vựng' : 'Word pronunciation'}
+                  {isUiVi ? 'Chấm phát âm từ vựng' : 'Word pronunciation'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi ? 'Đọc to từ vựng, AI chấm điểm chuẩn' : 'Read words aloud for feedback'}
@@ -494,7 +494,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors truncate">
-                  {isUiVi ? 'Đọc Lại Câu Ví Dụ' : 'Read example sentences'}
+                  {isUiVi ? 'Đọc lại câu ví dụ' : 'Read example sentences'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi
@@ -516,7 +516,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-accent-300 transition-colors truncate">
-                  {isUiVi ? 'Nói Đè Theo Mẫu' : 'Shadow the model'}
+                  {isUiVi ? 'Nói đè theo mẫu' : 'Shadow the model'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi ? 'Nói đồng thời theo nhịp audio phát' : 'Speak along with the audio'}
@@ -536,7 +536,7 @@ export default function Practice() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors truncate">
-                  {isUiVi ? 'Phỏng Vấn Ngược AI' : 'Reverse interview'}
+                  {isUiVi ? 'Phỏng vấn ngược AI' : 'Reverse interview'}
                 </p>
                 <p className="text-[11px] text-zinc-400 truncate">
                   {isUiVi
@@ -557,7 +557,7 @@ export default function Practice() {
         <section aria-labelledby="practice-ai-tutor" className="space-y-3">
           <h2
             id="practice-ai-tutor"
-            className="px-1 text-xs font-bold uppercase tracking-wider text-accent-400 theme-light:text-accent-800"
+            className="px-1 text-xs font-bold text-accent-400 theme-light:text-accent-800"
           >
             {isUiVi
               ? '2. Luyện với gia sư AI · Tiếng Anh'
@@ -586,7 +586,7 @@ export default function Practice() {
         {/* ── 3. LUYỆN TẬP 5 MÔN HỌC CỐT LÕI & GIẢI ĐỀ AI ── */}
         <section aria-label="Luyện tập 5 Môn học cốt lõi" className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-blue-300 theme-light:text-blue-800">
+            <h2 className="text-xs font-bold text-blue-300 theme-light:text-blue-800">
               3. Luyện Tập 5 Môn Học & Giải Đề Từng Bước
             </h2>
             <button

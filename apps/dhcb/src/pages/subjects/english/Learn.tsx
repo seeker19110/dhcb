@@ -20,7 +20,7 @@ import { getDirection } from '../../../lib/storage'
 import { useAuth } from '../../../context/useAuth'
 
 export default function Learn() {
-  usePageTitle('Lộ trình học | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Lộ trình học | Môn tiếng Anh · Đồng hành cùng bạn')
   const { user } = useAuth()
   const isA = getDirection() === 'A'
 

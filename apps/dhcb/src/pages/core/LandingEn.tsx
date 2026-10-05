@@ -151,9 +151,7 @@ export default function LandingEn() {
 
         {/* 3 chế độ — ba lựa chọn NGANG HÀNG nhau nên xếp ngang ở desktop. */}
         <section className="mt-8 lg:mt-16">
-          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Three practice modes
-          </h2>
+          <h2 className="text-center text-sm font-semibold text-zinc-500">Three practice modes</h2>
           <div className="mt-4 space-y-3 lg:mt-8 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">
             {MODES.map((mode) => (
               <div

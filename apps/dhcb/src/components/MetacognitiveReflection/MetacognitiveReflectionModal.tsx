@@ -165,7 +165,7 @@ export default function MetacognitiveReflectionModal({
               {/* Socratic Prompt Card */}
               {prompt && (
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-950/40 to-emerald-950/30 border border-teal-500/30">
-                  <div className="flex items-center gap-2 text-teal-400 theme-light:text-teal-900 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  <div className="flex items-center gap-2 text-teal-400 theme-light:text-teal-900 text-xs font-bold mb-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Chủ đề: {prompt.theme}</span>
                   </div>
@@ -185,7 +185,7 @@ export default function MetacognitiveReflectionModal({
               <div className="space-y-2">
                 <label
                   htmlFor="metacognitivereflectionmodal-dong-suy-ngam-chan-thuc-cua-ban"
-                  className="block text-xs font-bold text-zinc-300 uppercase tracking-wider"
+                  className="block text-xs font-bold text-zinc-300"
                 >
                   Dòng suy ngẫm chân thực của bạn
                 </label>
@@ -223,7 +223,7 @@ export default function MetacognitiveReflectionModal({
                   <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">🌟</span>
-                      <h4 className="font-bold text-sm text-white">Kết Quả Phân Tích Nhận Thức</h4>
+                      <h4 className="font-bold text-sm text-white">Kết quả phân tích nhận thức</h4>
                     </div>
                     <div className="flex items-center gap-4 text-xs">
                       <span className="px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 theme-light:text-teal-900 border border-teal-500/30 font-bold">
@@ -238,7 +238,7 @@ export default function MetacognitiveReflectionModal({
                   {/* Biases */}
                   {currentReflection.identifiedBiases.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-zinc-400 flex items-center gap-1.5">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-400 theme-light:text-amber-900" />
                         Thiên kiến & Điểm mù nhận diện:
                       </span>
@@ -264,7 +264,7 @@ export default function MetacognitiveReflectionModal({
                   {/* Aha Moments */}
                   {currentReflection.ahaMoments.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-zinc-400 flex items-center gap-1.5">
                         <Lightbulb className="w-3.5 h-3.5 text-yellow-400 theme-light:text-yellow-900" />
                         Khoảnh khắc "Aha!" sáng suốt:
                       </span>

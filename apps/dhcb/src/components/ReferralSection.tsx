@@ -75,7 +75,7 @@ export default function ReferralSection({ isA }: { isA: boolean }) {
               className="tap-44 shrink-0 flex items-center gap-1.5 rounded-xl bg-accent-500/15 border border-accent-500/30 px-3 py-2.5 text-xs font-medium text-accent-400 hover:bg-accent-500/25 transition"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? (isA ? 'Đã chép' : 'Copied') : isA ? 'Chép link' : 'Copy link'}
+              {copied ? (isA ? 'Đã chép' : 'Copied') : isA ? 'Chép liên kết' : 'Copy link'}
             </button>
           </div>
 

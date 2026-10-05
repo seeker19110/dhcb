@@ -47,7 +47,7 @@ export const EdgeAiIndicator: React.FC<EdgeAiIndicatorProps> = ({ className = ''
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
                 <Cpu className="w-5 h-5 text-emerald-400 theme-light:text-emerald-900" />
-                <h3 className="font-bold text-white text-sm">Hạ Tầng Trí Tuệ Biên (Edge AI)</h3>
+                <h3 className="font-bold text-white text-sm">Hạ tầng trí tuệ biên (Edge AI)</h3>
               </div>
               <button
                 onClick={() => setShowDetails(false)}

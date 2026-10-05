@@ -200,9 +200,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
           {/* Problem Statement Card */}
           <div className="p-4 rounded-2xl bg-teal-950/20 border border-teal-500/20">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-teal-300 theme-light:text-teal-900 uppercase tracking-wide">
-                Đề bài
-              </h4>
+              <h4 className="text-xs font-bold text-teal-300 theme-light:text-teal-900">Đề bài</h4>
               {problem?.isSolved && (
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 border border-emerald-500/30 font-bold">
                   ✓ ĐÃ GIẢI XONG
@@ -219,7 +217,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
 
           {/* Steps Timeline */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
+            <h4 className="text-xs font-bold text-zinc-400">
               Các bước biến đổi ({problem?.steps.length || 0})
             </h4>
 

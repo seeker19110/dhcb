@@ -27,7 +27,7 @@ export default function PvPArenaCard() {
                   Đấu 1v1
                 </span>
                 <span className="text-[11px] font-semibold text-content-secondary">
-                  Xếp hạng theo điểm Elo
+                  Xếp hạng theo điểm
                 </span>
               </div>
               <h3 className="text-base sm:text-lg font-bold text-content mt-1">
@@ -46,7 +46,7 @@ export default function PvPArenaCard() {
             className="tap-44 w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center justify-center gap-2 shrink-0"
           >
             <Swords className="w-4 h-4" />
-            <span>Vào Đấu Trường</span>
+            <span>Vào đấu trường</span>
           </button>
         </div>
       </div>

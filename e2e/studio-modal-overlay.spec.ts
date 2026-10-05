@@ -11,7 +11,7 @@ import { mockLogin } from './helpers/auth'
 // Cách sửa: hộp thoại render qua `createPortal(…, document.body)` + hoạt ảnh không giữ transform.
 
 const CASES = [
-  { studio: 'Thử thách', trigger: /Mở Bảng Nháp/ },
+  { studio: 'Thử thách', trigger: /Mở bảng nháp/ },
   { studio: 'Ghi nhớ', trigger: /Khám phá Cung Điện/ },
 ]
 const SIZES = [

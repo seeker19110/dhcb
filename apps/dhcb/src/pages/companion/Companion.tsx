@@ -614,7 +614,7 @@ export default function Companion() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-zinc-400">Token Sử Dụng</div>
+                  <div className="text-zinc-400">Token sử dụng</div>
                   <div className="font-medium text-accent-300 theme-light:text-accent-800 mt-0.5">
                     {activeContext.tokenUsed} / {activeContext.tokenBudget} tokens
                   </div>

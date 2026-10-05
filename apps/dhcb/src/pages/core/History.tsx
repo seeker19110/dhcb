@@ -353,7 +353,7 @@ export default function History() {
         {/* Tiêu đề trang — ngay dưới AppHeader, cỡ chữ lớn */}
         {/* [Slice 03] Lịch sử ở đây là của MÔN TIẾNG ANH (Chat / Viết / Nói) — nói rõ ngữ cảnh. */}
         <p className="text-sm text-zinc-300 mb-3">
-          Môn Tiếng Anh —{' '}
+          Môn tiếng Anh —{' '}
           <Link
             to={duongDanMonTiengAnh()}
             className="underline underline-offset-2 text-accent-300 theme-light:text-accent-800 hover:text-white"

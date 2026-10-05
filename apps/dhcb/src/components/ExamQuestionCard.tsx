@@ -106,7 +106,7 @@ export default function ExamQuestionCard({
   return (
     <>
       {/* Nhãn phần */}
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-400">
         <MetaIcon aria-hidden="true" className={`w-3.5 h-3.5 ${accent.text}`} />
         {isA ? meta.vi : meta.en}
       </div>

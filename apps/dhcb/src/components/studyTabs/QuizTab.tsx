@@ -262,7 +262,7 @@ export function QuizTab({
         />
       </div>
       <div className="text-center py-6">
-        <p className="text-xs text-zinc-400 mb-3 uppercase tracking-wide">
+        <p className="text-xs text-zinc-400 mb-3">
           {q.kind === 'vocab'
             ? isA
               ? `Câu ${current + 1}/${questions.length} — Nghĩa tiếng Việt của từ này là?`

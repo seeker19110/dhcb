@@ -277,7 +277,7 @@ export default function Dictionary() {
             <div className="grid grid-cols-3 gap-1.5">
               {(
                 [
-                  { key: 'srs', icon: Brain, label: isA ? 'Ôn SRS' : 'SRS', badge: badges.srsDue },
+                  { key: 'srs', icon: Brain, label: isA ? 'Ôn lại' : 'SRS', badge: badges.srsDue },
                   {
                     key: 'hard',
                     icon: Star,
@@ -533,7 +533,7 @@ export default function Dictionary() {
                             {/* 3 ví dụ đánh số — Ví dụ 1 từ ex_en, Ví dụ 2&3 từ EXTRA_EXAMPLES */}
                             {e.ex_en && (
                               <div className="mt-3.5 space-y-2">
-                                <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                                <p className="text-[11px] font-bold text-zinc-400">
                                   {isA ? 'Câu ví dụ ngữ cảnh' : 'Context Examples'}
                                 </p>
 
@@ -653,7 +653,7 @@ export default function Dictionary() {
 
                   {/* Chủ đề từ vựng nhanh */}
                   <div>
-                    <p className="text-xs text-zinc-400 uppercase tracking-wide mb-2 px-0.5">
+                    <p className="text-xs text-zinc-400 mb-2 px-0.5">
                       {isA ? 'Chủ đề phổ biến' : 'Common topics'}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

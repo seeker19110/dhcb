@@ -289,7 +289,7 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
           placeholder={
             isListening
               ? 'Đang lắng nghe câu hỏi của bạn...'
-              : 'Bạn muốn học gì? (Toán, Tiếng Anh, Phỏng vấn, Simulators)...'
+              : 'Bạn muốn học gì? (Toán, Tiếng Anh, Phỏng vấn, thí nghiệm mô phỏng)...'
           }
           className="tap-44-y flex-1 bg-transparent px-2 py-1 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 outline-none min-w-0"
         />

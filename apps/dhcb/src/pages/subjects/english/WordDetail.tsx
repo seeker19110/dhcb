@@ -113,17 +113,13 @@ export default function WordDetail() {
         )}
 
         <section className="mt-4 rounded-2xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-1">
-            Nghĩa ({entry.pos})
-          </p>
+          <p className="text-xs font-semibold text-zinc-500 mb-1">Nghĩa ({entry.pos})</p>
           <p className="text-lg text-zinc-100 theme-light:text-zinc-900">{entry.vi}</p>
         </section>
 
         {entry.ex_en && (
           <section className="mt-4 rounded-2xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">
-              Ví dụ
-            </p>
+            <p className="text-xs font-semibold text-zinc-500 mb-2">Ví dụ</p>
             <p className="text-zinc-200 theme-light:text-zinc-800">{entry.ex_en}</p>
             <p className="text-sm text-zinc-400 mt-1">{entry.ex_vi}</p>
           </section>

@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { mockLogin } from './helpers/auth'
 import { muteTts } from './helpers/tts'
 
-// Thẻ Nói Đè Theo Mẫu và Scenario Holodeck (studio "Thử thách") từng nuốt lỗi tải danh mục:
+// Thẻ Nói đè theo mẫu và Scenario Holodeck (studio "Thử thách") từng nuốt lỗi tải danh mục:
 // API lỗi thì thân thẻ để TRỐNG, không báo gì. Nay qua `useCatalogList`: tải / lỗi + Thử lại /
 // rỗng / sẵn sàng tách bạch. Chỉ chặn GET danh mục — POST (luyện, bắt đầu phiên) không đụng tới.
 
@@ -78,7 +78,7 @@ function card(page: Page, title: string) {
     .locator('xpath=ancestor::div[contains(@class,"p-5")][1]')
 }
 
-test('Nói Đè Theo Mẫu: lỗi tải hiện thông báo + Thử lại, thử lại thành công thì hiện bài mẫu', async ({
+test('Nói đè theo mẫu: lỗi tải hiện thông báo + Thử lại, thử lại thành công thì hiện bài mẫu', async ({
   page,
 }) => {
   const api = await mockCatalog(page, '/api/echo-shadowing', {
@@ -86,7 +86,7 @@ test('Nói Đè Theo Mẫu: lỗi tải hiện thông báo + Thử lại, thử 
     body: { error: 'boom' },
   })
   await openLabs(page)
-  const echo = card(page, 'Nói Đè Theo Mẫu')
+  const echo = card(page, 'Nói đè theo mẫu')
   await expect(echo.getByRole('alert')).toContainText('Không tải được dữ liệu')
   api.set({ status: 200, body: { passages: [PASSAGE] } })
   await echo.getByRole('button', { name: 'Thử lại' }).click()

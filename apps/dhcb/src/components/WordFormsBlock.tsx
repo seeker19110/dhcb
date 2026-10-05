@@ -119,7 +119,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
 
   return (
     <div className="mt-2.5">
-      <p className="text-[11px] text-zinc-400 uppercase tracking-wide mb-1.5">
+      <p className="text-[11px] text-zinc-400 mb-1.5">
         {isA ? 'Các dạng của từ' : 'Word forms'}
         {irregular && (
           <span className="ml-1.5 normal-case text-amber-400 theme-light:text-amber-900 font-medium">
@@ -181,7 +181,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
                 className="rounded-lg border border-zinc-800/70 bg-zinc-900/40 overflow-hidden"
               >
                 <p className="px-3 pt-2 text-[11px] text-zinc-400">
-                  <span className="uppercase tracking-wide">{isA ? label.vi : label.en}</span>
+                  <span>{isA ? label.vi : label.en}</span>
                   <span className="ml-1.5 font-medium text-zinc-200">{val}</span>
                 </p>
                 <div className="divide-y divide-zinc-800/50">

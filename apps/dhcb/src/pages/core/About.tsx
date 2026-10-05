@@ -102,7 +102,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: BookMarked,
-    titleVi: 'Nghe – Đọc – Kể Truyện',
+    titleVi: 'Nghe – đọc – kể truyện',
     titleEn: 'Listen – Read – Tell Stories',
     descVi: 'Cổ tích, ngụ ngôn, truyện dân gian Việt Nam — giọng đọc chuẩn, song ngữ.',
     descEn: 'Fairy tales, fables, Vietnamese folk stories — native voices, bilingual text.',
@@ -137,7 +137,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Flame,
-    titleVi: 'Streak & huy hiệu',
+    titleVi: 'Chuỗi ngày học & huy hiệu',
     titleEn: 'Streaks & achievements',
     descVi: 'Giữ chuỗi ngày học liên tiếp, mở khóa huy hiệu khi đạt mốc.',
     descEn: 'Keep a daily streak going and unlock achievements at milestones.',
@@ -156,7 +156,7 @@ const TIPS: Tip[] = [
     titleVi: 'Học đều đặn, dù chỉ ít mỗi ngày',
     titleEn: 'Study a little every day',
     bodyVi:
-      'Ghi nhớ ngôn ngữ hiệu quả hơn nhiều khi lặp lại đều đặn thay vì học dồn 1 buổi rồi nghỉ dài. Streak ở trang chủ giúp bạn theo dõi và duy trì thói quen này.',
+      'Ghi nhớ ngôn ngữ hiệu quả hơn nhiều khi lặp lại đều đặn thay vì học dồn 1 buổi rồi nghỉ dài. Chuỗi ngày học ở trang chủ giúp bạn theo dõi và duy trì thói quen này.',
     bodyEn:
       'Language sticks much better with steady repetition than one long cram session followed by a long break. The streak on the home page helps you track and keep this habit.',
   },
@@ -164,7 +164,7 @@ const TIPS: Tip[] = [
     titleVi: 'Để hệ thống nhắc bạn ôn đúng lúc sắp quên',
     titleEn: 'Let the system remind you before you forget',
     bodyVi:
-      'Mục "Ôn SRS" ở mỗi cấp lộ trình tự tính thời điểm ôn tối ưu cho từng từ theo nguyên lý lặp lại ngắt quãng (spaced repetition) — ôn đúng lúc thay vì ôn tràn lan.',
+      'Mục "Ôn lại" ở mỗi cấp lộ trình tự tính thời điểm ôn tối ưu cho từng từ theo nguyên lý lặp lại ngắt quãng (spaced repetition) — ôn đúng lúc thay vì ôn tràn lan.',
     bodyEn:
       'The "SRS review" tab in each level calculates the best time to review each word using spaced repetition — reviewing right before you\'d forget, not all at once.',
   },
@@ -256,7 +256,7 @@ export default function About() {
             <p className="text-sm text-zinc-300">
               <strong className="text-white">
                 {isA
-                  ? 'Môn Tiếng Anh — điểm khác biệt: '
+                  ? 'Môn tiếng Anh — điểm khác biệt: '
                   : "The English subject — what's different: "}
               </strong>
               {isA ? (
@@ -285,7 +285,7 @@ export default function About() {
         {/* Tính năng chính */}
         <section className="animate-fade-in">
           <h2 className="text-lg font-bold text-white mb-3">
-            {isA ? 'Môn Tiếng Anh có gì' : 'Inside the English subject'}
+            {isA ? 'Môn tiếng Anh có gì' : 'Inside the English subject'}
           </h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {FEATURES.map((f) => (

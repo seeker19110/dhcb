@@ -13,7 +13,7 @@ import { MAIN_CONTENT_ID } from '@core/PageShell'
 // khoá quảng cáo), KHÔNG phải trang chủ nền tảng. Trang chủ nền tảng là apps/hub (giới
 // thiệu đủ 5 trụ). Vì vậy trang này phải nói rõ tiếng Anh là MỘT MÔN của nền tảng và có
 // đường dẫn sang phần còn lại — tránh để người đọc hiểu nhầm nền tảng chỉ dạy tiếng Anh.
-const TITLE = 'Nói tiếng Anh với AI — sửa lỗi bằng giọng Việt | Môn Tiếng Anh · Đồng hành cùng bạn'
+const TITLE = 'Nói tiếng Anh với AI — sửa lỗi bằng giọng Việt | Môn tiếng Anh · Đồng hành cùng bạn'
 const DESCRIPTION =
   'Nói tiếng Anh với AI — sai chỗ nào, được giảng lại bằng tiếng Việt. Miễn phí. Hội thoại giọng Anh chuẩn, sửa lỗi & giải thích bằng giọng tiếng Việt. Môn Tiếng Anh thuộc nền tảng đồng hành cá nhân Đồng hành cùng bạn.'
 
@@ -119,7 +119,7 @@ export default function Landing() {
               <Sparkles className="h-7 w-7" aria-hidden="true" />
             </div>
             <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 px-3 py-1 text-xs text-zinc-300 theme-light:text-zinc-700">
-              <span className="font-semibold text-accent-400">Môn Tiếng Anh</span>
+              <span className="font-semibold text-accent-400">Môn tiếng Anh</span>
               <span aria-hidden="true">·</span>
               <span>một môn của nền tảng Đồng hành cùng bạn</span>
             </p>
@@ -159,9 +159,7 @@ export default function Landing() {
         {/* 3 chế độ — một cột ở mobile, ba cột ngang ở desktop: ba chế độ là các lựa chọn NGANG
             HÀNG nhau, xếp dọc làm chúng trông như ba bước nối tiếp. */}
         <section className="mt-8 lg:mt-16">
-          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            3 chế độ luyện tập
-          </h2>
+          <h2 className="text-center text-sm font-semibold text-zinc-500">3 chế độ luyện tập</h2>
           <div className="mt-4 space-y-3 lg:mt-8 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">
             {MODES.map((mode) => (
               <div

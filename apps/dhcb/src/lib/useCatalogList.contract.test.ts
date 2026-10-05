@@ -11,7 +11,7 @@ import { HolodeckScenarioSchema } from '@dhcb/core-contracts/scenarioHolodeck'
 const overWire = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
 
 describe('danh mục server khớp schema client của useCatalogList', () => {
-  it('bài mẫu Nói Đè Theo Mẫu (GET /api/echo-shadowing)', () => {
+  it('bài mẫu Nói đè theo mẫu (GET /api/echo-shadowing)', () => {
     const result = z.array(ShadowingPassageSchema).safeParse(overWire(listShadowingPassages()))
     expect(result.success, JSON.stringify(result.error?.issues.slice(0, 3))).toBe(true)
     expect(result.data?.length).toBeGreaterThan(0)

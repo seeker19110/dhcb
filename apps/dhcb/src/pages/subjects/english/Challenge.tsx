@@ -277,7 +277,7 @@ function ChallengePlayback({ uid, day, label }: { uid: string; day: string; labe
 }
 
 export default function Challenge() {
-  usePageTitle('Thử thách | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Thử thách | Môn tiếng Anh · Đồng hành cùng bạn')
   const user = useAuth().user!
   const toast = useToast()
   const dir: Direction = getDirection()

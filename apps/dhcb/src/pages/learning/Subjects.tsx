@@ -24,6 +24,7 @@ import LoadError from '../../components/LoadError'
 import { listSubjects, SubjectApiError } from '../../lib/subjectApi'
 import type { SubjectManifest } from '@dhcb/core-contracts/subjectManifest'
 import { goToSubjects, goToSubjectHome } from '../../lib/subjectsHost'
+import { categoryLabel, evaluationModeLabel } from '../../lib/subjectLabels'
 
 const SUBJECT_ICONS: Record<string, typeof BookOpen> = {
   english: BookOpen,
@@ -208,7 +209,7 @@ export default function Subjects() {
               <div className="flex items-center gap-2.5 min-w-0">
                 <Sparkles className="w-4 h-4 text-cyan-400 theme-light:text-cyan-800 shrink-0" />
                 <span className="text-xs font-semibold text-zinc-200 truncate">
-                  10 Phòng thí nghiệm Simulators
+                  10 phòng thí nghiệm mô phỏng
                 </span>
               </div>
               <ChevronRight className="w-4 h-4 text-cyan-400 theme-light:text-cyan-800 group-hover:translate-x-1 transition-transform shrink-0" />
@@ -363,18 +364,18 @@ export default function Subjects() {
                             {sub.label}
                           </h3>
                           <span
-                            className={`inline-block text-[11px] px-2 py-0.5 rounded-full font-semibold mt-0.5 uppercase ${
+                            className={`inline-block text-[11px] px-2 py-0.5 rounded-full font-semibold mt-0.5 ${
                               sub.category === 'language'
                                 ? 'bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 border border-emerald-500/20'
                                 : 'bg-blue-500/15 text-blue-300 theme-light:text-blue-800 border border-blue-500/20'
                             }`}
                           >
-                            {sub.category}
+                            {categoryLabel(sub.category)}
                           </span>
                         </div>
                       </div>
                       <span className="text-xs px-2.5 py-1 rounded-xl bg-zinc-800/80 text-zinc-400 border border-zinc-700/80 shrink-0">
-                        {sub.taxonomyKind === 'cefr' ? 'Chuẩn CEFR' : 'Theo Khối Lớp'}
+                        {sub.taxonomyKind === 'cefr' ? 'Chuẩn CEFR' : 'Theo khối lớp'}
                       </span>
                     </div>
 
@@ -419,7 +420,7 @@ export default function Subjects() {
                         <Layers className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                         <span>Chế độ chấm:</span>
                         <span className="text-zinc-300">
-                          {sub.evaluationModes.map((m) => m.replace('_', ' ')).join(', ')}
+                          {sub.evaluationModes.map(evaluationModeLabel).join(', ')}
                         </span>
                       </div>
                     </div>

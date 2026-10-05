@@ -142,7 +142,7 @@ export default function EnglishHome() {
 
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Danh sách/lưới nhiều thẻ → width standard. */}
       <PageShell width="standard" baseWidth="max-w-3xl" className="!pt-4 space-y-5">
-        <h1 className="sr-only">{isA ? 'Môn Tiếng Anh' : 'English'}</h1>
+        <h1 className="sr-only">{isA ? 'Môn tiếng Anh' : 'English'}</h1>
 
         {/* ── TIÊU ĐỀ & TIẾP TỤC HỌC CEFR ── */}
         <section
@@ -272,9 +272,7 @@ export default function EnglishHome() {
               <div className="p-1.5 rounded-lg bg-accent-500/15 text-accent-400 border border-accent-500/20">
                 <Bot className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Gia Sư Luyện 4 Kỹ Năng AI
-              </h3>
+              <h3 className="text-sm font-bold text-white">Gia sư luyện 4 kỹ năng AI</h3>
             </div>
           </div>
 
@@ -296,7 +294,7 @@ export default function EnglishHome() {
               <div className="w-10 h-10 rounded-xl bg-accent-500/15 flex items-center justify-center group-hover:scale-110 transition">
                 <MessageCircle className="w-5 h-5 text-accent-400" />
               </div>
-              <span className="text-xs font-semibold text-zinc-200">Chat Đối Thoại</span>
+              <span className="text-xs font-semibold text-zinc-200">Chat đối thoại</span>
             </button>
 
             <button
@@ -333,7 +331,7 @@ export default function EnglishHome() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <h4 className="font-bold text-white text-sm">Học Theo Lộ Trình CEFR</h4>
+                <h4 className="font-bold text-white text-sm">Học theo lộ trình CEFR</h4>
                 <span className="text-[11px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 font-semibold border border-emerald-500/20">
                   A1-C2
                 </span>
@@ -354,9 +352,9 @@ export default function EnglishHome() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <h4 className="font-bold text-white text-sm">Từ Điển Song Ngữ 12.000+</h4>
+                <h4 className="font-bold text-white text-sm">Từ điển song ngữ 12.000+</h4>
                 <span className="text-[11px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 theme-light:text-amber-800 font-semibold border border-amber-500/20">
-                  Audio IPA
+                  Có phiên âm
                 </span>
               </div>
               <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
@@ -369,9 +367,7 @@ export default function EnglishHome() {
         {/* ── THƯ VIỆN & TÀI NGUYÊN HỌC TẬP MỞ RỘNG ── */}
         <section aria-label="Tài nguyên học tập" className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-              Tài Nguyên & Công Cụ Bổ Trợ
-            </h3>
+            <h3 className="text-xs font-bold text-zinc-400">Tài nguyên & công cụ bổ trợ</h3>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -412,8 +408,8 @@ export default function EnglishHome() {
                 <BookOpen className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">Truyện Song Ngữ</h4>
-                <p className="text-[11px] text-zinc-400 truncate">Karaoke Text</p>
+                <h4 className="font-semibold text-white text-xs truncate">Truyện song ngữ</h4>
+                <p className="text-[11px] text-zinc-400 truncate">Chữ sáng theo giọng đọc</p>
               </div>
             </button>
 
@@ -462,7 +458,7 @@ export default function EnglishHome() {
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">Sổ Lỗi Sai</h4>
+                <h4 className="font-semibold text-white text-xs truncate">Sổ lỗi sai</h4>
                 <p className="text-[11px] text-zinc-400 truncate">Khắc phục lỗ hổng</p>
               </div>
             </button>
@@ -481,9 +477,9 @@ export default function EnglishHome() {
               <Video className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="font-bold text-white text-xs">Thử Thách Video Nói 1 Phút Mỗi Ngày</h4>
+              <h4 className="font-bold text-white text-xs">Thử thách video nói 1 phút mỗi ngày</h4>
               <p className="text-[11px] text-zinc-400">
-                Ghi hình phát âm, nhận phản hồi AI và tích lũy chuỗi Streak
+                Ghi hình phát âm, nhận phản hồi AI và tích lũy chuỗi ngày học
               </p>
             </div>
           </div>

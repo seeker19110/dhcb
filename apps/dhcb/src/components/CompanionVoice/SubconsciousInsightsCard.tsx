@@ -69,7 +69,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
           </div>
           <div>
             <h4 className="font-bold text-[#fff] text-sm flex items-center gap-1.5">
-              <span>Nhận Thức Ngầm & Dự Đoán Đón Đầu</span>
+              <span>Nhận thức ngầm & dự đoán đón đầu</span>
               <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-purple-500/20 text-purple-300 theme-light:text-purple-800 border border-purple-500/30">
                 V3 Autonomous
               </span>
@@ -95,7 +95,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
       <div className="bg-purple-950/60 theme-light:bg-purple-100 border border-purple-800/50 rounded-xl p-3 text-purple-200 theme-light:text-purple-800 leading-relaxed font-medium flex items-start gap-2.5">
         <Sparkles className="w-4 h-4 text-purple-400 theme-light:text-purple-800 shrink-0 mt-0.5" />
         <div>
-          <span className="text-[11px] uppercase font-bold tracking-wider text-purple-400 theme-light:text-purple-800 block mb-0.5">
+          <span className="text-[11px] font-bold text-purple-400 theme-light:text-purple-800 block mb-0.5">
             Tâm thế khuyến nghị ngày mới
           </span>
           <p className="text-xs text-purple-100 theme-light:text-purple-800">

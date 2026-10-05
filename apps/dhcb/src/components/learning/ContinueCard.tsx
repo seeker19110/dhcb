@@ -61,7 +61,7 @@ export function ContinueCard({
     <Khung className={KHUNG[frame]}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-300">{eyebrow}</p>
+          <p className="text-xs font-semibold text-zinc-300">{eyebrow}</p>
           {title && <TieuDe className="text-lg font-bold leading-snug text-white">{title}</TieuDe>}
           {meta && <div className="flex flex-wrap items-center gap-2">{meta}</div>}
         </div>

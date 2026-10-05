@@ -37,7 +37,7 @@ const EVENT_LABELS: Record<string, string> = {
 }
 
 const ACTION_LABELS: Record<string, string> = {
-  srs_review: 'Ôn SRS',
+  srs_review: 'Ôn lại',
   continue_learning: 'Học tiếp',
   discover_path: 'Khám phá lộ trình',
 }

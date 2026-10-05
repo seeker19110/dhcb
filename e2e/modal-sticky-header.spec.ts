@@ -42,7 +42,7 @@ test.describe('tiêu đề dính của Modal không che nội dung', () => {
       await mockDomainApis(page)
       await page.goto('/ghi-chu', { waitUntil: 'domcontentloaded' })
 
-      // [2026-09-20] Trang "Sự nghiệp" đã bị gỡ; dùng hộp thoại "Tạo Dự Án Mới" của trang
+      // [2026-09-20] Trang "Sự nghiệp" đã bị gỡ; dùng hộp thoại "Tạo dự án mới" của trang
       // "Ghi chú" — cùng dáng Modal center, vẫn canh đúng thứ lỗi này từng làm biến mất.
       // Nút chỉ hiện ở tab "Dự án" (mặc định trang mở ở tab "Công việc") nên phải chuyển tab
       // trước khi chờ nút.

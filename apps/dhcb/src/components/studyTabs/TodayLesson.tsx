@@ -501,7 +501,7 @@ export function TodayLesson({
         </p>
         <p className="text-sm text-zinc-400">
           {isA
-            ? 'Hãy Ôn SRS để nhớ lâu hơn, hoặc sang cấp tiếp theo.'
+            ? 'Hãy ôn lại để nhớ lâu hơn, hoặc sang cấp tiếp theo.'
             : 'Review SRS to retain more, or move to the next level.'}
         </p>
       </div>
@@ -662,7 +662,7 @@ export function TodayLesson({
           />
         </div>
         <div className="text-center py-4">
-          <p className="text-xs text-zinc-400 mb-3 uppercase tracking-wide">
+          <p className="text-xs text-zinc-400 mb-3">
             {q.direction === 'en-vi'
               ? isA
                 ? 'Nghĩa tiếng Việt của từ này là?'

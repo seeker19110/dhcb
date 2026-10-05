@@ -9,7 +9,7 @@ interface CollocationGraphExplorerProps {
 
 export default function CollocationGraphExplorer({
   collocations,
-  title = 'Mạng Lưới Cụm Từ Chuẩn Bản Xứ (Collocations Graph)',
+  title = 'Mạng lưới cụm từ chuẩn bản xứ (Collocations Graph)',
 }: CollocationGraphExplorerProps) {
   const [selectedId, setSelectedId] = useState<string>(collocations[0]?.id || '')
   const activeCol = collocations.find((c) => c.id === selectedId) || collocations[0]

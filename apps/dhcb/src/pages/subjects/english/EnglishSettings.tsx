@@ -48,7 +48,7 @@ const GOAL_LABEL: Record<WeeklyGoal, { vi: string; en: string }> = {
 }
 
 export default function EnglishSettings() {
-  usePageTitle('Cài đặt | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Cài đặt | Môn tiếng Anh · Đồng hành cùng bạn')
   const nav = useNavigate()
   const { user } = useAuth()
   const { T, setLang } = useLang()
@@ -111,7 +111,7 @@ export default function EnglishSettings() {
           {isA ? 'Cài đặt' : 'Settings'}
         </h1>
 
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-content-secondary pt-2">
+        <h2 className="text-sm font-semibold text-content-secondary pt-2">
           {isA ? 'Chung — áp dụng cho cả app' : 'General — whole app'}
         </h2>
         {/* Ngôn ngữ hiển thị & chiều học */}
@@ -245,8 +245,8 @@ export default function EnglishSettings() {
           </p>
         </section>
 
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-content-secondary pt-2">
-          {isA ? 'Môn Tiếng Anh' : 'English subject'}
+        <h2 className="text-sm font-semibold text-content-secondary pt-2">
+          {isA ? 'Môn tiếng Anh' : 'English subject'}
         </h2>
         {/* Tốc độ học: số từ mới/ngày */}
         <section className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 animate-fade-in">

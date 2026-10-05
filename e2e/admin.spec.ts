@@ -1296,7 +1296,7 @@ test.describe('Admin Dashboard — /admin-s', () => {
     await expect(page.getByText('Phễu Daily Plan theo action')).toBeVisible({
       timeout: VISIBLE_TIMEOUT,
     })
-    await expect(page.getByText('Ôn SRS')).toBeVisible()
+    await expect(page.getByText('Ôn lại')).toBeVisible()
     await expect(page.getByText('40.0%')).toBeVisible()
     await expect(page.getByText('n/a').first()).toBeVisible()
   })
@@ -1304,7 +1304,7 @@ test.describe('Admin Dashboard — /admin-s', () => {
   // AdminFeedbackPanel giờ có 2 tab con: "Ý Kiến Người Dùng" (mặc định) và "Đánh Giá Gia Sư AI 👎"
   // (feat/feedback: hệ thống góp ý người dùng, xem CI #616) — nội dung phản hồi gia sư AI chỉ
   // hiện sau khi bấm sang tab con thứ 2.
-  test('Analytics: Tiêu đề "Phản Hồi 👎 Chất Lượng Gia Sư AI"', async ({ page }) => {
+  test('Analytics: Tiêu đề "Phản Hồi 👎 chất lượng gia sư AI"', async ({ page }) => {
     await gotoAdmin(page, 'analytics')
     await page.getByRole('button', { name: /Đánh Giá Gia Sư AI/ }).click()
     await expect(page.getByText(/Phản Hồi.*Chất Lượng Gia Sư AI/)).toBeVisible({

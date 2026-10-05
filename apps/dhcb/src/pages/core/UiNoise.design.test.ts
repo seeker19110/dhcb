@@ -293,3 +293,202 @@ describe('Không lộ thuật ngữ kỹ thuật lên giao diện (audit 2026-09
     expect(offenders).toEqual([])
   })
 })
+
+// ── U8 (2026-10-05, audit 2026-09-30 M16) — thuật ngữ nội bộ, mã enum, chữ Viết Hoa Mỗi Chữ ──
+//
+// VÌ SAO CẦN: người học thấy "rubric ielts", "Mesh: ap-southeast-1", "Ôn SRS", "Elo", "Streak",
+// "Opus dịch tay 2026"… — chữ của lập trình viên, không phải của người học; và ~90 chuỗi kiểu
+// tiếng Anh "Danh Sách Công Việc" (tiếng Việt chuẩn viết hoa chữ đầu câu). Khác khối
+// FORBIDDEN_TECH_TERMS ở trên (quét CẢ comment), các luật dưới chỉ quét CHUỖI HIỂN THỊ (văn bản
+// JSX + chuỗi trong dấu nháy, bỏ dòng comment) nên comment kỹ thuật vẫn được nhắc tên thuật ngữ.
+
+/** Trích các đoạn chữ có thể hiện ra màn hình từ mã nguồn (bỏ dòng comment). */
+function visibleTextSegments(source: string): string[] {
+  const out: string[] = []
+  for (const line of source.split('\n')) {
+    const t = line.trim()
+    if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('{/*'))
+      continue
+    for (const m of line.matchAll(/(?:>|}|['"`])([^<>'"`{}]{3,120})(?=[<'"`{])/g)) {
+      const seg = m[1]
+      if (seg) out.push(seg)
+    }
+  }
+  return out
+}
+
+const HAS_VI_DIACRITIC = /[à-ỹđ]/i
+
+/** Luôn cấm (mọi ngôn ngữ): thuật ngữ nội bộ / mã enum / hạ tầng. */
+const FORBIDDEN_UI_ALWAYS: RegExp[] = [
+  /Mesh:/,
+  /ap-southeast/,
+  /Opus dịch tay/,
+  /Ôn SRS/,
+  /Karaoke Text/,
+  /Audio IPA/,
+  /\bElo\b/,
+  /\b(?:rubric|discrete|exact|step)[ _](?:ielts|ai|check|formula|analysis)\b/i,
+]
+/** Chỉ cấm trong chuỗi TIẾNG VIỆT (có dấu) — nhánh tiếng Anh của giao diện song ngữ được giữ. */
+const FORBIDDEN_UI_VIETNAMESE: RegExp[] = [/Streak/, /Simulators/, /\bPoC\b/, /Copy link/]
+
+function isForbiddenUiText(seg: string): boolean {
+  return (
+    FORBIDDEN_UI_ALWAYS.some((re) => re.test(seg)) ||
+    (HAS_VI_DIACRITIC.test(seg) && FORBIDDEN_UI_VIETNAMESE.some((re) => re.test(seg)))
+  )
+}
+
+const PRODUCT_NAMES = [
+  'Bạn Đồng Hành',
+  'Đồng Hành Cùng Bạn',
+  'De Morgan',
+  'Toulmin',
+  'Hồ Chí Minh',
+  'Tết Nguyên Đán',
+]
+
+function isCapitalizedWord(w: string): boolean {
+  return w.length > 1
+    ? /^\p{Lu}\p{Ll}+$/u.test(w)
+    : /^[ÀÁẢÃẠĂÂĐÈÉẺẼẸÊÌÍỈĨỊÒÓỎÕỌÔƠÙÚỦŨỤƯÝỲỶỸỴ]$/.test(w)
+}
+
+/**
+ * Heuristic "Viết Hoa Mỗi Chữ" kiểu tiếng Anh trong chuỗi tiếng Việt: >= 3 từ liền nhau đều viết
+ * hoa chữ cái đầu, trong đó >= 2 từ có dấu tiếng Việt (tránh bắt chuỗi tiếng Anh/tên riêng không
+ * dấu). Dấu câu ngắt chuỗi ("Toán, Tiếng Anh, Phỏng vấn" không bị bắt); tên sản phẩm/tên riêng
+ * được gỡ trước khi xét. Có NGƯỠNG: chuỗi 2 từ không bị bắt — chấp nhận bỏ sót để không báo
+ * giả với tên riêng ghép hai từ.
+ */
+function findTitleCaseRun(text: string): string | null {
+  let s = text
+  for (const name of PRODUCT_NAMES) s = s.split(name).join(' ')
+  for (const chunk of s.split(/[^\p{L}\s]+/u)) {
+    let run: string[] = []
+    for (const w of chunk.split(/\s+/).filter(Boolean)) {
+      if (isCapitalizedWord(w)) {
+        run.push(w)
+        if (run.length >= 3 && run.filter((x) => HAS_VI_DIACRITIC.test(x)).length >= 2) {
+          return run.join(' ')
+        }
+      } else {
+        run = []
+      }
+    }
+  }
+  return null
+}
+
+describe('U8 — chuỗi hiển thị không lộ thuật ngữ nội bộ / mã enum (audit M16)', () => {
+  const files = listSourceFiles(SRC_DIR)
+
+  it('không chuỗi hiển thị nào chứa thuật ngữ cấm', () => {
+    const offenders: string[] = []
+    for (const f of files) {
+      for (const seg of visibleTextSegments(readFileSync(f, 'utf8'))) {
+        if (isForbiddenUiText(seg)) offenders.push(`${toRelativePosix(f)}: "${seg.trim()}"`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
+  it('ĐỐI CHỨNG ÂM — bộ lọc bắt đúng chuỗi xấu, bỏ qua comment và nhánh tiếng Anh', () => {
+    const bad = [
+      `<span>Chế độ chấm: rubric ielts</span>`,
+      `<span>Mesh: ap-southeast-1</span>`,
+      `const s = 'Opus dịch tay 2026 từ bản public domain'`,
+      `<p>Karaoke Text</p>`,
+      `<p>{x} Elo</p>`,
+      `<b>Ôn SRS</b>`,
+      `<b>Streak hiện tại: 3 ngày</b>`,
+    ]
+    for (const src of bad) {
+      expect(visibleTextSegments(src).some(isForbiddenUiText), src).toBe(true)
+    }
+    // Comment kỹ thuật không bị quét; nhánh tiếng Anh của chuỗi song ngữ được giữ.
+    expect(visibleTextSegments(`// tab "Ôn SRS" — xem srs.ts`)).toEqual([])
+    expect(isForbiddenUiText('Copy link')).toBe(false)
+    expect(isForbiddenUiText('Chép liên kết')).toBe(false)
+  })
+})
+
+describe('U8 — bản dịch truyện ghi nguồn "Biên dịch: Đồng Hành", không lộ tên mô hình', () => {
+  const dirs = [join(SRC_DIR, 'data/stories/raw'), join(SRC_DIR, '../public/data/stories')]
+  it.each(dirs)('không file truyện nào trong %s còn chữ "Opus"', (dir) => {
+    const jsonFiles = readdirSync(dir).filter((f) => f.endsWith('.json'))
+    expect(jsonFiles.length).toBeGreaterThan(90) // canh quét rỗng
+    const offenders = jsonFiles.filter((f) => /Opus/.test(readFileSync(join(dir, f), 'utf8')))
+    expect(offenders).toEqual([])
+  })
+})
+
+describe('U8 — không còn "Viết Hoa Mỗi Chữ" kiểu tiếng Anh trong chuỗi tiếng Việt', () => {
+  // Chỉ quét lớp giao diện (components/pages/studios) — `data/` là nội dung học (tên riêng,
+  // câu mẫu), `prompts/` có golden snapshot riêng.
+  const uiFiles = listSourceFiles(SRC_DIR).filter((f) => {
+    const rel = toRelativePosix(f)
+    return rel.startsWith('components/') || rel.startsWith('pages/') || rel === 'lib/studios.ts'
+  })
+
+  it('không chuỗi hiển thị nào có >= 3 từ viết hoa liền nhau', () => {
+    expect(uiFiles.length).toBeGreaterThan(100)
+    const offenders: string[] = []
+    for (const f of uiFiles) {
+      for (const seg of visibleTextSegments(readFileSync(f, 'utf8'))) {
+        const run = findTitleCaseRun(seg)
+        if (run) offenders.push(`${toRelativePosix(f)}: "${run}"`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
+  it('ĐỐI CHỨNG ÂM — luật bắt Viết Hoa Mỗi Chữ, bỏ qua câu chuẩn và tên riêng', () => {
+    expect(findTitleCaseRun('Danh Sách Công Việc')).toBe('Danh Sách Công')
+    expect(findTitleCaseRun('Gia Sư Tiếng Anh Song Ngữ')).not.toBeNull()
+    expect(findTitleCaseRun('Ý Kiến Đóng Góp')).not.toBeNull()
+    expect(findTitleCaseRun('Danh sách công việc')).toBeNull()
+    expect(findTitleCaseRun('Môn tiếng Anh')).toBeNull()
+    expect(findTitleCaseRun('Bạn Đồng Hành')).toBeNull() // tên sản phẩm
+    expect(findTitleCaseRun('Đồng Hành Cùng Bạn')).toBeNull() // tên sản phẩm
+    expect(findTitleCaseRun('Toán, Tiếng Anh, Phỏng vấn')).toBeNull() // dấu phẩy ngắt chuỗi
+    expect(findTitleCaseRun('Writing Practice And Grading')).toBeNull() // tiếng Anh, không dấu
+    expect(findTitleCaseRun('Bảng Xếp')).toBeNull() // dưới ngưỡng 3 từ
+  })
+})
+
+// Nhãn CHỮ HOA giãn cách (`uppercase tracking-*`): chữ Việt có dấu in hoa khó đọc, skill ui-ux
+// §9.C.9 cấm thêm. Sau U8 chỉ còn huy hiệu nhỏ, ô mã nhập và nhãn kỹ thuật — liệt kê tường
+// minh, khoá hai chiều như D2/D3 (thêm mới → đỏ; gỡ bớt thì hạ số ở đây).
+const UPPERCASE_TRACKING_PATTERN = /uppercase[^"'`]*tracking-|tracking-[^"'`]*uppercase/g
+const ALLOWED_UPPERCASE_TRACKING: Record<string, number> = {
+  'components/ActionCanvas/InteractiveCanvasViewport.tsx': 1, // huy hiệu loại nút (mã ngắn)
+  'components/Companion3D/CyberTutorAvatar3D.tsx': 1, // huy hiệu trạng thái avatar
+  'components/DebateArena/DebateArenaCard.tsx': 1, // huy hiệu nhỏ
+  'components/LifeSynthesis/LifeSynthesisDashboard.tsx': 1, // huy hiệu nhỏ
+  'components/MetacognitiveReflection/MetacognitiveJournalCard.tsx': 1, // huy hiệu nhỏ
+  'components/PvPArena/PvPArenaCard.tsx': 1, // huy hiệu nhỏ
+  'components/StemScratchpad/StemScratchpadCard.tsx': 1, // huy hiệu nhỏ
+  'components/location/TripSetup.tsx': 1, // ô nhập mã chuyến đi (mã luôn viết hoa)
+  'pages/learning/SubjectDetail.tsx': 1, // huy hiệu phân loại môn
+  'pages/learning/Subjects.tsx': 1, // huy hiệu nhỏ
+}
+
+describe('U8 — nhãn chữ HOA giãn cách chỉ còn ở huy hiệu nhỏ', () => {
+  it('mỗi file khớp ĐÚNG số `uppercase tracking-*` trong allowlist', () => {
+    const actual: Record<string, number> = {}
+    for (const f of listSourceFiles(SRC_DIR)) {
+      const matches = readFileSync(f, 'utf8').match(UPPERCASE_TRACKING_PATTERN)
+      if (matches) actual[toRelativePosix(f)] = matches.length
+    }
+    expect(actual).toEqual(ALLOWED_UPPERCASE_TRACKING)
+  })
+
+  it('ĐỐI CHỨNG ÂM — mẫu bắt nhãn HOA giãn cách, bỏ qua lớp thường', () => {
+    const hit = (s: string) => s.match(UPPERCASE_TRACKING_PATTERN)
+    expect(hit('<p className="text-xs uppercase tracking-wide">')).toHaveLength(1)
+    expect(hit('<p className="tracking-wider font-bold uppercase">')).toHaveLength(1)
+    expect(hit('<p className="text-xs font-semibold">')).toBeNull()
+  })
+})

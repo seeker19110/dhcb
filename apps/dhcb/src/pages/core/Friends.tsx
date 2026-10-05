@@ -96,7 +96,7 @@ export default function Friends() {
               className="inline-flex items-center gap-2 rounded-full bg-accent-500 px-4 py-2.5 text-sm font-semibold text-[#fff] min-h-[44px]"
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied ? 'Đã copy link' : 'Copy link kết bạn'}
+              {copied ? 'Đã chép liên kết' : 'Chép liên kết kết bạn'}
             </button>
           </section>
         )}

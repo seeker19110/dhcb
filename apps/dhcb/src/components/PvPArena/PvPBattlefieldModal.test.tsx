@@ -141,7 +141,7 @@ describe('PvPBattlefieldModal', () => {
     })
 
     const text = document.body.textContent ?? ''
-    expect(text).toContain('−14 Elo')
+    expect(text).toContain('−14 điểm')
     expect(text).not.toContain('+-')
     expect(text).not.toContain('Exp')
     expect(text).not.toContain('Nhận Thưởng')

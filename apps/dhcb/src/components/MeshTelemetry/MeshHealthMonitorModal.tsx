@@ -71,7 +71,7 @@ export default function MeshHealthMonitorModal({
 
         <div className="grid grid-cols-2 gap-2.5">
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Độ Trễ Mạng (P50/P95)</span>
+            <span className="text-[11px] text-zinc-400 block mb-1">Độ trễ mạng (P50/P95)</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-emerald-400 theme-light:text-emerald-800 font-mono">
                 {telemetry.currentLatencyMs}
@@ -81,7 +81,7 @@ export default function MeshHealthMonitorModal({
           </div>
 
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Số Node Relay Hoạt Động</span>
+            <span className="text-[11px] text-zinc-400 block mb-1">Số node relay hoạt động</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-cyan-400 theme-light:text-cyan-800 font-mono">
                 {meshStatus.activeNodes}
@@ -91,7 +91,7 @@ export default function MeshHealthMonitorModal({
           </div>
 
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Tổng Tokens Phiên</span>
+            <span className="text-[11px] text-zinc-400 block mb-1">Tổng tokens phiên</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-zinc-100 font-mono">
                 {telemetry.totalTokens}
@@ -101,7 +101,7 @@ export default function MeshHealthMonitorModal({
           </div>
 
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Chi Phí Tích Lũy</span>
+            <span className="text-[11px] text-zinc-400 block mb-1">Chi phí tích lũy</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-emerald-400 theme-light:text-emerald-800 font-mono">
                 {telemetry.totalTokens} tokens

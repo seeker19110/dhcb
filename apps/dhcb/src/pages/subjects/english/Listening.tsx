@@ -33,7 +33,7 @@ type Tab = 'phrases' | 'dialogues'
 const TABS: Tab[] = ['phrases', 'dialogues']
 
 export default function Listening() {
-  usePageTitle('Luyện nghe | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Luyện nghe | Môn tiếng Anh · Đồng hành cùng bạn')
   const { user } = useAuth()
   const { T } = useLang()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -378,9 +378,7 @@ function DialogueGroups({
           // `scroll-mt-20` chừa đúng chiều cao header sticky, nếu không cấp được nhảy tới sẽ
           // nằm khuất sau header.
           <div key={level} id={`cap-${level}`} className="scroll-mt-20">
-            <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-              {level}
-            </p>
+            <p className="text-[11px] font-semibold text-zinc-400 mb-2">{level}</p>
             {/* [2026-09-05, đợt 3] Thêm nấc `lg:grid-cols-3`. Lưới cũ dừng ở `sm:` nên ở 1440px
               vẫn chỉ hai cột: đo được cả trang cao 37.266px — hơn bốn mươi màn hình cuộn. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">

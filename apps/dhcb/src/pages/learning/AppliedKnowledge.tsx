@@ -28,7 +28,7 @@ export default function AppliedKnowledge() {
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
-      <Layout onBack={() => nav('/')} title="Ứng Dụng Thực Tế & Mô Phỏng Đời Sống" />
+      <Layout onBack={() => nav('/')} title="Ứng dụng thực tế & mô phỏng đời sống" />
 
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Lưới ứng dụng thực tế → width standard. */}
       <PageShell

@@ -102,7 +102,7 @@ export default function NeuralMicroCurriculumCard() {
           <button
             type="button"
             disabled={generating}
-            onClick={() => handleGenerate('Đàm Phán Hợp Đồng & Deal Giá')}
+            onClick={() => handleGenerate('Đàm phán hợp đồng & deal giá')}
             className="text-[11px] font-medium text-sky-400 theme-light:text-sky-900 hover:text-sky-300 bg-sky-950/40 hover:bg-sky-900/40 px-2.5 py-1 rounded-lg border border-sky-500/30 transition flex items-center gap-1"
           >
             {generating ? (

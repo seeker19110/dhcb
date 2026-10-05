@@ -148,7 +148,7 @@ export const AmbientScreenCopilot: React.FC = () => {
                   className="tap-44 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-[#fff] font-semibold text-xs transition shadow-md"
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span>Bật Chia Sẻ Màn Hình</span>
+                  <span>Bật chia sẻ màn hình</span>
                 </button>
               ) : (
                 <button
@@ -156,7 +156,7 @@ export const AmbientScreenCopilot: React.FC = () => {
                   className="tap-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 theme-light:text-rose-900 border border-rose-500/40 font-semibold text-xs transition"
                 >
                   <EyeOff className="w-3.5 h-3.5" />
-                  <span>Dừng Quan Sát</span>
+                  <span>Dừng quan sát</span>
                 </button>
               )}
 
@@ -174,7 +174,7 @@ export const AmbientScreenCopilot: React.FC = () => {
                   ) : (
                     <>
                       <Sparkles className="w-3.5 h-3.5 text-sky-400 theme-light:text-sky-900" />
-                      <span>Quét Ngữ Cảnh Ngay</span>
+                      <span>Quét ngữ cảnh ngay</span>
                     </>
                   )}
                 </button>
@@ -218,7 +218,7 @@ export const AmbientScreenCopilot: React.FC = () => {
             <div className="space-y-3 p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs">
               <div className="flex items-start justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
                 <div>
-                  <div className="text-[11px] uppercase font-bold text-sky-400 theme-light:text-sky-900 tracking-wider">
+                  <div className="text-[11px] font-bold text-sky-400 theme-light:text-sky-900">
                     Ứng dụng: <span className="text-zinc-200">{insight.detectedApp}</span> · Lĩnh
                     vực: <span className="text-zinc-200 capitalize">{insight.relevantDomain}</span>
                   </div>

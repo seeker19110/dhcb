@@ -88,7 +88,7 @@ export default function AdminReservedNamesPanel() {
           <div className="flex items-center gap-2">
             <Ban className="w-5 h-5 text-rose-400 theme-light:text-rose-900" />
             <div>
-              <h3 className="font-bold text-white text-base">Chặn Tên Giả Danh Ban Quản Trị</h3>
+              <h3 className="font-bold text-white text-base">Chặn tên giả danh ban quản trị</h3>
               <p className="text-xs text-zinc-400">
                 Các cụm từ này bị cấm khi người dùng đặt nickname (chống giả danh Admin/CSKH/Hệ
                 thống).

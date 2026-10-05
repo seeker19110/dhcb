@@ -112,9 +112,7 @@ export default function StudioDialogue({
       {/* Avatar & Multimodal Embodiment Section */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-            Hình đại diện
-          </span>
+          <span className="text-xs font-semibold text-zinc-400">Hình đại diện</span>
           <AvatarEmbodimentSelector currentMode={embodimentMode} onModeChange={setEmbodimentMode} />
         </div>
 
@@ -210,7 +208,7 @@ export default function StudioDialogue({
           <div className="w-full max-w-lg bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 shadow-xl space-y-3">
             <div className="flex items-center justify-between text-xs pb-2 border-b border-zinc-800">
               <span className="text-zinc-400 font-medium">Trạng thái Companion:</span>
-              <span className="font-semibold uppercase tracking-wider text-accent-400 theme-light:text-accent-800 bg-accent-500/10 px-2 py-0.5 rounded-full">
+              <span className="font-semibold text-accent-400 theme-light:text-accent-800 bg-accent-500/10 px-2 py-0.5 rounded-full">
                 {voice.state === 'recording'
                   ? 'Đang nghe bạn...'
                   : voice.state === 'transcribing'

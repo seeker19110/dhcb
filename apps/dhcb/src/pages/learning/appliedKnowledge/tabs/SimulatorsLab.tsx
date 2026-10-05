@@ -229,7 +229,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
               Di truyền
             </span>
           </div>
-          <div className="text-xs font-bold mt-2">10. Nhóm Máu Men-đen</div>
+          <div className="text-xs font-bold mt-2">10. Nhóm máu men-đen</div>
         </button>
       </div>
 
