@@ -4,7 +4,7 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Goal ID           | GOAL-2026-010                                                                                                                                                                         |
 | Owner             | Chủ dự án DHCB                                                                                                                                                                        |
-| Trạng thái        | VERIFYING                                                                                                                                                                             |
+| Trạng thái        | WAITING                                                                                                                                                                               |
 | Bắt đầu           | 2026-10-05                                                                                                                                                                            |
 | Target review     | Sau mỗi lát nội dung và trước khi mở catalog                                                                                                                                          |
 | Quyền được cấp    | Nghiên cứu, lập kế hoạch, viết đặc tả và giao các phần nghiên cứu độc lập; thay đổi source sau khi đặc tả được duyệt và merge theo quy trình repo                                     |
@@ -78,7 +78,7 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - PR tài liệu: [#1236](https://github.com/seeker19110/dhcb/pull/1236). Chủ dự án đã duyệt phương án, cho phép PR/merge tài liệu khi kiểm tra đạt ngày 2026-10-05.
 - Cổng đặc tả và pilot: chương trình/hoạt họa #1236, replay #1238 và Git state/ignore #1240 đã merge. C1 #1237 và pilot gradient/replay #1241 đã merge sau required quality/e2e/metadata đạt, gồm sáu shard E2E. Pilot đã có trên main, không phải khóa mới hoặc mở lại chấm Python.
 - Blocker phát hành khóa: bộ chấm Python/JS/TS/SQL còn đóng. Chủ dự án xác nhận chưa có staging và yêu cầu chuẩn bị gói trước. ADR/spec gói chưa kích hoạt ở Draft PR [#1239](https://github.com/seeker19110/dhcb/pull/1239), còn chờ lựa chọn kiến trúc Docker rootless hoặc microVM; chưa chạy probe, triển khai worker hay mở chấm.
-- Next best slice: PR A mô phỏng Git ignore và chấm trạng thái đang triển khai/review theo spec #1240. Sau A merge, PR B mở rộng bài `p3-u11-l1` và hoạt họa bản sao workdir/staging/HEAD. Map K1 chưa thay nghiệm thu nội dung 20 khóa.
+- Next best slice: PR A mô phỏng Git ignore và chấm trạng thái đã qua review độc lập và full gate tại máy, chờ CI/merge theo spec #1240. Sau A merge, PR B mở rộng bài `p3-u11-l1` và hoạt họa bản sao workdir/staging/HEAD. Map K1 chưa thay nghiệm thu nội dung 20 khóa.
 - Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; chủ dự án đã cấp quyền PR/merge các lát mã theo đặc tả được duyệt, bắt đầu C1, với điều kiện required quality/e2e đạt trước merge. Quyền deploy production chưa được cấp.
 
 ## 6. Iteration log
@@ -150,6 +150,18 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Worker: chủ dự án chọn chuẩn bị gói trước vì chưa có staging; ADR/spec/review luồng ở Draft #1239. Bản tài liệu gói đã đóng snapshot, chưa có runner được kích hoạt, probe staging hoặc quyền kích hoạt. Quyết định kiến trúc đang chờ.
 - Goal gap trước/sau: từ khả năng render hoạt họa tới một pilot gradient đã chạy/kiểm trên main; **20 khóa chưa hoàn tất, 0 phase được nghiệm thu toàn phần**. Các outcome K1 chưa được nâng tự động lên bằng chứng lab.
 - Next: hoàn tất review/gates/PR A; sau merge cập nhật checkpoint rồi thực thi PR B từ storyboard. Worker chỉ tiến source sau quyết định kiến trúc và spec tương ứng Approved/merge.
+
+### Iteration 6 — 2026-10-05
+
+- State: WAITING. Lát A: engine `.gitignore` và Git state assertions; base main `a9f3729` (checkpoint #1242).
+- Spec Approved/merge #1240; root đọc diff, reviewer độc lập bắt inherited-property lookup và kiểm lại reproducer sau sửa. Subagent viết engine/test và E2E; root tích hợp, kiểm gates.
+- Bằng chứng local: 794 file test đạt, 1 bỏ qua; 18.536 test đạt, 2 bỏ qua trong 287,94 giây với hai workers. Build/typecheck/lint/format đạt. Rebase sau full gate chỉ thêm checkpoint tài liệu #1242, không đổi source; browser tích hợp cuối chạy lại trên base mới.
+- Negative controls: transcript echo không đạt state; bỏ history assertion trên cùng state reset/rebase thì đạt, giữ assertion thì rớt. Tệp thứ 101, commit thứ 101, append vượt 4.000 ký tự hoặc state vượt 128 KiB trả lỗi và rollback.
+- Browser thật dùng CodeMirror, không mock engine: ignored file vẫn đọc được, commit 2 file, pattern lỗi hiện rõ, sample legacy 4/4 ca đạt. Lượt browser tích hợp cuối: 3/3 đạt trong 9,2 giây, gồm regression Git cũ. Font từ node_modules symlink bị Vite chặn; lượt này xác nhận hành vi, chưa là nghiệm thu hình thức chữ. Required CI còn chờ ở PR.
+- Gap: chưa đổi nội dung/rubric bài công bố và chưa thêm hoạt họa Git. Không phase nào nghiệm thu toàn bộ; 20 khóa vẫn chưa hoàn tất.
+- Gói grader #1239 còn Draft. Chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước; snapshot tài liệu đã đóng gói ở outputs, chưa có runtime hoặc activation. Quyết định kiến trúc còn chờ.
+- Giới hạn phiên: usage 91%, áp dụng CLAUDE.md mục 3: hoàn tất lát đang làm, mở PR rồi dừng ở checkpoint. Không tự bắt đầu PR B trong phiên này.
+- Next: sau A đạt required quality/e2e và merge, biên soạn/hoạt họa `p3-u11-l1` theo storyboard đã review. Quyền PR/merge có điều kiện vẫn còn; chưa có quyền deploy production.
 
 ## 7. Final audit
 
