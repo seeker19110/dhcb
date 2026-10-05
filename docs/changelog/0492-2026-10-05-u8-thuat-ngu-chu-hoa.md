@@ -37,7 +37,7 @@ Cập nhật theo: 2 spec E2E (`cefr-tab-touch-target`, `admin`) và các test c
 
 ### 4. Chữ hoa
 
-- **Viết Hoa Mỗi Chữ:** 91 chuỗi ở `components/`, `pages/`, `lib/studios.ts` (heuristic: từ 3 từ viết
+- **Viết Hoa Mỗi Chữ:** khoảng 135 chuỗi (91 chuỗi một dòng + khoảng 44 chuỗi JSX nhiều dòng) ở `components/`, `pages/`, `lib/studios.ts` (heuristic: từ 3 từ viết
   hoa liền nhau, có từ 2 từ có dấu) chuyển sang viết hoa chữ đầu câu, giữ tên riêng (Bạn Đồng Hành,
   Kanban, Toulmin, Tết Nguyên Đán…). "Môn Tiếng Anh" thành "Môn tiếng Anh". Spec E2E có chuỗi cũ
   (`a11y-modals`, `modal-sticky-header`, `studio-modal-overlay`, `companion-catalog-states`,
@@ -77,6 +77,22 @@ Cập nhật theo: 2 spec E2E (`cefr-tab-touch-target`, `admin`) và các test c
 - Nội dung `MeshHealthMonitorModal` (admin) còn thuật ngữ hạ tầng ("node relay", "tokens"); modal này
   không mở được từ giao diện hiện tại (`setModalOpen(true)` không được gọi), nên chưa xử lý.
 
+## Gộp `main`
+
+- Lần gộp đầu xung đột ở `Landing.tsx` và `LandingEn.tsx` (U3 thêm màu `theme-light`). Giữ màu
+  của `main`, bỏ `uppercase tracking`.
+- Lần gộp sau xung đột ở `Subjects.tsx` (#1232 đổi `h3` thành `h2`). Giữ thẻ `h2` của `main`, lấy
+  chữ hoa đầu câu của đợt này.
+
 ## Bằng chứng
 
-Xem báo cáo giao nộp đợt (số test, E2E cổng 5185, ảnh 8b).
+- Chạy trên kết quả đã gộp `main`, sau `rm -rf packages/*/dist dist dist-server`:
+  - typecheck ✅ · lint 0 cảnh báo ✅ · build ✅ · `audit:prose -- --ci` ✅;
+  - `test:coverage`: 789 file, 18468 test ✅.
+- E2E: 8 spec có sửa chuỗi, cùng `landmark-title`, `english-subject-home`, `a11y-modals`: 122 ca xanh.
+- Golden snapshot prompt: không chạy, vì đợt này không đụng `src/prompts/*`.
+- Tầng 8b, theme Blue sky, 1440px và 390px, trước và sau:
+  - **Góc học tập:** chữ enum đổi thành câu tiếng Việt; huy hiệu "Ngôn ngữ"/"Khoa học"; tiêu đề viết
+    hoa chữ đầu câu. Hàng "Chế độ chấm" từng bẻ dòng xấu, đã sửa bằng `items-start` + `shrink-0` +
+    `min-w-0`. Ở 390px chữ không tràn.
+  - **Bạn Đồng Hành:** "Mesh: ap-southeast-1" thành "Kết nối ổn định"; bố cục không đổi.
