@@ -1,6 +1,6 @@
 # 0493 — Thứ bậc tiêu đề ở Góc học tập và trang môn STEM (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** (điền khi tạo) · **Loại:** `fix(a11y)`.
+- **Ngày:** 2026-10-05 · **PR:** #1232 · **Loại:** `fix(a11y)`.
 - **Nguồn:** chuyển từ PR #1230 của chủ dự án. Nhánh gốc dựng trên lịch sử cũ (trước #871), không
   có gốc chung với `main` nên không gộp được. Dựng lại đúng thay đổi trên `main` và làm trọn phần
   còn sót.
