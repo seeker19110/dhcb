@@ -135,6 +135,7 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Browser: bộ hoạt họa liên quan 11/11 đạt; sau bổ sung running-zoom, bộ pilot 6/6 chạy lại đạt. Quét AAA/độ lớn chữ trên trang thật 390 px sáng/tối đều đạt. Người tích hợp đã xem 20 ảnh SVG trang thật theo ma trận năm mốc × hai viewport × hai theme.
 - Gate: build đầu phát hiện mock test thiếu kiểu `this`; đã sửa, hub typecheck và renderer 28/28 đạt. Một lượt kiểm toàn kho đồng thời bị gián đoạn khi môi trường khởi động lại; trước gián đoạn có timeout ActivityCalendarCard. Chưa coi lượt này đạt hoặc kết luận lỗi ngoài scope; lượt mới chạy các gate tuần tự, chẩn đoán riêng ca đó rồi full unit với hai workers, giữ nguyên assertions/timeout.
 - Worker: staging chưa có, PR tài liệu #1239 Draft đã chuẩn bị, không mở runner. Quyết định kiến trúc còn chờ trả lời; quyền PR/merge tài liệu và source sau cổng vẫn được giữ.
+- Gate tiếp: lượt unit sau restart phát hiện chỉ mục sinh tự động còn title cũ của l3; đã chạy generator chuẩn, diff một title. Dừng lượt unit đó, kiểm lại `lessonsLazy` và chạy full gates trên bản đồng bộ; chưa coi lượt dừng đạt.
 - Goal gap: C1 hoàn tất, pilot chưa merge; 20 khóa chưa hoàn tất và không phase nào được đánh dấu DONE.
 - Next: ghi kết quả gate cuối, mở pilot PR và chỉ merge khi required quality/e2e đạt; sau đó reconcile main và thực thi lát Git đã được review/merge riêng.
 
