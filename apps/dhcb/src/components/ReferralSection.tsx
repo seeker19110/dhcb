@@ -65,14 +65,14 @@ export default function ReferralSection({ isA }: { isA: boolean }) {
           </p>
 
           <div className="flex items-center gap-2 mb-3">
-            <code className="flex-1 min-w-0 truncate bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-accent-400">
+            <code className="flex-1 min-w-0 truncate bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-accent-400 theme-light:text-accent-900">
               {stats.code}
             </code>
             <button
               type="button"
               onClick={copyLink}
               aria-label={isA ? 'Sao chép link mời' : 'Copy invite link'}
-              className="tap-44 shrink-0 flex items-center gap-1.5 rounded-xl bg-accent-500/15 border border-accent-500/30 px-3 py-2.5 text-xs font-medium text-accent-400 hover:bg-accent-500/25 transition"
+              className="tap-44 shrink-0 flex items-center gap-1.5 rounded-xl bg-accent-500/15 border border-accent-500/30 px-3 py-2.5 text-xs font-medium text-accent-400 theme-light:text-accent-800 hover:bg-accent-500/25 transition"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copied ? (isA ? 'Đã chép' : 'Copied') : isA ? 'Chép link' : 'Copy link'}

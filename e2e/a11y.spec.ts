@@ -1,10 +1,18 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Locator, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { mockLogin, USER_ID, type ThemeName } from './helpers/auth'
 import { openLiveLocationTrip } from './helpers/location'
 import { muteTts } from './helpers/tts'
 import { freezeAnimations, waitForStableDom } from './helpers/axe'
 import { moCauTuThuLai } from './helpers/stemRetry'
+import {
+  mockFriendsState,
+  mockPlanPrices,
+  mockQuestsStatus,
+  mockReferralStats,
+  mockStemSubjectDetail,
+  STEM_DETAIL_SUBJECTS,
+} from './helpers/realDataMocks'
 
 // Quét a11y bằng axe-core (WCAG 2.0/2.1/2.2 A & AA), gồm quyền phóng to viewport.
 //
@@ -148,6 +156,101 @@ for (const route of AUTHED_ROUTES) {
       await mockLogin(page, 'vi', theme)
       await page.goto(route, { waitUntil: 'domcontentloaded' })
       // Chờ theo TRẠNG THÁI, không theo thời gian — xem lý do đầy đủ ở `waitForStableDom`.
+      await waitForStableDom(page)
+      const { all } = await scan(page)
+      expect(all).toEqual([])
+    })
+  }
+}
+
+// ── [U3] TRANG CHỈ RỚT AA KHI CÓ DỮ LIỆU THẬT (audit UI/UX 2026-09-30, mục C4 + 11) ─────
+// Audit đo 14 trang trượt axe AA khi có dữ liệu thật mà KHÔNG trang nào nằm trong cổng: hoặc
+// trang vắng mặt khỏi danh sách quét, hoặc API riêng của trang không được mock nên phần tử rớt
+// tương phản không bao giờ được vẽ ra (nút "Copy link kết bạn", mã mời, nút mua "Nâng cấp VIP"
+// đang `disabled` vì chưa có giá…). Mỗi ca dưới đây: mock ĐÚNG HÌNH DẠNG dữ liệu thật
+// (e2e/helpers/realDataMocks.ts), CHỜ đúng phần tử từng rớt hiện ra rồi mới quét — để cổng
+// không thể xanh giả vì quét trúng màn tải/màn lỗi. Hai trang hub (U2) và /reset-password
+// (form xác thực, U2) do đợt U2 phủ.
+type RealDataCase = {
+  route: string
+  /** Mock API riêng của trang (ngoài `mockLogin`). */
+  mock?: (page: Page) => Promise<void>
+  /** Phần tử TỪNG RỚT — phải hiện ra trước khi quét. */
+  ready: (page: Page) => Locator
+  /** Mặc định viewport desktop của project; vùng cuộn CodeMirror chỉ tràn ở màn hẹp. */
+  mobile?: boolean
+}
+
+const REAL_DATA_CASES: RealDataCase[] = [
+  {
+    route: '/welcome',
+    ready: (page) => page.getByRole('main').getByText('Điểm khác biệt:'),
+  },
+  {
+    route: '/learn-vietnamese',
+    ready: (page) => page.getByRole('main').getByText("What's different:"),
+  },
+  {
+    // Hồ sơ của tài khoản FREE (mockLogin mặc định plan='free'): khối "Nâng cấp VIP" rút gọn
+    // + mã mời trong <code>.
+    route: '/trang-ca-nhan',
+    mock: mockReferralStats,
+    ready: (page) => page.getByRole('link', { name: /Xem bảng giá đầy đủ/ }),
+  },
+  {
+    route: '/nhiem-vu',
+    mock: async (page) => {
+      await mockReferralStats(page)
+      await mockQuestsStatus(page)
+    },
+    ready: (page) => page.getByText('DHCB7Q2K'),
+  },
+  {
+    route: '/ban-be',
+    mock: mockFriendsState,
+    ready: (page) => page.getByRole('button', { name: /Copy link kết bạn/ }),
+  },
+  ...STEM_DETAIL_SUBJECTS.map((subjectId): RealDataCase => ({
+    route: `/goc-hoc-tap/${subjectId}`,
+    mock: (page) => mockStemSubjectDetail(page, subjectId),
+    ready: (page) => page.getByRole('button', { name: /AI Giải Bài Tập/ }),
+  })),
+  {
+    // Lộ trình mục tiêu (dữ liệu tĩnh trong gói subject-programming): 32 nút "Mở bài kiểm" +
+    // ô chọn giai đoạn của "Hồ sơ bằng chứng".
+    route: '/goc-hoc-tap/programming/lo-trinh/principal-ai',
+    ready: (page) => page.getByRole('button', { name: /Mở bài kiểm/ }),
+  },
+  {
+    route: '/nang-cap',
+    mock: mockPlanPrices,
+    ready: (page) => page.getByRole('button', { name: /Nâng cấp VIP/ }),
+  },
+  {
+    route: '/lap-trinh/chay-thu',
+    mobile: true,
+    ready: (page) => page.getByRole('textbox').first(),
+  },
+  {
+    route: '/lap-trinh/du-an',
+    mobile: true,
+    ready: (page) => page.getByRole('textbox').first(),
+  },
+]
+
+for (const c of REAL_DATA_CASES) {
+  for (const theme of THEMES) {
+    const vw = c.mobile ? ' 390px' : ''
+    test(`a11y: ${c.route}${vw} có dữ liệu thật theme=${theme} — 0 vi phạm A/AA`, async ({
+      page,
+    }) => {
+      if (c.mobile) await page.setViewportSize({ width: 390, height: 844 })
+      await mockLogin(page, 'vi', theme)
+      if (c.mock) await c.mock(page)
+      await page.goto(c.route, { waitUntil: 'domcontentloaded' })
+      const ready = c.ready(page).first()
+      await expect(ready).toBeVisible()
+      await expect(ready).toBeEnabled()
       await waitForStableDom(page)
       const { all } = await scan(page)
       expect(all).toEqual([])

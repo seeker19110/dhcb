@@ -71,6 +71,14 @@ export default function CodeEditor({ value, onChange, ariaLabel }: Props) {
           python(),
           editorTheme,
           syntaxHighlighting(editorHighlight),
+          // [U3, audit UI/UX 2026-09-30 C4] CodeMirror đặt `tabindex="-1"` cho vùng cuộn
+          // `.cm-scroller`; ở màn hẹp code dài tràn ngang nên vùng đó cuộn được, và axe
+          // (`scrollable-region-focusable`, WCAG 2.1.1) đòi bên trong có phần tử nhận focus
+          // bằng bàn phím. Ô soạn (`contenteditable`) vốn nhận Tab được, nhưng chỉ được coi là
+          // focusable khi có `tabindex` tường minh — đặt `0` không đổi thứ tự Tab (vẫn đúng một
+          // điểm dừng), chỉ nói rõ điều trình duyệt đã làm. Focus vào đó rồi dùng phím mũi
+          // tên/Home/End là vùng cuộn đi theo con trỏ.
+          EditorView.contentAttributes.of({ tabindex: '0' }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current(update.state.doc.toString())
           }),

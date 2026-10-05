@@ -5,6 +5,7 @@ import { track } from '../../lib/analytics'
 import ThemeToggle from '../../components/ThemeToggle'
 import { setDirection } from '../../lib/storage'
 import { MAIN_CONTENT_ID } from '@core/PageShell'
+import { useDocumentLangOverride } from '../../lib/documentLang'
 
 // Landing page TIẾNG ANH cho chiều B (người nước ngoài học tiếng Việt) — ngách gần như trống
 // (xem docs/research/chien-luoc-marketing-2026-07-25.md §2.1). Song song với src/pages/Landing.tsx
@@ -36,6 +37,9 @@ const MODES = [
 export default function LandingEn() {
   const nav = useNavigate()
   const [searchParams] = useSearchParams()
+
+  // WCAG 3.1.1 (audit C5): cả trang là tiếng Anh, kể cả khi giao diện người dùng đang là vi.
+  useDocumentLangOverride('en')
 
   // SEO: set title + meta description ngay khi vào trang — cùng cách Landing.tsx (chiều A)
   // đang làm, đọc chú thích ở đó để biết vì sao document API thay vì react-helmet.
@@ -111,7 +115,9 @@ export default function LandingEn() {
             <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 px-3 py-1 text-xs text-zinc-300 theme-light:text-zinc-700">
               <span className="font-semibold text-accent-400">Language subject</span>
               <span aria-hidden="true">·</span>
-              <span>part of the Đồng hành cùng bạn platform</span>
+              <span>
+                part of the <span lang="vi">Đồng hành cùng bạn</span> platform
+              </span>
             </p>
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl lg:leading-[1.15] xl:text-5xl xl:leading-[1.1]">
               Learn Vietnamese with AI
@@ -136,7 +142,7 @@ export default function LandingEn() {
           <section className="mt-10 rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4 lg:mt-0 lg:p-6">
             <div className="flex items-start gap-3">
               <Volume2 className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
-              <p className="text-sm text-zinc-300 lg:text-base lg:leading-relaxed">
+              <p className="text-sm text-zinc-300 theme-light:text-zinc-700 lg:text-base lg:leading-relaxed">
                 <strong className="text-zinc-100 theme-light:text-zinc-900">
                   What's different:
                 </strong>{' '}
@@ -151,7 +157,7 @@ export default function LandingEn() {
 
         {/* 3 chế độ — ba lựa chọn NGANG HÀNG nhau nên xếp ngang ở desktop. */}
         <section className="mt-8 lg:mt-16">
-          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-500 theme-light:text-zinc-600">
             Three practice modes
           </h2>
           <div className="mt-4 space-y-3 lg:mt-8 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">

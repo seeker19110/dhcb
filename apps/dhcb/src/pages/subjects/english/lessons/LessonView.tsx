@@ -770,9 +770,13 @@ export function LessonView({
             // "Lý thuyết" bên môn Lý (20px), nên ba môn có ba cỡ tiêu đề bài khác nhau.
             className="text-2xl sm:text-3xl font-extrabold leading-tight text-white focus:outline-none focus-visible:underline"
           >
-            {isA ? `Bài ${lesson.id}: ${lesson.title}` : `Lesson ${lesson.id}: ${lesson.title}`}
+            {/* [U4 · WCAG 3.1.2] tên bài + tình huống trong dữ liệu luôn là tiếng Việt. */}
+            {isA ? `Bài ${lesson.id}: ` : `Lesson ${lesson.id}: `}
+            <span lang="vi">{lesson.title}</span>
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">{lesson.situation}</p>
+          <p lang="vi" className="mt-1 text-sm text-zinc-400">
+            {lesson.situation}
+          </p>
 
           <h2
             id={NEO_BAI_ANH.hoiThoai}

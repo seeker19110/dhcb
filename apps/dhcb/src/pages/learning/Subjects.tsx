@@ -170,9 +170,9 @@ export default function Subjects() {
                   </span>
                   <span className="text-xs text-zinc-400 font-medium">Học cùng gia sư AI</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
                   Bắt Đầu Từ Đâu Hôm Nay
-                </h3>
+                </h2>
               </div>
             </div>
           </div>
@@ -281,9 +281,9 @@ export default function Subjects() {
                 </span>
                 <span className="text-xs text-zinc-400">10 thí nghiệm tương tác</span>
               </div>
-              <h3 className="text-base font-bold text-white mt-1 group-hover:text-accent-300 transition">
+              <h2 className="text-base font-bold text-white mt-1 group-hover:text-accent-300 transition">
                 Phòng Thí Nghiệm Mô Phỏng & Ứng Dụng Thực Tế
-              </h3>
+              </h2>
               <p className="text-xs text-zinc-300 mt-0.5">
                 Xem ngay công thức Toán, Lý, Hóa, Sinh giải quyết bài toán tiền điện, lãi kép, giảm
                 mỡ, vệ tinh GPS ra sao.
@@ -293,6 +293,9 @@ export default function Subjects() {
           <ChevronRight className="w-5 h-5 text-accent-400 theme-light:text-accent-800 group-hover:translate-x-1 transition shrink-0 ml-2" />
         </button>
 
+        {/* Tiêu đề ẩn cho danh sách: thẻ môn dùng `<h3>`, cần một `<h2>` phía trên để không nhảy
+            bậc h1 → h3 (WCAG 1.3.1, port từ PR #1230). */}
+        <h2 className="sr-only">Danh sách môn học</h2>
         {/* Danh sách thẻ môn học — BỐN nhánh tách bạch, xem `CatalogState` ở đầu file:
             đang tải · lỗi tải (thử lại được) · tải xong nhưng bộ lọc không có môn · tìm
             kiếm không khớp. Trước S03-1 nhánh 2 và 3 bị gộp làm một. */}

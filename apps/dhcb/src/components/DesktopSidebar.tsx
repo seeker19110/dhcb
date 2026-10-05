@@ -360,7 +360,10 @@ export default function DesktopSidebar() {
   }
 
   return (
+    // [U4 · WCAG 3.1.2] chữ của thanh bên viết cứng tiếng Việt (chưa đi qua i18n) — gắn `lang="vi"`
+    // để khi trang là tiếng Anh (giao diện en) trình đọc màn hình vẫn đọc mục menu bằng giọng Việt.
     <aside
+      lang="vi"
       className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[var(--sidebar-w)] flex-col bg-zinc-950/95 backdrop-blur-xl border-r border-zinc-800/80 transition-[width] duration-200"
       aria-label="Điều hướng chính (desktop)"
     >

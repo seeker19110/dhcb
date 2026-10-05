@@ -72,6 +72,10 @@ test('học lúc mất mạng → tải lại trang vẫn còn → có mạng l�
   })
 
   await page.goto('/', { waitUntil: 'domcontentloaded' })
+  // Chờ chunk lười của Trang chủ tải XONG trước khi ngắt mạng: `setOffline` rơi vào lúc chunk
+  // còn đang tải thì `lazyWithRetry` coi là chunk hỏng sau deploy và `location.reload()` —
+  // `page.evaluate` bên dưới gãy "Execution context was destroyed" (CI PR #1229, shard 6).
+  await expect(page.locator('main h1').first()).toBeAttached({ timeout: 30_000 })
   await loadSyncModules(page)
 
   // ── Mất mạng: hoàn thành 2 bài ──
@@ -88,22 +92,32 @@ test('học lúc mất mạng → tải lại trang vẫn còn → có mạng l�
   // còn ở dev server thì `reload` khi ngắt mạng chỉ gãy ở tầng tải trang — không đo được gì về
   // đồng bộ. Thay vào đó: cho trang tải bình thường, CHẶN riêng đường POST (server chưa nhận
   // được gì) và để GET trả về bản server THẬT SỰ CHƯA CÓ bài vừa học — đúng ca làm mất dữ liệu.
+  // Chặn POST TRƯỚC khi bật mạng lại: app (đã tải xong) nghe sự kiện `online` và tự `flush` ngay —
+  // nếu route chặn đặt SAU `setOffline(false)` thì lượt gửi tự động đó lọt tới route "thành công"
+  // ở trên và hàng đợi rỗng trước khi kịp đo bước tải lại.
+  await page.route('**/api/programming/progress', (route) =>
+    route.request().method() === 'POST'
+      ? route.abort('internetdisconnected')
+      : route.fulfill({ status: 200, contentType: 'application/json', body: '{"lessons":[]}' }),
+  )
   await context.setOffline(false)
   // Playwright's `setOffline` resolves trước khi trạng thái mạng của renderer THẬT SỰ đổi
   // (độ trễ CDP) — gọi `reload()` ngay sau đó thỉnh thoảng bị `net::ERR_ABORTED` vì điều hướng
   // khởi động lúc trang vẫn còn coi là offline. Đo được: flaky ~50% (2/4 lượt) trước khi chờ
   // `navigator.onLine` thật sự lật lại true. Không phải cổng 5179 dùng chung (đã chạy cổng riêng).
   await page.waitForFunction(() => navigator.onLine === true)
-  await page.route('**/api/programming/progress', (route) =>
-    route.request().method() === 'POST'
-      ? route.abort('internetdisconnected')
-      : route.fulfill({ status: 200, contentType: 'application/json', body: '{"lessons":[]}' }),
-  )
   await page.reload({ waitUntil: 'domcontentloaded' })
   await loadSyncModules(page)
   const afterReload = await page.evaluate(async (uid) => {
     const w = window as unknown as OutboxWindow
-    return { pending: w.__sync.pending(uid), lessons: await w.__sync.fetchProgress(uid) }
+    // Đếm riêng mục `programming`: trang vừa tải xong có thể đang xếp/gửi một mục `english`
+    // (bản chụp tiến độ môn Anh) — không thuộc phép đo "2 bài gộp vào MỘT batch".
+    const raw = localStorage.getItem(`dhcb_sync_outbox_${uid}`)
+    const entries = raw ? (JSON.parse(raw) as { kind: string }[]) : []
+    return {
+      pending: entries.filter((e) => e.kind === 'programming').length,
+      lessons: await w.__sync.fetchProgress(uid),
+    }
   }, USER_ID)
   expect(afterReload.pending).toBe(1) // 2 bài gộp vào MỘT mục batch
   expect(
@@ -111,6 +125,9 @@ test('học lúc mất mạng → tải lại trang vẫn còn → có mạng l�
   ).toEqual(['p1-u4-l1', 'p1-u4-l2'])
 
   // ── Server nhận lại được: gửi đúng một request batch, hàng đợi rỗng ──
+  // Lượt gửi tự động bị chặn ở bước trên (app tự `flush` khi có mạng lại) không tính — chỉ đo
+  // các request gửi tới server ĐÃ nhận được.
+  posts.length = 0
   await page.unroute('**/api/programming/progress')
   await page.route('**/api/programming/progress', (route) =>
     route.fulfill({
