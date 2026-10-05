@@ -146,6 +146,89 @@ describe('LessonAnimation', () => {
     expect(moDiChuyen).toMatch(/opacity="0.4"/)
   })
 
+  it('fallback ẩn hình đến muộn ngay cả khi CSS animation bị tắt', () => {
+    const h = renderToStaticMarkup(
+      <LessonAnimation
+        spec={{
+          ...spec,
+          shapes: [
+            {
+              kind: 'circle',
+              id: 'delayed',
+              cx: 10,
+              cy: 10,
+              r: 3,
+              keyframes: [
+                { atMs: 500, opacity: 0 },
+                { atMs: 1500, opacity: 1 },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    const group = /<g data-animated="true"[^>]*>/.exec(h)![0]
+    expect(group).toMatch(/(?:;|style=")opacity:0(?:;|")/)
+    expect(/<circle[^>]*>/.exec(h)![0]).not.toContain('opacity=')
+  })
+
+  it('fallback lấy transform và origin của mốc đầu, kể cả mốc đầu sau 0ms', () => {
+    const h = renderToStaticMarkup(
+      <LessonAnimation
+        spec={{
+          ...spec,
+          shapes: [
+            {
+              kind: 'rect',
+              id: 'initial',
+              x: 30,
+              y: 20,
+              w: 8,
+              h: 60,
+              origin: [34, 80],
+              keyframes: [
+                { atMs: 250, dx: 12, dy: 8, rotate: 90, scale: 0.5, scaleY: 0.5 },
+                { atMs: 2000, dx: 60, dy: 20, rotate: 0, scale: 1, scaleY: 1 },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    const group = /<g data-animated="true"[^>]*>/.exec(h)![0]
+    expect(group).toContain('transform:translate(12px, 8px) rotate(90deg) scale(0.5, 0.25)')
+    expect(group).toContain('transform-origin:34px 80px')
+  })
+
+  it('fallback không nhân đôi opacity tĩnh ở nhóm cha khi chỉ animate vị trí', () => {
+    const h = renderToStaticMarkup(
+      <LessonAnimation
+        spec={{
+          ...spec,
+          shapes: [
+            {
+              kind: 'circle',
+              id: 'static-opacity',
+              cx: 60,
+              cy: 10,
+              r: 3,
+              opacity: 0.4,
+              keyframes: [
+                { atMs: 0, dx: 14 },
+                { atMs: 2000, dx: 40 },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    const group = /<g data-animated="true"[^>]*>/.exec(h)![0]
+    expect(group).not.toMatch(/(?:;|style=")opacity:/)
+    expect(group).toContain('transform:translate(14px, 0px) rotate(0deg) scale(1, 1)')
+    expect(group).toContain('transform-origin:60px 10px')
+    expect(/<circle[^>]*>/.exec(h)![0]).toContain('opacity="0.4"')
+  })
+
   // Bẫy 2026-09-26: CSS tự lấy trạng thái nền cho 0%/100% còn thiếu và bỏ qua mốc thiếu opacity.
   // Luật đọc mốc nằm ở animationKeyframes.ts; ca này canh bộ vẽ thật sự in đủ mọi mốc ra CSS.
   it('CSS in đủ mọi thuộc tính ở mọi mốc, kể cả 0% và 100% mà người soạn không khai', () => {

@@ -1,6 +1,6 @@
 # Kế hoạch giao việc: 20 khóa Kỹ thuật AI
 
-> Trạng thái: Approved for implementation, chủ dự án DHCB xác nhận ngày 2026-10-05; còn chờ merge. Kế hoạch này đi cùng [spec chương trình](2026-10-05-ai-engineering-from-scratch-dhcb.md), [spec hoạt họa](2026-10-05-ai-engineering-lesson-animation.md) và [spec chấm bài cô lập](2026-10-05-programming-isolated-grading-dependency.md). Theo `AGENTS.md`, chỉ triển khai source khi spec liên quan đã được duyệt và merge.
+> Trạng thái: Approved for implementation, chủ dự án DHCB xác nhận ngày 2026-10-05; đã merge qua [PR #1236](https://github.com/seeker19110/dhcb/pull/1236). Kế hoạch này đi cùng [spec chương trình](2026-10-05-ai-engineering-from-scratch-dhcb.md), [spec hoạt họa](2026-10-05-ai-engineering-lesson-animation.md) và [spec chấm bài cô lập](2026-10-05-programming-isolated-grading-dependency.md). Theo `AGENTS.md`, chỉ triển khai source khi spec liên quan đã được duyệt và merge.
 
 ## 1. Phạm vi và thứ tự
 
@@ -43,4 +43,4 @@ Trước sửa hotspot: `npm run codemap -- impact <file>`. Trong PR: test đún
 
 ## 5. Trạng thái thực tế và bước kế tiếp
 
-Đã giao ba subagent làm các phase nghiên cứu và thiết kế hoạt họa; chưa giao sửa source vì spec được duyệt nhưng chưa merge. Spec worker bảo mật vẫn cần PoC và quyết định kiến trúc riêng. Bản đồ M0 đã có 523/523 quyết định K1 và cần đọc sâu theo từng lát. Sau merge spec, thực hiện C1 trên các PR nhỏ trong khi M0G tiếp tục PoC/ADR; M0G chặn phát hành khóa coding, không chặn phát triển renderer hoạt họa độc lập. Không đánh dấu bất kỳ phase nào đã hoàn tất chỉ từ bản đồ hoặc đề cương.
+Đặc tả đã merge tại `93904be` qua PR #1236. Ba subagent đã bàn giao và review chéo C1: hợp đồng và trang bài, công cụ ảnh, fallback giảm chuyển động của renderer. Storyboard gradient đã có bản nghiên cứu; chưa có hoạt họa trong bài sản phẩm. Spec worker bảo mật vẫn cần PoC và quyết định kiến trúc riêng. Bản đồ M0 đã có 523/523 quyết định K1 và cần đọc sâu theo từng lát. Thực hiện C1 trên các PR nhỏ trong khi M0G tiếp tục PoC/ADR; M0G chặn phát hành khóa coding, không chặn phát triển renderer hoạt họa độc lập. Không đánh dấu bất kỳ phase nào đã hoàn tất chỉ từ bản đồ hoặc đề cương.

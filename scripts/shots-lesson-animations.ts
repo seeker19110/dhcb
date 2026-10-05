@@ -3,7 +3,11 @@
  * ảnh — luật ⑥ của `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`: ảnh cảnh đầu KHÔNG đủ,
  * phải soi ≥ 3 mốc và so ảnh khác nhau thật).
  *
- *   npm run shots:lesson-anim -- [--subject math|physics|chemistry|biology] [--out DIR] [--only id,...]
+ *   npm run shots:lesson-anim -- [--subject math|physics|chemistry|biology|programming] [--out DIR] [--only id,...]
+ *
+ *   --viewports 390,1440 --themes blue-sky,dark-blue
+ * Mặc định giữ ảnh STEM ở 760px/blue-sky; ma trận ghi vào <out>/<theme>/<width>/.
+ * HTML tĩnh chỉ kiểm hình SVG/CSS, không thay E2E trang thật và nút Xem lớn.
  *
  * Cách làm (không cần DB/đăng nhập): render `LessonAnimation` ra HTML tĩnh kèm token theme,
  * mở bằng Chromium, đặt `currentTime` của mọi animation về 5 mốc 2/25/50/75/98% `durationMs`
@@ -27,6 +31,11 @@ import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import type { LessonAnimation as LessonAnimationSpec } from '@dhcb/core-contracts/lessonAnimation'
+import {
+  parseCaptureOptions,
+  selectCaptureLessons,
+  type CaptureTheme,
+} from './lesson-animation-capture-options.js'
 
 // `scripts/` được typecheck bởi tsconfig.api.json (không bật --jsx, loại trừ core-ui) nên không
 // import tĩnh file .tsx được; nạp động qua chuỗi để tsx phân giải lúc chạy, khai kiểu tay.
@@ -34,12 +43,6 @@ type LessonAnimationComponent = (props: { spec: LessonAnimationSpec }) => React.
 const RENDERER_MODULE = '@dhcb/core-ui/LessonAnimation'
 
 const MOC_PHAN_TRAM = [2, 25, 50, 75, 98] as const
-
-function doiSo(name: string, fallback: string): string {
-  const i = process.argv.indexOf(`--${name}`)
-  const value = i >= 0 ? process.argv[i + 1] : undefined
-  return value ?? fallback
-}
 
 type BaiCoHoatAnh = { id: string; animation?: LessonAnimationSpec }
 
@@ -50,6 +53,7 @@ const NAP_MON: Record<string, () => Promise<readonly BaiCoHoatAnh[]>> = {
   physics: async () => (await import('@dhcb/subject-physics/lessons')).PHYSICS_LESSONS,
   chemistry: async () => (await import('@dhcb/subject-chemistry/lessons')).CHEM_LESSONS,
   biology: async () => (await import('@dhcb/subject-biology/lessons')).BIOLOGY_LESSONS,
+  programming: async () => (await import('@dhcb/subject-programming/lessons')).PROGRAMMING_LESSONS,
 }
 
 async function napHoatAnh(subject: string): Promise<{ id: string; spec: LessonAnimationSpec }[]> {
@@ -67,6 +71,8 @@ function trangHtml(
   LessonAnimation: LessonAnimationComponent,
   spec: LessonAnimationSpec,
   themeCss: string,
+  theme: CaptureTheme,
+  responsive: boolean,
 ): string {
   const body = renderToStaticMarkup(React.createElement(LessonAnimation, { spec })).replace(
     /<style>[\s\S]*?<\/style>/,
@@ -76,9 +82,10 @@ function trangHtml(
         .replace(/&quot;/g, '"')
         .replace(/&gt;/g, '>'),
   )
-  return `<!doctype html><html data-theme="blue-sky"><head><meta charset="utf-8"><style>${themeCss}
+  return `<!doctype html><html data-theme="${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${themeCss}
 body{margin:0;padding:16px;background:rgb(var(--surface-card));color:rgb(var(--text-primary));font-family:sans-serif}
-figure{margin:0;width:720px}</style></head><body>${body}</body></html>`
+figure{margin:0;width:720px;max-width:100%}
+${responsive ? 'svg[role="img"]{display:block;width:100%;height:auto}' : ''}</style></head><body>${body}</body></html>`
 }
 
 /**
@@ -202,82 +209,102 @@ function kiemHinhHoc(): string[] {
 }
 
 async function main() {
-  const subject = doiSo('subject', 'math')
+  const options = parseCaptureOptions(process.argv.slice(2))
+  const { subject } = options
   // `tmpdir()` + `resolve` thay cho `/tmp` viết cứng, `pathToFileURL` thay cho ghép chuỗi
   // `file://`: trên Windows `/tmp/...` ghi ra thư mục `tmp` ở gốc ổ đĩa nhưng URL
   // `file:///tmp/...` không trỏ tới đó, script gãy ở hoạt ảnh đầu (ERR_FILE_NOT_FOUND).
-  const out = resolve(doiSo('out', join(tmpdir(), 'shots', 'lesson-animations', subject)))
-  const only = doiSo('only', '').split(',').filter(Boolean)
+  const baseOut = resolve(options.out ?? join(tmpdir(), 'shots', 'lesson-animations', subject))
+  const legacy =
+    options.viewports.length === 1 &&
+    options.viewports[0] === 760 &&
+    options.themes.length === 1 &&
+    options.themes[0] === 'blue-sky'
   const themeCss = readFileSync('packages/core-ui/theme.css', 'utf8')
   const { LessonAnimation } = (await import(RENDERER_MODULE)) as {
     LessonAnimation: LessonAnimationComponent
   }
-  const danhSach = (await napHoatAnh(subject)).filter(
-    (a) => only.length === 0 || only.includes(a.id),
-  )
-  mkdirSync(join(out, 'shots'), { recursive: true })
-  mkdirSync(join(out, 'montage'), { recursive: true })
+  const danhSach = selectCaptureLessons(await napHoatAnh(subject), options.only)
 
   const browser = await chromium.launch(
     process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
   )
-  const page = await browser.newPage({ viewport: { width: 760, height: 900 } })
-  // tsx (esbuild keepNames) bọc hàm con trong `__name(...)`; hàm `kiemHinhHoc` chạy TRONG trình
-  // duyệt nên phải có sẵn `__name` ở đó, không thì page.evaluate ném ReferenceError.
-  await page.addInitScript('globalThis.__name = (f) => f')
   let dungYen = 0
   let coVanDe = 0
-  for (const { id, spec } of danhSach) {
-    const htmlPath = join(out, `${id}.html`)
-    writeFileSync(htmlPath, trangHtml(LessonAnimation, spec, themeCss))
-    await page.goto(pathToFileURL(htmlPath).href)
-    const soAnim = await page.evaluate(() =>
-      [...document.querySelectorAll("[data-animated='true']")].reduce(
-        (n, g) => n + g.getAnimations().length,
-        0,
-      ),
-    )
-    const vanDe = new Map<string, number[]>()
-    for (const pct of MOC_PHAN_TRAM) {
-      const t = Math.round((spec.durationMs * pct) / 100)
-      await page.evaluate((ms) => {
-        document.querySelectorAll("[data-animated='true']").forEach((g) =>
-          g.getAnimations().forEach((a) => {
-            a.pause()
-            a.currentTime = ms
-          }),
-        )
-      }, t)
-      await page
-        .locator('svg')
-        .screenshot({ path: join(out, 'shots', `${id}--${String(pct).padStart(2, '0')}.png`) })
-      for (const loi of await page.evaluate(kiemHinhHoc))
-        vanDe.set(loi, [...(vanDe.get(loi) ?? []), pct])
+  try {
+    const page = await browser.newPage({
+      viewport: { width: 760, height: 900 },
+      reducedMotion: 'no-preference',
+    })
+    // tsx (esbuild keepNames) bọc hàm con trong `__name(...)`; hàm `kiemHinhHoc` chạy TRONG trình
+    // duyệt nên phải có sẵn `__name` ở đó, không thì page.evaluate ném ReferenceError.
+    await page.addInitScript('globalThis.__name = (f) => f')
+    for (const theme of options.themes) {
+      for (const width of options.viewports) {
+        const out = legacy ? baseOut : join(baseOut, theme, String(width))
+        mkdirSync(join(out, 'shots'), { recursive: true })
+        mkdirSync(join(out, 'montage'), { recursive: true })
+        await page.setViewportSize({ width, height: 900 })
+        for (const { id, spec } of danhSach) {
+          const htmlPath = join(out, `${id}.html`)
+          // HTML tĩnh không có Tailwind w-full/h-auto; ma trận phải đặt kích thước SVG thật.
+          // Giữ chế độ legacy để tập ảnh STEM cũ không đổi kích thước ngoài ý muốn.
+          writeFileSync(htmlPath, trangHtml(LessonAnimation, spec, themeCss, theme, !legacy))
+          await page.goto(pathToFileURL(htmlPath).href)
+          const soAnim = await page.evaluate(() =>
+            [...document.querySelectorAll("[data-animated='true']")].reduce(
+              (n, g) => n + g.getAnimations().length,
+              0,
+            ),
+          )
+          const vanDe = new Map<string, number[]>()
+          for (const pct of MOC_PHAN_TRAM) {
+            const t = Math.round((spec.durationMs * pct) / 100)
+            await page.evaluate((ms) => {
+              document.querySelectorAll("[data-animated='true']").forEach((g) =>
+                g.getAnimations().forEach((a) => {
+                  a.pause()
+                  a.currentTime = ms
+                }),
+              )
+            }, t)
+            await page.locator('svg').screenshot({
+              path: join(out, 'shots', `${id}--${String(pct).padStart(2, '0')}.png`),
+            })
+            for (const loi of await page.evaluate(kiemHinhHoc))
+              vanDe.set(loi, [...(vanDe.get(loi) ?? []), pct])
+          }
+          // Dải ghép 5 khung để đọc một lượt.
+          const khung = MOC_PHAN_TRAM.map(
+            (pct) =>
+              `<figure style="margin:0;text-align:center"><img src="shots/${id}--${String(pct).padStart(2, '0')}.png" style="width:370px;border:1px solid #999"><figcaption style="font:13px sans-serif">${pct}% · ${Math.round((spec.durationMs * pct) / 100)}ms</figcaption></figure>`,
+          ).join('')
+          const montagePath = join(out, `m-${id}.html`)
+          writeFileSync(
+            montagePath,
+            `<html><body style="margin:0;padding:6px;background:#fff"><div style="font:bold 15px sans-serif;margin-bottom:4px">${id} — ${spec.title}</div><div style="display:flex;gap:4px">${khung}</div></body></html>`,
+          )
+          await page.setViewportSize({ width: 1900, height: 600 })
+          await page.goto(pathToFileURL(montagePath).href)
+          await page.locator('body').screenshot({ path: join(out, 'montage', `${id}.png`) })
+          await page.setViewportSize({ width, height: 900 })
+          if (soAnim === 0) dungYen += 1
+          console.log(
+            `${theme}/${width}/${id}: ${soAnim} animation đang chạy · ${spec.durationMs}ms`,
+          )
+          for (const [loi, moc] of vanDe) console.log(`   ⚠ ${loi} @${moc.join('/')}%`)
+          if (vanDe.size > 0) coVanDe += 1
+        }
+        console.log(`\n${danhSach.length} hoạt ảnh → ${out}/montage/*.png`)
+      }
     }
-    // Dải ghép 5 khung để đọc một lượt.
-    const khung = MOC_PHAN_TRAM.map(
-      (pct) =>
-        `<figure style="margin:0;text-align:center"><img src="shots/${id}--${String(pct).padStart(2, '0')}.png" style="width:370px;border:1px solid #999"><figcaption style="font:13px sans-serif">${pct}% · ${Math.round((spec.durationMs * pct) / 100)}ms</figcaption></figure>`,
-    ).join('')
-    const montagePath = join(out, `m-${id}.html`)
-    writeFileSync(
-      montagePath,
-      `<html><body style="margin:0;padding:6px;background:#fff"><div style="font:bold 15px sans-serif;margin-bottom:4px">${id} — ${spec.title}</div><div style="display:flex;gap:4px">${khung}</div></body></html>`,
-    )
-    await page.setViewportSize({ width: 1900, height: 600 })
-    await page.goto(pathToFileURL(montagePath).href)
-    await page.locator('body').screenshot({ path: join(out, 'montage', `${id}.png`) })
-    await page.setViewportSize({ width: 760, height: 900 })
-    if (soAnim === 0) dungYen += 1
-    console.log(`${id}: ${soAnim} animation đang chạy · ${spec.durationMs}ms`)
-    for (const [loi, moc] of vanDe) console.log(`   ⚠ ${loi} @${moc.join('/')}%`)
-    if (vanDe.size > 0) coVanDe += 1
+  } finally {
+    await browser.close()
   }
-  await browser.close()
-  console.log(`\n${danhSach.length} hoạt ảnh → ${out}/montage/*.png`)
+  const soLuot = danhSach.length * options.themes.length * options.viewports.length
   // Chỉ BÁO, không chặn: có ca cố ý (chữ trắng nằm trong quả cầu, trục đi qua điện tích) —
   // người soạn đọc từng dòng ⚠ rồi NHÌN dải ảnh để quyết (TRAPS.md mục 10).
-  console.log(`⚠ ${coVanDe}/${danhSach.length} hoạt ảnh có dòng cảnh báo hình học cần nhìn lại.`)
+  console.log(`⚠ ${coVanDe}/${soLuot} lượt chụp hoạt ảnh có dòng cảnh báo hình học cần nhìn lại.`)
   if (dungYen > 0) {
     console.error(`✖ ${dungYen} hoạt ảnh KHÔNG có animation nào chạy (xem TRAPS.md mục 10).`)
     process.exit(1)

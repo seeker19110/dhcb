@@ -1,6 +1,6 @@
 # Đặc tả: Hoạt họa giải thích cơ chế trong các khóa AI Engineering
 
-> Trạng thái: **Approved for implementation**, chủ dự án DHCB xác nhận ngày 2026-10-05; còn chờ merge trước khi sửa source. Đối chiếu mã nguồn ngày 2026-10-05; số bài và danh sách hoạt họa cuối cùng phải lấy từ bảng đối chiếu chương trình mới, không suy từ tên khóa.
+> Trạng thái: **Approved for implementation**, chủ dự án DHCB xác nhận ngày 2026-10-05; đã merge qua [PR #1236](https://github.com/seeker19110/dhcb/pull/1236) tại `93904be` trước khi sửa source. Đối chiếu mã nguồn ngày 2026-10-05; số bài và danh sách hoạt họa cuối cùng phải lấy từ bảng đối chiếu chương trình mới, không suy từ tên khóa.
 
 ## 0. Một câu
 

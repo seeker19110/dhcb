@@ -4,6 +4,36 @@ import { PROGRAMMING_LESSONS, getLesson, getLessonsByUnit } from './lessons.js'
 import { LessonSchema } from './lessonTypes.js'
 import { PROGRAMMING_LEVELS } from './curriculum.js'
 import { SHORT_COURSES } from './courses/registry.js'
+import type { LessonAnimation } from '@dhcb/core-contracts/lessonAnimation'
+
+const animation: LessonAnimation = {
+  title: 'Luồng dữ liệu',
+  description: 'Dữ liệu đi từ đầu vào, qua bước xử lý rồi tới đầu ra.',
+  viewBoxWidth: 320,
+  viewBoxHeight: 120,
+  durationMs: 2000,
+  loop: false,
+  shapes: [
+    {
+      kind: 'circle',
+      id: 'du-lieu',
+      cx: 30,
+      cy: 60,
+      r: 10,
+      fill: 'accent',
+      keyframes: [
+        { atMs: 0, dx: 0 },
+        { atMs: 1000, dx: 130 },
+        { atMs: 2000, dx: 260 },
+      ],
+    },
+  ],
+  captions: [
+    { atMs: 0, text: 'Nhận dữ liệu đầu vào.' },
+    { atMs: 1000, text: 'Xử lý dữ liệu.' },
+    { atMs: 2000, text: 'Trả kết quả đầu ra.' },
+  ],
+}
 
 const ALL_UNIT_IDS = new Set(PROGRAMMING_LEVELS.flatMap((l) => l.units.map((u) => u.id)))
 
@@ -16,6 +46,33 @@ const COURSE_REFERENCED_LESSON_IDS = new Set(
 )
 
 describe('programming lessons', () => {
+  it('bài cũ không có animation và bài có hoạt họa khai báo đều hợp lệ', () => {
+    const lesson = getLesson('p1-u4-l1')!
+    const baiCu = { ...lesson }
+    delete baiCu.animation
+    expect(LessonSchema.parse(baiCu).animation).toBeUndefined()
+    expect(LessonSchema.parse({ ...baiCu, animation }).animation).toEqual(animation)
+  })
+
+  it.each([
+    ['thiếu mô tả', { ...animation, description: undefined }],
+    ['trùng id hình', { ...animation, shapes: [animation.shapes[0], animation.shapes[0]] }],
+    [
+      'keyframe vượt thời lượng',
+      {
+        ...animation,
+        shapes: [{ ...animation.shapes[0], keyframes: [{ atMs: 2001, dx: 0 }] }],
+      },
+    ],
+    ['HTML tùy ý', { ...animation, html: '<svg onload="alert(1)"></svg>' }],
+  ])('LessonSchema chặn hoạt họa %s', (_case, animationSai) => {
+    const result = LessonSchema.safeParse({ ...getLesson('p1-u4-l1')!, animation: animationSai })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path[0] === 'animation')).toBe(true)
+    }
+  })
+
   it('mọi bài đúng khuôn LessonSchema (Zod)', () => {
     for (const lesson of PROGRAMMING_LESSONS) {
       const r = LessonSchema.safeParse(lesson)

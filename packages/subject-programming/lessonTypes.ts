@@ -4,6 +4,7 @@
 // về nhà → ⑧ thẻ SRS (⑧ nối vào SRS chung ở PR sau — schema đã chừa chỗ).
 // Zod validate ở test (chặn CI khi soạn nội dung sai khuôn) — dữ liệu là hằng biên dịch.
 import { z } from 'zod'
+import { LessonAnimationSchema } from '@dhcb/core-contracts/lessonAnimation'
 
 /** Một ca chấm cho bài Make: chạy code học viên với stdin này, so output. */
 export const TestCaseSchema = z
@@ -98,6 +99,8 @@ export const LessonSchema = z
     hook: z.string().min(1).max(600),
     /** ② Khái niệm — đoạn văn thuần, xuống dòng bằng \n (chưa cần markdown ở PR-L3). */
     theory: z.string().min(1).max(4000),
+    /** Minh hoạ cơ chế ở bước Khái niệm; không tham gia chấm điểm hay tiến độ. */
+    animation: LessonAnimationSchema.optional(),
     /** ③ Ví dụ mẫu chạy được, chú thích TỪNG DÒNG bằng comment tiếng Việt trong code. */
     workedExample: z
       .object({
