@@ -7,12 +7,12 @@
 // trong một bước. Bốn bộ mô phỏng dòng lệnh bên dưới chỉ thao tác trạng thái ảo,
 // không eval/I/O, không vòng lặp do học viên định nghĩa; code luôn có trần kích thước.
 import { getLesson } from './lessons.js'
-import { chayLenh } from './gitSim.js'
+import { chayLenh, type GitRunResult } from './gitSim.js'
 import { chayLenhHermes } from './hermesSim.js'
 import { chayLenhVibe } from './vibeSim.js'
 import { chayLenhOpenclaw } from './openclawSim.js'
 import { laLanPython } from './pyLanes.js'
-import { gradeTestCase, allTestsPassed, type TestCaseResult } from './grading.js'
+import { gradeTestCase, gradeGitTestCase, allTestsPassed, type TestCaseResult } from './grading.js'
 
 const SPINE_RE = /^p[1-6]-u\d+-l\d+$/
 const PYTHON_SHORT_COURSE_RE = /^(ml|pyai|mathai|mlds|cv1|cv2|llmagent)-u\d+-l\d+$/
@@ -31,7 +31,7 @@ const INTERPRETED_LANGUAGES = new Set([
 /** Trần giống hợp đồng API, áp lại tại dispatcher để caller khác không bỏ qua được. */
 export const MAX_SUBMISSION_CODE_LENGTH = 4_000
 
-type InterpretedRunner = (code: string, stdinLines: string[]) => { output: string; error?: string }
+type InterpretedRunner = (code: string, stdinLines: string[]) => GitRunResult
 const INTERPRETED_RUNNERS: Readonly<Partial<Record<string, InterpretedRunner>>> = {
   git: chayLenh,
   hermes: chayLenhHermes,
@@ -127,7 +127,9 @@ export function regradeInterpretedSubmission(lessonId: string, code: string): Re
   const runner = INTERPRETED_RUNNERS[lesson.language]!
   const results = lesson.make.testCases.map((testCase) => {
     const result = runner(code, testCase.stdinLines)
-    return gradeTestCase(testCase, result.output, result.error)
+    return lesson.language === 'git'
+      ? gradeGitTestCase(testCase, result)
+      : gradeTestCase(testCase, result.output, result.error)
   })
   return { passed: allTestsPassed(results), results }
 }

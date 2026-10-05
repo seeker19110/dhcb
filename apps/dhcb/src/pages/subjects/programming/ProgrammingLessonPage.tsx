@@ -83,6 +83,7 @@ import { getLevelIdOfLesson } from '@dhcb/subject-programming/curriculum'
 import { z } from 'zod'
 import {
   gradeTestCase,
+  gradeGitTestCase,
   allTestsPassed,
   checkParsonsOrder,
   parsonsShuffle,
@@ -357,7 +358,16 @@ function LessonBody({
       // Owner đổi giữa lúc chấm → lượt này thuộc phiên cũ: không hiện, không ghi gì thêm.
       if (theHeOwnerRef.current !== luot) return
       out.push(
-        gradeTestCase(testCase, r.output, r.error ?? (r.timedOut ? 'Quá thời gian' : undefined)),
+        lesson.language === 'git'
+          ? gradeGitTestCase(testCase, {
+              ...r,
+              error: r.error ?? (r.timedOut ? 'Quá thời gian' : undefined),
+            })
+          : gradeTestCase(
+              testCase,
+              r.output,
+              r.error ?? (r.timedOut ? 'Quá thời gian' : undefined),
+            ),
       )
       setCham({ owner: chuLuot, grading: true, results: [...out] })
     }

@@ -156,3 +156,15 @@ describe('programming lessons', () => {
     expect(getLesson('p9-u9-l9')).toBeUndefined()
   })
 })
+
+it('Git assertions chỉ hợp lệ bài Git, mọi ngôn ngữ khác bị chặn', () => {
+  const lesson = getLesson('p1-u4-l1')!
+  const testCases = [
+    { ...lesson.make.testCases[0]!, gitAssertions: [{ type: 'headAbsent', path: '.env' }] },
+  ]
+  expect(LessonSchema.safeParse({ ...lesson, make: { ...lesson.make, testCases } }).success).toBe(
+    false,
+  )
+  const git = PROGRAMMING_LESSONS.find((l) => l.language === 'git')!
+  expect(LessonSchema.safeParse({ ...git, make: { ...git.make, testCases } }).success).toBe(true)
+})

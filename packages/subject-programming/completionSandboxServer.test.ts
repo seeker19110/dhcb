@@ -2,6 +2,9 @@
 // Các cổng lessonsPython/Js/Ts/Sql vẫn kiểm nội dung tin cậy; test này không chạy
 // payload thoát sandbox/DoS và không coi node:vm/subprocess là ranh giới bảo mật.
 import { describe, expect, it, vi, afterEach } from 'vitest'
+import * as lessonCatalog from './lessons.js'
+import { chayLenh } from './gitSim.js'
+import { gradeGitTestCase } from './grading.js'
 import { getLesson, PROGRAMMING_LESSONS } from './lessons.js'
 import {
   regradeMakeSubmission,
@@ -110,4 +113,35 @@ describe('bộ mô phỏng dòng lệnh còn hoạt động', () => {
       regradeInterpretedSubmission('git-u2-l1', '#'.repeat(MAX_SUBMISSION_CODE_LENGTH)).passed,
     ).toBe(false)
   })
+})
+
+it('dispatcher Git chấm state giống engine browser và bác transcript giả', () => {
+  const original = getLesson('p3-u11-l1')!
+  const testCase = {
+    ...original.make.testCases[0]!,
+    stdinLines: ['git init', 'echo "fake" > .env'],
+    expected: 'safe',
+    gitAssertions: [
+      { type: 'headIgnoreProbe' as const, path: '.env', ignored: true },
+      { type: 'historyAbsent' as const, path: '.env' },
+    ],
+  }
+  const lesson = { ...original, make: { ...original.make, testCases: [testCase] } }
+  const lookup = lessonCatalog.getLesson
+  const spy = vi
+    .spyOn(lessonCatalog, 'getLesson')
+    .mockImplementation((id) => (id === original.id ? lesson : lookup(id)))
+  try {
+    for (const code of [
+      'echo "safe"',
+      'echo ".env" > .gitignore\ngit add .\ngit commit -m "safe"',
+    ]) {
+      const browser = gradeGitTestCase(testCase, chayLenh(code, testCase.stdinLines))
+      const server = regradeInterpretedSubmission(original.id, code)
+      expect(server.results[0]).toEqual(browser)
+      expect(server.passed).toBe(code.includes('git commit'))
+    }
+  } finally {
+    spy.mockRestore()
+  }
 })

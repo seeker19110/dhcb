@@ -1524,3 +1524,156 @@ git tag -a v1.0 -m "ban chinh thuc"`)
     expect(r.output).toContain('phat hanh dau tien')
   })
 })
+
+describe('gitignore — subset, atomicity và bounds', () => {
+  const fixture = [
+    'git init',
+    'echo "doc" > README.md',
+    'echo "secret" > .env',
+    'echo "weights" > models/a.pt',
+    'echo "cache" > nested/__pycache__/a.py',
+    'echo "ok" > .env.example',
+    'echo "ok" > __pycache__',
+  ]
+  const ignore =
+    'echo ".env" > .gitignore\necho "*.pt" >> .gitignore\necho "__pycache__/" >> .gitignore'
+  it('bỏ ignored khỏi status/add, giữ file trong workdir; benign vẫn theo dõi', () => {
+    const r = chayLenh(`${ignore}\ngit add .\ngit commit -m "safe"\ngit status\nls`, fixture)
+    expect(r.error).toBeUndefined()
+    expect(Object.keys(r.gitState!.headSnapshot!)).toEqual(
+      expect.arrayContaining(['README.md', '.gitignore', '.env.example', '__pycache__']),
+    )
+    for (const p of ['.env', 'models/a.pt', 'nested/__pycache__/a.py']) {
+      expect(Object.hasOwn(r.gitState!.headSnapshot!, p)).toBe(false)
+      expect(Object.hasOwn(r.gitState!.workdir, p)).toBe(true)
+    }
+    expect(r.output).toContain('thu muc lam viec sach')
+  })
+  it('preflight explicit path và invalid ignore không staging một phần', () => {
+    const r = chayLenh(`${ignore}\ngit add README.md .env`, fixture)
+    expect(r.error).toContain('bo qua')
+    expect(r.gitState!.staged).toEqual({})
+    const missing = chayLenh('git add README.md missing', fixture)
+    expect(missing.gitState!.staged).toEqual({})
+    for (const pattern of ['!secret', '**', '?', '[ab]', '/models/*.pt', 'x\\y']) {
+      const invalid = chayLenh(`echo "${pattern}" > .gitignore\ngit add .`, fixture)
+      expect(invalid.error).toContain('dong 1')
+      expect(invalid.gitState!.staged).toEqual({})
+    }
+  })
+  it('ignore ở workdir có hiệu lực; tracked hoặc staged trước ignore không bị loại', () => {
+    const r = chayLenh(
+      `git add .env\n${ignore}\ngit add .\ngit commit -m "tracked"\necho "changed" > .env\ngit status\ngit add .env`,
+      fixture,
+    )
+    expect(r.error).toBeUndefined()
+    expect(r.gitState!.headSnapshot!['.env']).toBe('secret\n')
+    expect(r.gitState!.staged['.env']).toBe('changed\n')
+    expect(r.output).toContain('sua: .env')
+    expect(chayLenh('git add -f .env', fixture).error).toContain('force')
+  })
+  it('snapshot tách các maps và giới hạn entrypoint/path/file/command', () => {
+    const r = chayLenh('git add README.md\ngit commit -m "one"', fixture)
+    const copy = r.gitState!.workdir as Record<string, string>
+    copy['README.md'] = 'mutated'
+    expect(r.gitState!.headSnapshot!['README.md']).toBe('doc\n')
+    expect(r.gitState!.commits[0]!.snapshot['README.md']).toBe('doc\n')
+    expect(chayLenh('x'.repeat(4001)).error).toBeDefined()
+    expect(chayLenh(Array(101).fill('ls').join('\n')).error).toBeDefined()
+    expect(chayLenh('', Array(21).fill('ls')).error).toBeDefined()
+    for (const p of ['../x', '/x', 'a//b', '__proto__', 'a/constructor'])
+      expect(chayLenh(`echo "x" > ${p}`).error).toBeDefined()
+    const fileLimit = chayLenh(
+      'echo "last" > last',
+      Array.from({ length: 20 }, (_, i) => `echo "${'x'.repeat(198)}" > f${i}`),
+    )
+    expect(fileLimit.error).toBeDefined() // bộ chuẩn bị vượt 4000 ký tự, không truncate
+  })
+})
+
+it('budget toàn lịch sử rollback commit mới, không truncate evidence cũ', () => {
+  const script = Array.from(
+    { length: 45 },
+    (_, i) => `echo "${i}" > marker\ngit add .\ngit commit -m "c${i}"`,
+  ).join('\n')
+  // 135 commands vượt trần lệnh; kiểm state budget dùng 32 lần (96 lệnh).
+  expect(chayLenh(script).error).toContain('100 lenh')
+  const bounded = Array.from(
+    { length: 32 },
+    (_, i) => `echo "${i}" > marker\ngit add .\ngit commit -m "c${i}"`,
+  ).join('\n')
+  const r = chayLenh(bounded, [
+    'git init',
+    ...Array.from({ length: 10 }, (_, i) => `echo "${'x'.repeat(380)}" > f${i}`),
+  ])
+  expect(r.error).toMatch(/128 KiB/)
+  expect(r.gitState!.commits.length).toBeGreaterThan(0)
+  expect(new TextEncoder().encode(JSON.stringify(r.gitState)).length).toBeLessThanOrEqual(
+    128 * 1024,
+  )
+  expect(r.gitState!.headMessage).toBe(r.gitState!.commits.at(-1)!.message)
+})
+
+it('toString/valueOf là tên file bình thường: mọi lookup chỉ đọc own property', () => {
+  for (const name of ['toString', 'valueOf', 'hasOwnProperty']) {
+    const ignored = chayLenh(
+      `git init\necho "${name}" > .gitignore\necho "fake" > ${name}\ngit status`,
+    )
+    expect(ignored.error).toBeUndefined()
+    expect(ignored.output).not.toContain(`sua: ${name}`)
+    const restore = chayLenh(`git init\ngit restore ${name}`)
+    expect(restore.error).toBeDefined()
+    expect(Object.hasOwn(restore.gitState!.workdir, name)).toBe(false)
+    const append = chayLenh(`git init\necho "fake" >> ${name}\ngit add .\ngit commit -m "valid"`)
+    expect(append.error).toBeUndefined()
+    expect(append.gitState!.headSnapshot![name]).toBe('fake\n')
+    expect(append.output).not.toContain('[native code]')
+  }
+})
+
+it('metadata branches/remote/tags không dùng giá trị inherited làm commit', () => {
+  for (const name of ['toString', 'valueOf', 'hasOwnProperty']) {
+    const r = chayLenh(
+      `git init\ngit remote add origin https://fake.local/repo\ngit push origin ${name}`,
+    )
+    expect(r.error).toBeDefined()
+    expect(r.output).not.toContain('[native code]')
+    const branch = chayLenh(
+      `git init\necho "x" > a\ngit add .\ngit commit -m "base"\ngit branch ${name}\ngit switch ${name}\ngit log`,
+    )
+    expect(branch.error).toBeUndefined()
+    expect(branch.gitState!.headMessage).toBe('base')
+  }
+})
+
+it('append quá 4000 ký tự rollback file thay vì cắt nội dung', () => {
+  const original = `${'x'.repeat(3980)}\n`
+  const r = chayLenh(`echo "${'y'.repeat(30)}" >> f`, [`echo "${'x'.repeat(3980)}" > f`])
+  expect(r.error).toContain('4000 ky tu')
+  expect(r.gitState!.workdir['f']).toBe(original)
+})
+
+it('file thứ 101 rollback, vẫn giữ 100 file từ fixture và learner', () => {
+  const fixture = Array.from({ length: 20 }, (_, i) => `echo "fixture" > f${i}`)
+  const script = Array.from({ length: 81 }, (_, i) => `echo "learner" > l${i}`).join('\n')
+  const r = chayLenh(script, fixture)
+  expect(r.error).toContain('100 file')
+  expect(Object.keys(r.gitState!.workdir)).toHaveLength(100)
+  expect(r.gitState!.workdir['f19']).toBe('fixture\n')
+  expect(r.gitState!.workdir['l79']).toBe('learner\n')
+  expect(Object.hasOwn(r.gitState!.workdir, 'l80')).toBe(false)
+})
+
+it('commit thứ 101 rollback, giữ đầy đủ 100 commit trước đó', () => {
+  const r = chayLenh(Array(100).fill('git cherry-pick c1').join('\n'), [
+    'git init',
+    'echo "base" > f',
+    'git add .',
+    'git commit -m "base"',
+  ])
+  expect(r.error).toContain('100 commit')
+  expect(r.gitState!.commits).toHaveLength(100)
+  expect(r.gitState!.headSnapshot).toEqual({ f: 'base\n' })
+  expect(r.gitState!.headMessage).toBe('base')
+  expect(r.gitState!.commits.every((c) => c.snapshot['f'] === 'base\n')).toBe(true)
+})

@@ -1,5 +1,11 @@
 // grading — Engine chấm THUẦN cho bài học 8 bước (PR-L3): so output test-case (Make),
 // kiểm thứ tự Parsons, xáo trộn deterministic. KHÔNG đụng Pyodide/DOM — test được bằng vitest.
+import {
+  isCanonicalGitPath,
+  parseGitIgnore,
+  matchesGitIgnore,
+  type GitRunResult,
+} from './gitSim.js'
 import type { ProgrammingTestCase } from './lessonTypes.js'
 
 /**
@@ -33,6 +39,13 @@ export function gradeTestCase(
   actualRaw: string,
   runError?: string,
 ): TestCaseResult {
+  if (testCase.gitAssertions !== undefined)
+    return {
+      label: testCase.label,
+      hidden: testCase.hidden,
+      passed: false,
+      ...(testCase.hidden ? {} : { error: 'Ca nay can bo cham trang thai Git.' }),
+    }
   const actual = normalizeOutput(actualRaw)
   const expected = normalizeOutput(testCase.expected)
   const passed =
@@ -44,6 +57,62 @@ export function gradeTestCase(
     // Ca ẩn không lộ output/lỗi chi tiết (chống dò đáp án bằng in thử).
     ...(passed || testCase.hidden ? {} : { actual: actual.slice(0, MAX_ACTUAL_SHOWN) }),
     ...(runError && !testCase.hidden ? { error: runError } : {}),
+  }
+}
+
+/** Assertions là bằng chứng bổ sung; không tin transcript hoặc state do client gửi. */
+export function gradeGitTestCase(testCase: ProgrammingTestCase, run: GitRunResult): TestCaseResult {
+  const { gitAssertions, ...outputCase } = testCase
+  const outputResult = gradeTestCase(outputCase, run.output, run.error)
+  if (!gitAssertions || !outputResult.passed) return outputResult
+  const state = run.gitState
+  const fail = (): TestCaseResult => ({
+    label: testCase.label,
+    hidden: testCase.hidden,
+    passed: false,
+    ...(testCase.hidden ? {} : { error: 'Trang thai Git chua dat tieu chi cua ca cham.' }),
+  })
+  if (!state?.initialized || !state.headSnapshot || state.headMessage === null) return fail()
+  const has = (map: Readonly<Record<string, string>>, path: string) => Object.hasOwn(map, path)
+  try {
+    for (const assertion of gitAssertions) {
+      if ('path' in assertion && !isCanonicalGitPath(assertion.path)) return fail()
+      let passed: boolean
+      switch (assertion.type) {
+        case 'workdirContent':
+          passed =
+            has(state.workdir, assertion.path) &&
+            state.workdir[assertion.path] === assertion.content
+          break
+        case 'headContent':
+          passed =
+            has(state.headSnapshot, assertion.path) &&
+            state.headSnapshot[assertion.path] === assertion.content
+          break
+        case 'stagedAbsent':
+          passed = !has(state.staged, assertion.path)
+          break
+        case 'headAbsent':
+          passed = !has(state.headSnapshot, assertion.path)
+          break
+        case 'historyAbsent':
+          passed = state.commits.every((c) => !has(c.snapshot, assertion.path))
+          break
+        case 'commitMessage':
+          passed = state.headMessage === assertion.content
+          break
+        case 'headIgnoreProbe':
+          passed =
+            has(state.headSnapshot, '.gitignore') &&
+            matchesGitIgnore(assertion.path, parseGitIgnore(state.headSnapshot['.gitignore']!)) ===
+              assertion.ignored
+          break
+      }
+      if (!passed) return fail()
+    }
+    return outputResult
+  } catch {
+    return fail()
   }
 }
 
