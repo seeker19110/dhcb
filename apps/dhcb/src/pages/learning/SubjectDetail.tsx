@@ -561,10 +561,10 @@ export default function SubjectDetail() {
             {/* Khung giải bài tập */}
             <section className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5 space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-accent-400" />
                   <span>Nhập đề bài hoặc tải ảnh chụp</span>
-                </h3>
+                </h2>
                 {problemInput && (
                   <button
                     onClick={() => {
@@ -683,9 +683,9 @@ export default function SubjectDetail() {
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400 theme-light:text-emerald-900" />
-                    <h3 className="text-base font-bold text-white">
+                    <h2 className="text-base font-bold text-white">
                       Lời Giải Chi Tiết Từng Bước (AI Step Analysis)
-                    </h3>
+                    </h2>
                   </div>
 
                   <button
@@ -710,7 +710,7 @@ export default function SubjectDetail() {
                       key={idx}
                       className="bg-zinc-950 rounded-2xl p-4 border border-zinc-800/80 space-y-2.5"
                     >
-                      <h4 className="text-sm font-bold text-accent-300">{step.title}</h4>
+                      <h3 className="text-sm font-bold text-accent-300">{step.title}</h3>
                       <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
                         {step.detail}
                       </p>
@@ -758,9 +758,9 @@ export default function SubjectDetail() {
                       {String(chapIdx + 1).padStart(2, '0')}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm sm:text-base font-bold text-white leading-snug">
+                      <h2 className="text-sm sm:text-base font-bold text-white leading-snug">
                         {chap.title}
-                      </h4>
+                      </h2>
                       <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
                         {chap.description}
                       </p>
@@ -854,7 +854,7 @@ export default function SubjectDetail() {
                             ? 'Vận dụng'
                             : 'Vận dụng cao'}
                       </span>
-                      <h4 className="text-sm font-bold text-white inline">{prob.title}</h4>
+                      <h2 className="text-sm font-bold text-white inline">{prob.title}</h2>
                     </div>
                     <button
                       onClick={() => loadSampleProblem(prob.prompt, prob.solutionSteps)}
