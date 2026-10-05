@@ -10,7 +10,18 @@
 //      trên khung 420–716 đơn vị nên ở màn điện thoại (SVG rộng ~358px) đo được 1.000/1.861 nhãn
 //      dưới 10px, tệ nhất 6px. Không sửa tay từng nhãn được; hộp thoại toàn màn hình tự xoay hình
 //      khổ ngang theo chiều dài màn hình dựng đứng, nên chữ về lại đúng cỡ kể cả khi khoá xoay.
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+  type Ref,
+  type RefObject,
+} from 'react'
 import { boCucXemLon, chuQuaNho } from './lessonAnimationZoom.js'
 import { giaiMoc, type TrangThaiMoc } from './animationKeyframes.js'
 import type {
@@ -191,6 +202,7 @@ interface AnimationSvgProps {
   descriptionId: string
   svgRef?: Ref<SVGSVGElement>
   style?: CSSProperties
+  onAnimationEnd?: (event: AnimationEvent<SVGSVGElement>) => void
 }
 
 /** Thẻ svg của hoạt ảnh — tách riêng để vẽ ĐÚNG MỘT cách ở cả trong bài lẫn khung "Xem lớn".
@@ -203,10 +215,12 @@ function AnimationSvg({
   descriptionId,
   svgRef,
   style,
+  onAnimationEnd,
 }: AnimationSvgProps) {
   return (
     <svg
       ref={svgRef}
+      onAnimationEnd={onAnimationEnd}
       className={`dhcb-anim-${uid} w-full h-auto`}
       style={style}
       viewBox={`0 0 ${spec.viewBoxWidth} ${spec.viewBoxHeight}`}
@@ -261,7 +275,12 @@ function AnimationSvg({
         // tên → KHÔNG hoạt ảnh nào từng chạy ở cả 4 môn STEM lẫn Lập trình, mà mọi cổng (Zod,
         // snapshot HTML, ảnh chụp cảnh đầu) vẫn xanh vì cảnh đầu vốn đúng.
         return (
-          <g key={shape.id} data-animated={animName ? 'true' : undefined} style={initialStyle}>
+          <g
+            key={shape.id}
+            data-animated={animName ? 'true' : undefined}
+            data-animation-shape={shape.id}
+            style={initialStyle}
+          >
             <Shape shape={shape} />
           </g>
         )
@@ -271,7 +290,8 @@ function AnimationSvg({
 }
 
 interface XemLonProps extends Omit<AnimationSvgProps, 'svgRef' | 'style'> {
-  playing: boolean
+  playback: Playback
+  inlineSvgRef: RefObject<SVGSVGElement | null>
   onTogglePlay: () => void
   onClose: () => void
 }
@@ -281,7 +301,8 @@ interface XemLonProps extends Omit<AnimationSvgProps, 'svgRef' | 'style'> {
  * còn lại của trang thành inert) và Esc để đóng. Tiêu điểm được trả về nút mở ở `onClose` của nơi
  * gọi. Dùng thẻ gốc vì hook hộp thoại của dự án nằm ở `apps/`, mà `packages/` không được import `apps/`.
  */
-function XemLon({ spec, playing, onTogglePlay, onClose, ...svg }: XemLonProps) {
+function XemLon({ spec, playback, inlineSvgRef, onTogglePlay, onClose, ...svg }: XemLonProps) {
+  const zoomSvgRef = useRef<SVGSVGElement>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const nutDongRef = useRef<HTMLButtonElement>(null)
   const khungRef = useRef<HTMLDivElement>(null)
@@ -313,6 +334,24 @@ function XemLon({ spec, playing, onTogglePlay, onClose, ...svg }: XemLonProps) {
   }, [])
 
   const boCuc = khung ? boCucXemLon(spec, khung.w, khung.h) : null
+  // Khung lớn mount sau số đo ResizeObserver. Đồng bộ trước khi vẽ, theo ID shape,
+  // vì getAnimations() không có hợp đồng thứ tự giữa hai SVG.
+  useLayoutEffect(() => {
+    const inline = inlineSvgRef.current
+    const zoom = zoomSvgRef.current
+    if (!inline || !zoom) return
+    const times = new Map<string, CSSNumberish>()
+    for (const group of inline.querySelectorAll<SVGGElement>('g[data-animated]')) {
+      const animation = group.getAnimations?.()[0]
+      if (animation?.currentTime != null)
+        times.set(group.dataset.animationShape ?? '', animation.currentTime)
+    }
+    for (const group of zoom.querySelectorAll<SVGGElement>('g[data-animated]')) {
+      const time = times.get(group.dataset.animationShape ?? '')
+      const animation = group.getAnimations?.()[0]
+      if (time !== undefined && animation) animation.currentTime = time
+    }
+  }, [boCuc, inlineSvgRef, svg.animNames])
   // Mô tả trong bài nằm NGOÀI dialog, bị inert khi dialog mở, nên khung này mang bản riêng.
   const moTaId = `dhcb-anim-xem-lon-mo-ta-${svg.uid}`
 
@@ -334,9 +373,10 @@ function XemLon({ spec, playing, onTogglePlay, onClose, ...svg }: XemLonProps) {
           <button
             type="button"
             onClick={onTogglePlay}
+            aria-label={playbackLabel(playback)}
             className="min-h-[44px] shrink-0 rounded-lg border border-line-strong px-3 text-content"
           >
-            {playing ? 'Tạm dừng' : 'Chạy'}
+            {playback === 'running' ? 'Tạm dừng' : playback === 'finished' ? 'Chạy lại' : 'Chạy'}
           </button>
           <button
             ref={nutDongRef}
@@ -361,6 +401,7 @@ function XemLon({ spec, playing, onTogglePlay, onClose, ...svg }: XemLonProps) {
               spec={spec}
               {...svg}
               descriptionId={moTaId}
+              svgRef={zoomSvgRef}
               style={{
                 position: 'absolute',
                 left: '50%',
@@ -376,11 +417,22 @@ function XemLon({ spec, playing, onTogglePlay, onClose, ...svg }: XemLonProps) {
   )
 }
 
+type Playback = 'running' | 'paused' | 'finished'
+
+function playbackLabel(playback: Playback): string {
+  return playback === 'running'
+    ? 'Tạm dừng hoạt ảnh'
+    : playback === 'finished'
+      ? 'Chạy lại hoạt ảnh'
+      : 'Chạy hoạt ảnh'
+}
+
 export function LessonAnimation({ spec, className }: LessonAnimationProps) {
   const rawId = useId()
   // useId sinh chuỗi có dấu ':' — không hợp lệ trong tên @keyframes và id của SVG.
   const uid = rawId.replace(/[^a-zA-Z0-9]/g, '')
-  const [playing, setPlaying] = useState(true)
+  const [playback, setPlayback] = useState<Playback>('running')
+  const [run, setRun] = useState(0)
   const [xemLon, setXemLon] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const nutXemLonRef = useRef<HTMLButtonElement>(null)
@@ -404,7 +456,7 @@ export function LessonAnimation({ spec, className }: LessonAnimationProps) {
     const blocks: string[] = []
     for (const shape of spec.shapes) {
       if (!shape.keyframes || shape.keyframes.length === 0) continue
-      const name = `dhcbAnim${uid}${shape.id.replace(/[^a-zA-Z0-9]/g, '')}`
+      const name = `dhcbAnim${uid}run${run}${shape.id.replace(/[^a-zA-Z0-9]/g, '')}`
       names.set(shape.id, name)
       // Gốc xoay/co giãn: `origin` nếu hình có khai (đuôi mũi tên, chân cột, điểm treo…), không
       // thì tâm hình như trước — hoạt ảnh cũ không đổi.
@@ -412,7 +464,7 @@ export function LessonAnimation({ spec, className }: LessonAnimationProps) {
       blocks.push(keyframesCss(name, shape.keyframes, spec.durationMs, goc, shape.opacity))
     }
     return { css: blocks.join('\n'), animNames: names }
-  }, [spec, uid])
+  }, [spec, uid, run])
 
   // Các vai trò màu thật sự có mũi tên — chỉ sinh marker cần dùng.
   const arrowRoles = useMemo(
@@ -422,6 +474,26 @@ export function LessonAnimation({ spec, className }: LessonAnimationProps) {
       ),
     [spec],
   )
+
+  function togglePlayback() {
+    if (playback === 'finished') setRun((previous) => previous + 1)
+    setPlayback(playback === 'running' ? 'paused' : 'running')
+  }
+
+  function handleAnimationEnd(event: AnimationEvent<SVGSVGElement>) {
+    const target = event.target
+    if (
+      spec.loop ||
+      event.pseudoElement !== '' ||
+      !(target instanceof SVGElement) ||
+      target.tagName.toLowerCase() !== 'g' ||
+      target.parentNode !== svgRef.current ||
+      target.getAttribute('data-animated') !== 'true' ||
+      animNames.get(target.getAttribute('data-animation-shape') ?? '') !== event.animationName
+    )
+      return
+    setPlayback('finished')
+  }
 
   const descriptionId = `dhcb-anim-desc-${uid}`
 
@@ -434,7 +506,7 @@ ${css}
   animation-timing-function: linear;
   animation-iteration-count: ${spec.loop ? 'infinite' : '1'};
   animation-fill-mode: both;
-  animation-play-state: ${playing ? 'running' : 'paused'};
+  animation-play-state: ${playback === 'running' ? 'running' : 'paused'};
 }
 /* Người dùng bật "giảm chuyển động" của hệ điều hành: giữ nguyên cảnh đầu, không chạy.
    Nội dung không mất đi — mô tả bằng lời luôn hiển thị bên dưới. */
@@ -450,6 +522,7 @@ ${css}
         arrowRoles={arrowRoles}
         descriptionId={descriptionId}
         svgRef={svgRef}
+        onAnimationEnd={handleAnimationEnd}
       />
 
       <figcaption className="mt-2 space-y-2">
@@ -467,10 +540,10 @@ ${css}
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setPlaying((p) => !p)}
+            onClick={togglePlayback}
             className="min-h-[44px] rounded-lg border border-line-strong px-4 text-content"
           >
-            {playing ? 'Tạm dừng hoạt ảnh' : 'Chạy hoạt ảnh'}
+            {playbackLabel(playback)}
           </button>
           {chuQuaNho(spec, rongSvg) && (
             <button
@@ -492,8 +565,9 @@ ${css}
           animNames={animNames}
           arrowRoles={arrowRoles}
           descriptionId={descriptionId}
-          playing={playing}
-          onTogglePlay={() => setPlaying((p) => !p)}
+          playback={playback}
+          inlineSvgRef={svgRef}
+          onTogglePlay={togglePlayback}
           onClose={() => {
             setXemLon(false)
             // Trả tiêu điểm về đúng nút đã mở, không để rơi về <body>.

@@ -1,6 +1,6 @@
 # Storyboard thí điểm: Gradient descent và learning rate
 
-> Trạng thái: **thiết kế chờ triển khai và kiểm ảnh**, ngày 2026-10-05. Bài đích: `mathai-u3-l3`. Lát C1 đang nối hợp đồng/công cụ; tài liệu này chuẩn bị lát nội dung tiếp theo. Chưa thêm hoạt họa vào bài, chưa chạy kiểm giao diện, chưa xác nhận chất lượng thị giác.
+> Trạng thái: **pilot đã triển khai tại máy, đang kiểm toàn kho trước PR/merge**, ngày 2026-10-05. Bài đích: `mathai-u3-l3`. C1 đã merge ở PR #1237; hợp đồng phát lại đã merge ở PR #1238. Mục 8 ghi dữ liệu triển khai và bằng chứng hiện tại; chưa nghiệm thu pilot trên main.
 
 ## 1. Mục tiêu và bằng chứng đã đọc
 
@@ -142,3 +142,13 @@ Các điểm dùng chung do coordinator sở hữu: hợp đồng optional anima
 Nghiệm thu gồm parse dữ liệu, test số, ảnh thật có ít nhất ba trạng thái khác nhau, `getAnimations()` chứng minh chuyển động chạy, đọc đủ bản chữ khi giảm chuyển động, kiểm cảnh cuối và hành vi pause/resume thực tế. Các gate sản phẩm đầy đủ chạy trên commit tích hợp cuối, không được thay bằng kết quả tính Decimal trong tài liệu này.
 
 **Bằng chứng hiện tại:** đã đọc source, tính đáp án bằng Python Decimal, lập storyboard và sửa fallback reduced motion ở renderer trong C1; unit regression trước/sau có bằng chứng nêu trên. Chưa cài dữ liệu hoạt họa gradient, chưa sửa lỗi bài, chưa có ảnh UI của pilot. Gate tích hợp và browser do coordinator chạy trên thay đổi cuối. Tài liệu không phải xác nhận pilot đã hoàn thành.
+
+## 8. Bản triển khai và kiểm chứng pilot
+
+- Dữ liệu thực dùng viewBox **480×540**, 12 giây, không lặp; giữ cảnh cuối đến khi người học chọn phát lại. Hai làn dùng hình tròn/hình vuông, nhãn số riêng; không phụ thuộc màu để phân biệt. Mọi nhãn SVG cỡ 20: trên trang thật ở viewport 390 px, chữ nhỏ nhất khoảng 13,17 px. Đây là điều chỉnh từ bố cục đề xuất để đạt mục tiêu đọc trên điện thoại.
+- Nhãn số giữ trong 1.600 ms, chuyển trạng thái trong 800 ms; điểm loss chỉ xuất hiện tại tọa độ đánh giá rời rạc. Mũi tên chỉ hiện trong khoảng chuyển động. Mốc thứ năm tới 9.600 ms và giữ đến 12.000 ms.
+- Sửa Hook/theory/homework/SRS của đúng bài l3 để không hứa hội tụ cho mọi hàm, không gọi lr=1 là phân kỳ và không quy mọi NaN cho tốc độ học. Giữ ID, Predict, Make, lời giải lập trình và test cases.
+- Unit pilot kiểm phép cập nhật/tọa độ độc lập, nhãn/captions, thời gian giữ/chuyển cảnh và schema. Unit renderer kiểm tên animation từng lượt, giữ DOM/focus, bỏ sự kiện giả/cũ, đồng bộ hộp lớn theo ID.
+- Browser trên trang thật: bộ liên quan 11/11 đạt. Sau review độc lập, thêm mở hộp lớn trong lúc chạy và đo sai lệch thời gian sau mount/sau tiếp tục chạy ≤150 ms; riêng bộ pilot chạy lại 6/6 đạt. Hai theme ở 390 px qua ngưỡng chữ ≥12 px và quét accessibility AAA. Reduced motion giữ cảnh đầu cả sau thao tác phát/zoom.
+- Chụp trang bài thật tại **2%, 25%, 50%, 75%, 98%**, viewport **390/1440**, theme **blue-sky/dark-blue**. Người tích hợp đã xem đủ bốn montage (20 ảnh) sau sửa cỡ chữ: không thấy nhãn chồng nhau; mũi tên/phép tính khớp chuỗi. Ảnh nằm ngoài repo, trong `outputs/gradient-pilot/actual-page/` của phiên làm việc; không dùng ảnh chụp thay kiểm browser tương tác.
+- Review độc lập không phát hiện lỗi chặn ở số học, chú thích hoặc renderer; yêu cầu bổ sung tình huống mở zoom khi đang chạy đã xử lý. Build đầu phát hiện thiếu kiểu `this` trong mock unit được hub typecheck đọc; đã sửa, hub typecheck và renderer 28/28 đạt. Gate toàn kho bản tích hợp cuối và required CI còn chờ; không suy từ các lượt riêng rằng E2E toàn kho đã đạt.

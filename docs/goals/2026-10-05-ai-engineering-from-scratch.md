@@ -76,9 +76,9 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Goal gap: inventory và CSV đã khớp **523/523 source keys**, gồm **349 NEW, 174 EXTEND, 0 REUSE**. Đây là map K1 về mục tiêu/theory/Make, chưa phải 523 bài đã triển khai hoặc lab đã chạy. Mọi EXTEND có ID hiện hữu chính; mọi hàng có mức kiểm chứng. 345 ứng viên hoạt họa, 93 mục không ưu tiên hoạt họa, 85 mục Phase 19 chờ chọn cảnh khi có thiết kế project chi tiết.
 - Review: [phiếu quality review](../research/2026-10-05-ai-engineering-map-quality-review.md) đã xử lý năm ID thiếu và mô tả Build It quá rộng. [Bản đồ capstone](../research/2026-10-05-ai-engineering-phase19-map.md) có đủ 85 source keys và rubric từng nhóm. Chưa chạy lab nguồn; review sâu thuộc từng lát nội dung.
 - PR tài liệu: [#1236](https://github.com/seeker19110/dhcb/pull/1236). Chủ dự án đã duyệt phương án, cho phép PR/merge tài liệu khi kiểm tra đạt ngày 2026-10-05.
-- Cổng đặc tả: PR #1236 đã merge. C1 contract/UI/tooling/fallback giảm chuyển động đã merge qua [PR #1237](https://github.com/seeker19110/dhcb/pull/1237) sau khi metadata, security, quality và e2e đều đạt, gồm sáu shard E2E. [CI](https://github.com/seeker19110/dhcb/actions/runs/37317306434) kiểm head `c352d0199c6df9cb62d28e9e2c25cf9e837da1be`; các lượt E2E local chưa xanh vẫn được giữ trong log lịch sử, không dùng thay bằng chứng CI.
-- Blocker phát hành khóa: worker bảo mật còn Draft, cần PoC/ADR riêng để mở lại chấm code. Rà sâu bổ sung yêu cầu policy ghi hoàn thành không phụ thuộc tiền tố ID, tách ca đánh giá server khỏi bundle và đo batch 25 ca; chưa có bằng chứng worker chạy trên staging.
-- Next best slice: pilot `mathai-u3-l3`: sửa khái quát toán/ML sai, thêm hoạt họa theo storyboard, kiểm số học và ảnh thật. [Hợp đồng phát lại](../specs/2026-10-05-lesson-animation-replay.md) chuẩn bị sửa nút chạy sau lượt hữu hạn trước phát hành pilot. Phần content tiếp tục review theo từng nhóm outcome, không dùng map K1 thay nghiệm thu bài.
+- Cổng đặc tả: chương trình/hoạt họa #1236 và replay #1238 đã merge. C1 #1237 đã merge sau required quality/e2e đều đạt; pilot gradient/replay đang kiểm tại máy, chưa có trên main.
+- Blocker phát hành khóa: bộ chấm Python/JS/TS/SQL còn đóng. Chủ dự án xác nhận chưa có staging và yêu cầu chuẩn bị gói trước. ADR/spec gói chưa kích hoạt ở Draft PR [#1239](https://github.com/seeker19110/dhcb/pull/1239), còn chờ lựa chọn kiến trúc Docker rootless hoặc microVM; chưa chạy probe, triển khai worker hay mở chấm.
+- Next best slice: hoàn tất pilot `mathai-u3-l3` với replay, kiểm toàn kho/CI rồi merge; sau đó bổ sung mô phỏng Git ignore và chấm trạng thái theo spec riêng. Map K1 chưa thay nghiệm thu nội dung 20 khóa.
 - Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; chủ dự án đã cấp quyền PR/merge các lát mã theo đặc tả được duyệt, bắt đầu C1, với điều kiện required quality/e2e đạt trước merge. Quyền deploy production chưa được cấp.
 
 ## 6. Iteration log
@@ -126,6 +126,17 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Review vòng sau: bộ mô phỏng Git chưa thực thi `.gitignore` dù bài `p3-u11-l1` hướng dẫn dùng; cần lát sửa mô phỏng và rubric kiểm trạng thái thật trước reuse. ID bài mới hiện còn bị schema chặn; test registry hiện đòi mọi lesson phải chấm lại. Rủi ro bỏ sót policy chỉ phát sinh khi mở ID/language mới và phải được chặn tại API, không chỉ dựa test.
 - Next: merge hợp đồng replay, triển khai pilot gradient với một subagent sở hữu lesson/test và coordinator sở hữu renderer/browser/integration. Không đổi ID/Make/grading trong pilot.
 - Quyền: tiếp tục PR/merge tài liệu và source theo đặc tả được duyệt khi required checks đạt; chưa cấp deploy production. Quyết định staging/kiến trúc worker còn mở.
+
+### Iteration 4 — 2026-10-05
+
+- State: VERIFYING. Slice: pilot gradient `mathai-u3-l3` và replay đã có spec Approved/merge #1238.
+- Triển khai tại máy: hoạt họa 12 giây với hai tốc độ học, chữ SVG ≥20, cảnh số/điểm loss rời rạc, captions năm bước và sửa diễn đạt toán của đúng bài. Không đổi ID, Make hoặc quyền ghi completed.
+- Review: subagent độc lập rà số học, captions, replay/end-event và timeline zoom; yêu cầu thêm mở zoom khi đang chạy đã xử lý. Reviewer không thấy lỗi correctness chặn.
+- Browser: bộ hoạt họa liên quan 11/11 đạt; sau bổ sung running-zoom, bộ pilot 6/6 chạy lại đạt. Quét AAA/độ lớn chữ trên trang thật 390 px sáng/tối đều đạt. Người tích hợp đã xem 20 ảnh SVG trang thật theo ma trận năm mốc × hai viewport × hai theme.
+- Gate: build đầu phát hiện mock test thiếu kiểu `this`; đã sửa, hub typecheck và renderer 28/28 đạt. Một lượt kiểm toàn kho đồng thời bị gián đoạn khi môi trường khởi động lại; trước gián đoạn có timeout ActivityCalendarCard. Chưa coi lượt này đạt hoặc kết luận lỗi ngoài scope; lượt mới chạy các gate tuần tự, chẩn đoán riêng ca đó rồi full unit với hai workers, giữ nguyên assertions/timeout.
+- Worker: staging chưa có, PR tài liệu #1239 Draft đã chuẩn bị, không mở runner. Quyết định kiến trúc còn chờ trả lời; quyền PR/merge tài liệu và source sau cổng vẫn được giữ.
+- Goal gap: C1 hoàn tất, pilot chưa merge; 20 khóa chưa hoàn tất và không phase nào được đánh dấu DONE.
+- Next: ghi kết quả gate cuối, mở pilot PR và chỉ merge khi required quality/e2e đạt; sau đó reconcile main và thực thi lát Git đã được review/merge riêng.
 
 ## 7. Final audit
 
