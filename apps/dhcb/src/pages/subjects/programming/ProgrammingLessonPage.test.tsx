@@ -61,6 +61,35 @@ function taoBai(patch: Partial<ProgrammingLesson['make']> = {}): ProgrammingLess
 
 const baiHienTai: { lesson: ProgrammingLesson } = { lesson: taoBai() }
 
+const hoatHoa: NonNullable<ProgrammingLesson['animation']> = {
+  title: 'Dữ liệu đi qua bước xử lý',
+  description: 'Dữ liệu từ đầu vào đi qua bước xử lý để tạo kết quả đầu ra.',
+  viewBoxWidth: 320,
+  viewBoxHeight: 120,
+  durationMs: 2000,
+  loop: false,
+  shapes: [
+    {
+      kind: 'circle',
+      id: 'du-lieu',
+      cx: 30,
+      cy: 60,
+      r: 10,
+      fill: 'accent',
+      keyframes: [
+        { atMs: 0, dx: 0 },
+        { atMs: 1000, dx: 130 },
+        { atMs: 2000, dx: 260 },
+      ],
+    },
+  ],
+  captions: [
+    { atMs: 0, text: 'Nhận dữ liệu đầu vào.' },
+    { atMs: 1000, text: 'Xử lý dữ liệu.' },
+    { atMs: 2000, text: 'Trả kết quả đầu ra.' },
+  ],
+}
+
 vi.mock('../../../components/Layout', () => ({ default: () => null }))
 vi.mock('../../../components/programming/LivePreview', () => ({ default: () => null }))
 vi.mock('../../../components/programming/AiHelpPanel', () => ({ default: () => null }))
@@ -234,6 +263,69 @@ afterEach(() => {
   act(() => root.unmount())
   container.remove()
   vi.useRealTimers()
+})
+
+describe('ProgrammingLessonPage — hoạt họa tùy chọn', () => {
+  it('bài thiếu hoạt họa không hiện khung rỗng hay nút phát/dừng', () => {
+    mo()
+    expect(container.querySelector('figure')).toBeNull()
+    expect(chu()).not.toContain('Tạm dừng hoạt ảnh')
+    expect(chu()).toContain('Lý thuyết')
+  })
+
+  it('hiện renderer thật sau lý thuyết ở Khái niệm, có mô tả và toàn bộ lời dẫn', () => {
+    mo({ ...taoBai(), animation: hoatHoa })
+    const concept = container.querySelector('section[aria-labelledby="concept"]')!
+    const figure = concept.querySelector('figure')!
+    expect(figure).not.toBeNull()
+    expect(figure.previousElementSibling?.textContent).toBe('Lý thuyết')
+    expect(figure.textContent).toContain(hoatHoa.title)
+    expect(figure.textContent).toContain(hoatHoa.description)
+    for (const caption of hoatHoa.captions!) expect(figure.textContent).toContain(caption.text)
+    const descriptionId = figure.querySelector('svg')?.getAttribute('aria-describedby')
+    expect(document.getElementById(descriptionId!)?.textContent).toBe(hoatHoa.description)
+    expect(figure.querySelector('[data-animated="true"]')).not.toBeNull()
+
+    bam('Ví dụ mẫu')
+    expect(container.querySelector('figure')).toBeNull()
+    bam('Khái niệm')
+    expect(container.querySelector('figure')?.textContent).toContain(hoatHoa.description)
+  })
+
+  it('dừng/chạy hoạt họa không gọi máy chạy code, ghi hoàn thành hay tạo thẻ SRS', () => {
+    mo({ ...taoBai(), animation: hoatHoa })
+    const soLanLuuTruoc = luuTienDo.mock.calls.length
+    bam('Tạm dừng hoạt ảnh')
+    expect(container.querySelector('figure style')?.textContent).toContain(
+      'animation-play-state: paused',
+    )
+    bam('Chạy hoạt ảnh')
+    expect(container.querySelector('figure style')?.textContent).toContain(
+      'animation-play-state: running',
+    )
+    expect(mayChay.soLan).toBe(0)
+    expect(luuTienDo.mock.calls.length).toBe(soLanLuuTruoc)
+    expect(luuTienDo.mock.calls.some((call) => call[2] === 'completed')).toBe(false)
+    expect(themSrs).not.toHaveBeenCalled()
+  })
+
+  it('thêm hoạt họa vẫn khôi phục nháp code cũ, không đánh dấu bài đã đổi', () => {
+    mo()
+    bam('Tự viết')
+    goCode('print("nhap truoc khi them hoat hoa")')
+    act(() => vi.advanceTimersByTime(600))
+    act(() => root.unmount())
+    root = createRoot(container)
+    mo({ ...taoBai(), animation: hoatHoa })
+
+    expect(oCode().value).toBe('print("nhap truoc khi them hoat hoa")')
+    expect(chu()).toContain('Đã khôi phục code bạn gõ')
+    expect(container.querySelector('[role="dialog"]')).toBeNull()
+    expect(luuTienDo.mock.calls.some((call) => call[2] === 'completed')).toBe(false)
+    expect(themSrs).not.toHaveBeenCalled()
+    bam('Khái niệm')
+    expect(container.querySelector('figure')?.textContent).toContain(hoatHoa.title)
+  })
 })
 
 describe('ProgrammingLessonPage — phiên học (S08-2)', () => {

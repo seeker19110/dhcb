@@ -4,7 +4,7 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Goal ID           | GOAL-2026-010                                                                                                                                                                         |
 | Owner             | Chủ dự án DHCB                                                                                                                                                                        |
-| Trạng thái        | WAITING                                                                                                                                                                               |
+| Trạng thái        | VERIFYING                                                                                                                                                                             |
 | Bắt đầu           | 2026-10-05                                                                                                                                                                            |
 | Target review     | Sau mỗi lát nội dung và trước khi mở catalog                                                                                                                                          |
 | Quyền được cấp    | Nghiên cứu, lập kế hoạch, viết đặc tả và giao các phần nghiên cứu độc lập; thay đổi source sau khi đặc tả được duyệt và merge theo quy trình repo                                     |
@@ -67,13 +67,14 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 
 ## 5. Current truth
 
-- Commit `main` đã reconcile: `c7eca92` (2026-10-05).
+- Commit `main` đã reconcile: `93904beaf1d4a29bb9c17ffa13eb7b1983bbe5eb` (2026-10-05, merge PR #1236; remote main kiểm lại không đổi).
 - Goal gap: inventory và CSV đã khớp **523/523 source keys**, gồm **349 NEW, 174 EXTEND, 0 REUSE**. Đây là map K1 về mục tiêu/theory/Make, chưa phải 523 bài đã triển khai hoặc lab đã chạy. Mọi EXTEND có ID hiện hữu chính; mọi hàng có mức kiểm chứng. 345 ứng viên hoạt họa, 93 mục không ưu tiên hoạt họa, 85 mục Phase 19 chờ chọn cảnh khi có thiết kế project chi tiết.
 - Review: [phiếu quality review](../research/2026-10-05-ai-engineering-map-quality-review.md) đã xử lý năm ID thiếu và mô tả Build It quá rộng. [Bản đồ capstone](../research/2026-10-05-ai-engineering-phase19-map.md) có đủ 85 source keys và rubric từng nhóm. Chưa chạy lab nguồn; review sâu thuộc từng lát nội dung.
 - PR tài liệu: [#1236](https://github.com/seeker19110/dhcb/pull/1236). Chủ dự án đã duyệt phương án, cho phép PR/merge tài liệu khi kiểm tra đạt ngày 2026-10-05.
-- Blocker hiện tại: chờ các required checks và merge đặc tả trước source; worker bảo mật còn Draft, cần PoC/ADR riêng để mở lại chấm code. Các subagent dừng do hạn mức sử dụng; coordinator tiếp tục tích hợp kết quả đã lưu.
-- Next best slice: sau merge spec, C1 mở trường hoạt họa tùy chọn và renderer trong bài Lập trình, có test tương thích. C1 độc lập với worker; việc công bố khóa coding mới vẫn chờ worker đạt cổng. Phần content tiếp tục review theo từng nhóm outcome, không dùng map K1 thay nghiệm thu bài.
-- Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; quyền push/merge hiện được cấp rõ cho **tài liệu**. Mã sản phẩm có thể chuẩn bị, kiểm và commit tại máy; chưa có quyền merge/deploy mã sản phẩm.
+- Cổng đặc tả: PR #1236 đã merge sau quality/e2e/metadata xanh, gồm sáu shard E2E. Các subagent đã tiếp tục và bàn giao phần hợp đồng/trang bài, công cụ ảnh, storyboard gradient; fallback giảm chuyển động đang triển khai.
+- Blocker phát hành khóa: worker bảo mật còn Draft, cần PoC/ADR riêng để mở lại chấm code. Mã C1 đã triển khai tại máy; build/typecheck/lint/format và unit suite đạt, E2E liên quan hoạt họa đạt nhưng E2E toàn kho chưa đạt. Chủ dự án đã cấp quyền PR/merge mã ngày 2026-10-05, có điều kiện chỉ merge sau khi required quality/e2e đều đạt. Chưa push/merge tại thời điểm checkpoint này.
+- Next best slice: hoàn tất cổng C1 mở trường hoạt họa tùy chọn và renderer trong bài Lập trình, công cụ ảnh ma trận và sửa fallback giảm chuyển động, có test tương thích. C1 độc lập với worker; việc công bố khóa coding mới vẫn chờ worker đạt cổng. Phần content tiếp tục review theo từng nhóm outcome, không dùng map K1 thay nghiệm thu bài.
+- Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; chủ dự án đã cấp quyền PR/merge các lát mã theo đặc tả được duyệt, bắt đầu C1, với điều kiện required quality/e2e đạt trước merge. Quyền deploy production chưa được cấp.
 
 ## 6. Iteration log
 
@@ -90,6 +91,26 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Blocker: đặc tả chương trình và hoạt họa đã được chủ dự án duyệt ngày 2026-10-05 nhưng chưa merge; worker bảo mật chờ PoC và quyết định kiến trúc.
 - Next best slice: merge đặc tả sau required checks, triển khai C1 hoạt họa bài học.
 - Quyền cần thêm: đã được cấp quyền đưa đặc tả lên PR và merge khi kiểm tra đạt; quyết định kiến trúc worker vẫn cần PoC riêng.
+
+### Iteration 2 — 2026-10-05
+
+- State: VERIFYING; quyền PR/merge mã có điều kiện đã được cấp.
+- Slice: C1 hợp đồng hoạt họa Lập trình, trang Khái niệm, công cụ chụp ma trận và lỗi fallback giảm chuyển động của renderer chung.
+- Base: `93904be`; nhánh `codex/programming-lesson-animation`.
+- Goal gap: chưa thêm khóa/bài sản phẩm; đang mở năng lực hiển thị và kiểm hoạt họa. Bốn storyboard thí điểm và nội dung từng outcome vẫn cần triển khai/nghiệm thu riêng.
+- Subagent: hợp đồng/trang bài, tooling ảnh, storyboard/fallback; reviewer chéo độc lập rà tooling và số liệu gradient.
+- Bằng chứng tạm: 4 suites / 73 tests trang/schema/loader/renderer cũ đạt; 15 tests parser đạt; ESLint các file hợp đồng/tooling và Prettier riêng đạt. Các con số này không thay full gate trên trạng thái tích hợp cuối.
+- Browser smoke tooling: 20 ảnh + 4 montage ở 390/1440 × blue-sky/dark-blue, 5 CSS animations/lượt, 4 ảnh khác nhau mỗi tổ hợp, SVG rộng 358/720px, không cảnh báo hình học. Legacy 760px giữ 5 ảnh và đường dẫn cũ. Reviewer đã xem bốn montage; đây là bài STEM mẫu, chưa nghiệm thu bài Lập trình hay a11y nội dung.
+- Môi trường: Chromium thiếu bốn thư viện hệ thống; tải/extract thư viện vào `work/browser-libs` để kiểm cục bộ, không đổi dependency sản phẩm.
+- Phát hiện: reduced motion làm các lớp opacity/trạng thái transform mất cảnh đầu; C1 bổ sung hồi quy. Storyboard gradient phân biệt dao động lr=1 và hội tụ lr=0,1; lỗi nội dung cũ được ghi để sửa khi triển khai pilot.
+- PoC grader: [kế hoạch kiểm chứng](../research/2026-10-05-programming-grading-poc-plan.md) ở trạng thái Proposed, có 16 ca kiểm và ranh giới supervisor/container; chưa chọn staging, chạy probe hay phê duyệt kiến trúc.
+- Gate tĩnh: `npm run build`, `npm run typecheck`, `npm run lint`, `npm run format:check` đều exit 0 trên bản tích hợp. Sau sửa harness E2E, typecheck E2E + ESLint/Prettier riêng file tiếp tục đạt.
+- Unit toàn kho: **793 files đạt, 1 file skip; 18.508 tests đạt, 2 skip / 18.510**; exit 0, 311,86 giây trên bản sao kiểm chứng Linux. Lượt đầu trên ổ Windows gặp timeout 5 giây ở phép quét tệp `UiNoise.design.test.ts`; đã dừng lượt đó, không tăng timeout. Đối chiếu 4.269 tệp nguồn trước lượt native: không sai khác; cài cùng lockfile.
+- E2E hoạt họa: **5/5 đạt**, gồm 2 ca giảm chuyển động thật và 3 ca zoom/rotation/Esc/focus. Harness SSR phải chạy Node/tsx riêng với tsconfig.base, vì Playwright biến đổi JSX theo dạng component-test; lỗi harness được sửa, assertions giữ nguyên.
+- E2E toàn kho: lượt đầu gặp cold-load timeout ở 2FA; chẩn đoán và chạy lại 12/12 ca 2FA đạt. Lượt rộng tiếp theo dừng theo `--max-failures=3`: 53 passed, 3 failed, 1 interrupted, 1.195 chưa chạy / 1.252. Hai lỗi là DOM đổi trong lúc quét AAA (`p1-u4-l1`, `/goc-hoc-tap/english`, dark-blue); một timeout ở `/bai-hoc`, blue-sky. Không khẳng định đây chỉ là lỗi môi trường hoặc cổng E2E đã xanh; ba ca lỗi đều đã chạy lại đạt với một worker, không đổi timeout/assertions. Lượt chẩn đoán dùng `--last-failed` còn chọn cả ca chưa chạy; đã dừng sau khi xác nhận ba ca lỗi để tránh lặp quét ngoài mục tiêu chẩn đoán. Cần full CI trước merge; không coi các lượt rời rạc là một lượt E2E toàn kho xanh.
+- Root review: đã đọc toàn bộ diff; reviewer chéo không thấy lỗi mới trong contract/tooling/fallback. Không hạ tiêu chuẩn a11y, sửa allowlist hoặc thêm skip để vượt cổng.
+- Quyền: tài liệu được PR/merge; source được triển khai/kiểm/commit tại máy. C1 đã có diff và bằng chứng để review; chủ dự án đã cho phép push/mở PR mã và merge có điều kiện sau khi required quality/e2e đều đạt. Chưa được triển khai production.
+- Next: PR C1 và full CI; sau merge reconcile main, triển khai pilot gradient từ storyboard. Worker vẫn cần quyết định staging/ADR theo kế hoạch PoC Proposed.
 
 ## 7. Final audit
 

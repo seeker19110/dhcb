@@ -192,5 +192,5 @@ Hành trình: chọn mục tiêu → xem tiên quyết và bài chẩn đoán �
 
 ## 18. Trạng thái nghiệm thu
 
-- Đặc tả đã được chủ dự án **Approved for implementation** ngày 2026-10-05; còn chờ merge theo `AGENTS.md`. Chưa có source change hay bằng chứng final gate.
+- Đặc tả đã được chủ dự án **Approved for implementation** ngày 2026-10-05; đã merge qua [PR #1236](https://github.com/seeker19110/dhcb/pull/1236) tại `93904be`. C1 đang được triển khai/kiểm tra cục bộ; chưa có bằng chứng hoàn tất khóa học trên `main`.
 - Bản đồ cuối hiện có 523/523 quyết định K1: 349 NEW, 174 EXTEND. Đã sửa các lỗi truy vết phát hiện trong quality review. Mỗi lát nội dung vẫn phải đọc sâu và chạy lab/ca chấm trước nghiệm thu; 85 mục capstone chờ quyết định hoạt họa ở spec project.

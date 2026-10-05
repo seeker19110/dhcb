@@ -12,7 +12,7 @@
 //      khổ ngang theo chiều dài màn hình dựng đứng, nên chữ về lại đúng cỡ kể cả khi khoá xoay.
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type Ref } from 'react'
 import { boCucXemLon, chuQuaNho } from './lessonAnimationZoom.js'
-import { giaiMoc } from './animationKeyframes.js'
+import { giaiMoc, type TrangThaiMoc } from './animationKeyframes.js'
 import type {
   AnimationColorRole,
   AnimationKeyframe,
@@ -65,6 +65,11 @@ function gon(x: number): number {
   return Math.round(x * 10_000) / 10_000
 }
 
+/** Cùng phép biến đổi cho keyframe đang chạy và trạng thái nền khi giảm chuyển động. */
+function transformCss(m: TrangThaiMoc): string {
+  return `translate(${m.dx}px, ${m.dy}px) rotate(${m.rotate}deg) scale(${gon(m.scale * m.scaleX)}, ${gon(m.scale * m.scaleY)})`
+}
+
 /** Dựng @keyframes CSS từ danh sách mốc thời gian. Chỉ sinh transform + opacity —
  *  hai thuộc tính trình duyệt chạy được trên luồng hợp thành, không gây reflow. */
 function keyframesCss(
@@ -79,9 +84,7 @@ function keyframesCss(
     const pct = durationMs === 0 ? 0 : (m.atMs / durationMs) * 100
     // Đủ ba hàm ở MỌI mốc để trình duyệt nội suy từng con số. Hai mốc có danh sách hàm khác nhau
     // thì trình duyệt phải nội suy qua ma trận, và phép xoay có thể đi đường tắt ngược chiều.
-    const sx = gon(m.scale * m.scaleX)
-    const sy = gon(m.scale * m.scaleY)
-    const transform = `translate(${m.dx}px, ${m.dy}px) rotate(${m.rotate}deg) scale(${sx}, ${sy})`
+    const transform = transformCss(m)
     const opacity = coOpacity ? ` opacity: ${m.opacity};` : ''
     return `  ${pct.toFixed(3)}% { transform-origin: ${center.cx}px ${center.cy}px; transform: ${transform};${opacity} }`
   })
@@ -233,6 +236,24 @@ function AnimationSvg({
         ...spec.shapes.filter((shape) => shape.kind === 'label'),
       ].map((shape) => {
         const animName = animNames.get(shape.id)
+        const initial = animName
+          ? giaiMoc(shape.keyframes ?? [], spec.durationMs, shape.opacity)[0]
+          : undefined
+        const center = shape.origin ? { cx: shape.origin[0], cy: shape.origin[1] } : centerOf(shape)
+        // CSS animation ghi đè trạng thái nền khi chạy. Khi media query tắt animation,
+        // trở về đúng mốc đầu thay vì làm hiện mọi lớp opacity hoặc mất transform ban đầu.
+        // Chỉ đưa opacity lên nhóm khi keyframe điều khiển nó: opacity tĩnh còn ở hình con
+        // và không được nhân thêm một lần ở nhóm cha.
+        const initialStyle: CSSProperties | undefined = initial
+          ? {
+              animationName: animName,
+              transform: transformCss(initial),
+              transformOrigin: `${center.cx}px ${center.cy}px`,
+              ...(shape.keyframes?.some((frame) => frame.opacity !== undefined)
+                ? { opacity: initial.opacity }
+                : {}),
+            }
+          : undefined
         // `animation-name` PHẢI nằm trên CHÍNH thẻ <g> mang data-animated, vì duration /
         // iteration / play-state được gán cho <g> qua CSS ở trên và CSS animation KHÔNG kế
         // thừa xuống con. Bẫy đã mắc thật (2026-09-22, docs/changelog/0407-*.md): trước đây
@@ -240,11 +261,7 @@ function AnimationSvg({
         // tên → KHÔNG hoạt ảnh nào từng chạy ở cả 4 môn STEM lẫn Lập trình, mà mọi cổng (Zod,
         // snapshot HTML, ảnh chụp cảnh đầu) vẫn xanh vì cảnh đầu vốn đúng.
         return (
-          <g
-            key={shape.id}
-            data-animated={animName ? 'true' : undefined}
-            style={animName ? { animationName: animName } : undefined}
-          >
+          <g key={shape.id} data-animated={animName ? 'true' : undefined} style={initialStyle}>
             <Shape shape={shape} />
           </g>
         )
