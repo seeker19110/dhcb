@@ -172,6 +172,8 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Tiếp theo: engine Git theo đặc tả #1240, rồi nội dung/hoạt họa `p3-u11-l1`. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
+
 - **[2026-09-30] Sửa theo audit UI/UX chuẩn 2026** ([báo cáo](docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md),
   `docs/changelog/0466-*.md`, PR #1197): 8 critical · 22 major · 14 minor, chia **9 đợt U1–U9** (mục 12 báo
   cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **Đã xong 6/9 đợt (2026-10-03 → 2026-10-05):**
