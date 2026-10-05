@@ -90,10 +90,13 @@ export default function Friends() {
             )}
             <p className="text-xs text-zinc-400 mb-2">Mã kết bạn của bạn</p>
             <p className="text-lg font-mono font-bold tracking-widest text-white mb-4">{code}</p>
+            {/* Chữ TỐI cố định trên nền accent-500: chữ trắng chỉ 2,4–2,8:1 ở cả 3 theme (audit
+                UI/UX 2026-09-30 C4); `#09090b` đạt ≥ 7:1 trên accent-500 của mọi theme. Không
+                dùng `text-zinc-950`/`text-black` vì thang zinc tự đảo màu ở theme nền sáng. */}
             <button
               type="button"
               onClick={copyLink}
-              className="inline-flex items-center gap-2 rounded-full bg-accent-500 px-4 py-2.5 text-sm font-semibold text-[#fff] min-h-[44px]"
+              className="inline-flex items-center gap-2 rounded-full bg-accent-500 px-4 py-2.5 text-sm font-semibold text-[#09090b] min-h-[44px]"
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? 'Đã chép liên kết' : 'Chép liên kết kết bạn'}

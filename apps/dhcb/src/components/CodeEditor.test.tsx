@@ -14,12 +14,22 @@ import CodeEditor from './CodeEditor'
 
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
+// Ghi lại thuộc tính mà CodeEditor xin CodeMirror gắn lên ô soạn (`contentAttributes`) — dùng
+// cho ca canh `tabindex` ở cuối file. `vi.hoisted` vì factory của `vi.mock` chạy trước import.
+const contentAttrs = vi.hoisted(() => [] as Array<Record<string, string>>)
+
 // CodeMirror không chạy được trong jsdom (đòi đo layout thật), và test này KHÔNG quan tâm tới
 // CodeMirror — chỉ quan tâm class trên host lúc render đầu, tức đúng lúc chưa có style editor.
 vi.mock('codemirror', () => ({
   EditorView: class {
     static theme = () => []
     static updateListener = { of: () => [] }
+    static contentAttributes = {
+      of: (attrs: Record<string, string>) => {
+        contentAttrs.push(attrs)
+        return []
+      },
+    }
     contentDOM = document.createElement('div')
     state = { doc: { toString: () => '' } }
     dispatch() {}
@@ -55,5 +65,15 @@ describe('CodeEditor — host tự khai nền và màu chữ cố định', () =
     expect(bg).not.toBeNull()
     expect(fg).not.toBeNull()
     expect(contrastRatio(fg!, bg!)).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+// [U3, audit UI/UX 2026-09-30 C4] Ở màn hẹp vùng cuộn `.cm-scroller` (CodeMirror tự đặt
+// `tabindex="-1"`) tràn ngang; axe `scrollable-region-focusable` (WCAG 2.1.1) chỉ chấp nhận khi
+// bên trong có phần tử nhận focus TƯỜNG MINH. Gỡ dòng `contentAttributes` là cổng E2E
+// `/lap-trinh/chay-thu 390px` đỏ — ca này bắt sớm hơn, ở tầng unit.
+describe('CodeEditor — ô soạn nhận focus bằng bàn phím', () => {
+  it('xin CodeMirror gắn tabindex="0" lên ô soạn (không phải -1, không phải số dương)', () => {
+    expect(contentAttrs).toContainEqual({ tabindex: '0' })
   })
 })

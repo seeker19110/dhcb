@@ -3,6 +3,8 @@
 import { memo } from 'react'
 import type { WordSync } from './shared'
 
+// [U4 · WCAG 3.1.2] `lang` của câu được gắn lên <p> — trình đọc màn hình đọc câu tiếng Anh bằng
+// giọng Anh ngay cả khi trang đang là tiếng Việt (và ngược lại ở chiều B).
 export const WordText = memo(function WordText({
   text,
   baseClass,
@@ -17,12 +19,17 @@ export const WordText = memo(function WordText({
   lang: 'en' | 'vi'
 }) {
   const isActive = wordSync?.turnIdx === turnIdx && wordSync?.lang === lang
-  if (!isActive) return <p className={baseClass}>{text}</p>
+  if (!isActive)
+    return (
+      <p lang={lang} className={baseClass}>
+        {text}
+      </p>
+    )
 
   const parts = text.split(/(\s+)/)
   let wi = 0
   return (
-    <p className={baseClass}>
+    <p lang={lang} className={baseClass}>
       {parts.map((part, i) => {
         if (/^\s+$/.test(part)) return <span key={i}>{part}</span>
         const thisIdx = wi++

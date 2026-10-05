@@ -75,6 +75,7 @@ import { isFeatureEnabled } from '../lib/planFeatures'
 import { getLimits } from '../lib/appSettings'
 import { useApiThrottle } from '../lib/useApiThrottle'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
+import MixedLangText from './MixedLangText'
 
 // ── Chi tiết 1 bài ngữ pháp ───────────────────────────────────────────────────
 export function GrammarDetail({
@@ -118,12 +119,17 @@ export function GrammarDetail({
       </button>
 
       <div className="glass rounded-2xl p-5">
-        <h3 className="font-bold text-white text-lg">{isA ? lesson.titleVi : lesson.titleEn}</h3>
+        <h3 className="font-bold text-white text-lg">
+          <MixedLangText text={isA ? lesson.titleVi : lesson.titleEn} />
+        </h3>
 
         {/* Công thức */}
         <div className={`mt-3 px-4 py-3 rounded-xl ${accent.soft} border ${accent.ring}`}>
           <p className="text-xs text-zinc-400 mb-1">{isA ? 'Cấu trúc' : 'Structure'}</p>
-          <p className={`font-mono text-sm font-semibold ${accent.text}`}>{lesson.structure}</p>
+          {/* [U4 · WCAG 3.1.2] công thức trộn Anh/Việt → `lang` theo từng đoạn. */}
+          <p className={`font-mono text-sm font-semibold ${accent.text}`}>
+            <MixedLangText text={lesson.structure} />
+          </p>
         </div>
 
         {/* Giải thích tiếng Việt */}

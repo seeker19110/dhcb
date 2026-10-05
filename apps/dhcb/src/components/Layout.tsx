@@ -312,6 +312,8 @@ export default function Layout({
         {!(isHome && !isDesktop) && (
           <button
             onClick={() => nav('/ban-dong-hanh')}
+            // [U4 · WCAG 3.1.2] nhãn viết cứng tiếng Việt — đúng giọng khi trang là tiếng Anh.
+            lang="vi"
             aria-label="Mở Bạn Đồng Hành AI"
             title="Bạn Đồng Hành AI (Live Voice & Executive Suite)"
             className="tap-44 relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent-500/15 hover:bg-accent-500/25 border border-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-semibold transition-all active:scale-95 group shadow-sm shrink-0"

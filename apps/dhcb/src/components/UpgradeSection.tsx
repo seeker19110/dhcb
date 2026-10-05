@@ -225,7 +225,7 @@ export default function UpgradeSection({
         </p>
         <Link
           to="/nang-cap"
-          className="tap-44 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-900 font-semibold text-sm transition"
+          className="tap-44 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-semibold text-sm transition"
         >
           {isA ? 'Xem bảng giá đầy đủ' : 'View full pricing'}
           <ArrowRight className="w-4 h-4" aria-hidden />
@@ -462,11 +462,13 @@ export default function UpgradeSection({
               ))}
             </div>
           )}
+          {/* Nút mua: chữ TỐI CỐ ĐỊNH `#09090b` trên amber-500 (≈ 9:1). `text-zinc-900` cũ tự đảo
+              thành chữ SÁNG ở theme nền sáng → rớt AA đúng ở nút mua (audit UI/UX 2026-09-30 C4). */}
           <button
             type="button"
             onClick={handleCreateCheckout}
             disabled={creating || !prices}
-            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-900 font-semibold text-sm disabled:opacity-60"
+            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-semibold text-sm disabled:opacity-60"
           >
             {creating
               ? isA

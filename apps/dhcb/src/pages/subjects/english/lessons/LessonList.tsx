@@ -98,13 +98,17 @@ export function LessonList({
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
+                  {/* [U4 · WCAG 3.1.2] tên bài + tình huống trong dữ liệu luôn là tiếng Việt —
+                      ở chiều B (giao diện tiếng Anh) phải báo cho trình đọc màn hình. */}
                   <p
+                    lang="vi"
                     id={`lesson-card-${l.id}-title`}
                     className={`font-semibold leading-snug ${compact ? 'text-sm' : 'text-[15px]'} ${c.text}`}
                   >
                     {l.title}
                   </p>
                   <p
+                    lang="vi"
                     id={`lesson-card-${l.id}-situation`}
                     className="text-xs text-zinc-400 break-words mt-0.5"
                   >
