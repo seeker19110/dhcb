@@ -25,4 +25,24 @@ describe('PathArtifactVault — SSR', () => {
     const html = renderToStaticMarkup(<PathArtifactVault pathId="principal-ai" phases={[]} />)
     expect(html).toBe('')
   })
+
+  // [U3, audit UI/UX 2026-09-30 C4] Ô chọn giai đoạn từng không có nhãn (axe `select-name`,
+  // critical) và hai ô nhập chỉ có placeholder. Mỗi ô phải có <label for> trỏ đúng id của nó.
+  it('mỗi ô (giai đoạn, link, ghi chú) có <label> nối đúng id', () => {
+    const html = renderToStaticMarkup(
+      <PathArtifactVault
+        pathId="principal-ai"
+        phases={[{ id: 'principal-ai-p1', name: 'Nền toán & thuật toán' }]}
+      />,
+    )
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    const named = (label: string) => {
+      const el = [...doc.querySelectorAll('label')].find((l) => l.textContent === label)
+      const id = el?.getAttribute('for')
+      return id ? doc.getElementById(id) : null
+    }
+    expect(named('Giai đoạn')?.tagName).toBe('SELECT')
+    expect(named('Link bằng chứng')?.getAttribute('type')).toBe('url')
+    expect(named('Ghi chú')?.getAttribute('type')).toBe('text')
+  })
 })

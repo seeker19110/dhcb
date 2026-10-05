@@ -524,7 +524,7 @@ export default function SubjectDetail() {
             onClick={() => setActiveTab('solver')}
             className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
               activeTab === 'solver'
-                ? 'bg-accent-500/20 text-accent-400 border border-accent-500/30'
+                ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -535,7 +535,7 @@ export default function SubjectDetail() {
             onClick={() => setActiveTab('curriculum')}
             className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
               activeTab === 'curriculum'
-                ? 'bg-accent-500/20 text-accent-400 border border-accent-500/30'
+                ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -546,7 +546,7 @@ export default function SubjectDetail() {
             onClick={() => setActiveTab('practice')}
             className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
               activeTab === 'practice'
-                ? 'bg-accent-500/20 text-accent-400 border border-accent-500/30'
+                ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
