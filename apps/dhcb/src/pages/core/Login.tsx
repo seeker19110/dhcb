@@ -30,6 +30,8 @@ const FEATURES = [
   { icon: PenLine, key: 'featScore', color: 'text-violet-400 theme-light:text-violet-800' },
 ] as const
 
+type AuthField = 'name' | 'email' | 'password'
+
 export default function Login() {
   const nav = useNavigate()
   const { user, refresh, isGuest } = useAuth()
@@ -42,6 +44,9 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  // Ô nhập nào đang sai — để gắn aria-invalid (WCAG 3.3.1). Chỉ là thông tin trình bày, không
+  // đổi logic kiểm hợp lệ.
+  const [invalidFields, setInvalidFields] = useState<AuthField[]>([])
   const [loading, setLoading] = useState(false)
   const [forgotSending, setForgotSending] = useState(false)
   const [isPopupBlocked, setIsPopupBlocked] = useState(false)
@@ -105,6 +110,7 @@ export default function Login() {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setInvalidFields([])
     setLoading(true)
     try {
       if (mode === 'register') {
@@ -114,15 +120,18 @@ export default function Login() {
               ? 'Mật khẩu tối thiểu 15 ký tự, tối đa 72 byte UTF-8'
               : 'Password must be at least 15 characters and at most 72 UTF-8 bytes',
           )
+          setInvalidFields(['password'])
           return
         }
         if (!name.trim()) {
           setError(T.errNameRequired)
+          setInvalidFields(['name'])
           return
         }
         const u = await register(email.trim(), name.trim(), password)
         if (!u) {
           setError(T.errEmailInvalid)
+          setInvalidFields(['email'])
           return
         }
         // Mời bạn: gửi mã đang chờ (lưu lúc vào landing qua link ?ref=) NGAY SAU khi đăng ký
@@ -132,6 +141,7 @@ export default function Login() {
         const u = await login(email.trim(), password)
         if (!u) {
           setError(T.errBadCredentials)
+          setInvalidFields(['email', 'password'])
           return
         }
       }
@@ -259,6 +269,7 @@ export default function Login() {
     }
   }
 
+  const labelCls = 'block text-xs font-medium text-zinc-300 mb-1'
   const inputCls =
     'w-full bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-accent-500/70 focus:bg-zinc-800 transition'
 
@@ -311,14 +322,17 @@ export default function Login() {
 
       {/* Card */}
       <div className="w-full max-w-sm glass rounded-2xl p-6 shadow-2xl shadow-black/40 animate-scale-in delay-100">
-        {/* Tabs */}
+        {/* Tabs: hai nút chế độ, aria-pressed cho trình đọc màn hình biết đang ở chế độ nào */}
         <div className="flex mb-5 bg-zinc-800/60 rounded-xl p-1 gap-1">
           {(['login', 'register'] as const).map((m) => (
             <button
               key={m}
+              type="button"
+              aria-pressed={mode === m}
               onClick={() => {
                 setMode(m)
                 setError('')
+                setInvalidFields([])
               }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
                 mode === m
@@ -333,64 +347,87 @@ export default function Login() {
 
         <form onSubmit={submit} className="space-y-3">
           {mode === 'register' && (
+            <div>
+              <label htmlFor="name" className={labelCls}>
+                {T.namePlaceholder}
+              </label>
+              <input
+                id="name"
+                name="name"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={T.namePlaceholder}
+                aria-invalid={invalidFields.includes('name')}
+                className={inputCls}
+                required
+                // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
+                // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
+                // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
+                // eslint-disable-next-line jsx-a11y/no-autofocus
+                autoFocus
+              />
+            </div>
+          )}
+          <div>
+            <label htmlFor="email" className={labelCls}>
+              {T.emailPlaceholder}
+            </label>
             <input
-              id="name"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={T.namePlaceholder}
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={T.emailPlaceholder}
+              aria-invalid={invalidFields.includes('email')}
               className={inputCls}
               required
-              // Ô nhập này chỉ xuất hiện SAU một hành động của người dùng (mở form / bấm "thêm"),
-              // nên đưa tiêu điểm vào đó là chuyển tiêu điểm đúng chỗ theo WAI-ARIA, không phải
-              // cướp tiêu điểm lúc tải trang (audit 2026-09-05, F1).
+              // Trang đăng nhập chỉ có một việc để làm; đưa tiêu điểm vào ô email giúp người dùng
+              // bàn phím khỏi phải Tab qua thanh điều hướng (audit 2026-09-05, F1).
               // eslint-disable-next-line jsx-a11y/no-autofocus
-              autoFocus
+              autoFocus={mode === 'login'}
             />
-          )}
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={T.emailPlaceholder}
-            className={inputCls}
-            required
-            // Trang đăng nhập chỉ có một việc để làm; đưa tiêu điểm vào ô email giúp người dùng
-            // bàn phím khỏi phải Tab qua thanh điều hướng (audit 2026-09-05, F1).
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus={mode === 'login'}
-          />
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={
-                mode === 'register'
-                  ? isA
-                    ? 'Mật khẩu (ít nhất 15 ký tự)'
-                    : 'Password (at least 15 characters)'
-                  : T.passwordPlaceholder
-              }
-              className={`${inputCls} pr-11`}
-              required
-              minLength={mode === 'register' ? 15 : 1}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw((p) => !p)}
-              aria-label={showPw ? T.hidePassword : T.showPassword}
-              aria-pressed={showPw}
-              /* h-8 w-8 = 32px: đạt target-size WCAG 2.2 AA (≥24px). Nằm gọn trong pr-11 (44px)
-                 của ô nhập nên không đè lên chữ. */
-              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
-            >
-              {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+          </div>
+          <div>
+            <label htmlFor="password" className={labelCls}>
+              {T.passwordPlaceholder}
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPw ? 'text' : 'password'}
+                // Đăng ký → trình quản lý mật khẩu gợi ý mật khẩu mới; đăng nhập → điền mật khẩu cũ.
+                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={T.passwordPlaceholder}
+                aria-invalid={invalidFields.includes('password')}
+                aria-describedby={mode === 'register' ? 'password-hint' : undefined}
+                className={`${inputCls} pr-11`}
+                required
+                minLength={mode === 'register' ? 15 : 1}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((p) => !p)}
+                aria-label={showPw ? T.hidePassword : T.showPassword}
+                aria-pressed={showPw}
+                /* h-8 w-8 = 32px: đạt target-size WCAG 2.2 AA (≥24px). Nằm gọn trong pr-11 (44px)
+                   của ô nhập nên không đè lên chữ. */
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {/* Luật mật khẩu hiện cố định (không biến mất khi gõ như placeholder) — WCAG 3.3.2. */}
+            {mode === 'register' && (
+              <p id="password-hint" className="mt-1.5 text-xs text-zinc-400">
+                {isA ? 'Mật khẩu tối thiểu 15 ký tự.' : 'Password must be at least 15 characters.'}
+              </p>
+            )}
           </div>
 
           {mode === 'login' && (
@@ -411,7 +448,10 @@ export default function Login() {
           )}
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400 theme-light:text-red-900">
+            <div
+              role="alert"
+              className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-400 theme-light:text-red-900"
+            >
               {error}
             </div>
           )}
