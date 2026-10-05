@@ -52,6 +52,11 @@
 
 Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong một PR, không phải một phase lớn trong một PR. Chỉ mở khóa trong catalog khi chương có bài thật và cổng chất lượng xanh. Bản đồ M0 quyết định số slice và thứ tự chính xác.
 
+| Slice                                                                     | State    | Bằng chứng                                    |
+| ------------------------------------------------------------------------- | -------- | --------------------------------------------- |
+| C1 — hợp đồng hoạt họa, trang bài, công cụ ảnh, fallback giảm chuyển động | DONE     | PR #1237, merge `07911b4`, quality/e2e đạt    |
+| C1-G — pilot gradient và phát lại lượt hữu hạn                            | PLANNING | Storyboard đã review; chưa có pilot trên main |
+
 ## 4. Risk register
 
 | Risk                                            | Trigger/guardrail                                         | Mitigation/rollback                                                             | Owner      | State |
@@ -67,13 +72,13 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 
 ## 5. Current truth
 
-- Commit `main` đã reconcile: `93904beaf1d4a29bb9c17ffa13eb7b1983bbe5eb` (2026-10-05, merge PR #1236; remote main kiểm lại không đổi).
+- Commit `main` đã reconcile: `07911b4d3a7d949dfae27b1855436cf180b98851` (2026-10-05, merge PR #1237).
 - Goal gap: inventory và CSV đã khớp **523/523 source keys**, gồm **349 NEW, 174 EXTEND, 0 REUSE**. Đây là map K1 về mục tiêu/theory/Make, chưa phải 523 bài đã triển khai hoặc lab đã chạy. Mọi EXTEND có ID hiện hữu chính; mọi hàng có mức kiểm chứng. 345 ứng viên hoạt họa, 93 mục không ưu tiên hoạt họa, 85 mục Phase 19 chờ chọn cảnh khi có thiết kế project chi tiết.
 - Review: [phiếu quality review](../research/2026-10-05-ai-engineering-map-quality-review.md) đã xử lý năm ID thiếu và mô tả Build It quá rộng. [Bản đồ capstone](../research/2026-10-05-ai-engineering-phase19-map.md) có đủ 85 source keys và rubric từng nhóm. Chưa chạy lab nguồn; review sâu thuộc từng lát nội dung.
 - PR tài liệu: [#1236](https://github.com/seeker19110/dhcb/pull/1236). Chủ dự án đã duyệt phương án, cho phép PR/merge tài liệu khi kiểm tra đạt ngày 2026-10-05.
-- Cổng đặc tả: PR #1236 đã merge sau quality/e2e/metadata xanh, gồm sáu shard E2E. Các subagent đã tiếp tục và bàn giao phần hợp đồng/trang bài, công cụ ảnh, storyboard gradient; fallback giảm chuyển động đang triển khai.
-- Blocker phát hành khóa: worker bảo mật còn Draft, cần PoC/ADR riêng để mở lại chấm code. Mã C1 đã triển khai tại máy; build/typecheck/lint/format và unit suite đạt, E2E liên quan hoạt họa đạt nhưng E2E toàn kho chưa đạt. Chủ dự án đã cấp quyền PR/merge mã ngày 2026-10-05, có điều kiện chỉ merge sau khi required quality/e2e đều đạt. Chưa push/merge tại thời điểm checkpoint này.
-- Next best slice: hoàn tất cổng C1 mở trường hoạt họa tùy chọn và renderer trong bài Lập trình, công cụ ảnh ma trận và sửa fallback giảm chuyển động, có test tương thích. C1 độc lập với worker; việc công bố khóa coding mới vẫn chờ worker đạt cổng. Phần content tiếp tục review theo từng nhóm outcome, không dùng map K1 thay nghiệm thu bài.
+- Cổng đặc tả: PR #1236 đã merge. C1 contract/UI/tooling/fallback giảm chuyển động đã merge qua [PR #1237](https://github.com/seeker19110/dhcb/pull/1237) sau khi metadata, security, quality và e2e đều đạt, gồm sáu shard E2E. [CI](https://github.com/seeker19110/dhcb/actions/runs/37317306434) kiểm head `c352d0199c6df9cb62d28e9e2c25cf9e837da1be`; các lượt E2E local chưa xanh vẫn được giữ trong log lịch sử, không dùng thay bằng chứng CI.
+- Blocker phát hành khóa: worker bảo mật còn Draft, cần PoC/ADR riêng để mở lại chấm code. Rà sâu bổ sung yêu cầu policy ghi hoàn thành không phụ thuộc tiền tố ID, tách ca đánh giá server khỏi bundle và đo batch 25 ca; chưa có bằng chứng worker chạy trên staging.
+- Next best slice: pilot `mathai-u3-l3`: sửa khái quát toán/ML sai, thêm hoạt họa theo storyboard, kiểm số học và ảnh thật. [Hợp đồng phát lại](../specs/2026-10-05-lesson-animation-replay.md) chuẩn bị sửa nút chạy sau lượt hữu hạn trước phát hành pilot. Phần content tiếp tục review theo từng nhóm outcome, không dùng map K1 thay nghiệm thu bài.
 - Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; chủ dự án đã cấp quyền PR/merge các lát mã theo đặc tả được duyệt, bắt đầu C1, với điều kiện required quality/e2e đạt trước merge. Quyền deploy production chưa được cấp.
 
 ## 6. Iteration log
@@ -111,6 +116,16 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Root review: đã đọc toàn bộ diff; reviewer chéo không thấy lỗi mới trong contract/tooling/fallback. Không hạ tiêu chuẩn a11y, sửa allowlist hoặc thêm skip để vượt cổng.
 - Quyền: tài liệu được PR/merge; source được triển khai/kiểm/commit tại máy. C1 đã có diff và bằng chứng để review; chủ dự án đã cho phép push/mở PR mã và merge có điều kiện sau khi required quality/e2e đều đạt. Chưa được triển khai production.
 - Next: PR C1 và full CI; sau merge reconcile main, triển khai pilot gradient từ storyboard. Worker vẫn cần quyết định staging/ADR theo kế hoạch PoC Proposed.
+
+### Iteration 3 — 2026-10-05
+
+- State: PLANNING.
+- Slice hoàn tất: C1 contract/UI/tooling/fallback giảm chuyển động, PR #1237, merge `07911b4` lúc 20:39 giờ Việt Nam.
+- Bằng chứng: required `quality` và `e2e` đạt; sáu shard E2E, build/budget/boot, type/lint/format, unit/coverage, audit/import-cycle và secret scan đều đạt trên head PR. Goal chưa có khóa/bài AI mới hoặc pilot hoạt họa trên main.
+- Goal gap trước/sau: bài Lập trình đã có khả năng gắn hoạt họa và công cụ kiểm ảnh; 20 khóa vẫn chưa nghiệm thu, worker vẫn chưa mở. Không đánh dấu một phase DONE.
+- Review vòng sau: bộ mô phỏng Git chưa thực thi `.gitignore` dù bài `p3-u11-l1` hướng dẫn dùng; cần lát sửa mô phỏng và rubric kiểm trạng thái thật trước reuse. ID bài mới hiện còn bị schema chặn; test registry hiện đòi mọi lesson phải chấm lại. Rủi ro bỏ sót policy chỉ phát sinh khi mở ID/language mới và phải được chặn tại API, không chỉ dựa test.
+- Next: merge hợp đồng replay, triển khai pilot gradient với một subagent sở hữu lesson/test và coordinator sở hữu renderer/browser/integration. Không đổi ID/Make/grading trong pilot.
+- Quyền: tiếp tục PR/merge tài liệu và source theo đặc tả được duyệt khi required checks đạt; chưa cấp deploy production. Quyết định staging/kiến trúc worker còn mở.
 
 ## 7. Final audit
 
