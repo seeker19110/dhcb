@@ -32,3 +32,11 @@ describe('runGit', () => {
     expect(r.output).toContain('(thu muc rong)')
   })
 })
+
+it('chuyển snapshot thật và giữ khi lỗi, không gộp nội dung state vào output', async () => {
+  const r = await runGit('git init\necho "private" > .env\ngit add absent')
+  expect(r.error).toBeDefined()
+  expect(r.gitState?.workdir['.env']).toBe('private\n')
+  expect(r.gitState?.staged).toEqual({})
+  expect(r.output).not.toContain('headSnapshot')
+})

@@ -16,7 +16,7 @@
 import { describe, expect, it } from 'vitest'
 import { PROGRAMMING_LESSONS } from './lessons.js'
 import { chayLenh } from './gitSim.js'
-import { gradeTestCase, allTestsPassed } from './grading.js'
+import { gradeGitTestCase, allTestsPassed } from './grading.js'
 import type { ProgrammingLesson, ProgrammingTestCase } from './lessonTypes.js'
 
 const GIT_LESSONS = PROGRAMMING_LESSONS.filter((l) => l.language === 'git')
@@ -29,7 +29,7 @@ const LENH_NGOAI_DOI =
 function gradeAll(lesson: ProgrammingLesson, code: string, cases: ProgrammingTestCase[]) {
   return cases.map((c) => {
     const r = chayLenh(code, c.stdinLines)
-    return gradeTestCase(c, r.output, r.error)
+    return gradeGitTestCase(c, r)
   })
 }
 

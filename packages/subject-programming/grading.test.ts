@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest'
 import {
   normalizeOutput,
   gradeTestCase,
+  gradeGitTestCase,
   allTestsPassed,
   checkParsonsOrder,
   parsonsShuffle,
 } from './grading.js'
+import { chayLenh } from './gitSim.js'
 import { TestCaseSchema } from './lessonTypes.js'
 
 const tc = (over: Record<string, unknown> = {}) =>
@@ -83,5 +85,102 @@ describe('parsonsShuffle', () => {
   })
   it('mảng toàn phần tử giống nhau: không kẹt vòng (ca biên)', () => {
     expect(parsonsShuffle(['x', 'x'], 's')).toEqual(['x', 'x'])
+  })
+})
+
+describe('gradeGitTestCase — bằng chứng state', () => {
+  const stateCase = (hidden = false) =>
+    tc({
+      expected: 'safe',
+      hidden,
+      gitAssertions: [
+        { type: 'workdirContent', path: '.env', content: 'fake\n' },
+        { type: 'headContent', path: 'README.md', content: 'doc\n' },
+        { type: 'historyAbsent', path: '.env' },
+        { type: 'commitMessage', content: 'safe' },
+        { type: 'headIgnoreProbe', path: 'nested/.env', ignored: true },
+        { type: 'headIgnoreProbe', path: '.env.example', ignored: false },
+      ],
+    })
+  const setup = ['git init', 'echo "fake" > .env', 'echo "doc" > README.md']
+  const correct =
+    'echo "# comment" > .gitignore\necho ".env" >> .gitignore\ngit add README.md .gitignore\ngit commit -m "safe"'
+  it('semantic probes cho phép comment và add từng file; browser/server dùng engine thuần', () => {
+    const run = chayLenh(correct, setup)
+    expect(gradeGitTestCase(stateCase(), run).passed).toBe(true)
+    expect(gradeTestCase(stateCase(), run.output).passed).toBe(false)
+  })
+  it('echo/JSON, thiếu state, xóa fixture, wildcard rộng và commit message cũ không qua', () => {
+    expect(gradeGitTestCase(stateCase(), { output: 'safe' }).passed).toBe(false)
+    for (const code of [
+      'echo "safe"',
+      'echo "{safe: true}"',
+      `${correct}\nrm .env`,
+      correct.replace('echo ".env"', 'echo "*"'),
+      `${correct}\necho "new" > README.md\ngit add .\ngit commit -m "wrong"`,
+    ]) {
+      expect(gradeGitTestCase(stateCase(), chayLenh(code, setup)).passed).toBe(false)
+    }
+  })
+  it('history giữ file cấm kể cả reset; ca ẩn không lộ state/lỗi/nội dung', () => {
+    const run = chayLenh(
+      `git add README.md\ngit commit -m "base"\ngit add .env\ngit commit -m "leak"\ngit reset --hard c1\necho "fake" > .env\n${correct}`,
+      setup,
+    )
+    expect(run.error).toBeUndefined()
+    const withoutHistory = stateCase()
+    withoutHistory.gitAssertions = withoutHistory.gitAssertions!.filter(
+      (a) => a.type !== 'historyAbsent',
+    )
+    expect(gradeGitTestCase(withoutHistory, run).passed).toBe(true)
+    expect(gradeGitTestCase(stateCase(), run).passed).toBe(false)
+    expect(gradeGitTestCase(stateCase(true), run)).toEqual({
+      label: 'ca 1',
+      hidden: true,
+      passed: false,
+    })
+  })
+  it('history vẫn bắt commit cấm sau rebase và reset về HEAD sạch', () => {
+    const run = chayLenh(
+      `git add README.md
+git commit -m "base"
+git branch feature
+git switch feature
+echo "fake" > .env
+git add .env
+git commit -m "leak"
+git switch main
+echo "main" > marker
+git add marker
+git commit -m "main update"
+git switch feature
+git rebase main
+git reset --hard c1
+echo "fake" > .env
+${correct}`,
+      setup,
+    )
+    expect(run.error).toBeUndefined()
+    expect(run.output).toContain('Da rebase 1 commit')
+    expect(Object.hasOwn(run.gitState!.headSnapshot!, '.env')).toBe(false)
+    expect(run.gitState!.commits.filter((c) => Object.hasOwn(c.snapshot, '.env'))).toHaveLength(2)
+    const withoutHistory = stateCase()
+    withoutHistory.gitAssertions = withoutHistory.gitAssertions!.filter(
+      (a) => a.type !== 'historyAbsent',
+    )
+    expect(gradeGitTestCase(withoutHistory, run).passed).toBe(true)
+    expect(gradeGitTestCase(stateCase(), run).passed).toBe(false)
+  })
+  it('strict schema chặn prototype/traversal, trường lạ và giá trị thiếu', () => {
+    for (const assertion of [
+      { type: 'headAbsent', path: '../x' },
+      { type: 'headAbsent', path: 'constructor' },
+      { type: 'headAbsent', path: 'x', surprise: true },
+      { type: 'headIgnoreProbe', path: 'x' },
+    ]) {
+      expect(
+        TestCaseSchema.safeParse({ expected: 'x', label: 'x', gitAssertions: [assertion] }).success,
+      ).toBe(false)
+    }
   })
 })

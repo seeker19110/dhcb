@@ -11,7 +11,8 @@
 //
 // GIỚI HẠN PHẢI NÓI THẲNG VỚI HỌC VIÊN (nội dung bài học có nói): đây là mô hình dạy học, KHÔNG
 // phải git thật. Nó cố tình chỉ làm phần lõi: không mạng (push/pull/clone chỉ diễn tả), không
-// SHA thật (mã commit sinh tuần tự để bài học tất định), không rebase/stash/cherry-pick. Điều
+// SHA thật (mã commit sinh tuần tự để bài học tất định); rebase chỉ tuyến tính, stash và
+// cherry-pick giữ subset được công bố trong bài học. Điều
 // gì mô phỏng không làm được thì bài học dạy bằng cách khác chứ KHÔNG giả vờ làm được.
 //
 // TẤT ĐỊNH TUYỆT ĐỐI: không Date.now(), không random — cùng chuỗi lệnh luôn cho cùng output,
@@ -21,6 +22,133 @@
 export interface GitRunResult {
   output: string
   error?: string
+  gitState?: GitStateSnapshot
+}
+
+/** Chỉ dữ liệu sao chép, không chứa trạng thái có thể điều khiển engine. */
+export interface GitStateSnapshot {
+  readonly initialized: boolean
+  readonly workdir: Readonly<Record<string, string>>
+  readonly staged: Readonly<Record<string, string>>
+  readonly headSnapshot: Readonly<Record<string, string>> | null
+  readonly headMessage: string | null
+  readonly commits: readonly {
+    readonly message: string
+    readonly snapshot: Readonly<Record<string, string>>
+  }[]
+}
+
+function ownValue<T>(map: Readonly<Record<string, T>>, path: string): T | undefined {
+  return Object.hasOwn(map, path) ? map[path] : undefined
+}
+
+function hasControlCharacters(value: string): boolean {
+  return [...value].some((char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)
+}
+
+export function isCanonicalGitPath(path: string): boolean {
+  return (
+    path.length > 0 &&
+    path.length <= 120 &&
+    !path.includes('\\') &&
+    !hasControlCharacters(path) &&
+    path
+      .split('/')
+      .every(
+        (part) =>
+          part.length > 0 && !['.', '..', '__proto__', 'prototype', 'constructor'].includes(part),
+      )
+  )
+}
+
+/** Subset công bố: basename literal, một star, hoặc thư mục literal. Không regex learner. */
+export function parseGitIgnore(content: string): readonly { name: string; directory: boolean }[] {
+  const patterns: { name: string; directory: boolean }[] = []
+  for (const [index, raw] of content.replace(/\r\n/g, '\n').split('\n').entries()) {
+    const line = raw.replace(/ +$/g, '')
+    if (!line || line.startsWith('#')) continue
+    const directory = line.endsWith('/')
+    const name = directory ? line.slice(0, -1) : line
+    if (
+      !name ||
+      hasControlCharacters(name) ||
+      [...name].some((char) => '!?[]\\/'.includes(char)) ||
+      (name.match(/\*/g)?.length ?? 0) > 1 ||
+      (directory && name.includes('*'))
+    ) {
+      throw new Error(
+        `.gitignore dong ${index + 1}: pattern "${line}" ngoai subset: basename literal, mot *, hoac thu muc literal/.`,
+      )
+    }
+    patterns.push({ name, directory })
+    if (patterns.length > 100) throw new Error('.gitignore vuot 100 pattern.')
+  }
+  return patterns
+}
+
+export function matchesGitIgnore(
+  path: string,
+  patterns: ReturnType<typeof parseGitIgnore>,
+): boolean {
+  if (!isCanonicalGitPath(path)) throw new Error('Duong dan Git khong canonical.')
+  const parts = path.split('/')
+  return patterns.some(({ name, directory }) =>
+    parts.some((part, index) => {
+      if (directory && index === parts.length - 1) return false
+      const star = name.indexOf('*')
+      return star < 0
+        ? part === name
+        : part.length >= name.length - 1 &&
+            part.startsWith(name.slice(0, star)) &&
+            part.endsWith(name.slice(star + 1))
+    }),
+  )
+}
+
+function ignorePatterns(repo: RepoState): ReturnType<typeof parseGitIgnore> {
+  return parseGitIgnore(
+    Object.hasOwn(repo.workdir, '.gitignore') ? repo.workdir['.gitignore']! : '',
+  )
+}
+
+function validateRepoBudget(repo: RepoState): void {
+  for (const map of [repo.branches, repo.tags, repo.remote?.nhanh ?? {}]) {
+    if (Object.keys(map).some((key) => ['__proto__', 'constructor', 'prototype'].includes(key)))
+      throw new LoiLenh('Ten metadata Git khong hop le.')
+  }
+  const maps = [
+    repo.workdir,
+    repo.staged,
+    ...repo.commits.map((c) => c.snapshot),
+    ...(repo.remote?.commits.map((c) => c.snapshot) ?? []),
+    ...repo.stash.flatMap((s) => [s.workdir, s.staged]),
+  ]
+  for (const map of maps) {
+    if (Object.keys(map).length > 100) throw new LoiLenh('Trang thai vuot 100 file.')
+    for (const [path, content] of Object.entries(map)) {
+      if (!isCanonicalGitPath(path)) throw new LoiLenh('Duong dan file Git khong canonical.')
+      if (typeof content !== 'string') throw new LoiLenh('Noi dung file Git phai la chuoi.')
+      if (content.length > 4000) throw new LoiLenh('Noi dung file vuot 4000 ky tu.')
+    }
+  }
+  if (repo.commits.length > 100 || (repo.remote?.commits.length ?? 0) > 100)
+    throw new LoiLenh('Kho vuot 100 commit.')
+  if (new TextEncoder().encode(JSON.stringify(snapshot(repo))).length > 128 * 1024)
+    throw new LoiLenh('Snapshot Git vuot 128 KiB.')
+  if (new TextEncoder().encode(JSON.stringify(repo)).length > 128 * 1024)
+    throw new LoiLenh('Trang thai Git vuot 128 KiB.')
+}
+
+function snapshot(repo: RepoState): GitStateSnapshot {
+  const head = commitHienTai(repo)
+  return {
+    initialized: repo.khoiTao,
+    workdir: { ...repo.workdir },
+    staged: { ...repo.staged },
+    headSnapshot: head ? { ...head.snapshot } : null,
+    headMessage: head?.message ?? null,
+    commits: repo.commits.map((c) => ({ message: c.message, snapshot: { ...c.snapshot } })),
+  }
 }
 
 interface Commit {
@@ -106,7 +234,7 @@ function taoRepo(): RepoState {
 
 /** Commit đang được nhánh hiện tại trỏ tới (null = nhánh chưa có commit nào). */
 function commitHienTai(repo: RepoState): Commit | null {
-  const id = repo.branches[repo.nhanhHienTai] ?? null
+  const id = ownValue(repo.branches, repo.nhanhHienTai) ?? null
   return id === null ? null : (repo.commits.find((c) => c.id === id) ?? null)
 }
 
@@ -141,20 +269,24 @@ function doiHoiRepo(repo: RepoState): void {
 function gitStatus(repo: RepoState): string {
   const dong: string[] = [`Tren nhanh ${repo.nhanhHienTai}`]
   const goc = anhChupHienTai(repo)
+  const patterns = ignorePatterns(repo)
 
   const daChuanBi = Object.keys(repo.staged)
-    .filter((p) => repo.staged[p] !== goc[p])
+    .filter((p) => ownValue(repo.staged, p) !== ownValue(goc, p))
     .sort()
   // "Đã sửa nhưng chưa add": nội dung trong thư mục khác với thứ đang nằm ở vùng chờ (nếu có
   // trong vùng chờ) hoặc khác với commit gần nhất.
   const chuaChuanBi = Object.keys(repo.workdir)
     .filter((p) => {
-      const mocSoSanh = p in repo.staged ? repo.staged[p] : goc[p]
-      return mocSoSanh !== undefined && repo.workdir[p] !== mocSoSanh
+      const mocSoSanh = Object.hasOwn(repo.staged, p) ? ownValue(repo.staged, p) : ownValue(goc, p)
+      return mocSoSanh !== undefined && ownValue(repo.workdir, p) !== mocSoSanh
     })
     .sort()
   const chuaTheoDoi = Object.keys(repo.workdir)
-    .filter((p) => !(p in repo.staged) && !(p in goc))
+    .filter(
+      (p) =>
+        !Object.hasOwn(repo.staged, p) && !Object.hasOwn(goc, p) && !matchesGitIgnore(p, patterns),
+    )
     .sort()
 
   if (daChuanBi.length) {
@@ -180,14 +312,22 @@ function gitAdd(repo: RepoState, duongDan: string[]): string {
   if (duongDan.length === 0) {
     throw new LoiLenh('Thieu ten file. Vi du: "git add ghi_chu.txt" hoac "git add ." (tat ca).')
   }
-  const canAdd = duongDan.includes('.') ? Object.keys(repo.workdir) : duongDan
-  for (const p of canAdd) {
-    const noiDung = repo.workdir[p]
-    if (noiDung === undefined) {
-      throw new LoiLenh(`Khong co file "${p}" trong thu muc. Go "ls" de xem dang co nhung file gi.`)
-    }
-    repo.staged[p] = noiDung
+  if (duongDan.some((p) => p.startsWith('-')))
+    throw new LoiLenh('Mo phong chua ho tro git add -f/--force hoac flag khac.')
+  const patterns = ignorePatterns(repo)
+  const head = anhChupHienTai(repo)
+  const ignored = (p: string) =>
+    !Object.hasOwn(head, p) && !Object.hasOwn(repo.staged, p) && matchesGitIgnore(p, patterns)
+  for (const p of duongDan.filter((p) => p !== '.')) {
+    if (!isCanonicalGitPath(p) || !Object.hasOwn(repo.workdir, p))
+      throw new LoiLenh(`Khong co file "${p}" trong thu muc.`)
+    if (ignored(p))
+      throw new LoiLenh(`File "${p}" bi .gitignore bo qua; mo phong khong ho tro force.`)
   }
+  const canAdd = duongDan.includes('.')
+    ? Object.keys(repo.workdir).filter((p) => !ignored(p))
+    : duongDan
+  for (const p of canAdd) repo.staged[p] = ownValue(repo.workdir, p)!
   return ''
 }
 
@@ -205,14 +345,14 @@ function gitCommit(repo: RepoState, tu: string[]): string {
   // gộp, không phải commit thường. Phải chặn nếu còn file nào chưa giải xung đột.
   if (repo.dangGop) {
     const conThieu = repo.dangGop.xungDot.filter(
-      (p) => !(p in repo.staged) || repo.staged[p]!.includes('<<<<<<<'),
+      (p) => !Object.hasOwn(repo.staged, p) || ownValue(repo.staged, p)!.includes('<<<<<<<'),
     )
     if (conThieu.length) {
       throw new LoiLenh(
         `Con xung dot chua giai o: ${conThieu.join(', ')}. Sua het cac dau <<<<<<< / ======= / >>>>>>> trong file roi "git add <file>" lai truoc khi commit.`,
       )
     }
-    const idNay = repo.branches[repo.nhanhHienTai] ?? null
+    const idNay = ownValue(repo.branches, repo.nhanhHienTai) ?? null
     const kia = repo.commits.find((c) => c.id === repo.dangGop!.idKia)!
     repo.demCommit += 1
     const commit: Commit = {
@@ -230,7 +370,9 @@ function gitCommit(repo: RepoState, tu: string[]): string {
   }
 
   const goc = anhChupHienTai(repo)
-  const coThayDoi = Object.keys(repo.staged).some((p) => repo.staged[p] !== goc[p])
+  const coThayDoi = Object.keys(repo.staged).some(
+    (p) => ownValue(repo.staged, p) !== ownValue(goc, p),
+  )
   if (!coThayDoi) {
     throw new LoiLenh(
       'Khong co gi trong vung cho de commit. Dung "git add <file>" de dua thay doi vao vung cho truoc.',
@@ -238,7 +380,7 @@ function gitCommit(repo: RepoState, tu: string[]): string {
   }
 
   repo.demCommit += 1
-  const cha = repo.branches[repo.nhanhHienTai]
+  const cha = ownValue(repo.branches, repo.nhanhHienTai)
   const commit: Commit = {
     id: `c${repo.demCommit}`,
     message,
@@ -256,7 +398,7 @@ function gitCommit(repo: RepoState, tu: string[]): string {
 /** Đi ngược cha để lấy lịch sử của nhánh hiện tại, mới nhất trước. */
 function lichSu(repo: RepoState): Commit[] {
   const ra: Commit[] = []
-  let id = repo.branches[repo.nhanhHienTai] ?? null
+  let id = ownValue(repo.branches, repo.nhanhHienTai) ?? null
   while (id) {
     const c = repo.commits.find((x) => x.id === id)
     if (!c) break
@@ -274,6 +416,11 @@ function gitLog(repo: RepoState, tu: string[]): string {
   return ds.map((c) => `commit ${c.id}\nNhanh: ${c.branch}\n\n    ${c.message}`).join('\n\n')
 }
 
+function validateMetadataName(name: string): void {
+  if (['__proto__', 'constructor', 'prototype'].includes(name))
+    throw new LoiLenh('Ten metadata Git khong hop le.')
+}
+
 function gitBranch(repo: RepoState, tu: string[]): string {
   doiHoiRepo(repo)
   const ten = tu[0]
@@ -284,20 +431,22 @@ function gitBranch(repo: RepoState, tu: string[]): string {
       .map((b) => (b === repo.nhanhHienTai ? `* ${b}` : `  ${b}`))
       .join('\n')
   }
-  if (ten in repo.branches) throw new LoiLenh(`Nhanh "${ten}" da ton tai roi.`)
-  repo.branches[ten] = repo.branches[repo.nhanhHienTai] ?? null
+  validateMetadataName(ten)
+  if (Object.hasOwn(repo.branches, ten)) throw new LoiLenh(`Nhanh "${ten}" da ton tai roi.`)
+  repo.branches[ten] = ownValue(repo.branches, repo.nhanhHienTai) ?? null
   return ''
 }
 
 function chuyenNhanh(repo: RepoState, ten: string, taoMoi: boolean): string {
   doiHoiRepo(repo)
+  validateMetadataName(ten)
   if (taoMoi) {
-    if (ten in repo.branches) throw new LoiLenh(`Nhanh "${ten}" da ton tai roi.`)
-    repo.branches[ten] = repo.branches[repo.nhanhHienTai] ?? null
+    if (Object.hasOwn(repo.branches, ten)) throw new LoiLenh(`Nhanh "${ten}" da ton tai roi.`)
+    repo.branches[ten] = ownValue(repo.branches, repo.nhanhHienTai) ?? null
     repo.nhanhHienTai = ten
     return `Da chuyen sang nhanh moi "${ten}"`
   }
-  if (!(ten in repo.branches)) {
+  if (!Object.hasOwn(repo.branches, ten)) {
     throw new LoiLenh(
       `Khong co nhanh "${ten}". Go "git branch" de xem danh sach, hoac them -b de tao nhanh moi.`,
     )
@@ -314,13 +463,13 @@ function gitMerge(repo: RepoState, tu: string[]): string {
   doiHoiRepo(repo)
   const ten = tu[0]
   if (!ten) throw new LoiLenh('Thieu ten nhanh. Vi du: git merge tinh-nang-moi')
-  if (!(ten in repo.branches)) throw new LoiLenh(`Khong co nhanh "${ten}".`)
+  if (!Object.hasOwn(repo.branches, ten)) throw new LoiLenh(`Khong co nhanh "${ten}".`)
   if (ten === repo.nhanhHienTai) throw new LoiLenh('Khong the gop mot nhanh vao chinh no.')
 
   // `?? null` chứ không để nguyên: tra map bằng khoá cho ra `string | null | undefined` dưới
   // noUncheckedIndexedAccess, mà "nhánh chưa có commit" và "không có khoá" là cùng một ý.
-  const idKia = repo.branches[ten] ?? null
-  const idNay = repo.branches[repo.nhanhHienTai] ?? null
+  const idKia = ownValue(repo.branches, ten) ?? null
+  const idNay = ownValue(repo.branches, repo.nhanhHienTai) ?? null
   if (!idKia) throw new LoiLenh(`Nhanh "${ten}" chua co commit nao de gop.`)
 
   const dsKia: string[] = []
@@ -355,7 +504,9 @@ function gitMerge(repo: RepoState, tu: string[]): string {
   repo.workdir = { ...commit.snapshot }
 
   const trung = Object.keys(kia.snapshot).filter(
-    (p) => nay.snapshot[p] !== undefined && nay.snapshot[p] !== kia.snapshot[p],
+    (p) =>
+      ownValue(nay.snapshot, p) !== undefined &&
+      ownValue(nay.snapshot, p) !== ownValue(kia.snapshot, p),
   )
   const canhBao = trung.length
     ? `\nLuu y: ca hai nhanh cung sua ${trung.join(', ')} — mo phong lay ban cua nhanh ${ten}. Git that se bao XUNG DOT va bat ban tu chon.`
@@ -388,20 +539,26 @@ function gitDiff(repo: RepoState, tu: string[]): string {
   const goc = anhChupHienTai(repo)
   if (staged) {
     const doi = Object.keys(repo.staged)
-      .filter((p) => repo.staged[p] !== goc[p])
+      .filter((p) => ownValue(repo.staged, p) !== ownValue(goc, p))
       .sort()
     if (!doi.length) return ''
     return doi
-      .map((p) => `diff --git a/${p} b/${p}\n${dongDiff(goc[p], repo.staged[p]).join('\n')}`)
+      .map(
+        (p) =>
+          `diff --git a/${p} b/${p}\n${dongDiff(ownValue(goc, p), ownValue(repo.staged, p)).join('\n')}`,
+      )
       .join('\n')
   }
   const mocSoSanh = { ...goc, ...repo.staged }
   const doi = Object.keys(repo.workdir)
-    .filter((p) => repo.workdir[p] !== mocSoSanh[p])
+    .filter((p) => ownValue(repo.workdir, p) !== ownValue(mocSoSanh, p))
     .sort()
   if (!doi.length) return ''
   return doi
-    .map((p) => `diff --git a/${p} b/${p}\n${dongDiff(mocSoSanh[p], repo.workdir[p]).join('\n')}`)
+    .map(
+      (p) =>
+        `diff --git a/${p} b/${p}\n${dongDiff(ownValue(mocSoSanh, p), ownValue(repo.workdir, p)).join('\n')}`,
+    )
     .join('\n')
 }
 
@@ -417,13 +574,13 @@ function gitRestore(repo: RepoState, tu: string[]): string {
   const goc = anhChupHienTai(repo)
   for (const p of files) {
     if (staged) {
-      if (!(p in repo.staged)) throw new LoiLenh(`File "${p}" khong o trong vung cho.`)
+      if (!Object.hasOwn(repo.staged, p)) throw new LoiLenh(`File "${p}" khong o trong vung cho.`)
       delete repo.staged[p]
       continue
     }
     // KHÔNG có --staged: ghi đè thư mục làm việc bằng bản đã add (nếu có) hoặc bản commit gần
     // nhất — MẤT VĨNH VIỄN thay đổi chưa add. Bài học phải cảnh báo trước khi cho gõ lệnh này.
-    const nguon = p in repo.staged ? repo.staged[p] : goc[p]
+    const nguon = Object.hasOwn(repo.staged, p) ? ownValue(repo.staged, p) : ownValue(goc, p)
     if (nguon === undefined) throw new LoiLenh(`Khong co gi de khoi phuc cho "${p}".`)
     repo.workdir[p] = nguon
   }
@@ -441,7 +598,7 @@ function gitReset(repo: RepoState, tu: string[]): string {
       args.splice(i, 1)
     }
   }
-  const dich = args[0] ?? repo.branches[repo.nhanhHienTai] ?? undefined
+  const dich = args[0] ?? ownValue(repo.branches, repo.nhanhHienTai) ?? undefined
   if (!dich) throw new LoiLenh('Khong co commit de reset ve.')
   const target = repo.commits.find((c) => c.id === dich)
   if (!target) {
@@ -477,11 +634,11 @@ function gitRevert(repo: RepoState, tu: string[]): string {
   const hienTai = anhChupHienTai(repo)
   const snapshotMoi: Record<string, string> = { ...hienTai }
   for (const p of Object.keys(target.snapshot)) {
-    if (p in truoc) snapshotMoi[p] = truoc[p]!
+    if (Object.hasOwn(truoc, p)) snapshotMoi[p] = truoc[p]!
     else delete snapshotMoi[p]
   }
   repo.demCommit += 1
-  const cha = repo.branches[repo.nhanhHienTai]
+  const cha = ownValue(repo.branches, repo.nhanhHienTai)
   const commit: Commit = {
     id: `c${repo.demCommit}`,
     message: `Revert "${target.message}"`,
@@ -571,9 +728,9 @@ function gitPush(repo: RepoState, tu: string[]): string {
     throw new LoiLenh('Mo phong chi co remote "origin". Vi du: git push -u origin main')
   }
   const nhanh = args[1] ?? repo.nhanhHienTai
-  const localId = repo.branches[nhanh] ?? null
+  const localId = ownValue(repo.branches, nhanh) ?? null
   if (!localId) throw new LoiLenh(`Nhanh "${nhanh}" chua co commit nao de day.`)
-  const remoteId = luc.nhanh[nhanh] ?? null
+  const remoteId = ownValue(luc.nhanh, nhanh) ?? null
   if (remoteId && remoteId !== localId && !laToTien(repo.commits, localId, remoteId) && !force) {
     throw new LoiLenh(
       `Bi tu choi: origin/${nhanh} co commit ban chua co o may. Chay "git pull" truoc, hoac "git push --force-with-lease" neu THAT SU chac chan muon ghi de (nguy hiem — co the xoa mat viec cua nguoi khac).`,
@@ -603,7 +760,7 @@ function gitFetch(repo: RepoState): string {
  *  hàm này mô phỏng ĐÚNG quy trình git thật khi có xung đột — CHÈN DẤU XUNG ĐỘT vào file, KHÔNG
  *  tự tạo commit, bắt học viên sửa rồi tự `git add` + `git commit` mới hoàn tất. */
 function guiGop(repo: RepoState, tenKia: string, idKia: string): string {
-  const idNay = repo.branches[repo.nhanhHienTai] ?? null
+  const idNay = ownValue(repo.branches, repo.nhanhHienTai) ?? null
   if (idKia === idNay) return `Da cap nhat, khong co gi moi tu ${tenKia}.`
   if (idNay === null || laToTien(repo.commits, idKia, idNay)) {
     // Nhánh hiện tại không có gì mới so với phía kia (hoặc chưa có commit nào) → tua nhanh.
@@ -618,7 +775,9 @@ function guiGop(repo: RepoState, tenKia: string, idKia: string): string {
   const kia = repo.commits.find((c) => c.id === idKia)!
   const nay = repo.commits.find((c) => c.id === idNay)!
   const trung = Object.keys(kia.snapshot).filter(
-    (p) => nay.snapshot[p] !== undefined && nay.snapshot[p] !== kia.snapshot[p],
+    (p) =>
+      ownValue(nay.snapshot, p) !== undefined &&
+      ownValue(nay.snapshot, p) !== ownValue(kia.snapshot, p),
   )
   if (!trung.length) {
     // Không file nào trùng — gộp sạch, tạo luôn commit gộp (không cần học viên can thiệp).
@@ -639,11 +798,11 @@ function guiGop(repo: RepoState, tenKia: string, idKia: string): string {
   // XUNG ĐỘT THẬT: chèn dấu vào các file cả hai bên cùng sửa, dừng lại chờ học viên xử lý.
   for (const p of trung) {
     repo.workdir[p] =
-      `<<<<<<< HEAD\n${nay.snapshot[p]}\n=======\n${kia.snapshot[p]}\n>>>>>>> ${tenKia}\n`
+      `<<<<<<< HEAD\n${ownValue(nay.snapshot, p)}\n=======\n${ownValue(kia.snapshot, p)}\n>>>>>>> ${tenKia}\n`
   }
   for (const p of Object.keys(kia.snapshot)) {
-    if (!trung.includes(p) && kia.snapshot[p] !== nay.snapshot[p])
-      repo.workdir[p] = kia.snapshot[p]!
+    if (!trung.includes(p) && ownValue(kia.snapshot, p) !== ownValue(nay.snapshot, p))
+      repo.workdir[p] = ownValue(kia.snapshot, p)!
   }
   repo.staged = {}
   repo.dangGop = { ten: tenKia, idKia, xungDot: trung }
@@ -663,7 +822,7 @@ function gitPull(repo: RepoState): string {
   }
   if (!repo.remote) throw new LoiLenh('Chua co remote. Chay "git remote add origin <url>" truoc.')
   const nhanh = repo.nhanhHienTai
-  const remoteId = repo.remote.nhanh[nhanh] ?? null
+  const remoteId = ownValue(repo.remote.nhanh, nhanh) ?? null
   if (!remoteId) return `Khong co gi moi tu origin/${nhanh}.`
   saoChepChuoi(repo.remote.commits, remoteId, repo.commits)
   return guiGop(repo, `origin/${nhanh}`, remoteId)
@@ -680,7 +839,7 @@ function gitClone(repo: RepoState, tu: string[]): string {
   }
   repo.khoiTao = true
   const nhanhChinh = 'main'
-  const id = repo.remote.nhanh[nhanhChinh] ?? null
+  const id = ownValue(repo.remote.nhanh, nhanhChinh) ?? null
   repo.branches[nhanhChinh] = id
   repo.nhanhHienTai = nhanhChinh
   if (id) {
@@ -701,9 +860,9 @@ function gitStash(repo: RepoState, tu: string[]): string {
     const goc = anhChupHienTai(repo)
     const coGiDoi =
       Object.keys(repo.workdir).some((p) => {
-        const moc = p in repo.staged ? repo.staged[p] : goc[p]
-        return moc === undefined || repo.workdir[p] !== moc
-      }) || Object.keys(repo.staged).some((p) => repo.staged[p] !== goc[p])
+        const moc = Object.hasOwn(repo.staged, p) ? ownValue(repo.staged, p) : ownValue(goc, p)
+        return moc === undefined || ownValue(repo.workdir, p) !== moc
+      }) || Object.keys(repo.staged).some((p) => ownValue(repo.staged, p) !== ownValue(goc, p))
     if (!coGiDoi) throw new LoiLenh('Khong co gi de stash — thu muc lam viec dang sach.')
     const viTriM = tu.findIndex((t) => t === '-m')
     const msg = viTriM === -1 ? `WIP tren ${repo.nhanhHienTai}` : (tu[viTriM + 1] ?? 'WIP')
@@ -746,8 +905,9 @@ function gitTag(repo: RepoState, tu: string[]): string {
   }
   const ten = tu[1]
   if (!ten) throw new LoiLenh('Thieu ten tag. Vi du: git tag -a v1.0 -m "Ban phat hanh dau tien"')
-  if (ten in repo.tags) throw new LoiLenh(`Tag "${ten}" da ton tai.`)
-  const id = repo.branches[repo.nhanhHienTai]
+  validateMetadataName(ten)
+  if (Object.hasOwn(repo.tags, ten)) throw new LoiLenh(`Tag "${ten}" da ton tai.`)
+  const id = ownValue(repo.branches, repo.nhanhHienTai)
   if (!id) throw new LoiLenh('Chua co commit nao de gan tag.')
   repo.tags[ten] = id
   return `Da tao tag "${ten}" tro toi ${id}`
@@ -761,7 +921,7 @@ function gitCherryPick(repo: RepoState, tu: string[]): string {
   if (!target) throw new LoiLenh(`Khong co commit "${id}". Dung "git log --oneline" de xem ma.`)
   const goc = anhChupHienTai(repo)
   repo.demCommit += 1
-  const cha = repo.branches[repo.nhanhHienTai]
+  const cha = ownValue(repo.branches, repo.nhanhHienTai)
   const commit: Commit = {
     id: `c${repo.demCommit}`,
     message: target.message,
@@ -785,9 +945,9 @@ function gitRebase(repo: RepoState, tu: string[]): string {
   }
   const ten = tu[0]
   if (!ten) throw new LoiLenh('Thieu ten nhanh. Vi du: git rebase main')
-  if (!(ten in repo.branches)) throw new LoiLenh(`Khong co nhanh "${ten}".`)
-  const idDich = repo.branches[ten] ?? null
-  const idNay = repo.branches[repo.nhanhHienTai] ?? null
+  if (!Object.hasOwn(repo.branches, ten)) throw new LoiLenh(`Khong co nhanh "${ten}".`)
+  const idDich = ownValue(repo.branches, ten) ?? null
+  const idNay = ownValue(repo.branches, repo.nhanhHienTai) ?? null
   if (idNay === null) throw new LoiLenh('Nhanh hien tai chua co commit nao de rebase.')
 
   // Chỉ chấp nhận ca TUYẾN TÍNH: đi ngược nhánh hiện tại tới khi gặp TỔ TIÊN CHUNG với nhánh
@@ -842,7 +1002,7 @@ const GIT_CHUA_MO_PHONG: Record<string, string> = {
 function chayGit(repo: RepoState, tu: string[]): string {
   const lenh = tu[0]
   if (!lenh) throw new LoiLenh('Thieu lenh git. Vi du: git status')
-  if (lenh in GIT_CHUA_MO_PHONG) throw new LoiLenh(GIT_CHUA_MO_PHONG[lenh]!)
+  if (Object.hasOwn(GIT_CHUA_MO_PHONG, lenh)) throw new LoiLenh(GIT_CHUA_MO_PHONG[lenh]!)
 
   const conLai = tu.slice(1)
   if (lenh === 'init') {
@@ -899,14 +1059,14 @@ function chayShell(repo: RepoState, tu: string[], dongGoc: string): string {
   if (lenh === 'cat') {
     const p = conLai[0]
     if (!p) throw new LoiLenh('Thieu ten file. Vi du: cat ghi_chu.txt')
-    const noiDung = repo.workdir[p]
+    const noiDung = Object.hasOwn(repo.workdir, p) ? ownValue(repo.workdir, p) : undefined
     if (noiDung === undefined) throw new LoiLenh(`Khong co file "${p}".`)
     return noiDung
   }
   if (lenh === 'rm') {
     const p = conLai[0]
     if (!p) throw new LoiLenh('Thieu ten file. Vi du: rm ghi_chu.txt')
-    if (!(p in repo.workdir)) throw new LoiLenh(`Khong co file "${p}".`)
+    if (!Object.hasOwn(repo.workdir, p)) throw new LoiLenh(`Khong co file "${p}".`)
     delete repo.workdir[p]
     return ''
   }
@@ -918,7 +1078,9 @@ function chayShell(repo: RepoState, tu: string[], dongGoc: string): string {
     const chu = tachTu((phanChu ?? '').replace(/^\s*echo\s*/, '')).join(' ')
     const file = tachTu(phanFile ?? '')[0]
     if (!file) throw new LoiLenh('Thieu ten file sau dau ">". Vi du: echo "xin chao" > ghi_chu.txt')
-    repo.workdir[file] = chuyenHuong === '>>' ? `${repo.workdir[file] ?? ''}${chu}\n` : `${chu}\n`
+    if (!isCanonicalGitPath(file)) throw new LoiLenh('Duong dan file Git khong canonical.')
+    repo.workdir[file] =
+      chuyenHuong === '>>' ? `${ownValue(repo.workdir, file) ?? ''}${chu}\n` : `${chu}\n`
     return ''
   }
   if (lenh === 'remote-seed') {
@@ -933,9 +1095,11 @@ function chayShell(repo: RepoState, tu: string[], dongGoc: string): string {
         'remote-seed can 4 tham so: nhanh, loi nhan (nhay kep), ten file, noi dung (nhay kep).',
       )
     }
+    if (!isCanonicalGitPath(file) || ['__proto__', 'constructor', 'prototype'].includes(nhanh))
+      throw new LoiLenh('Duong dan/nhanh Git khong canonical.')
     if (!repo.remote)
       repo.remote = { url: 'https://mo-phong.local/kho.git', nhanh: {}, commits: [] }
-    const chaId = repo.remote.nhanh[nhanh] ?? null
+    const chaId = ownValue(repo.remote.nhanh, nhanh) ?? null
     const cha = chaId ? repo.remote.commits.find((c) => c.id === chaId) : undefined
     const idMoi = `r${repo.remote.commits.length + 1}`
     repo.remote.commits.push({
@@ -967,13 +1131,28 @@ function chayShell(repo: RepoState, tu: string[], dongGoc: string): string {
  */
 export function chayLenh(script: string, lenhChuanBi: string[] = []): GitRunResult {
   const repo = taoRepo()
+  const result = (output: string, error?: string): GitRunResult => ({
+    output,
+    ...(error ? { error } : {}),
+    gitState: snapshot(repo),
+  })
+  if (
+    script.length > 4000 ||
+    lenhChuanBi.length > 20 ||
+    lenhChuanBi.join('\n').length > 4000 ||
+    script.split('\n').filter((s) => s.trim() && !s.trim().startsWith('#')).length > 100
+  )
+    return result(
+      '',
+      'Script/boi canh vuot gioi han 4000 ky tu, 100 lenh hoc vien hoac 20 lenh chuan bi.',
+    )
   const dong: string[] = []
 
   // `lenhChuanBi` dựng sẵn bối cảnh (vd repo đã có sẵn vài commit) mà KHÔNG in ra — nhờ vậy
   // đề bài nói "kho của bạn đang có…" mà học viên không phải gõ lại phần dựng cảnh.
   for (const lenh of lenhChuanBi) {
     const r = chayMotDong(repo, lenh)
-    if (r.loi) return { output: '', error: `Loi khi dung boi canh: ${r.loi}` }
+    if (r.loi) return result('', `Loi khi dung boi canh: ${r.loi}`)
   }
 
   for (const raw of script.split('\n')) {
@@ -983,18 +1162,21 @@ export function chayLenh(script: string, lenhChuanBi: string[] = []): GitRunResu
     const r = chayMotDong(repo, lenh)
     if (r.loi) {
       dong.push(`loi: ${r.loi}`)
-      return { output: dong.join('\n'), error: r.loi }
+      return result(dong.join('\n'), r.loi)
     }
     if (r.ra) dong.push(r.ra)
   }
-  return { output: dong.join('\n') }
+  return result(dong.join('\n'))
 }
 
 function chayMotDong(repo: RepoState, lenh: string): { ra: string; loi?: string } {
   try {
     const tu = tachTu(lenh)
     if (tu.length === 0) return { ra: '' }
-    const ra = tu[0] === 'git' ? chayGit(repo, tu.slice(1)) : chayShell(repo, tu, lenh)
+    const candidate: RepoState = structuredClone(repo)
+    const ra = tu[0] === 'git' ? chayGit(candidate, tu.slice(1)) : chayShell(candidate, tu, lenh)
+    validateRepoBudget(candidate)
+    Object.assign(repo, candidate)
     return { ra }
   } catch (err) {
     return { ra: '', loi: err instanceof Error ? err.message : String(err) }

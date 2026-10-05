@@ -20,6 +20,7 @@ import {
   useNavigationType,
   type NavigateFunction,
 } from 'react-router-dom'
+import { chayLenh, type GitStateSnapshot } from '@dhcb/subject-programming/gitSim'
 import type { ProgrammingLesson } from '@dhcb/subject-programming/lessonTypes'
 import { buildSlugSegment } from '@core/slug'
 import { LEARNING_SESSION_PREFIX, __resetSessionMemory } from '../../../lib/learningSession'
@@ -116,7 +117,7 @@ vi.mock('../../../lib/useProgrammingLesson', () => ({
 }))
 // Máy chạy code giả. Mặc định: code có chữ "xong" thì coi như in ra "xong" (đủ để đạt
 // test-case). Test S09d thay `mayChay.impl` để giữ một ca "đang chạy" (chấm dở/chấm chậm).
-type KetQuaChay = { output: string; error: string | undefined }
+type KetQuaChay = { output: string; error: string | undefined; gitState?: GitStateSnapshot }
 const mayChayMacDinh = (_lang: string, code: string): Promise<KetQuaChay> =>
   Promise.resolve({ output: code.includes('xong') ? 'xong' : 'chưa', error: undefined })
 const mayChay: { impl: typeof mayChayMacDinh; soLan: number } = {
@@ -821,4 +822,33 @@ describe('ProgrammingLessonPage — bước ↔ URL (S09d, §2.8)', () => {
     expect(dinhTuyen.loc?.hash).toBe('')
     expect(idDangFocus()).toBe('concept')
   })
+})
+
+it('Make Git dùng snapshot: echo đúng vẫn không completed, commit thật mới đạt', async () => {
+  const lesson = taoBai({
+    testCases: [
+      {
+        stdinLines: [],
+        expected: 'safe',
+        match: 'contains',
+        hidden: false,
+        label: 'Git state',
+        gitAssertions: [{ type: 'headIgnoreProbe', path: '.env', ignored: true }],
+      },
+    ],
+  })
+  lesson.language = 'git'
+  mayChay.impl = async (_lang, code) => {
+    const r = chayLenh(code, ['git init', 'echo "fake" > .env'])
+    return { ...r, error: r.error }
+  }
+  mo(lesson, '#make')
+  goCode('echo "safe"')
+  act(() => nut('Chấm bài').click())
+  await doiChamXong()
+  expect(luuTienDo.mock.calls.some((c) => c[2] === 'completed')).toBe(false)
+  goCode('echo ".env" > .gitignore\ngit add .\ngit commit -m "safe"')
+  act(() => nut('Chấm bài').click())
+  await doiChamXong()
+  expect(luuTienDo.mock.calls.some((c) => c[2] === 'completed')).toBe(true)
 })

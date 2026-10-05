@@ -53,6 +53,9 @@ export const ProjectStepSchema = z
     probeCode: z.string().max(2000).optional(),
   })
   .strict()
+  .refine((s) => s.checks.every((c) => c.gitAssertions === undefined), {
+    message: 'Project chua ho tro Git assertions',
+  })
   .refine((s) => (s.language === 'dom' || s.language === 'fetch') === (s.domHtml !== undefined), {
     message: "bước 'dom'/'fetch' phải có domHtml; ngôn ngữ khác thì không được có",
   })

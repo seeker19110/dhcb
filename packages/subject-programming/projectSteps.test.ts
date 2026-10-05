@@ -150,3 +150,16 @@ describe('PROJECT_STAGES', () => {
     expect(getProjectStep('p2-s5')?.isMilestone).toBe(true)
   })
 })
+
+it('mọi language project hiện có từ chối Git assertions', () => {
+  const original = P1_PROJECT_STEPS[0]!
+  for (const language of ['python', 'pytest', 'apisim', 'html', 'dom', 'sql', 'fetch']) {
+    expect(
+      ProjectStepSchema.safeParse({
+        ...original,
+        language,
+        checks: [{ ...original.checks[0]!, gitAssertions: [{ type: 'headAbsent', path: '.env' }] }],
+      }).success,
+    ).toBe(false)
+  }
+})
