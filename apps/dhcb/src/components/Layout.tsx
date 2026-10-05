@@ -193,17 +193,8 @@ export default function Layout({
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/80 relative pt-safe shadow-sm"
+      className="app-header sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/80 relative pt-safe shadow-sm"
     >
-      {/* Tấm nền ĐẶC phủ toàn bộ khoảng phía TRÊN header cho Reachability (cử chỉ kéo màn
-          hình xuống — thuần MOBILE). `lg:hidden` vì desktop không có cử chỉ này, mà header
-          `z-50` lại nằm trên sidebar `z-40` nên tấm nền còn có thể phủ lên sidebar.
-          `100dvh` thay `h-screen`: trên iOS `100vh` tính cả thanh URL nên bị hụt/thừa. */}
-      <div
-        aria-hidden
-        className="lg:hidden absolute inset-x-0 bottom-full h-[100dvh] bg-zinc-950 pointer-events-none"
-      />
-
       {/* Gradient accent line trên cùng */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-500/50 to-transparent" />
 

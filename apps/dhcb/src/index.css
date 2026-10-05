@@ -46,20 +46,19 @@
   }
 }
 
-/* Chiều cao THẬT của riêng BottomNav (components/BottomNav.tsx: min-h-[5.25rem] nội
-   dung) — BottomNav CHỈ hiện dưới 1024px (`lg:hidden`), từ 1024px trở lên hai biến
-   này bị đặt về 0px ở media query bên dưới. Đổi min-h-[5.25rem] ở BottomNav.tsx thì
-   đổi 5.25rem ở đây. CHỈ dùng để định vị dải trigger Reachability
-   (App.tsx: bottom: calc(var(--bnav-only-h) - 0.75rem)) — các trang KHÔNG dùng
-   biến này cho padding-bottom, dùng --bnav-h ở dưới (đã cộng thêm phần trigger). */
+/* Chiều cao THẬT của BottomNav (components/BottomNav.tsx: min-h-[5.25rem] nội dung + đệm
+   safe-area của `.pb-safe`) — BottomNav CHỈ hiện dưới 1024px (`lg:hidden`), từ 1024px trở lên
+   hai biến này bị đặt về 0px ở media query bên dưới. Đổi min-h-[5.25rem] ở BottomNav.tsx thì
+   đổi 5.25rem ở đây.
+   [U6, 2026-10-05] Tính năng "Reachability" (dải kéo 1 tay 2rem phía trên thanh đáy) đã GỠ HẲN
+   (chủ dự án quyết) nên `--bnav-h` không còn cộng thêm 2.75rem cho dải đó: hai biến nay bằng
+   nhau. Giữ cả hai tên vì ~30 trang dùng `--bnav-h` cho đệm đáy còn vài thanh nổi
+   (PromoEndingBanner, Dictionary) dùng `--bnav-only-h` để định vị sát mép trên thanh đáy. */
 :root {
   --bnav-only-h: calc(5.25rem + max(12px, env(safe-area-inset-bottom)));
-  /* Tổng không gian dành riêng ở ĐÁY MỌI TRANG: BottomNav + dải trigger
-     Reachability nằm ngay trên nó. Trigger cao 3.5rem, phần nhô lên trên mép trên
-     BottomNav = 2.75rem (vì 0.75rem dưới đè lên nav) — xem BottomNav.tsx. Toàn bộ
-     ~30 trang đều dùng chung biến NÀY (pb-[calc(...+var(--bnav-h))]) nên chỉ cần
-     sửa 1 chỗ là tự áp dụng khắp nơi. */
-  --bnav-h: calc(var(--bnav-only-h) + 2.75rem);
+  /* Tổng không gian dành riêng ở ĐÁY MỌI TRANG — mọi trang dùng chung biến NÀY
+     (pb-[calc(...+var(--bnav-h))]) nên chỉ cần sửa 1 chỗ là tự áp dụng khắp nơi. */
+  --bnav-h: var(--bnav-only-h);
 
   /* Bề rộng thật của DesktopSidebar.tsx — CHỈ áp dụng từ 1024px (`lg:`) trở lên, xem
      media query bên dưới. Dưới ngưỡng đó sidebar không render (`hidden lg:flex`) nên
@@ -74,6 +73,46 @@
   :root {
     --bnav-only-h: 0px;
     --bnav-h: 0px;
+  }
+}
+
+/* [U6 · M1, 2026-10-05] KHUNG NHÌN THẤP (phóng to 200–400%, điện thoại xoay ngang) —
+   WCAG 1.4.10 Reflow / 1.4.4. Audit 2026-09-30 đo sau khi cuộn: header dính + thanh đáy (và dải
+   Reachability đã gỡ) chiếm 39% khung nhìn ở 844×390, 43% ở 200% (640×360), 60% ở 400%
+   (320×256) — nội dung chỉ còn ~205px. Dưới 500px chiều cao:
+   - header của Layout THÔI dính (cuộn đi cùng trang) — nút Back vẫn ở đầu trang;
+   - thanh đáy gọn còn 3.5rem (56px) + safe-area thật, không còn đệm tối thiểu 12px; nút Orb
+     không nhô lên và nhỏ lại để vừa chiều cao mới. Nhãn tab GIỮ NGUYÊN (icon 28px + nhãn 16px
+     vừa 56px), vùng chạm vẫn ≥ 44px nhờ `.tap-44`.
+   Đặt NGOÀI `@layer` để thắng `sticky`/`min-h-*`/`.pb-safe` (đều nằm trong layer). Cổng canh:
+   `e2e/u6-user-preferences.spec.ts` (tỉ lệ thanh cố định ở 800×400 và 844×390). */
+@media (max-height: 500px) {
+  header.app-header {
+    /* `relative` chứ không `static`: header có con định vị `absolute` (vạch sáng trên cùng). */
+    position: relative;
+  }
+  html[data-kbd-nav] {
+    scroll-padding-top: 8px;
+  }
+}
+@media (max-height: 500px) and (max-width: 1023.98px) {
+  :root {
+    --bnav-only-h: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  nav.bottom-nav {
+    min-height: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  nav.bottom-nav .bottom-nav-tabs {
+    min-height: 3.5rem;
+  }
+  nav.bottom-nav .bottom-nav-orb-link {
+    margin-top: 0;
+  }
+  nav.bottom-nav .bottom-nav-orb {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
   }
 }
 
@@ -149,7 +188,9 @@ html[data-kbd-nav][data-focus='1'] {
     input,
     textarea,
     select {
-      font-size: 16px !important;
+      /* [U6 · M5] `max(1rem, 16px)`: KHÔNG BAO GIỜ dưới 16px (ngưỡng iOS tự zoom) nhưng vẫn
+         lớn theo cỡ chữ người dùng chọn — 16px cứng thì khoá chữ ô nhập ở 16px. */
+      font-size: max(1rem, 16px) !important;
     }
   }
 
@@ -409,9 +450,12 @@ html[data-kbd-nav][data-focus='1'] {
 
   /* Thân bài dài: cỡ chữ + giãn dòng của NỘI DUNG ĐỂ ĐỌC, tách khỏi cỡ chữ giao diện.
      15px thay vì `text-sm` (14px) — 14px là cỡ cho nhãn/nút, không phải cho đoạn văn
-     2.000–3.000 ký tự. `line-height` 1.65 nằm giữa khoảng 1.5–1.7 mà luật mục 9 chốt. */
+     2.000–3.000 ký tự. `line-height` 1.65 nằm giữa khoảng 1.5–1.7 mà luật mục 9 chốt.
+     [U6 · M5] Viết bằng rem (0.9375rem = 15px ở cỡ mặc định): khoá px thì người đổi cỡ chữ
+     trình duyệt 16→24px vẫn đọc truyện ở 15px (audit 2026-09-30: 87% nút chữ trang đọc truyện
+     giữ nguyên cỡ). Cổng: `pages/core/FontSizeRem.design.test.ts`. */
   .read-body {
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.65;
   }
 
@@ -593,6 +637,43 @@ html[data-kbd-nav][data-focus='1'] {
     transition-duration: 0s !important;
     transition-delay: 0s !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ── CHẾ ĐỘ MÀU CƯỠNG BỨC (Windows tương phản cao) — U6 · M4, 2026-10-05 ───────────────
+   EN 301 549 §9.7 / WCAG 1.4.11. Ở `forced-colors: active` trình duyệt ép nền về `Canvas`, bỏ
+   gradient, bỏ box-shadow (nên `ring-*` của Tailwind biến mất). Audit 2026-09-30 thấy:
+   - icon lucide GIỮ màu tác giả (Chromium mặc định `forced-color-adjust: preserve-parent-color`
+     cho <svg>: icon tự khai `text-*` riêng thì không được ép) → icon tối/nhạt trên nền Canvas
+     gần như biến mất (nút tròn "Đồng Hành" ở thanh đáy, ô icon thẻ tính năng Tiếng Anh);
+   - nút chỉ có nền màu, không viền → mất hình nút;
+   - viền focus kiểu `ring` (box-shadow) mất → không thấy đang focus ở đâu.
+   Sửa ở MỘT chỗ cho mọi trang thay vì vá từng component. Đặt NGOÀI `@layer` để thắng
+   `text-*`/`outline-none` của Tailwind (nằm trong layer). Dùng `outline` (không phải `border`)
+   để không đổi kích thước hộp. Ô dữ liệu cần giữ màu (heatmap lịch hoạt động) tự khai
+   `forced-color-adjust-none` tại chỗ. Cổng canh: `e2e/u6-user-preferences.spec.ts`. */
+@media (forced-colors: active) {
+  /* Icon theo màu hệ thống của phần tử chứa nó (CanvasText / ButtonText / LinkText). */
+  svg.lucide {
+    color: inherit;
+  }
+  /* Hình nút: viền mảnh màu hệ thống, kể cả "nút" là link có nền và nút tròn Orb ở thanh đáy. */
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='switch'],
+  summary,
+  a[class^='bg-'],
+  a[class*=' bg-'],
+  nav.bottom-nav .bottom-nav-orb {
+    outline: 1px solid ButtonText;
+    outline-offset: -1px;
+  }
+  /* Viền focus thay cho `ring` đã mất — dày 3px, màu Highlight của hệ thống. `:root` nâng độ
+     đặc hiệu (0,2,0) để thắng viền mảnh ở trên (`a[class*=' bg-']` là 0,1,1). */
+  :root :focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
   }
 }
 

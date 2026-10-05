@@ -41,7 +41,8 @@
     input,
     textarea,
     select {
-      font-size: 16px !important;
+      /* [U6 · M5] Giống apps/dhcb: không dưới 16px (iOS) nhưng theo cỡ chữ người dùng. */
+      font-size: max(1rem, 16px) !important;
     }
   }
 }
