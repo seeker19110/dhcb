@@ -103,3 +103,14 @@
   - chạy lại riêng thì xanh hết.
 - Tầng 8b: chụp bài hội thoại `lesson=1` ở 1440px và 390px, trước (bản sao `main`) và sau. Ảnh
   **trùng từng byte** (sha256 giống nhau), tức thêm `lang` không đổi giao diện.
+
+## Sửa thêm khi CI đỏ (E2E shard 6)
+
+- `e2e/sync-offline.spec.ts` gãy với lỗi "Execution context was destroyed". Đây là race có sẵn trong
+  test, nhánh này chỉ làm lộ ra: `setOffline(true)` rơi vào lúc chunk lười của Trang chủ còn đang
+  tải, nên `lazyWithRetry` gọi `location.reload()`. Đã sửa test, không sửa app:
+  - chờ Trang chủ tải xong rồi mới ngắt mạng;
+  - chặn POST trước `setOffline(false)`, vì app tự `flush` ngay khi có sự kiện `online`;
+  - chỉ đếm mục `programming` trong hàng đợi, vì mục `english` của trang vừa tải không thuộc phép đo;
+  - chỉ đếm POST ở pha server nhận được.
+- Kết quả: chạy lặp 6 + 8 lượt, xanh 14/14.
