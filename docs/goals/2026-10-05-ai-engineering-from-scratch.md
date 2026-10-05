@@ -153,7 +153,7 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 
 ### Iteration 6 — 2026-10-05
 
-- State: WAITING. Lát A: engine `.gitignore` và Git state assertions; base main `a9f3729` (checkpoint #1242).
+- State: WAITING. PR [#1243](https://github.com/seeker19110/dhcb/pull/1243). Lát A: engine `.gitignore` và Git state assertions; base main `a9f3729` (checkpoint #1242).
 - Spec Approved/merge #1240; root đọc diff, reviewer độc lập bắt inherited-property lookup và kiểm lại reproducer sau sửa. Subagent viết engine/test và E2E; root tích hợp, kiểm gates.
 - Bằng chứng local: 794 file test đạt, 1 bỏ qua; 18.536 test đạt, 2 bỏ qua trong 287,94 giây với hai workers. Build/typecheck/lint/format đạt. Rebase sau full gate chỉ thêm checkpoint tài liệu #1242, không đổi source; browser tích hợp cuối chạy lại trên base mới.
 - Negative controls: transcript echo không đạt state; bỏ history assertion trên cùng state reset/rebase thì đạt, giữ assertion thì rớt. Tệp thứ 101, commit thứ 101, append vượt 4.000 ký tự hoặc state vượt 128 KiB trả lỗi và rollback.

@@ -1,6 +1,6 @@
 # 0496 — Mô phỏng gitignore và chấm trạng thái Git (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** chờ tạo · **Loại:** `feat(programming)`.
+- **Ngày:** 2026-10-05 · **PR:** #1243 · **Loại:** `feat(programming)`.
 - Spec Approved đã merge #1240 trước khi viết mã. Lát A triển khai engine/grader; nội dung và hoạt họa bài Git thuộc lát B sau.
 - Bổ sung subset basename literal, một star và literal directory; tracked files không bị ignore. Snapshot tách rời, assertions strict, browser/server cùng chấm engine thật; grader chung fail closed.
 - Trần 4.000 ký tự / 100 lệnh / 20 lệnh chuẩn bị / 100 file / 100 commit / 128 KiB state, rollback khi vượt; toàn lịch sử sau reset/rebase giữ bằng chứng.
