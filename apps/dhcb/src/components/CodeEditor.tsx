@@ -21,7 +21,8 @@ interface Props {
 const editorTheme = EditorView.theme(
   {
     '&': {
-      fontSize: '16px',
+      // rem (= 16px mặc định) để theo cỡ chữ người dùng chọn — U6 · M5.
+      fontSize: '1rem',
       backgroundColor: '#0a0a0a',
       color: '#e5e5e5',
       minHeight: '220px',

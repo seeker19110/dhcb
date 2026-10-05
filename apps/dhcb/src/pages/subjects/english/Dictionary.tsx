@@ -730,8 +730,7 @@ export default function Dictionary() {
 
       {/* Search bar cố định dưới — CHỈ trên mobile, tab Tra từ. Cố định ngay TRÊN
           BottomNav (bottom: var(--bnav-only-h) — chiều cao THẬT của riêng nav, xem
-          index.css; --bnav-h giờ là tổng nav+trigger nên không dùng cho việc định vị
-          flush-với-nav nữa), giống PromoEndingBanner — tránh cách làm cũ (bó chiều
+          index.css), giống PromoEndingBanner — tránh cách làm cũ (bó chiều
           cao trang bằng 100dvh-bnav-h để "đẩy" thanh này lên): cách đó khiến
           BottomNav hiển thị sai vị trí trên một số trình duyệt di động do dvh không
           khớp khi trang không tự cuộn ở cấp document. */}

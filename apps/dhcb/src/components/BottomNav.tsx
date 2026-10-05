@@ -2,10 +2,9 @@
 // Từ 1024px trở lên (`lg:`) bị ẩn (`lg:hidden`) — desktop dùng DesktopSidebar.tsx thay thế.
 // 5 Tab lõi (P1-7, lệnh 9): Trang chủ · Học · Đồng Hành (Agent) · Ôn tập · Tôi
 import { Link, useLocation } from 'react-router-dom'
-import { Home, GraduationCap, Brain, Sparkles, User, ChevronDown, ChevronUp } from 'lucide-react'
+import { Home, GraduationCap, Brain, Sparkles, User } from 'lucide-react'
 import { useAuth } from '../context/useAuth'
 import { useLang } from '../context/useLang'
-import type { useOneHandedDrag } from '../lib/useOneHandedDrag'
 import SubjectsLink from './SubjectsLink'
 // Bảng tiền tố đường dẫn dùng CHUNG với DesktopSidebar — xem lib/navPaths.ts
 import {
@@ -19,17 +18,11 @@ import {
 const HIDDEN_PATHS = ['/login', '/onboarding']
 
 interface Props {
-  triggerHandlers?: ReturnType<typeof useOneHandedDrag>['triggerHandlers']
-  isReachabilityOpen?: boolean
   /** Đồng Hành có ghi chú mới chưa xem — chấm báo nhỏ trên Orb. Nguồn dữ liệu thật nối ở P2-11. */
   companionHasNote?: boolean
 }
 
-export default function BottomNav({
-  triggerHandlers,
-  isReachabilityOpen,
-  companionHasNote = false,
-}: Props) {
+export default function BottomNav({ companionHasNote = false }: Props) {
   const { user } = useAuth()
   const { T, lang } = useLang()
   const location = useLocation()
@@ -60,28 +53,9 @@ export default function BottomNav({
       {/* Viền sáng gradient đa sắc tinh tế ở đỉnh thanh điều hướng */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-500/40 to-transparent" />
 
-      {/* Vùng bắt cử chỉ Reachability */}
-      {triggerHandlers && (
-        <div
-          className="absolute -top-[2rem] inset-x-0 bg-zinc-950"
-          style={{ touchAction: 'none', height: '2rem' }}
-          aria-hidden="true"
-          {...triggerHandlers}
-        >
-          <div className="absolute bottom-2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-accent-500/50 to-transparent" />
-          <div className="absolute inset-x-0 top-2 flex justify-center pointer-events-none">
-            {isReachabilityOpen ? (
-              <ChevronUp className="w-4 h-4 text-accent-400/70 theme-light:text-accent-800/70 animate-bounce" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-zinc-500 animate-bounce" />
-            )}
-          </div>
-        </div>
-      )}
-
       {/* `min-h` chứ không `h-full`: hộp <nav> nay chỉ có CHIỀU CAO TỐI THIỂU (min-h) nên
           `h-full` sẽ tính về auto — dùng thẳng min-h cùng giá trị cho chắc chắn. */}
-      <div className="max-w-3xl mx-auto min-h-[5.25rem] grid grid-cols-5 px-1 items-center">
+      <div className="bottom-nav-tabs max-w-3xl mx-auto min-h-[5.25rem] grid grid-cols-5 px-1 items-center">
         {/* Tab 1: Trang chủ */}
         <Link
           to="/"
@@ -129,11 +103,11 @@ export default function BottomNav({
         <Link
           to="/ban-dong-hanh"
           aria-current={isCompanion ? 'page' : undefined}
-          className="tap-44 relative flex flex-col items-center justify-center -mt-3.5 text-center text-xs font-medium transition-all duration-200 group"
+          className="bottom-nav-orb-link tap-44 relative flex flex-col items-center justify-center -mt-3.5 text-center text-xs font-medium transition-all duration-200 group"
           title="Agent Bạn Đồng Hành"
         >
           <div
-            className={`relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-600 via-accent-500 to-indigo-500 text-zinc-950 shadow-lg transition-all duration-200 group-hover:scale-110 group-active:scale-95 ${
+            className={`bottom-nav-orb relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-600 via-accent-500 to-indigo-500 text-zinc-950 shadow-lg transition-all duration-200 group-hover:scale-110 group-active:scale-95 ${
               isCompanion ? 'ring-2 ring-accent-400 ring-offset-2 ring-offset-zinc-950' : ''
             }`}
           >

@@ -118,6 +118,7 @@ export default function ActivityCalendarCard({
     days.findIndex((day) => day.date === effectiveDate),
   )
   const gridRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const calendarHadFocusRef = useRef(false)
   const focusedDateRef = useRef<string | null>(null)
 
@@ -178,6 +179,14 @@ export default function ActivityCalendarCard({
     focusedDateRef.current = effectiveDate
   }, [days, effectiveDate])
 
+  // [U6 · M6] Ô desktop to hơn (24px) nên lịch nửa năm tràn ngang cột phải nhiều hơn: mở thẻ
+  // là cuộn sẵn về MÉP PHẢI — tuần gần nhất (có hôm nay) luôn hiện, tuần cũ kéo sang trái xem.
+  // Cột nhãn thứ (T2…CN) dính mép trái (`sticky left-0`, nền đặc) nên không trôi mất khi cuộn.
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (isDesktop && el) el.scrollLeft = el.scrollWidth
+  }, [isDesktop, days.length])
+
   function onKeyDown(e: React.KeyboardEvent) {
     const next = resolveRovingGridKey(e.key, {
       index: selected,
@@ -220,10 +229,20 @@ export default function ActivityCalendarCard({
               : { gridColumnStart: calendar.firstColumn + 1 }
             : undefined
         }
-        className={`${isDesktop ? 'w-4 h-4' : 'w-11 h-11'} rounded-[4px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring ${heatColor(d.count)} ${
+        // [U6 · M6, WCAG 2.5.8] Vùng chạm desktop 24×24px (trước: 16×16, dưới sàn AA). Ô màu
+        // nhìn thấy là <span> bên trong, nhỏ hơn 6px — giữ mật độ "lưới chấm" dễ đọc, các ô
+        // nằm sát nhau (gap 0) nên bước lưới chỉ tăng 20→24px. Mobile giữ 44px (luật dự án).
+        className={`${isDesktop ? 'w-6 h-6 p-[3px]' : 'w-11 h-11'} rounded-[6px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring ${
           isSel ? 'ring-2 ring-accent-300' : isLast ? 'ring-1 ring-accent-400/70' : ''
         }`}
-      />
+      >
+        {/* `forced-color-adjust-none`: ở chế độ tương phản cao (Windows) nền bị ép về Canvas
+            nên heatmap mất sạch nghĩa — giữ màu tác giả cho riêng ô dữ liệu (U6 · M4). */}
+        <span
+          aria-hidden="true"
+          className={`block w-full h-full rounded-[4px] forced-color-adjust-none ${heatColor(d.count)}`}
+        />
+      </button>
     )
   }
 
@@ -254,11 +273,14 @@ export default function ActivityCalendarCard({
     <>
       {/* Một cây DOM duy nhất cho cả hai hình học. Chỉ class CSS đổi qua breakpoint nên ô còn
           trong range giữ nguyên identity, focus và state khi chuyển 5↔13↔26 tuần. */}
-      <div className={isDesktop ? 'flex gap-1.5 overflow-x-auto' : 'overflow-x-auto'}>
+      <div
+        ref={scrollRef}
+        className={isDesktop ? 'flex gap-1.5 overflow-x-auto' : 'overflow-x-auto'}
+      >
         <div
           className={
             isDesktop
-              ? 'grid grid-rows-7 gap-1 text-[11px] text-zinc-400 shrink-0'
+              ? 'sticky left-0 z-[1] grid grid-rows-7 gap-0 text-[0.6875rem] text-zinc-400 shrink-0 bg-zinc-900'
               : 'grid w-max grid-cols-7 gap-1.5 mb-1.5'
           }
         >
@@ -266,7 +288,9 @@ export default function ActivityCalendarCard({
             <span
               key={i}
               className={
-                isDesktop ? 'h-4 leading-4 pr-0.5' : 'w-11 text-[11px] text-zinc-400 text-center'
+                isDesktop
+                  ? 'h-6 leading-6 pr-0.5'
+                  : 'w-11 text-[0.6875rem] text-zinc-400 text-center'
               }
             >
               {w}
@@ -283,7 +307,7 @@ export default function ActivityCalendarCard({
           aria-label={vi ? 'Lịch hoạt động theo ngày' : 'Daily activity calendar'}
           onKeyDown={onKeyDown}
           className={
-            isDesktop ? 'grid grid-rows-7 grid-flow-col gap-1' : 'grid w-max grid-cols-7 gap-1.5'
+            isDesktop ? 'grid grid-rows-7 grid-flow-col gap-0' : 'grid w-max grid-cols-7 gap-1.5'
           }
         >
           {rows}
@@ -319,13 +343,13 @@ export default function ActivityCalendarCard({
       )}
 
       {/* Chú thích đậm nhạt */}
-      <div className="flex items-center justify-end gap-1.5 mt-3 text-[11px] text-zinc-400">
+      <div className="flex items-center justify-end gap-1.5 mt-3 text-[0.6875rem] text-zinc-400">
         <span>{vi ? 'Ít' : 'Less'}</span>
-        <span className="w-3 h-3 rounded-[3px] bg-zinc-800/50" />
-        <span className="w-3 h-3 rounded-[3px] bg-accent-900" />
-        <span className="w-3 h-3 rounded-[3px] bg-accent-700" />
-        <span className="w-3 h-3 rounded-[3px] bg-accent-500" />
-        <span className="w-3 h-3 rounded-[3px] bg-accent-400" />
+        <span className="w-3 h-3 rounded-[3px] forced-color-adjust-none bg-zinc-800/50" />
+        <span className="w-3 h-3 rounded-[3px] forced-color-adjust-none bg-accent-900" />
+        <span className="w-3 h-3 rounded-[3px] forced-color-adjust-none bg-accent-700" />
+        <span className="w-3 h-3 rounded-[3px] forced-color-adjust-none bg-accent-500" />
+        <span className="w-3 h-3 rounded-[3px] forced-color-adjust-none bg-accent-400" />
         <span>{vi ? 'Nhiều' : 'More'}</span>
       </div>
     </>

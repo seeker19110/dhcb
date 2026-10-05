@@ -96,10 +96,17 @@ describe('ActivityCalendarCard', () => {
     expect(document.activeElement?.getAttribute('data-cell')).toBe('6')
   })
 
-  it('giữ heatmap desktop 16px', () => {
+  // [U6 · M6] Trước đây test này GHIM ô desktop 16×16px — đúng cỡ dưới sàn WCAG 2.5.8 (AA,
+  // ≥ 24px) mà audit 2026-09-30 chỉ ra. Nay ghim vùng chạm 24px (`w-6 h-6`); ô màu nhìn thấy
+  // là <span> bên trong. Đo px thật ở trình duyệt: `e2e/u6-user-preferences.spec.ts`.
+  it('ô desktop có vùng chạm 24×24px, ô màu nằm bên trong', () => {
     render(true)
     const cells = container.querySelectorAll<HTMLElement>('[role="gridcell"]')
-    cells.forEach((cell) => expect(cell.className).toContain('w-4 h-4'))
+    expect(cells.length).toBeGreaterThan(0)
+    cells.forEach((cell) => {
+      expect(cell.className).toContain('w-6 h-6')
+      expect(cell.querySelector('span[aria-hidden="true"]')?.className).toMatch(/\bbg-/)
+    })
   })
 
   it('giữ ngày chọn, node và focus khi đổi hình học 5 → 13 → 26 tuần', () => {

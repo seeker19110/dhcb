@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Oculus15Viseme, AvatarEmotionType } from '@dhcb/core-contracts/avatarEmbodiment'
 import { VisemeMorphingService } from '@dhcb/core-ai/visemeMorphingService'
+import { startMotionAwareLoop } from '../../lib/motionAwareLoop'
+
+// Mốc thời gian cho khung TĨNH khi người dùng bật "giảm chuyển động": ở giây thứ 1 chu kỳ
+// chớp mắt (3,5s, chớp trong 0,12s đầu) đang ở pha MỞ MẮT — avatar đứng yên, không nhắm dở.
+const STATIC_FRAME_MS = 1000
 
 interface CyberTutorAvatar3DProps {
   isSpeaking?: boolean
@@ -51,8 +56,6 @@ export default function CyberTutorAvatar3D({
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-
-    let animationFrameId: number
 
     let smoothedWidth = 0.2
     let smoothedHeight = 0.05
@@ -259,11 +262,16 @@ export default function CyberTutorAvatar3D({
       })
 
       ctx.restore()
-      animationFrameId = requestAnimationFrame(render)
     }
 
-    animationFrameId = requestAnimationFrame(render)
-    return () => cancelAnimationFrame(animationFrameId)
+    // [U6 · M3] Không tự gọi `requestAnimationFrame` vô hạn nữa: vòng lặp dừng khi người dùng
+    // bật "giảm chuyển động" (vẽ một khung tĩnh), khi tab ẩn và khi avatar ra khỏi khung nhìn —
+    // xem `lib/motionAwareLoop.ts`.
+    return startMotionAwareLoop({
+      draw: render,
+      staticFrameTime: STATIC_FRAME_MS,
+      target: containerRef.current,
+    })
   }, [isSpeaking, isListening, currentSpeechAmplitude, activeViseme, emotion, gaze, accentColor])
 
   return (
@@ -287,7 +295,7 @@ export default function CyberTutorAvatar3D({
               }`}
             />
           </div>
-          <span className="rounded bg-surface-card px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-content">
+          <span className="rounded bg-surface-card px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-content">
             {isListening ? 'Đang nghe…' : isSpeaking ? 'Đang nói…' : 'Sẵn sàng'}
           </span>
         </div>
