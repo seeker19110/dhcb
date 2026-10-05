@@ -1,6 +1,6 @@
 # Storyboard thí điểm: Gradient descent và learning rate
 
-> Trạng thái: **pilot đã triển khai tại máy, đang kiểm toàn kho trước PR/merge**, ngày 2026-10-05. Bài đích: `mathai-u3-l3`. C1 đã merge ở PR #1237; hợp đồng phát lại đã merge ở PR #1238. Mục 8 ghi dữ liệu triển khai và bằng chứng hiện tại; chưa nghiệm thu pilot trên main.
+> Trạng thái: **pilot đã nghiệm thu và merge trên main**, ngày 2026-10-05. Bài đích: `mathai-u3-l3`. C1 #1237 và hợp đồng phát lại #1238 đã merge; pilot #1241 merge `839e7b4`. Mục 8–9 phân biệt các lượt sửa/kiểm và bằng chứng cuối.
 
 ## 1. Mục tiêu và bằng chứng đã đọc
 
@@ -154,3 +154,11 @@ Nghiệm thu gồm parse dữ liệu, test số, ảnh thật có ít nhất ba 
 - Review độc lập không phát hiện lỗi chặn ở số học, chú thích hoặc renderer; yêu cầu bổ sung tình huống mở zoom khi đang chạy đã xử lý. Build đầu phát hiện thiếu kiểu `this` trong mock unit được hub typecheck đọc; đã sửa, hub typecheck và renderer 28/28 đạt. Gate toàn kho bản tích hợp cuối và required CI còn chờ; không suy từ các lượt riêng rằng E2E toàn kho đã đạt.
 
 - Kiểm toàn kho phát hiện title trong chỉ mục sinh tự động chưa đổi theo title bài l3; đã chạy `npm run gen:lesson-index`. Diff chỉ một title, không đổi ID/order/count/loader. Lượt unit có failure này đã dừng để kiểm và chạy lại sau sửa; không đánh dấu lượt dừng đạt.
+
+## 9. Nghiệm thu cuối
+
+PR [#1241](https://github.com/seeker19110/dhcb/pull/1241) merge `839e7b4` sau required quality/e2e/metadata đều đạt trên head `c00e6a2`. Sáu shard E2E, unit/coverage, build/budget/boot, type/lint/format, audit/import-cycle và secret scan xanh.
+
+Tại máy, bản đồng bộ cuối đạt full build/typecheck/lint/format và unit **794 files passed, 1 skip; 18.516 tests passed, 2 skip**, 267,88 giây với hai workers. `lessonsLazy` 7/7 xác nhận title sinh lại khớp registry; không đổi ID/order/loaders. Bằng chứng full E2E là CI; các lượt browser local 11/11 và pilot 6/6 là bằng chứng tương tác/a11y có phạm vi riêng.
+
+Pilot giữ nguyên quyền chấm/completed. Bài Python vẫn chờ worker trước khi mở lại chấm hoàn thành; không dùng pilot hoặc ảnh đã xem làm bằng chứng khóa/phase hoàn tất.
