@@ -1,6 +1,6 @@
 # 0492 — Đợt U8 audit UI/UX: thuật ngữ nội bộ, mã enum, chữ Viết Hoa Mỗi Chữ, nguồn truyện (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** (điền khi tạo) · **Loại:** `fix(copy)`.
+- **Ngày:** 2026-10-05 · **PR:** #1235 · **Loại:** `fix(copy)`.
 - **Phạm vi:** đợt U8 trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` mục 12: **M16**. M15
   (tiêu đề lý thuyết STEM) đã xong ở changelog 0470 — kiểm nhanh, không làm lại.
 

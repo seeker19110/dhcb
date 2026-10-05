@@ -180,7 +180,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   - U3 #1231 (`0489`): 14 trang tương phản, đưa vào cổng;
   - U4 #1229 (`0490`): ngôn ngữ trang/đoạn;
   - U6 #1234 (`0491`): khung nhìn thấp, gỡ Reachability, giảm chuyển động, màu cưỡng bức, lịch 24px;
-  - U8 (`0492`, PR đợt này): thuật ngữ nội bộ, mã enum, chữ Viết Hoa Mỗi Chữ, nguồn truyện.
+  - U8 #1235 (`0492`): thuật ngữ nội bộ, mã enum, chữ Viết Hoa Mỗi Chữ, nguồn truyện.
 
   Kèm #1232 (`0493`): thứ bậc tiêu đề ở Góc học tập và trang môn STEM.
   **Kế tiếp:** U5 (câu chữ về gói, bản tin), U7 (tải dữ liệu ngoại tuyến) và U9 (onboarding) — cần
