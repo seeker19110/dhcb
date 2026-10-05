@@ -1,6 +1,6 @@
 # 0490 — Đợt U4 audit UI/UX: ngôn ngữ của trang và ngôn ngữ của từng đoạn (2026-10-04)
 
-- **Ngày:** 2026-10-04 · **PR:** (điền khi tạo) · **Loại:** `fix(a11y)`.
+- **Ngày:** 2026-10-04 · **PR:** #1229 · **Loại:** `fix(a11y)`.
 - **Phạm vi:** đợt U4 trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` mục 12. Gồm lỗi C5
   (WCAG 3.1.1 Language of Page mức A, 3.1.2 Language of Parts mức AA) và cổng (c) ở mục 11. Đợt này
   "không cần chủ dự án quyết".
