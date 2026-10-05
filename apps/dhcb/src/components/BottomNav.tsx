@@ -31,7 +31,7 @@ export default function BottomNav({
   companionHasNote = false,
 }: Props) {
   const { user } = useAuth()
-  const { T } = useLang()
+  const { T, lang } = useLang()
   const location = useLocation()
 
   if (!user || HIDDEN_PATHS.includes(location.pathname)) return null
@@ -52,7 +52,10 @@ export default function BottomNav({
       // qua, nên tương phản nhãn đổi theo từng trang và axe báo "partially obscured" ở 390px
       // (không đo được). Nền đặc cho nhãn một màu nền cố định, đo được, ở mọi trang.
       className="bottom-nav lg:hidden fixed bottom-0 inset-x-0 z-40 min-h-[5.25rem] pb-safe bg-zinc-950 border-t border-zinc-800/80 shadow-2xl shadow-black/40"
-      aria-label="Điều hướng chính"
+      // [U4 · WCAG 3.1.2] nhãn thanh này theo NGÔN NGỮ GIAO DIỆN (`T`), có thể khác ngôn ngữ
+      // trang (vd /learn-vietnamese luôn là tiếng Anh) — gắn `lang` để đọc đúng giọng.
+      lang={lang}
+      aria-label={lang === 'en' ? 'Main navigation' : 'Điều hướng chính'}
     >
       {/* Viền sáng gradient đa sắc tinh tế ở đỉnh thanh điều hướng */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-500/40 to-transparent" />

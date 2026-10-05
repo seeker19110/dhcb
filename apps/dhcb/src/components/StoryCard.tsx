@@ -36,8 +36,16 @@ export default function StoryCard({ story, isA, onClick, progress }: Props) {
           {story.level}
         </span>
       </div>
-      <p className="font-bold text-base text-white leading-snug line-clamp-2">{mainTitle}</p>
-      <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{subTitle}</p>
+      {/* [U4 · WCAG 3.1.2] tiêu đề mang ngôn ngữ của chính nó, không theo ngôn ngữ trang. */}
+      <p
+        lang={isA ? 'en' : 'vi'}
+        className="font-bold text-base text-white leading-snug line-clamp-2"
+      >
+        {mainTitle}
+      </p>
+      <p lang={isA ? 'vi' : 'en'} className="text-xs text-zinc-400 mt-0.5 line-clamp-1">
+        {subTitle}
+      </p>
       {percent !== null && (
         <div className="mt-2">
           {/* Chữ mang đủ thông tin (thành tên truy cập của nút); thanh chỉ để nhìn nhanh nên

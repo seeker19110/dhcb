@@ -105,6 +105,7 @@ import { PageShell } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
 import { countBadgeClass, badgeCount } from '@core/badgeStyles'
 import { usePageTitle } from '../../../lib/usePageTitle'
+import MixedLangText from '../../../components/MixedLangText'
 
 // % an toàn (0 khi total = 0, không chia cho 0).
 const pct = (done: number, total: number) => (total > 0 ? Math.round((done / total) * 100) : 0)
@@ -1476,9 +1477,13 @@ function UnitSection({
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-zinc-200 truncate">
-                        {isA ? g.titleVi : g.titleEn}
+                        {/* [U4] tên "tiếng Việt" có khi là tiếng Anh ("This / That / …"). */}
+                        <MixedLangText text={isA ? g.titleVi : g.titleEn} />
                       </p>
-                      <p className="text-xs text-zinc-400 font-mono truncate">{g.structure}</p>
+                      {/* [U4 · WCAG 3.1.2] công thức trộn Anh/Việt → `lang` theo từng đoạn. */}
+                      <p className="text-xs text-zinc-400 font-mono truncate">
+                        <MixedLangText text={g.structure} />
+                      </p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
                   </button>

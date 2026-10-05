@@ -20,12 +20,19 @@ import { MAIN_CONTENT_ID } from './PageShell.js'
 export interface SkipLinkProps {
   /** Nhãn hiển thị. Mặc định tiếng Việt — truyền vào để đổi theo ngôn ngữ đang chọn. */
   label?: string
+  /**
+   * Ngôn ngữ của nhãn (WCAG 3.1.2). Mặc định `vi` khớp nhãn mặc định — trang đang là tiếng Anh
+   * thì trình đọc màn hình vẫn đọc nhãn tiếng Việt bằng giọng Việt. Truyền nhãn khác thì truyền
+   * kèm ngôn ngữ của nó.
+   */
+  lang?: string
 }
 
-export function SkipLink({ label = 'Bỏ qua tới nội dung chính' }: SkipLinkProps) {
+export function SkipLink({ label = 'Bỏ qua tới nội dung chính', lang = 'vi' }: SkipLinkProps) {
   return (
     <a
       href={`#${MAIN_CONTENT_ID}`}
+      lang={lang}
       // [2026-09-25] Focus bằng mã thay vì để trình duyệt theo `href`: theo `href` thì (1) trình
       // duyệt cuộn `<main>` sát mép trên — phần tử đầu nội dung bị header sticky che (đo ở 1440px:
       // liên kết quay lại ở top=32px, header cao 56px); (2) URL bị gắn `#noi-dung-chinh`, mà trang

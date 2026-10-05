@@ -20,6 +20,11 @@ export interface OutlinePrevNextProps {
    * viên học chiều B (giao diện tiếng Anh), giữ nguyên MỘT khuôn nút cho mọi môn.
    */
   labels?: { nav: string; prev: string; next: string }
+  /**
+   * Ngôn ngữ của TÊN bài trong cây, khi có thể khác ngôn ngữ trang (WCAG 3.1.2) — vd bài hội thoại
+   * tiếng Anh có tên tiếng Việt cả khi giao diện là tiếng Anh. Bỏ trống = theo ngôn ngữ trang.
+   */
+  titleLang?: 'vi' | 'en'
 }
 
 const NHAN_MAC_DINH = { nav: 'Bài trước và bài sau', prev: 'Bài trước', next: 'Bài sau' }
@@ -28,6 +33,7 @@ export default function OutlinePrevNext({
   outline,
   contentId,
   labels = NHAN_MAC_DINH,
+  titleLang,
 }: OutlinePrevNextProps) {
   if (!outline || contentId === undefined) return null
   const { prev, next } = prevNext(outline, contentId)
@@ -42,7 +48,7 @@ export default function OutlinePrevNext({
         <Link to={prev.href} className={lop}>
           <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="line-clamp-2 break-words text-left">
-            {labels.prev}: {prev.title}
+            {labels.prev}: <span lang={titleLang}>{prev.title}</span>
           </span>
         </Link>
       ) : (
@@ -52,7 +58,7 @@ export default function OutlinePrevNext({
       {next?.href && (
         <Link to={next.href} className={lop}>
           <span className="line-clamp-2 break-words text-right">
-            {labels.next}: {next.title}
+            {labels.next}: <span lang={titleLang}>{next.title}</span>
           </span>
           <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         </Link>
