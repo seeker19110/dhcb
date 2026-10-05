@@ -320,6 +320,7 @@ export default function Lessons() {
           <OutlinePrevNext
             outline={cayBai}
             contentId={String(lesson.id)}
+            titleLang="vi"
             {...(isA
               ? {}
               : {
