@@ -16,10 +16,10 @@ export function LoanAmortization() {
         <div>
           <h3 className="text-base font-bold text-amber-400 theme-light:text-amber-800 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
-            Mô Phỏng 3: Trả Góp Khoản Vay Mua Nhà / Xe Theo Dư Nợ Giảm Dần
+            Mô phỏng 3: Trả góp khoản vay mua nhà / xe theo dư nợ giảm dần
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Toán Tài Chính & Phương thức tính toán của hệ thống Ngân hàng
+            Toán tài chính & phương thức tính toán của hệ thống Ngân hàng
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 theme-light:text-amber-800 font-mono font-bold">

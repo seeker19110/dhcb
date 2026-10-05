@@ -411,7 +411,7 @@ export default function Profile() {
                   </p>
                   <p className="text-xs text-zinc-400 truncate mt-0.5">
                     {isA
-                      ? 'Streak, từ vựng, lộ trình CEFR & kết quả luyện tập'
+                      ? 'Chuỗi ngày học, từ vựng, lộ trình CEFR & kết quả luyện tập'
                       : 'Streak, vocabulary, CEFR roadmap & practice scores'}
                   </p>
                 </div>

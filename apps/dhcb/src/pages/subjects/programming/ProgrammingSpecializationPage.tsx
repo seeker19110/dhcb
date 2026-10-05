@@ -106,9 +106,7 @@ function ProjectBlock({ project, tone }: { project: SpecProject; tone: 'stage' |
         <span>Dự án: {project.name}</span>
       </h4>
       <p className="text-sm text-zinc-200 leading-relaxed read-measure">{project.brief}</p>
-      <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">
-        Xong nghĩa là đạt đủ:
-      </p>
+      <p className="text-xs font-semibold text-zinc-200">Xong nghĩa là đạt đủ:</p>
       <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5 read-measure">
         {project.requirements.map((req) => (
           <li key={req}>{req}</li>
@@ -182,7 +180,7 @@ function StageBlock({
       <div className="space-y-1.5">
         {/* Nhãn chặng dùng zinc-300 chứ không phải accent-400: accent ở theme nền sáng
             không đạt tương phản AA cho CHỮ (cổng e2e/a11y.spec.ts bắt được). */}
-        <p className="text-xs font-semibold text-zinc-300 uppercase tracking-wide">
+        <p className="text-xs font-semibold text-zinc-300">
           {TIER_LABEL[stage.tier] ?? stage.tier}
         </p>
         <h3 className="text-base font-bold text-white leading-snug">{stage.name}</h3>

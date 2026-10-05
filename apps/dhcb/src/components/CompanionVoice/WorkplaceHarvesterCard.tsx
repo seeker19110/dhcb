@@ -268,7 +268,7 @@ export default function WorkplaceHarvesterCard() {
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-indigo-400 theme-light:text-indigo-800" />
                     <span className="text-xs font-bold text-indigo-200 theme-light:text-indigo-800">
-                      Thẻ Ôn Tập Spaced Repetition
+                      Thẻ ôn tập ngắt quãng
                     </span>
                   </div>
                   <span className="text-[11px] text-content-secondary">

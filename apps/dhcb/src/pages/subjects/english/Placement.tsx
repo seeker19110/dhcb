@@ -113,7 +113,7 @@ function PlacementSession() {
     [],
   )
 
-  usePageTitle('Kiểm tra trình độ | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Kiểm tra trình độ | Môn tiếng Anh · Đồng hành cùng bạn')
 
   if (!user) return null // như /onboarding: chưa đăng nhập thì AuthProvider tự điều hướng /login
 

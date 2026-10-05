@@ -151,7 +151,7 @@ export default function PvPBattlefieldModal({
             <div>
               <div
                 id={titleId}
-                className="text-xs font-bold text-amber-400 theme-light:text-amber-900 uppercase tracking-wider"
+                className="text-xs font-bold text-amber-400 theme-light:text-amber-900"
               >
                 Đấu Trường 1v1 PvP
               </div>
@@ -200,7 +200,7 @@ export default function PvPBattlefieldModal({
           <div className="flex items-center justify-end gap-3 p-3 rounded-2xl bg-purple-950/40 border border-purple-500/30 text-right">
             <div className="min-w-0 flex-1">
               {match.player2.isGhostBot && (
-                <div className="text-[11px] font-black uppercase tracking-wide text-purple-300 theme-light:text-purple-800">
+                <div className="text-[11px] font-black text-purple-300 theme-light:text-purple-800">
                   Đối thủ AI
                 </div>
               )}
@@ -245,7 +245,7 @@ export default function PvPBattlefieldModal({
               {eloDelta !== null && (
                 <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 theme-light:text-amber-900 border border-amber-500/30 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-amber-400 theme-light:text-amber-900" />
-                  <span>{formatEloDelta(eloDelta)} Elo</span>
+                  <span>{formatEloDelta(eloDelta)} điểm</span>
                 </div>
               )}
             </div>

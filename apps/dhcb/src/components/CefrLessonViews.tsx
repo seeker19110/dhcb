@@ -435,7 +435,7 @@ export function VocabFlash({
           />
         </div>
         <div className="text-center py-4">
-          <p className="text-xs text-zinc-400 mb-3 uppercase tracking-wide">
+          <p className="text-xs text-zinc-400 mb-3">
             {isA ? 'Nghĩa tiếng Việt của từ này là?' : 'Vietnamese meaning?'}
           </p>
           <p className="text-4xl font-bold text-white">{q.word}</p>

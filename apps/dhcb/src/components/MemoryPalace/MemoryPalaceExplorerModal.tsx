@@ -189,7 +189,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
               type="text"
               value={newRoomName}
               onChange={(e) => setNewRoomName(e.target.value)}
-              placeholder="Tên phòng (ví dụ: Xưởng Luyện Tranh Biện C2)..."
+              placeholder="Tên phòng (ví dụ: Xưởng luyện tranh biện C2)..."
               className="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 flex-1 min-w-[200px]"
             />
             <select
@@ -197,11 +197,11 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
               onChange={(e) => setNewRoomTheme(e.target.value as MemoryPalaceTheme)}
               className="px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100"
             >
-              <option value="knowledge_library">Thư Viện Tri Thức</option>
-              <option value="debate_sanctuary">Đấu Trường Tranh Biện</option>
-              <option value="stem_laboratory">Phòng Thí Nghiệm STEM</option>
-              <option value="zen_garden">Khu Vườn Thiền</option>
-              <option value="philosophical_atrium">Góc Chiêm Nghiệm</option>
+              <option value="knowledge_library">Thư viện tri thức</option>
+              <option value="debate_sanctuary">Đấu trường tranh biện</option>
+              <option value="stem_laboratory">Phòng thí nghiệm STEM</option>
+              <option value="zen_garden">Khu vườn thiền</option>
+              <option value="philosophical_atrium">Góc chiêm nghiệm</option>
             </select>
             <button
               type="button"
@@ -271,7 +271,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
 
                 {/* Loci List */}
                 <div className="space-y-2">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-zinc-400">
                     Các điểm neo Loci trong phòng ({currentRoom.loci.length})
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

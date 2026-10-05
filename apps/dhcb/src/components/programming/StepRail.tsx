@@ -51,7 +51,7 @@ export default function StepRail({ steps, current, isDone, onGo }: Props) {
             <li key={s.key}>
               {s.startsPhase && (
                 <p
-                  className="t-caption text-content-muted uppercase tracking-wide mt-3 mb-1 px-1"
+                  className="t-caption text-content-muted mt-3 mb-1 px-1"
                   role="separator"
                   aria-label={`Sang pha ${s.startsPhase}`}
                 >

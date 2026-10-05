@@ -170,7 +170,7 @@ export default function QuestsPanel({ isA, userId }: { isA: boolean; userId?: st
               ? `Chuỗi ngày học của bạn: ${status.streak.current} ngày. Mục này hiện không có thưởng VIP.`
               : `Your learning streak: ${status.streak.current} days. This activity currently has no VIP reward.`
             : isA
-              ? `Streak hiện tại: ${status.streak.current}/${status.streak.required} ngày. Thưởng +${status.streak.rewardDays} ngày VIP, nhận lại được mỗi ${status.streak.cooldownDays} ngày.`
+              ? `Chuỗi ngày học hiện tại: ${status.streak.current}/${status.streak.required} ngày. Thưởng +${status.streak.rewardDays} ngày VIP, nhận lại được mỗi ${status.streak.cooldownDays} ngày.`
               : `Current streak: ${status.streak.current}/${status.streak.required} days. +${status.streak.rewardDays} day of VIP, repeatable every ${status.streak.cooldownDays} days.`
         }
         status={status.streak.canClaim ? 'ready' : 'locked'}

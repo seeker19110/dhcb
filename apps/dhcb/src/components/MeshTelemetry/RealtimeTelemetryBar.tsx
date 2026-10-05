@@ -34,8 +34,8 @@ export default function RealtimeTelemetryBar() {
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-emerald-400" />
         <span className="text-[11px] text-zinc-400 font-medium">
-          Mesh:{' '}
-          <span className="text-zinc-200 font-semibold">{meshStatus.region.split(' ')[0]}</span>
+          {/* Vùng máy chủ là thông tin hạ tầng — không hiện cho người học */}
+          <span className="text-zinc-200 font-semibold">Kết nối ổn định</span>
         </span>
       </div>
 

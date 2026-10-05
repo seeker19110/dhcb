@@ -427,7 +427,7 @@ function SpeakFeedbackPanel({
   return (
     <aside className="flex w-72 xl:w-80 shrink-0 flex-col min-h-0">
       <div className="shrink-0 pb-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+        <p className="text-[11px] font-bold text-zinc-400">
           {dir === 'A' ? 'Sửa lỗi & giải thích' : 'Corrections & explanations'}
         </p>
       </div>
@@ -566,7 +566,7 @@ function currentTimeMs(): number {
 
 // ── Main Speaking page ──────────────────────────────────────────────────
 export default function Speaking() {
-  usePageTitle('Luyện nói song ngữ | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Luyện nói song ngữ | Môn tiếng Anh · Đồng hành cùng bạn')
   const user = useAuth().user! // RequireAuth đã đảm bảo có user trước khi vào trang
   const toast = useToast()
   useCloudSync(user.id) // kéo lịch sử + lượt dùng từ Supabase khi mở trang

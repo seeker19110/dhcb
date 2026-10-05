@@ -3,7 +3,7 @@ import { mockLogin, type ThemeName } from './helpers/auth'
 
 const CAP_A1 = '/goc-hoc-tap/english/lo-trinh/a1'
 const THEMES: ThemeName[] = ['dark-blue', 'blue-sky', 'kid']
-const TAB_NAMES = ['Bài học', 'Hôm nay', 'Ôn SRS', 'Nghe', 'Từ khó', 'Kiểm tra']
+const TAB_NAMES = ['Bài học', 'Hôm nay', 'Ôn lại', 'Nghe', 'Từ khó', 'Kiểm tra']
 
 for (const width of [320, 390]) {
   for (const theme of THEMES) {

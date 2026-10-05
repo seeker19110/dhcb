@@ -28,7 +28,7 @@ export default function AppliedKnowledge() {
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
-      <Layout onBack={() => nav('/')} title="Ứng Dụng Thực Tế & Mô Phỏng Đời Sống" />
+      <Layout onBack={() => nav('/')} title="Ứng dụng thực tế & mô phỏng đời sống" />
 
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Lưới ứng dụng thực tế → width standard. */}
       <PageShell
@@ -37,7 +37,7 @@ export default function AppliedKnowledge() {
         className="!pb-[calc(2.5rem+var(--bnav-h))] space-y-6"
       >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
-          Ứng Dụng Thực Tế & Mô Phỏng Đời Sống
+          Ứng dụng thực tế & mô phỏng đời sống
         </h1>
 
         {/* TABS NAVIGATION */}
@@ -73,7 +73,7 @@ export default function AppliedKnowledge() {
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            AI Giải Đáp Bản Chất Đời Sống
+            AI giải đáp bản chất đời sống
           </button>
           <button
             onClick={() => setActiveTab('projects')}
@@ -84,7 +84,7 @@ export default function AppliedKnowledge() {
             }`}
           >
             <Lightbulb className="w-4 h-4" />
-            Dự Án Mini Tự Làm Tại Nhà
+            Dự án mini tự làm tại nhà
           </button>
         </div>
 

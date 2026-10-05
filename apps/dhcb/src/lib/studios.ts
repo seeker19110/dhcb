@@ -42,8 +42,8 @@ export const STUDIOS: Studio[] = [
   },
   {
     id: 'practice',
-    title: 'Phòng Luyện Tập',
-    subtitle: 'Đa Môn · Bài Tập · Sửa Lỗi · 4 Kỹ Năng',
+    title: 'Phòng luyện tập',
+    subtitle: 'Đa môn · bài tập · sửa lỗi · 4 kỹ năng',
     to: '/luyen-tap',
     icon: Dumbbell,
     badge: 'Đa Môn AI',
@@ -53,7 +53,7 @@ export const STUDIOS: Studio[] = [
   {
     id: 'subjects',
     title: 'Góc học tập',
-    subtitle: 'Toán, Lý, Hóa, Sinh & Simulators',
+    subtitle: 'Toán, Lý, Hóa, Sinh & thí nghiệm mô phỏng',
     to: '/goc-hoc-tap',
     icon: Calculator,
     badge: 'Bài tập',

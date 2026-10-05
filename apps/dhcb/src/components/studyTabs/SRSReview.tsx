@@ -267,7 +267,7 @@ export function SRSReview({
       )}
 
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
-        <span>{isA ? 'Ôn SRS' : 'SRS Review'}</span>
+        <span>{isA ? 'Ôn lại' : 'SRS Review'}</span>
         <span>
           {idx + 1}/{due.length} {isA ? 'cần ôn' : 'due'}
           {totalDue > due.length ? ` (${totalDue} ${isA ? 'tổng' : 'total'})` : ''}

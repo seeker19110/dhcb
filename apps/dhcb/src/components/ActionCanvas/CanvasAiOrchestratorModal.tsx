@@ -63,7 +63,7 @@ export default function CanvasAiOrchestratorModal({
           </div>
           <div>
             <h3 id={titleId} className="text-base font-bold text-zinc-100">
-              Tạo Không Gian Hành Động
+              Tạo không gian hành động
             </h3>
             <p className="text-xs text-zinc-400">
               {/* Changelog 0485: `synthesize` dựng từ KHUNG MẪU cố định, không gọi AI — câu cũ "AI tự
@@ -80,7 +80,7 @@ export default function CanvasAiOrchestratorModal({
               htmlFor="canvasaiorchestratormodal-nhap-muc-tieu-chien-luoc-hoac-du"
               className="block text-xs font-semibold text-zinc-300 mb-1.5"
             >
-              Nhập Mục Tiêu Chiến Lược Hoặc Dự Định Của Bạn:
+              Nhập mục tiêu chiến lược hoặc dự định của bạn:
             </label>
             <textarea
               id="canvasaiorchestratormodal-nhap-muc-tieu-chien-luoc-hoac-du"

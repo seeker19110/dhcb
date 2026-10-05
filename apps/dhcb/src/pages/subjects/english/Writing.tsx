@@ -103,7 +103,7 @@ function ResultPanel({
         <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xl p-3.5">
           <Trophy className="w-8 h-8 text-white drop-shadow-md" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">
+        <p className="text-xs font-semibold text-zinc-400 mb-1">
           {isA ? 'Điểm ước lượng IELTS Overall' : 'Estimated IELTS Band'}
         </p>
         <div
@@ -236,7 +236,7 @@ function ResultView({
 }
 
 export default function Writing() {
-  usePageTitle('Luyện viết & chấm điểm | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Luyện viết & chấm điểm | Môn tiếng Anh · Đồng hành cùng bạn')
   const user = useAuth().user! // RequireAuth đã đảm bảo có user trước khi vào trang
   const toast = useToast()
   useCloudSync(user.id) // kéo lượt dùng từ Supabase khi mở trang

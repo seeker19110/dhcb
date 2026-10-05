@@ -195,7 +195,7 @@ function interleave(items: SubjectMeta[]): SubjectMeta[] {
 }
 
 export default function CommonPhrases() {
-  usePageTitle('Câu thông dụng | Môn Tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Câu thông dụng | Môn tiếng Anh · Đồng hành cùng bạn')
   const { T } = useLang()
   const { user } = useAuth()
   const uid = user?.id ?? ''

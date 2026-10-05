@@ -83,7 +83,7 @@ export function buildProgressShareContent(
   learned: number,
   isA: boolean,
 ): { title: string; lines: string[] } {
-  const title = isA ? `Streak ${streak} ngày liên tiếp 🔥` : `${streak}-day streak 🔥`
+  const title = isA ? `Chuỗi học ${streak} ngày liên tiếp 🔥` : `${streak}-day streak 🔥`
   const lines = [isA ? `Đã học ${learned} từ` : `${learned} words learned`]
   return { title, lines }
 }

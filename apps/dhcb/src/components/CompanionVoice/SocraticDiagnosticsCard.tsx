@@ -242,7 +242,7 @@ export default function SocraticDiagnosticsCard() {
                 <Award className="w-6 h-6" />
               </div>
               <h4 className="text-sm font-bold text-emerald-300 theme-light:text-emerald-900">
-                Cognitive Breakthrough Đạt Được!
+                Đột phá nhận thức đạt được!
               </h4>
               <p className="text-xs text-content-secondary max-w-lg mx-auto">
                 {activeSession.breakthroughSummary}

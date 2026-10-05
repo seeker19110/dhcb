@@ -104,9 +104,7 @@ export default function ProgrammingCoursePage() {
               >
                 <div className="flex items-end justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-300">
-                      Bản đồ năng lực
-                    </p>
+                    <p className="text-xs font-semibold text-accent-300">Bản đồ năng lực</p>
                     <h2 id="course-flow-title" className="text-base font-bold text-white mt-1">
                       Từ test đầu tiên tới hệ AI vận hành bền
                     </h2>

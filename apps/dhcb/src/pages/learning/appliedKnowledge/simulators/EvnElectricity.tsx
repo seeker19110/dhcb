@@ -21,7 +21,7 @@ export function EvnElectricity() {
             Mô Phỏng 4: Công Suất Điện & Tối Ưu Hóa Đơn EVN 6 Bậc ($A = P \\cdot t$)
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Vật Lý Điện Học Lớp 9 & Biểu giá điện bậc thang sinh hoạt EVN
+            Vật lý điện học lớp 9 & biểu giá điện bậc thang sinh hoạt EVN
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-yellow-500/20 text-yellow-300 theme-light:text-yellow-800 font-mono font-bold">

@@ -98,7 +98,7 @@ function ModuleBlock({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">Kiến thức</p>
+        <p className="text-xs font-semibold text-zinc-200">Kiến thức</p>
         <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5">
           {topics.map((t) => (
             <li key={t}>{t}</li>
@@ -113,9 +113,7 @@ function ModuleBlock({
               với 4 môn STEM — tự lo prefers-reduced-motion + mô tả bằng lời. */}
           {detail.animation && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">
-                Hoạt ảnh minh hoạ
-              </p>
+              <p className="text-xs font-semibold text-zinc-200">Hoạt ảnh minh hoạ</p>
               <LessonAnimation
                 spec={detail.animation}
                 // `[&_svg]:max-w-2xl`: viewBox hoạt ảnh nhỏ (≈440×180) — để `w-full` ở cột 4xl thì ô số
@@ -126,9 +124,7 @@ function ModuleBlock({
           )}
 
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">
-              Tự tay làm
-            </p>
+            <p className="text-xs font-semibold text-zinc-200">Tự tay làm</p>
             <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5">
               {detail.practice.map((p) => (
                 <li key={p}>{p}</li>
@@ -151,9 +147,7 @@ function ModuleBlock({
           </details>
 
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">
-              Dấu hiệu đã nắm
-            </p>
+            <p className="text-xs font-semibold text-zinc-200">Dấu hiệu đã nắm</p>
             <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5">
               {detail.doneSignals.map((s) => (
                 <li key={s}>{s}</li>
@@ -380,7 +374,7 @@ export default function ProgrammingSpecStagePage() {
 
           {detail ? (
             <>
-              <p className="text-xs font-semibold text-zinc-200 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-zinc-200">
                 Nghiệm thu — mỗi dòng phải chứng minh được
               </p>
               <ul className="space-y-2">

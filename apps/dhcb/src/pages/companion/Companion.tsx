@@ -592,7 +592,7 @@ export default function Companion() {
               <div className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-accent-400 theme-light:text-accent-800" />
                 <h3 id={contextDialog.titleId} className="font-semibold text-white text-base">
-                  Minh Bạch Ngữ Cảnh
+                  Minh bạch ngữ cảnh
                 </h3>
               </div>
               <button
@@ -614,7 +614,7 @@ export default function Companion() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-zinc-400">Token Sử Dụng</div>
+                  <div className="text-zinc-400">Token sử dụng</div>
                   <div className="font-medium text-accent-300 theme-light:text-accent-800 mt-0.5">
                     {activeContext.tokenUsed} / {activeContext.tokenBudget} tokens
                   </div>

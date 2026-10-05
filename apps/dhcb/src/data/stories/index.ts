@@ -19,7 +19,7 @@ export interface StorySource {
   en: string
   /** URL Gutenberg đã tải văn bản gốc. Rỗng với truyện dân gian Việt Nam. */
   enUrl: string
-  /** Vd: "Opus dịch tay 2026 từ bản public domain" */
+  /** Vd: "Biên dịch: Đồng Hành" (người dịch thật, chủ dự án xác nhận 2026-10-05) */
   vi: string
 }
 

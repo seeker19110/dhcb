@@ -37,10 +37,10 @@ const PAGES: { name: string; route: string; modals: ModalCase[] }[] = [
     name: 'Ghi chú',
     route: '/ghi-chu',
     modals: [
-      { tab: 'Công việc', trigger: 'Thêm công việc', title: 'Thêm Công Việc Mới' },
-      { tab: 'Dự án', trigger: 'Tạo dự án mới', title: 'Tạo Dự Án Mới' },
-      { tab: 'Cuộc họp', trigger: 'Ghi lại cuộc họp', title: 'Ghi Lại Cuộc Họp' },
-      { tab: 'Ghi chú', trigger: 'Thêm ghi chú', title: 'Thêm Ghi Chú' },
+      { tab: 'Công việc', trigger: 'Thêm công việc', title: 'Thêm công việc mới' },
+      { tab: 'Dự án', trigger: 'Tạo dự án mới', title: 'Tạo dự án mới' },
+      { tab: 'Cuộc họp', trigger: 'Ghi lại cuộc họp', title: 'Ghi lại cuộc họp' },
+      { tab: 'Ghi chú', trigger: 'Thêm ghi chú', title: 'Thêm ghi chú' },
     ],
   },
 ]

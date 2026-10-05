@@ -61,7 +61,7 @@ async function setup(page: Page, direction: string | null, uiLang: UiLang) {
   }, direction)
   await page.goto('/luyen-tap', { waitUntil: 'domcontentloaded' })
   await expect(
-    page.getByRole('button', { name: /Nghe Đoán Từ Vựng|Listen and guess vocabulary/ }),
+    page.getByRole('button', { name: /Nghe đoán từ vựng|Listen and guess vocabulary/ }),
   ).toBeEnabled({ timeout: 30_000 })
   return audio
 }
@@ -95,7 +95,7 @@ async function changeUi(page: Page, uiLang: UiLang) {
 }
 
 async function openListen(page: Page) {
-  await page.getByRole('button', { name: /Nghe Đoán Từ Vựng|Listen and guess vocabulary/ }).click()
+  await page.getByRole('button', { name: /Nghe đoán từ vựng|Listen and guess vocabulary/ }).click()
   await expect(
     page.getByRole('heading', { name: /Nghe đoán từ vựng|Listen & guess/ }),
   ).toBeVisible()
@@ -120,7 +120,7 @@ async function replay(page: Page, audio: AudioRequest[], direction: Direction) {
 test.describe('S04 — direction độc lập UI', () => {
   test('Keyboard focus is visible on a mode and its answer', async ({ page }) => {
     await setup(page, 'A', 'vi')
-    const mode = page.getByRole('button', { name: 'Nghe Đoán Từ Vựng' })
+    const mode = page.getByRole('button', { name: 'Nghe đoán từ vựng' })
     await mode.focus()
     await page.keyboard.press('Tab')
     await page.keyboard.press('Shift+Tab')
@@ -236,7 +236,7 @@ test.describe('S04 — direction độc lập UI', () => {
     })
   }
 
-  for (const mode of [/Chấm Phát Âm Từ Vựng/, /Đọc Lại Câu Ví Dụ/]) {
+  for (const mode of [/Chấm phát âm từ vựng/, /Đọc lại câu ví dụ/]) {
     for (const direction of ['A', 'B'] as const) {
       test(`${mode.source} ${direction}: câu thứ hai ổn định khi đổi UI`, async ({ page }) => {
         await setup(page, direction, 'vi')

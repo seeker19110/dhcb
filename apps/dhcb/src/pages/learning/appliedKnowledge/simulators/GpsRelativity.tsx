@@ -14,10 +14,10 @@ export function GpsRelativity() {
         <div>
           <h3 className="text-base font-bold text-cyan-400 theme-light:text-cyan-800 flex items-center gap-2">
             <Radio className="w-5 h-5" />
-            Mô Phỏng 5: Thuyết Tương Đối Einstein & Độ Trôi Vị Trí Vệ Tinh GPS
+            Mô phỏng 5: Thuyết tương đối Einstein & độ trôi vị trí vệ tinh GPS
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Vật Lý Hiện Đại Lớp 12 & Công nghệ Định Vị Toàn Cầu
+            Vật lý hiện đại lớp 12 & Công nghệ định vị toàn cầu
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 theme-light:text-cyan-800 font-mono font-bold">

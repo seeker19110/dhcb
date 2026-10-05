@@ -218,7 +218,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
             <div className="p-3.5 rounded-xl bg-surface-raised border border-line-strong space-y-2">
               <div className="text-xs font-bold text-content flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-teal-400 theme-light:text-teal-900" />
-                <span>3 Bước Đặt Khẩu Hình Chuẩn Xác:</span>
+                <span>3 bước đặt khẩu hình chuẩn xác:</span>
               </div>
               <ul className="space-y-1.5">
                 {guide.stepByStepAnatomyTips.map((tip, idx) => (

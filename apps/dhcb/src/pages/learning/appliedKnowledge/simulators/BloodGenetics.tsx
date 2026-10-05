@@ -15,10 +15,10 @@ export function BloodGenetics() {
         <div>
           <h3 className="text-base font-bold text-teal-400 theme-light:text-teal-800 flex items-center gap-2">
             <Dna className="w-5 h-5" />
-            Mô Phỏng 10: Di Truyền Học Men-đen & Dự Đoán Nhóm Máu Đời Con
+            Mô phỏng 10: Di truyền học Men-đen & dự đoán nhóm máu đời con
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Sinh Học Di Truyền Lớp 12 & Ứng dụng y học huyết học
+            Sinh học di truyền lớp 12 & ứng dụng y học huyết học
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-teal-500/20 text-teal-300 theme-light:text-teal-800 font-mono font-bold">

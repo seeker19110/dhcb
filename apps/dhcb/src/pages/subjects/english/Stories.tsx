@@ -142,14 +142,14 @@ export default function Stories() {
   return (
     <div className="min-h-dvh bg-zinc-950">
       <Layout
-        title={isA ? 'Nghe - Đọc - Kể Truyện' : 'Listen - Read - Tell Stories'}
+        title={isA ? 'Nghe - đọc - kể truyện' : 'Listen - Read - Tell Stories'}
         backTo={ENGLISH_PREFIX}
         back
       />
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Lưới thẻ truyện → width standard. */}
       <PageShell width="standard" baseWidth="max-w-3xl">
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
-          {isA ? 'Nghe - Đọc - Kể Truyện' : 'Listen - Read - Tell Stories'}
+          {isA ? 'Nghe - đọc - kể truyện' : 'Listen - Read - Tell Stories'}
         </h1>
 
         {all === null ? (

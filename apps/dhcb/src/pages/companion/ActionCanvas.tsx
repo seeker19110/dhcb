@@ -194,7 +194,7 @@ export default function ActionCanvas() {
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100 flex flex-col">
-      <Layout back={true} title="Không Gian Làm Việc Trực Quan (Action Canvas)" />
+      <Layout back={true} title="Không gian làm việc trực quan (Action Canvas)" />
 
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] width="standard"; giữ bố cục flex cột full-height. */}
       <PageShell width="standard" baseWidth="max-w-6xl" className="!pt-4 flex flex-1 flex-col">
@@ -226,7 +226,7 @@ export default function ActionCanvas() {
               className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
             >
               <LayoutGrid className="w-3.5 h-3.5 text-cyan-400 theme-light:text-cyan-800" />
-              Tự Động Bố Cục
+              Tự động bố cục
             </button>
           </div>
 

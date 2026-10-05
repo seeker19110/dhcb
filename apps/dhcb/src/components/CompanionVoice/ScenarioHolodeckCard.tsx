@@ -363,7 +363,7 @@ export default function ScenarioHolodeckCard() {
                 <div className="flex items-center gap-2">
                   <Award className="w-5 h-5 text-amber-400 theme-light:text-amber-900" />
                   <h4 className="text-sm font-bold text-[#fff]">
-                    Bảng Điểm Rubric Tổng Kết Chuẩn Quốc Tế
+                    Bảng điểm rubric tổng kết chuẩn quốc tế
                   </h4>
                 </div>
                 <div className="text-lg font-black text-amber-400 theme-light:text-amber-900 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/30">

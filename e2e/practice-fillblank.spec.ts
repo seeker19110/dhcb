@@ -63,7 +63,7 @@ async function setup(page: Page, direction: Direction, uiLang: UiLang, entries: 
   )
   await page.addInitScript((dir) => localStorage.setItem('et_direction', dir), direction)
   await page.goto('/luyen-tap', { waitUntil: 'domcontentloaded' })
-  const mode = page.getByRole('button', { name: /Điền Từ Ngữ Cảnh|Fill in the blank/ })
+  const mode = page.getByRole('button', { name: /Điền từ ngữ cảnh|Fill in the blank/ })
   await expect(mode).toBeEnabled({ timeout: 30_000 })
   return mode
 }
@@ -143,6 +143,6 @@ test.describe('S05 — điền từ có kiểm chứng', () => {
     const back = page.getByRole('main').getByRole('button', { name: 'Về Luyện tập' }).last()
     await back.focus()
     await page.keyboard.press('Enter')
-    await expect(page.getByRole('button', { name: /Điền Từ Ngữ Cảnh/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Điền từ ngữ cảnh/ })).toBeVisible()
   })
 })

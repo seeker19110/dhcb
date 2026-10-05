@@ -255,7 +255,7 @@ export default function Notes() {
           <button
             onClick={() => nav(duongDanGhiChuKanban())}
             className="tap-44 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-black text-sm font-bold transition shadow-sm"
-            title="Bảng Kanban Tương Tác"
+            title="Bảng Kanban tương tác"
           >
             <FolderKanban className="w-4 h-4" />
             Bảng Kanban
@@ -351,7 +351,7 @@ export default function Notes() {
           {activeTab === 'tasks' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-zinc-200">Danh Sách Công Việc</h3>
+                <h3 className="text-base font-semibold text-zinc-200">Danh sách công việc</h3>
                 <button
                   onClick={() => setShowTaskModal(true)}
                   className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-[#fff] text-xs font-semibold shadow-md transition"
@@ -430,7 +430,7 @@ export default function Notes() {
           {activeTab === 'projects' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-zinc-200">Dự Án Đang Thực Hiện</h3>
+                <h3 className="text-base font-semibold text-zinc-200">Dự án đang thực hiện</h3>
                 <button
                   onClick={() => setShowProjectModal(true)}
                   className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-[#fff] text-xs font-semibold shadow-md transition"
@@ -607,7 +607,7 @@ export default function Notes() {
 
       {/* Modal Create Project */}
       {showProjectModal && (
-        <Modal title="Tạo Dự Án Mới" onClose={() => setShowProjectModal(false)}>
+        <Modal title="Tạo dự án mới" onClose={() => setShowProjectModal(false)}>
           <form onSubmit={handleCreateProject} className="space-y-4">
             <div>
               <Field label="Tên dự án" required>
@@ -667,7 +667,7 @@ export default function Notes() {
                 disabled={submitting}
                 className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Đang lưu…' : 'Tạo Dự Án'}
+                {submitting ? 'Đang lưu…' : 'Tạo dự án'}
               </button>
             </div>
           </form>
@@ -676,7 +676,7 @@ export default function Notes() {
 
       {/* Modal Create Task */}
       {showTaskModal && (
-        <Modal title="Thêm Công Việc Mới" onClose={() => setShowTaskModal(false)}>
+        <Modal title="Thêm công việc mới" onClose={() => setShowTaskModal(false)}>
           <form onSubmit={handleCreateTask} className="space-y-4">
             <div>
               <Field label="Tiêu đề công việc" required>
@@ -767,7 +767,7 @@ export default function Notes() {
                 disabled={submitting}
                 className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Đang lưu…' : 'Tạo Công Việc'}
+                {submitting ? 'Đang lưu…' : 'Tạo công việc'}
               </button>
             </div>
           </form>
@@ -776,7 +776,7 @@ export default function Notes() {
 
       {/* Modal Record Meeting */}
       {showMeetingModal && (
-        <Modal title="Ghi Lại Cuộc Họp" onClose={() => setShowMeetingModal(false)}>
+        <Modal title="Ghi lại cuộc họp" onClose={() => setShowMeetingModal(false)}>
           <form onSubmit={handleRecordMeeting} className="space-y-4">
             <div>
               <Field label="Tiêu đề cuộc họp" required>
@@ -871,7 +871,7 @@ export default function Notes() {
                 disabled={submitting}
                 className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Đang lưu…' : 'Lưu Biên Bản'}
+                {submitting ? 'Đang lưu…' : 'Lưu biên bản'}
               </button>
             </div>
           </form>
@@ -880,7 +880,7 @@ export default function Notes() {
 
       {/* Modal Create Document */}
       {showDocModal && (
-        <Modal title="Thêm Ghi Chú" onClose={() => setShowDocModal(false)}>
+        <Modal title="Thêm ghi chú" onClose={() => setShowDocModal(false)}>
           <form onSubmit={handleCreateDocument} className="space-y-4">
             <div>
               <Field label="Tiêu đề tài liệu" required>
@@ -1006,7 +1006,7 @@ export default function Notes() {
                 disabled={submitting}
                 className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Đang lưu…' : 'Lưu Ghi Chú'}
+                {submitting ? 'Đang lưu…' : 'Lưu ghi chú'}
               </button>
             </div>
           </form>

@@ -436,7 +436,7 @@ export default function SubjectDetail() {
                 >
                   AI Gia Sư
                 </span>
-                <span className="text-xs text-zinc-400">STEM Học Bổ Trợ</span>
+                <span className="text-xs text-zinc-400">STEM học bổ trợ</span>
               </div>
               {/* [2026-09-05, đợt 2] Đây nay là tiêu đề DUY NHẤT của trang nên lên đúng cỡ
                   chữ tiêu đề trang của app (khớp `PageHeader`: text-2xl sm:text-3xl). */}
@@ -529,7 +529,7 @@ export default function SubjectDetail() {
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span>AI Giải Bài Tập</span>
+            <span>AI giải bài tập</span>
           </button>
           <button
             onClick={() => setActiveTab('curriculum')}
@@ -551,7 +551,7 @@ export default function SubjectDetail() {
             }`}
           >
             <Flame className="w-4 h-4 text-orange-400 theme-light:text-orange-900" />
-            <span>Bài Tập Trọng Tâm</span>
+            <span>Bài tập trọng tâm</span>
           </button>
         </div>
 
@@ -774,9 +774,7 @@ export default function SubjectDetail() {
 
                 {/* Danh sách công thức cốt lõi */}
                 <div className="space-y-2">
-                  <span
-                    className={`text-xs font-semibold ${theme.accent} uppercase tracking-wider block`}
-                  >
+                  <span className={`text-xs font-semibold ${theme.accent}r block`}>
                     Công thức & Định lý cốt lõi:
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -860,7 +858,7 @@ export default function SubjectDetail() {
                       onClick={() => loadSampleProblem(prob.prompt, prob.solutionSteps)}
                       className="tap-44 px-3.5 py-1.5 rounded-xl bg-accent-500 text-[#09090b] font-semibold text-xs transition shadow-sm hover:bg-accent-400 shrink-0 flex items-center gap-1"
                     >
-                      <span>Xem Lời Giải AI</span>
+                      <span>Xem lời giải AI</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>

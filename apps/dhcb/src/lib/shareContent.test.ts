@@ -96,7 +96,7 @@ describe('buildQuizShareContent', () => {
 describe('buildProgressShareContent', () => {
   it('tiếng Việt: streak + số từ đã học', () => {
     const r = buildProgressShareContent(7, 120, true)
-    expect(r.title).toBe('Streak 7 ngày liên tiếp 🔥')
+    expect(r.title).toBe('Chuỗi học 7 ngày liên tiếp 🔥')
     expect(r.lines).toEqual(['Đã học 120 từ'])
   })
 

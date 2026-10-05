@@ -208,12 +208,12 @@ const REAL_DATA_CASES: RealDataCase[] = [
   {
     route: '/ban-be',
     mock: mockFriendsState,
-    ready: (page) => page.getByRole('button', { name: /Copy link kết bạn/ }),
+    ready: (page) => page.getByRole('button', { name: /Chép liên kết kết bạn/ }),
   },
   ...STEM_DETAIL_SUBJECTS.map((subjectId): RealDataCase => ({
     route: `/goc-hoc-tap/${subjectId}`,
     mock: (page) => mockStemSubjectDetail(page, subjectId),
-    ready: (page) => page.getByRole('button', { name: /AI Giải Bài Tập/ }),
+    ready: (page) => page.getByRole('button', { name: /AI giải bài tập/ }),
   })),
   {
     // Lộ trình mục tiêu (dữ liệu tĩnh trong gói subject-programming): 32 nút "Mở bài kiểm" +

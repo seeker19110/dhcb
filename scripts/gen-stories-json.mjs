@@ -2,7 +2,7 @@
 //  gen-stories-json.mjs — Sinh dữ liệu "Truyện cổ tích / Ngụ ngôn song ngữ"
 //  cho trang /listening.
 //
-//  Đọc mọi file apps/dhcb/src/data/stories/raw/*.json (nguồn — do Opus soạn),
+//  Đọc mọi file apps/dhcb/src/data/stories/raw/*.json (nguồn — do người dịch soạn),
 //  validate theo ràng buộc mục 5.3 của đặc tả, rồi ghi ra:
 //    - public/data/stories/<id>.json  (nội dung đầy đủ, kèm lineCount tự tính)
 //    - public/data/stories/index.json (mảng StoryMeta, KHÔNG kèm lines/source/moral*)

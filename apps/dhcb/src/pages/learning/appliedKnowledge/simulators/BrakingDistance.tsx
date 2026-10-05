@@ -20,7 +20,7 @@ export function BrakingDistance() {
             {2}mv^2$)
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Vật Lý Động Học Lớp 10 & Quy tắc an toàn giao thông đường bộ
+            Vật lý động học lớp 10 & quy tắc an toàn giao thông đường bộ
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-red-500/20 text-red-300 theme-light:text-red-800 font-mono font-bold">

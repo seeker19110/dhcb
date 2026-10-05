@@ -48,7 +48,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
             </div>
             <div>
               <h2 className="text-base font-bold text-zinc-100">
-                Báo Cáo Tổng Hợp Đa Miền & Dự Báo Chiến Lược
+                Báo cáo tổng hợp đa miền & dự báo chiến lược
               </h2>
               <p className="text-xs text-zinc-400">
                 Phân tích cộng hưởng 5 miền & dự báo xác suất cán đích mục tiêu
@@ -98,19 +98,19 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
           {/* Core Metrics Grid */}
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
-              <span className="text-[11px] font-semibold text-zinc-400">Đồng Bộ Toàn Diện</span>
+              <span className="text-[11px] font-semibold text-zinc-400">Đồng bộ toàn diện</span>
               <div className="text-xl font-black text-accent-400 mt-1">
                 {report.holisticAlignmentScore}%
               </div>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
-              <span className="text-[11px] font-semibold text-zinc-400">Cộng Hưởng Đa Miền</span>
+              <span className="text-[11px] font-semibold text-zinc-400">Cộng hưởng đa miền</span>
               <div className="text-xl font-black text-indigo-400 theme-light:text-indigo-800 mt-1">
                 {report.lifeSynergyIndex}%
               </div>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
-              <span className="text-[11px] font-semibold text-zinc-400">Bền Bỉ Nhận Thức</span>
+              <span className="text-[11px] font-semibold text-zinc-400">Bền bỉ nhận thức</span>
               <div className="text-xl font-black text-emerald-400 theme-light:text-emerald-900 mt-1">
                 {report.cognitiveResilienceScore}%
               </div>
@@ -119,9 +119,9 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
 
           {/* Predictive Goals Section */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-accent-400" />
-              Dự Báo Xác Suất Mục Tiêu Chiến Lược
+              Dự báo xác suất mục tiêu chiến lược
             </h3>
 
             <div className="space-y-3">
@@ -156,7 +156,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
 
                   {/* Critical Path Steps */}
                   <div className="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 space-y-1.5">
-                    <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block">
+                    <span className="text-[11px] font-bold text-zinc-400 block">
                       Các bước đường găng (Critical Path):
                     </span>
                     {goal.criticalPathSteps.map((step, sIdx) => (
@@ -173,9 +173,9 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
 
           {/* High Leverage Recommendations */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-400 theme-light:text-amber-900" />
-              Khuyến Nghị Chiến Lược Đòn Bẩy Cao
+              Khuyến nghị chiến lược đòn bẩy cao
             </h3>
 
             <div className="space-y-2.5">

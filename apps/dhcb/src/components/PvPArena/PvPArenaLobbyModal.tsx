@@ -70,7 +70,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
   }> = [
     {
       id: 'vocab_speed_duel',
-      title: 'Đấu Tốc Độ Từ Vựng (5s)',
+      title: 'Đấu tốc độ từ vựng (5s)',
       subtitle: 'Phản xạ chọn từ đồng nghĩa, trái nghĩa, collocation nhanh nhất để nhân x1.5 điểm.',
       icon: '⚡',
       time: '5s / lượt',
@@ -79,7 +79,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
     },
     {
       id: 'grammar_clash',
-      title: 'Đấu Bắt Lỗi Ngữ Pháp',
+      title: 'Đấu bắt lỗi ngữ pháp',
       subtitle: 'Phát hiện lỗi sai thì, hòa hợp chủ vị, đảo ngữ và câu điều kiện trong 8 giây.',
       icon: '📐',
       time: '8s / lượt',
@@ -88,7 +88,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
     },
     {
       id: 'toulmin_showdown',
-      title: 'Tranh Biện Toulmin Phản Xạ',
+      title: 'Tranh biện Toulmin phản xạ',
       subtitle: 'Nhận diện ngụy biện logic (Fallacy) và chọn luận điểm phản bác đắt giá nhất.',
       icon: '🏛️',
       time: '10s / lượt',
@@ -119,7 +119,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                 <h3 id={titleId} className="text-base sm:text-lg font-black text-white">
                   Đấu Trường 1v1 PvP Arena
                 </h3>
-                <p className="text-[11px] text-zinc-400">Đấu với đối thủ AI · Xếp hạng Elo</p>
+                <p className="text-[11px] text-zinc-400">Đấu với đối thủ AI · Xếp hạng điểm</p>
               </div>
             </div>
 
@@ -149,7 +149,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                   </div>
                   <div className="text-xs text-zinc-300 mt-0.5 flex items-center gap-3">
                     <span className="font-bold text-amber-400 theme-light:text-amber-900">
-                      {profile.eloRating} Elo
+                      {profile.eloRating} điểm
                     </span>
                     <span>·</span>
                     <span>
@@ -190,7 +190,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
               }`}
             >
               <Trophy className="w-3.5 h-3.5" />
-              <span>Bảng Xếp Hạng</span>
+              <span>Bảng xếp hạng</span>
             </button>
           </div>
 
@@ -276,7 +276,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
 
                   <div className="text-right">
                     <div className="text-sm font-black text-amber-400 theme-light:text-amber-900">
-                      {entry.eloRating} Elo
+                      {entry.eloRating} điểm
                     </div>
                     <div className="text-[11px] font-semibold text-zinc-400 uppercase">
                       {entry.rankTier}

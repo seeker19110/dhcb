@@ -336,7 +336,7 @@ function DictationPractice({
         />
       </div>
       <div className="text-center py-2">
-        <p className="text-xs text-zinc-400 mb-3 uppercase tracking-wide">
+        <p className="text-xs text-zinc-400 mb-3">
           {isA
             ? `Câu ${current + 1}/${items.length} — Nghe rồi gõ lại`
             : `${current + 1}/${items.length} — Listen and type`}
