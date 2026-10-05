@@ -455,6 +455,7 @@ afterEach(() => {
   root = null
   container?.remove()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   rongSvgGia = 358
 })
 
@@ -492,5 +493,103 @@ describe('LessonAnimation — nút "Xem lớn"', () => {
     await act(async () => nut('Đóng')?.click())
     expect(document.querySelector('dialog')).toBeNull()
     expect(document.activeElement).toBe(nut('Xem lớn'))
+  })
+})
+
+function endAnimation(target: Element, animationName: string, pseudoElement = '') {
+  const event = new Event('animationend', { bubbles: true })
+  Object.defineProperties(event, {
+    animationName: { value: animationName },
+    pseudoElement: { value: pseudoElement },
+  })
+  target.dispatchEvent(event)
+}
+
+describe('LessonAnimation — phát lại', () => {
+  it('kết thúc hữu hạn, phát lại hai lượt với tên mới và giữ DOM/focus', async () => {
+    await veVao({ ...spec, loop: false })
+    const group = container.querySelector<SVGGElement>('g[data-animated]')!
+    const button = nut('Tạm dừng hoạt ảnh')!
+    button.focus()
+    const first = group.style.animationName
+    await act(async () => endAnimation(group, first))
+    expect(nut('Chạy lại hoạt ảnh')).toBe(button)
+    await act(async () => button.click())
+    const second = group.style.animationName
+    expect(second).not.toBe(first)
+    expect(container.querySelector('g[data-animated]')).toBe(group)
+    expect(document.activeElement).toBe(button)
+    await act(async () => endAnimation(group, first))
+    expect(nut('Tạm dừng hoạt ảnh')).toBe(button)
+    await act(async () => endAnimation(group, second))
+    await act(async () => button.click())
+    expect(group.style.animationName).not.toBe(second)
+  })
+
+  it('tạm dừng/tiếp tục giữ tên lượt; bỏ sự kiện từ con, pseudo và tên lạ', async () => {
+    await veVao({ ...spec, loop: false })
+    const group = container.querySelector<SVGGElement>('g[data-animated]')!
+    const name = group.style.animationName
+    await act(async () => nut('Tạm dừng hoạt ảnh')?.click())
+    expect(container.querySelector('style')?.textContent).toContain('animation-play-state: paused')
+    await act(async () => nut('Chạy hoạt ảnh')?.click())
+    expect(group.style.animationName).toBe(name)
+    await act(async () => {
+      endAnimation(group.firstElementChild!, name)
+      endAnimation(group, name, '::before')
+      endAnimation(group, 'unknown')
+    })
+    expect(nut('Tạm dừng hoạt ảnh')).toBeDefined()
+  })
+
+  it('hoạt họa lặp không chuyển sang kết thúc', async () => {
+    await veVao(spec)
+    const group = container.querySelector<SVGGElement>('g[data-animated]')!
+    await act(async () => endAnimation(group, group.style.animationName))
+    expect(nut('Tạm dừng hoạt ảnh')).toBeDefined()
+  })
+
+  it('hộp lớn nhận thời gian theo ID sau SVG mount và dùng chung nút phát', async () => {
+    const times = new Map([
+      ['bi', 730],
+      ['nhan', 410],
+    ])
+    const getter = vi.spyOn(Element.prototype, 'getAnimations')
+    const animations: { currentTime: number }[] = []
+    getter.mockImplementation(function (this: Element) {
+      const id = (this as Element).getAttribute('data-animation-shape')!
+      const animation = { currentTime: (this as Element).closest('dialog') ? 0 : times.get(id)! }
+      if ((this as Element).closest('dialog')) animations.push(animation)
+      return [animation as Animation]
+    })
+    await veVao({
+      ...spec,
+      viewBoxWidth: 716,
+      shapes: [
+        ...spec.shapes.map((shape) =>
+          shape.id === 'nhan'
+            ? {
+                ...shape,
+                keyframes: [
+                  { atMs: 0, dx: 0 },
+                  { atMs: 2000, dx: 10 },
+                ],
+              }
+            : shape,
+        ),
+        { kind: 'label', id: 'small', x: 10, y: 30, size: 12, text: 'nhỏ' },
+      ],
+    })
+    await act(async () => nut('Xem lớn')?.click())
+    expect(animations.map((animation) => animation.currentTime)).toEqual([730, 410])
+    const zoomButton = document.querySelector<HTMLButtonElement>('dialog button')!
+    expect(zoomButton.getAttribute('aria-label')).toBe('Tạm dừng hoạt ảnh')
+    await act(async () => zoomButton.click())
+    expect(zoomButton.getAttribute('aria-label')).toBe('Chạy hoạt ảnh')
+    expect(nut('Chạy hoạt ảnh')).toBeDefined()
+    const zoomGroup = document.querySelector<SVGGElement>('dialog g[data-animated]')!
+    await act(async () => endAnimation(zoomGroup, zoomGroup.style.animationName))
+    expect(nut('Chạy lại hoạt ảnh')).toBeUndefined()
+    getter.mockRestore()
   })
 })

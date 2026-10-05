@@ -1,6 +1,327 @@
 // lessons/mathaiu3.ts — Chương C3 "Giải tích & tối ưu hoá" của khoá "Toán Thiết Yếu cho AI"
 // (mathai) (docs/specs/2026-09-01-mathai-bai-hoc-chi-tiet.md).
 import type { ProgrammingLesson } from '../lessonTypes.js'
+import type {
+  AnimationKeyframe,
+  AnimationShape,
+  LessonAnimation,
+} from '@dhcb/core-contracts/lessonAnimation'
+
+// Cùng một hàm f(x) = (x − 3)² cho hai lần chạy; chỉ tịnh tiến dấu trên các làn x.
+// Điểm đánh giá trên parabol xuất hiện rời rạc, không trượt qua vị trí sai đồ thị.
+const slowXs = [0, 0.6, 1.08, 1.464, 1.7712] as const
+const fastXs = [0, 6, 0, 6, 0] as const
+const stepMs = 2400
+const xOnGraph = (x: number) => 60 + 60 * x
+const yOnGraph = (x: number) => 240 - 20 * (x - 3) ** 2
+
+function laneFrames(xs: readonly number[]): AnimationKeyframe[] {
+  return xs.flatMap((x, index) => {
+    if (index === 0) return [{ atMs: 0, dx: 0 }]
+    return [
+      { atMs: index * stepMs - 800, dx: 60 * (xs[index - 1] ?? 0) },
+      { atMs: index * stepMs, dx: 60 * x },
+    ]
+  })
+}
+
+function sceneFrames(index: number): AnimationKeyframe[] {
+  const arrival = index * stepMs
+  const departure = arrival + 1600
+  return [
+    { atMs: 0, opacity: index === 0 ? 1 : 0 },
+    ...(index > 0
+      ? [
+          { atMs: arrival - 1, opacity: 0 },
+          { atMs: arrival, opacity: 1 },
+        ]
+      : []),
+    ...(index < 4
+      ? [
+          { atMs: departure, opacity: 1 },
+          { atMs: departure + 1, opacity: 0 },
+        ]
+      : []),
+  ]
+}
+
+function revealFrames(arrival: number): AnimationKeyframe[] {
+  return [
+    { atMs: 0, opacity: 0 },
+    { atMs: arrival - 1, opacity: 0 },
+    { atMs: arrival, opacity: 1 },
+  ]
+}
+
+function arrowFrames(index: number): AnimationKeyframe[] {
+  const arrival = index * stepMs
+  return [
+    { atMs: 0, opacity: 0 },
+    { atMs: arrival - 801, opacity: 0 },
+    { atMs: arrival - 800, opacity: 1 },
+    { atMs: arrival - 1, opacity: 1 },
+    { atMs: arrival, opacity: 0 },
+  ]
+}
+
+const slowStates = [
+  'n=0 · x=0 · f=9',
+  'n=1 · x=0,6 · f=5,76',
+  'n=2 · x=1,08 · f=3,6864',
+  'n=3 · x=1,464 · f≈2,3593',
+  'n=4 · x=1,7712 · f≈1,5099',
+] as const
+const fastStates = [
+  'n=0 · x=0 · f=9',
+  'n=1 · x=6 · f=9',
+  'n=2 · x=0 · f=9',
+  'n=3 · x=6 · f=9',
+  'n=4 · x=0 · f=9',
+] as const
+
+const gradientShapes: AnimationShape[] = [
+  {
+    kind: 'polyline',
+    id: 'loss-curve',
+    points: Array.from({ length: 31 }, (_, index): [number, number] => {
+      const x = index / 5
+      return [xOnGraph(x), yOnGraph(x)]
+    }),
+    stroke: 'neutral',
+    strokeWidth: 3,
+  },
+  { kind: 'line', id: 'axis-x', x1: 60, y1: 240, x2: 420, y2: 240, stroke: 'muted' },
+  { kind: 'line', id: 'axis-f', x1: 60, y1: 60, x2: 60, y2: 240, stroke: 'muted' },
+  {
+    kind: 'label',
+    id: 'function-label',
+    x: 240,
+    y: 28,
+    text: 'f(x) = (x−3)²',
+    anchor: 'middle',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'f-axis-label',
+    x: 47,
+    y: 43,
+    text: 'f(x)',
+    anchor: 'end',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'f-nine-label',
+    x: 47,
+    y: 70,
+    text: '9',
+    anchor: 'end',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'f-zero-label',
+    x: 47,
+    y: 240,
+    text: '0',
+    anchor: 'end',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'x-axis-label',
+    x: 448,
+    y: 245,
+    text: 'x',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'zero-label',
+    x: 60,
+    y: 268,
+    text: 'x=0',
+    anchor: 'middle',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'minimum-label',
+    x: 240,
+    y: 268,
+    text: 'đáy x=3; f=0',
+    anchor: 'middle',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'six-label',
+    x: 420,
+    y: 268,
+    text: 'x=6',
+    anchor: 'middle',
+    size: 20,
+    fill: 'neutral',
+  },
+  { kind: 'circle', id: 'minimum', cx: 240, cy: 240, r: 5, fill: 'neutral' },
+  { kind: 'circle', id: 'initial-loss', cx: 60, cy: 60, r: 5, fill: 'neutral' },
+  ...slowXs.slice(1).map((x, index): AnimationShape => ({
+    kind: 'circle',
+    id: `slow-loss-n${index + 1}`,
+    cx: xOnGraph(x),
+    cy: yOnGraph(x),
+    r: 5,
+    fill: 'primary',
+    keyframes: revealFrames((index + 1) * stepMs),
+  })),
+  {
+    kind: 'rect',
+    id: 'fast-loss-right',
+    x: 416,
+    y: 56,
+    w: 8,
+    h: 8,
+    fill: 'accent',
+    keyframes: revealFrames(stepMs),
+  },
+  {
+    kind: 'line',
+    id: 'slow-lane',
+    x1: 60,
+    y1: 366,
+    x2: 420,
+    y2: 366,
+    stroke: 'muted',
+    strokeWidth: 2,
+  },
+  {
+    kind: 'line',
+    id: 'fast-lane',
+    x1: 60,
+    y1: 477,
+    x2: 420,
+    y2: 477,
+    stroke: 'muted',
+    strokeWidth: 2,
+  },
+  {
+    kind: 'label',
+    id: 'slow-lane-label',
+    x: 60,
+    y: 310,
+    text: 'lr=0,1 · hình tròn',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'label',
+    id: 'fast-lane-label',
+    x: 60,
+    y: 420,
+    text: 'lr=1 · hình vuông',
+    size: 20,
+    fill: 'neutral',
+  },
+  {
+    kind: 'circle',
+    id: 'slow-x',
+    cx: 60,
+    cy: 366,
+    r: 7,
+    fill: 'primary',
+    keyframes: laneFrames(slowXs),
+  },
+  {
+    kind: 'rect',
+    id: 'fast-x',
+    x: 54,
+    y: 471,
+    w: 12,
+    h: 12,
+    fill: 'accent',
+    keyframes: laneFrames(fastXs),
+  },
+  ...slowStates.map((text, index): AnimationShape => ({
+    kind: 'label',
+    id: `slow-state-n${index}`,
+    x: 60,
+    y: 340,
+    text,
+    size: 20,
+    fill: 'neutral',
+    keyframes: sceneFrames(index),
+  })),
+  ...fastStates.map((text, index): AnimationShape => ({
+    kind: 'label',
+    id: `fast-state-n${index}`,
+    x: 60,
+    y: 450,
+    text,
+    size: 20,
+    fill: 'neutral',
+    keyframes: sceneFrames(index),
+  })),
+  ...slowXs.slice(1).map((x, index): AnimationShape => ({
+    kind: 'arrow',
+    id: `update-slow-n${index + 1}`,
+    x1: xOnGraph(slowXs[index] ?? 0),
+    y1: 390,
+    x2: xOnGraph(x),
+    y2: 390,
+    stroke: 'primary',
+    strokeWidth: 2,
+    keyframes: arrowFrames(index + 1),
+  })),
+  ...fastXs.slice(1).map((x, index): AnimationShape => ({
+    kind: 'arrow',
+    id: `update-fast-n${index + 1}`,
+    x1: xOnGraph(fastXs[index] ?? 0),
+    y1: 507,
+    x2: xOnGraph(x),
+    y2: 507,
+    stroke: 'accent',
+    strokeWidth: 2,
+    keyframes: arrowFrames(index + 1),
+  })),
+]
+
+const gradientAnimation: LessonAnimation = {
+  title: 'Cùng điểm xuất phát, hai learning rate: tiến về đáy hoặc dao động',
+  description:
+    'Hai lần chạy bắt đầu tại x=0, f(x)=9 trên cùng hàm f(x)=(x−3)². Với lr=0,1, x lần lượt là 0; 0,6; 1,08; 1,464; 1,7712, tiến về đáy x=3 nhưng sau bốn bước vẫn chưa tới. Với lr=1, x luân phiên 0 và 6, còn f(x) luôn bằng 9: dao động không tăng biên độ. Làn hình tròn và làn hình vuông bên dưới thể hiện thay đổi của tham số x; các dấu trên parabol là những lần đánh giá loss rời rạc, không phải đường di chuyển của tham số.',
+  viewBoxWidth: 480,
+  viewBoxHeight: 540,
+  durationMs: 12000,
+  loop: false,
+  shapes: gradientShapes,
+  captions: [
+    { atMs: 0, text: 'Bước 0: cả hai bắt đầu tại x=0, f(x)=9; gradient bằng −6.' },
+    {
+      atMs: 2400,
+      text: 'Bước 1: x mới = x − lr·gradient. lr=0,1 cho x=0,6, f=5,76; lr=1 cho x=6, f=9.',
+    },
+    {
+      atMs: 4800,
+      text: 'Bước 2: tính lại gradient tại vị trí mới. lr=0,1 cho x=1,08, f=3,6864; lr=1 trở về x=0, f=9.',
+    },
+    {
+      atMs: 7200,
+      text: 'Bước 3: lr=0,1 cho x=1,464, f≈2,3593; lr=1 lại sang x=6. Chỉ đường đi thứ nhất giảm mất mát.',
+    },
+    {
+      atMs: 9600,
+      text: 'Bước 4: lr=0,1 cho x=1,7712, f≈1,5099; khoảng cách tới 3 nhân 0,8 mỗi bước. lr=1 tiếp tục dao động 0↔6, mất mát luôn 9.',
+    },
+  ],
+}
 
 export const MATHAI_U3_LESSONS: ProgrammingLesson[] = [
   {
@@ -198,10 +519,11 @@ print(f"Do doc tai day: {round(do_doc, 4)}")`,
     id: 'mathai-u3-l3',
     unitId: 'mathai-u3',
     language: 'python',
-    title: 'Gradient descent tự cài — và learning rate quá to thì văng',
-    hook: 'Bịt mắt thả vào một cái bát khổng lồ, làm sao xuống đáy? Dò chân tìm hướng dốc, bước một bước, dò lại, bước tiếp. Bước quá bé thì tới Tết chưa xuống; bước quá to thì nhảy vọt qua đáy sang thành bên kia rồi văng cao hơn cũ. Toàn bộ nghề huấn luyện AI nằm trong hai câu đó.',
+    title: 'Gradient descent tự cài — learning rate đổi đường đi thế nào?',
+    hook: 'Bịt mắt thả vào một cái bát khổng lồ, làm sao xuống đáy? Dò chân tìm hướng dốc, bước một bước, dò lại, bước tiếp. Bước quá bé có thể tiến rất chậm; bước quá to có thể vượt đáy rồi dao động hoặc văng xa hơn. Ví dụ một biến này giúp ta hiểu cách cập nhật tham số của mô hình khả vi.',
     theory:
-      "GRADIENT DESCENT là thuật toán tối ưu chạy trong mọi mô hình học sâu. Vòng lặp đúng ba bước, lặp đi lặp lại:\n1. Tính gradient của hàm mất mát tại vị trí hiện tại.\n2. Bước NGƯỢC hướng gradient một đoạn tỷ lệ với nó: x_moi = x - lr * gradient.\n3. Lặp lại cho tới khi hết số bước cho phép hoặc gradient đủ nhỏ.\n\nLEARNING RATE (lr, tốc độ học) là hệ số quyết định bước dài bao nhiêu — siêu tham số quan trọng bậc nhất của cả ngành:\n- lr quá NHỎ: hội tụ đúng nhưng chậm lê thê, có khi hết ngân sách tính toán vẫn chưa tới đáy.\n- lr VỪA: đi nhanh và ổn định về đáy.\n- lr quá LỚN: nhảy vọt qua đáy, mỗi lần lại xa hơn — sai số PHÂN KỲ (bay lên vô cực, trong thực tế hiện ra thành loss = nan).\n\nTa quan sát rõ điều đó với f(x) = (x-3)², đáy nằm tại x = 3, đạo hàm f'(x) = 2(x-3). Quy tắc cập nhật x = x - lr·2(x-3) khiến khoảng cách tới đáy nhân với hệ số (1 - 2·lr) sau mỗi bước:\n- lr = 0,1 → hệ số 0,8: khoảng cách co lại 20% mỗi bước, hội tụ mượt.\n- lr = 0,5 → hệ số 0: nhảy thẳng vào đáy sau đúng MỘT bước (may mắn hiếm có, chỉ đúng với parabol này).\n- lr = 1,0 → hệ số -1: nhảy đối xứng qua đáy rồi nhảy về, dao động MÃI MÃI không bao giờ tới.\n- lr > 1,0 → |hệ số| > 1: mỗi bước xa đáy hơn bước trước, văng thẳng.\n\nBa điều thực chiến phải nhớ: (1) mất mát không giảm hoặc ra nan thì việc đầu tiên là GIẢM LEARNING RATE; (2) hàm thật có nhiều ĐÁY ĐỊA PHƯƠNG nên gradient descent chỉ hứa tìm được MỘT đáy, không hứa đáy sâu nhất; (3) các biến thể hiện đại (momentum, Adam) chỉ là cách tự động điều chỉnh bước đi, ruột vẫn là ba bước trên.",
+      "GRADIENT DESCENT là một thuật toán nền tảng để tối ưu hàm mất mát khả vi. Mỗi vòng lặp:\n1. Tính gradient tại vị trí hiện tại.\n2. Cập nhật NGƯỢC hướng gradient: x_moi = x - lr * gradient.\n3. Tính lại gradient ở vị trí mới và lặp đến điều kiện dừng đã chọn.\n\nLEARNING RATE (lr, tốc độ học) nhân với gradient để quyết định độ dài bước. Giá trị phù hợp phụ thuộc vào hàm, điểm xuất phát và cách tối ưu; không có một lr tốt cho mọi bài toán. lr nhỏ có thể tiến chậm, còn lr lớn có thể vượt cực tiểu, dao động hoặc phân kỳ.\n\nXét RIÊNG f(x) = (x−3)² với x₀ = 0, đáy x = 3 và f'(x) = 2(x−3). Quy tắc x_moi = x − lr·2(x−3) cho sai lệch có dấu e_moi = (1−2lr)·e, với e = x−3:\n- lr = 0,1 → e nhân 0,8, nên khoảng cách tới 3 giảm 20% mỗi bước; sau bốn bước x=1,7712, CHƯA tới đáy.\n- lr = 0,5 → e thành 0 sau một bước với hàm và lr đang xét.\n- lr = 1 → e đổi dấu nhưng giữ độ lớn: x luân phiên 0 và 6, f(x) luôn 9; dao động KHÔNG tăng biên độ.\n- lr > 1 → |1−2lr| > 1, sai lệch tăng độ lớn nếu chưa ở đáy; loss có thể tăng rất lớn rồi gây tràn số.\n\nKhi loss tăng hoặc ra NaN, hãy kiểm cả dữ liệu, phép toán và learning rate; NaN không tự chứng minh lr quá lớn. Với hàm tổng quát, gradient descent có thể không hội tụ hoặc dừng ở điểm không phải cực tiểu; không có bảo đảm luôn tìm được một đáy. Momentum tích lũy hướng cập nhật, còn Adam dùng lịch sử gradient để điều chỉnh từng bước; cả hai vẫn dựa trên gradient nhưng không chỉ là thay một hằng số lr.",
+    animation: gradientAnimation,
     workedExample: {
       code: `def f(x):
     return (x - 3) ** 2          # day nam tai x = 3
@@ -274,7 +596,7 @@ print(f"Con cach day: {round(abs(x - 3), 4)}")`,
       sampleSolution: `x = float(input("x ban dau: "))\nlr = float(input("Learning rate: "))\nfor _ in range(20):\n    grad = 2 * (x - 3)\n    x = x - lr * grad\nprint(f"x cuoi: {round(x, 4)}")\nprint(f"f(x): {round((x - 3) ** 2, 4)}")`,
     },
     homework:
-      'Chạy chương trình với x0 = 0 và lr lần lượt 0.001, 0.01, 0.1, 0.5, 0.9, 1.0, 1.1 rồi lập bảng 7 dòng (lr, x cuối, f(x)). Đánh dấu vùng nào hội tụ nhanh, vùng nào chậm, vùng nào dao động, vùng nào văng. Bạn vừa tự tay làm cái mà dân nghề gọi là "dò learning rate" — công việc chiếm phần lớn thời gian huấn luyện một mô hình thật. Viết 3 câu kết luận về cách chọn lr.',
+      'Chạy chương trình với x0 = 0 và lr lần lượt 0.001, 0.01, 0.1, 0.5, 0.9, 1.0, 1.1 rồi lập bảng 7 dòng (lr, x cuối, f(x)). Đánh dấu trường hợp tiến chậm, tiến nhanh, dao động và phân kỳ trong ví dụ này. Viết 3 câu giải thích vì sao không thể lấy cùng kết luận về lr cho mọi hàm mất mát.',
     srsCards: [
       {
         hoi: 'Ba bước của một vòng lặp gradient descent?',
@@ -282,11 +604,11 @@ print(f"Con cach day: {round(abs(x - 3), 4)}")`,
       },
       {
         hoi: 'Learning rate quá lớn và quá nhỏ gây hậu quả gì?',
-        dap: 'Quá nhỏ: hội tụ đúng nhưng chậm lê thê, hết ngân sách vẫn chưa tới đáy. Quá lớn: nhảy vọt qua đáy, mỗi bước xa hơn bước trước — mất mát phân kỳ, thực tế hiện ra thành loss = nan. Gặp nan thì việc đầu tiên là giảm learning rate.',
+        dap: 'lr nhỏ có thể tiến rất chậm; lr lớn có thể vượt đáy, dao động hoặc phân kỳ. Riêng f(x)=(x−3)² từ x=0: lr=1 dao động 0↔6 với loss=9, còn lr>1 làm sai lệch tăng biên độ. NaN cũng có thể đến từ dữ liệu hoặc phép toán sai.',
       },
       {
         hoi: 'Gradient descent có hứa tìm được đáy sâu nhất không?',
-        dap: 'Không. Hàm mất mát thật có nhiều đáy địa phương và điểm yên ngựa; thuật toán chỉ hứa đi xuống tới MỘT đáy gần nơi xuất phát. Điểm khởi tạo, learning rate và các biến thể (momentum, Adam) ảnh hưởng tới việc rơi vào đáy nào.',
+        dap: 'Không. Với hàm tổng quát, thuật toán có thể không hội tụ hoặc dừng ở điểm không phải cực tiểu. Kết quả phụ thuộc hàm, điểm khởi tạo, learning rate và cách cập nhật; không có lời hứa luôn tới một đáy.',
       },
     ],
   },
