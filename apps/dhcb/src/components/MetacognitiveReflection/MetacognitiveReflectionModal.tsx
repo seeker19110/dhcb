@@ -86,7 +86,7 @@ export default function MetacognitiveReflectionModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                Nhật Ký Phản Tỉnh Socratic & Điểm Mù Nhận Thức
+                Nhật ký phản tỉnh Socratic & điểm mù nhận thức
               </h2>
               <p className="text-xs text-zinc-400">
                 Phân tích Metacognitive Awareness Index (MAI) và giải trừ thiên kiến

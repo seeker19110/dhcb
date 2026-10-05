@@ -587,7 +587,7 @@ export default function Practice() {
         <section aria-label="Luyện tập 5 Môn học cốt lõi" className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-bold text-blue-300 theme-light:text-blue-800">
-              3. Luyện Tập 5 Môn Học & Giải Đề Từng Bước
+              3. Luyện tập 5 môn học & giải đề từng bước
             </h2>
             <button
               onClick={() => goToSubjects(nav)}
@@ -747,7 +747,7 @@ export default function Practice() {
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">10 thí nghiệm STEM</h3>
                     <span className="text-[11px] px-1.5 py-0.2 rounded bg-teal-500/15 text-teal-300 theme-light:text-teal-800 font-semibold border border-teal-500/20">
-                      Phòng Thí Nghiệm
+                      Phòng thí nghiệm
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">

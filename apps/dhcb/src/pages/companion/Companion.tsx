@@ -592,7 +592,7 @@ export default function Companion() {
               <div className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-accent-400 theme-light:text-accent-800" />
                 <h3 id={contextDialog.titleId} className="font-semibold text-white text-base">
-                  Minh Bạch Ngữ Cảnh
+                  Minh bạch ngữ cảnh
                 </h3>
               </div>
               <button

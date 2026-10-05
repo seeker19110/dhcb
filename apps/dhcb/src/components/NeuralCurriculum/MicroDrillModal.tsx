@@ -215,7 +215,7 @@ export default function MicroDrillModal({
             </div>
             <div>
               <h3 id={titleId} className="text-base font-bold text-zinc-100">
-                Hoàn Tất Bài Luyện Vi Mô!
+                Hoàn tất bài luyện vi mô!
               </h3>
               <p className="text-xs text-zinc-400 mt-1">
                 Bạn đã trả lời đúng {review?.correctCount ?? score} / {drills.length} câu.{' '}

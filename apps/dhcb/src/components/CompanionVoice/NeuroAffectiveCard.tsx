@@ -85,7 +85,7 @@ export const NeuroAffectiveCard: React.FC = () => {
           </div>
           <div className="text-left">
             <span className="font-bold text-white text-xs block">
-              Thấu Cảm Sinh Học & Điều Tiết Thần Kinh
+              Thấu cảm sinh học & điều tiết thần kinh
             </span>
             <span className="text-[11px] text-zinc-400">
               {isPeakFlow

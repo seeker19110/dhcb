@@ -55,7 +55,7 @@ export default function LifeSynthesisDashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-bold text-zinc-100 tracking-tight">
-                  Tổng Hợp Đa Miền & Dự Báo Mục Tiêu
+                  Tổng hợp đa miền & dự báo mục tiêu
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-500/15 text-accent-200 theme-light:text-accent-900 border border-accent-500/30 uppercase tracking-wider">
                   V5.4 Flagship
@@ -83,7 +83,7 @@ export default function LifeSynthesisDashboard() {
             <div className="flex items-center justify-between text-xs text-zinc-400">
               <span className="font-semibold flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5 text-accent-400" />
-                Đồng Bộ Toàn Diện
+                Đồng bộ toàn diện
               </span>
               <span className="text-[11px] font-bold text-accent-300 theme-light:text-accent-900">
                 Holistic
@@ -107,7 +107,7 @@ export default function LifeSynthesisDashboard() {
             <div className="flex items-center justify-between text-xs text-zinc-400">
               <span className="font-semibold flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400 theme-light:text-indigo-800" />
-                Cộng Hưởng Đa Miền
+                Cộng hưởng đa miền
               </span>
               <span className="text-[11px] font-bold text-indigo-400 theme-light:text-indigo-800">
                 Synergy
@@ -131,7 +131,7 @@ export default function LifeSynthesisDashboard() {
             <div className="flex items-center justify-between text-xs text-zinc-400">
               <span className="font-semibold flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900" />
-                Bền Bỉ Nhận Thức
+                Bền bỉ nhận thức
               </span>
               <span className="text-[11px] font-bold text-emerald-400 theme-light:text-emerald-900">
                 Resilience
@@ -157,7 +157,7 @@ export default function LifeSynthesisDashboard() {
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-zinc-300 flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-zinc-400" />
-              Xung Lực Hoạt Động 5 Lĩnh Vực
+              Xung lực hoạt động 5 lĩnh vực
             </span>
             <span className="text-[11px] text-zinc-400">Cập nhật theo tuần</span>
           </div>

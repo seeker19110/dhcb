@@ -145,7 +145,7 @@ export default function StudioDialogue({
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            Hội thoại Văn bản
+            Hội thoại văn bản
           </button>
           <button
             onClick={() => setViewMode('voice')}
@@ -156,7 +156,7 @@ export default function StudioDialogue({
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
-            Đàm thoại Giọng nói
+            Đàm thoại giọng nói
           </button>
         </div>
 
@@ -183,7 +183,7 @@ export default function StudioDialogue({
         <div className="flex-1 flex flex-col items-center justify-center py-6 px-4 space-y-6">
           <div className="text-center space-y-1">
             <h3 className="text-lg font-bold text-white tracking-tight">
-              Đàm Thoại Bằng Giọng Nói
+              Đàm thoại bằng giọng nói
             </h3>
             <p className="text-xs text-zinc-400 max-w-md">
               Nhấn mic để nói, Companion sẽ nghe, trả lời và đọc câu trả lời cho bạn.
@@ -193,7 +193,7 @@ export default function StudioDialogue({
           {!voice.supported && (
             <div className="text-amber-400 theme-light:text-amber-800 text-xs bg-amber-500/10 border border-amber-500/25 rounded-2xl px-4 py-3 text-center max-w-sm">
               Trình duyệt không hỗ trợ ghi âm. Dùng <strong>Chrome</strong> hoặc{' '}
-              <strong>Edge</strong>, hoặc chuyển sang Hội thoại Văn bản.
+              <strong>Edge</strong>, hoặc chuyển sang Hội thoại văn bản.
             </div>
           )}
 
@@ -257,7 +257,7 @@ export default function StudioDialogue({
                 className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 disabled:opacity-50 text-white font-bold text-sm shadow-xl transition-all transform hover:scale-105"
               >
                 <Mic className="w-5 h-5" />
-                Nhấn Để Nói
+                Nhấn để nói
               </button>
             ) : voice.state === 'recording' ? (
               <>
@@ -272,7 +272,7 @@ export default function StudioDialogue({
                   className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-black text-xs font-bold shadow-lg shadow-rose-600/20 transition animate-pulse"
                 >
                   <MicOff className="w-4 h-4" />
-                  Dừng Ghi Âm
+                  Dừng ghi âm
                 </button>
               </>
             ) : (

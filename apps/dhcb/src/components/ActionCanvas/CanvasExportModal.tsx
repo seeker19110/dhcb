@@ -61,7 +61,7 @@ export default function CanvasExportModal({
           </div>
           <div>
             <h3 id={titleId} className="text-base font-bold text-zinc-100">
-              Xuất Báo Cáo & Sơ Đồ Action Canvas
+              Xuất báo cáo & sơ đồ Action Canvas
             </h3>
             <p className="text-xs text-zinc-400">
               Định dạng chuẩn Markdown tương thích Notion, Obsidian và Google Docs.

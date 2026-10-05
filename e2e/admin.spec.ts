@@ -1304,10 +1304,10 @@ test.describe('Admin Dashboard — /admin-s', () => {
   // AdminFeedbackPanel giờ có 2 tab con: "Ý Kiến Người Dùng" (mặc định) và "Đánh Giá Gia Sư AI 👎"
   // (feat/feedback: hệ thống góp ý người dùng, xem CI #616) — nội dung phản hồi gia sư AI chỉ
   // hiện sau khi bấm sang tab con thứ 2.
-  test('Analytics: Tiêu đề "Phản Hồi 👎 chất lượng gia sư AI"', async ({ page }) => {
+  test('Analytics: Tiêu đề "Phản hồi 👎 chất lượng gia sư AI"', async ({ page }) => {
     await gotoAdmin(page, 'analytics')
     await page.getByRole('button', { name: /Đánh Giá Gia Sư AI/ }).click()
-    await expect(page.getByText(/Phản Hồi.*Chất Lượng Gia Sư AI/)).toBeVisible({
+    await expect(page.getByText(/Phản hồi.*chất lượng gia sư AI/)).toBeVisible({
       timeout: VISIBLE_TIMEOUT,
     })
   })

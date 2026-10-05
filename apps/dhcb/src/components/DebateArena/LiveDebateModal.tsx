@@ -106,7 +106,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
             </div>
             <div>
               <h2 id={titleId} className="text-base sm:text-lg font-bold text-white">
-                Đấu Trường Tranh Biện AI
+                Đấu trường tranh biện AI
               </h2>
               <p className="text-xs text-indigo-300 theme-light:text-indigo-800">
                 Chủ đề: {session?.config.motion || 'Đang chuẩn bị...'}

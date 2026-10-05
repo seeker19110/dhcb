@@ -18,7 +18,7 @@ export function PhScale() {
             Mô Phỏng 8: Thang Đo pH & Nồng Độ Ion [H+] = 10^(-pH)
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Hóa Học Lớp 11 & Cơ chế trung hòa axit dịch vị dạ dày
+            Hóa học lớp 11 & cơ chế trung hòa axit dịch vị dạ dày
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800 font-mono font-bold">

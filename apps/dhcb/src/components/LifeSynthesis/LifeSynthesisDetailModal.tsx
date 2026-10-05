@@ -48,7 +48,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
             </div>
             <div>
               <h2 className="text-base font-bold text-zinc-100">
-                Báo Cáo Tổng Hợp Đa Miền & Dự Báo Chiến Lược
+                Báo cáo tổng hợp đa miền & dự báo chiến lược
               </h2>
               <p className="text-xs text-zinc-400">
                 Phân tích cộng hưởng 5 miền & dự báo xác suất cán đích mục tiêu
@@ -121,7 +121,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-accent-400" />
-              Dự Báo Xác Suất Mục Tiêu Chiến Lược
+              Dự báo xác suất mục tiêu chiến lược
             </h3>
 
             <div className="space-y-3">
@@ -175,7 +175,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-400 theme-light:text-amber-900" />
-              Khuyến Nghị Chiến Lược Đòn Bẩy Cao
+              Khuyến nghị chiến lược đòn bẩy cao
             </h3>
 
             <div className="space-y-2.5">

@@ -60,7 +60,7 @@ export default function MeshHealthMonitorModal({
           </div>
           <div>
             <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-              Giám Sát Mạng Lưới WebSocket Mesh
+              Giám sát mạng lưới WebSocket Mesh
               <span className="rounded px-1.5 py-0.2 text-[11px] font-bold uppercase bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 border border-emerald-500/40">
                 {meshStatus.overallQuality}% Quality
               </span>

@@ -27,7 +27,7 @@ export function ProfitOptimization() {
             Mô Phỏng 1: Tối Ưu Hóa Giá Bán Bằng Đạo Hàm Bậc 1 ($P'(x) = 0$)
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Toán Giải Tích Lớp 12 & Ứng dụng trong Dynamic Pricing của Grab, Shopee, Airlines
+            Toán giải tích lớp 12 & ứng dụng trong Dynamic Pricing của Grab, Shopee, Airlines
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-blue-500/20 text-blue-300 theme-light:text-blue-800 font-mono font-bold">

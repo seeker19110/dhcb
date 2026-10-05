@@ -226,7 +226,7 @@ export default function ActionCanvas() {
               className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
             >
               <LayoutGrid className="w-3.5 h-3.5 text-cyan-400 theme-light:text-cyan-800" />
-              Tự Động Bố Cục
+              Tự động bố cục
             </button>
           </div>
 

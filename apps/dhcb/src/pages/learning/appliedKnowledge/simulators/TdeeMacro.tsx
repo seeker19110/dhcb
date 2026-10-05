@@ -26,10 +26,10 @@ export function TdeeMacro() {
         <div>
           <h3 className="text-base font-bold text-rose-400 theme-light:text-rose-800 flex items-center gap-2">
             <HeartPulse className="w-5 h-5" />
-            Mô Phỏng 9: Chuyển Hóa Năng Lượng Tế Bào BMR/TDEE & Phân Bổ Macro
+            Mô phỏng 9: Chuyển hóa năng lượng tế bào BMR/TDEE & phân bổ macro
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Sinh Học Chuyển Hóa Lớp 10 & Khoa học dinh dưỡng giảm mỡ tăng cơ
+            Sinh học chuyển hóa lớp 10 & Khoa học dinh dưỡng giảm mỡ tăng cơ
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 theme-light:text-rose-800 font-mono font-bold">

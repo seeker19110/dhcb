@@ -172,7 +172,7 @@ export default function Subjects() {
                   <span className="text-xs text-zinc-400 font-medium">Học cùng gia sư AI</span>
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                  Bắt Đầu Từ Đâu Hôm Nay
+                  Bắt đầu từ đâu hôm nay
                 </h3>
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function Subjects() {
                 <span className="text-xs text-zinc-400">10 thí nghiệm tương tác</span>
               </div>
               <h3 className="text-base font-bold text-white mt-1 group-hover:text-accent-300 transition">
-                Phòng Thí Nghiệm Mô Phỏng & Ứng Dụng Thực Tế
+                Phòng thí nghiệm mô phỏng & ứng dụng thực tế
               </h3>
               <p className="text-xs text-zinc-300 mt-0.5">
                 Xem ngay công thức Toán, Lý, Hóa, Sinh giải quyết bài toán tiền điện, lãi kép, giảm
@@ -416,10 +416,10 @@ export default function Subjects() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                        <Layers className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                        <span>Chế độ chấm:</span>
-                        <span className="text-zinc-300">
+                      <div className="flex items-start gap-1.5 text-xs text-zinc-400">
+                        <Layers className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                        <span className="shrink-0">Chế độ chấm:</span>
+                        <span className="min-w-0 text-zinc-300">
                           {sub.evaluationModes.map(evaluationModeLabel).join(', ')}
                         </span>
                       </div>

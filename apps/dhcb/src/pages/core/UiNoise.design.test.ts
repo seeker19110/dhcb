@@ -309,6 +309,8 @@ function visibleTextSegments(source: string): string[] {
     const t = line.trim()
     if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('{/*'))
       continue
+    // Dòng chữ thuần của JSX viết nhiều dòng (không có thẻ, dấu nháy, ngoặc nhọn hay ký hiệu mã).
+    if (/^[^<>{}'"`=;()[\]]{5,120}$/.test(t) && /\p{L}/u.test(t)) out.push(t)
     for (const m of line.matchAll(/(?:>|}|['"`])([^<>'"`{}]{3,120})(?=[<'"`{])/g)) {
       const seg = m[1]
       if (seg) out.push(seg)

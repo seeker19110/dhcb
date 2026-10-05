@@ -18,7 +18,7 @@ export function AlcoholDilution() {
             Mô Phỏng 7: Nồng Độ Dung Dịch & Công Thức Pha Cồn 70° ($C_1 V_1 = C_2 V_2$)
           </h3>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Hóa Học Lớp 8-9 & Quy chuẩn sát khuẩn y tế chuẩn WHO
+            Hóa học lớp 8-9 & quy chuẩn sát khuẩn y tế chuẩn WHO
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 theme-light:text-purple-800 font-mono font-bold">
