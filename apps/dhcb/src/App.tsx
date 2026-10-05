@@ -36,7 +36,6 @@ import { ENGLISH_PREFIX } from './lib/englishRoutes'
 // dưới trần 140 kB. Không bọc Suspense: khi chưa nạp xong, `lazy` render null, đúng bằng
 // trạng thái thường trực của chính nó.
 const OfflineSyncIndicator = lazy(() => import('./components/OfflineSyncIndicator'))
-import { useOneHandedDrag } from './lib/useOneHandedDrag'
 // Dùng lazyWithRetry thay cho React.lazy: tự tải lại 1 lần khi chunk lỗi
 // ── 1. Core Platform & Shared Pages (Nền tảng dùng chung)
 const Login = lazyWithRetry(() => import('./pages/core/Login'))
@@ -288,8 +287,6 @@ function LegacySubjectsRedirect() {
 
 export default function App() {
   usePrefetchPages()
-  // Kéo toàn bộ nội dung trang xuống 1 tay (Reachability) — xem lib/useOneHandedDrag.ts
-  const oneHandedDrag = useOneHandedDrag()
   // Đồng bộ hạn mức/khuyến mãi thật từ server: ngay lúc mở app, định kỳ mỗi 1h nếu app mở
   // lâu, và mỗi lần quay lại tab (visibilitychange) — trình duyệt thường tạm dừng
   // setInterval khi tab ẩn/máy ngủ, nên bắt thêm sự kiện này để không phải đợi đủ 1h mới
@@ -334,18 +331,13 @@ export default function App() {
                   ĐẦU TIÊN của trang. */}
               <SkipLink />
               {/* Chỉ hiện từ 1024px (`lg:`) — xem components/DesktopSidebar.tsx.
-                  Ở ngoài ErrorBoundary/div kéo 1 tay vì tự định vị `fixed`, giống BottomNav. */}
+                  Ở ngoài ErrorBoundary vì tự định vị `fixed`, giống BottomNav. */}
               <DesktopSidebar />
               <ErrorBoundary>
-                {/* Bọc toàn bộ nội dung định tuyến để hỗ trợ kéo 1 tay (không bọc
-                    BottomNav — giữ cố định để luôn bấm được dù đang kéo xuống).
-                    `lg:pl-[var(--sidebar-w)]` chừa lề trái cho DesktopSidebar — biến CSS
+                {/* `lg:pl-[var(--sidebar-w)]` chừa lề trái cho DesktopSidebar — biến CSS
                     đổi theo trạng thái thu gọn/mở rộng nên không cần biết sidebar rộng
                     bao nhiêu ở đây (xem index.css). */}
-                <div
-                  className="lg:pl-[var(--sidebar-w)] transition-[padding] duration-200"
-                  style={oneHandedDrag.contentStyle}
-                >
+                <div className="lg:pl-[var(--sidebar-w)] transition-[padding] duration-200">
                   <Suspense fallback={<PageLoading />}>
                     <Routes>
                       <Route path="/login" element={<Login />} />
@@ -972,19 +964,10 @@ export default function App() {
                   </Suspense>
                 </div>
               </ErrorBoundary>
-              {/* Dải trigger Reachability giờ lồng NGAY TRONG BottomNav (xem
-                  components/BottomNav.tsx) thay vì <div> rời định vị bằng biến CSS
-                  --bnav-only-h — chỉ cần truyền triggerHandlers + isOpen xuống, chiều
-                  cao 3.5rem vẫn được cộng vào --bnav-h ở index.css để mọi trang tự
-                  chừa đủ padding-bottom, không bị trigger che/chặn tap nội dung
-                  cuối trang. */}
               <Suspense fallback={null}>
                 <OfflineSyncIndicator />
               </Suspense>
-              <BottomNav
-                triggerHandlers={oneHandedDrag.triggerHandlers}
-                isReachabilityOpen={oneHandedDrag.isOpen}
-              />
+              <BottomNav />
             </BrowserRouter>
           </ToastProvider>
         </LangProvider>
