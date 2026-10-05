@@ -8,7 +8,7 @@ Nguồn cố định tại commit `f6dbae74ef622b78a76df704f86eafcde9f4ef3f`: 52
 
 1. **M0 — nghiên cứu:** khóa snapshot, rà 523 outcome, kiểm body và bài Make DHCB, lập backlog `reuse/extend/new` và ứng viên hoạt họa. Audit còn thiếu bài được tách theo phase để dễ rà chéo. Đầu ra M0 là bản đồ không còn `UNREVIEWED` cùng biên bản review mẫu ở mỗi phase.
 2. **M0G — mở đường chấm bài:** triển khai worker cô lập theo spec riêng; xác nhận Python/JS/TS/SQL chạy và ghi tiến độ thật qua server regrade, đồng thời các ca vượt quyền/time/memory/network bị chặn. Không đăng ký khóa coding mới khi dependency này chưa đạt.
-3. **C1 — hợp đồng và thí điểm:** chốt ID khóa/lesson, registry/loader, khả năng gắn hoạt họa vào `ProgrammingLesson`, công cụ chụp, rồi thử bốn storyboard từ [phiếu thí điểm](../research/2026-10-05-ai-engineering-pilot-selection.md). Sửa hai lỗi nội dung cũ đã phát hiện trước khi reuse. C1 có một PR contract và các PR thí điểm riêng, mỗi PR nhỏ và kiểm được.
+3. **C1 — hợp đồng và thí điểm (có thể chuẩn bị song song M0G sau merge spec):** chốt ID khóa/lesson, registry/loader, khả năng gắn hoạt họa vào `ProgrammingLesson`, công cụ chụp, rồi thử bốn storyboard từ [phiếu thí điểm](../research/2026-10-05-ai-engineering-pilot-selection.md). Sửa hai lỗi nội dung cũ đã phát hiện trước khi reuse. C1 có một PR contract và các PR thí điểm riêng, mỗi PR nhỏ và kiểm được.
 4. **B1–B5 — khóa học:** B1 Phase 00–04; B2 Phase 05–10; B3 Phase 11–14; B4 Phase 15–18; B5 Phase 19. Trong mỗi đợt, giao một unit/outcome cluster độc lập mỗi lần, nghiệm thu rồi mới gắn vào khóa công khai. Thứ tự trong đợt theo tiên quyết; có thể soạn song song các bài không phụ thuộc nhau sau khi contract đã ổn định.
 5. **F — tích hợp:** 20 khóa và một lộ trình điều hướng có chương/bài thật, test E2E học–chấm–tiến độ, dự án tổng hợp có artifact/rubric, review chuyên môn, a11y và hiệu năng; final audit trên `main`.
 
@@ -43,4 +43,4 @@ Trước sửa hotspot: `npm run codemap -- impact <file>`. Trong PR: test đún
 
 ## 5. Trạng thái thực tế và bước kế tiếp
 
-Đã giao ba subagent làm các phase nghiên cứu và thiết kế hoạt họa; chưa giao sửa source vì spec được duyệt nhưng chưa merge. Spec worker bảo mật vẫn cần PoC và quyết định kiến trúc riêng. Bước có giá trị cao nhất sau khi chốt bản đồ M0 là duyệt các spec, sau đó thực hiện M0G và C1 trên các PR nhỏ. Không đánh dấu bất kỳ phase nào đã hoàn tất chỉ từ bản đồ hoặc đề cương.
+Đã giao ba subagent làm các phase nghiên cứu và thiết kế hoạt họa; chưa giao sửa source vì spec được duyệt nhưng chưa merge. Spec worker bảo mật vẫn cần PoC và quyết định kiến trúc riêng. Bản đồ M0 đã có 523/523 quyết định K1 và cần đọc sâu theo từng lát. Sau merge spec, thực hiện C1 trên các PR nhỏ trong khi M0G tiếp tục PoC/ADR; M0G chặn phát hành khóa coding, không chặn phát triển renderer hoạt họa độc lập. Không đánh dấu bất kỳ phase nào đã hoàn tất chỉ từ bản đồ hoặc đề cương.

@@ -1,6 +1,6 @@
 # Bản đồ Phase 15–16: hệ tự chủ và nhiều agent → DHCB
 
-> M0, ngày 2026-10-05, trạng thái **Draft**. Nguồn ghim commit `f6dbae74ef622b78a76df704f86eafcde9f4ef3f`: [Phase 15](https://github.com/rohitg00/ai-engineering-from-scratch/tree/f6dbae74ef622b78a76df704f86eafcde9f4ef3f/phases/15-autonomous-systems), [Phase 16](https://github.com/rohitg00/ai-engineering-from-scratch/tree/f6dbae74ef622b78a76df704f86eafcde9f4ef3f/phases/16-multi-agent-and-swarms). Rà 47/47 bài ở mức tiêu đề, ý chính Concept, cấu trúc Build It và Exercises; chưa đọc tuyến tính toàn văn hoặc chạy các code mẫu nguồn.
+> M0, ngày 2026-10-05, trạng thái **Draft**. Nguồn ghim commit `f6dbae74ef622b78a76df704f86eafcde9f4ef3f`: [Phase 15](https://github.com/rohitg00/ai-engineering-from-scratch/tree/f6dbae74ef622b78a76df704f86eafcde9f4ef3f/phases/15-autonomous-systems), [Phase 16](https://github.com/rohitg00/ai-engineering-from-scratch/tree/f6dbae74ef622b78a76df704f86eafcde9f4ef3f/phases/16-multi-agent-and-swarms). Rà 47/47 bài ở mức tiêu đề, ý chính và các mục thực hành có sẵn. Phase 15 không có mục `Build It` trong 22/22 bài; Phase 16 có mục này trong 24/25 bài. Chưa đọc tuyến tính toàn văn hoặc chạy các code mẫu nguồn.
 
 ## Quy tắc đối chiếu
 

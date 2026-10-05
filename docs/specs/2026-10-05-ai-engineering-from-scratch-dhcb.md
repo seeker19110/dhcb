@@ -193,4 +193,4 @@ Hành trình: chọn mục tiêu → xem tiên quyết và bài chẩn đoán �
 ## 18. Trạng thái nghiệm thu
 
 - Đặc tả đã được chủ dự án **Approved for implementation** ngày 2026-10-05; còn chờ merge theo `AGENTS.md`. Chưa có source change hay bằng chứng final gate.
-- Sau khi ba nghiên cứu độc lập hoàn tất, cập nhật con số snapshot/gap cụ thể và chỉ đóng M0 khi các hàng còn nghi vấn đã được giải quyết.
+- Bản đồ cuối hiện có 523/523 quyết định K1: 349 NEW, 174 EXTEND. Đã sửa các lỗi truy vết phát hiện trong quality review. Mỗi lát nội dung vẫn phải đọc sâu và chạy lab/ca chấm trước nghiệm thu; 85 mục capstone chờ quyết định hoạt họa ở spec project.

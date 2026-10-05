@@ -4,7 +4,7 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Goal ID           | GOAL-2026-010                                                                                                                                                                         |
 | Owner             | Chủ dự án DHCB                                                                                                                                                                        |
-| Trạng thái        | FRAMING                                                                                                                                                                               |
+| Trạng thái        | WAITING                                                                                                                                                                               |
 | Bắt đầu           | 2026-10-05                                                                                                                                                                            |
 | Target review     | Sau mỗi lát nội dung và trước khi mở catalog                                                                                                                                          |
 | Quyền được cấp    | Nghiên cứu, lập kế hoạch, viết đặc tả và giao các phần nghiên cứu độc lập; thay đổi source sau khi đặc tả được duyệt và merge theo quy trình repo                                     |
@@ -68,25 +68,27 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 ## 5. Current truth
 
 - Commit `main` đã reconcile: `c7eca92` (2026-10-05).
-- Goal gap: [inventory nguồn](../research/2026-10-05-ai-engineering-source-inventory.md) xác nhận 523 bài/20 phase tại commit `f6dbae74ef622b78a76df704f86eafcde9f4ef3f`. [Bản đồ CSV](../research/2026-10-05-ai-engineering-source-map.csv) hiện có 168/523 bài được quyết định ở Phase 00, 01, 02, 07, 08, 13 và 14. Các [phiếu Phase 03–04](../research/2026-10-05-ai-engineering-phase03-04-map.md), [05](../research/2026-10-05-ai-engineering-phase05-map.md), [09–10](../research/2026-10-05-ai-engineering-phase09-10-map.md), [11–12](../research/2026-10-05-ai-engineering-phase11-12-map.md), [15–16](../research/2026-10-05-ai-engineering-phase15-16-map.md) đã nghiên cứu ở mức K1 nhưng chưa hợp nhất vào CSV. Những phase khác còn `UNREVIEWED` cho tới khi hoàn tất phiếu body/Make; cần rà chéo cả phiếu K1 trước khi soạn. Hoạt họa đã có trong chặng chuyên sâu nhưng chưa có hợp đồng/render ở bài `ProgrammingLesson`. Chấm hoàn thành Python/JS/TS/SQL đang dừng chờ worker cô lập.
-- Blocker: repo yêu cầu đặc tả được duyệt và merge trước thay đổi source. Đặc tả mới hiện đang soạn; goal cũ `GOAL-2026-009` khác nguồn và vẫn WAITING.
-- Next best slice: hoàn thành M0, rà chéo nghiên cứu của subagent, viết spec có thể nghiệm thu và trình chủ dự án duyệt. [Thí điểm hoạt họa](../research/2026-10-05-ai-engineering-pilot-selection.md) đã phát hiện hai lỗi nội dung cần sửa trước khi phát hành: convolution dùng thuật ngữ “bất biến tịnh tiến” và bài gọi “BPE mini” nhưng mã chưa thực hiện vòng gộp BPE.
-- Quyền hoặc quyết định cần thêm: duyệt bản đồ triển khai và cách nhóm 20 phase vào catalog trước khi thêm source; merge/đưa lên production theo Git flow riêng.
+- Goal gap: inventory và CSV đã khớp **523/523 source keys**, gồm **349 NEW, 174 EXTEND, 0 REUSE**. Đây là map K1 về mục tiêu/theory/Make, chưa phải 523 bài đã triển khai hoặc lab đã chạy. Mọi EXTEND có ID hiện hữu chính; mọi hàng có mức kiểm chứng. 345 ứng viên hoạt họa, 93 mục không ưu tiên hoạt họa, 85 mục Phase 19 chờ chọn cảnh khi có thiết kế project chi tiết.
+- Review: [phiếu quality review](../research/2026-10-05-ai-engineering-map-quality-review.md) đã xử lý năm ID thiếu và mô tả Build It quá rộng. [Bản đồ capstone](../research/2026-10-05-ai-engineering-phase19-map.md) có đủ 85 source keys và rubric từng nhóm. Chưa chạy lab nguồn; review sâu thuộc từng lát nội dung.
+- PR tài liệu: [#1236](https://github.com/seeker19110/dhcb/pull/1236). Chủ dự án đã duyệt phương án, cho phép PR/merge tài liệu khi kiểm tra đạt ngày 2026-10-05.
+- Blocker hiện tại: chờ các required checks và merge đặc tả trước source; worker bảo mật còn Draft, cần PoC/ADR riêng để mở lại chấm code. Các subagent dừng do hạn mức sử dụng; coordinator tiếp tục tích hợp kết quả đã lưu.
+- Next best slice: sau merge spec, C1 mở trường hoạt họa tùy chọn và renderer trong bài Lập trình, có test tương thích. C1 độc lập với worker; việc công bố khóa coding mới vẫn chờ worker đạt cổng. Phần content tiếp tục review theo từng nhóm outcome, không dùng map K1 thay nghiệm thu bài.
+- Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; quyền push/merge hiện được cấp rõ cho **tài liệu**. Mã sản phẩm có thể chuẩn bị, kiểm và commit tại máy; chưa có quyền merge/deploy mã sản phẩm.
 
 ## 6. Iteration log
 
 ### Iteration 1 — 2026-10-05
 
-- State: FRAMING.
+- State: WAITING.
 - Slice: kiểm kê nguồn/DHCB song song, đặc tả chương trình và hoạt họa.
-- Goal gap trước/sau: chờ hoàn tất bản đồ từng bài để đo.
-- Research/spec/issue/PR: xem mục M0; chưa có issue/PR.
+- Goal gap trước/sau: từ inventory chưa map tới 523/523 quyết định K1; chưa có bài sản phẩm mới.
+- Research/spec/issue/PR: xem mục M0 và PR #1236.
 - Thay đổi: tài liệu goal, spec và nghiên cứu, không thay đổi source sản phẩm.
-- Validation và test count: ghi sau khi chạy.
+- Validation: Prettier và whitespace đạt; audit 523 source keys, 174 EXTEND có ID hợp lệ, 85 capstone keys đạt. Kiểm mã sản phẩm chưa áp dụng vì diff chỉ có tài liệu.
 - Metric/guardrail: chưa phát hành nội dung, chi phí provider bằng 0.
 - Quyết định: giữ riêng goal `aieng` cũ; tái dùng nội dung hiện hữu bằng ID.
 - Blocker: đặc tả chương trình và hoạt họa đã được chủ dự án duyệt ngày 2026-10-05 nhưng chưa merge; worker bảo mật chờ PoC và quyết định kiến trúc.
-- Next best slice: kiểm kê và phê duyệt M0.
+- Next best slice: merge đặc tả sau required checks, triển khai C1 hoạt họa bài học.
 - Quyền cần thêm: đã được cấp quyền đưa đặc tả lên PR và merge khi kiểm tra đạt; quyết định kiến trúc worker vẫn cần PoC riêng.
 
 ## 7. Final audit
