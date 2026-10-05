@@ -129,9 +129,9 @@ export default function Subjects() {
                   </span>
                   <span className="text-xs text-zinc-400 font-medium">Học cùng gia sư AI</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
                   Bắt Đầu Từ Đâu Hôm Nay
-                </h3>
+                </h2>
               </div>
             </div>
           </div>
@@ -240,9 +240,9 @@ export default function Subjects() {
                 </span>
                 <span className="text-xs text-zinc-400">10 Simulators Tương Tác</span>
               </div>
-              <h3 className="text-base font-bold text-white mt-1 group-hover:text-accent-300 transition">
+              <h2 className="text-base font-bold text-white mt-1 group-hover:text-accent-300 transition">
                 Phòng Thí Nghiệm Mô Phỏng & Ứng Dụng Thực Tế
-              </h3>
+              </h2>
               <p className="text-xs text-zinc-300 mt-0.5">
                 Xem ngay công thức Toán, Lý, Hóa, Sinh giải quyết bài toán tiền điện, lãi kép, giảm
                 mỡ, vệ tinh GPS ra sao.
@@ -253,6 +253,7 @@ export default function Subjects() {
         </button>
 
         {/* Danh sách thẻ môn học */}
+        <h2 className="sr-only">Danh sách môn học</h2>
         {loading ? (
           <div className="text-center py-12 text-zinc-500 text-sm flex items-center justify-center gap-2">
             <span className="w-2 h-2 rounded-full bg-accent-400 animate-ping" />

@@ -452,10 +452,10 @@ export default function SubjectDetail() {
             {/* Khung giải bài tập */}
             <section className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5 space-y-4 shadow-xl">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-accent-400" />
                   <span>Nhập đề bài hoặc tải ảnh chụp</span>
-                </h3>
+                </h2>
                 {problemInput && (
                   <button
                     onClick={() => {
@@ -574,9 +574,9 @@ export default function SubjectDetail() {
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400 theme-light:text-emerald-900" />
-                    <h3 className="text-base font-bold text-white">
+                    <h2 className="text-base font-bold text-white">
                       Lời Giải Chi Tiết Từng Bước (AI Step Analysis)
-                    </h3>
+                    </h2>
                   </div>
 
                   <button
