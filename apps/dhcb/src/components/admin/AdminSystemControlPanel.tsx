@@ -112,11 +112,11 @@ export default function AdminSystemControlPanel() {
             <div className="flex items-center gap-2">
               <span className="font-semibold text-zinc-300">Trạng thái Cầu dao khẩn cấp:</span>
               {circuitBreaker ? (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 text-rose-400 theme-light:text-rose-900 border border-rose-500/40">
+                <span className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-rose-500/20 text-rose-400 theme-light:text-rose-900 border border-rose-500/40">
                   ĐANG BẬT — ĐÃ DẬP GỌI AI
                 </span>
               ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 theme-light:text-emerald-900 border border-emerald-500/40">
+                <span className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-emerald-500/20 text-emerald-400 theme-light:text-emerald-900 border border-emerald-500/40">
                   HOẠT ĐỘNG BÌNH THƯỜNG
                 </span>
               )}

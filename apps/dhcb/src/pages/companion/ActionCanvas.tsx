@@ -265,7 +265,7 @@ export default function ActionCanvas() {
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
-              <span className="px-2 text-[11px] font-mono text-zinc-400">
+              <span className="px-2 text-[0.6875rem] font-mono text-zinc-400">
                 {canvas ? Math.round(canvas.viewport.zoom * 100) : 100}%
               </span>
               <button

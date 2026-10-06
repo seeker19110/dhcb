@@ -52,7 +52,8 @@ export default function LessonProse({ text }: { text: string }) {
     // code phải được rộng hết cột (dòng code dài mà bị bó 66ch thì phải cuộn ngang liên tục).
     <div className="space-y-3 read-body text-zinc-200">
       {blocks.map((b, i) => {
-        if (b.kind === 'code') return <CodeSurface key={i} code={b.code} className="text-[13px]" />
+        if (b.kind === 'code')
+          return <CodeSurface key={i} code={b.code} className="text-[0.8125rem]" />
         if (b.kind === 'bullets')
           return (
             <ul key={i} className="read-measure list-disc pl-5 space-y-1.5 marker:text-accent-400">

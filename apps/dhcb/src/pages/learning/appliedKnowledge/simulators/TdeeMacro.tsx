@@ -41,7 +41,10 @@ export function TdeeMacro() {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label htmlFor="appliedknowledge-can-nang-kg" className="text-[11px] text-zinc-400">
+              <label
+                htmlFor="appliedknowledge-can-nang-kg"
+                className="text-[0.6875rem] text-zinc-400"
+              >
                 Cân nặng (kg)
               </label>
               <input
@@ -53,7 +56,10 @@ export function TdeeMacro() {
               />
             </div>
             <div>
-              <label htmlFor="appliedknowledge-chieu-cao-cm" className="text-[11px] text-zinc-400">
+              <label
+                htmlFor="appliedknowledge-chieu-cao-cm"
+                className="text-[0.6875rem] text-zinc-400"
+              >
                 Chiều cao (cm)
               </label>
               <input
@@ -65,7 +71,7 @@ export function TdeeMacro() {
               />
             </div>
             <div>
-              <label htmlFor="appliedknowledge-do-tuoi" className="text-[11px] text-zinc-400">
+              <label htmlFor="appliedknowledge-do-tuoi" className="text-[0.6875rem] text-zinc-400">
                 Độ tuổi
               </label>
               <input
@@ -104,7 +110,7 @@ export function TdeeMacro() {
           <div>
             <label
               htmlFor="appliedknowledge-muc-do-van-dong-the-luc"
-              className="text-[11px] text-zinc-400"
+              className="text-[0.6875rem] text-zinc-400"
             >
               Mức độ vận động thể lực:
             </label>
@@ -122,7 +128,7 @@ export function TdeeMacro() {
           </div>
 
           <div>
-            <div id="fitness-goal-label" className="text-[11px] text-zinc-400">
+            <div id="fitness-goal-label" className="text-[0.6875rem] text-zinc-400">
               Mục tiêu thể hình:
             </div>
             <div
@@ -135,7 +141,7 @@ export function TdeeMacro() {
                   key={g}
                   aria-pressed={userGoal === g}
                   onClick={() => setUserGoal(g)}
-                  className={`py-1.5 rounded-lg text-[11px] font-bold border transition ${
+                  className={`py-1.5 rounded-lg text-[0.6875rem] font-bold border transition ${
                     userGoal === g
                       ? 'bg-rose-600 text-[#fff] border-rose-400'
                       : 'bg-zinc-950 text-zinc-400 border-zinc-800'
@@ -162,7 +168,7 @@ export function TdeeMacro() {
 
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-800 text-center">
             <div className="p-2 rounded-lg bg-blue-950/40 theme-light:bg-blue-50 border border-blue-500/30">
-              <div className="text-[11px] text-blue-300 theme-light:text-blue-800">
+              <div className="text-[0.6875rem] text-blue-300 theme-light:text-blue-800">
                 Đạm (Protein)
               </div>
               <div className="text-sm font-bold text-blue-400 theme-light:text-blue-800">
@@ -170,7 +176,7 @@ export function TdeeMacro() {
               </div>
             </div>
             <div className="p-2 rounded-lg bg-amber-950/40 theme-light:bg-amber-50 border border-amber-500/30">
-              <div className="text-[11px] text-amber-300 theme-light:text-amber-800">
+              <div className="text-[0.6875rem] text-amber-300 theme-light:text-amber-800">
                 Đường bột (Carb)
               </div>
               <div className="text-sm font-bold text-amber-400 theme-light:text-amber-800">
@@ -178,7 +184,7 @@ export function TdeeMacro() {
               </div>
             </div>
             <div className="p-2 rounded-lg bg-rose-950/40 theme-light:bg-rose-50 border border-rose-500/30">
-              <div className="text-[11px] text-rose-300 theme-light:text-rose-800">
+              <div className="text-[0.6875rem] text-rose-300 theme-light:text-rose-800">
                 Chất béo (Fat)
               </div>
               <div className="text-sm font-bold text-rose-400 theme-light:text-rose-800">

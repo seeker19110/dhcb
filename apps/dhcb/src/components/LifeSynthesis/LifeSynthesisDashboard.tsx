@@ -57,7 +57,7 @@ export default function LifeSynthesisDashboard() {
                 <h3 className="text-sm font-bold text-zinc-100 tracking-tight">
                   Tổng hợp đa miền & dự báo mục tiêu
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-500/15 text-accent-200 theme-light:text-accent-900 border border-accent-500/30 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-full text-[0.6875rem] font-bold bg-accent-500/15 text-accent-200 theme-light:text-accent-900 border border-accent-500/30 uppercase tracking-wider">
                   V5.4 Flagship
                 </span>
               </div>
@@ -85,7 +85,7 @@ export default function LifeSynthesisDashboard() {
                 <Target className="w-3.5 h-3.5 text-accent-400" />
                 Đồng bộ toàn diện
               </span>
-              <span className="text-[11px] font-bold text-accent-300 theme-light:text-accent-900">
+              <span className="text-[0.6875rem] font-bold text-accent-300 theme-light:text-accent-900">
                 Holistic
               </span>
             </div>
@@ -109,7 +109,7 @@ export default function LifeSynthesisDashboard() {
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400 theme-light:text-indigo-800" />
                 Cộng hưởng đa miền
               </span>
-              <span className="text-[11px] font-bold text-indigo-400 theme-light:text-indigo-800">
+              <span className="text-[0.6875rem] font-bold text-indigo-400 theme-light:text-indigo-800">
                 Synergy
               </span>
             </div>
@@ -133,7 +133,7 @@ export default function LifeSynthesisDashboard() {
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900" />
                 Bền bỉ nhận thức
               </span>
-              <span className="text-[11px] font-bold text-emerald-400 theme-light:text-emerald-900">
+              <span className="text-[0.6875rem] font-bold text-emerald-400 theme-light:text-emerald-900">
                 Resilience
               </span>
             </div>
@@ -159,7 +159,7 @@ export default function LifeSynthesisDashboard() {
               <Layers className="w-3.5 h-3.5 text-zinc-400" />
               Xung lực hoạt động 5 lĩnh vực
             </span>
-            <span className="text-[11px] text-zinc-400">Cập nhật theo tuần</span>
+            <span className="text-[0.6875rem] text-zinc-400">Cập nhật theo tuần</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -169,11 +169,11 @@ export default function LifeSynthesisDashboard() {
                 className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex flex-col gap-1.5"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-zinc-200">
+                  <span className="text-[0.6875rem] font-bold text-zinc-200">
                     {domainLabelMap[dom.domain] || dom.domain}
                   </span>
                   <span
-                    className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full border ${
+                    className={`text-[0.6875rem] font-bold px-1.5 py-0.5 rounded-full border ${
                       domainIconColorMap[dom.domain] || 'text-zinc-400'
                     }`}
                   >
@@ -188,7 +188,7 @@ export default function LifeSynthesisDashboard() {
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-sm font-black text-zinc-100">{dom.score}</span>
-                  <span className="text-[11px] text-zinc-400">/ 100</span>
+                  <span className="text-[0.6875rem] text-zinc-400">/ 100</span>
                 </div>
               </div>
             ))}
@@ -205,11 +205,11 @@ export default function LifeSynthesisDashboard() {
               <div className="text-xs">
                 <div className="font-bold text-zinc-100 flex items-center gap-2">
                   <span>{topGoal.title}</span>
-                  <span className="text-[11px] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 font-bold border border-emerald-500/30">
+                  <span className="text-[0.6875rem] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 font-bold border border-emerald-500/30">
                     {topGoal.successProbabilityPercent}% Xác suất đạt
                   </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 mt-0.5">
+                <p className="text-[0.6875rem] text-zinc-400 mt-0.5">
                   Dự kiến hoàn tất:{' '}
                   <span className="text-zinc-200 font-medium">
                     {topGoal.estimatedCompletionDate}

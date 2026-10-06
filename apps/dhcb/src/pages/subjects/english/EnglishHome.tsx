@@ -165,7 +165,7 @@ export default function EnglishHome() {
               <div>
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   {isA ? 'Gia sư tiếng Anh song ngữ' : 'Bilingual English tutor'}
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 font-bold border border-emerald-500/30 whitespace-nowrap">
+                  <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 font-bold border border-emerald-500/30 whitespace-nowrap">
                     A1–C2
                   </span>
                 </h2>
@@ -350,7 +350,7 @@ export default function EnglishHome() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <h4 className="font-bold text-white text-sm">Học theo lộ trình CEFR</h4>
-                <span className="text-[11px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 font-semibold border border-emerald-500/20">
+                <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 font-semibold border border-emerald-500/20">
                   A1-C2
                 </span>
               </div>
@@ -371,7 +371,7 @@ export default function EnglishHome() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <h4 className="font-bold text-white text-sm">Từ điển song ngữ 12.000+</h4>
-                <span className="text-[11px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 theme-light:text-amber-800 font-semibold border border-amber-500/20">
+                <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 theme-light:text-amber-800 font-semibold border border-amber-500/20">
                   Có phiên âm
                 </span>
               </div>
@@ -401,7 +401,7 @@ export default function EnglishHome() {
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white text-xs break-words">Ngữ Pháp</h4>
-                <p className="text-[11px] text-zinc-400 break-words">100+ chủ điểm</p>
+                <p className="text-[0.6875rem] text-zinc-400 break-words">100+ chủ điểm</p>
               </div>
             </button>
 
@@ -415,7 +415,7 @@ export default function EnglishHome() {
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white text-xs break-words">Mẫu Câu</h4>
-                <p className="text-[11px] text-zinc-400 break-words">Giao tiếp nhanh</p>
+                <p className="text-[0.6875rem] text-zinc-400 break-words">Giao tiếp nhanh</p>
               </div>
             </button>
 
@@ -429,7 +429,9 @@ export default function EnglishHome() {
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white text-xs break-words">Truyện song ngữ</h4>
-                <p className="text-[11px] text-zinc-400 break-words">Chữ sáng theo giọng đọc</p>
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
+                  Chữ sáng theo giọng đọc
+                </p>
               </div>
             </button>
 
@@ -445,7 +447,7 @@ export default function EnglishHome() {
                 <h4 className="font-semibold text-white text-xs break-words">
                   {isA ? 'Ôn thi' : 'Exam prep'}
                 </h4>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isA ? 'Kế hoạch tới ngày thi' : 'Plan to exam day'}
                 </p>
               </div>
@@ -463,7 +465,7 @@ export default function EnglishHome() {
                 <h4 className="font-semibold text-white text-xs break-words">
                   {isA ? 'Cài đặt môn' : 'Subject settings'}
                 </h4>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isA ? 'Chiều học · tốc độ · giọng' : 'Direction · pace · voice'}
                 </p>
               </div>
@@ -479,7 +481,7 @@ export default function EnglishHome() {
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-semibold text-white text-xs break-words">Sổ lỗi sai</h4>
-                <p className="text-[11px] text-zinc-400 break-words">Khắc phục lỗ hổng</p>
+                <p className="text-[0.6875rem] text-zinc-400 break-words">Khắc phục lỗ hổng</p>
               </div>
             </button>
           </div>
@@ -498,7 +500,7 @@ export default function EnglishHome() {
             </div>
             <div>
               <h4 className="font-bold text-white text-xs">Thử thách video nói 1 phút mỗi ngày</h4>
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[0.6875rem] text-zinc-400">
                 Ghi hình phát âm, nhận phản hồi AI và tích lũy chuỗi ngày học
               </p>
             </div>

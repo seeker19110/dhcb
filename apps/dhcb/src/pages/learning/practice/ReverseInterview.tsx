@@ -175,7 +175,7 @@ export function ReverseInterview({
         {idx + 1}/{topics.length}
       </p>
       <div className="text-center space-y-1">
-        <p className="text-[11px] text-accent-400 theme-light:text-accent-800 font-semibold">
+        <p className="text-[0.6875rem] text-accent-400 theme-light:text-accent-800 font-semibold">
           {uiVi ? 'AI hỏi' : 'AI asks'}
         </p>
         <p className="text-lg font-semibold text-white px-2">

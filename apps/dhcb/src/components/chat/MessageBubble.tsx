@@ -22,7 +22,7 @@ export default function MessageBubble({ message, isMine, onDelete }: MessageBubb
       } my-1.5 transition-all`}
     >
       {!isMine && (
-        <span className="text-[11px] font-medium text-zinc-400 mb-1 px-1">
+        <span className="text-[0.6875rem] font-medium text-zinc-400 mb-1 px-1">
           {message.senderName}
         </span>
       )}
@@ -33,7 +33,7 @@ export default function MessageBubble({ message, isMine, onDelete }: MessageBubb
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
             {confirmDelete ? (
               <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-700 px-2 py-0.5 rounded-lg text-xs animate-fade-in">
-                <span className="text-zinc-300 text-[11px]">Xoá?</span>
+                <span className="text-zinc-300 text-[0.6875rem]">Xoá?</span>
                 <button
                   type="button"
                   onClick={() => onDelete(message.id)}
@@ -74,13 +74,13 @@ export default function MessageBubble({ message, isMine, onDelete }: MessageBubb
           <p className="whitespace-pre-wrap leading-relaxed select-text">{message.content}</p>
 
           <div
-            className={`flex items-center gap-1.5 justify-end mt-1 text-[11px] ${
+            className={`flex items-center gap-1.5 justify-end mt-1 text-[0.6875rem] ${
               isMine ? 'text-accent-100/80' : 'text-zinc-400'
             }`}
           >
             {isFiltered && (
               <span
-                className="inline-flex items-center gap-0.5 text-amber-300 theme-light:text-amber-900 text-[11px]"
+                className="inline-flex items-center gap-0.5 text-amber-300 theme-light:text-amber-900 text-[0.6875rem]"
                 title="Một số từ ngữ đã được lọc theo tiêu chuẩn cộng đồng"
               >
                 <ShieldAlert size={11} />

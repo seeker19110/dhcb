@@ -76,14 +76,14 @@ const SOURCE_META: Record<MistakeSource, { emoji: string; vi: string; en: string
 function EvidenceBadge({ mistake }: { mistake: Mistake }) {
   if (mistake.attemptId) {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 theme-light:text-emerald-900 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2 py-0.5">
+      <span className="inline-flex items-center gap-1 text-[0.6875rem] text-emerald-300 theme-light:text-emerald-900 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2 py-0.5">
         <ShieldCheck className="w-3 h-3" aria-hidden="true" />
         có bằng chứng · {ngayNgan(mistake.createdAt)}
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/70 border border-zinc-700/50 rounded-full px-2 py-0.5">
+    <span className="inline-flex items-center gap-1 text-[0.6875rem] text-zinc-400 bg-zinc-800/70 border border-zinc-700/50 rounded-full px-2 py-0.5">
       <PenLine className="w-3 h-3" aria-hidden="true" />
       ghi tay
     </span>
@@ -93,7 +93,7 @@ function EvidenceBadge({ mistake }: { mistake: Mistake }) {
 function SourceBadge({ source, vi }: { source: MistakeSource; vi: boolean }) {
   const m = SOURCE_META[source]
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/70 border border-zinc-700/50 rounded-full px-2 py-0.5">
+    <span className="inline-flex items-center gap-1 text-[0.6875rem] text-zinc-400 bg-zinc-800/70 border border-zinc-700/50 rounded-full px-2 py-0.5">
       <span aria-hidden>{m.emoji}</span>
       {vi ? m.vi : m.en}
     </span>
@@ -128,7 +128,7 @@ function ReviewCard({
         </span>
         <div className="flex items-center gap-2 shrink-0">
           {mistake.count > 1 && (
-            <span className="text-[11px] text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
+            <span className="text-[0.6875rem] text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
               {isA ? `Lặp ${mistake.count} lần` : `${mistake.count}× repeated`}
             </span>
           )}
@@ -144,7 +144,7 @@ function ReviewCard({
       </div>
 
       {/* Câu sai */}
-      <p className="text-[11px] text-content-secondary mb-1">
+      <p className="text-[0.6875rem] text-content-secondary mb-1">
         {isA ? 'Câu bạn đã viết' : 'What you wrote'}
       </p>
       <div className="bg-red-500/8 border border-red-500/20 rounded-xl px-3 py-2.5 mb-3">
@@ -172,7 +172,7 @@ function ReviewCard({
         <div className="animate-fade-in space-y-3">
           {mistake.corrected && (
             <div>
-              <p className="text-[11px] text-content-secondary mb-1">
+              <p className="text-[0.6875rem] text-content-secondary mb-1">
                 {isA ? 'Câu đúng' : 'Corrected'}
               </p>
               <div className="bg-accent-500/8 border border-accent-500/25 rounded-xl px-3 py-2.5">
@@ -186,7 +186,7 @@ function ReviewCard({
           )}
           {mistake.explanation && (
             <div>
-              <p className="text-[11px] text-content-secondary mb-1">
+              <p className="text-[0.6875rem] text-content-secondary mb-1">
                 {isA ? 'Giải thích' : 'Explanation'}
               </p>
               <div className="bg-amber-500/8 border border-amber-500/20 rounded-xl px-3 py-2.5">
@@ -264,7 +264,9 @@ function ListRow({
         </p>
       )}
       {mistake.explanation && (
-        <p className="text-[11px] text-content-secondary break-words mt-1">{mistake.explanation}</p>
+        <p className="text-[0.6875rem] text-content-secondary break-words mt-1">
+          {mistake.explanation}
+        </p>
       )}
       {/* [S11b] Nhãn nói ĐÚNG nơi sẽ mở: lỗi môn Anh không neo được tới câu nào, nên không hứa
           "sửa đúng câu này" — cùng khuôn với thẻ ôn ở trên. */}
@@ -294,14 +296,14 @@ function StemMistakeRow({ entry }: { entry: MistakeEntry }) {
   return (
     <li className="rounded-xl border border-zinc-800/80 bg-zinc-900/80 px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 theme-light:text-emerald-900 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2 py-0.5">
+        <span className="inline-flex items-center gap-1 text-[0.6875rem] text-emerald-300 theme-light:text-emerald-900 bg-emerald-500/10 border border-emerald-500/25 rounded-full px-2 py-0.5">
           <ShieldCheck className="w-3 h-3" aria-hidden="true" />
           {entry.evidenceKind === 'local_graded'
             ? `chấm trên thiết bị · ${ngayNgan(entry.lastWrongAt)}`
             : `có bằng chứng · ${ngayNgan(entry.lastWrongAt)}`}
         </span>
         {entry.count > 1 && (
-          <span className="text-[11px] text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
+          <span className="text-[0.6875rem] text-amber-400 theme-light:text-amber-800 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5">
             Sai {entry.count} lần
           </span>
         )}
@@ -310,7 +312,7 @@ function StemMistakeRow({ entry }: { entry: MistakeEntry }) {
         {tieuDe || entry.contentId} · câu {entry.questionIndex + 1}
       </p>
       {lyDo && (
-        <p className="text-[11px] text-content-secondary break-words mt-0.5">
+        <p className="text-[0.6875rem] text-content-secondary break-words mt-0.5">
           Kết quả chấm: {lyDo}
         </p>
       )}

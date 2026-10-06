@@ -119,7 +119,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                 <h3 id={titleId} className="text-base sm:text-lg font-black text-white">
                   Đấu Trường 1v1 PvP Arena
                 </h3>
-                <p className="text-[11px] text-zinc-400">Đấu với đối thủ AI · Xếp hạng điểm</p>
+                <p className="text-[0.6875rem] text-zinc-400">Đấu với đối thủ AI · Xếp hạng điểm</p>
               </div>
             </div>
 
@@ -143,7 +143,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-white">{profile.name}</span>
-                    <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 theme-light:text-amber-900 border border-amber-500/40">
+                    <span className="text-[0.6875rem] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 theme-light:text-amber-900 border border-amber-500/40">
                       Rank {profile.rankTier}
                     </span>
                   </div>
@@ -211,7 +211,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="text-sm font-bold text-white">{m.title}</h4>
-                        <span className="text-[11px] font-semibold text-zinc-400 px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700">
+                        <span className="text-[0.6875rem] font-semibold text-zinc-400 px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700">
                           {m.time}
                         </span>
                       </div>
@@ -268,7 +268,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                     <span className="text-xl">{entry.avatar}</span>
                     <div>
                       <div className="text-xs font-bold text-white">{entry.name}</div>
-                      <div className="text-[11px] text-zinc-400">
+                      <div className="text-[0.6875rem] text-zinc-400">
                         {entry.winRate}% thắng · {entry.winStreak} chuỗi
                       </div>
                     </div>
@@ -278,7 +278,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                     <div className="text-sm font-black text-amber-400 theme-light:text-amber-900">
                       {entry.eloRating} điểm
                     </div>
-                    <div className="text-[11px] font-semibold text-zinc-400 uppercase">
+                    <div className="text-[0.6875rem] font-semibold text-zinc-400 uppercase">
                       {entry.rankTier}
                     </div>
                   </div>

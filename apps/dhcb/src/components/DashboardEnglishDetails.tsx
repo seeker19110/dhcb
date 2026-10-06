@@ -92,7 +92,7 @@ function StatCard({
           {value}
         </p>
         <p className="text-xs font-medium text-zinc-400 leading-tight mt-1">{label}</p>
-        {sub && <p className="text-[11px] text-zinc-400 leading-tight mt-0.5">{sub}</p>}
+        {sub && <p className="text-[0.6875rem] text-zinc-400 leading-tight mt-0.5">{sub}</p>}
       </div>
     </div>
   )
@@ -287,13 +287,13 @@ export default function DashboardEnglishDetails({
       {/* ── Summary: luôn hiển thị, không nằm trong panel hidden ─────────────────────────── */}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="bg-zinc-900/60 border border-zinc-800/70 rounded-2xl p-2.5">
-          <p className="text-[11px] text-zinc-400">{vi ? 'Cần ôn hôm nay' : 'Due today'}</p>
+          <p className="text-[0.6875rem] text-zinc-400">{vi ? 'Cần ôn hôm nay' : 'Due today'}</p>
           <p className="text-lg font-bold text-teal-300 theme-light:text-teal-900 leading-none mt-0.5">
             {srsDue}
           </p>
         </div>
         <div className="bg-zinc-900/60 border border-zinc-800/70 rounded-2xl p-2.5">
-          <p className="text-[11px] text-zinc-400">{vi ? 'Lộ trình CEFR' : 'CEFR roadmap'}</p>
+          <p className="text-[0.6875rem] text-zinc-400">{vi ? 'Lộ trình CEFR' : 'CEFR roadmap'}</p>
           <p className="text-lg font-bold text-accent-300 theme-light:text-accent-900 leading-none mt-0.5">
             {cefrOverallText}
           </p>
@@ -311,7 +311,7 @@ export default function DashboardEnglishDetails({
             <h3
               id="dashboard-weekly-credit-heading"
               tabIndex={-1}
-              className="text-[11px] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-md"
+              className="text-[0.6875rem] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-md"
             >
               <MessageCircle className="w-3.5 h-3.5 text-accent-400 shrink-0 mt-0.5" />
               <span>
@@ -565,7 +565,7 @@ export default function DashboardEnglishDetails({
                       <span className={`font-semibold ${c.text} flex items-center gap-1.5`}>
                         {vi ? l.titleVi : l.titleEn}
                         {exam?.passed && (
-                          <span className="flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 theme-light:text-amber-800">
+                          <span className="flex items-center gap-0.5 text-[0.6875rem] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 theme-light:text-amber-800">
                             <GraduationCap className="w-2.5 h-2.5" />
                             {exam.bestPct}%
                           </span>
@@ -609,23 +609,27 @@ export default function DashboardEnglishDetails({
                   <p className={`text-2xl font-bold leading-none ${bandText(wp.latest!)}`}>
                     {wp.latest}
                   </p>
-                  <p className="text-[11px] text-zinc-400 mt-1">{vi ? 'gần nhất' : 'latest'}</p>
+                  <p className="text-[0.6875rem] text-zinc-400 mt-1">
+                    {vi ? 'gần nhất' : 'latest'}
+                  </p>
                 </div>
                 <div className="text-center border-x border-zinc-800">
                   <p className="text-2xl font-bold leading-none text-amber-300 theme-light:text-amber-900 flex items-center justify-center gap-1">
                     <Trophy className="w-4 h-4" />
                     {wp.best}
                   </p>
-                  <p className="text-[11px] text-zinc-400 mt-1">{vi ? 'cao nhất' : 'best'}</p>
+                  <p className="text-[0.6875rem] text-zinc-400 mt-1">{vi ? 'cao nhất' : 'best'}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold leading-none text-zinc-200">{wp.avg}</p>
-                  <p className="text-[11px] text-zinc-400 mt-1">{vi ? 'trung bình' : 'average'}</p>
+                  <p className="text-[0.6875rem] text-zinc-400 mt-1">
+                    {vi ? 'trung bình' : 'average'}
+                  </p>
                 </div>
               </div>
 
               <div>
-                <p className="text-[11px] text-zinc-400 mb-2">
+                <p className="text-[0.6875rem] text-zinc-400 mb-2">
                   {vi ? `${wp.count} bài đã chấm` : `${wp.count} essays graded`}
                 </p>
                 <div className="flex items-end justify-between gap-1.5 h-24">
@@ -635,7 +639,7 @@ export default function DashboardEnglishDetails({
                       className="flex-1 flex flex-col items-center gap-1"
                       title={`${p.date}: ${p.overall}`}
                     >
-                      <span className="text-[11px] text-zinc-400">{p.overall}</span>
+                      <span className="text-[0.6875rem] text-zinc-400">{p.overall}</span>
                       <div className="w-full flex-1 flex items-end">
                         <div
                           className={`w-full rounded-md ${bandBar(p.overall)}`}

@@ -103,7 +103,7 @@ export function LessonList({
                   <p
                     lang="vi"
                     id={`lesson-card-${l.id}-title`}
-                    className={`font-semibold leading-snug ${compact ? 'text-sm' : 'text-[15px]'} ${c.text}`}
+                    className={`font-semibold leading-snug ${compact ? 'text-sm' : 'text-[0.9375rem]'} ${c.text}`}
                   >
                     {l.title}
                   </p>
@@ -118,7 +118,7 @@ export function LessonList({
                       đôi thành cặp) — cùng cách đếm với trang bài ("Lượt 20"), link `#luot-N`
                       và dòng mô tả "Mỗi bài 10–20 đoạn" (turnCount thật 10–20). */}
                   {!compact && (
-                    <p className="text-[11px] text-zinc-400 mt-1.5">
+                    <p className="text-[0.6875rem] text-zinc-400 mt-1.5">
                       {l.turnCount} {isA ? 'lượt thoại' : 'turns'}
                     </p>
                   )}

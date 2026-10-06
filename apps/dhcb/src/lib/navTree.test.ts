@@ -39,7 +39,7 @@ describe('navTree — Tiếng Anh là một môn, công cụ ở cấp 2', () =>
     // [Slice 03] đủ 12 công cụ theo thứ tự luồng học (spec 03 §④ AC-3.1).
     expect(ENGLISH_CHILDREN.map((c) => c.label)).toEqual([
       'Lộ trình CEFR',
-      'Bài học hôm nay',
+      'Bài hội thoại mẫu',
       'Trò chuyện',
       'Luyện nói',
       'Luyện viết',

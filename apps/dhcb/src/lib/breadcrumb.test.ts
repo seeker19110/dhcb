@@ -139,7 +139,7 @@ describe('buildCrumbs', () => {
     ['/luyen-viet', 'Luyện viết'],
     ['/luyen-nghe', 'Luyện nghe'],
     ['/tu-dien', 'Từ điển'],
-    ['/bai-hoc', 'Bài học hôm nay'],
+    ['/bai-hoc', 'Bài hội thoại mẫu'],
     ['/cau-thong-dung', 'Câu thông dụng'],
     ['/truyen-song-ngu', 'Truyện song ngữ'],
     ['/truyen-song-ngu/ft-01', 'Truyện song ngữ'],

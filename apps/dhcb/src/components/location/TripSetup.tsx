@@ -102,7 +102,7 @@ export default function TripSetup({ sessions, onOpen, onCreate, onJoin, busy = f
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
             placeholder="VD: Đi cà phê Bờ Hồ"
-            className="mb-4 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-[16px] text-zinc-100 placeholder:text-zinc-500"
+            className="mb-4 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-[1rem] text-zinc-100 placeholder:text-zinc-500"
           />
 
           <fieldset className="mb-4">
@@ -159,7 +159,7 @@ export default function TripSetup({ sessions, onOpen, onCreate, onJoin, busy = f
             maxLength={6}
             autoComplete="off"
             placeholder="K7M2QP"
-            className="w-full min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-center text-[20px] font-bold uppercase tracking-[0.3em] text-zinc-100 placeholder:font-normal placeholder:tracking-normal placeholder:text-zinc-500"
+            className="w-full min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-center text-[1.25rem] font-bold uppercase tracking-[0.3em] text-zinc-100 placeholder:font-normal placeholder:tracking-normal placeholder:text-zinc-500"
           />
           <button
             type="submit"

@@ -465,7 +465,7 @@ export default function Lessons() {
       <Layout
         backTo={duongDanMonTiengAnh()}
         back
-        title={isA ? 'Các bài hội thoại mẫu thông dụng' : 'Common sample dialogues'}
+        title={isA ? 'Bài hội thoại mẫu' : 'Sample dialogues'}
       />
 
       {/* <div> chứ không phải <main>: landmark <main> do PageShell render bên trong. */}
@@ -477,7 +477,7 @@ export default function Lessons() {
           className="!pt-4 !pb-2 sm:!pb-[calc(1.5rem+var(--bnav-h))]"
         >
           <h1 id={ID_DANH_SACH} tabIndex={-1} className="sr-only focus:outline-none">
-            {isA ? 'Các bài hội thoại mẫu thông dụng' : 'Common sample dialogues'}
+            {isA ? 'Bài hội thoại mẫu' : 'Sample dialogues'}
           </h1>
           {thongBaoBaiSai}
           {/* Gợi ý "Tiếp tục bài N" — bài đầu tiên chưa xem, ẩn khi đang tìm kiếm */}

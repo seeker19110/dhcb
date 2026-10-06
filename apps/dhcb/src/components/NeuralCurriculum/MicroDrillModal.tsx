@@ -123,7 +123,7 @@ export default function MicroDrillModal({
                   <h3 id={titleId} className="text-sm font-bold text-zinc-100">
                     Micro-Drill 2 Phút
                   </h3>
-                  <p className="text-[11px] text-zinc-400">
+                  <p className="text-[0.6875rem] text-zinc-400">
                     Câu {currentIndex + 1} / {drills.length}
                   </p>
                 </div>

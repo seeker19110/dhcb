@@ -55,7 +55,7 @@ export default function LangBadge({ language, className = '' }: Props) {
   const lang = LANGS[language]
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-950 border border-zinc-700 text-[11px] font-semibold text-zinc-300 ${className}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-950 border border-zinc-700 text-[0.6875rem] font-semibold text-zinc-300 ${className}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${lang.dot}`} aria-hidden="true" />
       <span>{lang.label}</span>

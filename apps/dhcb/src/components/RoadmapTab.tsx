@@ -152,7 +152,7 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
                   </h2>
                   {isCurrent && (
                     <span
-                      className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${a.soft} ${a.text}`}
+                      className={`flex items-center gap-1 text-[0.6875rem] font-semibold px-2 py-0.5 rounded-full ${a.soft} ${a.text}`}
                     >
                       <MapPin className="w-3 h-3" />
                       {isA ? 'Bạn đang ở đây' : 'You are here'}
@@ -160,7 +160,7 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
                   )}
                   {complete && (
                     <span
-                      className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${a.soft} ${a.text}`}
+                      className={`flex items-center gap-1 text-[0.6875rem] font-semibold px-2 py-0.5 rounded-full ${a.soft} ${a.text}`}
                     >
                       <CheckCircle2 className="w-3 h-3" />
                       {isA ? 'Hoàn thành' : 'Done'}
@@ -168,7 +168,7 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
                   )}
                   {/* Huy hiệu "đã thi qua cấp" — kèm điểm cao nhất */}
                   {exam?.passed && (
-                    <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 theme-light:text-amber-800">
+                    <span className="flex items-center gap-1 text-[0.6875rem] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 theme-light:text-amber-800">
                       <GraduationCap className="w-3 h-3" />
                       {isA ? `Đã qua · ${exam.bestPct}%` : `Passed · ${exam.bestPct}%`}
                     </span>

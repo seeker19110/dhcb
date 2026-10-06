@@ -1254,7 +1254,7 @@ export default function CefrLevelPage() {
                           }}
                           className="tap-44 flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm text-zinc-300 hover:bg-zinc-800/80 hover:text-white transition"
                         >
-                          <span className={`text-[11px] font-bold shrink-0 ${accent.text}`}>
+                          <span className={`text-[0.6875rem] font-bold shrink-0 ${accent.text}`}>
                             {ui + 1}
                           </span>
                           <span className="text-base shrink-0">{unit.emoji}</span>
@@ -1389,7 +1389,7 @@ function UnitSection({
   const stepLabel = (nameVi: string, nameEn: string) => {
     step += 1
     return (
-      <p className="text-[11px] font-semibold text-zinc-400 mb-1.5">
+      <p className="text-[0.6875rem] font-semibold text-zinc-400 mb-1.5">
         {step} · {isA ? nameVi : nameEn}
       </p>
     )
@@ -1398,7 +1398,7 @@ function UnitSection({
   return (
     <div id={`cefr-unit-${unit.id}`} className="glass rounded-2xl p-4 scroll-mt-20">
       <div className="flex items-center gap-2 mb-3">
-        <span className={`text-[11px] font-bold ${accent.text}`}>
+        <span className={`text-[0.6875rem] font-bold ${accent.text}`}>
           {isA ? 'Phần' : 'Part'} {index + 1}
         </span>
         <span className="text-xl">{unit.emoji}</span>

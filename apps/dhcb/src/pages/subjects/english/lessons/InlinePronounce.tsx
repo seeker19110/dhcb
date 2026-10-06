@@ -114,12 +114,12 @@ export function InlinePronounce({
             setOpen(false)
             reset()
           }}
-          className="tap-44 text-[11px] text-zinc-400 hover:text-zinc-300 transition px-1"
+          className="tap-44 text-[0.6875rem] text-zinc-400 hover:text-zinc-300 transition px-1"
         >
           {isA ? 'Đóng' : 'Close'}
         </button>
         {status === 'listening' && (
-          <span className="text-[11px] text-zinc-400 animate-pulse">
+          <span className="text-[0.6875rem] text-zinc-400 animate-pulse">
             {isA ? `Đọc: "${text}"` : `Say: "${text}"`}
           </span>
         )}
@@ -146,18 +146,18 @@ export function InlinePronounce({
               ))}
             </div>
           )}
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[0.6875rem] text-zinc-400">
             {isA ? 'Bạn đọc' : 'You said'}: "{heard}"
           </p>
           <button
             onClick={start}
-            className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-300 transition"
+            className="flex items-center gap-1 text-[0.6875rem] text-zinc-400 hover:text-zinc-300 transition"
           >
             <RotateCcw className="w-2.5 h-2.5" /> {isA ? 'Thử lại' : 'Retry'}
           </button>
         </div>
       )}
-      {err && <p className="text-[11px] text-rose-400 theme-light:text-rose-900">{err}</p>}
+      {err && <p className="text-[0.6875rem] text-rose-400 theme-light:text-rose-900">{err}</p>}
     </div>
   )
 }

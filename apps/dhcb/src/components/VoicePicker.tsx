@@ -246,7 +246,7 @@ export default function VoicePicker({ plan, isA }: Props) {
           </div>
         </div>
       ))}
-      <p className="text-[11px] text-zinc-400 mt-1">
+      <p className="text-[0.6875rem] text-zinc-400 mt-1">
         {isA
           ? '⚡ = giọng phát ngay lập tức. Giọng khác chậm hơn 1 chút ở lần phát đầu tiên.'
           : '⚡ = plays instantly. Other voices are slightly slower the first time.'}

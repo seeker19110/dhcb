@@ -33,7 +33,7 @@ export default function RealtimeTelemetryBar() {
     <div className="flex items-center justify-between py-1.5 px-2 bg-zinc-950/40 rounded-xl border border-zinc-800/60 mb-2">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-emerald-400" />
-        <span className="text-[11px] text-zinc-400 font-medium">
+        <span className="text-[0.6875rem] text-zinc-400 font-medium">
           {/* Vùng máy chủ là thông tin hạ tầng — không hiện cho người học */}
           <span className="text-zinc-200 font-semibold">Kết nối ổn định</span>
         </span>

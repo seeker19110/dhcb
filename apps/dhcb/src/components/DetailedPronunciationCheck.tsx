@@ -177,7 +177,7 @@ export default function DetailedPronunciationCheck({
           </button>
           <button
             onClick={cancel}
-            className="tap-44 text-[11px] text-zinc-400 hover:text-zinc-300 underline"
+            className="tap-44 text-[0.6875rem] text-zinc-400 hover:text-zinc-300 underline"
           >
             {uiVi ? 'Hủy' : 'Cancel'}
           </button>
@@ -196,7 +196,7 @@ export default function DetailedPronunciationCheck({
           <p className={`text-sm font-bold ${scoreColor(result.overall)}`}>
             {result.overall}% {uiVi ? '(tổng)' : '(overall)'}
           </p>
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[0.6875rem] text-zinc-400">
             {uiVi ? 'Chuẩn' : 'Accuracy'} {result.accuracy}% · {uiVi ? 'Trôi chảy' : 'Fluency'}{' '}
             {result.fluency}% · {uiVi ? 'Đầy đủ' : 'Completeness'} {result.completeness}%
           </p>
@@ -214,7 +214,7 @@ export default function DetailedPronunciationCheck({
           </div>
 
           {expandedWord != null && result.words[expandedWord] && (
-            <div className="flex flex-wrap justify-center gap-1 text-[11px]">
+            <div className="flex flex-wrap justify-center gap-1 text-[0.6875rem]">
               {result.words[expandedWord]!.phonemes.map((p, i) => (
                 <span key={i} className={`px-1.5 py-0.5 rounded border ${scoreChipCls(p.score)}`}>
                   {p.phoneme} {p.score}%

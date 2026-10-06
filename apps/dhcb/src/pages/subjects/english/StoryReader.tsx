@@ -419,7 +419,7 @@ export default function StoryReader() {
           {/* Nghĩa vụ ghi công bản quyền — bắt buộc hiển thị (mục 3, đặc tả trang Nghe).
             Dùng text-zinc-400 (không phải 500) để đạt AAA 7:1 — đây là nội dung
             đọc (mục 4.5 CLAUDE.md), không phải UI phụ. */}
-          <p className="text-[11px] text-zinc-400 leading-relaxed mb-4 border-l-2 border-zinc-800 pl-2">
+          <p className="text-[0.6875rem] text-zinc-400 leading-relaxed mb-4 border-l-2 border-zinc-800 pl-2">
             {T.sourceLabel}: {story.source.en}
             {story.source.enUrl && (
               <>
@@ -499,7 +499,7 @@ export default function StoryReader() {
                         text={isA ? ln.en : ln.vi}
                         lang={targetLang}
                         voice={storyVoice}
-                        textClass="text-[15px] leading-relaxed text-zinc-100"
+                        textClass="text-[0.9375rem] leading-relaxed text-zinc-100"
                         buttonClass="w-full px-2 py-1.5 rounded-lg hover:bg-zinc-900/60"
                         disabled={playing}
                         externalState={

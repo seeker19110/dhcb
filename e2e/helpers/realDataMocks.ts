@@ -130,8 +130,8 @@ const STEM_MANIFESTS: Record<StemDetailSubject, unknown> = {
   },
   physics: {
     id: 'physics',
-    label: 'Vật lý',
-    description: 'Cơ học, nhiệt học, điện từ học, quang học và vật lý lượng tử',
+    label: 'Vật lí',
+    description: 'Cơ học, nhiệt học, điện từ học, quang học và vật lí lượng tử',
     category: 'stem',
     taxonomyKind: 'grade_curriculum',
     standardLevels: ['grade_10', 'grade_11', 'grade_12', 'university'],

@@ -74,7 +74,7 @@ export default function Listening() {
               role="tab"
               aria-selected={tab === key}
               onClick={() => setTab(key)}
-              className={`tap-44 px-1.5 py-2 rounded-xl text-[11px] sm:text-xs font-medium transition text-center leading-tight ${
+              className={`tap-44 px-1.5 py-2 rounded-xl text-[0.6875rem] sm:text-xs font-medium transition text-center leading-tight ${
                 tab === key
                   ? 'bg-accent-500/20 text-accent-300 theme-light:text-accent-800 border border-accent-500/40'
                   : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-zinc-200'
@@ -381,7 +381,7 @@ function DialogueGroups({
           // `scroll-mt-20` chừa đúng chiều cao header sticky, nếu không cấp được nhảy tới sẽ
           // nằm khuất sau header.
           <div key={level} id={`cap-${level}`} className="scroll-mt-20">
-            <p className="text-[11px] font-semibold text-zinc-400 mb-2">{level}</p>
+            <p className="text-[0.6875rem] font-semibold text-zinc-400 mb-2">{level}</p>
             {/* [2026-09-05, đợt 3] Thêm nấc `lg:grid-cols-3`. Lưới cũ dừng ở `sm:` nên ở 1440px
               vẫn chỉ hai cột: đo được cả trang cao 37.266px — hơn bốn mươi màn hình cuộn. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -524,7 +524,7 @@ function SentenceListPlayer({
               <KaraokeText
                 text={isA ? s.en : s.vi}
                 lang={targetLang}
-                textClass="text-[15px] leading-relaxed text-zinc-100"
+                textClass="text-[0.9375rem] leading-relaxed text-zinc-100"
                 buttonClass="w-full px-2 py-1.5 rounded-lg hover:bg-zinc-900/60"
                 externalState={
                   playing ? { playing: isActive, wordIdx: isActive ? wordIdx : null } : undefined
@@ -675,11 +675,11 @@ function DialoguePlayer({
               key={i}
               className={`rounded-lg p-2 ${isActive ? 'bg-accent-500/10' : 'bg-zinc-900/50'}`}
             >
-              <p className="text-[11px] text-zinc-500 font-medium mb-0.5">{speakerName}</p>
+              <p className="text-[0.6875rem] text-zinc-500 font-medium mb-0.5">{speakerName}</p>
               <KaraokeText
                 text={isA ? ln.en : ln.vi}
                 lang={targetLang}
-                textClass="text-[15px] leading-relaxed text-zinc-100"
+                textClass="text-[0.9375rem] leading-relaxed text-zinc-100"
                 buttonClass="w-full"
                 externalState={
                   playing ? { playing: isActive, wordIdx: isActive ? wordIdx : null } : undefined

@@ -166,7 +166,7 @@ export default function Subjects() {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-accent-400 theme-light:text-accent-800 bg-accent-500/15 px-2 py-0.5 rounded-full border border-accent-500/25 whitespace-nowrap">
+                  <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-accent-400 theme-light:text-accent-800 bg-accent-500/15 px-2 py-0.5 rounded-full border border-accent-500/25 whitespace-nowrap">
                     Gia sư AI
                   </span>
                   <span className="text-xs text-zinc-400 font-medium">Học cùng gia sư AI</span>
@@ -277,7 +277,7 @@ export default function Subjects() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] px-2 py-0.5 rounded bg-accent-500/20 text-accent-300 theme-light:text-accent-800 font-bold">
+                <span className="text-[0.6875rem] px-2 py-0.5 rounded bg-accent-500/20 text-accent-300 theme-light:text-accent-800 font-bold">
                   MỚI
                 </span>
                 <span className="text-xs text-zinc-400">10 thí nghiệm tương tác</span>
@@ -367,7 +367,7 @@ export default function Subjects() {
                             {sub.label}
                           </h3>
                           <span
-                            className={`inline-block text-[11px] px-2 py-0.5 rounded-full font-semibold mt-0.5 ${
+                            className={`inline-block text-[0.6875rem] px-2 py-0.5 rounded-full font-semibold mt-0.5 ${
                               sub.category === 'language'
                                 ? 'bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 border border-emerald-500/20'
                                 : 'bg-blue-500/15 text-blue-300 theme-light:text-blue-800 border border-blue-500/20'
@@ -413,7 +413,7 @@ export default function Subjects() {
                         {sub.standardLevels.map((lvl) => (
                           <span
                             key={lvl}
-                            className="px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-300 border border-zinc-800 text-[11px] uppercase font-mono"
+                            className="px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-300 border border-zinc-800 text-[0.6875rem] uppercase font-mono"
                           >
                             {lvl.replace('grade_', 'Lớp ')}
                           </span>

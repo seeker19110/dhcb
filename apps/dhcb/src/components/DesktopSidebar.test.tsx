@@ -69,7 +69,7 @@ describe('DesktopSidebar — Tiếng Anh là một môn trong Góc học tập',
     expect(html).toContain('href="/goc-hoc-tap/english"')
     for (const label of [
       'Lộ trình CEFR',
-      'Bài học hôm nay',
+      'Bài hội thoại mẫu',
       'Trò chuyện',
       'Luyện nói',
       'Luyện viết',
@@ -113,7 +113,7 @@ describe('DesktopSidebar — Tiếng Anh là một môn trong Góc học tập',
 
   it('nhóm Góc học tập vẫn đủ 6 môn khi mở (đứng ở một môn thì nhóm tự mở)', () => {
     const html = render('/goc-hoc-tap/physics')
-    for (const label of ['Tiếng Anh', 'Toán học', 'Vật lý', 'Hóa học', 'Sinh học', 'Lập trình']) {
+    for (const label of ['Tiếng Anh', 'Toán học', 'Vật lí', 'Hóa học', 'Sinh học', 'Lập trình']) {
       expect(html, label).toContain(label)
     }
   })

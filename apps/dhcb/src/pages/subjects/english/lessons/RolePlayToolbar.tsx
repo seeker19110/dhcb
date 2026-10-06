@@ -77,7 +77,7 @@ export function RolePlayToolbar({
                     </button>
                   </div>
                   {!canRecord && (
-                    <p className="text-[11px] text-amber-400 theme-light:text-amber-900 mt-2">
+                    <p className="text-[0.6875rem] text-amber-400 theme-light:text-amber-900 mt-2">
                       {isA
                         ? 'Trình duyệt này không hỗ trợ ghi âm.'
                         : 'This browser does not support recording.'}

@@ -130,7 +130,7 @@ export default function About() {
           </p>
           <h3 className="text-base font-semibold text-content">
             {vi
-              ? 'Toán, Vật lý, Hóa học, Sinh học — xem trước'
+              ? 'Toán, Vật lí, Hóa học, Sinh học — xem trước'
               : 'Mathematics, Physics, Chemistry, Biology — preview'}
           </h3>
           <p className={prose}>

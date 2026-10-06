@@ -13,7 +13,7 @@ export default function QuizOptionKey({ index }: { index: number }) {
   return (
     <span
       aria-hidden="true"
-      className="hidden lg:flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line-subtle bg-surface-raised text-[11px] font-semibold text-content-muted"
+      className="hidden lg:flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-line-subtle bg-surface-raised text-[0.6875rem] font-semibold text-content-muted"
     >
       {index + 1}
     </span>

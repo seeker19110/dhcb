@@ -75,7 +75,7 @@ export interface NavChild {
 export const ENGLISH_CHILDREN: NavChild[] = [
   { label: 'Lộ trình CEFR', icon: RouteIcon, to: duongDanLoTrinh(), paths: [duongDanLoTrinh()] },
   {
-    label: 'Bài học hôm nay',
+    label: 'Bài hội thoại mẫu',
     icon: BookOpen,
     to: duongDanBaiHocAnh(),
     paths: [duongDanBaiHocAnh()],
@@ -153,7 +153,7 @@ export const SUBJECT_CHILDREN: NavChild[] = [
     children: stemGradeChildren('/goc-hoc-tap/mathematics'),
   },
   {
-    label: 'Vật lý',
+    label: 'Vật lí',
     icon: Atom,
     subjectId: 'physics',
     paths: ['/goc-hoc-tap/physics', '/physics'],

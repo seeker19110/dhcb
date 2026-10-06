@@ -42,11 +42,11 @@ const KEYWORD_ROUTES: { keywords: string[]; destination: Destination }[] = [
     },
   },
   {
-    keywords: ['vật lý', 'con lắc', 'dao động'],
+    keywords: ['vật lí', 'vật lý', 'con lắc', 'dao động'],
     destination: {
       route: '/goc-hoc-tap/physics',
-      label: 'Môn Vật lý',
-      reason: 'Câu hỏi có từ khoá về Vật lý.',
+      label: 'Môn Vật lí',
+      reason: 'Câu hỏi có từ khoá về Vật lí.',
       isCompanion: false,
     },
   },

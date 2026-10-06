@@ -207,7 +207,7 @@ export default function PathStageQuiz({
         className="tap-44 w-full text-left flex items-center justify-between gap-2"
       >
         <span className="text-xs font-semibold text-zinc-200">Bài kiểm sau chặng</span>
-        <span className="text-[11px] text-accent-400 theme-light:text-accent-800">
+        <span className="text-[0.6875rem] text-accent-400 theme-light:text-accent-800">
           {open ? 'Thu gọn' : 'Mở bài kiểm'}
         </span>
       </button>

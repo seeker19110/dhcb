@@ -609,7 +609,7 @@ export default function Companion() {
               <div className="grid grid-cols-2 gap-2 bg-zinc-950 p-3 rounded-xl border border-zinc-800/80">
                 <div>
                   <div className="text-zinc-400">Yêu cầu ID</div>
-                  <div className="font-mono text-[11px] text-zinc-300 mt-0.5 truncate">
+                  <div className="font-mono text-[0.6875rem] text-zinc-300 mt-0.5 truncate">
                     {activeContext.requestId}
                   </div>
                 </div>
@@ -640,12 +640,14 @@ export default function Companion() {
                           <span className="font-medium text-accent-300 theme-light:text-accent-800">
                             {item.sourceType}
                           </span>
-                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                          <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
                             {item.sensitivity}
                           </span>
                         </div>
-                        <p className="text-zinc-300 text-[11px] leading-relaxed">{item.content}</p>
-                        <div className="text-[11px] text-zinc-400 mt-1">
+                        <p className="text-zinc-300 text-[0.6875rem] leading-relaxed">
+                          {item.content}
+                        </p>
+                        <div className="text-[0.6875rem] text-zinc-400 mt-1">
                           Nguồn: {item.provenance}
                         </div>
                       </div>

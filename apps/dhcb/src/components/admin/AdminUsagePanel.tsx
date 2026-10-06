@@ -136,9 +136,9 @@ const pct = (n: number) => `${(n * 100).toFixed(1)}%`
 function Tile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="bg-zinc-800/60 rounded-xl px-3 py-2.5">
-      <p className="text-[11px] text-zinc-400">{label}</p>
+      <p className="text-[0.6875rem] text-zinc-400">{label}</p>
       <p className="text-lg font-semibold text-white tabular-nums leading-tight">{value}</p>
-      {hint && <p className="text-[11px] text-zinc-500 mt-0.5">{hint}</p>}
+      {hint && <p className="text-[0.6875rem] text-zinc-500 mt-0.5">{hint}</p>}
     </div>
   )
 }
@@ -160,7 +160,7 @@ function Card({
         <Icon className="w-4 h-4 text-accent-400 shrink-0" />
         <h3 className="text-sm font-semibold text-white">{title}</h3>
       </div>
-      {note && <p className="text-[11px] text-zinc-500 mb-3">{note}</p>}
+      {note && <p className="text-[0.6875rem] text-zinc-500 mb-3">{note}</p>}
       {children}
     </section>
   )

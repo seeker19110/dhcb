@@ -132,7 +132,7 @@ export default function ChatWindow({
 
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-white truncate">{room.peer.name}</h3>
-            <p className="text-[11px] text-zinc-400 flex items-center gap-1">
+            <p className="text-[0.6875rem] text-zinc-400 flex items-center gap-1">
               <span>{isOnline ? 'Đang hoạt động' : 'Ngoại tuyến'}</span>
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function ChatWindow({
 
         <div className="flex items-center gap-2">
           <span
-            className="inline-flex items-center gap-1 text-[11px] text-zinc-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full"
+            className="inline-flex items-center gap-1 text-[0.6875rem] text-zinc-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full"
             title="Đã bật bộ lọc ngôn từ văn minh tự động"
           >
             <ShieldCheck size={13} className="text-emerald-400 theme-light:text-emerald-800" />
@@ -166,7 +166,7 @@ export default function ChatWindow({
               <MessageSquare size={22} />
             </div>
             <p className="text-xs font-medium text-zinc-300 mb-1">Chưa có tin nhắn nào</p>
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[0.6875rem] text-zinc-400">
               Gửi lời chào đầu tiên tới {room.peer.name} để bắt đầu cuộc trò chuyện!
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function ChatWindow({
             <div key={group.date} className="w-full">
               {/* Header ngày */}
               <div className="flex items-center justify-center my-3">
-                <span className="text-[11px] font-semibold text-zinc-400 bg-zinc-800/80 border border-white/5 px-2.5 py-0.5 rounded-full shadow-xs">
+                <span className="text-[0.6875rem] font-semibold text-zinc-400 bg-zinc-800/80 border border-white/5 px-2.5 py-0.5 rounded-full shadow-xs">
                   {group.date}
                 </span>
               </div>
@@ -198,8 +198,8 @@ export default function ChatWindow({
         {isTyping && (
           <div className="flex items-center gap-2 my-2 text-xs text-zinc-400 animate-fade-in pl-1">
             <div className="flex items-center gap-1 bg-zinc-800/80 border border-white/5 px-3 py-1.5 rounded-2xl">
-              <span className="text-[11px] font-medium text-zinc-300">{room.peer.name}</span>
-              <span className="text-[11px] text-zinc-400">đang soạn tin</span>
+              <span className="text-[0.6875rem] font-medium text-zinc-300">{room.peer.name}</span>
+              <span className="text-[0.6875rem] text-zinc-400">đang soạn tin</span>
               <span className="inline-flex gap-0.5 ml-1">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 animate-bounce" />
                 <span className="w-1 h-1 rounded-full bg-zinc-400 animate-bounce [animation-delay:0.2s]" />

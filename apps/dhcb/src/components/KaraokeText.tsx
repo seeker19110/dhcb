@@ -3,7 +3,7 @@
 //
 // CHUẨN UI THỐNG NHẤT cho mọi nút loa đi kèm text:
 // - Icon loa luôn nằm BÊN TRÁI văn bản, căn giữa với DÒNG ĐẦU của văn bản.
-// - iconSize: 'sm' cho text ≥ 14px (text-sm / text-[15px]), 'xs' cho text-xs.
+// - iconSize: 'sm' cho text ≥ 14px (text-sm / text-[0.9375rem]), 'xs' cho text-xs.
 // - Với iconSize 'sm', văn bản bắt đầu ở 36px (icon w-7 + gap-2) — dòng phụ
 //   (bản dịch) đặt dưới phải dùng KARAOKE_INDENT để thẳng hàng với văn bản.
 

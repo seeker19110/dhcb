@@ -223,7 +223,9 @@ export default function ChatList({
                     >
                       {room.peer.name}
                     </span>
-                    {timeStr && <span className="text-[11px] text-zinc-400 ml-2">{timeStr}</span>}
+                    {timeStr && (
+                      <span className="text-[0.6875rem] text-zinc-400 ml-2">{timeStr}</span>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -238,7 +240,7 @@ export default function ChatList({
                     </p>
 
                     {room.unreadCount > 0 && (
-                      <span className="ml-2 flex-shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[11px] font-bold">
+                      <span className="ml-2 flex-shrink-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[0.6875rem] font-bold">
                         {room.unreadCount > 99 ? '99+' : room.unreadCount}
                       </span>
                     )}

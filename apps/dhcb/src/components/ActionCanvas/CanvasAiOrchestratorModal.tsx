@@ -95,7 +95,7 @@ export default function CanvasAiOrchestratorModal({
           </div>
 
           <div>
-            <span className="block text-[11px] font-semibold text-zinc-400 mb-1.5">
+            <span className="block text-[0.6875rem] font-semibold text-zinc-400 mb-1.5">
               Gợi ý mục tiêu phổ biến:
             </span>
             <div className="flex flex-col gap-1.5">

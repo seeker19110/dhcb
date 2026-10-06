@@ -161,7 +161,7 @@ export function GrammarDetail({
                 <KaraokeText
                   text={e.en}
                   lang="en-US"
-                  textClass={`font-medium text-[15px] leading-snug ${accent.text}`}
+                  textClass={`font-medium text-[0.9375rem] leading-snug ${accent.text}`}
                   buttonClass="w-full"
                 />
                 <p className={`text-sm text-zinc-400 mt-1 ${KARAOKE_INDENT}`}>{e.vi}</p>
@@ -455,7 +455,7 @@ export function VocabFlash({
                 onClick={() => {
                   if (testOutSel === null) setTestOutSel(opt)
                 }}
-                className={`w-full text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-colors ${cls}`}
+                className={`w-full text-left px-4 py-3.5 rounded-2xl border font-medium text-[0.9375rem] transition-colors ${cls}`}
               >
                 {opt}
               </button>
@@ -563,7 +563,7 @@ export function VocabFlash({
                   <KaraokeText
                     text={s.en}
                     lang="en-US"
-                    textClass="font-medium text-[15px] leading-snug text-teal-300 theme-light:text-teal-800"
+                    textClass="font-medium text-[0.9375rem] leading-snug text-teal-300 theme-light:text-teal-800"
                     buttonClass="w-full"
                   />
                   <p className={`text-sm text-zinc-400 mt-1 ${KARAOKE_INDENT}`}>{s.vi}</p>
@@ -1263,7 +1263,7 @@ export function DialogueView({
                         </button>
                       </div>
                       {!canRecord && (
-                        <p className="text-[11px] text-amber-400 theme-light:text-amber-900 mt-2">
+                        <p className="text-[0.6875rem] text-amber-400 theme-light:text-amber-900 mt-2">
                           {isA
                             ? 'Trình duyệt này không hỗ trợ ghi âm.'
                             : 'This browser does not support recording.'}
@@ -1305,7 +1305,7 @@ export function DialogueView({
             {(playing || rolePlay) && activeLine !== null && (
               <div className="flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse" />
-                <span className="text-[11px] text-zinc-400">
+                <span className="text-[0.6875rem] text-zinc-400">
                   {activeLine + 1}/{dialogue.lines.length}
                 </span>
               </div>
@@ -1368,7 +1368,9 @@ export function DialogueView({
         )}
 
         {rpError && (
-          <p className="text-[11px] text-red-400 theme-light:text-red-700 mt-1.5 px-1">{rpError}</p>
+          <p className="text-[0.6875rem] text-red-400 theme-light:text-red-700 mt-1.5 px-1">
+            {rpError}
+          </p>
         )}
 
         {/* Kết thúc đóng vai xong (chưa chấm) → mời chấm điểm hoặc nói lại */}
@@ -1429,7 +1431,7 @@ export function DialogueView({
                       chấm điểm thì flex-wrap đẩy bảng xuống dòng riêng. */}
                   <div className="flex flex-wrap items-center justify-between gap-x-2">
                     <span
-                      className={`text-[11px] font-semibold tracking-wide ${
+                      className={`text-[0.6875rem] font-semibold tracking-wide ${
                         isB ? accent.text : 'text-zinc-400'
                       }`}
                     >
@@ -1457,7 +1459,7 @@ export function DialogueView({
                   <KaraokeText
                     text={isA ? ln.en : ln.vi}
                     lang={isA ? 'en-US' : 'vi-VN'}
-                    textClass={`font-medium text-[15px] leading-snug ${isB ? accent.text : 'text-zinc-100'}`}
+                    textClass={`font-medium text-[0.9375rem] leading-snug ${isB ? accent.text : 'text-zinc-100'}`}
                     buttonClass="w-full"
                     voice={ln.who === 'A' ? voiceA : voiceB}
                     externalState={

@@ -24,7 +24,7 @@ export default function ActionCanvasBanner({ navigate }: ActionCanvasBannerProps
         <div>
           <h4 className="text-sm font-bold text-content flex flex-wrap items-center gap-x-2 gap-y-1">
             Không Gian Làm Việc Trực Quan (Action Canvas)
-            <span className="rounded-full px-2 py-0.5 text-[11px] font-bold uppercase bg-cyan-500/15 text-cyan-200 theme-light:text-cyan-900 border border-cyan-500/40">
+            <span className="rounded-full px-2 py-0.5 text-[0.6875rem] font-bold uppercase bg-cyan-500/15 text-cyan-200 theme-light:text-cyan-900 border border-cyan-500/40">
               V4.2 Hub
             </span>
           </h4>

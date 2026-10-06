@@ -34,10 +34,10 @@ export default function MetacognitiveJournalCard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 theme-light:text-teal-900 border border-teal-500/30 tracking-wide uppercase">
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 theme-light:text-teal-900 border border-teal-500/30 tracking-wide uppercase">
                   Platform V5 Peak Cognitive
                 </span>
-                <span className="text-[11px] font-semibold text-zinc-400">
+                <span className="text-[0.6875rem] font-semibold text-zinc-400">
                   Socratic Metacognition & Biases
                 </span>
               </div>

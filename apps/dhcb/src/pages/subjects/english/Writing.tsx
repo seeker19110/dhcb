@@ -488,7 +488,7 @@ export default function Writing() {
                   <span className="font-semibold text-emerald-400 theme-light:text-emerald-900">
                     → {issue.suggestion}
                   </span>
-                  <span className="text-[11px] text-zinc-400 ml-auto pl-2 truncate max-w-[200px]">
+                  <span className="text-[0.6875rem] text-zinc-400 ml-auto pl-2 truncate max-w-[200px]">
                     {issue.reason}
                   </span>
                 </div>

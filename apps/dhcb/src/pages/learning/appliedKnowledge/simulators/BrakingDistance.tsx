@@ -20,7 +20,7 @@ export function BrakingDistance() {
             {2}mv^2$)
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Vật lý động học lớp 10 & quy tắc an toàn giao thông đường bộ
+            Vật lí động học lớp 10 & quy tắc an toàn giao thông đường bộ
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-red-500/20 text-red-300 theme-light:text-red-800 font-mono font-bold">
@@ -116,7 +116,7 @@ export function BrakingDistance() {
             <div className="text-base font-bold text-amber-300 theme-light:text-amber-800">
               {brakingSimResult.initialKineticEnergyKj.toLocaleString()} kJ
             </div>
-            <div className="text-[11px] text-zinc-500">
+            <div className="text-[0.6875rem] text-zinc-500">
               Vận tốc tăng gấp đôi thì động năng và quãng đường phanh tăng gấp 4 lần ($v^2$)!
             </div>
           </div>

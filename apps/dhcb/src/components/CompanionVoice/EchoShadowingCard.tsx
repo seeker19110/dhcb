@@ -93,7 +93,7 @@ export default function EchoShadowingCard() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h3 className="text-base font-bold text-white tracking-wide">Nói đè theo mẫu</h3>
-              <span className="text-[11px] px-2 py-0.5 font-bold uppercase rounded-full bg-sky-500/20 text-sky-200 theme-light:text-sky-900 border border-sky-500/30">
+              <span className="text-[0.6875rem] px-2 py-0.5 font-bold uppercase rounded-full bg-sky-500/20 text-sky-200 theme-light:text-sky-900 border border-sky-500/30">
                 Phản xạ tức thì
               </span>
             </div>
@@ -167,7 +167,7 @@ export default function EchoShadowingCard() {
           <div className="p-4 rounded-xl bg-surface-raised border border-line-subtle space-y-2">
             <div className="flex items-center justify-between text-xs text-content-secondary">
               <span className="font-semibold text-content-secondary">{currentPassage.title}</span>
-              <span className="text-[11px] px-2 py-0.5 rounded bg-surface-raised text-content-secondary">
+              <span className="text-[0.6875rem] px-2 py-0.5 rounded bg-surface-raised text-content-secondary">
                 Nhịp {currentPassage.bpmPacing} BPM
               </span>
             </div>

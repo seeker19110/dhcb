@@ -78,7 +78,7 @@ export default function ProactiveNudgeBanner({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="text-xs sm:text-sm font-bold text-white">{nudge.title}</h4>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/10 uppercase">
+            <span className="text-[0.6875rem] font-semibold px-2 py-0.5 rounded-full bg-white/10 uppercase">
               {nudge.priority}
             </span>
           </div>

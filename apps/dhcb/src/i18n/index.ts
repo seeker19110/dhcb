@@ -57,7 +57,7 @@ export const t = {
       "1.000+ chủ thể (I'm, We are, Could you…), mỗi chủ thể nhiều câu thực tế, có phát âm.",
     dictTitleA: 'Từ điển',
     dictDescA: 'Tra 10.000 từ tiếng Anh thông dụng: loại từ, nghĩa tiếng Việt, ví dụ minh họa.',
-    lessonsTitleA: 'Các bài hội thoại mẫu',
+    lessonsTitleA: 'Bài hội thoại mẫu',
     lessonsDescA:
       'Hội thoại mẫu theo chủ đề đời sống hằng ngày, mỗi bài 10–20 đoạn song ngữ có phát âm.',
     tagDictCount: '10.000+ từ',
@@ -82,7 +82,7 @@ export const t = {
       '1.000+ chủ thể câu tiếng Anh/Việt thông dụng, mỗi chủ thể có nhiều ví dụ thực tế.',
     dictTitleB: 'Từ điển',
     dictDescB: 'Tra 10.000 từ tiếng Việt–Anh thông dụng với loại từ và ví dụ.',
-    lessonsTitleB: 'Các bài hội thoại mẫu',
+    lessonsTitleB: 'Bài hội thoại mẫu',
     lessonsDescB: 'Hội thoại mẫu tiếng Việt hàng ngày, 10–20 đoạn song ngữ mỗi bài.',
     listenDescB: 'Hội thoại mẫu tiếng Việt hàng ngày + kho câu thông dụng thực tế, có phát âm.',
 

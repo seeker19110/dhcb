@@ -88,7 +88,7 @@ describe('Onboarding — chọn môn trước', () => {
   it('bước đầu là "Bạn muốn học gì?" với đủ 6 môn; chưa chọn thì chưa có bước nhóm tuổi', () => {
     hien()
     expect(container.textContent).toContain('Bạn muốn học gì?')
-    for (const label of ['Tiếng Anh', 'Toán học', 'Vật lý', 'Hóa học', 'Sinh học', 'Lập trình']) {
+    for (const label of ['Tiếng Anh', 'Toán học', 'Vật lí', 'Hóa học', 'Sinh học', 'Lập trình']) {
       expect(container.textContent, label).toContain(label)
     }
     expect(container.textContent).not.toContain('Bạn thuộc nhóm tuổi nào?')

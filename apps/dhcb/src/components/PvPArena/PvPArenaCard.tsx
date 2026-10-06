@@ -25,10 +25,10 @@ export default function PvPArenaCard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 theme-light:text-amber-900 border border-amber-500/30 tracking-wide uppercase">
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 theme-light:text-amber-900 border border-amber-500/30 tracking-wide uppercase">
                   Đấu 1v1
                 </span>
-                <span className="text-[11px] font-semibold text-content-secondary">
+                <span className="text-[0.6875rem] font-semibold text-content-secondary">
                   Xếp hạng theo điểm
                 </span>
               </div>

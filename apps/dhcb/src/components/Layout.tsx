@@ -107,7 +107,7 @@ export default function Layout({
   const backLabel = ancestors[ancestors.length - 1]?.label ?? T.home
   // [2026-10-01, audit đồng nhất bố cục] Đích MẶC ĐỊNH của nút Back = đúng đốt cha đang làm
   // nhãn. Trước đây mặc định cứng là '/', nên 21 trang không truyền `onBack`/`backTo` có nút
-  // ghi "← Vật lý" / "← Tiến độ" / "← Hồ sơ" mà bấm lại về Trang chủ — nhãn nói một đằng, nút
+  // ghi "← Vật lí" / "← Tiến độ" / "← Hồ sơ" mà bấm lại về Trang chủ — nhãn nói một đằng, nút
   // làm một nẻo. Trang có cha là Trang chủ (Hồ sơ, Tiến độ…) vẫn về '/' như cũ.
   const backDest = backTo ?? defaultBackDestination(ancestors)
 
@@ -183,7 +183,7 @@ export default function Layout({
       <span className="text-sm font-bold text-orange-400 theme-light:text-orange-900 leading-none">
         {streak}
       </span>
-      <span className="text-[11px] font-medium text-orange-400 theme-light:text-orange-800 leading-none">
+      <span className="text-[0.6875rem] font-medium text-orange-400 theme-light:text-orange-800 leading-none">
         {T.streakDays}
       </span>
     </>
@@ -271,7 +271,9 @@ export default function Layout({
             dài nay thành 2 dòng, header cao thêm một chút nhưng không mất nội dung. */}
         <div className="flex-1 min-w-0">
           {title && (
-            <p className="font-semibold text-[15px] leading-snug break-words text-white">{title}</p>
+            <p className="font-semibold text-[0.9375rem] leading-snug break-words text-white">
+              {title}
+            </p>
           )}
           {subtitle && <p className="text-xs text-zinc-400 break-words">{subtitle}</p>}
         </div>

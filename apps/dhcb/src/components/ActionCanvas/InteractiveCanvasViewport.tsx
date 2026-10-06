@@ -236,14 +236,14 @@ export default function InteractiveCanvasViewport({
               <div className="flex items-center justify-between gap-1 mb-1.5">
                 <span
                   className={
-                    'rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ' +
+                    'rounded px-1.5 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wider ' +
                     theme.text +
                     ' bg-zinc-950/60 border border-zinc-800'
                   }
                 >
                   {CANVAS_DOMAIN_LABELS[node.domain] ?? CANVAS_DOMAIN_LABELS.general}
                 </span>
-                <div className="flex items-center gap-1 text-[11px] text-zinc-400">
+                <div className="flex items-center gap-1 text-[0.6875rem] text-zinc-400">
                   {node.assignedTo === 'companion_ai' ? (
                     <span className="flex items-center gap-0.5 text-cyan-300 theme-light:text-cyan-900 font-medium">
                       <Bot className="w-3 h-3" /> {CANVAS_ASSIGNEE_LABELS.companion_ai}
@@ -271,11 +271,11 @@ export default function InteractiveCanvasViewport({
                 {node.title}
               </h4>
               {node.content && (
-                <p className="text-[11px] text-zinc-300/80 line-clamp-2 mb-2 leading-relaxed">
+                <p className="text-[0.6875rem] text-zinc-300/80 line-clamp-2 mb-2 leading-relaxed">
                   {node.content}
                 </p>
               )}
-              <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-zinc-800/60">
+              <div className="flex items-center justify-between text-[0.6875rem] text-zinc-400 pt-1 border-t border-zinc-800/60">
                 <span className="flex items-center gap-1">
                   {node.status === 'completed' ? (
                     <CheckCircle2 className="w-3 h-3 text-emerald-400 theme-light:text-emerald-900" />

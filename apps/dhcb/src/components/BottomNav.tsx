@@ -122,7 +122,7 @@ export default function BottomNav({ companionHasNote = false }: Props) {
             )}
           </div>
           <span
-            className={`truncate max-w-[5.25rem] tracking-tight mt-0.5 text-[11px] font-bold ${
+            className={`truncate max-w-[5.25rem] tracking-tight mt-0.5 text-[0.6875rem] font-bold ${
               isCompanion
                 ? 'text-accent-300 theme-light:text-accent-800'
                 : 'text-zinc-300 group-hover:text-white'

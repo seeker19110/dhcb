@@ -301,7 +301,7 @@ export default function CommonPhrases() {
                     <KaraokeText
                       text={sent.en}
                       lang="en-US"
-                      textClass={`font-medium text-[15px] leading-snug ${c.text}`}
+                      textClass={`font-medium text-[0.9375rem] leading-snug ${c.text}`}
                       buttonClass="w-full px-3 py-2.5 hover:bg-accent-500/5 active:bg-accent-500/10"
                     />
                     <KaraokeText
@@ -422,7 +422,7 @@ export default function CommonPhrases() {
                   </div>
                   <p className={`font-bold text-lg ${c.text} leading-tight`}>{subj.starter}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[11px] text-zinc-400">
+                    <span className="text-[0.6875rem] text-zinc-400">
                       {subj.count} {T.phrasesSentences}
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-content-muted group-hover:text-zinc-400 transition" />

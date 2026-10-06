@@ -320,7 +320,7 @@ export function QuizTab({
               aria-pressed={selected === opt}
               aria-disabled={selected !== null}
               onClick={() => pick(opt)}
-              className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-colors ${cls}`}
+              className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[0.9375rem] transition-colors ${cls}`}
             >
               <QuizOptionKey index={optIdx} />
               <span className="min-w-0 flex-1">{opt}</span>

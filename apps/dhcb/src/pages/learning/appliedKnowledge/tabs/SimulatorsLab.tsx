@@ -72,7 +72,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <TrendingUp className="w-5 h-5 text-blue-400 theme-light:text-blue-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 theme-light:text-blue-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 theme-light:text-blue-800 font-mono">
               Toán
             </span>
           </div>
@@ -89,7 +89,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Calculator className="w-5 h-5 text-emerald-400 theme-light:text-emerald-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 font-mono">
               Tài chính
             </span>
           </div>
@@ -106,7 +106,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Building2 className="w-5 h-5 text-amber-400 theme-light:text-amber-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 theme-light:text-amber-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 theme-light:text-amber-800 font-mono">
               Vay vốn
             </span>
           </div>
@@ -123,8 +123,8 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Zap className="w-5 h-5 text-yellow-400 theme-light:text-yellow-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 theme-light:text-yellow-800 font-mono">
-              Vật lý
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 theme-light:text-yellow-800 font-mono">
+              Vật lí
             </span>
           </div>
           <div className="text-xs font-bold mt-2">4. Tiền điện EVN</div>
@@ -140,7 +140,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Radio className="w-5 h-5 text-cyan-400 theme-light:text-cyan-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 theme-light:text-cyan-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 theme-light:text-cyan-800 font-mono">
               Vũ trụ
             </span>
           </div>
@@ -157,7 +157,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Car className="w-5 h-5 text-red-400 theme-light:text-red-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 theme-light:text-red-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 theme-light:text-red-800 font-mono">
               An toàn
             </span>
           </div>
@@ -174,7 +174,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <FlaskConical className="w-5 h-5 text-purple-400 theme-light:text-purple-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 theme-light:text-purple-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 theme-light:text-purple-800 font-mono">
               Hóa học
             </span>
           </div>
@@ -191,7 +191,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Activity className="w-5 h-5 text-indigo-400 theme-light:text-indigo-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800 font-mono">
               Axit-Bazơ
             </span>
           </div>
@@ -208,7 +208,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <HeartPulse className="w-5 h-5 text-rose-400 theme-light:text-rose-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 theme-light:text-rose-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 theme-light:text-rose-800 font-mono">
               Dinh dưỡng
             </span>
           </div>
@@ -225,7 +225,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
         >
           <div className="flex items-center justify-between">
             <Dna className="w-5 h-5 text-teal-400 theme-light:text-teal-800" />
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 theme-light:text-teal-800 font-mono">
+            <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-300 theme-light:text-teal-800 font-mono">
               Di truyền
             </span>
           </div>

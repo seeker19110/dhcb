@@ -75,7 +75,7 @@ export function StreakCelebrationContent({ uid, isA }: StreakCelebrationContentP
           return (
             <div key={d.date} className="flex flex-col items-center gap-1">
               <span
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-[0.6875rem] font-bold ${
                   d.active
                     ? 'bg-orange-500 text-black'
                     : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
@@ -84,7 +84,7 @@ export function StreakCelebrationContent({ uid, isA }: StreakCelebrationContentP
                 {d.active ? '✓' : ''}
               </span>
               <span
-                className={`text-[11px] ${isToday ? 'text-orange-400 theme-light:text-orange-900 font-bold' : 'text-zinc-500'}`}
+                className={`text-[0.6875rem] ${isToday ? 'text-orange-400 theme-light:text-orange-900 font-bold' : 'text-zinc-500'}`}
               >
                 {dowLabels[d.dow]}
               </span>

@@ -1,5 +1,5 @@
 // apps/dhcb/src/data/stemCurriculum.ts — Kho dữ liệu học tập chuẩn hóa cho các môn STEM (V2-12)
-// Bám sát khung mạch kiến thức GDPT 2018 (Toán, Vật lý, Hóa học, Sinh học)
+// Bám sát khung mạch kiến thức GDPT 2018 (Toán, Vật lí, Hóa học, Sinh học)
 // Bao gồm đầy đủ 4 khối lớp: Lớp 10, Lớp 11, Lớp 12, Đại học
 
 export interface StemChapter {
@@ -685,7 +685,7 @@ export const STEM_CURRICULUM: Record<string, StemGradeCurriculum[]> = {
       chapters: [
         {
           id: 'p_uni_c1',
-          title: 'Vật lý đại cương & Thuyết tương đối',
+          title: 'Vật lí đại cương & Thuyết tương đối',
           description:
             'Cơ học giải tích Lagrangian, điện từ học Maxwell và hiệu ứng Doppler tương đối tính.',
           keyFormulas: [

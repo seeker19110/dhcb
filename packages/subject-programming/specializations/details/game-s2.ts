@@ -104,7 +104,7 @@ export const GAME_S2_DETAIL: SpecStageDetail = {
   rubric: [
     {
       id: 'game-s2-r1',
-      text: 'Vật lý tất định: cùng hạt giống và cùng đầu vào cho ra cùng kết quả.',
+      text: 'Vật lí tất định: cùng hạt giống và cùng đầu vào cho ra cùng kết quả.',
       howToProve: 'Ghi và phát lại ba ván, so khớp mã băm trạng thái ở khung hình cuối.',
     },
     {

@@ -56,7 +56,7 @@ export default function AvatarEmbodimentSelector({
             />
             <span>{mode.label}</span>
             <span
-              className={`rounded px-1.5 py-0.2 text-[11px] font-semibold uppercase ${
+              className={`rounded px-1.5 py-0.2 text-[0.6875rem] font-semibold uppercase ${
                 isActive
                   ? 'bg-cyan-500/30 text-cyan-200 theme-light:text-cyan-800'
                   : 'bg-zinc-800 text-zinc-500'
