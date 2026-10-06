@@ -1,6 +1,6 @@
 # 0498 — Đợt U9b audit UI/UX: hành trình người mới nói cùng một điều (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** _(điền khi tạo PR)_ · **Loại:** `fix(ux)`.
+- **Ngày:** 2026-10-05 · **PR:** #1245 · **Loại:** `fix(ux)`.
 - **Phạm vi:** đợt U9b trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md`: **M19** (mục 5),
   **mục 8** (hành trình người mới) và **minor 12** (mục 6). Phần còn lại của U9 (M17, M18,
   M20–M22 — bố cục) KHÔNG thuộc đợt này.
