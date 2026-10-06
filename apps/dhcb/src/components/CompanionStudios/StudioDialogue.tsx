@@ -549,7 +549,10 @@ export default function StudioDialogue({
                     handleSend()
                   }
                 }}
-                placeholder="Nhắn tin cho Bạn Đồng Hành AI... (Enter để gửi)"
+                // [audit 2026-09-30 minor 14] Bỏ gợi ý Enter dài trên mobile.
+                placeholder="Nhắn tin cho Bạn Đồng Hành AI…"
+                aria-label="Nhắn tin cho Bạn Đồng Hành AI"
+                enterKeyHint="send"
                 rows={1}
                 className="tap-44-y flex-1 bg-transparent px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-400 resize-none outline-none max-h-32"
               />
