@@ -10,7 +10,7 @@ import { buildCrumbs, defaultBackDestination, type Crumb } from '../lib/breadcru
 import { useIsDesktopViewport } from '../lib/useIsDesktopViewport'
 
 /**
- * Đọc `document.documentElement.dataset.sidebar` ('expanded' | 'collapsed' | 'off') mà
+ * Đọc `document.documentElement.dataset.sidebar` ('expanded' | 'collapsed' | 'off' | 'none') mà
  * `DesktopSidebar.tsx` tự ghi khi mở/thu gọn — theo dõi bằng MutationObserver vì đây là state
  * của MỘT component khác, không có qua props/context (cùng cơ chế đã dùng cho `--sidebar-w`).
  * Layout dùng giá trị này để ẩn nút "Trang chủ" ở header khi sidebar đang MỞ RỘNG (hai lối về
@@ -89,7 +89,6 @@ export default function Layout({
   // chuyển Studio (dropdown "Studio" ở header) đã GỠ HẲN khỏi Layout — ô chọn miền trùng lặp
   // với sidebar/trang Hồ sơ, không còn phục vụ mục đích riêng nào ở đây.
   const isDesktop = useIsDesktopViewport()
-  const isHome = location.pathname === '/'
   // Sidebar đang MỞ RỘNG thì ẩn nút "Trang chủ" ở header (trùng với nút "Trang chủ" đứng đầu
   // sidebar) — thu gọn ('collapsed') hoặc không có sidebar ('off'/trang đăng nhập) thì hiện lại.
   const sidebarState = useSidebarDataset()
@@ -254,7 +253,7 @@ export default function Layout({
               <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-accent-500 via-accent-400 to-indigo-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                 <BookOpen className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="font-bold text-sm text-white hidden sm:inline tracking-tight">
+              <span lang="vi" className="font-bold text-sm text-white hidden sm:inline tracking-tight">
                 {T.appName}
               </span>
             </Link>
@@ -306,7 +305,7 @@ export default function Layout({
             thường là lối AI DUY NHẤT ở đó. */}
         {/* `transition` (màu + transform), KHÔNG `transition-all`: hover đổi nền/viền, active đổi
             scale — `transition-all` còn làm viền lấy nét hiện dần 200ms (audit M17, changelog 0500). */}
-        {!(isHome && !isDesktop) && (
+        {(isDesktop || focus) && (
           <button
             onClick={() => nav('/ban-dong-hanh')}
             // [U4 · WCAG 3.1.2] nhãn viết cứng tiếng Việt — đúng giọng khi trang là tiếng Anh.
