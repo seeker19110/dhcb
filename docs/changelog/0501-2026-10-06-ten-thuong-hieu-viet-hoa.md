@@ -35,4 +35,12 @@
 
 ## Bằng chứng
 
-(điền sau khi chạy cổng)
+- Cổng trên cây cuối (sau `rm -rf packages/*/dist dist dist-server`): typecheck ✅ · lint 0 cảnh báo ✅
+  · `prettier --check .` ✅ · `test:coverage` ✅ 801 file / 18637 test, coverage 95,10 / 90,98 / 95,69 /
+  95,76 · build ✅ · size-limit JS 153,78/160 kB, CSS 24,1/26 kB.
+- E2E: `landmark-title`, `hub-reflow`, `a11y-exam-plan`, `smoke`, `lang-of-parts` — 47/47 xanh.
+- Tầng 8b, ảnh trước (c333356) / sau, 1440px + 390px, đã tự xem:
+  - Hub 1440: logo "Đồng hành cùng bạn" → "Đồng Hành Cùng Bạn", rộng thêm ~6px, thanh nav không vỡ
+    thêm (mục "Các trụ"/"Cách hoạt động" vốn đã 2 dòng từ trước). Hub 390: chỉ hiện biểu tượng — không đổi.
+  - `/welcome` 1440 + 390: dòng "một môn của nền tảng Đồng Hành Cùng Bạn" xuống dòng như cũ, không
+    tràn; tiêu đề tab đo bằng `document.title` đổi đúng sang viết hoa.
