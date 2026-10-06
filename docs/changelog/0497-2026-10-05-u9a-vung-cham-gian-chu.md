@@ -1,6 +1,6 @@
 # 0497 — Đợt U9a audit UI/UX: vùng chạm 44px trên mobile + giãn chữ WCAG 1.4.12 không cắt chữ (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** (điền khi tạo PR) · **Loại:** `fix(a11y)`.
+- **Ngày:** 2026-10-05 · **PR:** #1248 · **Loại:** `fix(a11y)`.
 - **Phạm vi:** đợt U9a trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` — **M20** (vùng chạm
   < 44px trên mobile, luật dự án CLAUDE.md mục 4.7 / WCAG 2.5.5 AAA) và **M21** (giãn chữ WCAG
   1.4.12 làm cắt chữ). Chỉ lo KÍCH THƯỚC vùng chạm và CẮT CHỮ — không đổi biến thể nút hay bề rộng
