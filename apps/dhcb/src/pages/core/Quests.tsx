@@ -14,7 +14,7 @@ export default function Quests() {
   const isA = lang === 'vi'
   const { user } = useAuth()
 
-  usePageTitle('Nhiệm vụ | Đồng hành cùng bạn')
+  usePageTitle('Nhiệm vụ | Đồng Hành Cùng Bạn')
 
   return (
     <div className="min-h-dvh bg-zinc-950">

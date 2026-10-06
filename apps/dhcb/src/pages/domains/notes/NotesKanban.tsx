@@ -41,7 +41,7 @@ const PRIORITY_COLORS: Record<string, { label: string; cls: string }> = {
 }
 
 export default function NotesKanban() {
-  usePageTitle('Bảng Kanban ghi chú | Đồng hành cùng bạn')
+  usePageTitle('Bảng Kanban ghi chú | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const toast = useToast()
   const [tasks, setTasks] = useState<WorkTask[]>([])

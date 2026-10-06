@@ -87,7 +87,7 @@ type CatalogState =
 const CHIP_DANG_CHON = 'bg-accent-500 text-[#09090b] shadow-sm'
 
 export default function Subjects() {
-  usePageTitle('Môn học | Đồng hành cùng bạn')
+  usePageTitle('Môn học | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const [catalog, setCatalog] = useState<CatalogState>({ status: 'loading' })
   const [filter, setFilter] = useState<'all' | 'language' | 'stem'>('all')

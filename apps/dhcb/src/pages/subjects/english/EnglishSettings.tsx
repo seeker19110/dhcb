@@ -70,7 +70,7 @@ const GOAL_LABEL: Record<WeeklyGoal, { vi: string; en: string }> = {
 }
 
 export default function EnglishSettings() {
-  usePageTitle('Cài đặt | Môn tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Cài đặt | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
   const { T, lang, setLang } = useLang()

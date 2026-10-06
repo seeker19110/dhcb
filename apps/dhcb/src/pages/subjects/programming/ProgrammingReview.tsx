@@ -26,7 +26,7 @@ import { PROGRAMMING_PREFIX, duongDanBaiHoc } from '../../../lib/programmingRout
 import FlashcardReview, { type FlashcardItem } from '../../../components/FlashcardReview'
 
 export default function ProgrammingReview() {
-  usePageTitle('Ôn tập | Môn Lập trình · Đồng hành cùng bạn')
+  usePageTitle('Ôn tập | Môn Lập trình · Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
 

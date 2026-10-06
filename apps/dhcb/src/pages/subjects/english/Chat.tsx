@@ -475,7 +475,7 @@ function currentTimeMs(): number {
 
 // ── Main Chat page ────────────────────────────────────────────────────────────
 export default function Chat() {
-  usePageTitle('Trò chuyện với gia sư AI | Môn tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Trò chuyện với gia sư AI | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const user = useAuth().user! // RequireAuth đã đảm bảo có user trước khi vào trang
   const toast = useToast()
   useCloudSync(user.id) // kéo lịch sử + lượt dùng từ Supabase khi mở trang

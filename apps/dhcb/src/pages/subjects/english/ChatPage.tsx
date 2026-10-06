@@ -8,7 +8,7 @@ import { useChat } from '../../../lib/useChat'
 import { useToast } from '@core/ToastProvider'
 
 export default function ChatPage() {
-  usePageTitle('Tin nhắn | Đồng hành cùng bạn')
+  usePageTitle('Tin nhắn | Đồng Hành Cùng Bạn')
   const [searchParams] = useSearchParams()
   const initialRoomId = searchParams.get('roomId')
   const initialPeerId = searchParams.get('peerId')

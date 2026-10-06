@@ -19,7 +19,7 @@ import { P1_SAMPLES } from '@dhcb/subject-programming/samplesP1'
 type RunState = 'idle' | 'loading-env' | 'running' | 'done'
 
 export default function ProgrammingPlayground() {
-  usePageTitle('Chạy thử code | Môn Lập trình · Đồng hành cùng bạn')
+  usePageTitle('Chạy thử code | Môn Lập trình · Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const firstSample = P1_SAMPLES[0]!
   const [sampleId, setSampleId] = useState(firstSample.id)
