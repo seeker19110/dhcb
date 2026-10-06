@@ -174,13 +174,15 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Engine Git theo đặc tả #1240 đã qua review và full gate tại máy, chờ CI/merge; tiếp theo là nội dung/hoạt họa `p3-u11-l1`. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
 
-- **[2026-10-06 — cập nhật hiện trạng] Không còn PR mở; `main` ở #1256.** Đã merge sau mục dưới:
+- **[2026-10-06 — cập nhật hiện trạng] `main` ở #1257.** Đã merge sau mục dưới:
   U5 #1244 · U9a #1248 · U9b #1245 · minor 1–14 #1246 · Git ignore + chấm trạng thái #1243 ·
   U7 #1255 · đổi mật khẩu/Google #1252 · học hỏi + VIP không giới hạn lượt AI #1256 (changelog
   `0501`–`0503`). Nghĩa là **U1–U9 đều đã có source trên `main`** (danh sách "6/9" bên dưới là
-  mốc 2026-10-05, giữ làm lịch sử). Đang giao subagent (chưa merge): đổi `text-[Npx]` → rem và
-  hạ nợ `FontSizeRem.design.test.ts` về 0 · "Học tiếp" cho 4 môn STEM + thống nhất "Vật lí" ·
-  bài `p3-u11-l1` + hoạt họa Git (PR B của goal AI Engineering).
+  mốc 2026-10-05, giữ làm lịch sử). Đã merge #1257: đổi `text-[Npx]` → rem (nợ `FontSizeRem.design.test.ts` = 0) và "Học tiếp" cho 4 môn
+  STEM + thống nhất "Vật lí". PR kế (changelog `0506`–`0508`): B1 bài `p3-u11-l1` (nội dung + rubric trạng
+  Git, chưa hoạt họa) · storyboard NHÁP hoạt họa Git — **B2 chờ chuyên gia chốt 9 điểm** trong
+  `docs/research/2026-10-06-ai-engineering-git-ignore-storyboard.md` · test render khối "Học tiếp".
+  E2E `e2e/gitignore-engine.spec.ts` viết lại theo rubric mới, chỉ CI mới chạy được.
   Còn chờ chủ dự án: việc tay mục A bên dưới (VAPID/nginx/firewall, `ALLOWED_ORIGINS`, câu Free
   cũ trong `plan_marketing_bullets`, `cwv:prod`), quyết định kiến trúc gói chấm #1239, chuyên gia
   rà S10b/S12.
