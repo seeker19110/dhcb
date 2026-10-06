@@ -130,7 +130,7 @@ export default function NotesKanban() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm công việc..."
-              className="bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none w-full"
+              className="tap-44-y bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none w-full"
             />
           </div>
 
@@ -140,7 +140,7 @@ export default function NotesKanban() {
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               aria-label="Lọc theo dự án"
-              className="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
+              className="tap-44-y bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
             >
               <option value="all">Tất cả dự án ({tasks.length})</option>
               {projects.map((p) => (

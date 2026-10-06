@@ -394,10 +394,10 @@ export default function Practice() {
                 <Headphones className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors break-words">
                   {isUiVi ? 'Nghe đoán từ vựng' : 'Listen and guess vocabulary'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi ? 'Nghe phát âm, chọn nghĩa đúng' : 'Listen and choose the meaning'}
                 </p>
               </div>
@@ -414,10 +414,10 @@ export default function Practice() {
                 <Shuffle className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors break-words">
                   {isUiVi ? 'Sắp xếp câu hoàn chỉnh' : 'Put the sentence in order'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Ghép từ ngữ thành câu chuẩn ngữ pháp'
                     : 'Arrange words into a sentence'}
@@ -436,10 +436,10 @@ export default function Practice() {
                 <Keyboard className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors break-words">
                   {isUiVi ? 'Nghe & viết chính tả' : 'Listen and type'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Nghe từng câu và gõ lại chính xác'
                     : 'Listen to each sentence and type it'}
@@ -458,10 +458,10 @@ export default function Practice() {
                 <ListChecks className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors break-words">
                   {isUiVi ? 'Điền từ ngữ cảnh' : 'Fill in the blank'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Khôi phục câu ví dụ đã học'
                     : 'Restore the example sentence you learned'}
@@ -480,10 +480,10 @@ export default function Practice() {
                 <Mic className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors break-words">
                   {isUiVi ? 'Chấm phát âm từ vựng' : 'Word pronunciation'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi ? 'Đọc to từ vựng, AI chấm điểm chuẩn' : 'Read words aloud for feedback'}
                 </p>
               </div>
@@ -500,10 +500,10 @@ export default function Practice() {
                 <Volume2 className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors break-words">
                   {isUiVi ? 'Đọc lại câu ví dụ' : 'Read example sentences'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Rèn ngữ điệu và nối âm tự nhiên'
                     : 'Practice intonation and connected speech'}
@@ -522,10 +522,10 @@ export default function Practice() {
                 <Sparkles className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-accent-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-accent-300 transition-colors break-words">
                   {isUiVi ? 'Nói đè theo mẫu' : 'Shadow the model'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi ? 'Nói đồng thời theo nhịp audio phát' : 'Speak along with the audio'}
                 </p>
               </div>
@@ -542,10 +542,10 @@ export default function Practice() {
                 <MessageCircle className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors truncate">
+                <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors break-words">
                   {isUiVi ? 'Phỏng vấn ngược AI' : 'Reverse interview'}
                 </p>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isUiVi
                     ? 'AI đặt câu hỏi, bạn trả lời bằng giọng nói'
                     : 'Answer AI questions by voice'}
@@ -593,7 +593,7 @@ export default function Practice() {
             <h2 className={TIEU_DE_MUC}>3. Luyện tập 5 môn học & giải đề từng bước</h2>
             <button
               onClick={() => goToSubjects(nav)}
-              className="text-[11px] text-zinc-400 hover:text-blue-300 transition flex items-center gap-1 font-medium"
+              className="tap-44-y text-[11px] text-zinc-400 hover:text-blue-300 transition flex items-center gap-1 font-medium"
             >
               <span>Xem tất cả môn</span>
               <ChevronRight className="w-3 h-3" />
@@ -617,7 +617,7 @@ export default function Practice() {
                       Giải từng bước
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
                     Khảo sát hàm số, đạo hàm, tích phân, hình học Oxyz & giải đề thi.
                   </p>
                 </div>
@@ -644,7 +644,7 @@ export default function Practice() {
                       Thí nghiệm mô phỏng
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
                     Dao động cơ, sóng âm, điện xoay chiều kèm phân tích công thức.
                   </p>
                 </div>
@@ -671,7 +671,7 @@ export default function Practice() {
                       Cân bằng phản ứng
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
                     Cân bằng oxi hóa khử, este - lipit, amino axit & bài toán dung dịch.
                   </p>
                 </div>
@@ -698,7 +698,7 @@ export default function Practice() {
                       Di Truyền
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
                     Di truyền Mendel, phiên mã ADN, đột biến gen và phả hệ.
                   </p>
                 </div>
@@ -725,7 +725,7 @@ export default function Practice() {
                       A1 - C2
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
                     Lộ trình CEFR, từ điển, truyện song ngữ, mẫu câu & thử thách 1 phút.
                   </p>
                 </div>
@@ -752,7 +752,7 @@ export default function Practice() {
                       Phòng thí nghiệm
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
                     Mô phỏng điện EVN, con lắc lò xo, tên lửa nước, thấu kính quang học.
                   </p>
                 </div>

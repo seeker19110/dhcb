@@ -264,9 +264,14 @@ export default function Layout({
         {/* Title/subtitle — như cũ, hiện ở MỌI kích thước. Không còn Breadcrumb riêng: nhãn
             nút Back ở trên đã lấy đúng đốt cha (xem `backLabel`), vẽ thêm breadcrumb là lặp
             chữ với chính nhãn đó (bài học 2026-09-17). */}
+        {/* [U9a, WCAG 1.4.12] Tiêu đề XUỐNG DÒNG thay vì `truncate`: khi người dùng giãn chữ
+            (khoảng cách chữ/dòng theo WCAG) tiêu đề dài bị cắt "…" mất chữ ở 390px. Tiêu đề quá
+            dài nay thành 2 dòng, header cao thêm một chút nhưng không mất nội dung. */}
         <div className="flex-1 min-w-0">
-          {title && <p className="font-semibold text-[15px] truncate text-white">{title}</p>}
-          {subtitle && <p className="text-xs text-zinc-400 truncate">{subtitle}</p>}
+          {title && (
+            <p className="font-semibold text-[15px] leading-snug break-words text-white">{title}</p>
+          )}
+          {subtitle && <p className="text-xs text-zinc-400 break-words">{subtitle}</p>}
         </div>
 
         {/* Streak — TOÀN CỤC.

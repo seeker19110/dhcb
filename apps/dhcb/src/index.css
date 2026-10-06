@@ -441,6 +441,28 @@ html[data-kbd-nav][data-focus='1'] {
     }
   }
 
+  /* [U9a, audit UI/UX 2026-09-30 M20] Ép 44px ở MỌI màn chạm: màn hẹp (< 1024px — điện thoại,
+     tablet dọc) HOẶC con trỏ chính là ngón tay. Dùng cho danh sách chip DÀY (vd 40 chip vòng từ
+     vựng ở trang cấp CEFR): ở desktop dùng chuột giữ cỡ gọn 30px (đã qua sàn 24px của WCAG
+     2.5.8), còn trên điện thoại mỗi chip đủ 44px để chạm. Khác `tap-44-coarse-y` ở chỗ áp cả
+     cho khung nhìn hẹp: đã hiện giao diện mobile thì theo luật vùng chạm của mobile. */
+  @media (max-width: 1023.98px), (pointer: coarse) {
+    .tap-44-touch-y {
+      min-height: 44px;
+    }
+    /* Biến thể ép CẢ chiều rộng — chip chữ rất ngắn ("A2", "B1"). */
+    .tap-44-touch {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Thanh trượt `<input type="range">` mặc định chỉ cao 16px — cả hàng thành vùng kéo 44px
+       (rãnh và nút kéo vẫn vẽ ở giữa). Áp chung một chỗ thay vì vá từng thanh trượt ở các
+       trình mô phỏng "Ứng dụng thực tế" + "Lộ trình ôn thi". */
+    input[type='range'] {
+      min-height: 44px;
+    }
+  }
+
   /* ── KHOẢNG ĐỌC (measure) — luật "độ dài dòng ≤ 75ch" của ui-ux-craftsman mục 9 ──
      Đặt ở CSS chứ không dùng `max-w-*` của Tailwind vì thang `max-w-*` tính bằng `rem`
      (một con số cố định), còn độ dài dòng dễ đọc lại phụ thuộc CỠ CHỮ đang dùng. `ch` là

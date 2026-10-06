@@ -468,7 +468,7 @@ export default function UpgradeSection({
             type="button"
             onClick={handleCreateCheckout}
             disabled={creating || !prices}
-            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-semibold text-sm disabled:opacity-60"
+            className="tap-44-y w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-semibold text-sm disabled:opacity-60"
           >
             {creating
               ? isA

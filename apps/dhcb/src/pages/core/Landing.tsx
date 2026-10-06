@@ -207,7 +207,7 @@ export default function Landing() {
             </p>
             <a
               href="https://www.donghanhcungban.org"
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-400 hover:underline"
+              className="tap-44-y mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-400 hover:underline"
             >
               Xem toàn bộ nền tảng →
             </a>

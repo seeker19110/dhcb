@@ -27,6 +27,14 @@ import {
 } from '../../../lib/tts'
 import { usePageTitle } from '../../../lib/usePageTitle'
 
+// [U9a, WCAG 1.4.12] Mục lục đoạn hiện câu ĐẦU của đoạn làm nhãn. Trước đây cắt bằng CSS
+// `line-clamp-2` — khi người dùng giãn chữ, dòng thứ 2 bị cắt mất giữa chừng. Nay rút gọn ngay
+// trong chuỗi (thêm "…") rồi để chữ xuống dòng tự nhiên: giãn chữ thế nào cũng không mất chữ.
+const DO_DAI_TRICH_DOAN = 80
+function trichDoan(cau: string): string {
+  return cau.length > DO_DAI_TRICH_DOAN ? `${cau.slice(0, DO_DAI_TRICH_DOAN - 1).trimEnd()}…` : cau
+}
+
 export default function StoryReader() {
   const { id: slugParam } = useParams<{ id: string }>()
   const id = slugParam ? idFromSlugSegment(slugParam) : undefined
@@ -349,7 +357,7 @@ export default function StoryReader() {
       <ol className="space-y-0.5">
         {paragraphs.map((para, pi) => {
           const first = para[0]
-          const preview = first ? (isA ? first.en : first.vi) : ''
+          const preview = trichDoan(first ? (isA ? first.en : first.vi) : '')
           const isActive = activePara === pi
           return (
             <li key={pi}>
@@ -365,7 +373,7 @@ export default function StoryReader() {
                 }`}
               >
                 <span className="shrink-0 font-semibold tabular-nums">{pi + 1}</span>
-                <span className="line-clamp-2 leading-snug">{preview}</span>
+                <span className="break-words leading-snug">{preview}</span>
               </a>
             </li>
           )

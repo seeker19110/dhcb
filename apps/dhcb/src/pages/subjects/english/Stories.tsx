@@ -46,7 +46,7 @@ function FilterChip({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+      className={`tap-44-touch shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition ${
         active
           ? 'bg-accent-500/20 text-accent-300 theme-light:text-accent-800 border-accent-500/30'
           : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-zinc-300'
@@ -246,7 +246,7 @@ export default function Stories() {
               <div className="flex justify-center pt-4">
                 <button
                   onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium border border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:text-zinc-100"
+                  className="tap-44-y px-4 py-2 rounded-lg text-sm font-medium border border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:text-zinc-100"
                 >
                   {isA ? `Xem thêm (${remaining} truyện nữa)` : `Show more (${remaining} more)`}
                 </button>

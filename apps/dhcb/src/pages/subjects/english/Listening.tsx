@@ -212,7 +212,7 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={T.phrasesSearchPlaceholder}
-          className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
+          className="tap-44-y w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
         />
       </div>
 

@@ -138,7 +138,7 @@ export default function StudioDialogue({
         <div className="flex items-center gap-1">
           <button
             onClick={() => setViewMode('chat')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+            className={`tap-44-touch-y flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
               viewMode === 'chat'
                 ? 'bg-accent-500 text-black shadow-md shadow-accent-500/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -149,7 +149,7 @@ export default function StudioDialogue({
           </button>
           <button
             onClick={() => setViewMode('voice')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+            className={`tap-44-touch-y flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
               viewMode === 'voice'
                 ? 'bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-md shadow-accent-500/20'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -303,7 +303,7 @@ export default function StudioDialogue({
                 <button
                   key={d.id}
                   onClick={() => setSelectedDomain(d.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 shrink-0 ${
+                  className={`tap-44-y flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 shrink-0 ${
                     isSelected
                       ? 'bg-accent-500 text-black shadow-md shadow-accent-500/25 ring-1 ring-accent-400/40 scale-105'
                       : 'bg-zinc-900/90 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800/80'
@@ -515,7 +515,7 @@ export default function StudioDialogue({
                       setSelectedDomain(prompt.domain)
                       handleSend(prompt.text)
                     }}
-                    className="text-left p-3 rounded-2xl bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800/80 hover:border-accent-500/50 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-sm active:scale-98"
+                    className="tap-44-y text-left p-3 rounded-2xl bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800/80 hover:border-accent-500/50 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-sm active:scale-98"
                   >
                     <span>{prompt.label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-accent-400 group-hover:translate-x-0.5 transition-all" />
@@ -551,7 +551,7 @@ export default function StudioDialogue({
                 }}
                 placeholder="Nhắn tin cho Bạn Đồng Hành AI... (Enter để gửi)"
                 rows={1}
-                className="flex-1 bg-transparent px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-400 resize-none outline-none max-h-32"
+                className="tap-44-y flex-1 bg-transparent px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-400 resize-none outline-none max-h-32"
               />
 
               <button

@@ -260,7 +260,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={zoomOut}
-                className="p-1.5 text-zinc-400 hover:text-zinc-200"
+                className="tap-44 flex items-center justify-center text-zinc-400 hover:text-zinc-200"
                 title="Thu nhỏ"
               >
                 <ZoomOut className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={zoomIn}
-                className="p-1.5 text-zinc-400 hover:text-zinc-200"
+                className="tap-44 flex items-center justify-center text-zinc-400 hover:text-zinc-200"
                 title="Phóng to"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
@@ -279,7 +279,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={resetView}
-                className="p-1.5 text-zinc-400 hover:text-zinc-200 border-l border-zinc-800"
+                className="tap-44 flex items-center justify-center text-zinc-400 hover:text-zinc-200 border-l border-zinc-800"
                 title="Đặt lại góc nhìn"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
