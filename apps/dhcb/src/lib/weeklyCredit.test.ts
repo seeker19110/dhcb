@@ -45,6 +45,29 @@ describe('fetchWeeklyCredit — lượt còn lại của gói Free từ server',
     await expect(fetchWeeklyCredit()).resolves.toBeNull()
   })
 
+  it('VIP unlimited là dữ liệu thật dù credit null và cap 0', async () => {
+    const data = {
+      plan: 'vip',
+      unlimited: true,
+      usedToday: 9999,
+      freeWeeklyCredit: null,
+      freeWeeklyCap: 0,
+    }
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => data } as Response)
+    await expect(fetchWeeklyCredit()).resolves.toEqual(data)
+  })
+
+  it.each([
+    { plan: 'free', unlimited: true, usedToday: 1, freeWeeklyCredit: null, freeWeeklyCap: 0 },
+    { plan: 'vip', unlimited: true, usedToday: -1, freeWeeklyCredit: null, freeWeeklyCap: 0 },
+    { plan: 'vip', unlimited: true, freeWeeklyCredit: null, freeWeeklyCap: 0 },
+    { plan: 'vip', usedToday: 1, freeWeeklyCredit: null, freeWeeklyCap: 0 },
+    { plan: 'vip', unlimited: true, usedToday: 1, freeWeeklyCredit: null, freeWeeklyCap: 300 },
+  ])('unlimited sai hợp đồng %o không trở thành quyền lợi thật', async (data) => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => data } as Response)
+    await expect(fetchWeeklyCredit()).resolves.toBeNull()
+  })
+
   it('server trả HTTP lỗi → trả về null (an toàn, coi như hết lượt)', async () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 500 } as Response)
     await expect(fetchWeeklyCredit()).resolves.toBeNull()

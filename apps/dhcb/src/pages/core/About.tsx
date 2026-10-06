@@ -1,378 +1,214 @@
-import { useNavigate } from 'react-router-dom'
-import {
-  BookOpen,
-  Target,
-  Briefcase,
-  GraduationCap,
-  Bot,
-  BookMarked,
-  MessageCircle,
-  Mic,
-  PenLine,
-  Headphones,
-  Flame,
-  Brain,
-  Award,
-  Volume2,
-  Sparkles,
-} from 'lucide-react'
+// Định vị do chủ dự án chốt 2026-10-06: hỗ trợ khả năng học hỏi, không quảng bá các trụ đã gỡ.
+import { Link } from 'react-router-dom'
 import Layout from '../../components/Layout'
-import { usePageTitle } from '../../lib/usePageTitle'
-import { useLang } from '../../context/useLang'
-import { navigateTo } from '../../lib/subjectsHost'
 import { PageShell } from '@core/PageShell'
-import { NOTES_STUDIO_PATH } from '../../lib/domainRoutes'
+import { buttonClass } from '@core/buttonStyles'
+import { useLang } from '../../context/useLang'
+import { usePageTitle } from '../../lib/usePageTitle'
+import { useAppSettings } from '../../lib/useAppSettings'
 
-type IconType = typeof BookOpen
-
-// Trang /gioi-thieu — giới thiệu NỀN TẢNG trước, rồi mới tới môn Tiếng Anh.
-// DHCB là nền tảng đồng hành cá nhân 4 trụ (Học tập · Sự nghiệp · Khởi nghiệp · Công việc &
-// Đời sống — Work và Life gộp làm một, xem migration 0066) + Companion "Bạn Đồng Hành";
-// Tiếng Anh chỉ là MỘT MÔN trong trụ Học tập —
-// môn đầu tiên và chín nhất. Xem `docs/research/kien-truc-va-ha-tang.md` mục [1].
-
-interface Pillar {
-  icon: IconType
-  path: string
-  titleVi: string
-  titleEn: string
-  descVi: string
-  descEn: string
-}
-
-// Mỗi trụ trỏ tới route CÓ THẬT trong App.tsx — không giới thiệu trang chưa tồn tại.
-const PILLARS: Pillar[] = [
+const LEARNING_STEPS = [
   {
-    icon: GraduationCap,
-    path: '/goc-hoc-tap',
-    titleVi: 'Học tập',
-    titleEn: 'Learning',
-    descVi: 'Góc học tập đa môn: Tiếng Anh, Lập trình — các môn khác đang được xây cùng một khuôn.',
-    descEn: 'Multi-subject study room: English, Programming — more subjects are being built.',
+    vi: 'Biết bắt đầu từ đâu',
+    en: 'Find a starting point',
+    detailVi:
+      'Chọn môn học, mục đích và khoảng thời gian đang có. Nền tảng gợi ý một việc để bắt đầu; bạn có thể bỏ qua câu hỏi và tự khám phá nội dung mình quan tâm.',
+    detailEn:
+      'Choose a subject, purpose and time budget. Get one suggested activity, or skip the questions and explore for yourself.',
   },
   {
-    // [2026-09-20] Ba trụ Sự nghiệp, Khởi nghiệp và Đời sống đã bị gỡ hẳn khỏi sản phẩm, nên
-    // cũng không còn được giới thiệu ở đây — trang này chỉ nói về thứ có thật.
-    icon: Briefcase,
-    path: NOTES_STUDIO_PATH,
-    titleVi: 'Ghi chú',
-    titleEn: 'Notes',
-    descVi:
-      'Việc cần làm, dự án, biên bản họp và tài liệu nằm chung một chỗ — và Bạn Đồng Hành đọc được chúng khi trò chuyện với bạn.',
-    descEn:
-      'Tasks, projects, meeting notes and documents in one place — and your Companion can read them while talking with you.',
+    vi: 'Hiểu cách làm, không chỉ xem đáp án',
+    en: 'Understand the method, not just the answer',
+    detailVi:
+      'Tùy hoạt động, AI có thể giải thích, nhận xét bài viết hoặc gợi ý cách tìm lỗi. Mục tiêu là giúp bạn suy nghĩ tiếp và từng bước tự làm được, không làm thay bạn.',
+    detailEn:
+      'Depending on the activity, AI can explain, give writing feedback or help you investigate an error. The goal is to help you think and practise, not do the learning for you.',
   },
   {
-    icon: Bot,
-    path: '/ban-dong-hanh',
-    titleVi: 'Bạn Đồng Hành',
-    titleEn: 'Your Companion',
-    descVi:
-      'Một người bạn AI duy nhất, hiểu ngữ cảnh của bạn ở mọi nơi trong app. Bạn chốt, AI đề xuất.',
-    descEn:
-      'One AI companion that knows your context across all four pillars. You decide, it suggests.',
-  },
-] as const
-
-interface Feature {
-  icon: IconType
-  titleVi: string
-  titleEn: string
-  descVi: string
-  descEn: string
-}
-
-// Tính năng chính — mô tả ngắn gọn lại từ getModes() (Home.tsx) và mục 1 CLAUDE.md, dùng
-// riêng cho trang giới thiệu nên viết tay (không import từ Home.tsx vì đó là hàm nội bộ
-// trang, không export).
-const FEATURES: Feature[] = [
-  {
-    icon: BookOpen,
-    titleVi: 'Từ điển 10.000+ từ',
-    titleEn: '10,000+ word dictionary',
-    descVi: 'Tra nhanh loại từ, nghĩa tiếng Việt, ví dụ minh họa có phát âm.',
-    descEn: 'Look up part of speech, meaning, and example sentences with audio.',
+    vi: 'Biến kiến thức thành việc làm được',
+    en: 'Put knowledge into practice',
+    detailVi:
+      'Đưa từ vừa học vào hội thoại, thử một cách giải hoặc áp dụng kiến thức lập trình vào dự án. Hoạt động thực hành giúp bạn tự kiểm tra mình đã hiểu và dùng được đến đâu.',
+    detailEn:
+      'Use new words in a conversation, try a solution, or apply programming knowledge to a project. Practice lets you check what you understand and can use.',
   },
   {
-    icon: Target,
-    titleVi: 'Học theo lộ trình CEFR A1–C2',
-    titleEn: 'CEFR A1–C2 learning path',
-    descVi: 'Mỗi ngày 5–20 từ mới (tự chọn tốc độ) theo vòng tròn chủ đề liên quan.',
-    descEn: 'Learn 5–20 new words a day (pick your pace) in related topic circles.',
+    vi: 'Ôn lại điều cần củng cố',
+    en: 'Review what needs strengthening',
+    detailVi:
+      'Thẻ ôn tập và lịch ôn giúp bạn quay lại nội dung đã học. Làm sai hoặc chưa nhớ ngay là lý do để thử lại và điều chỉnh, không phải để đánh giá con người bạn.',
+    detailEn:
+      'Review cards and schedules help you revisit what you learned. A mistake or a forgotten item is a reason to try again, not a judgement about you.',
   },
   {
-    icon: BookMarked,
-    titleVi: 'Nghe – đọc – kể truyện',
-    titleEn: 'Listen – Read – Tell Stories',
-    descVi: 'Cổ tích, ngụ ngôn, truyện dân gian Việt Nam — giọng đọc chuẩn, song ngữ.',
-    descEn: 'Fairy tales, fables, Vietnamese folk stories — native voices, bilingual text.',
-  },
-  {
-    icon: MessageCircle,
-    titleVi: 'Chat với gia sư AI',
-    titleEn: 'Chat with an AI tutor',
-    descVi: 'Trò chuyện theo tình huống, sửa lỗi và giải thích ngay bằng tiếng mẹ đẻ.',
-    descEn: 'Situational conversation — errors corrected and explained in your native tongue.',
-  },
-  {
-    icon: Mic,
-    titleVi: 'Luyện nói song ngữ',
-    titleEn: 'Bilingual speaking practice',
-    descVi: 'Nói → AI nghe → trả lời bằng giọng ngôn ngữ đích → sửa lỗi bằng giọng tiếng mẹ đẻ.',
-    descEn: 'Speak → AI listens → replies in the target voice → corrects in your native voice.',
-  },
-  {
-    icon: PenLine,
-    titleVi: 'Luyện viết & chấm điểm',
-    titleEn: 'Writing practice & scoring',
-    descVi: 'Nộp bài, AI chấm kiểu IELTS, chỉ lỗi cụ thể và ước lượng band điểm.',
-    descEn: 'Submit an essay, get IELTS-style scoring, specific corrections and a band estimate.',
-  },
-  {
-    icon: Headphones,
-    titleVi: 'Luyện nghe theo cấp',
-    titleEn: 'Level-based listening practice',
-    descVi: 'Trắc nghiệm và gõ lại câu nghe được, độ khó tăng dần theo cấp CEFR.',
-    descEn: 'Multiple choice and dictation, difficulty increasing with your CEFR level.',
-  },
-  {
-    icon: Flame,
-    titleVi: 'Chuỗi ngày học & huy hiệu',
-    titleEn: 'Streaks & achievements',
-    descVi: 'Giữ chuỗi ngày học liên tiếp, mở khóa huy hiệu khi đạt mốc.',
-    descEn: 'Keep a daily streak going and unlock achievements at milestones.',
-  },
-] as const
-
-interface Tip {
-  titleVi: string
-  titleEn: string
-  bodyVi: string
-  bodyEn: string
-}
-
-const TIPS: Tip[] = [
-  {
-    titleVi: 'Học đều đặn, dù chỉ ít mỗi ngày',
-    titleEn: 'Study a little every day',
-    bodyVi:
-      'Ghi nhớ ngôn ngữ hiệu quả hơn nhiều khi lặp lại đều đặn thay vì học dồn 1 buổi rồi nghỉ dài. Chuỗi ngày học ở trang chủ giúp bạn theo dõi và duy trì thói quen này.',
-    bodyEn:
-      'Language sticks much better with steady repetition than one long cram session followed by a long break. The streak on the home page helps you track and keep this habit.',
-  },
-  {
-    titleVi: 'Để hệ thống nhắc bạn ôn đúng lúc sắp quên',
-    titleEn: 'Let the system remind you before you forget',
-    bodyVi:
-      'Mục "Ôn lại" ở mỗi cấp lộ trình tự tính thời điểm ôn tối ưu cho từng từ theo nguyên lý lặp lại ngắt quãng (spaced repetition) — ôn đúng lúc thay vì ôn tràn lan.',
-    bodyEn:
-      'The "SRS review" tab in each level calculates the best time to review each word using spaced repetition — reviewing right before you\'d forget, not all at once.',
-  },
-  {
-    titleVi: 'Nghe trước, nói sau',
-    titleEn: 'Listen first, speak second',
-    bodyVi:
-      'Làm quen ngữ điệu và cách phát âm tự nhiên qua mục Nghe/Truyện trước khi luyện nói — bạn sẽ bắt chước đúng hơn thay vì đoán mò cách đọc.',
-    bodyEn:
-      "Get used to natural rhythm and pronunciation through Listening/Stories before speaking practice — you'll imitate more accurately instead of guessing.",
-  },
-  {
-    titleVi: 'Nói ra thành tiếng, đừng chỉ đọc thầm',
-    titleEn: "Speak out loud, don't just read silently",
-    bodyVi:
-      'Luyện nói song ngữ chỉ hiệu quả khi bạn thực sự phát âm — não bộ và cơ miệng cần luyện phản xạ thật, không thể thay thế bằng đọc mắt.',
-    bodyEn:
-      'Speaking practice only works if you actually vocalize — your brain and mouth need real reflex training that reading silently cannot replace.',
-  },
-  {
-    titleVi: 'Chọn tốc độ học vừa sức',
-    titleEn: 'Pick a pace that fits you',
-    bodyVi:
-      'Vào Hồ sơ để chọn 5/10/20 từ mới/ngày. Học ít mà nhớ chắc luôn tốt hơn học nhiều mà quên nhanh — đổi tốc độ bất cứ lúc nào, không ảnh hưởng từ đã học.',
-    bodyEn:
-      "Go to Profile to pick 5/10/20 new words/day. Learning fewer words solidly beats cramming many and forgetting fast — change pace anytime, it won't affect words already learned.",
-  },
-  {
-    titleVi: 'Làm bài kiểm tra cuối mỗi cấp',
-    titleEn: 'Take the test at the end of each level',
-    bodyVi:
-      'Trước khi lên cấp CEFR tiếp theo, hãy làm bài kiểm tra để chắc chắn kiến thức đã vững — tránh học chồng lỗ hổng.',
-    bodyEn:
-      'Before moving to the next CEFR level, take the test to confirm your knowledge is solid — this avoids building on gaps.',
+    vi: 'Tiếp tục theo nhịp của mình',
+    en: 'Continue at your own pace',
+    detailVi:
+      'Theo dõi tiến độ và trở lại việc đang học. Bạn có thể bắt đầu bằng một việc nhỏ, nghỉ khi cần và tiếp tục sau đó; không cần biết cả lộ trình ngay từ đầu.',
+    detailEn:
+      'Track progress and return to your learning. Start small, take a break when needed and continue later. You do not need to plan the whole journey on day one.',
   },
 ] as const
 
 export default function About() {
-  const { lang } = useLang()
-  const isA = lang === 'vi'
-  const nav = useNavigate()
-
-  usePageTitle('Giới thiệu | Đồng Hành Cùng Bạn')
+  const vi = useLang().lang === 'vi'
+  const settings = useAppSettings()
+  usePageTitle(vi ? 'Giới thiệu' : 'About')
+  const section = 'rounded-2xl border border-line-subtle bg-surface-card p-5 space-y-3'
+  const title = 'text-lg font-bold text-content'
+  const prose = 'text-sm leading-relaxed text-content-muted'
 
   return (
     <div className="min-h-dvh bg-zinc-950">
-      <Layout title={isA ? 'Giới thiệu nền tảng' : 'About the platform'} />
-      {/* [2026-09-02, đợt 4 thiết kế lại desktop] Trang chữ dài để đọc → width="reading". */}
-      <PageShell width="reading" baseWidth="max-w-2xl" className="space-y-6">
+      <Layout title={vi ? 'Giới thiệu nền tảng' : 'About the platform'} />
+      <PageShell width="reading" baseWidth="max-w-3xl" className="space-y-5">
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
-          {isA ? 'Giới thiệu nền tảng' : 'About the platform'}
+          {vi
+            ? 'Đồng Hành Cùng Bạn — hỗ trợ khả năng học hỏi'
+            : 'Đồng Hành Cùng Bạn — supporting your ability to learn'}
         </h1>
-
-        {/* Nền tảng gồm những gì — đặt TRƯỚC phần môn Tiếng Anh, vì đây là trang giới thiệu
-            nền tảng chứ không phải trang giới thiệu một môn. */}
-        <section className="animate-fade-in">
-          <h2 className="text-lg font-bold text-white mb-1">
-            {isA ? 'Nền tảng gồm những gì' : 'What the platform covers'}
+        <section className={section}>
+          <h2 className="text-2xl font-bold text-content">
+            {vi
+              ? 'Học điều bạn muốn. Hiểu điều bạn học.'
+              : 'Learn what matters to you. Understand what you learn.'}
           </h2>
-          <p className="text-xs text-zinc-300 mb-3">
-            {isA
-              ? 'Bốn trụ nằm chung một hồ sơ, nên việc bạn làm ở mảng này được tính đến khi gợi ý cho mảng kia.'
-              : 'Four pillars share one profile, so what you do in one area informs the suggestions in another.'}
+          <p className={prose}>
+            {vi
+              ? 'Đồng Hành Cùng Bạn hỗ trợ mọi người học hỏi, hiểu sâu hơn và từng bước nâng cao khả năng tự học. Bài học, luyện tập, ghi chú và AI cùng phục vụ việc giúp bạn chủ động hơn trong quá trình học của chính mình.'
+              : 'Đồng Hành Cùng Bạn supports people in exploring knowledge, understanding more deeply and developing independent learning. Lessons, practice, notes and AI help you take an active role in your own learning.'}
           </p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {PILLARS.map((p) => (
-              <button
-                key={p.titleVi}
-                type="button"
-                onClick={() => navigateTo(nav, p.path)}
-                className="tap-44 text-left bg-zinc-900/80 border border-zinc-800/80 hover:border-accent-500/40 rounded-2xl p-4 flex items-start gap-3 transition"
-              >
-                <div className="w-10 h-10 rounded-xl bg-accent-500/15 flex items-center justify-center shrink-0">
-                  <p.icon className="w-5 h-5 text-accent-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{isA ? p.titleVi : p.titleEn}</p>
-                  <p className="text-xs text-zinc-300 mt-0.5">{isA ? p.descVi : p.descEn}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+          <p className={prose}>
+            {vi
+              ? 'Bạn có thể đang đi học, đi làm, bắt đầu một kỹ năng mới hoặc trở lại kiến thức đã quên. Không cần giỏi sẵn hay có cùng tốc độ với người khác. Hãy bắt đầu từ một câu hỏi, một bài học hoặc một việc nhỏ.'
+              : 'You may be studying, working, starting a new skill or revisiting forgotten knowledge. You do not need prior expertise or someone else’s pace. Start with a question, a lesson or a small task.'}
+          </p>
+          <Link
+            to="/bat-dau"
+            className={buttonClass({ variant: 'primary', size: 'lg', fullWidth: true })}
+          >
+            {vi ? 'Bắt đầu học miễn phí' : 'Start learning for free'}
+          </Link>
+          <p className={prose}>
+            {vi
+              ? 'Thử ngay, không cần đăng nhập. Các tính năng AI dùng thử có hạn mức.'
+              : 'Try without signing in. Free AI trials have usage limits.'}
+          </p>
         </section>
 
-        {/* Môn Tiếng Anh — điểm khác biệt riêng của môn này */}
-        <section className="rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4 animate-fade-in">
-          <div className="flex items-start gap-3">
-            <Volume2 className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
-            <p className="text-sm text-zinc-300">
-              <strong className="text-white">
-                {isA
-                  ? 'Môn tiếng Anh — điểm khác biệt: '
-                  : "The English subject — what's different: "}
-              </strong>
-              {isA ? (
-                <>
-                  AI không chỉ sửa lỗi bằng chữ — mà còn{' '}
-                  <strong className="text-white">
-                    đọc to lời giải thích bằng giọng tiếng mẹ đẻ của bạn
-                  </strong>
-                  , trong khi hội thoại chính vẫn bằng giọng chuẩn của ngôn ngữ bạn đang học. Nội
-                  dung sát với đời sống Việt Nam, giá rẻ.
-                </>
-              ) : (
-                <>
-                  The AI doesn't just correct mistakes in text — it also{' '}
-                  <strong className="text-white">
-                    reads the explanation aloud in your native voice
-                  </strong>
-                  , while the main conversation stays in the target language's native voice. Content
-                  stays close to real Vietnamese life, at a low cost.
-                </>
-              )}
-            </p>
-          </div>
-        </section>
-
-        {/* Tính năng chính */}
-        <section className="animate-fade-in">
-          <h2 className="text-lg font-bold text-white mb-3">
-            {isA ? 'Môn tiếng Anh có gì' : 'Inside the English subject'}
+        <section aria-labelledby="learning-how-heading" className="space-y-3">
+          <h2 id="learning-how-heading" className={title}>
+            {vi ? 'Không chỉ học thêm — học tốt hơn' : 'Not just more learning — better learning'}
           </h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {FEATURES.map((f) => (
-              <div
-                key={f.titleVi}
-                className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 flex items-start gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-accent-500/15 flex items-center justify-center shrink-0">
-                  <f.icon className="w-5 h-5 text-accent-400" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white">{isA ? f.titleVi : f.titleEn}</p>
-                  <p className="text-xs text-zinc-300 mt-0.5">{isA ? f.descVi : f.descEn}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {LEARNING_STEPS.map((step) => (
+            <article key={step.vi} className={section}>
+              <h3 className="text-base font-semibold text-content">{vi ? step.vi : step.en}</h3>
+              <p className={prose}>{vi ? step.detailVi : step.detailEn}</p>
+            </article>
+          ))}
         </section>
 
-        {/* Học sao cho hiệu quả */}
-        <section className="animate-fade-in">
-          <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-accent-400" aria-hidden="true" />
-            {isA ? 'Học ngoại ngữ sao cho hiệu quả' : 'Tips for effective language learning'}
+        <section className={section}>
+          <h2 className={title}>{vi ? 'Học theo điều bạn quan tâm' : 'Explore your interests'}</h2>
+          <h3 className="text-base font-semibold text-content">
+            {vi ? 'Tiếng Anh: hiểu và sử dụng' : 'English: understand and use it'}
+          </h3>
+          <p className={prose}>
+            {vi
+              ? 'Lộ trình A1–C2 kết hợp từ vựng, ngữ pháp, nghe, đọc, viết và hội thoại. Tra từ và ví dụ, ôn bằng thẻ từ, nghe truyện song ngữ và luyện tập theo tình huống. Phản hồi bằng tiếng Việt hỗ trợ bạn hiểu cách sửa lỗi. Điểm viết kiểu IELTS là ước lượng để tham khảo, không phải kết quả thi hay chứng nhận chính thức.'
+              : 'The A1–C2 pathway connects vocabulary, grammar, listening, reading, writing and conversation. Explore examples, review cards, bilingual stories and situational practice. Vietnamese feedback helps explain corrections. IELTS-style writing scores are practice estimates, not official results or certificates.'}
+          </p>
+          <h3 className="text-base font-semibold text-content">
+            {vi
+              ? 'Lập trình: từ hiểu vấn đề đến tự xây dựng'
+              : 'Programming: from understanding to building'}
+          </h3>
+          <p className={prose}>
+            {vi
+              ? 'Tiếp cận Python, JavaScript/TypeScript và SQL qua bài học và các chặng dự án. Luyện đọc hiểu mã, thử giải pháp, kiểm tra kết quả và tìm lỗi. Lộ trình hướng tới thực hành, không bảo đảm thay thế kinh nghiệm làm việc nhóm hay vận hành hệ thống thực tế.'
+              : 'Explore Python, JavaScript/TypeScript and SQL through lessons and project stages. Practise reading code, trying solutions, checking results and debugging. The course supports practice; it does not replace real team or production experience.'}
+          </p>
+          <h3 className="text-base font-semibold text-content">
+            {vi
+              ? 'Toán, Vật lý, Hóa học, Sinh học — xem trước'
+              : 'Mathematics, Physics, Chemistry, Biology — preview'}
+          </h3>
+          <p className={prose}>
+            {vi
+              ? 'Các môn STEM đang hoàn thiện và có nội dung để xem trước. Nhãn trạng thái giúp bạn biết phần nào đã mở; không phải tất cả các môn đều có cùng mức độ hoàn thiện.'
+              : 'STEM subjects are being developed and include preview content. Status labels show what is available; not every subject has the same level of completeness.'}
+          </p>
+          <Link
+            to="/goc-hoc-tap"
+            className="tap-44 inline-flex items-center text-sm font-semibold text-content underline underline-offset-2"
+          >
+            {vi ? 'Khám phá các môn học' : 'Explore subjects'}
+          </Link>
+        </section>
+
+        <section className={section}>
+          <h2 className={title}>
+            {vi
+              ? 'Ghi lại điều đang học. Có AI hỗ trợ khi cần.'
+              : 'Keep your learning notes. Get AI support when needed.'}
           </h2>
-          <div className="space-y-3">
-            {TIPS.map((tip, i) => (
-              <div
-                key={tip.titleVi}
-                className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4"
-              >
-                <p className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-accent-500/15 text-accent-400 text-[11px] font-bold flex items-center justify-center shrink-0">
-                    {i + 1}
-                  </span>
-                  {isA ? tip.titleVi : tip.titleEn}
-                </p>
-                <p className="text-xs text-zinc-300 mt-1.5 pl-7">{isA ? tip.bodyVi : tip.bodyEn}</p>
-              </div>
-            ))}
-          </div>
+          <p className={prose}>
+            {vi
+              ? 'Ghi chú giúp giữ lại câu hỏi, ý tưởng, tài liệu và việc cần làm. Bạn Đồng Hành có thể dùng ngữ cảnh liên quan trong ứng dụng để hỗ trợ trao đổi và gợi ý bước tiếp theo. Bạn vẫn là người chọn mục tiêu và quyết định; phản hồi AI có thể sai và cần được kiểm tra.'
+              : 'Notes keep questions, ideas, documents and tasks together. Your Companion can use relevant in-app context to support a discussion and suggest next steps. You choose the goal and decide; AI feedback can be wrong and should be checked.'}
+          </p>
+          <p className={prose}>
+            {vi
+              ? 'Ghi chú và Bạn Đồng Hành cần tài khoản để gắn dữ liệu với bạn. Chế độ khách vẫn cho phép bắt đầu với nội dung học và các hoạt động dùng thử được mở.'
+              : 'Notes and Companion require an account to associate data with you. Guest mode still lets you begin with available learning content and trial activities.'}
+          </p>
         </section>
 
-        {/* Ghi nhận huy hiệu — nối sang trang Nhiệm vụ để biết thêm cách kiếm thưởng.
-            Nội dung cụ thể hoá thứ tự ưu tiên (streak + challenge trước) vì đó là 2 việc
-            tốn ít thời gian nhất/ngày nhưng cộng dồn huy hiệu nhanh nhất — xem đối chiếu
-            với data/achievements.ts. */}
-        <section className="bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-4 flex items-start gap-3 animate-fade-in">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-            <Award
-              className="w-5 h-5 text-amber-300 theme-light:text-amber-900"
-              aria-hidden="true"
-            />
-          </div>
-          <div className="text-xs text-zinc-300">
-            <p>
-              {isA
-                ? 'Càng học đều, càng kiếm được nhiều huy hiệu và ngày dùng gói VIP miễn phí — xem chi tiết ở mục Nhiệm vụ trong Hồ sơ.'
-                : 'The more consistently you study, the more achievements and free VIP days you earn — see the Quests section in your Profile.'}
-            </p>
-            <p className="mt-1.5">
-              {isA ? (
-                <>
-                  <strong className="text-zinc-300">Nhanh nhất:</strong> giữ streak học mỗi ngày +
-                  làm challenge 1 phút đều đặn — 2 việc tốn ít thời gian nhất nhưng lên huy hiệu
-                  nhanh nhất. Từ vựng và các cấp CEFR tự cộng dồn theo lộ trình học bình thường.
-                </>
-              ) : (
-                <>
-                  <strong className="text-zinc-300">Fastest path:</strong> keep a daily streak + do
-                  the 1-minute challenge every day — the two lowest-effort habits that unlock
-                  achievements the quickest. Vocabulary and CEFR levels build up naturally as you
-                  study.
-                </>
-              )}
-            </p>
-          </div>
+        <section className={section}>
+          <h2 className={title}>
+            {vi
+              ? 'Bắt đầu miễn phí. Nâng cấp để học tự do.'
+              : 'Start free. Upgrade for more freedom.'}
+          </h2>
+          <h3 className="text-base font-semibold text-content">
+            {vi ? 'Miễn phí — trải nghiệm trước' : 'Free — try it first'}
+          </h3>
+          <p className={prose}>
+            {vi
+              ? 'Không cần đăng nhập để khám phá nội dung và thử hoạt động được mở cho khách. Các tính năng AI miễn phí có hạn mức; số lượt dùng thử khác với tài khoản Free. Tiến độ khách được lưu trên trình duyệt này. Đăng ký khi cần lưu vào tài khoản và tiếp tục trên thiết bị khác.'
+              : 'Explore content and guest activities without signing in. Free AI has usage limits; the guest trial differs from a Free account. Guest progress is stored in this browser. Register to save it to an account and continue on another device.'}
+          </p>
+          <h3 className="text-base font-semibold text-content">
+            {vi
+              ? 'VIP — tự chọn bài, chủ động cách học'
+              : 'VIP — choose lessons and your own order'}
+          </h3>
+          <p className={prose}>
+            {vi
+              ? 'Trong những nội dung đã mở, bạn có thể học phần đang cần trước, quay lại nền tảng hoặc tập trung vào chủ đề quan tâm. VIP mở các cấp tiếng Anh và bậc lập trình mà không bắt học lại chỉ để mở khóa. Quyền mở bài không phải chứng nhận đã thành thạo; bài kiểm tra vẫn giúp bạn tự đánh giá.'
+              : 'Within available content, study what you need first, revisit fundamentals or focus on a topic. VIP opens English and programming levels without repeating earlier levels just to unlock them. Access does not certify mastery; practice and assessments remain useful.'}
+          </p>
+          <p className={prose}>
+            {settings.vipUnlimited === true
+              ? vi
+                ? 'Không giới hạn lượt AI trong thời gian gói còn hiệu lực. Các kiểm soát chống lạm dụng, an toàn và gián đoạn kỹ thuật vẫn áp dụng; đây không phải cam kết hoạt động mãi mãi sau một lần mua.'
+                : 'Unlimited AI turns while your plan is active. Anti-abuse and safety controls and technical interruptions still apply; this is not lifetime access from any one purchase.'
+              : vi
+                ? 'Xem quyền lợi AI và thời hạn hiện hành ở trang nâng cấp trước khi thanh toán.'
+                : 'Check the current AI benefits and subscription term on the upgrade page before paying.'}
+          </p>
+          <Link
+            to="/nang-cap"
+            className="tap-44 inline-flex items-center text-sm font-semibold text-content underline underline-offset-2"
+          >
+            {vi ? 'Xem gói VIP và nâng cấp' : 'View VIP and upgrade'}
+          </Link>
         </section>
-
-        <button
-          type="button"
-          onClick={() => nav('/')}
-          className="tap-44 w-full flex items-center justify-center gap-2 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold py-3.5 transition active:scale-[0.99]"
-        >
-          <Sparkles className="w-4 h-4" aria-hidden="true" />
-          {isA ? 'Về trang chủ nền tảng' : 'Back to the platform home'}
-        </button>
+        <p className={prose}>
+          {vi
+            ? 'Một câu hỏi được hiểu rõ hơn. Một lỗi được tự sửa. Một kiến thức được dùng vào việc thật. Đó là những bước tiến Đồng Hành Cùng Bạn hướng tới.'
+            : 'A question understood more clearly. A mistake you can fix yourself. Knowledge applied to a real task. These are the steps forward Đồng Hành Cùng Bạn aims to support.'}
+        </p>
       </PageShell>
     </div>
   )

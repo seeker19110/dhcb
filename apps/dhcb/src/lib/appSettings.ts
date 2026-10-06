@@ -43,6 +43,14 @@ function loadFromLocalStorage(): AppSettings | null {
 }
 
 let current: AppSettings = loadFromLocalStorage() ?? DEFAULT_SETTINGS
+const listeners = new Set<() => void>()
+
+export function subscribeAppSettings(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
 
 export function getAppSettings(): AppSettings {
   return current
@@ -54,7 +62,12 @@ export function getLimits(): PlanDailyLimits {
 
 /** Hạn mức lượt AI/ngày (TỔNG mọi tính năng) của gói đang có hiệu lực. */
 export function getDailyLimit(plan: Plan): number {
-  return current.limits[plan]
+  return hasUnlimitedAi(plan) ? Number.POSITIVE_INFINITY : current.limits[plan]
+}
+
+/** Chỉ gói VIP được máy chủ xác nhận mới bỏ chặn sớm ở UI; đây không phải quyền server. */
+export function hasUnlimitedAi(plan: Plan): boolean {
+  return plan === 'vip' && current.vipUnlimited === true
 }
 
 /**
@@ -100,6 +113,7 @@ export async function refreshAppSettings(): Promise<void> {
       return
     }
     current = parsed.data
+    for (const listener of listeners) listener()
     localStorage.setItem(CACHE_KEY, JSON.stringify(parsed.data))
   } catch {
     /* giữ nguyên cache/mặc định hiện có */

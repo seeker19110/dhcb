@@ -17,8 +17,9 @@ import { track } from '../../lib/analytics'
 
 // Chuỗi tĩnh — hợp đồng dữ liệu §③ của spec, KHÔNG được đổi chữ ngoài chủ đích (không có
 // snapshot riêng cho lát này, nhưng vẫn giữ nguyên như spec đã chốt).
-const GUEST_LEAD = 'Chào bạn. Mình là Bạn Đồng Hành — học cùng bạn mỗi ngày.'
-const GUEST_DETAIL = 'Từ tiếng Anh tới lập trình, toán, lý, hoá, sinh — bắt đầu từ một việc nhỏ.'
+const GUEST_LEAD = 'Học điều bạn muốn. Hiểu điều bạn học.'
+const GUEST_DETAIL =
+  'Mình là Bạn Đồng Hành — hỗ trợ bạn học hỏi, thực hành và từng bước tự học tốt hơn.'
 
 // Trụ KHÔNG phải môn học (không tới từ SUBJECT_ENTRIES) — cùng nội dung với thẻ "Ghi chú" của
 // trang chủ người đã đăng nhập (Home.tsx), rút gọn cho khách vì khách chưa có gì để cá nhân hoá.
@@ -63,7 +64,9 @@ export default function GuestHome() {
         >
           Bắt đầu — chọn việc đầu tiên
         </Link>
-        <p className="text-sm text-zinc-400">Không cần tài khoản</p>
+        <p className="text-sm text-zinc-400">
+          Không cần tài khoản. Trải nghiệm AI trong hạn mức miễn phí.
+        </p>
         {/* [U9b, audit 2026-09-30 mục 8] Người cũ đổi máy cần một lối đăng nhập BẰNG CHỮ — trước
             đây chỉ có nút tròn chữ cái đầu ở header, phải đoán. Liên kết chữ, không phải nút
             chính thứ hai: CTA "Bắt đầu" vẫn là nút chính duy nhất (AC-2). */}
@@ -78,7 +81,25 @@ export default function GuestHome() {
         </p>
       </div>
 
-      {/* ── Khối 3: Dải môn + 2 trụ ── */}
+      <section
+        aria-labelledby="guest-learning-benefits"
+        className="rounded-2xl border border-line-subtle bg-surface-card p-4 space-y-2"
+      >
+        <h2 id="guest-learning-benefits" className="text-base font-bold text-content">
+          Không chỉ học thêm — học tốt hơn
+        </h2>
+        <p className="text-sm text-content-muted">
+          Chọn một việc để bắt đầu, tìm hiểu cách làm, thực hành và ôn lại điều cần củng cố. AI hỗ
+          trợ giải thích và phản hồi; bạn vẫn là người suy nghĩ và quyết định.
+        </p>
+        <Link
+          to="/gioi-thieu"
+          className="tap-44 inline-flex items-center text-sm font-semibold text-content underline underline-offset-2"
+        >
+          Tìm hiểu cách Đồng Hành hỗ trợ việc học
+        </Link>
+      </section>
+      {/* ── Khối 3: Dải môn và Ghi chú ── */}
       <section aria-labelledby="guest-home-subjects-heading">
         <h2 id="guest-home-subjects-heading" className="text-base font-bold text-white mb-2 px-1">
           Bộ môn & không gian
@@ -91,6 +112,7 @@ export default function GuestHome() {
                 className="tap-44 flex items-center rounded-full border border-zinc-800 bg-zinc-900/90 px-4 text-sm font-medium text-zinc-200 hover:border-accent-500/40 hover:text-white transition"
               >
                 {entry.label}
+                {entry.status === 'preview' ? ' · Xem trước' : ''}
               </Link>
             </li>
           ))}
@@ -109,7 +131,12 @@ export default function GuestHome() {
                     className="w-4 h-4 text-purple-400 theme-light:text-purple-800 shrink-0"
                     aria-hidden="true"
                   />
-                  {pillar.label}
+                  <span>
+                    {pillar.label}
+                    <span className="block text-sm font-normal text-zinc-300">
+                      Giữ lại câu hỏi, ý tưởng và việc đang học · Cần tài khoản
+                    </span>
+                  </span>
                 </Link>
               </li>
             )

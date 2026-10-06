@@ -191,13 +191,13 @@ export default function AdminLimitsPanel({ onForbiddenChange }: Props) {
           <section className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4">
             <p className="text-sm font-semibold text-white mb-1">Hạn mức lượt AI/ngày</p>
             <p className="text-xs text-zinc-400 mb-3">
-              Một con số TỔNG cho mọi tính năng AI cộng lại (Chat + Luyện viết + Luyện nói + STT +
-              Chấm phát âm) — không còn chia riêng từng chế độ. Từ 2026-09-12 chỉ còn 2 gói: Free
-              (miễn phí, mặc định 30 lượt/ngày) và VIP. Đổi ở đây có hiệu lực ngay, không cần
-              deploy.
+              Free dùng một hạn mức tổng/ngày cho các tính năng AI. VIP không giới hạn lượt AI/ngày
+              khi gói còn hiệu lực; vẫn giữ rate limit, theo dõi chi phí và cầu dao khẩn cấp. Cấu
+              hình số VIP cũ được giữ trong DB để tương thích rollback, không còn dùng để chặn lượt
+              học VIP.
             </p>
             <div className="grid grid-cols-1 gap-2.5">
-              {PLANS.map(({ key: plan, label }) => (
+              {PLANS.filter(({ key }) => key === 'free').map(({ key: plan, label }) => (
                 <label key={plan} className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-zinc-400">Gói {label} (lượt/ngày)</span>
                   <input

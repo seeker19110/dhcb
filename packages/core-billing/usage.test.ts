@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { checkAndConsumeUsage, refundUsage, isUsageMode } from './usage.js'
+import { hasUnlimitedAiTurns } from './aiUsagePolicy'
 import { invalidateSettingsCache } from '@dhcb/core-db/settings'
 
 // Mock Pool Postgres để test logic đếm/hoàn lượt OFFLINE (không cần DB thật).
@@ -37,6 +38,8 @@ function mockPool(opts: {
   planExpiresAt?: string | null
   consumeResult?: unknown
   queryError?: Error
+  meterResult?: unknown
+  meterError?: Error
   promoUntil?: string | null
   aiCircuitBreaker?: boolean
   // Phanh tay theo môn (bảng subject_limits, migration 0029). undefined = KHÔNG có dòng nào
@@ -71,6 +74,10 @@ function mockPool(opts: {
           { consume_usage_total: Object.hasOwn(opts, 'consumeResult') ? opts.consumeResult : true },
         ],
       }
+    if (sql.includes('insert into public.daily_usage')) {
+      if (opts.meterError) throw opts.meterError
+      return { rows: [{ recorded: Object.hasOwn(opts, 'meterResult') ? opts.meterResult : true }] }
+    }
     if (sql.includes('refund_usage')) return { rows: [] }
     return { rows: [] }
   })
@@ -177,17 +184,16 @@ describe('checkAndConsumeUsage — gói Free (hạn mức TỔNG/ngày = hạn m
 describe('checkAndConsumeUsage — gói VIP', () => {
   beforeEach(() => mockedGetPool.mockReset())
 
-  it('gói vip dùng hạn mức cao hơn (đọc đúng plan + truyền đúng limit)', async () => {
+  it('gói VIP không kiểm hạn mức lượt/ngày nhưng ghi thống kê atomic', async () => {
     const pool = mockPool({ plan: 'vip', consumeResult: true })
     mockedGetPool.mockReturnValue(pool)
     await checkAndConsumeUsage('u1', 'speaking')
-    expect(consumeCallOf(pool)?.[1]).toEqual([
-      'u1',
-      expect.any(String),
-      'speaking_count',
-      1_000_000,
-      'english',
-    ])
+    expect(consumeCallOf(pool)).toBeUndefined()
+    const meter = vi
+      .mocked(pool.query)
+      .mock.calls.find(([sql]) => String(sql).includes('insert into public.daily_usage'))
+    expect(meter?.[0]).toContain('speaking_count')
+    expect(meter?.[1]).toEqual(['u1', expect.any(String), 'english'])
   })
 
   it('gói vip đã HẾT HẠN → rơi về hạn mức Free ngay, không chờ job dọn dữ liệu', async () => {
@@ -206,32 +212,30 @@ describe('checkAndConsumeUsage — gói VIP', () => {
 
   // Bất biến §⑤: người mua gói CŨ (plus/pro) còn hạn vẫn hưởng hạn mức VIP, kể cả khi migration
   // 0076 chưa kịp chạy trên hàng đó.
-  it('hàng CŨ plan=pro còn hạn → hưởng hạn mức VIP', async () => {
+  it('hàng CŨ plan=pro còn hạn → hưởng quyền VIP không giới hạn', async () => {
     const future = new Date(Date.now() + 86_400_000).toISOString()
     const pool = mockPool({ plan: 'pro', planExpiresAt: future, consumeResult: true })
     mockedGetPool.mockReturnValue(pool)
     await checkAndConsumeUsage('u1', 'speaking')
-    expect(consumeCallOf(pool)?.[1]).toEqual([
-      'u1',
-      expect.any(String),
-      'speaking_count',
-      1_000_000,
-      'english',
-    ])
+    expect(consumeCallOf(pool)).toBeUndefined()
+    const meter = vi
+      .mocked(pool.query)
+      .mock.calls.find(([sql]) => String(sql).includes('insert into public.daily_usage'))
+    expect(meter?.[0]).toContain('speaking_count')
+    expect(meter?.[1]).toEqual(['u1', expect.any(String), 'english'])
   })
 
-  it('khuyến mãi đang bật → free được nâng lên hạn mức VIP', async () => {
+  it('khuyến mãi đang bật → Free hưởng quyền VIP theo chính sách hiện hành', async () => {
     const future = new Date(Date.now() + 86_400_000).toISOString()
     const pool = mockPool({ plan: 'free', consumeResult: true, promoUntil: future })
     mockedGetPool.mockReturnValue(pool)
     await checkAndConsumeUsage('u1', 'chat')
-    expect(consumeCallOf(pool)?.[1]).toEqual([
-      'u1',
-      expect.any(String),
-      'chat_count',
-      1_000_000,
-      'english',
-    ])
+    expect(consumeCallOf(pool)).toBeUndefined()
+    const meter = vi
+      .mocked(pool.query)
+      .mock.calls.find(([sql]) => String(sql).includes('insert into public.daily_usage'))
+    expect(meter?.[0]).toContain('chat_count')
+    expect(meter?.[1]).toEqual(['u1', expect.any(String), 'english'])
   })
 })
 
@@ -285,5 +289,70 @@ describe('isUsageMode', () => {
     expect(isUsageMode('pronounce')).toBe(true)
     expect(isUsageMode('hack')).toBe(false)
     expect(isUsageMode(null)).toBe(false)
+  })
+})
+
+describe('VIP không giới hạn — vẫn giữ các cổng an toàn', () => {
+  it.each(['chat', 'writing', 'speaking', 'stt', 'pronounce', 'code_feedback'] as const)(
+    'mode %s ghi đúng cột, không mượn hạn mức số rất lớn',
+    async (mode) => {
+      const pool = mockPool({ plan: 'vip', consumeResult: false })
+      mockedGetPool.mockReturnValue(pool)
+      expect((await checkAndConsumeUsage('u1', mode)).ok).toBe(true)
+      const meter = vi
+        .mocked(pool.query)
+        .mock.calls.find(([sql]) => String(sql).includes('insert into public.daily_usage'))
+      expect(meter?.[0]).toContain(`${mode}_count`)
+      expect(meter?.[0]).toContain('on conflict (user_id, day, subject)')
+      expect(meter?.[0]).toContain(`daily_usage.${mode}_count + 1`)
+      expect(meter?.[1]).toEqual(['u1', expect.any(String), 'english'])
+      expect(consumeCallOf(pool)).toBeUndefined()
+    },
+  )
+
+  it.each([undefined, null, false, 1, 'true'])(
+    'ghi thống kê không xác minh được (%s) → không gọi provider',
+    async (meterResult) => {
+      mockedGetPool.mockReturnValue(mockPool({ plan: 'vip', meterResult }))
+      expect((await checkAndConsumeUsage('u1', 'chat')).ok).toBe(false)
+    },
+  )
+
+  it('lỗi ghi thống kê → fail closed dù là VIP', async () => {
+    mockedGetPool.mockReturnValue(
+      mockPool({ plan: 'vip', meterError: new Error('database unavailable') }),
+    )
+    expect((await checkAndConsumeUsage('u1', 'chat')).ok).toBe(false)
+  })
+
+  it('VIP không vượt được cầu dao khẩn cấp', async () => {
+    const pool = mockPool({ plan: 'vip', aiCircuitBreaker: true })
+    mockedGetPool.mockReturnValue(pool)
+    expect((await checkAndConsumeUsage('u1', 'chat')).ok).toBe(false)
+    expect(
+      vi
+        .mocked(pool.query)
+        .mock.calls.some(([sql]) => String(sql).includes('insert into public.daily_usage')),
+    ).toBe(false)
+  })
+
+  it('nhiều yêu cầu VIP cùng lúc đều được ghi, không dùng bộ đếm hạn mức Free', async () => {
+    const pool = mockPool({ plan: 'vip', consumeResult: false })
+    mockedGetPool.mockReturnValue(pool)
+    const results = await Promise.all(
+      Array.from({ length: 40 }, () => checkAndConsumeUsage('u1', 'chat')),
+    )
+    expect(results.every((r) => r.ok)).toBe(true)
+    const writes = vi
+      .mocked(pool.query)
+      .mock.calls.filter(([sql]) => String(sql).includes('insert into public.daily_usage'))
+    expect(writes).toHaveLength(40)
+    expect(consumeCallOf(pool)).toBeUndefined()
+  })
+
+  it('chính sách chỉ nhận gói VIP đã được xác minh, không tự hiểu mọi chuỗi trả phí', () => {
+    expect(hasUnlimitedAiTurns('vip')).toBe(true)
+    for (const value of ['free', 'guest', 'pro', 'VIP', '', 'admin'])
+      expect(hasUnlimitedAiTurns(value)).toBe(false)
   })
 })

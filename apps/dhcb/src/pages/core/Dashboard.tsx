@@ -108,7 +108,7 @@ export default function Dashboard() {
   const weeklyCreditInfo =
     weeklyCredit.status === 'ready' &&
     weeklyCredit.data &&
-    weeklyCredit.data.freeWeeklyCredit !== null
+    (weeklyCredit.data.unlimited === true || weeklyCredit.data.freeWeeklyCredit !== null)
       ? { ...weeklyCredit.data, freeWeeklyCredit: weeklyCredit.data.freeWeeklyCredit }
       : null
   const cefr = cefrState.status === 'ready' ? cefrState.data : []

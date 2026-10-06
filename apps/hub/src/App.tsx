@@ -79,7 +79,7 @@ const PILLARS: Pillar[] = [
     id: 'learning',
     name: 'Học tập',
     icon: GraduationCap,
-    tagline: 'Nhiều môn, một lộ trình liền mạch',
+    tagline: 'Hiểu, thực hành và ôn lại',
     description:
       'Góc học tập đa môn với gia sư AI riêng cho từng môn. Tiến độ, ôn tập ngắt quãng và lượt dùng đều nằm chung một hồ sơ, học môn nào cũng cộng dồn vào đó.',
     bullets: [
@@ -93,14 +93,14 @@ const PILLARS: Pillar[] = [
     id: 'notes',
     name: 'Ghi chú',
     icon: StickyNote,
-    tagline: 'Ghi lại, rồi Bạn Đồng Hành nhớ giúp bạn',
+    tagline: 'Giữ lại câu hỏi, ý tưởng và việc đang học',
     description:
-      'Việc cần làm, dự án, biên bản họp và tài liệu nằm chung một chỗ. Bạn Đồng Hành đọc được những ghi chú đó khi trò chuyện, nên nó biết bạn đang bận gì trước khi gợi ý thêm việc.',
+      'Lưu câu hỏi muốn tìm hiểu, ý tưởng dự án, tài liệu và việc cần làm. Ghi chú gắn với tài khoản và có thể cung cấp ngữ cảnh cho Bạn Đồng Hành khi trao đổi.',
     bullets: [
       'Việc cần làm trên bảng Kanban, kéo qua lại theo tiến độ',
       'Dự án, cuộc họp và tài liệu gắn cùng một hồ sơ',
       'Mỗi ghi chú tới 10.000 ký tự — đủ cho cả một biên bản họp',
-      'Companion biết bạn đang bận gì trước khi gợi ý thêm việc',
+      'Cần tài khoản để lưu ghi chú và liên kết ngữ cảnh',
     ],
     url: `${APP_URL}/ghi-chu`,
   },
@@ -170,7 +170,7 @@ export const SUBJECT_COPY: Record<
     icon: BookOpen,
     tagline: 'Đại số · Hình học · Giải tích · Xác suất thống kê',
     description:
-      'Hàng trăm bài đang ở dạng xem trước, hoàn thiện dần: hướng dẫn cách nghĩ và từng bước giải, thay vì đưa thẳng đáp án.',
+      'Các bài đang ở dạng xem trước, hoàn thiện dần: hướng dẫn cách nghĩ và từng bước giải, thay vì đưa thẳng đáp án.',
     highlight: 'Bài tập bám chương trình phổ thông; phần đại học sẽ mở dần sau.',
     skills: [
       'Giải từng bước kèm lý do cho mỗi bước',
@@ -183,7 +183,7 @@ export const SUBJECT_COPY: Record<
     icon: BookOpen,
     tagline: 'Cơ · Nhiệt · Điện từ · Quang · Vật lý hiện đại',
     description:
-      'Hàng trăm bài đang ở dạng xem trước, hoàn thiện dần: hiểu bản chất hiện tượng trước, rồi mới đến công thức và bài tập định lượng.',
+      'Các bài đang ở dạng xem trước, hoàn thiện dần: hiểu bản chất hiện tượng trước, rồi mới đến công thức và bài tập định lượng.',
     highlight: 'Mô phỏng tương tác để nhìn thấy hiện tượng chứ không chỉ đọc công thức.',
     skills: [
       'Mô phỏng thí nghiệm ảo',
@@ -196,7 +196,7 @@ export const SUBJECT_COPY: Record<
     icon: BookOpen,
     tagline: 'Vô cơ · Hữu cơ · Oxi hóa khử · Phân tích',
     description:
-      'Hàng trăm bài đang ở dạng xem trước, hoàn thiện dần: viết và cân bằng phương trình, đọc cơ chế phản ứng, giải bài toán hóa học theo lối tư duy.',
+      'Các bài đang ở dạng xem trước, hoàn thiện dần: viết và cân bằng phương trình, đọc cơ chế phản ứng, giải bài toán hóa học theo lối tư duy.',
     highlight: 'Trực quan hóa cấu trúc phân tử và chuỗi phản ứng.',
     skills: [
       'Viết và cân bằng phương trình',
@@ -209,7 +209,7 @@ export const SUBJECT_COPY: Record<
     icon: BookOpen,
     tagline: 'Di truyền · Tế bào · Tiến hóa · Sinh thái',
     description:
-      'Hàng trăm bài đang ở dạng xem trước, hoàn thiện dần: hệ thống kiến thức theo sơ đồ và cơ chế, kèm bài tập di truyền có hướng dẫn lập luận.',
+      'Các bài đang ở dạng xem trước, hoàn thiện dần: hệ thống kiến thức theo sơ đồ và cơ chế, kèm bài tập di truyền có hướng dẫn lập luận.',
     highlight: 'Sơ đồ tư duy và phương pháp giải bài tập di truyền, phả hệ.',
     skills: ['Quy luật di truyền và phả hệ', 'Cơ chế di truyền phân tử', 'Sinh thái và môi trường'],
   },
@@ -386,26 +386,26 @@ function Hero({ stats }: { stats: HubStats | null }) {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs sm:text-sm text-zinc-200 mb-6 shadow-sm">
             <Layers className="w-3.5 h-3.5 text-accent-300 theme-light:text-accent-800" />
             <span className="font-semibold text-accent-300 theme-light:text-accent-800">
-              Một nền tảng — một hồ sơ
+              Học hỏi cho mọi người
             </span>
             <span aria-hidden="true" className="text-zinc-500">
               •
             </span>
-            <span className="text-zinc-200">Một hồ sơ duy nhất của bạn</span>
+            <span className="text-zinc-200">Bắt đầu từ một việc nhỏ</span>
           </div>
         )}
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15] mb-6">
-          Không chỉ học một môn — <br className="hidden sm:inline" />
+          Học điều bạn muốn. <br className="hidden sm:inline" />
           <span className="bg-gradient-to-r from-accent-400 via-accent-300 to-accent-200 bg-clip-text text-transparent">
-            đồng hành cùng bạn
+            Hiểu điều bạn học.
           </span>{' '}
-          trên cả chặng đường
+          Từng bước tự học tốt hơn.
         </h1>
 
         <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-2xl mx-auto mb-8 leading-relaxed">
-          Học tập và những việc bạn đang ghi lại nằm chung một hồ sơ, có một người bạn AI hiểu ngữ
-          cảnh của cả hai. Bạn chốt mục tiêu, nền tảng đề xuất bước gần nhất.
+          Bài học, thực hành, ghi chú và AI hỗ trợ bạn khám phá kiến thức, hiểu cách làm và tự tin
+          học tiếp. Bạn chọn mục tiêu, bắt đầu từ một việc vừa sức và tiến bộ theo nhịp của mình.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
@@ -413,7 +413,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
             href={isLoggedIn ? APP_URL : START_URL}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 hover:shadow-accent-500/35 transition-all hover:scale-[1.02]"
           >
-            <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu — khoảng 90 giây'}</span>
+            <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu học miễn phí'}</span>
             <ArrowRight className="w-4 h-4" />
           </a>
 
@@ -429,7 +429,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto pt-4 border-t border-zinc-800/60 text-xs sm:text-sm text-zinc-200">
           <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-zinc-900/40">
             <CheckCircle2 className="w-4 h-4 text-accent-300 theme-light:text-accent-800 shrink-0" />
-            <span>Không cần thẻ ngân hàng</span>
+            <span>Thử ngay không cần đăng nhập</span>
           </div>
           <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-zinc-900/40">
             <Smartphone className="w-4 h-4 text-accent-300 theme-light:text-accent-800 shrink-0" />
@@ -437,7 +437,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
           </div>
           <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-zinc-900/40">
             <Bot className="w-4 h-4 text-accent-300 theme-light:text-accent-800 shrink-0" />
-            <span>Một AI hiểu cả hồ sơ của bạn</span>
+            <span>AI hỗ trợ, bạn quyết định</span>
           </div>
           <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-zinc-900/40">
             <ShieldCheck className="w-4 h-4 text-accent-300 theme-light:text-accent-800 shrink-0" />
@@ -555,14 +555,14 @@ function PillarsSection() {
     <section id="tru-cot" className="px-4 sm:px-6 py-16 sm:py-20 max-w-6xl mx-auto">
       <div className="text-center max-w-2xl mx-auto mb-12">
         <span className="text-xs uppercase font-bold tracking-widest text-accent-300 theme-light:text-accent-800 mb-2 block">
-          Cấu trúc nền tảng
+          Hỗ trợ quá trình học
         </span>
         <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-3">
-          Các trụ của nền tảng
+          Không chỉ học thêm — học tốt hơn
         </h2>
         <p className="text-zinc-200 text-sm sm:text-base">
-          Đời sống không chia thành từng ứng dụng rời rạc. Ở đây các mảng nằm chung một hồ sơ, nên
-          việc bạn làm ở mảng này được tính đến khi gợi ý cho mảng kia.
+          Tìm điểm bắt đầu, hiểu cách làm, thực hành và ôn lại điều cần củng cố. Ghi chú giữ lại câu
+          hỏi và ý tưởng; AI giúp trao đổi và phản hồi, không học thay bạn.
         </p>
       </div>
 
@@ -611,8 +611,9 @@ function PillarsSection() {
             Sợi chỉ xuyên suốt cả nền tảng
           </p>
           <p className="text-zinc-100 text-sm leading-relaxed mb-4 flex-1">
-            Không phải bốn con bot rời rạc. Một người bạn AI duy nhất, nhớ ngữ cảnh của bạn ở mọi
-            trụ — nên lời gợi ý cho việc học có tính đến chuyện bạn đang bận gì ở công việc.
+            Một nơi để hỏi khi chưa rõ, trao đổi về điều đang học và cân nhắc bước tiếp theo. AI có
+            thể dùng ngữ cảnh liên quan; bạn vẫn là người suy nghĩ và quyết định. Bạn Đồng Hành cần
+            tài khoản.
           </p>
           <a
             href={COMPANION_URL}
@@ -640,8 +641,8 @@ function CompanionSection() {
       desc: 'Hiểu hoàn cảnh của bạn rồi mới nói. Một lời khuyên đúng lý thuyết mà lệch hoàn cảnh thì vô dụng.',
     },
     {
-      title: 'Mỗi lúc chỉ ba việc',
-      desc: 'Không dội cho bạn danh sách 23 thứ cần cải thiện. Ba việc, làm xong rồi tính tiếp.',
+      title: 'Bắt đầu từ một việc nhỏ',
+      desc: 'Gợi ý một việc để bắt đầu, có lựa chọn khác khi chưa phù hợp. Không cần lên kế hoạch cho cả chặng đường ngay từ đầu.',
     },
     {
       title: 'So với chính bạn hôm qua',
@@ -973,8 +974,8 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
           Một tài khoản cho cả nền tảng
         </h2>
         <p className="text-zinc-200 text-sm sm:text-base">
-          Không mua theo môn, không mua theo trụ. Khi nền tảng mở thêm môn hoặc thêm tính năng ở một
-          trụ nào đó, tài khoản đang có của bạn dùng được luôn.
+          Bắt đầu miễn phí để trải nghiệm cách học. Nâng cấp VIP khi cần tự chọn thứ tự bài và sử
+          dụng AI không giới hạn lượt trong thời gian gói còn hiệu lực.
         </p>
       </div>
 
@@ -996,7 +997,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
             </p>
             <ul className="space-y-3 text-xs sm:text-sm text-zinc-100 mb-8">
               {[
-                'Truy cập cả nền tảng và Bạn Đồng Hành',
+                'Thử nội dung học không cần đăng nhập; AI dùng thử có hạn mức',
                 'Học Tiếng Anh và Lập trình với lượt AI hằng ngày',
                 'Trọn lộ trình CEFR A1 → C2 và từ điển',
                 'Ôn tập ngắt quãng, học ngoại tuyến trên điện thoại',
@@ -1023,7 +1024,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>Gói Pro / VIP</span>
+                <span>Gói VIP</span>
                 <Sparkles className="w-4 h-4 text-accent-300 theme-light:text-accent-800" />
               </h3>
               <span className="text-xs px-2.5 py-1 rounded-full bg-accent-500/10 text-accent-200 theme-light:text-accent-900 font-semibold border border-accent-500/20">
@@ -1032,20 +1033,21 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
             </div>
             <div className="mb-6">
               <span className="text-3xl sm:text-4xl font-extrabold text-accent-300 theme-light:text-accent-800">
-                Học phí bình dân
+                Học tự do
               </span>
               <span className="text-zinc-200 text-xs sm:text-sm"> / 10 ngày · tháng · năm</span>
             </div>
             <p className="text-xs sm:text-sm text-zinc-100 mb-6">
-              Nới rộng lượt dùng AI ở mọi trụ và mở trọn bộ giọng đọc cao cấp. Giá cụ thể xem trong
-              trang cá nhân, luôn cập nhật theo bảng giá hiện hành.
+              Tự chọn bài trong nội dung đã mở và không giới hạn lượt AI trong thời gian gói có hiệu
+              lực. Xem giá theo thời hạn trước khi thanh toán. Các kiểm soát an toàn, chống lạm dụng
+              và gián đoạn kỹ thuật vẫn áp dụng.
             </p>
             <ul className="space-y-3 text-xs sm:text-sm text-zinc-100 mb-8">
               {[
-                'Lượt dùng AI rộng hơn ở mọi nơi',
-                'Trọn bộ giọng đọc AI cao cấp cho môn Tiếng Anh',
-                'Chấm bài viết và phản hồi chi tiết thoải mái hơn',
-                'Môn mở sau này tự động dùng được, không mua thêm',
+                'Không giới hạn lượt AI/ngày khi gói còn hiệu lực',
+                'Tự do chọn thứ tự bài, không phải học lại chỉ để mở khóa',
+                'Hỏi, nhận phản hồi và luyện tập theo nhu cầu',
+                'Quyền mở bài không thay thế việc thực hành và tự đánh giá',
               ].map((t) => (
                 <li key={t} className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-accent-300 theme-light:text-accent-800 shrink-0 mt-0.5" />
@@ -1072,28 +1074,32 @@ function FaqSection() {
 
   const faqs = [
     {
-      q: '"Đồng Hành Cùng Bạn" là gì — một app học tiếng Anh phải không?',
-      a: 'Không. Đây là nền tảng đồng hành cá nhân gồm trụ Học tập (nhiều môn) và trụ Ghi chú (việc cần làm, dự án, cuộc họp, tài liệu), nối với nhau bằng Bạn Đồng Hành — một tác tử AI hiểu ngữ cảnh của bạn ở cả hai. Tiếng Anh là MỘT MÔN trong trụ Học tập; nó là môn đầu tiên nên hiện đầy đủ nhất, chứ không phải toàn bộ nền tảng.',
+      q: 'Đồng Hành Cùng Bạn hỗ trợ việc học như thế nào?',
+      a: 'Nền tảng giúp bạn tìm điểm bắt đầu, khám phá kiến thức, thực hành, ôn lại và theo dõi tiến độ. Mục tiêu không chỉ là học thêm nhiều kiến thức, mà là từng bước nâng cao khả năng tự học. AI hỗ trợ giải thích và phản hồi; bạn vẫn là người suy nghĩ và quyết định.',
     },
     {
-      q: 'Tôi chỉ muốn học tiếng Anh thôi, có bị bắt dùng những phần khác không?',
-      a: 'Không. Bạn vào thẳng môn Tiếng Anh và dùng như một app học tiếng Anh bình thường. Các trụ khác nằm đó khi nào bạn cần thì mở, không có thứ gì ép bạn phải điền.',
+      q: 'Tôi có phải đăng ký trước khi dùng không?',
+      a: 'Không. Bạn có thể bắt đầu với nội dung học và các hoạt động được mở cho khách. AI dùng thử có hạn mức. Tiến độ khách lưu trên trình duyệt này; tạo tài khoản khi cần đồng bộ, dùng Ghi chú, Bạn Đồng Hành hoặc quản lý gói dịch vụ.',
     },
     {
-      q: 'Hiện tại phần nào dùng được thật, phần nào còn đang xây?',
-      a: 'Dùng được thật: trụ Ghi chú (bảng việc Kanban, dự án, cuộc họp, tài liệu), Bạn Đồng Hành, và hai môn Tiếng Anh (đầy đủ nhất) cùng Lập trình. Đang xây: các môn Toán, Lý, Hóa, Sinh. Chỗ nào chưa xong thì trang này ghi rõ là "đang xây" — không hứa trước.',
+      q: 'Hiện tại những môn nào đã mở?',
+      a: 'Tiếng Anh và Lập trình đang học được. Toán, Vật lý, Hóa học và Sinh học có nội dung xem trước và đang hoàn thiện. Các môn không có cùng mức độ hoàn thiện; trạng thái được ghi rõ ở phần môn học.',
     },
     {
-      q: 'Nền tảng có chấm điểm hay xếp loại tôi không?',
-      a: 'Không. Nền tảng có ghi nhận tiến độ để gợi ý việc phù hợp, nhưng nguyên tắc thiết kế là kết quả đó không bao giờ trở thành bảng điểm con người trên màn hình chính, không so bạn với người khác và không có bảng xếp hạng. Tiến bộ được đối chiếu với chính bạn trước đó.',
+      q: 'Tôi đã biết cơ bản, có phải học lại từ đầu không?',
+      a: 'VIP cho phép tự chọn thứ tự bài trong nội dung đã mở; các cấp tiếng Anh và bậc lập trình được mở mà không bắt học lại chỉ để mở khóa. Lộ trình vẫn là gợi ý. Quyền mở bài không có nghĩa là đã thành thạo; bạn vẫn có thể luyện tập và tự kiểm tra.',
     },
     {
-      q: 'Dùng thử miễn phí được không?',
-      a: 'Được. Gói Miễn phí dùng mãi mãi, không cần nhập thẻ ngân hàng, có số lượt gọi AI mỗi ngày. Muốn dùng nhiều hơn thì nâng cấp Pro hoặc VIP, và một tài khoản áp dụng cho cả nền tảng.',
+      q: 'Miễn phí và VIP khác nhau thế nào?',
+      a: 'Miễn phí có hạn mức AI để làm quen và học tập. VIP cho phép tự chọn bài và không giới hạn lượt AI trong thời gian gói còn hiệu lực. Không giới hạn lượt không có nghĩa mọi nội dung tương lai đã có sẵn, truy cập vĩnh viễn sau một lần mua hoặc bỏ các kiểm soát an toàn, chống lạm dụng.',
+    },
+    {
+      q: 'AI có luôn đưa ra đáp án đúng không?',
+      a: 'Không. Phản hồi AI có thể sai. Hãy dùng lời giải thích như hỗ trợ để suy nghĩ và kiểm tra lại. Điểm luyện viết kiểu IELTS chỉ là ước lượng tham khảo, không phải kết quả thi hay chứng nhận chính thức.',
     },
     {
       q: 'Cài lên điện thoại thế nào?',
-      a: 'Mở website bằng trình duyệt trên điện thoại (Safari trên iPhone, Chrome trên Android) rồi chọn "Thêm vào Màn hình chính". Nền tảng chạy dạng PWA, dùng như một ứng dụng và môn Tiếng Anh còn học được cả khi mất mạng.',
+      a: 'Mở website bằng Safari trên iPhone hoặc Chrome trên Android rồi chọn Thêm vào Màn hình chính. Một số nội dung ôn tập đã lưu có thể dùng ngoại tuyến; tính năng gọi AI vẫn cần Internet.',
     },
   ]
 
@@ -1194,8 +1200,8 @@ function Footer({ stats }: { stats: HubStats | null }) {
             <span>Đồng Hành Cùng Bạn</span>
           </div>
           <p className="text-zinc-200 text-xs leading-relaxed max-w-sm">
-            Nền tảng đồng hành cá nhân: học tập, sự nghiệp, khởi nghiệp, và công việc gắn liền đời
-            sống — cùng một người bạn AI hiểu ngữ cảnh cả bốn mảng. donghanhcungban.org
+            Hỗ trợ mọi người học hỏi, hiểu sâu hơn và từng bước nâng cao khả năng tự học. Bài học,
+            thực hành, ghi chú và AI đồng hành. donghanhcungban.org
           </p>
         </div>
 

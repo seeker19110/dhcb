@@ -26,6 +26,8 @@ export const DEFAULT_PLAN_DAILY_LIMITS: PlanDailyLimits = { free: 30, vip: 300 }
 // mà client cũ không vỡ — Zod bỏ trường lạ khi parse.
 export const PublicAppSettingsSchema = z.object({
   limits: PlanDailyLimitsSchema,
+  // Additive: máy chủ cũ/rollback không có cờ này thì client vẫn giữ hạn mức cũ.
+  vipUnlimited: z.boolean().optional(),
   // null = không có khuyến mãi đang chạy.
   promoUntil: z.string().nullable(),
   leaderboardEnabled: z.boolean(),

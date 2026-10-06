@@ -106,6 +106,20 @@ describe('VipPlanSummary', () => {
     expect(container.textContent).toContain('Đã dùng 200/300 lượt')
   })
 
+  it('VIP không giới hạn hiện số đã dùng, không dựng cap giả', async () => {
+    mocks.fetchWeeklyCredit.mockResolvedValue({
+      plan: 'vip',
+      unlimited: true,
+      usedToday: 9999,
+      freeWeeklyCredit: null,
+      freeWeeklyCap: 0,
+    })
+    await render('2026-12-31T16:00:00.000Z')
+    expect(container.textContent).toContain('Không giới hạn')
+    expect(container.textContent).toContain('9999')
+    expect(container.textContent).not.toMatch(/9999\/|NaN|Infinity|còn 0 lượt/)
+  })
+
   it('tiếng Anh khi giao diện là tiếng Anh', async () => {
     mocks.fetchWeeklyCredit.mockResolvedValue({
       plan: 'vip',
