@@ -14,7 +14,7 @@
 //     hết dòng (dễ bấm bằng ngón cái); từ 640px: nút nằm bên phải tên bài.
 //   - `ContinueRow`: dòng gợi ý đầu một DANH SÁCH — cả dòng là một nút.
 import type { ReactNode } from 'react'
-import { Play } from 'lucide-react'
+import { Play, type LucideIcon } from 'lucide-react'
 import { buttonClass } from '@core/buttonStyles'
 
 export interface ContinueCardProps {
@@ -27,6 +27,8 @@ export interface ContinueCardProps {
   actionLabel: string
   onAction: () => void
   disabled?: boolean
+  /** Biểu tượng của nút chính. Mặc định ▷ (hợp với "bắt đầu/học tiếp"); đổi khi nút làm việc khác. */
+  icon?: LucideIcon
   /**
    * - `card` (mặc định): thẻ đứng riêng, viền accent.
    * - `inset`: nằm TRONG một thẻ khác (vd thẻ đầu trang môn Tiếng Anh) — chỉ có vạch ngăn phía
@@ -51,6 +53,7 @@ export function ContinueCard({
   actionLabel,
   onAction,
   disabled = false,
+  icon: Icon = Play,
   frame = 'card',
   headingLevel = 2,
   children,
@@ -75,7 +78,7 @@ export function ContinueCard({
             className: 'w-full shrink-0 sm:w-auto',
           })}
         >
-          <Play className="h-4 w-4" aria-hidden="true" />
+          <Icon className="h-4 w-4" aria-hidden="true" />
           <span>{actionLabel}</span>
         </button>
       </div>

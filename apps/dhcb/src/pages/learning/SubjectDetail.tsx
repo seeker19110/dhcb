@@ -453,16 +453,20 @@ export default function SubjectDetail() {
               <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed line-clamp-2">
                 {subject.description}
               </p>
-              <div className="flex items-center gap-3 pt-1">
+              {/* Hẹp (390px): cột trái còn ~160px nên hai chỉ số xuống DÒNG có chủ đích (mỗi chỉ số
+                  một dòng, chữ không bị bẻ giữa chừng); rộng thì nằm cùng một hàng. */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
                 <div className="flex items-center gap-1.5">
                   <BookOpen className={`w-3.5 h-3.5 ${theme.accent}`} />
-                  <span className="text-xs text-zinc-400 font-medium">
+                  <span className="text-xs text-zinc-400 font-medium whitespace-nowrap">
                     {currentGradeData?.chapters.length ?? 0} chương
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Sparkles className={`w-3.5 h-3.5 ${theme.accent}`} />
-                  <span className="text-xs text-zinc-400 font-medium">AI giải từng bước</span>
+                  <span className="text-xs text-zinc-400 font-medium whitespace-nowrap">
+                    AI giải từng bước
+                  </span>
                 </div>
               </div>
             </div>

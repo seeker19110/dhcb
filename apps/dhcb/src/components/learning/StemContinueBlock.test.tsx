@@ -105,6 +105,7 @@ describe('StemContinueBlock', () => {
     expect(container.querySelector('h2')?.textContent).toBe('Mệnh đề')
     expect(container.textContent).toContain('Lớp 10')
     expect(nut?.textContent).toBe('Bắt đầu học')
+    expect(nut?.querySelector('svg.lucide-play')).not.toBeNull()
     act(() => nut?.click())
     expect(duong()).toMatch(/^\/goc-hoc-tap\/mathematics\/bai-hoc\/m10-1/)
   })
@@ -138,6 +139,9 @@ describe('StemContinueBlock', () => {
       'Bạn đã hoàn thành mọi bài chuẩn môn Toán',
     )
     expect(nut?.textContent).toBe('Xem lại danh sách bài')
+    // Biểu tượng danh sách, không phải ▷ (lucide-play) vốn hợp với "bắt đầu".
+    expect(nut?.querySelector('svg.lucide-list-checks')).not.toBeNull()
+    expect(nut?.querySelector('svg.lucide-play')).toBeNull()
     act(() => nut?.click())
     expect(duong()).toBe('/goc-hoc-tap/mathematics/bai-hoc')
   })
@@ -150,6 +154,16 @@ describe('StemContinueBlock', () => {
     expect(container.textContent).not.toContain('Đã học xong')
     expect(container.textContent).not.toContain('Đang học dở')
     expect(nut?.disabled).toBe(false)
+    // Phải có dòng báo lỗi (role=status) để không lẫn với "chưa học".
+    expect(container.querySelector('[role="status"]')?.textContent).toBe(
+      'Chưa tải được tiến độ — đang gợi ý bài đầu tiên.',
+    )
+  })
+
+  it('không báo lỗi khi tải xong bình thường', () => {
+    tienDo = { state: new Map(), stateStatus: 'ready' }
+    hien()
+    expect(container.querySelector('[role="status"]')).toBeNull()
   })
 
   it('môn chưa có bài chuẩn: không dựng gì', () => {
