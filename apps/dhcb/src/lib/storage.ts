@@ -270,6 +270,29 @@ export function hasStudiedToday(userId: string): boolean {
   return hasActivityOn(get<DailyUsage>(K.usage(userId, todayStr())))
 }
 
+// Đã từng có ÍT NHẤT MỘT ngày học (chat/viết/nói/STT/phát âm/học từ) chưa — dùng cho điều kiện
+// "đã học ≥ 1 phiên" của tải ngầm dữ liệu ngoại tuyến (lib/offlineDownload.ts, audit M14). Quét
+// mọi khoá `et_usage_<uid>_*` thay vì lùi từng ngày: không giới hạn khung thời gian, và dữ liệu
+// pullUserData kéo về từ server (tối đa 365 ngày) cũng được tính → đổi máy vẫn đúng.
+const USAGE_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+
+export function hasEverStudied(userId: string): boolean {
+  if (!userId) return false
+  const prefix = K.usage(userId, '')
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      // Phần sau tiền tố phải đúng là ngày — tránh khớp nhầm khoá của uid khác dài hơn
+      // (vd uid "a" với khoá của uid "a_b").
+      if (!key?.startsWith(prefix) || !USAGE_DATE_RE.test(key.slice(prefix.length))) continue
+      if (hasActivityOn(get<DailyUsage>(key))) return true
+    }
+  } catch {
+    /* localStorage bị chặn — coi như chưa học */
+  }
+  return false
+}
+
 // Số ngày kể từ lần hoạt động gần nhất (② M4, luồng "quay lại sau khi bỏ bẵng" —
 // docs/research/dac-ta-nang-cap-su-pham-2026-07-15.md). 0 = đã học hôm nay.
 // null = không tìm thấy hoạt động nào trong `maxLookback` ngày gần đây (người

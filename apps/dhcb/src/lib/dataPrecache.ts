@@ -11,6 +11,10 @@
 //  4. Lưu tiến độ sau MỖI file → đóng/mở lại app vẫn tải tiếp chỗ dang dở cho tới khi xong.
 //
 // Chỉ chạy ở bản build thật (PROD) vì cần service worker để cache bền. Dev không cần offline.
+//
+// [2026-10-05, audit M14] KHÔNG còn tự chạy cho mọi người lúc mở app: `DataPrecacheGate` chỉ gọi
+// startDataPrecache() khi chính sách ở `offlineDownload.ts` cho phép (đã đăng nhập + đã học ≥ 1
+// phiên + công tắc ở Cài đặt bật + không Save-Data), và gọi stopDataPrecache() khi điều kiện mất.
 
 const MANIFEST_URL = '/data/manifest.json'
 // PHẢI khớp tên DATA_CACHE trong public/sw.js (cache dữ liệu KHÔNG bị xoá mỗi lần deploy).
@@ -29,7 +33,10 @@ interface Manifest {
   files: ManifestFile[]
 }
 
-let started = false
+// Thế hệ lượt tải: start tăng số này; vòng tải so số của mình với số hiện tại sau mỗi file —
+// lệch nhau nghĩa là đã bị dừng (stopDataPrecache) hoặc một lượt mới thay thế → thoát êm.
+let generation = 0
+let running = false
 
 // ── Bản đồ "đã tải" trong localStorage ──────────────────────────────────────
 function loadMap(): Record<string, string> {
@@ -55,8 +62,10 @@ export interface PrecacheProgress {
   bytesTotal: number
 }
 let progress: PrecacheProgress = { done: 0, total: 0, bytesDone: 0, bytesTotal: 0 }
+// Tên sự kiện tiến độ (detail: PrecacheProgress) — Cài đặt nghe để cập nhật "đã tải X MB".
+export const PRECACHE_PROGRESS_EVENT = 'data-precache-progress'
 function emitProgress() {
-  window.dispatchEvent(new CustomEvent('data-precache-progress', { detail: { ...progress } }))
+  window.dispatchEvent(new CustomEvent(PRECACHE_PROGRESS_EVENT, { detail: { ...progress } }))
 }
 
 // Chờ tới lúc CPU rảnh (hoặc tối đa `timeout`ms) — giúp tải nền không tranh tài nguyên.
@@ -84,20 +93,54 @@ function waitOnline(): Promise<void> {
   })
 }
 
-// Bắt đầu tải nền (gọi 1 lần lúc mở app). Idempotent.
+// Chờ trang tải xong (sự kiện `load`) — tải nền không tranh băng thông với lần vẽ đầu.
+function waitPageLoaded(): Promise<void> {
+  if (document.readyState === 'complete') return Promise.resolve()
+  return new Promise((resolve) => window.addEventListener('load', () => resolve(), { once: true }))
+}
+
+// Bắt đầu tải nền. Idempotent: đang chạy thì không mở lượt thứ hai.
 export async function startDataPrecache(): Promise<void> {
-  if (started) return
-  started = true
+  if (running) return
   // Cần Cache Storage (service worker) để lưu bền. Không có thì bỏ qua.
   if (!('caches' in window)) return
+  running = true
+  const myGen = ++generation
   try {
-    await runPrecache()
+    await waitPageLoaded()
+    if (myGen === generation) await runPrecache(myGen)
   } catch {
-    // Lỗi mạng/khác — lần mở app sau sẽ thử lại tiếp từ chỗ dang dở.
+    // Lỗi mạng/khác — lần sau đủ điều kiện sẽ thử lại tiếp từ chỗ dang dở.
+  } finally {
+    if (myGen === generation) running = false
   }
 }
 
-async function runPrecache(): Promise<void> {
+// Dừng lượt tải đang chạy (tắt công tắc ở Cài đặt / đăng xuất). File đã tải GIỮ NGUYÊN trong
+// cache — vẫn dùng được offline; bật lại thì chỉ tải tiếp phần còn thiếu.
+export function stopDataPrecache(): void {
+  generation++
+  running = false
+}
+
+// Tóm tắt cho Cài đặt: tổng dung lượng bộ dữ liệu + phần ĐÃ tải trên máy này (theo bản đồ hash
+// trong localStorage — ước lượng, không mở Cache Storage để đếm từng file).
+export interface DataPackSummary {
+  totalBytes: number
+  cachedBytes: number
+  fileCount: number
+}
+
+export async function fetchDataPackSummary(): Promise<DataPackSummary> {
+  const res = await fetch(MANIFEST_URL, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`manifest HTTP ${res.status}`)
+  const manifest = (await res.json()) as Manifest
+  const map = loadMap()
+  const cachedBytes = manifest.files.reduce((s, f) => (map[f.path] === f.hash ? s + f.size : s), 0)
+  return { totalBytes: manifest.totalBytes, cachedBytes, fileCount: manifest.files.length }
+}
+
+async function runPrecache(myGen: number): Promise<void> {
   // Lấy manifest MỚI (no-store + bỏ qua service worker cache).
   const res = await fetch(MANIFEST_URL, { cache: 'no-store' })
   if (!res.ok) return
@@ -131,6 +174,7 @@ async function runPrecache(): Promise<void> {
   for (const f of queue) {
     await waitOnline()
     await idle()
+    if (myGen !== generation) return // đã bị dừng giữa chừng
     const url = '/' + f.path
     try {
       // Nếu file ĐỔI: xoá bản cũ để service worker (cache-first) buộc lấy bản mới từ mạng.

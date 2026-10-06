@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { LangProvider } from './context/LangProvider'
 import { AppThemeProvider as ThemeProvider } from './context/AppThemeProvider'
 import { AuthProvider } from './context/AuthProvider'
+import DataPrecacheGate from './components/DataPrecacheGate'
 import { ToastProvider } from '@core/ToastProvider'
 import { useAuth } from './context/useAuth'
 import { CardListSkeleton } from './components/Skeleton'
@@ -967,6 +968,8 @@ export default function App() {
               <Suspense fallback={null}>
                 <OfflineSyncIndicator />
               </Suspense>
+              {/* Tải ngầm dữ liệu học ngoại tuyến — chỉ khi đủ điều kiện (audit M14). */}
+              <DataPrecacheGate />
               <BottomNav />
             </BrowserRouter>
           </ToastProvider>

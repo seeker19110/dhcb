@@ -5,7 +5,7 @@ import { ThemeProvider } from '@core/ThemeProvider'
 import App from './App'
 import './index.css'
 
-// Áp dụng theme đã lưu (hoặc dark-blue mặc định) ngay trước khi render để tránh giật giao diện
+// Áp dụng theme đã lưu (chưa chọn → theo chế độ sáng/tối của máy) ngay trước khi render để tránh giật giao diện
 applyTheme(getTheme())
 
 createRoot(document.getElementById('root')!).render(
