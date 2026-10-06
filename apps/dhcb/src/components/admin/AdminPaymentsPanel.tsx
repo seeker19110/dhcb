@@ -243,11 +243,11 @@ export default function AdminPaymentsPanel() {
                   <td className="p-3 font-mono font-bold text-white">{p.paymentCode}</td>
                   <td className="p-3">
                     <div className="font-medium text-white">{p.userName || 'Chưa cập nhật'}</div>
-                    <div className="text-zinc-400 text-[11px]">{p.userEmail || p.userId}</div>
+                    <div className="text-zinc-400 text-[0.6875rem]">{p.userEmail || p.userId}</div>
                   </td>
                   <td className="p-3">
                     <span
-                      className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-bold uppercase mr-1.5 ${
+                      className={`inline-block px-1.5 py-0.5 rounded text-[0.6875rem] font-bold uppercase mr-1.5 ${
                         p.plan === 'vip'
                           ? 'bg-amber-500/20 text-amber-300 theme-light:text-amber-900'
                           : 'bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800'
@@ -258,26 +258,26 @@ export default function AdminPaymentsPanel() {
                     <span className="font-semibold text-white">
                       {p.amountVnd.toLocaleString('vi-VN')} đ
                     </span>
-                    <span className="text-zinc-500 text-[11px] block">{p.cycle}</span>
+                    <span className="text-zinc-500 text-[0.6875rem] block">{p.cycle}</span>
                   </td>
                   <td className="p-3">
                     {p.status === 'paid' && (
-                      <span className="inline-flex items-center gap-1 text-emerald-400 theme-light:text-emerald-900 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-emerald-400 theme-light:text-emerald-900 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full text-[0.6875rem]">
                         <CheckCircle2 className="w-3 h-3" /> Đã trả
                       </span>
                     )}
                     {p.status === 'pending' && (
-                      <span className="inline-flex items-center gap-1 text-amber-400 theme-light:text-amber-900 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-amber-400 theme-light:text-amber-900 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-full text-[0.6875rem]">
                         <Clock className="w-3 h-3" /> Chờ trả
                       </span>
                     )}
                     {p.status === 'expired' && (
-                      <span className="inline-flex items-center gap-1 text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full text-[0.6875rem]">
                         Quá hạn
                       </span>
                     )}
                   </td>
-                  <td className="p-3 text-zinc-400 text-[11px]">
+                  <td className="p-3 text-zinc-400 text-[0.6875rem]">
                     <div>Tạo: {new Date(p.createdAt).toLocaleString('vi-VN')}</div>
                     {p.paidAt && (
                       <div className="text-emerald-400 theme-light:text-emerald-900">
@@ -290,12 +290,12 @@ export default function AdminPaymentsPanel() {
                       <button
                         type="button"
                         onClick={() => handleOpenMatchModal(p)}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium text-[11px] transition shadow"
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium text-[0.6875rem] transition shadow"
                       >
                         Khớp đơn tay
                       </button>
                     ) : (
-                      <span className="text-content-muted text-[11px]">Hoàn tất</span>
+                      <span className="text-content-muted text-[0.6875rem]">Hoàn tất</span>
                     )}
                   </td>
                 </tr>
@@ -360,11 +360,11 @@ export default function AdminPaymentsPanel() {
                   onChange={(e) => setManualEmail(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-500"
                 />
-                <p className="text-[11px] text-zinc-500 mt-1">
+                <p className="text-[0.6875rem] text-zinc-500 mt-1">
                   Hệ thống sẽ chuyển trạng thái đơn sang ĐÃ THANH TOÁN và lập tức cộng thêm số ngày
                   gói {matchingPayment.plan.toUpperCase()} tương ứng cho người dùng này.
                 </p>
-                <p className="text-[11px] text-zinc-400 mt-1">
+                <p className="text-[0.6875rem] text-zinc-400 mt-1">
                   💡{' '}
                   <em>
                     Mã thanh toán hệ thống hiện sử dụng tiền tố{' '}

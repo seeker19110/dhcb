@@ -119,10 +119,10 @@ export default function ProgrammingCoursePage() {
                   <div className="course-flow-beam absolute top-[10px] left-2 w-2 h-2 rounded-full bg-accent-300 shadow-[0_0_14px_currentColor]" />
                   {course.chapters.map((chapter, index) => (
                     <div key={chapter.id} className="relative flex flex-col items-center gap-2">
-                      <span className="relative z-10 grid place-items-center w-6 h-6 rounded-full border border-accent-500/60 bg-zinc-950 text-[11px] font-bold text-accent-200">
+                      <span className="relative z-10 grid place-items-center w-6 h-6 rounded-full border border-accent-500/60 bg-zinc-950 text-[0.6875rem] font-bold text-accent-200">
                         {index + 1}
                       </span>
-                      <span className="text-[11px] text-zinc-300 text-center leading-tight">
+                      <span className="text-[0.6875rem] text-zinc-300 text-center leading-tight">
                         {chapter.weeks}
                       </span>
                     </div>
@@ -188,7 +188,7 @@ export default function ProgrammingCoursePage() {
                         </p>
                       </div>
                       {chapterCompleted && (
-                        <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[11px] font-semibold text-emerald-300 theme-light:text-emerald-800">
+                        <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[0.6875rem] font-semibold text-emerald-300 theme-light:text-emerald-800">
                           <CheckCircle2 className="w-3 h-3" /> Hoàn thành
                         </span>
                       )}

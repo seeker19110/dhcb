@@ -255,7 +255,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
                   }
                   className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950/70 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-accent-500/50 resize-none"
                 />
-                <span className="absolute bottom-2 right-3 text-[11px] text-zinc-500">
+                <span className="absolute bottom-2 right-3 text-[0.6875rem] text-zinc-500">
                   {message.length}/10000
                 </span>
               </div>
@@ -278,7 +278,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
 
             {/* Actions */}
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[11px] text-zinc-500 flex items-center gap-1">
+              <span className="text-[0.6875rem] text-zinc-500 flex items-center gap-1">
                 <HelpCircle className="w-3.5 h-3.5 text-zinc-500" />
                 {isA ? 'Ghi nhận tự động context' : 'Auto context included'}
               </span>

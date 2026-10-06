@@ -18,7 +18,7 @@ export const EdgeAiIndicator: React.FC<EdgeAiIndicatorProps> = ({ className = ''
     <>
       <button
         onClick={() => setShowDetails(true)}
-        className={`tap-44-y inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition border ${
+        className={`tap-44-y inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold transition border ${
           isWebGpu
             ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 border-emerald-500/30'
             : capability.inferenceMode === 'wasm'
@@ -72,7 +72,7 @@ export const EdgeAiIndicator: React.FC<EdgeAiIndicatorProps> = ({ className = ''
                 {capability.adapterName && (
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-400">Phần cứng xử lý:</span>
-                    <span className="font-mono text-zinc-200 text-[11px] truncate max-w-[200px]">
+                    <span className="font-mono text-zinc-200 text-[0.6875rem] truncate max-w-[200px]">
                       {capability.adapterName}
                     </span>
                   </div>
@@ -87,7 +87,7 @@ export const EdgeAiIndicator: React.FC<EdgeAiIndicatorProps> = ({ className = ''
                 )}
               </div>
 
-              <div className="space-y-2 text-zinc-300 leading-relaxed text-[11px]">
+              <div className="space-y-2 text-zinc-300 leading-relaxed text-[0.6875rem]">
                 <div className="flex items-start gap-2">
                   <Zap className="w-4 h-4 text-emerald-400 theme-light:text-emerald-900 shrink-0 mt-0.5" />
                   <span>

@@ -143,7 +143,7 @@ export function PlanFeatureCard({
         <span aria-hidden>{info.badge}</span>
         <span className="text-sm font-semibold text-white">{info.title.vi}</span>
         {isCurrent && (
-          <span className="text-[11px] font-medium text-accent-300 theme-light:text-accent-800 bg-accent-500/15 rounded-full px-1.5 py-0.5">
+          <span className="text-[0.6875rem] font-medium text-accent-300 theme-light:text-accent-800 bg-accent-500/15 rounded-full px-1.5 py-0.5">
             {isA ? 'Đang dùng' : 'Current'}
           </span>
         )}

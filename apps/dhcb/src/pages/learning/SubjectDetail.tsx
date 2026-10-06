@@ -438,7 +438,7 @@ export default function SubjectDetail() {
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <span
-                  className={`text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${theme.ring} bg-zinc-900/60 ${theme.accent}`}
+                  className={`text-[0.6875rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${theme.ring} bg-zinc-900/60 ${theme.accent}`}
                 >
                   AI Gia Sư
                 </span>
@@ -801,7 +801,9 @@ export default function SubjectDetail() {
                         <p className="text-xs font-mono text-amber-300 theme-light:text-amber-900 bg-zinc-900/90 px-2.5 py-1.5 rounded-xl border border-zinc-800 overflow-x-auto">
                           {kf.formula}
                         </p>
-                        {kf.note && <p className="text-[11px] text-zinc-400 italic">{kf.note}</p>}
+                        {kf.note && (
+                          <p className="text-[0.6875rem] text-zinc-400 italic">{kf.note}</p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -850,7 +852,7 @@ export default function SubjectDetail() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase mr-2 border ${
+                        className={`px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold uppercase mr-2 border ${
                           prob.difficulty === 'basic'
                             ? 'bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-900 border-emerald-500/30'
                             : prob.difficulty === 'intermediate'

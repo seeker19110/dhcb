@@ -226,14 +226,14 @@ export default function NotesKanban() {
                             {task.title}
                           </p>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-bold border shrink-0 ${priority.cls}`}
+                            className={`px-2 py-0.5 rounded-full text-[0.6875rem] font-bold border shrink-0 ${priority.cls}`}
                           >
                             {priority.label}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-zinc-900 text-xs">
-                          <span className="text-[11px] text-zinc-500">
+                          <span className="text-[0.6875rem] text-zinc-500">
                             {task.dueAt ? `Hạn: ${task.dueAt}` : 'Chưa có hạn'}
                           </span>
                           <button
@@ -287,7 +287,7 @@ export default function NotesKanban() {
                       <div className="flex justify-end pt-1">
                         <button
                           onClick={() => handleStatusChange(task, 'todo')}
-                          className="tap-44 text-[11px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition"
+                          className="tap-44 text-[0.6875rem] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition"
                         >
                           <ArrowLeft className="w-3 h-3" />
                           <span>Làm lại</span>

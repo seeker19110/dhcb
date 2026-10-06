@@ -168,7 +168,7 @@ export default function AdminVipWhitelistPanel() {
               <div className="min-w-0">
                 <p className="text-sm text-white truncate">{item.email}</p>
                 {item.note && <p className="text-xs text-zinc-500 truncate">{item.note}</p>}
-                <p className="text-[11px] text-content-muted">
+                <p className="text-[0.6875rem] text-content-muted">
                   {new Date(item.createdAt).toLocaleDateString('vi-VN')}
                 </p>
               </div>

@@ -23,7 +23,7 @@ export function CapstoneProjects() {
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 theme-light:text-amber-800 font-mono">
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 theme-light:text-amber-800 font-mono">
                   ⏱️ {item.miniProject.duration}
                 </span>
                 <span className="text-xs text-zinc-500">{item.gradeLabel}</span>

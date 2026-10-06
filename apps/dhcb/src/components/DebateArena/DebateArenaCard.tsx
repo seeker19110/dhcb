@@ -18,10 +18,10 @@ export default function DebateArenaCard({ onOpenTopic }: DebateArenaCardProps) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200 theme-light:text-indigo-800 border border-indigo-500/30 tracking-wide uppercase">
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200 theme-light:text-indigo-800 border border-indigo-500/30 tracking-wide uppercase">
                   Platform V5 Flagship
                 </span>
-                <span className="text-[11px] font-semibold text-zinc-400">
+                <span className="text-[0.6875rem] font-semibold text-zinc-400">
                   Oxbridge & Toulmin Model
                 </span>
               </div>

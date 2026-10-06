@@ -132,7 +132,7 @@ export default function LeagueSection({ isA }: { isA: boolean }) {
 
       {!loading && !error && data && (
         <>
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[0.6875rem] text-zinc-400">
             {isA
               ? 'Điểm cộng khi học từ mới, ôn SRS, luyện Chat/Viết/Nói và nộp challenge. Chỉ hiện biệt danh bạn chọn — không lộ email/tên thật.'
               : 'Points come from learning words, SRS review, Chat/Writing/Speaking, and submitting challenges. Only your chosen nickname is shown — never your email or real name.'}

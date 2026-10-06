@@ -23,7 +23,7 @@ export default function MemoryPalaceCard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 theme-light:text-amber-900 border border-amber-500/30">
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 theme-light:text-amber-900 border border-amber-500/30">
                   Ghi nhớ bằng không gian
                 </span>
               </div>

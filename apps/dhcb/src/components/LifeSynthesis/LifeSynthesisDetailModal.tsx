@@ -98,19 +98,23 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
           {/* Core Metrics Grid */}
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
-              <span className="text-[11px] font-semibold text-zinc-400">Đồng bộ toàn diện</span>
+              <span className="text-[0.6875rem] font-semibold text-zinc-400">
+                Đồng bộ toàn diện
+              </span>
               <div className="text-xl font-black text-accent-400 mt-1">
                 {report.holisticAlignmentScore}%
               </div>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
-              <span className="text-[11px] font-semibold text-zinc-400">Cộng hưởng đa miền</span>
+              <span className="text-[0.6875rem] font-semibold text-zinc-400">
+                Cộng hưởng đa miền
+              </span>
               <div className="text-xl font-black text-indigo-400 theme-light:text-indigo-800 mt-1">
                 {report.lifeSynergyIndex}%
               </div>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
-              <span className="text-[11px] font-semibold text-zinc-400">Bền bỉ nhận thức</span>
+              <span className="text-[0.6875rem] font-semibold text-zinc-400">Bền bỉ nhận thức</span>
               <div className="text-xl font-black text-emerald-400 theme-light:text-emerald-900 mt-1">
                 {report.cognitiveResilienceScore}%
               </div>
@@ -134,11 +138,11 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-zinc-100">{goal.title}</span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-accent-500/15 text-accent-300 font-semibold border border-accent-500/25">
+                        <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-accent-500/15 text-accent-300 font-semibold border border-accent-500/25">
                           {domainLabelMap[goal.domain]}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                      <p className="text-[0.6875rem] text-zinc-400 mt-0.5">
                         Ngày mục tiêu: {goal.targetDate} · Dự kiến về đích:{' '}
                         <strong className="text-zinc-200">{goal.estimatedCompletionDate}</strong>
                       </p>
@@ -148,7 +152,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
                       <span className="text-base font-black text-emerald-400 theme-light:text-emerald-900">
                         {goal.successProbabilityPercent}%
                       </span>
-                      <span className="block text-[11px] text-zinc-500 uppercase font-semibold">
+                      <span className="block text-[0.6875rem] text-zinc-500 uppercase font-semibold">
                         Xác suất đạt
                       </span>
                     </div>
@@ -156,7 +160,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
 
                   {/* Critical Path Steps */}
                   <div className="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 space-y-1.5">
-                    <span className="text-[11px] font-bold text-zinc-400 block">
+                    <span className="text-[0.6875rem] font-bold text-zinc-400 block">
                       Các bước đường găng (Critical Path):
                     </span>
                     {goal.criticalPathSteps.map((step, sIdx) => (
@@ -187,7 +191,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-zinc-200">{rec.title}</span>
                     <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                      className={`text-[0.6875rem] font-bold px-2 py-0.5 rounded-full border ${
                         rec.priority === 'critical'
                           ? 'bg-rose-500/15 text-rose-300 theme-light:text-rose-900 border-rose-500/30'
                           : rec.priority === 'high'
@@ -199,7 +203,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300">{rec.actionPrompt}</p>
-                  <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-zinc-800/60">
+                  <div className="flex items-center justify-between text-[0.6875rem] text-zinc-400 pt-1 border-t border-zinc-800/60">
                     <span>⚡ {rec.expectedSynergyImpact}</span>
                     <span>⏱️ ~{rec.estimatedMinutes} phút</span>
                   </div>

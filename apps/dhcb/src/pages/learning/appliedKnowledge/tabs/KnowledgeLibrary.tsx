@@ -87,7 +87,7 @@ export function KnowledgeLibrary() {
             <button
               key={s.id}
               onClick={() => setSelectedSubject(s.id as SubjectCategory | 'all')}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition ${
+              className={`px-2.5 py-1 rounded-lg text-[0.6875rem] font-medium transition ${
                 selectedSubject === s.id
                   ? 'bg-blue-600 text-[#fff]'
                   : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
@@ -109,7 +109,7 @@ export function KnowledgeLibrary() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-accent-500/20 text-accent-400 theme-light:text-accent-800 font-mono">
+                  <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded bg-accent-500/20 text-accent-400 theme-light:text-accent-800 font-mono">
                     {item.gradeLabel}
                   </span>
                   <span className="text-xs text-zinc-400">• {item.topic}</span>

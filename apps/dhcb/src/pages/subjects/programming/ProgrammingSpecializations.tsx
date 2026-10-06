@@ -60,18 +60,18 @@ function SpecCard({
           <ArrowRight className="w-4 h-4 text-accent-400 shrink-0 mt-1" aria-hidden="true" />
         </div>
         {theo && (
-          <p className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 border border-emerald-500/50 text-emerald-200 theme-light:text-emerald-900">
+          <p className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-emerald-500/15 border border-emerald-500/50 text-emerald-200 theme-light:text-emerald-900">
             <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
             Bạn đang theo hướng này · {soChangXong}/{spec.stages.length} chặng xong
           </p>
         )}
         <p className="text-sm text-zinc-200 leading-relaxed read-measure">{spec.tagline}</p>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
             <Lock className="w-3 h-3" aria-hidden="true" />
             Cần xong bậc {spec.prerequisite.toUpperCase()}
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
             <Clock className="w-3 h-3" aria-hidden="true" />
             {spec.duration}
           </span>

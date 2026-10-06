@@ -160,7 +160,7 @@ export default function AdminFeatureStatusPanel() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${OVERALL_CLASS[latest.overall_status]}`}
+                className={`px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold border ${OVERALL_CLASS[latest.overall_status]}`}
               >
                 {OVERALL_LABEL[latest.overall_status]}
               </span>
@@ -185,11 +185,11 @@ export default function AdminFeatureStatusPanel() {
                       <span className="font-semibold text-zinc-200 text-xs truncate">
                         {r.label}
                       </span>
-                      <span className="text-[11px] text-zinc-500 shrink-0">
+                      <span className="text-[0.6875rem] text-zinc-500 shrink-0">
                         {r.usesApi ? '(dùng API)' : '(không dùng API)'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-zinc-500 truncate">
+                    <p className="text-[0.6875rem] text-zinc-500 truncate">
                       {r.status === 'unconfigured'
                         ? 'Chưa cấu hình'
                         : r.status === 'up'
@@ -212,7 +212,7 @@ export default function AdminFeatureStatusPanel() {
               {history.map((h) => (
                 <li key={h.id} className="flex items-center gap-2 text-zinc-500">
                   <span
-                    className={`px-1.5 py-0.5 rounded text-[11px] font-bold border ${OVERALL_CLASS[h.overall_status]}`}
+                    className={`px-1.5 py-0.5 rounded text-[0.6875rem] font-bold border ${OVERALL_CLASS[h.overall_status]}`}
                   >
                     {h.overall_status}
                   </span>

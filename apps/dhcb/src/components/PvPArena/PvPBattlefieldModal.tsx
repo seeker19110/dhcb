@@ -155,7 +155,7 @@ export default function PvPBattlefieldModal({
               >
                 Đấu Trường 1v1 PvP
               </div>
-              <div className="text-[11px] text-zinc-400">
+              <div className="text-[0.6875rem] text-zinc-400">
                 Hiệp {Math.min(currentRound + 1, match.totalRounds)} / {match.totalRounds}
               </div>
             </div>
@@ -184,7 +184,7 @@ export default function PvPBattlefieldModal({
               </div>
               <div className="text-lg sm:text-xl font-black text-white flex items-center gap-1.5">
                 <span>{p1Score}</span>
-                <span className="text-[11px] font-semibold text-indigo-400 theme-light:text-indigo-800">
+                <span className="text-[0.6875rem] font-semibold text-indigo-400 theme-light:text-indigo-800">
                   pts
                 </span>
               </div>
@@ -200,7 +200,7 @@ export default function PvPBattlefieldModal({
           <div className="flex items-center justify-end gap-3 p-3 rounded-2xl bg-purple-950/40 border border-purple-500/30 text-right">
             <div className="min-w-0 flex-1">
               {match.player2.isGhostBot && (
-                <div className="text-[11px] font-black text-purple-300 theme-light:text-purple-800">
+                <div className="text-[0.6875rem] font-black text-purple-300 theme-light:text-purple-800">
                   Đối thủ AI
                 </div>
               )}
@@ -209,7 +209,7 @@ export default function PvPBattlefieldModal({
               </div>
               <div className="text-lg sm:text-xl font-black text-white flex items-center justify-end gap-1.5">
                 <span>{p2Score}</span>
-                <span className="text-[11px] font-semibold text-purple-400 theme-light:text-purple-800">
+                <span className="text-[0.6875rem] font-semibold text-purple-400 theme-light:text-purple-800">
                   pts
                 </span>
               </div>
@@ -268,7 +268,7 @@ export default function PvPBattlefieldModal({
                   <Timer className="w-4 h-4 animate-pulse" />
                   <span>Thời gian: {timeLeft}s</span>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-zinc-400">
+                <div className="flex items-center gap-1 text-[0.6875rem] font-semibold text-zinc-400">
                   <Flame className="w-3.5 h-3.5 text-orange-400 theme-light:text-orange-900" />
                   <span>Cấp độ: {currentQ.cefrLevel}</span>
                 </div>
@@ -346,7 +346,7 @@ export default function PvPBattlefieldModal({
                   <Sparkles className="w-4 h-4 text-amber-400 theme-light:text-amber-900 shrink-0 mt-0.5" />
                   <div>
                     <strong>Giải thích:</strong> {currentQ.explanation}
-                    <div className="mt-1 text-[11px] text-zinc-300">
+                    <div className="mt-1 text-[0.6875rem] text-zinc-300">
                       Điểm bạn nhận: +{roundResult.p1Action?.pointsEarned || 0} pts | Đối thủ: +
                       {roundResult.p2Action?.pointsEarned || 0} pts
                     </div>

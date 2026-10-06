@@ -341,7 +341,7 @@ export default function StudioDialogue({
                     }`}
                   >
                     {isBot && (msg.domain || msg.intent) && (
-                      <div className="flex flex-wrap items-center gap-2 mb-3 pb-2.5 border-b border-zinc-800/70 text-[11px]">
+                      <div className="flex flex-wrap items-center gap-2 mb-3 pb-2.5 border-b border-zinc-800/70 text-[0.6875rem]">
                         {msg.domain && (
                           <span className="px-2.5 py-0.5 rounded-full bg-accent-500/15 text-accent-300 theme-light:text-accent-900 border border-accent-500/25 font-semibold">
                             {getDomainLabel(msg.domain)}
@@ -355,7 +355,7 @@ export default function StudioDialogue({
                         {msg.contextPackage && (
                           <button
                             onClick={() => setActiveContext(msg.contextPackage || null)}
-                            className="ml-auto flex items-center gap-1 text-zinc-400 hover:text-accent-300 transition text-[11px]"
+                            className="ml-auto flex items-center gap-1 text-zinc-400 hover:text-accent-300 transition text-[0.6875rem]"
                           >
                             <Info className="w-3.5 h-3.5" />
                             <span>
@@ -374,7 +374,7 @@ export default function StudioDialogue({
                     {isBot ? (
                       <ChatProse text={msg.text} />
                     ) : (
-                      <div className="text-sm sm:text-[15px] leading-relaxed whitespace-pre-wrap">
+                      <div className="text-sm sm:text-[0.9375rem] leading-relaxed whitespace-pre-wrap">
                         {msg.text}
                       </div>
                     )}
@@ -410,10 +410,10 @@ export default function StudioDialogue({
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <span className="font-semibold text-zinc-100 text-[13px]">
+                                  <span className="font-semibold text-zinc-100 text-[0.8125rem]">
                                     {action.action}
                                   </span>
-                                  <div className="text-[11px] text-zinc-400 mt-1">
+                                  <div className="text-[0.6875rem] text-zinc-400 mt-1">
                                     Lĩnh vực:{' '}
                                     <span className="text-zinc-200 font-medium">
                                       {action.targetDomain}
@@ -480,7 +480,9 @@ export default function StudioDialogue({
                       </div>
                     )}
 
-                    <div className="text-[11px] text-zinc-400 text-right mt-2">{msg.timestamp}</div>
+                    <div className="text-[0.6875rem] text-zinc-400 text-right mt-2">
+                      {msg.timestamp}
+                    </div>
                   </div>
 
                   {!isBot && (

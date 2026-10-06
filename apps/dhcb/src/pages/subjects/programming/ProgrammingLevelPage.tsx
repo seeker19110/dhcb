@@ -262,11 +262,11 @@ export default function ProgrammingLevelPage() {
                             {unit.title}
                           </p>
                           {lessons.length === 0 ? (
-                            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-[11px] font-semibold text-zinc-400">
+                            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-[0.6875rem] font-semibold text-zinc-400">
                               <Lock className="w-3 h-3" /> Sắp mở
                             </span>
                           ) : unitCompleted ? (
-                            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[11px] font-semibold text-emerald-300 theme-light:text-emerald-800">
+                            <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[0.6875rem] font-semibold text-emerald-300 theme-light:text-emerald-800">
                               <CheckCircle2 className="w-3 h-3" /> Hoàn thành
                             </span>
                           ) : null}

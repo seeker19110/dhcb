@@ -102,7 +102,7 @@ export default function SocraticDiagnosticsCard() {
               <h3 className="text-base font-bold text-white tracking-wide">
                 Socratic Cognitive Diagnostic Engine
               </h3>
-              <span className="text-[11px] px-2 py-0.5 font-bold uppercase rounded-full bg-violet-500/20 text-violet-200 theme-light:text-violet-900 border border-violet-500/30">
+              <span className="text-[0.6875rem] px-2 py-0.5 font-bold uppercase rounded-full bg-violet-500/20 text-violet-200 theme-light:text-violet-900 border border-violet-500/30">
                 Mental Model Debugger
               </span>
             </div>
@@ -143,7 +143,7 @@ export default function SocraticDiagnosticsCard() {
                       : 'bg-surface-raised border-line-subtle hover:border-line-strong'
                   }`}
                 >
-                  <div className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded bg-violet-500/20 text-violet-200 theme-light:text-violet-900 w-fit mb-2">
+                  <div className="text-[0.6875rem] font-semibold uppercase px-2 py-0.5 rounded bg-violet-500/20 text-violet-200 theme-light:text-violet-900 w-fit mb-2">
                     {m.domain.replace(/_/g, ' ')}
                   </div>
                   <h4
@@ -193,7 +193,7 @@ export default function SocraticDiagnosticsCard() {
               <div key={idx} className="space-y-2">
                 {/* Socratic Question */}
                 <div className="p-3 rounded-xl bg-violet-950/40 border border-violet-500/30 text-xs text-violet-100 theme-light:text-violet-800 flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-200 theme-light:text-violet-900 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-200 theme-light:text-violet-900 text-[0.6875rem] font-bold flex items-center justify-center shrink-0 mt-0.5">
                     Q{idx + 1}
                   </div>
                   <div>

@@ -26,7 +26,7 @@ interface Props {
 function Dot({ member }: { member: MemberPosition }) {
   return (
     <span
-      className="inline-flex h-5 w-5 items-center justify-center rounded-full align-middle text-[11px] font-bold"
+      className="inline-flex h-5 w-5 items-center justify-center rounded-full align-middle text-[0.6875rem] font-bold"
       style={{ backgroundColor: memberColor(member.userId), color: MEMBER_INK }}
       aria-hidden="true"
     >

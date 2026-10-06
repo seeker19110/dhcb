@@ -203,7 +203,7 @@ function WeekBoard({ cells, isA }: { cells: WeekCell[]; isA: boolean }) {
             className="flex flex-col items-center gap-1"
           >
             <span
-              className={`w-full aspect-square rounded-lg flex items-center justify-center text-[11px] font-semibold border transition ${
+              className={`w-full aspect-square rounded-lg flex items-center justify-center text-[0.6875rem] font-semibold border transition ${
                 done
                   ? 'bg-accent-500 text-black border-transparent'
                   : c.isToday
@@ -216,7 +216,7 @@ function WeekBoard({ cells, isA }: { cells: WeekCell[]; isA: boolean }) {
               {done ? <Check className="w-3.5 h-3.5" /> : Number(c.date.slice(8))}
             </span>
             <span
-              className={`text-[11px] ${c.isToday ? 'text-accent-400 theme-light:text-accent-800 font-bold' : 'text-zinc-400'}`}
+              className={`text-[0.6875rem] ${c.isToday ? 'text-accent-400 theme-light:text-accent-800 font-bold' : 'text-zinc-400'}`}
             >
               {labels[i]}
             </span>
@@ -257,7 +257,7 @@ function ChallengePlayback({ uid, day, label }: { uid: string; day: string; labe
         <div className="h-56 rounded-xl bg-zinc-900 animate-pulse" />
       ) : media === null ? (
         <div className="h-56 rounded-xl bg-zinc-900/60 border border-zinc-800/60 flex items-center justify-center text-center px-2">
-          <p className="text-[11px] text-zinc-400">Video không còn trên máy này</p>
+          <p className="text-[0.6875rem] text-zinc-400">Video không còn trên máy này</p>
         </div>
       ) : media.kind === 'video' ? (
         /* eslint-disable-next-line jsx-a11y/media-has-caption -- bản ghi của CHÍNH người dùng,
@@ -857,7 +857,7 @@ export default function Challenge() {
                   <Square className="w-6 h-6 text-white fill-current" />
                 </button>
                 {elapsedSec < MIN_CHALLENGE_SEC && (
-                  <p className="text-[11px] text-zinc-400">
+                  <p className="text-[0.6875rem] text-zinc-400">
                     {isA
                       ? `Nói thêm ${MIN_CHALLENGE_SEC - elapsedSec}s nữa mới dừng được`
                       : `${MIN_CHALLENGE_SEC - elapsedSec}s more before you can stop`}

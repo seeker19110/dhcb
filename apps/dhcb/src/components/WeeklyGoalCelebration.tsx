@@ -44,7 +44,7 @@ export function WeeklyGoalCelebrationContent({ uid, isA }: WeeklyGoalCelebration
           return (
             <div key={label} className="flex flex-col items-center gap-1">
               <span
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-[0.6875rem] font-bold ${
                   d?.active
                     ? 'bg-accent-500 text-black'
                     : d
@@ -55,7 +55,7 @@ export function WeeklyGoalCelebrationContent({ uid, isA }: WeeklyGoalCelebration
                 {d?.active ? '✓' : ''}
               </span>
               <span
-                className={`text-[11px] ${isToday ? 'text-accent-400 font-bold' : 'text-zinc-500'}`}
+                className={`text-[0.6875rem] ${isToday ? 'text-accent-400 font-bold' : 'text-zinc-500'}`}
               >
                 {label}
               </span>

@@ -397,7 +397,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors break-words">
                   {isUiVi ? 'Nghe đoán từ vựng' : 'Listen and guess vocabulary'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi ? 'Nghe phát âm, chọn nghĩa đúng' : 'Listen and choose the meaning'}
                 </p>
               </div>
@@ -417,7 +417,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors break-words">
                   {isUiVi ? 'Sắp xếp câu hoàn chỉnh' : 'Put the sentence in order'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Ghép từ ngữ thành câu chuẩn ngữ pháp'
                     : 'Arrange words into a sentence'}
@@ -439,7 +439,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-violet-300 transition-colors break-words">
                   {isUiVi ? 'Nghe & viết chính tả' : 'Listen and type'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Nghe từng câu và gõ lại chính xác'
                     : 'Listen to each sentence and type it'}
@@ -461,7 +461,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors break-words">
                   {isUiVi ? 'Điền từ ngữ cảnh' : 'Fill in the blank'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Khôi phục câu ví dụ đã học'
                     : 'Restore the example sentence you learned'}
@@ -483,7 +483,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors break-words">
                   {isUiVi ? 'Chấm phát âm từ vựng' : 'Word pronunciation'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi ? 'Đọc to từ vựng, AI chấm điểm chuẩn' : 'Read words aloud for feedback'}
                 </p>
               </div>
@@ -503,7 +503,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors break-words">
                   {isUiVi ? 'Đọc lại câu ví dụ' : 'Read example sentences'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi
                     ? 'Rèn ngữ điệu và nối âm tự nhiên'
                     : 'Practice intonation and connected speech'}
@@ -525,7 +525,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-accent-300 transition-colors break-words">
                   {isUiVi ? 'Nói đè theo mẫu' : 'Shadow the model'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi ? 'Nói đồng thời theo nhịp audio phát' : 'Speak along with the audio'}
                 </p>
               </div>
@@ -545,7 +545,7 @@ export default function Practice() {
                 <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors break-words">
                   {isUiVi ? 'Phỏng vấn ngược AI' : 'Reverse interview'}
                 </p>
-                <p className="text-[11px] text-zinc-400 break-words">
+                <p className="text-[0.6875rem] text-zinc-400 break-words">
                   {isUiVi
                     ? 'AI đặt câu hỏi, bạn trả lời bằng giọng nói'
                     : 'Answer AI questions by voice'}
@@ -593,7 +593,7 @@ export default function Practice() {
             <h2 className={TIEU_DE_MUC}>3. Luyện tập 5 môn học & giải đề từng bước</h2>
             <button
               onClick={() => goToSubjects(nav)}
-              className="tap-44-y text-[11px] text-zinc-400 hover:text-blue-300 transition flex items-center gap-1 font-medium"
+              className="tap-44-y text-[0.6875rem] text-zinc-400 hover:text-blue-300 transition flex items-center gap-1 font-medium"
             >
               <span>Xem tất cả môn</span>
               <ChevronRight className="w-3 h-3" />
@@ -613,16 +613,16 @@ export default function Practice() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">Toán Học</h3>
-                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-300 theme-light:text-blue-800 font-semibold border border-blue-500/20">
+                    <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-300 theme-light:text-blue-800 font-semibold border border-blue-500/20">
                       Giải từng bước
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
+                  <p className="text-[0.6875rem] text-zinc-400 break-words leading-relaxed">
                     Khảo sát hàm số, đạo hàm, tích phân, hình học Oxyz & giải đề thi.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-blue-400 theme-light:text-blue-800 font-medium pt-2 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[0.6875rem] text-blue-400 theme-light:text-blue-800 font-medium pt-2 border-t border-zinc-800/80">
                 <span>Giải bài tập & Nhận gợi ý gợi mở</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -640,16 +640,16 @@ export default function Practice() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">Vật Lý</h3>
-                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 theme-light:text-cyan-800 font-semibold border border-cyan-500/20">
+                    <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 theme-light:text-cyan-800 font-semibold border border-cyan-500/20">
                       Thí nghiệm mô phỏng
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
+                  <p className="text-[0.6875rem] text-zinc-400 break-words leading-relaxed">
                     Dao động cơ, sóng âm, điện xoay chiều kèm phân tích công thức.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-cyan-400 theme-light:text-cyan-800 font-medium pt-2 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[0.6875rem] text-cyan-400 theme-light:text-cyan-800 font-medium pt-2 border-t border-zinc-800/80">
                 <span>Luyện giải & Thí nghiệm</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -667,16 +667,16 @@ export default function Practice() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">Hóa Học</h3>
-                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 theme-light:text-amber-800 font-semibold border border-amber-500/20">
+                    <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 theme-light:text-amber-800 font-semibold border border-amber-500/20">
                       Cân bằng phản ứng
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
+                  <p className="text-[0.6875rem] text-zinc-400 break-words leading-relaxed">
                     Cân bằng oxi hóa khử, este - lipit, amino axit & bài toán dung dịch.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-amber-400 theme-light:text-amber-800 font-medium pt-2 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[0.6875rem] text-amber-400 theme-light:text-amber-800 font-medium pt-2 border-t border-zinc-800/80">
                 <span>Luyện chuỗi phản ứng</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -694,16 +694,16 @@ export default function Practice() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">Sinh Học</h3>
-                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 font-semibold border border-emerald-500/20">
+                    <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 theme-light:text-emerald-800 font-semibold border border-emerald-500/20">
                       Di Truyền
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
+                  <p className="text-[0.6875rem] text-zinc-400 break-words leading-relaxed">
                     Di truyền Mendel, phiên mã ADN, đột biến gen và phả hệ.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-emerald-400 theme-light:text-emerald-800 font-medium pt-2 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[0.6875rem] text-emerald-400 theme-light:text-emerald-800 font-medium pt-2 border-t border-zinc-800/80">
                 <span>Luyện giải bài tập ADN</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -721,16 +721,16 @@ export default function Practice() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">Tiếng Anh CEFR</h3>
-                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 theme-light:text-purple-800 font-semibold border border-purple-500/20">
+                    <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-purple-500/15 text-purple-300 theme-light:text-purple-800 font-semibold border border-purple-500/20">
                       A1 - C2
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
+                  <p className="text-[0.6875rem] text-zinc-400 break-words leading-relaxed">
                     Lộ trình CEFR, từ điển, truyện song ngữ, mẫu câu & thử thách 1 phút.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-purple-400 theme-light:text-purple-800 font-medium pt-2 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[0.6875rem] text-purple-400 theme-light:text-purple-800 font-medium pt-2 border-t border-zinc-800/80">
                 <span>Khám phá lộ trình</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>
@@ -748,16 +748,16 @@ export default function Practice() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <h3 className="font-bold text-white text-sm">10 thí nghiệm STEM</h3>
-                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-teal-500/15 text-teal-300 theme-light:text-teal-800 font-semibold border border-teal-500/20">
+                    <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-teal-500/15 text-teal-300 theme-light:text-teal-800 font-semibold border border-teal-500/20">
                       Phòng thí nghiệm
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 break-words leading-relaxed">
+                  <p className="text-[0.6875rem] text-zinc-400 break-words leading-relaxed">
                     Mô phỏng điện EVN, con lắc lò xo, tên lửa nước, thấu kính quang học.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-teal-400 theme-light:text-teal-800 font-medium pt-2 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[0.6875rem] text-teal-400 theme-light:text-teal-800 font-medium pt-2 border-t border-zinc-800/80">
                 <span>Vào phòng thí nghiệm</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
               </div>

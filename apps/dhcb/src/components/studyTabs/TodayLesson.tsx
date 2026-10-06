@@ -192,7 +192,7 @@ function BatchDoneView({
                 <KaraokeText
                   text={isA ? s.en : s.vi}
                   lang={isA ? 'en-US' : 'vi-VN'}
-                  textClass="font-medium text-[15px] leading-snug text-teal-300 theme-light:text-teal-900"
+                  textClass="font-medium text-[0.9375rem] leading-snug text-teal-300 theme-light:text-teal-900"
                   buttonClass="w-full"
                 />
                 <p className={`text-sm text-zinc-400 mt-1 ${KARAOKE_INDENT}`}>
@@ -232,14 +232,14 @@ function BatchDoneView({
                     className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 border ${isB ? 'bg-teal-500/10 border-teal-500/30' : 'bg-zinc-900/80 border-zinc-800/80'}`}
                   >
                     <span
-                      className={`text-[11px] font-semibold tracking-wide ${isB ? 'text-teal-300 theme-light:text-teal-900' : 'text-zinc-400'}`}
+                      className={`text-[0.6875rem] font-semibold tracking-wide ${isB ? 'text-teal-300 theme-light:text-teal-900' : 'text-zinc-400'}`}
                     >
                       {name}
                     </span>
                     <KaraokeText
                       text={isA ? ln.en : ln.vi}
                       lang={isA ? 'en-US' : 'vi-VN'}
-                      textClass={`font-medium text-[15px] leading-snug ${isB ? 'text-teal-300 theme-light:text-teal-900' : 'text-zinc-100'}`}
+                      textClass={`font-medium text-[0.9375rem] leading-snug ${isB ? 'text-teal-300 theme-light:text-teal-900' : 'text-zinc-100'}`}
                       buttonClass="w-full"
                     />
                     <p className={`text-sm text-zinc-400 mt-1 ${KARAOKE_INDENT}`}>
@@ -700,7 +700,7 @@ export function TodayLesson({
                     }
                   }
                 }}
-                className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-colors ${cls}`}
+                className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[0.9375rem] transition-colors ${cls}`}
               >
                 <QuizOptionKey index={optIdx} />
                 <span className="min-w-0 flex-1">{opt}</span>
@@ -810,7 +810,7 @@ export function TodayLesson({
       {circle && (
         <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 mb-2">
           {circleLevel && (
-            <span className="px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-300 theme-light:text-accent-900 font-bold text-[11px]">
+            <span className="px-1.5 py-0.5 rounded bg-accent-500/15 text-accent-300 theme-light:text-accent-900 font-bold text-[0.6875rem]">
               {circleLevel}
             </span>
           )}

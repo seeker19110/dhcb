@@ -202,7 +202,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-teal-300 theme-light:text-teal-900">Đề bài</h4>
               {problem?.isSolved && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 border border-emerald-500/30 font-bold">
+                <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 border border-emerald-500/30 font-bold">
                   ✓ ĐÃ GIẢI XONG
                 </span>
               )}
@@ -238,7 +238,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                         Bước {step.stepNumber}:
                       </span>
                       <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${hienThi.huyHieu}`}
+                        className={`text-[0.6875rem] font-bold px-2 py-0.5 rounded-full ${hienThi.huyHieu}`}
                       >
                         {hienThi.nhan}
                       </span>
@@ -256,7 +256,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                       <div className={`mt-2 text-xs p-2 rounded-xl ${hienThi.phanHoi}`}>
                         {step.validation.feedback}
                         {step.validation.suggestedCorrection && (
-                          <div className="mt-1 font-mono text-[11px] text-amber-300 theme-light:text-amber-900">
+                          <div className="mt-1 font-mono text-[0.6875rem] text-amber-300 theme-light:text-amber-900">
                             Gợi ý: {step.validation.suggestedCorrection}
                           </div>
                         )}

@@ -149,7 +149,7 @@ export default function ProgrammingHome() {
                   meta: (
                     <>
                       <LangBadge language={picked.lesson.language} />
-                      <span className="text-[11px] font-semibold text-zinc-400">
+                      <span className="text-[0.6875rem] font-semibold text-zinc-400">
                         Bậc {picked.levelId.toUpperCase()} — {picked.levelName}
                       </span>
                     </>
@@ -242,7 +242,7 @@ export default function ProgrammingHome() {
               return (
                 <li key={stage.level} className="shrink-0">
                   <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.6875rem] font-semibold border ${
                       xong
                         ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 theme-light:text-emerald-800'
                         : dangO

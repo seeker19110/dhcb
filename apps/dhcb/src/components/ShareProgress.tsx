@@ -107,7 +107,7 @@ export default function ShareProgress({ userId, isA, onClose }: Props) {
                 <div key={s.label} className="bg-zinc-900/60 rounded-xl p-3 text-center">
                   <p className="text-2xl">{s.emoji}</p>
                   <p className={`text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
-                  <p className="text-[11px] text-zinc-400 mt-0.5">{s.label}</p>
+                  <p className="text-[0.6875rem] text-zinc-400 mt-0.5">{s.label}</p>
                 </div>
               ))}
             </div>

@@ -368,11 +368,11 @@ export default function ProgrammingSpecializationPage() {
           </h2>
           <p className="text-sm text-zinc-200 leading-relaxed read-measure">{spec.forWho}</p>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Lock className="w-3 h-3" aria-hidden="true" />
               Cần xong bậc {spec.prerequisite.toUpperCase()}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Clock className="w-3 h-3" aria-hidden="true" />
               {spec.duration}
             </span>
@@ -517,7 +517,7 @@ export default function ProgrammingSpecializationPage() {
             {spec.careers.map((career) => (
               <li
                 key={career}
-                className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-200"
+                className="px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-200"
               >
                 {career}
               </li>

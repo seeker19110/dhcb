@@ -68,9 +68,9 @@ export default function InteractiveQuestionCard({
             className="bg-zinc-950/80 border border-zinc-800/90 rounded-2xl p-3.5 space-y-2.5 shadow-inner disabled:opacity-70"
           >
             <legend className="sr-only">{question.text}</legend>
-            <p className="text-[13px] font-semibold text-zinc-100 leading-relaxed">
+            <p className="text-[0.8125rem] font-semibold text-zinc-100 leading-relaxed">
               {question.text}
-              <span className="ml-1.5 font-normal text-[11px] text-zinc-400">
+              <span className="ml-1.5 font-normal text-[0.6875rem] text-zinc-400">
                 {question.multi ? '(chọn nhiều)' : '(chọn một)'}
               </span>
             </p>
@@ -131,7 +131,7 @@ export default function InteractiveQuestionCard({
       </button>
 
       {!submitted && answerText.length === 0 && (
-        <p className="text-[11px] text-zinc-400 text-center">
+        <p className="text-[0.6875rem] text-zinc-400 text-center">
           Chọn ít nhất một đáp án, hoặc cứ nhắn tin tự do bên dưới nếu bạn muốn.
         </p>
       )}

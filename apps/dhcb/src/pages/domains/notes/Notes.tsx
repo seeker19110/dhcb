@@ -402,7 +402,7 @@ export default function Notes() {
                             </h4>
                             <div className="flex items-center gap-2 mt-1.5 text-xs text-zinc-400">
                               <span
-                                className={`text-[11px] px-2 py-0.5 rounded font-medium uppercase ${
+                                className={`text-[0.6875rem] px-2 py-0.5 rounded font-medium uppercase ${
                                   task.priority === 'urgent'
                                     ? 'bg-red-950/80 theme-light:bg-red-50 text-red-400 theme-light:text-red-800 border border-red-800/40'
                                     : task.priority === 'high'
@@ -457,7 +457,7 @@ export default function Notes() {
                       <div className="flex items-start justify-between">
                         <h4 className="font-bold text-zinc-100 text-base">{proj.name}</h4>
                         <span
-                          className={`text-[11px] px-2 py-0.5 rounded font-medium uppercase border ${
+                          className={`text-[0.6875rem] px-2 py-0.5 rounded font-medium uppercase border ${
                             proj.status === 'completed'
                               ? 'bg-emerald-950/80 theme-light:bg-emerald-50 text-emerald-400 theme-light:text-emerald-800 border-emerald-800/40'
                               : 'bg-blue-950/80 theme-light:bg-blue-50 text-blue-400 theme-light:text-blue-800 border-blue-800/40'
@@ -585,7 +585,7 @@ export default function Notes() {
                     >
                       <div className="flex items-start justify-between">
                         <h4 className="font-bold text-zinc-100 text-sm">{doc.title}</h4>
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase">
+                        <span className="text-[0.6875rem] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase">
                           {doc.documentType}
                         </span>
                       </div>

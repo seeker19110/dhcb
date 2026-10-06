@@ -396,7 +396,7 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
               </div>
               <div>
                 <h3 className="text-sm font-bold text-content">Gợi ý nơi học</h3>
-                <p className="text-[11px] text-content-secondary">
+                <p className="text-[0.6875rem] text-content-secondary">
                   Chọn theo từ khoá trong câu hỏi — đây chưa phải câu trả lời.
                 </p>
               </div>
@@ -462,7 +462,7 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
             )}
           </div>
           {needsLogin && (
-            <p className="mt-2 text-right text-[11px] text-content-secondary">
+            <p className="mt-2 text-right text-[0.6875rem] text-content-secondary">
               Câu hỏi được giữ lại; đăng nhập xong bạn quay về đây bấm tiếp.
             </p>
           )}

@@ -288,11 +288,11 @@ function Navbar({ stats }: { stats: HubStats | null }) {
           <div className="hidden min-[560px]:flex flex-col">
             <span className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5">
               Đồng Hành Cùng Bạn
-              <span className="hidden md:inline text-[11px] uppercase font-semibold px-1.5 py-0.5 rounded bg-accent-500/10 text-accent-300 theme-light:text-accent-800 border border-accent-500/25">
+              <span className="hidden md:inline text-[0.6875rem] uppercase font-semibold px-1.5 py-0.5 rounded bg-accent-500/10 text-accent-300 theme-light:text-accent-800 border border-accent-500/25">
                 Nền tảng
               </span>
             </span>
-            <span className="text-[11px] text-zinc-300 hidden sm:inline">
+            <span className="text-[0.6875rem] text-zinc-300 hidden sm:inline">
               Học tập · Ghi chú · Bạn Đồng Hành
             </span>
           </div>
@@ -466,7 +466,7 @@ function ActivitySection({ stats }: { stats: HubStats | null }) {
               {isAdmin ? 'Thống kê hoạt động nền tảng' : 'Nền tảng hiện có gì'}
             </h2>
             {isAdmin && (
-              <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 theme-light:text-amber-900 border border-amber-500/30 font-semibold">
+              <span className="inline-flex items-center gap-1 text-[0.6875rem] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 theme-light:text-amber-900 border border-amber-500/30 font-semibold">
                 <Shield className="w-2.5 h-2.5" />
                 Admin
               </span>
@@ -751,7 +751,7 @@ function SubjectsSection() {
             <span>{s.name}</span>
             {s.status === 'live' ? (
               <span
-                className={`text-[11px] px-1.5 py-0.5 rounded font-semibold ${
+                className={`text-[0.6875rem] px-1.5 py-0.5 rounded font-semibold ${
                   active === s.id
                     ? 'bg-[#09090b]/15 text-[#09090b]'
                     : 'bg-accent-500/15 text-accent-200 theme-light:text-accent-800 border border-accent-500/25'
@@ -761,7 +761,7 @@ function SubjectsSection() {
               </span>
             ) : s.status === 'preview' ? (
               <span
-                className={`text-[11px] px-1.5 py-0.5 rounded ${
+                className={`text-[0.6875rem] px-1.5 py-0.5 rounded ${
                   active === s.id
                     ? 'bg-[#09090b]/15 text-[#09090b]'
                     : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
@@ -771,7 +771,7 @@ function SubjectsSection() {
               </span>
             ) : (
               <span
-                className={`text-[11px] px-1.5 py-0.5 rounded ${
+                className={`text-[0.6875rem] px-1.5 py-0.5 rounded ${
                   active === s.id
                     ? 'bg-[#09090b]/15 text-[#09090b]'
                     : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
@@ -1018,7 +1018,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
         </div>
 
         <div className="bg-gradient-to-b from-zinc-900 via-zinc-900 to-accent-500/10 rounded-2xl p-6 sm:p-8 border-2 border-accent-500/60 shadow-xl shadow-accent-500/10 flex flex-col justify-between relative">
-          <div className="absolute -top-3 right-6 bg-accent-500 text-[#09090b] font-bold text-[11px] uppercase tracking-wider px-3 py-0.5 rounded-full shadow">
+          <div className="absolute -top-3 right-6 bg-accent-500 text-[#09090b] font-bold text-[0.6875rem] uppercase tracking-wider px-3 py-0.5 rounded-full shadow">
             Khuyên dùng
           </div>
           <div>

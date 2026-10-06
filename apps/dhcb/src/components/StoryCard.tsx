@@ -32,7 +32,7 @@ export default function StoryCard({ story, isA, onClick, progress }: Props) {
           {story.flag}
         </span>
         <span className="text-xs text-zinc-400 truncate">{country}</span>
-        <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-accent-500/15 text-accent-300 theme-light:text-accent-800 font-medium shrink-0">
+        <span className="ml-auto text-[0.6875rem] px-2 py-0.5 rounded-full bg-accent-500/15 text-accent-300 theme-light:text-accent-800 font-medium shrink-0">
           {story.level}
         </span>
       </div>
@@ -50,7 +50,7 @@ export default function StoryCard({ story, isA, onClick, progress }: Props) {
         <div className="mt-2">
           {/* Chữ mang đủ thông tin (thành tên truy cập của nút); thanh chỉ để nhìn nhanh nên
               aria-hidden — không cần role="progressbar" lồng trong một <button>. */}
-          <span className="flex items-center gap-1 text-[11px] font-semibold text-accent-300 theme-light:text-accent-800">
+          <span className="flex items-center gap-1 text-[0.6875rem] font-semibold text-accent-300 theme-light:text-accent-800">
             <BookOpen className="w-3 h-3" aria-hidden="true" />
             {isA ? `Đọc tiếp · đã đọc ${percent}%` : `Continue · ${percent}% read`}
           </span>
@@ -60,7 +60,7 @@ export default function StoryCard({ story, isA, onClick, progress }: Props) {
         </div>
       )}
       <div className="flex items-center justify-between mt-2.5">
-        <span className="flex items-center gap-1 text-[11px] text-zinc-400">
+        <span className="flex items-center gap-1 text-[0.6875rem] text-zinc-400">
           <Headphones className="w-3 h-3" />
           {isA ? `~${minutes} phút` : `~${minutes} min`}
         </span>

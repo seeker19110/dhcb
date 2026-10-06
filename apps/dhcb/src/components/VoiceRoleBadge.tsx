@@ -73,7 +73,7 @@ export default function VoiceRoleBadge({
 
   return (
     <div className="flex-1 min-w-[130px] flex flex-col items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 select-none">
-      <div className="flex items-center gap-1 text-[11px] text-zinc-500">
+      <div className="flex items-center gap-1 text-[0.6875rem] text-zinc-500">
         <Volume2 className="w-3 h-3" />
         {label} · {gender === 'female' ? (isA ? 'Nữ' : 'Female') : isA ? 'Nam' : 'Male'}
       </div>
@@ -110,7 +110,7 @@ export default function VoiceRoleBadge({
       <button
         type="button"
         onClick={setDefault}
-        className={`mt-0.5 px-2 py-0.5 rounded-full border text-[11px] transition ${
+        className={`mt-0.5 px-2 py-0.5 rounded-full border text-[0.6875rem] transition ${
           justSet
             ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 theme-light:text-emerald-900'
             : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'

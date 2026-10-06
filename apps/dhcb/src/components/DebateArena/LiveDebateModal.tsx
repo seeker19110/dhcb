@@ -143,11 +143,11 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold text-white truncate">{p.name}</h4>
-                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800 font-semibold uppercase">
+                        <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800 font-semibold uppercase">
                           {p.role}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-400 truncate mt-0.5">{p.stance}</p>
+                      <p className="text-[0.6875rem] text-zinc-400 truncate mt-0.5">{p.stance}</p>
                     </div>
                   </div>
                 ))}
@@ -182,17 +182,17 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                         {/* Nói THẬT khi lượt này là câu mẫu chứ không phải AI vừa nghĩ ra
                             (thiếu key AI / provider lỗi) — xem debateArenaService.ts. */}
                         {turn.isFallback && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 theme-light:text-amber-900 border border-amber-500/30 font-semibold">
+                          <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 theme-light:text-amber-900 border border-amber-500/30 font-semibold">
                             Câu mẫu — chưa gọi được AI
                           </span>
                         )}
                         {turn.detectedFallacy !== 'none' && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 theme-light:text-rose-900 border border-rose-500/30 font-semibold">
+                          <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 theme-light:text-rose-900 border border-rose-500/30 font-semibold">
                             ⚠️ Ngụy biện: {turn.detectedFallacy}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+                      <div className="flex items-center gap-2 text-[0.6875rem] text-zinc-400">
                         <span>Logic: {turn.logicScore}/100</span>
                         <span>•</span>
                         <span>Thuyết phục: {turn.persuasionScore}/100</span>
@@ -211,11 +211,11 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
 
                     {turn.advancedVocabulary.length > 0 && (
                       <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[11px] text-zinc-400">Từ vựng C1/C2:</span>
+                        <span className="text-[0.6875rem] text-zinc-400">Từ vựng C1/C2:</span>
                         {turn.advancedVocabulary.map((v) => (
                           <span
                             key={v}
-                            className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 border border-emerald-500/30 font-semibold"
+                            className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 border border-emerald-500/30 font-semibold"
                           >
                             {v}
                           </span>
@@ -239,25 +239,25 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-center">
                     <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-                      <div className="text-[11px] text-zinc-400">Cấu trúc Toulmin</div>
+                      <div className="text-[0.6875rem] text-zinc-400">Cấu trúc Toulmin</div>
                       <div className="text-xs font-bold text-white">
                         {session.finalRubric.toulminStructureScore}%
                       </div>
                     </div>
                     <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-                      <div className="text-[11px] text-zinc-400">Tránh ngụy biện</div>
+                      <div className="text-[0.6875rem] text-zinc-400">Tránh ngụy biện</div>
                       <div className="text-xs font-bold text-white">
                         {session.finalRubric.fallacyAvoidanceScore}%
                       </div>
                     </div>
                     <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-                      <div className="text-[11px] text-zinc-400">Từ vựng học thuật</div>
+                      <div className="text-[0.6875rem] text-zinc-400">Từ vựng học thuật</div>
                       <div className="text-xs font-bold text-white">
                         {session.finalRubric.lexicalResourceScore}%
                       </div>
                     </div>
                     <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-                      <div className="text-[11px] text-zinc-400">Sức phản biện</div>
+                      <div className="text-[0.6875rem] text-zinc-400">Sức phản biện</div>
                       <div className="text-xs font-bold text-white">
                         {session.finalRubric.rebuttalEffectivenessScore}%
                       </div>

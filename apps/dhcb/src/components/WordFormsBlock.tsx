@@ -92,7 +92,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
   // Danh từ không đếm được → chỉ 1 dòng chú thích.
   if (forms.uncountable) {
     return (
-      <p className="mt-2 text-[11px] text-zinc-400 italic">
+      <p className="mt-2 text-[0.6875rem] text-zinc-400 italic">
         {isA ? 'Danh từ không đếm được (không có số nhiều)' : 'Uncountable noun (no plural)'}
       </p>
     )
@@ -119,7 +119,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
 
   return (
     <div className="mt-2.5">
-      <p className="text-[11px] text-zinc-400 mb-1.5">
+      <p className="text-[0.6875rem] text-zinc-400 mb-1.5">
         {isA ? 'Các dạng của từ' : 'Word forms'}
         {irregular && (
           <span className="ml-1.5 normal-case text-amber-400 theme-light:text-amber-900 font-medium">
@@ -138,7 +138,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
                 irregular ? 'border-amber-500/30 bg-amber-500/5' : 'border-zinc-800 bg-zinc-900/60'
               }`}
             >
-              <span className="text-[11px] text-zinc-400">{isA ? label.vi : label.en}</span>
+              <span className="text-[0.6875rem] text-zinc-400">{isA ? label.vi : label.en}</span>
               {onPick ? (
                 <button
                   type="button"
@@ -148,7 +148,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
                 >
                   {val}
                   {unchanged && (
-                    <span className="text-[11px] text-zinc-500 ml-0.5">
+                    <span className="text-[0.6875rem] text-zinc-500 ml-0.5">
                       {isA ? '(không đổi)' : '(same)'}
                     </span>
                   )}
@@ -157,7 +157,7 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
                 <span className="text-xs font-medium text-zinc-100">
                   {val}
                   {unchanged && (
-                    <span className="text-[11px] text-zinc-500 ml-0.5">
+                    <span className="text-[0.6875rem] text-zinc-500 ml-0.5">
                       {isA ? '(không đổi)' : '(same)'}
                     </span>
                   )}
@@ -180,14 +180,14 @@ export default function WordFormsBlock({ forms, base, word, isA, onPick }: Props
                 key={key}
                 className="rounded-lg border border-zinc-800/70 bg-zinc-900/40 overflow-hidden"
               >
-                <p className="px-3 pt-2 text-[11px] text-zinc-400">
+                <p className="px-3 pt-2 text-[0.6875rem] text-zinc-400">
                   <span>{isA ? label.vi : label.en}</span>
                   <span className="ml-1.5 font-medium text-zinc-200">{val}</span>
                 </p>
                 <div className="divide-y divide-zinc-800/50">
                   {examples.map((ex, idx) => (
                     <div key={idx} className="relative">
-                      <span className="absolute left-3 top-2 text-[11px] text-zinc-500 font-mono select-none">
+                      <span className="absolute left-3 top-2 text-[0.6875rem] text-zinc-500 font-mono select-none">
                         {idx + 1}.
                       </span>
                       <KaraokeText

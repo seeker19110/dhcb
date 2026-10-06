@@ -40,7 +40,7 @@ export function PhScale() {
                 <div className="text-xs font-medium text-zinc-300">{item.name}</div>
                 <div className="flex items-center gap-1.5">
                   <span
-                    className={`text-[11px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                    className={`text-[0.6875rem] px-1.5 py-0.5 rounded font-mono font-bold ${
                       item.ph < 4
                         ? 'bg-red-500/20 text-red-400 theme-light:text-red-800'
                         : item.ph < 7
@@ -54,7 +54,7 @@ export function PhScale() {
                   </span>
                   <button
                     onClick={() => setSelectedPh1(item.ph)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold border transition ${
+                    className={`px-2 py-0.5 rounded text-[0.6875rem] font-bold border transition ${
                       selectedPh1 === item.ph
                         ? 'bg-indigo-600 text-[#fff] border-indigo-400'
                         : 'bg-zinc-800 text-zinc-400 border-zinc-700'
@@ -64,7 +64,7 @@ export function PhScale() {
                   </button>
                   <button
                     onClick={() => setSelectedPh2(item.ph)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold border transition ${
+                    className={`px-2 py-0.5 rounded text-[0.6875rem] font-bold border transition ${
                       selectedPh2 === item.ph
                         ? 'bg-purple-600 text-[#fff] border-purple-400'
                         : 'bg-zinc-800 text-zinc-400 border-zinc-700'

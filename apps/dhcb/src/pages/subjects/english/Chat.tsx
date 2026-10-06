@@ -372,7 +372,7 @@ function FeedbackBlock({
         </div>
       </div>
       {voted === 'down' && (
-        <p className="text-[11px] text-zinc-500 mt-1 pl-5">
+        <p className="text-[0.6875rem] text-zinc-500 mt-1 pl-5">
           {dir === 'A' ? 'Đã ghi nhận, cảm ơn bạn!' : 'Recorded, thank you!'}
         </p>
       )}
@@ -409,7 +409,7 @@ function FeedbackPanel({
   return (
     <aside className="flex w-72 xl:w-80 shrink-0 flex-col min-h-0">
       <div className="shrink-0 pb-2">
-        <p className="text-[11px] font-bold text-zinc-400">
+        <p className="text-[0.6875rem] font-bold text-zinc-400">
           {dir === 'A' ? 'Sửa lỗi & giải thích' : 'Corrections & explanations'}
         </p>
       </div>
@@ -424,7 +424,10 @@ function FeedbackPanel({
           items.map((it) => (
             <div key={it.id}>
               {it.userInput && (
-                <p className="text-[11px] text-zinc-500 mb-1 truncate px-0.5" title={it.userInput}>
+                <p
+                  className="text-[0.6875rem] text-zinc-500 mb-1 truncate px-0.5"
+                  title={it.userInput}
+                >
                   “{it.userInput}”
                 </p>
               )}
@@ -966,7 +969,7 @@ export default function Chat() {
                 >
                   <Send className="w-4 h-4" />
                   {isThrottled && throttleCountdown > 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[11px] font-bold text-white">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[0.6875rem] font-bold text-white">
                       {throttleCountdown}s
                     </div>
                   )}

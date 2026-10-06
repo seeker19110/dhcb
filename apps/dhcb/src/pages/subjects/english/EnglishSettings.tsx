@@ -321,7 +321,7 @@ export default function EnglishSettings() {
                 }`}
               >
                 <span className="text-base font-bold">{s}</span>
-                <span className="text-[11px]">
+                <span className="text-[0.6875rem]">
                   {isUiVi ? SPEED_LABEL[s].vi : SPEED_LABEL[s].en}
                 </span>
               </button>
@@ -355,7 +355,9 @@ export default function EnglishSettings() {
                 }`}
               >
                 <span className="text-base font-bold">{g}</span>
-                <span className="text-[11px]">{isUiVi ? GOAL_LABEL[g].vi : GOAL_LABEL[g].en}</span>
+                <span className="text-[0.6875rem]">
+                  {isUiVi ? GOAL_LABEL[g].vi : GOAL_LABEL[g].en}
+                </span>
               </button>
             ))}
           </div>

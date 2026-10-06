@@ -20,7 +20,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-white truncate">{plan.goalTitle}</h3>
-            <p className="text-[11px] text-accent-400 font-medium">
+            <p className="text-[0.6875rem] text-accent-400 font-medium">
               Auto-Pilot • {plan.domain.toUpperCase()} • Mục tiêu tuần
             </p>
           </div>
@@ -55,13 +55,13 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
         <div className="p-3 rounded-2xl bg-zinc-950/50 border border-zinc-800/60 flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-md bg-accent-500/20 text-accent-300 text-[11px] font-bold">
+              <span className="px-2 py-0.5 rounded-md bg-accent-500/20 text-accent-300 text-[0.6875rem] font-bold">
                 Bước {currentStep.stepNumber} • {currentStep.estimatedMinutes} phút
               </span>
-              <span className="text-[11px] text-zinc-500 font-medium">Đang tiến hành</span>
+              <span className="text-[0.6875rem] text-zinc-500 font-medium">Đang tiến hành</span>
             </div>
             <h4 className="text-xs font-bold text-zinc-100 mt-1 truncate">{currentStep.title}</h4>
-            <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
+            <p className="text-[0.6875rem] text-zinc-400 line-clamp-1 mt-0.5">
               {currentStep.description}
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
         {plan.steps.map((step: GoalAutoPilotStep) => (
           <div
             key={step.stepNumber}
-            className={`p-2 rounded-xl border text-[11px] font-medium transition-all ${
+            className={`p-2 rounded-xl border text-[0.6875rem] font-medium transition-all ${
               step.status === 'completed'
                 ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300 theme-light:text-emerald-900'
                 : step.status === 'in_progress'

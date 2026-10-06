@@ -162,7 +162,7 @@ export default function ProgrammingPathStagePage() {
               topics={stage.modules.flatMap((m) => m.topics)}
             />
           ) : (
-            <p className="text-[11px] text-zinc-500">Chặng này chưa có bài kiểm.</p>
+            <p className="text-[0.6875rem] text-zinc-500">Chặng này chưa có bài kiểm.</p>
           ))}
 
         {/* Dự án chốt chặng */}

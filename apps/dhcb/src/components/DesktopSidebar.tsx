@@ -244,7 +244,7 @@ export default function DesktopSidebar() {
     const groupId = `nav-sub-${childGroupId(child).replace(/\W+/g, '-')}`
     // Cùng một bộ lớp cho <Link> và <a>: mục con môn học có thể trỏ sang origin khác
     // (Góc học tập ở subdomain riêng — xem lib/subjectsHost.ts), lúc đó phải là thẻ <a> thật.
-    const cls = `tap-44-coarse-y flex items-center gap-2.5 rounded-lg pl-3 pr-2 py-2 text-[13px] font-medium transition ${
+    const cls = `tap-44-coarse-y flex items-center gap-2.5 rounded-lg pl-3 pr-2 py-2 text-[0.8125rem] font-medium transition ${
       hasChildren ? 'pr-12' : ''
     } ${active ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/70 hover:text-white'}`
     const inner = (

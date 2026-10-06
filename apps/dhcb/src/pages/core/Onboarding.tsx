@@ -281,7 +281,7 @@ function OnboardingForm() {
                     className="tap-44 w-full h-full flex flex-col items-center gap-2 p-4 rounded-2xl border bg-zinc-900/80 border-zinc-800 text-zinc-200 hover:border-accent-500/60 hover:text-white transition-all"
                   >
                     <SubjectIllustration subjectId={sub.id} size="sm" />
-                    <span className="font-semibold text-[15px]">{sub.label}</span>
+                    <span className="font-semibold text-[0.9375rem]">{sub.label}</span>
                   </button>
                 </li>
               ))}
@@ -308,7 +308,7 @@ function OnboardingForm() {
                 >
                   <span className="text-2xl">{a.emoji}</span>
                   <div className="text-left flex-1">
-                    <p className="font-semibold text-[15px]">{a.label}</p>
+                    <p className="font-semibold text-[0.9375rem]">{a.label}</p>
                     <p className="text-xs text-zinc-400 mt-0.5">{a.desc}</p>
                   </div>
                   {ageGroup === a.value && <Check className="w-4 h-4 text-accent-400 shrink-0" />}
@@ -331,7 +331,7 @@ function OnboardingForm() {
             >
               <Sparkles className="w-5 h-5 text-accent-400 shrink-0" />
               <div className="flex-1">
-                <p className="font-semibold text-[15px] text-white">Làm bài test 5 phút</p>
+                <p className="font-semibold text-[0.9375rem] text-white">Làm bài test 5 phút</p>
                 <p className="text-xs text-zinc-400 mt-0.5">Xếp đúng trình độ — khuyên dùng</p>
               </div>
               <ChevronRight className="w-4 h-4 text-accent-400 shrink-0" />
@@ -349,7 +349,7 @@ function OnboardingForm() {
                 >
                   <span className="text-2xl">{l.emoji}</span>
                   <div className="text-left flex-1">
-                    <p className="font-semibold text-[15px]">{l.label}</p>
+                    <p className="font-semibold text-[0.9375rem]">{l.label}</p>
                     <p className="text-xs text-zinc-400 mt-0.5">{l.desc}</p>
                   </div>
                   {level === l.value && <Check className="w-4 h-4 text-accent-400 shrink-0" />}
@@ -414,7 +414,7 @@ function OnboardingForm() {
                     />
                     <div className="text-left flex-1">
                       <p
-                        className={`font-semibold text-[15px] ${active ? 'text-white' : 'text-zinc-400'}`}
+                        className={`font-semibold text-[0.9375rem] ${active ? 'text-white' : 'text-zinc-400'}`}
                       >
                         {g.label}
                       </p>
@@ -453,7 +453,9 @@ function OnboardingForm() {
                 >
                   <p className="text-3xl font-bold">{m}</p>
                   <p className="text-xs text-zinc-400 mt-1">phút / ngày</p>
-                  {m === 10 && <p className="text-[11px] text-accent-400 mt-1">Phổ biến nhất</p>}
+                  {m === 10 && (
+                    <p className="text-[0.6875rem] text-accent-400 mt-1">Phổ biến nhất</p>
+                  )}
                 </button>
               ))}
             </div>

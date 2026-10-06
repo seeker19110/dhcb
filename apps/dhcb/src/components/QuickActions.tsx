@@ -185,7 +185,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
           className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-teal-500/40 transition group"
         >
           <Route className="w-4 h-4 text-teal-400 theme-light:text-teal-900" />
-          <span className="text-[11px] text-zinc-400 group-hover:text-zinc-200 transition">
+          <span className="text-[0.6875rem] text-zinc-400 group-hover:text-zinc-200 transition">
             {isA ? 'Lộ trình' : 'Roadmap'}
           </span>
         </button>
@@ -197,7 +197,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
           className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-accent-500/40 transition group"
         >
           <Share2 className="w-4 h-4 text-accent-400" />
-          <span className="text-[11px] text-zinc-400 group-hover:text-zinc-200 transition">
+          <span className="text-[0.6875rem] text-zinc-400 group-hover:text-zinc-200 transition">
             {isA ? 'Chia sẻ' : 'Share'}
           </span>
         </button>
@@ -228,7 +228,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
             <BellOff className="w-4 h-4 text-zinc-400 group-hover:text-amber-400 transition" />
           )}
           <span
-            className={`text-[11px] transition ${pushOn ? 'text-amber-300 theme-light:text-amber-900' : 'text-zinc-400 group-hover:text-zinc-200'}`}
+            className={`text-[0.6875rem] transition ${pushOn ? 'text-amber-300 theme-light:text-amber-900' : 'text-zinc-400 group-hover:text-zinc-200'}`}
           >
             {notifLabel}
           </span>
@@ -236,7 +236,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
       </div>
 
       {/* Giải thích "Nhắc học" đang nhắc cái gì */}
-      <p className="text-[11px] text-zinc-400 text-center mt-2.5 max-w-md mx-auto">
+      <p className="text-[0.6875rem] text-zinc-400 text-center mt-2.5 max-w-md mx-auto">
         🔔{' '}
         {pushOn
           ? isA
@@ -310,7 +310,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[11px] text-zinc-400 mb-3">
+            <p className="text-[0.6875rem] text-zinc-400 mb-3">
               {isA
                 ? 'Mỗi ngày tới giờ này, nếu bạn chưa học, app sẽ nhắc nhẹ một cái.'
                 : "Each day at this time, if you haven't studied, we'll send a gentle nudge."}

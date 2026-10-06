@@ -14,10 +14,10 @@ export default function StemScratchpadCard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 theme-light:text-teal-900 border border-teal-500/30 tracking-wide uppercase">
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 theme-light:text-teal-900 border border-teal-500/30 tracking-wide uppercase">
                   STEM Interactive Logic
                 </span>
-                <span className="text-[11px] font-semibold text-zinc-400">
+                <span className="text-[0.6875rem] font-semibold text-zinc-400">
                   Step-by-Step Validator
                 </span>
               </div>

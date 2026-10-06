@@ -702,7 +702,7 @@ export function LessonView({
               {(rolePlay || (playing && isDesktopPane)) && activeTurn !== null && (
                 <div className="flex items-center gap-1">
                   <div className="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse" />
-                  <span className="text-[11px] text-zinc-400">
+                  <span className="text-[0.6875rem] text-zinc-400">
                     {activeTurn + 1}/{lesson.turns.length}
                   </span>
                 </div>
@@ -725,7 +725,7 @@ export function LessonView({
           )}
 
           {rpError && (
-            <p className="text-[11px] text-red-400 theme-light:text-red-700 mt-1.5 px-1">
+            <p className="text-[0.6875rem] text-red-400 theme-light:text-red-700 mt-1.5 px-1">
               {rpError}
             </p>
           )}
@@ -822,7 +822,7 @@ export function LessonView({
                   >
                     {/* Nhãn speaker + nút phát + nút kiểm tra phát âm */}
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <p className="text-[11px] font-medium text-zinc-400">
+                      <p className="text-[0.6875rem] font-medium text-zinc-400">
                         {/* Số lượt nhìn thấy được để khớp với lưới "Tới lượt" trong mục Trong bài. */}
                         <span aria-hidden="true" className="mr-1.5 tabular-nums">
                           {i + 1}.

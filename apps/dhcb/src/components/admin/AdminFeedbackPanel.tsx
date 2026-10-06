@@ -234,13 +234,13 @@ export default function AdminFeedbackPanel() {
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-lg text-[11px] border ${meta.color}`}
+                          className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-lg text-[0.6875rem] border ${meta.color}`}
                         >
                           <span>{meta.icon}</span> {meta.labelVi}
                         </span>
 
                         {fb.rating && (
-                          <span className="flex items-center gap-0.5 text-amber-400 theme-light:text-amber-900 font-bold text-[11px] bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                          <span className="flex items-center gap-0.5 text-amber-400 theme-light:text-amber-900 font-bold text-[0.6875rem] bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
                             <Star className="w-3 h-3 fill-amber-400" /> {fb.rating}/5
                           </span>
                         )}
@@ -257,7 +257,7 @@ export default function AdminFeedbackPanel() {
                           onChange={(e) =>
                             handleStatusChange(fb.id, e.target.value as UserFeedbackStatus)
                           }
-                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-[11px] text-zinc-300 focus:outline-none focus:border-accent-500"
+                          className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-[0.6875rem] text-zinc-300 focus:outline-none focus:border-accent-500"
                         >
                           <option value="new">Mới nhận</option>
                           <option value="reviewed">Đã xem</option>
@@ -266,7 +266,7 @@ export default function AdminFeedbackPanel() {
                           <option value="closed">Đã đóng</option>
                         </select>
 
-                        <span className="text-zinc-500 text-[11px]">
+                        <span className="text-zinc-500 text-[0.6875rem]">
                           {new Date(fb.createdAt).toLocaleString('vi-VN')}
                         </span>
                       </div>
@@ -279,7 +279,7 @@ export default function AdminFeedbackPanel() {
                     </p>
 
                     {fb.contextInfo && Object.keys(fb.contextInfo).length > 0 && (
-                      <div className="text-[11px] text-zinc-500 flex flex-wrap gap-2 pt-1">
+                      <div className="text-[0.6875rem] text-zinc-500 flex flex-wrap gap-2 pt-1">
                         {(fb.contextInfo as { route?: string }).route && (
                           <span className="bg-zinc-800/60 px-2 py-0.5 rounded">
                             Route: {(fb.contextInfo as { route?: string }).route}
@@ -307,31 +307,31 @@ export default function AdminFeedbackPanel() {
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     {fb.source === 'chat' ? (
-                      <span className="inline-flex items-center gap-1 text-indigo-400 theme-light:text-indigo-800 font-semibold bg-indigo-500/10 px-2 py-0.5 rounded text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-indigo-400 theme-light:text-indigo-800 font-semibold bg-indigo-500/10 px-2 py-0.5 rounded text-[0.6875rem]">
                         <MessageSquare className="w-3 h-3" /> Chat
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-emerald-400 theme-light:text-emerald-900 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded text-[11px]">
+                      <span className="inline-flex items-center gap-1 text-emerald-400 theme-light:text-emerald-900 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded text-[0.6875rem]">
                         <Mic className="w-3 h-3" /> Speaking
                       </span>
                     )}
                     <span className="text-white font-medium">{fb.userEmail || fb.userId}</span>
                   </div>
 
-                  <span className="text-zinc-500 text-[11px]">
+                  <span className="text-zinc-500 text-[0.6875rem]">
                     {new Date(fb.createdAt).toLocaleString('vi-VN')}
                   </span>
                 </div>
 
                 <div className="space-y-1.5 text-xs">
                   <div className="p-2 bg-zinc-950 rounded border border-zinc-800/50">
-                    <span className="text-zinc-500 font-semibold block text-[11px]">
+                    <span className="text-zinc-500 font-semibold block text-[0.6875rem]">
                       Người dùng nhập:
                     </span>
                     <span className="text-zinc-200">{fb.userInput}</span>
                   </div>
                   <div className="p-2 bg-rose-500/5 rounded border border-rose-500/20">
-                    <span className="text-rose-400 theme-light:text-rose-900 font-semibold block text-[11px]">
+                    <span className="text-rose-400 theme-light:text-rose-900 font-semibold block text-[0.6875rem]">
                       AI phản hồi (bị chê):
                     </span>
                     <span className="text-rose-200 theme-light:text-rose-900">{fb.aiFeedback}</span>

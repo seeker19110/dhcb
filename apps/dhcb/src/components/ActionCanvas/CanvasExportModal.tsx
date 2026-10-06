@@ -76,7 +76,7 @@ export default function CanvasExportModal({
         </div>
 
         <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
-          <span className="text-[11px] text-zinc-500 font-mono">
+          <span className="text-[0.6875rem] text-zinc-500 font-mono">
             {markdown.split('\n').length} dòng • {markdown.length} ký tự
           </span>
 

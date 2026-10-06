@@ -70,11 +70,11 @@ export default function NeuralMicroCurriculumCard() {
           <div>
             <h3 className="text-xs font-bold text-zinc-100 flex items-center gap-1.5">
               Lộ Trình Vi Mô Thần Kinh (Neural Micro-Curriculum)
-              <span className="rounded px-1.5 py-0.2 text-[11px] font-semibold uppercase bg-sky-500/30 text-sky-300 theme-light:text-sky-900">
+              <span className="rounded px-1.5 py-0.2 text-[0.6875rem] font-semibold uppercase bg-sky-500/30 text-sky-300 theme-light:text-sky-900">
                 V4.3 Dynamic
               </span>
             </h3>
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[0.6875rem] text-zinc-400">
               Học theo mạng lưới Collocations đắt giá & micro-drills 2 phút tự động thích ứng.
             </p>
           </div>
@@ -82,7 +82,7 @@ export default function NeuralMicroCurriculumCard() {
 
         <div className="flex items-center gap-2">
           <div className="text-right">
-            <span className="text-[11px] text-zinc-400 block">Mastery</span>
+            <span className="text-[0.6875rem] text-zinc-400 block">Mastery</span>
             <span className="text-xs font-bold text-sky-400 theme-light:text-sky-900 font-mono">
               {state.masteryScore}%
             </span>
@@ -103,7 +103,7 @@ export default function NeuralMicroCurriculumCard() {
             type="button"
             disabled={generating}
             onClick={() => handleGenerate('Đàm phán hợp đồng & deal giá')}
-            className="text-[11px] font-medium text-sky-400 theme-light:text-sky-900 hover:text-sky-300 bg-sky-950/40 hover:bg-sky-900/40 px-2.5 py-1 rounded-lg border border-sky-500/30 transition flex items-center gap-1"
+            className="text-[0.6875rem] font-medium text-sky-400 theme-light:text-sky-900 hover:text-sky-300 bg-sky-950/40 hover:bg-sky-900/40 px-2.5 py-1 rounded-lg border border-sky-500/30 transition flex items-center gap-1"
           >
             {generating ? (
               <Loader2 className="w-3 h-3 animate-spin" />

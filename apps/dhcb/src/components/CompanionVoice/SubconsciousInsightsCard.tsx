@@ -70,11 +70,11 @@ export const SubconsciousInsightsCard: React.FC = () => {
           <div>
             <h4 className="font-bold text-[#fff] text-sm flex items-center gap-1.5">
               <span>Nhận thức ngầm & dự đoán đón đầu</span>
-              <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-purple-500/20 text-purple-300 theme-light:text-purple-800 border border-purple-500/30">
+              <span className="px-1.5 py-0.5 rounded text-[0.6875rem] font-mono bg-purple-500/20 text-purple-300 theme-light:text-purple-800 border border-purple-500/30">
                 V3 Autonomous
               </span>
             </h4>
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[0.6875rem] text-zinc-400">
               Tổng hợp tự động từ chu trình củng cố ký ức ban đêm (REM Consolidation)
             </p>
           </div>
@@ -95,7 +95,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
       <div className="bg-purple-950/60 theme-light:bg-purple-100 border border-purple-800/50 rounded-xl p-3 text-purple-200 theme-light:text-purple-800 leading-relaxed font-medium flex items-start gap-2.5">
         <Sparkles className="w-4 h-4 text-purple-400 theme-light:text-purple-800 shrink-0 mt-0.5" />
         <div>
-          <span className="text-[11px] font-bold text-purple-400 theme-light:text-purple-800 block mb-0.5">
+          <span className="text-[0.6875rem] font-bold text-purple-400 theme-light:text-purple-800 block mb-0.5">
             Tâm thế khuyến nghị ngày mới
           </span>
           <p className="text-xs text-purple-100 theme-light:text-purple-800">
@@ -106,7 +106,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
 
       {/* Vital Tasks */}
       <div className="space-y-1.5">
-        <div className="text-[11px] font-semibold text-zinc-300 flex items-center gap-1.5">
+        <div className="text-[0.6875rem] font-semibold text-zinc-300 flex items-center gap-1.5">
           <Target className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900" />
           <span>Top nhiệm vụ đón đầu đã tính toán sẵn:</span>
         </div>
@@ -117,7 +117,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
               className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-2.5 flex items-center gap-2 text-zinc-200"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900 shrink-0" />
-              <span className="font-medium text-[11px]">{task}</span>
+              <span className="font-medium text-[0.6875rem]">{task}</span>
             </div>
           ))}
         </div>
@@ -129,7 +129,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
           {preComputedStrategy.potentialObstacles.map((obs, idx) => (
             <div
               key={idx}
-              className="bg-rose-950/30 border border-rose-900/50 rounded-xl p-2.5 flex items-center gap-2 text-rose-300 theme-light:text-rose-900 text-[11px]"
+              className="bg-rose-950/30 border border-rose-900/50 rounded-xl p-2.5 flex items-center gap-2 text-rose-300 theme-light:text-rose-900 text-[0.6875rem]"
             >
               <ShieldAlert className="w-3.5 h-3.5 text-rose-400 theme-light:text-rose-900 shrink-0" />
               <span>{obs}</span>
@@ -142,7 +142,7 @@ export const SubconsciousInsightsCard: React.FC = () => {
       <div className="pt-1">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-[11px] text-purple-400 theme-light:text-purple-800 hover:text-purple-300 font-semibold flex items-center gap-1 transition"
+          className="text-[0.6875rem] text-purple-400 theme-light:text-purple-800 hover:text-purple-300 font-semibold flex items-center gap-1 transition"
         >
           <Layers className="w-3.5 h-3.5" />
           <span>
@@ -153,39 +153,39 @@ export const SubconsciousInsightsCard: React.FC = () => {
         </button>
 
         {isExpanded && (
-          <div className="mt-2.5 pt-2.5 border-t border-purple-800/30 space-y-2 text-[11px] animate-fade-in text-zinc-300">
+          <div className="mt-2.5 pt-2.5 border-t border-purple-800/30 space-y-2 text-[0.6875rem] animate-fade-in text-zinc-300">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                 <div className="font-bold text-white text-xs">{graphChanges.nodesCreated}</div>
-                <div className="text-[11px] text-zinc-400">Nút tri thức</div>
+                <div className="text-[0.6875rem] text-zinc-400">Nút tri thức</div>
               </div>
               <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                 <div className="font-bold text-purple-400 theme-light:text-purple-800 text-xs">
                   {graphChanges.edgesRewired}
                 </div>
-                <div className="text-[11px] text-zinc-400">Liên kết mới</div>
+                <div className="text-[0.6875rem] text-zinc-400">Liên kết mới</div>
               </div>
               <div className="bg-zinc-950 p-2 rounded-lg border border-zinc-800">
                 <div className="font-bold text-sky-400 theme-light:text-sky-900 text-xs">
                   {graphChanges.redundantItemsPruned}
                 </div>
-                <div className="text-[11px] text-zinc-400">Đã lọc nhiễu</div>
+                <div className="text-[0.6875rem] text-zinc-400">Đã lọc nhiễu</div>
               </div>
             </div>
 
             {hypothesesEvaluated.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <div className="text-[11px] uppercase font-bold text-purple-300 theme-light:text-purple-800">
+                <div className="text-[0.6875rem] uppercase font-bold text-purple-300 theme-light:text-purple-800">
                   Giả thuyết AI tự động kiểm chứng:
                 </div>
                 {hypothesesEvaluated.map((h, idx) => (
                   <div
                     key={idx}
-                    className="p-2 rounded-lg bg-zinc-950/70 border border-purple-900/40 text-[11px] space-y-1"
+                    className="p-2 rounded-lg bg-zinc-950/70 border border-purple-900/40 text-[0.6875rem] space-y-1"
                   >
                     <div className="text-zinc-200 font-medium">💡 {h.hypothesis}</div>
                     {h.actionProposed && (
-                      <div className="text-purple-300 theme-light:text-purple-800 text-[11px]">
+                      <div className="text-purple-300 theme-light:text-purple-800 text-[0.6875rem]">
                         ↳ {h.actionProposed}
                       </div>
                     )}

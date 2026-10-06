@@ -55,13 +55,14 @@ export default function ChatProse({ text }: { text: string }) {
   // `#` sẽ bị nuốt) — xem chú thích trong lib/lessonMarkdown.ts.
   const blocks = parseLessonMarkdown(text, { headings: true })
   return (
-    // Cỡ chữ + giãn dòng giữ NGUYÊN của bong bóng cũ (`text-sm sm:text-[15px] leading-relaxed`)
+    // Cỡ chữ + giãn dòng giữ NGUYÊN của bong bóng cũ (`text-sm sm:text-[0.9375rem] leading-relaxed`)
     // để đợt này không lẫn thay đổi kiểu chữ vào thay đổi cấu trúc. Màu `text-zinc-200` cũng
     // là màu cũ — đây là NỘI DUNG ĐỂ ĐỌC nên phải giữ WCAG AAA (CLAUDE.md mục 4.5) và token
     // đó đã qua cổng `e2e/a11y-aaa.spec.ts`.
-    <div className="space-y-2.5 text-sm sm:text-[15px] leading-relaxed text-zinc-200">
+    <div className="space-y-2.5 text-sm sm:text-[0.9375rem] leading-relaxed text-zinc-200">
       {blocks.map((b, i) => {
-        if (b.kind === 'code') return <CodeSurface key={i} code={b.code} className="text-[13px]" />
+        if (b.kind === 'code')
+          return <CodeSurface key={i} code={b.code} className="text-[0.8125rem]" />
         if (b.kind === 'heading') {
           // Tiêu đề bên trong MỘT lượt trả lời, không phải tiêu đề của trang — nên hạ xuống
           // `h4`/`h5`: bong bóng chat nằm dưới `h1` của trang và `h3` của khu vực, đặt `h2`

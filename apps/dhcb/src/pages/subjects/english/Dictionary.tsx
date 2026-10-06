@@ -484,21 +484,21 @@ export default function Dictionary() {
                                 type="button"
                                 onClick={() => openPos(e.pos)}
                                 title={`${POS_LABEL[e.pos] || e.pos} — ${isA ? 'nhấn để xem giải thích' : 'tap to learn more'}`}
-                                className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold transition hover:brightness-125 shadow-sm ${POS_COLOR[e.pos] ?? 'bg-zinc-700 text-zinc-300 theme-light:text-zinc-100'}`}
+                                className={`text-[0.6875rem] px-2.5 py-0.5 rounded-full font-semibold transition hover:brightness-125 shadow-sm ${POS_COLOR[e.pos] ?? 'bg-zinc-700 text-zinc-300 theme-light:text-zinc-100'}`}
                               >
                                 {POS_LABEL[e.pos] || e.pos}
                               </button>
                               {e.level && (
                                 <span
                                   title={isA ? `Cấp CEFR ${e.level}` : `CEFR level ${e.level}`}
-                                  className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold shadow-sm ${LEVEL_COLOR[e.level] ?? 'bg-zinc-700 text-zinc-300 theme-light:text-zinc-100'}`}
+                                  className={`text-[0.6875rem] px-2.5 py-0.5 rounded-full font-semibold shadow-sm ${LEVEL_COLOR[e.level] ?? 'bg-zinc-700 text-zinc-300 theme-light:text-zinc-100'}`}
                                 >
                                   {e.level}
                                 </span>
                               )}
                               <PronounceButton word={e.word} />
                               {isLearned && (
-                                <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 theme-light:text-emerald-900 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 ml-auto">
+                                <span className="flex items-center gap-1 text-[0.6875rem] font-semibold text-emerald-400 theme-light:text-emerald-900 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 ml-auto">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
                                   {isA ? 'Đã học' : 'Learned'}
                                 </span>
@@ -535,20 +535,20 @@ export default function Dictionary() {
                             {/* 3 ví dụ đánh số — Ví dụ 1 từ ex_en, Ví dụ 2&3 từ EXTRA_EXAMPLES */}
                             {e.ex_en && (
                               <div className="mt-3.5 space-y-2">
-                                <p className="text-[11px] font-bold text-zinc-400">
+                                <p className="text-[0.6875rem] font-bold text-zinc-400">
                                   {isA ? 'Câu ví dụ ngữ cảnh' : 'Context Examples'}
                                 </p>
 
                                 {/* Ví dụ 1 */}
                                 <div className="relative">
-                                  <span className="absolute left-3 top-2.5 text-[11px] text-zinc-400 font-mono select-none font-bold">
+                                  <span className="absolute left-3 top-2.5 text-[0.6875rem] text-zinc-400 font-mono select-none font-bold">
                                     1.
                                   </span>
                                   <div className="rounded-2xl border border-zinc-800/90 bg-zinc-950/70 divide-y divide-zinc-800/60 overflow-hidden shadow-inner">
                                     <KaraokeText
                                       text={e.ex_en}
                                       lang="en-US"
-                                      textClass="text-xs sm:text-[13px] text-accent-300/90 theme-light:text-accent-800 italic leading-relaxed font-medium"
+                                      textClass="text-xs sm:text-[0.8125rem] text-accent-300/90 theme-light:text-accent-800 italic leading-relaxed font-medium"
                                       buttonClass="w-full pl-8 pr-3.5 py-2.5 hover:bg-accent-500/5 active:bg-accent-500/10 text-left transition"
                                       iconSize="xs"
                                     />
@@ -556,7 +556,7 @@ export default function Dictionary() {
                                       <KaraokeText
                                         text={e.ex_vi}
                                         lang="vi-VN"
-                                        textClass="text-xs sm:text-[13px] text-zinc-300 leading-relaxed"
+                                        textClass="text-xs sm:text-[0.8125rem] text-zinc-300 leading-relaxed"
                                         buttonClass="w-full pl-8 pr-3.5 py-2.5 hover:bg-sky-500/5 active:bg-sky-500/10 text-left transition"
                                         iconSize="xs"
                                       />
@@ -567,21 +567,21 @@ export default function Dictionary() {
                                 {/* Ví dụ 2 & 3 */}
                                 {extras?.map((ex, idx) => (
                                   <div key={idx} className="relative">
-                                    <span className="absolute left-3 top-2 text-[11px] text-zinc-400 font-mono select-none font-bold">
+                                    <span className="absolute left-3 top-2 text-[0.6875rem] text-zinc-400 font-mono select-none font-bold">
                                       {idx + 2}.
                                     </span>
                                     <div className="rounded-2xl border border-zinc-800/70 bg-zinc-950/60 divide-y divide-zinc-800/40 overflow-hidden shadow-inner">
                                       <KaraokeText
                                         text={ex.en}
                                         lang="en-US"
-                                        textClass="text-xs sm:text-[13px] text-accent-300/80 theme-light:text-accent-800 italic leading-relaxed font-medium"
+                                        textClass="text-xs sm:text-[0.8125rem] text-accent-300/80 theme-light:text-accent-800 italic leading-relaxed font-medium"
                                         buttonClass="w-full pl-8 pr-3.5 py-2 hover:bg-accent-500/5 active:bg-accent-500/10 text-left transition"
                                         iconSize="xs"
                                       />
                                       <KaraokeText
                                         text={ex.vi}
                                         lang="vi-VN"
-                                        textClass="text-xs sm:text-[13px] text-zinc-300 leading-relaxed"
+                                        textClass="text-xs sm:text-[0.8125rem] text-zinc-300 leading-relaxed"
                                         buttonClass="w-full pl-8 pr-3.5 py-2 hover:bg-sky-500/5 active:bg-sky-500/10 text-left transition"
                                         iconSize="xs"
                                       />
@@ -595,7 +595,7 @@ export default function Dictionary() {
                       })}
 
                       {totalPages > 1 && (
-                        <p className="text-[11px] text-zinc-400 text-center pt-1">
+                        <p className="text-[0.6875rem] text-zinc-400 text-center pt-1">
                           {isA ? '← Vuốt để xem thêm kết quả →' : '← Swipe for more results →'}
                         </p>
                       )}
@@ -706,7 +706,9 @@ export default function Dictionary() {
                 >
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <h2 className="font-bold text-white text-base">{p.label}</h2>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${p.color}`}>
+                    <span
+                      className={`text-[0.6875rem] px-2 py-0.5 rounded-full font-medium ${p.color}`}
+                    >
                       {p.labelEn}
                     </span>
                   </div>

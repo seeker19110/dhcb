@@ -129,16 +129,16 @@ export default function ProgrammingPathPage() {
         <section className="rounded-3xl border border-accent-500/40 bg-zinc-900 p-5 space-y-3">
           <p className="text-sm text-zinc-200 leading-relaxed read-measure">{path.forWho}</p>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Lock className="w-3 h-3" aria-hidden="true" />
               {foundationLevels.length > 0 ? 'Phần chuyên sâu nên xong bậc ' : 'Nên xong bậc '}
               {path.prerequisite.toUpperCase()} trước
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Clock className="w-3 h-3" aria-hidden="true" />
               {path.duration}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Map className="w-3 h-3" aria-hidden="true" />
               {doneCount}/{allRefs.length} chặng xong
             </span>
@@ -191,7 +191,7 @@ export default function ProgrammingPathPage() {
                       )}
                     </div>
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <span className="text-[11px] font-semibold text-zinc-400">
+                      <span className="text-[0.6875rem] font-semibold text-zinc-400">
                         {levelProgress.done}/{levelProgress.total} bài · {level.duration}
                       </span>
                       <button
@@ -278,7 +278,7 @@ export default function ProgrammingPathPage() {
                             />
                           )}
                         </p>
-                        <span className="text-[11px] font-semibold text-zinc-400 shrink-0">
+                        <span className="text-[0.6875rem] font-semibold text-zinc-400 shrink-0">
                           {ref.stageId.toUpperCase()}
                         </span>
                       </div>

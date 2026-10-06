@@ -166,7 +166,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
               }`}
             >
               <span>{room.name}</span>
-              <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-black/20">
+              <span className="text-[0.6875rem] px-1.5 py-0.2 rounded-full bg-black/20">
                 {room.loci.length} Loci
               </span>
             </button>
@@ -261,7 +261,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                         title={locus.label}
                       >
                         <MapPin className="w-3.5 h-3.5" />
-                        <span className="text-[11px] max-w-[100px] truncate hidden sm:inline">
+                        <span className="text-[0.6875rem] max-w-[100px] truncate hidden sm:inline">
                           {i + 1}. {locus.label}
                         </span>
                       </button>
@@ -291,11 +291,11 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                             <span>#{i + 1}</span>
                             <span>{locus.label}</span>
                           </div>
-                          <div className="text-[11px] text-zinc-400 truncate max-w-[180px] mt-0.5">
+                          <div className="text-[0.6875rem] text-zinc-400 truncate max-w-[180px] mt-0.5">
                             {locus.keyConcept}
                           </div>
                         </div>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 font-semibold">
+                        <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-zinc-800 font-semibold">
                           {locus.retentionStrength}%
                         </span>
                       </button>
@@ -322,7 +322,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
 
                 {/* Target Concept */}
                 <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
-                  <div className="text-[11px] text-zinc-400 font-bold uppercase">
+                  <div className="text-[0.6875rem] text-zinc-400 font-bold uppercase">
                     Khái niệm & Tri thức mục tiêu
                   </div>
                   <div className="text-sm font-bold text-amber-300 theme-light:text-amber-900">
@@ -332,7 +332,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
 
                 {/* Mnemonic Story */}
                 <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1.5">
-                  <div className="text-[11px] text-amber-400 theme-light:text-amber-900 font-bold uppercase flex items-center gap-1.5">
+                  <div className="text-[0.6875rem] text-amber-400 theme-light:text-amber-900 font-bold uppercase flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Câu chuyện liên tưởng (Mnemonic Visual Cue):</span>
                   </div>
@@ -384,8 +384,8 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                       )}
                       <span>Độ tương đồng: {recallResult.similarityScore}%</span>
                     </div>
-                    <p className="text-[11px] leading-relaxed">{recallResult.feedback}</p>
-                    <div className="text-[11px] text-zinc-400 pt-1">
+                    <p className="text-[0.6875rem] leading-relaxed">{recallResult.feedback}</p>
+                    <div className="text-[0.6875rem] text-zinc-400 pt-1">
                       Độ bền thần kinh mới: <strong>{recallResult.strengthenedRetention}%</strong>
                     </div>
                   </div>

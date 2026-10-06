@@ -582,7 +582,7 @@ function LessonBody({
                 {(levelId || courseChuaBai) && (
                   <button
                     onClick={() => nav(backTo)}
-                    className="tap-44 text-[11px] font-semibold text-zinc-400 hover:text-white underline underline-offset-2 transition"
+                    className="tap-44 text-[0.6875rem] font-semibold text-zinc-400 hover:text-white underline underline-offset-2 transition"
                   >
                     {courseChuaBai
                       ? `Khoá ${courseChuaBai.title}`

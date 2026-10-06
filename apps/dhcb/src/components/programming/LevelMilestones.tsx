@@ -73,8 +73,8 @@ function ProgressRing({ done, total }: { done: number; total: number }) {
           paintOrder="stroke fill"
           vectorEffect="non-scaling-stroke"
           strokeLinejoin="round"
-          className="fill-zinc-300 text-[11px] font-bold"
-          style={{ fontSize: '11px' }}
+          className="fill-zinc-300 text-[0.6875rem] font-bold"
+          style={{ fontSize: '0.6875rem' }}
         >
           {done}
         </text>
@@ -142,17 +142,17 @@ export default function LevelMilestones({
                   </span>
                   <span>{level.name}</span>
                   {dangO && (
-                    <span className="px-2 py-0.5 rounded-full bg-accent-500/15 border border-accent-500/40 text-[11px] font-semibold text-accent-300 theme-light:text-accent-800">
+                    <span className="px-2 py-0.5 rounded-full bg-accent-500/15 border border-accent-500/40 text-[0.6875rem] font-semibold text-accent-300 theme-light:text-accent-800">
                       bạn đang ở đây
                     </span>
                   )}
                   {biKhoa && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-950 border border-zinc-700 text-[11px] font-semibold text-zinc-300">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-950 border border-zinc-700 text-[0.6875rem] font-semibold text-zinc-300">
                       <Lock className="w-3 h-3" aria-hidden="true" /> đang khoá
                     </span>
                   )}
                   {xong && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[11px] font-semibold text-emerald-300 theme-light:text-emerald-800">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-[0.6875rem] font-semibold text-emerald-300 theme-light:text-emerald-800">
                       <Check className="w-3 h-3" aria-hidden="true" /> xong
                     </span>
                   )}
@@ -166,7 +166,7 @@ export default function LevelMilestones({
                 {moSau && (
                   <p className="text-xs text-zinc-500 leading-relaxed read-measure">{moSau}</p>
                 )}
-                <div className="flex items-center gap-3 flex-wrap text-[11px] text-zinc-500">
+                <div className="flex items-center gap-3 flex-wrap text-[0.6875rem] text-zinc-500">
                   <span className="inline-flex items-center gap-1">
                     <Languages className="w-3.5 h-3.5" aria-hidden="true" />{' '}
                     {level.languages.join(' · ')}

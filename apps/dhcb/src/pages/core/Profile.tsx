@@ -201,7 +201,7 @@ export default function Profile() {
           <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {user.email}
         </p>
         <span
-          className={`mt-3 inline-block rounded-full px-2.5 py-1 text-[11px] font-medium ${
+          className={`mt-3 inline-block rounded-full px-2.5 py-1 text-[0.6875rem] font-medium ${
             user.plan === 'vip'
               ? 'border border-violet-500/20 bg-violet-500/15 text-violet-300 theme-light:text-violet-800'
               : 'border border-line-strong bg-surface-raised text-content-muted'
@@ -273,7 +273,7 @@ export default function Profile() {
                     <Mail className="w-3.5 h-3.5 shrink-0" /> {user.email}
                   </p>
                   <span
-                    className={`inline-block mt-2 text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                    className={`inline-block mt-2 text-[0.6875rem] px-2.5 py-1 rounded-full font-medium ${
                       user.plan === 'vip'
                         ? 'bg-violet-500/15 text-violet-300 theme-light:text-violet-800 border border-violet-500/20'
                         : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
@@ -384,7 +384,7 @@ export default function Profile() {
                   <Sparkles className="w-5 h-5 text-accent-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-[15px]">
+                  <p className="font-semibold text-white text-[0.9375rem]">
                     {isA ? 'Giao diện' : 'Theme'}
                   </p>
                   <p className="text-xs text-zinc-400 break-words mt-0.5">
@@ -403,7 +403,7 @@ export default function Profile() {
                   <Settings className="w-5 h-5 text-accent-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-[15px]">
+                  <p className="font-semibold text-white text-[0.9375rem]">
                     {isA ? 'Cài đặt' : 'Settings'}
                   </p>
                   <p className="text-xs text-zinc-400 break-words mt-0.5">
@@ -425,7 +425,7 @@ export default function Profile() {
                   <TrendingUp className="w-5 h-5 text-accent-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-[15px]">
+                  <p className="font-semibold text-white text-[0.9375rem]">
                     {isA ? 'Tiến độ học tập' : 'Learning Progress'}
                   </p>
                   <p className="text-xs text-zinc-400 break-words mt-0.5">
@@ -447,7 +447,7 @@ export default function Profile() {
                   <HistoryIcon className="w-5 h-5 text-zinc-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-[15px]">
+                  <p className="font-semibold text-white text-[0.9375rem]">
                     {isA ? 'Lịch sử học' : 'Learning history'}
                   </p>
                   <p className="text-xs text-zinc-400 break-words mt-0.5">
@@ -470,7 +470,7 @@ export default function Profile() {
                   <MessageSquareHeart className="w-5 h-5 text-purple-400 theme-light:text-purple-800" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-white text-[15px]">
+                  <p className="font-semibold text-white text-[0.9375rem]">
                     {isA ? 'Đóng góp ý kiến & Báo lỗi' : 'Feedback & Bug Report'}
                   </p>
                   <p className="text-xs text-zinc-400 break-words mt-0.5">
@@ -571,7 +571,7 @@ export default function Profile() {
                       >
                         {a.icon}
                       </span>
-                      <span className="text-[11px] text-zinc-400 text-center leading-tight break-words">
+                      <span className="text-[0.6875rem] text-zinc-400 text-center leading-tight break-words">
                         {name}
                       </span>
                     </div>

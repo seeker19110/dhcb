@@ -126,13 +126,13 @@ export function ProfitOptimization() {
 
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
             <div className="p-2.5 rounded-lg bg-zinc-900">
-              <div className="text-[11px] text-zinc-400">Doanh thu dự kiến:</div>
+              <div className="text-[0.6875rem] text-zinc-400">Doanh thu dự kiến:</div>
               <div className="text-sm font-bold text-zinc-200">
                 {(profitSimResult.totalRevenue / 1000000).toFixed(2)} Tr đ
               </div>
             </div>
             <div className="p-2.5 rounded-lg bg-emerald-950/40 theme-light:bg-emerald-50 border border-emerald-500/30">
-              <div className="text-[11px] text-emerald-400 theme-light:text-emerald-800">
+              <div className="text-[0.6875rem] text-emerald-400 theme-light:text-emerald-800">
                 Lợi nhuận ròng MAX:
               </div>
               <div className="text-sm font-bold text-emerald-300 theme-light:text-emerald-800">

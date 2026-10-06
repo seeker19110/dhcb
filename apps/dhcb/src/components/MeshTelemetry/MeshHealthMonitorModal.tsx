@@ -61,17 +61,17 @@ export default function MeshHealthMonitorModal({
           <div>
             <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
               Giám sát mạng lưới WebSocket Mesh
-              <span className="rounded px-1.5 py-0.2 text-[11px] font-bold uppercase bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 border border-emerald-500/40">
+              <span className="rounded px-1.5 py-0.2 text-[0.6875rem] font-bold uppercase bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 border border-emerald-500/40">
                 {meshStatus.overallQuality}% Quality
               </span>
             </h3>
-            <p className="text-[11px] text-zinc-400">Vùng máy chủ: {meshStatus.region}</p>
+            <p className="text-[0.6875rem] text-zinc-400">Vùng máy chủ: {meshStatus.region}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Độ trễ mạng (P50/P95)</span>
+            <span className="text-[0.6875rem] text-zinc-400 block mb-1">Độ trễ mạng (P50/P95)</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-emerald-400 theme-light:text-emerald-800 font-mono">
                 {telemetry.currentLatencyMs}
@@ -81,7 +81,9 @@ export default function MeshHealthMonitorModal({
           </div>
 
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Số node relay hoạt động</span>
+            <span className="text-[0.6875rem] text-zinc-400 block mb-1">
+              Số node relay hoạt động
+            </span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-cyan-400 theme-light:text-cyan-800 font-mono">
                 {meshStatus.activeNodes}
@@ -91,7 +93,7 @@ export default function MeshHealthMonitorModal({
           </div>
 
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Tổng tokens phiên</span>
+            <span className="text-[0.6875rem] text-zinc-400 block mb-1">Tổng tokens phiên</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-zinc-100 font-mono">
                 {telemetry.totalTokens}
@@ -101,7 +103,7 @@ export default function MeshHealthMonitorModal({
           </div>
 
           <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-            <span className="text-[11px] text-zinc-400 block mb-1">Chi phí tích lũy</span>
+            <span className="text-[0.6875rem] text-zinc-400 block mb-1">Chi phí tích lũy</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-emerald-400 theme-light:text-emerald-800 font-mono">
                 {telemetry.totalTokens} tokens
@@ -116,10 +118,12 @@ export default function MeshHealthMonitorModal({
               <ShieldCheck className="w-4 h-4 text-cyan-400 theme-light:text-cyan-800" />
               <span>Budget Quota Guard (Circuit Breaker)</span>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">Hạn mức phiên: theo gói</span>
+            <span className="text-[0.6875rem] text-zinc-400 font-mono">
+              Hạn mức phiên: theo gói
+            </span>
           </div>
 
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[0.6875rem] text-zinc-400">
             Tự động chuyển sang mô hình siêu tiết kiệm (Edge AI / Flash) nếu chi phí vượt ngưỡng
             trần để đảm bảo không phát sinh chi phí ngoài ý muốn.
           </p>

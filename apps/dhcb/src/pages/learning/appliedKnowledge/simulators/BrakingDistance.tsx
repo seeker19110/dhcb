@@ -116,7 +116,7 @@ export function BrakingDistance() {
             <div className="text-base font-bold text-amber-300 theme-light:text-amber-800">
               {brakingSimResult.initialKineticEnergyKj.toLocaleString()} kJ
             </div>
-            <div className="text-[11px] text-zinc-500">
+            <div className="text-[0.6875rem] text-zinc-500">
               Vận tốc tăng gấp đôi thì động năng và quãng đường phanh tăng gấp 4 lần ($v^2$)!
             </div>
           </div>

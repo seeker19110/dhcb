@@ -252,7 +252,7 @@ export default function MetacognitiveReflectionModal({
                               {b.biasName}
                             </div>
                             <p className="text-xs text-zinc-300">{b.explanation}</p>
-                            <div className="p-2 rounded-lg bg-zinc-900 border border-amber-500/20 text-[11px] text-amber-200 theme-light:text-amber-900/90">
+                            <div className="p-2 rounded-lg bg-zinc-900 border border-amber-500/20 text-[0.6875rem] text-amber-200 theme-light:text-amber-900/90">
                               💡 <strong>Gợi ý giải trừ:</strong> {b.antidotePrompt}
                             </div>
                           </div>
@@ -341,7 +341,7 @@ export default function MetacognitiveReflectionModal({
                       </span>
                     </div>
                     <p className="text-xs text-zinc-300 line-clamp-2">{h.userReflection}</p>
-                    <div className="flex items-center gap-2 pt-1 text-[11px] text-zinc-400">
+                    <div className="flex items-center gap-2 pt-1 text-[0.6875rem] text-zinc-400">
                       <span>
                         MAI: <strong className="text-white">{h.metacognitiveIndex}</strong>
                       </span>
