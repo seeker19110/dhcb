@@ -82,7 +82,7 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-dvh bg-zinc-950 theme-light:bg-white text-zinc-100 theme-light:text-zinc-900">
+    <div className="min-h-dvh bg-zinc-950 text-zinc-100">
       <header className="mx-auto flex max-w-lg justify-end px-4 pt-4 sm:max-w-2xl lg:max-w-6xl">
         <ThemeToggle />
       </header>
@@ -116,17 +116,21 @@ export default function Landing() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-400 lg:mx-0">
               <Sparkles className="h-7 w-7" aria-hidden="true" />
             </div>
-            <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 px-3 py-1 text-xs text-zinc-300 theme-light:text-zinc-700">
-              <span className="font-semibold text-accent-400">Môn tiếng Anh</span>
+            <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1 text-xs text-zinc-300">
+              <span className="font-semibold text-accent-400 theme-light:text-accent-700">
+                Môn tiếng Anh
+              </span>
               <span aria-hidden="true">·</span>
               <span>một môn của nền tảng Đồng Hành Cùng Bạn</span>
             </p>
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-5xl lg:leading-[1.1]">
               Nói tiếng Anh với AI
               <br />
-              <span className="text-accent-400">sai chỗ nào, được giảng lại bằng tiếng Việt</span>
+              <span className="text-accent-400 theme-light:text-accent-700">
+                sai chỗ nào, được giảng lại bằng tiếng Việt
+              </span>
             </h1>
-            <p className="mt-3 text-base text-zinc-300 theme-light:text-zinc-700 lg:mt-5 lg:text-lg">
+            <p className="mt-3 text-base text-zinc-300 lg:mt-5 lg:text-lg">
               Miễn phí. Không cần biết trước tiếng Anh vẫn học được.
             </p>
 
@@ -144,11 +148,11 @@ export default function Landing() {
           <section className="mt-10 rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4 lg:mt-0 lg:p-6">
             <div className="flex items-start gap-3">
               <Volume2 className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
-              <p className="text-sm text-zinc-300 theme-light:text-zinc-700 lg:text-base lg:leading-relaxed">
-                <strong className="text-zinc-100 theme-light:text-zinc-900">Điểm khác biệt:</strong>{' '}
-                AI không chỉ sửa lỗi bằng chữ — mà còn{' '}
-                <strong>đọc to lời giải thích bằng giọng tiếng Việt</strong>, trong khi hội thoại
-                chính vẫn bằng giọng tiếng Anh chuẩn. Nội dung bài học sát với đời sống người Việt.
+              <p className="text-sm text-zinc-300 lg:text-base lg:leading-relaxed">
+                <strong className="text-zinc-100">Điểm khác biệt:</strong> AI không chỉ sửa lỗi bằng
+                chữ — mà còn <strong>đọc to lời giải thích bằng giọng tiếng Việt</strong>, trong khi
+                hội thoại chính vẫn bằng giọng tiếng Anh chuẩn. Nội dung bài học sát với đời sống
+                người Việt.
               </p>
             </div>
           </section>
@@ -157,25 +161,19 @@ export default function Landing() {
         {/* 3 chế độ — một cột ở mobile, ba cột ngang ở desktop: ba chế độ là các lựa chọn NGANG
             HÀNG nhau, xếp dọc làm chúng trông như ba bước nối tiếp. */}
         <section className="mt-8 lg:mt-16">
-          <h2 className="text-center text-sm font-semibold text-zinc-500 theme-light:text-zinc-600">
-            3 chế độ luyện tập
-          </h2>
+          <h2 className="text-center text-sm font-semibold text-zinc-500">3 chế độ luyện tập</h2>
           <div className="mt-4 space-y-3 lg:mt-8 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">
             {MODES.map((mode) => (
               <div
                 key={mode.title}
-                className="flex items-start gap-3 rounded-xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 p-4 lg:flex-col lg:gap-4 lg:p-6"
+                className="flex items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 lg:flex-col lg:gap-4 lg:p-6"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-500/15 text-accent-400">
                   <mode.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-zinc-100 theme-light:text-zinc-900">
-                    {mode.title}
-                  </h3>
-                  <p className="mt-0.5 text-sm text-zinc-300 theme-light:text-zinc-700">
-                    {mode.desc}
-                  </p>
+                  <h3 className="font-semibold text-zinc-100">{mode.title}</h3>
+                  <p className="mt-0.5 text-sm text-zinc-300">{mode.desc}</p>
                 </div>
               </div>
             ))}
@@ -187,25 +185,23 @@ export default function Landing() {
             lượt thay vì cuộn qua hai màn. */}
         <div className="lg:mt-16 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
           {/* Giới hạn dùng — thành thật, không phóng đại */}
-          <section className="mt-8 rounded-xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/40 theme-light:bg-zinc-50 p-4 text-center lg:mt-0 lg:p-6">
-            <p className="text-sm text-zinc-300 theme-light:text-zinc-700">
+          <section className="mt-8 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 text-center lg:mt-0 lg:p-6">
+            <p className="text-sm text-zinc-300">
               Miễn phí, có giới hạn lượt dùng mỗi ngày để mọi người cùng dùng được.
             </p>
           </section>
 
           {/* Không dừng ở môn tiếng Anh: cho người đọc biết tài khoản này dùng được cả nền tảng */}
-          <section className="mt-8 rounded-2xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/40 theme-light:bg-zinc-50 p-4 lg:mt-0 lg:p-6">
-            <h2 className="text-sm font-semibold text-zinc-100 theme-light:text-zinc-900">
-              Tiếng Anh chỉ là một môn ở đây
-            </h2>
-            <p className="mt-1.5 text-sm text-zinc-300 theme-light:text-zinc-700">
+          <section className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 lg:mt-0 lg:p-6">
+            <h2 className="text-sm font-semibold text-zinc-100">Tiếng Anh chỉ là một môn ở đây</h2>
+            <p className="mt-1.5 text-sm text-zinc-300">
               Cùng một tài khoản, bạn còn học Lập trình, Toán, Lý, Hoá, Sinh và ghi việc ở Ghi chú —
               cùng Bạn Đồng Hành, người bạn AI nhớ ngữ cảnh học của bạn qua mọi môn. Không phải mua
               thêm gói nào.
             </p>
             <a
               href="https://www.donghanhcungban.org"
-              className="tap-44-y mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-400 hover:underline"
+              className="tap-44-y mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-400 theme-light:text-accent-700 hover:underline"
             >
               Xem toàn bộ nền tảng →
             </a>

@@ -63,12 +63,12 @@ export default function WordDetail() {
 
   if (entry === null) {
     return (
-      <div className="min-h-dvh bg-zinc-950 theme-light:bg-white flex flex-col items-center justify-center px-4 text-center">
+      <div className="min-h-dvh bg-zinc-950 flex flex-col items-center justify-center px-4 text-center">
         <p className="text-zinc-300 text-sm mb-4">Không tìm thấy từ "{word}" trong từ điển.</p>
         <button
           type="button"
           onClick={() => nav('/welcome')}
-          className="tap-44 text-accent-400 underline underline-offset-2 text-sm"
+          className="tap-44 text-accent-400 theme-light:text-accent-700 underline underline-offset-2 text-sm"
         >
           Về trang chủ
         </button>
@@ -77,7 +77,7 @@ export default function WordDetail() {
   }
 
   return (
-    <div className="min-h-dvh bg-zinc-950 theme-light:bg-white text-zinc-100 theme-light:text-zinc-900">
+    <div className="min-h-dvh bg-zinc-950 text-zinc-100">
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Trang từ vựng công khai, chữ để đọc → width reading. */}
       <PageShell
         width="reading"
@@ -107,20 +107,20 @@ export default function WordDetail() {
         </div>
 
         {entry.level && (
-          <span className="inline-block mt-2 mb-4 rounded-full bg-accent-500/10 border border-accent-500/30 px-2.5 py-1 text-xs font-medium text-accent-400">
+          <span className="inline-block mt-2 mb-4 rounded-full bg-accent-500/10 border border-accent-500/30 px-2.5 py-1 text-xs font-medium text-accent-400 theme-light:text-accent-700">
             Cấp {entry.level}
           </span>
         )}
 
-        <section className="mt-4 rounded-2xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 p-4">
+        <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
           <p className="text-xs font-semibold text-zinc-500 mb-1">Nghĩa ({entry.pos})</p>
-          <p className="text-lg text-zinc-100 theme-light:text-zinc-900">{entry.vi}</p>
+          <p className="text-lg text-zinc-100">{entry.vi}</p>
         </section>
 
         {entry.ex_en && (
-          <section className="mt-4 rounded-2xl border border-zinc-800 theme-light:border-zinc-200 bg-zinc-900/60 theme-light:bg-zinc-50 p-4">
+          <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
             <p className="text-xs font-semibold text-zinc-500 mb-2">Ví dụ</p>
-            <p className="text-zinc-200 theme-light:text-zinc-800">{entry.ex_en}</p>
+            <p className="text-zinc-200">{entry.ex_en}</p>
             <p className="text-sm text-zinc-400 mt-1">{entry.ex_vi}</p>
           </section>
         )}
@@ -130,7 +130,7 @@ export default function WordDetail() {
             Dạng biến thể của{' '}
             <Link
               to={duongDanTuDien(entry.base)}
-              className="text-accent-400 underline underline-offset-2"
+              className="text-accent-400 theme-light:text-accent-700 underline underline-offset-2"
             >
               {entry.base}
             </Link>

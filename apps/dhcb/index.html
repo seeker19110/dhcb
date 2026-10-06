@@ -1,11 +1,30 @@
 <!doctype html>
-<html lang="vi" data-theme="dark-blue">
+<html lang="vi" data-theme="blue-sky">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Cho phép người học phóng to; font input cảm ứng vẫn ≥16px để tránh iOS tự zoom. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0e1726" />
+    <!-- data-theme + theme-color ở đây PHẢI khớp theme mặc định Blue sky (packages/core-ui/theme.ts);
+         test apps/dhcb/src/lib/publicMetadata.test.ts canh. -->
+    <meta name="theme-color" content="#f0f9ff" />
+    <!-- Chống nhá màu trước khi JS chính chạy (audit 2026-09-30 M13): đọc theme đã chọn, chưa chọn
+         thì theo chế độ sáng/tối của máy — CÙNG luật với getTheme() ở packages/core-ui/theme.ts
+         (khoá 'ui_theme' + danh sách theme hợp lệ; test publicMetadata canh hai nơi khớp nhau).
+         main.tsx gọi applyTheme() ngay sau đó và cập nhật cả meta theme-color. -->
+    <script>
+      ;(function () {
+        try {
+          var t = localStorage.getItem('ui_theme')
+          if (t !== 'blue-sky' && t !== 'dark-blue' && t !== 'kid') {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-blue' : 'blue-sky'
+          }
+          document.documentElement.setAttribute('data-theme', t)
+        } catch (e) {
+          /* localStorage/matchMedia bị chặn — giữ Blue sky mặc định */
+        }
+      })()
+    </script>
     <link rel="manifest" href="/manifest.webmanifest" />
     <!-- Thẻ chuẩn mới (trình duyệt hiện đại); thẻ apple- bên dưới giữ cho iOS Safari cũ -->
     <meta name="mobile-web-app-capable" content="yes" />
@@ -50,16 +69,14 @@
     <link rel="alternate" hreflang="vi" href="https://www.donghanhcungban.org" />
     <link rel="alternate" hreflang="en" href="https://www.donghanhcungban.org" />
     <link rel="alternate" hreflang="x-default" href="https://www.donghanhcungban.org" />
-    <!-- Preconnect to speed up initial latency for AI & storage -->
-    <link rel="preconnect" href="https://api.groq.com" crossorigin />
-    <link rel="preconnect" href="https://api.openai.com" crossorigin />
-    <link rel="preconnect" href="https://api.anthropic.com" crossorigin />
-    <link rel="preconnect" href="https://api.sentry.io" crossorigin />
+    <!-- KHÔNG preconnect tới nhà cung cấp AI (Groq/OpenAI/Anthropic): trình duyệt không bao giờ gọi
+         họ — mọi lệnh gọi AI đi qua server của mình (/api/*). Sentry phía client gửi tới host
+         ingest trong DSN (*.ingest.sentry.io), không phải api.sentry.io, và chỉ khi có lỗi
+         (audit 2026-09-30 M12: 4 preconnect thừa tốn kết nối + lộ lượt truy cập cho bên thứ ba). -->
     <!-- Font Inter tự host cùng domain (xem src/main.tsx) — không còn phụ thuộc Google Fonts -->
   </head>
   <body>
     <div id="root"></div>
-    <!-- JSON-LD Structured Data for SEO -->
     <!-- JSON-LD Structured Data for SEO (WebSite, WebApplication, EducationalOrganization, Course) -->
     <script type="application/ld+json">
       {
@@ -68,7 +85,7 @@
           {
             "@type": "WebApplication",
             "@id": "https://www.donghanhcungban.org/#app",
-            "name": "Đồng Hành Cùng Bạn — Nền tảng đồng hành cá nhân",
+            "name": "Đồng Hành Cùng Bạn — Học hỏi và tự học tốt hơn",
             "description": "Nền tảng hỗ trợ mọi người học hỏi và từng bước nâng cao khả năng tự học, kết hợp bài học, thực hành, ghi chú và AI hỗ trợ. Trụ Học tập hiện có môn Tiếng Anh (CEFR A1–C2, luyện nói/viết/nghe, SRS, học ngoại tuyến) và môn Lập trình.",
             "url": "https://www.donghanhcungban.org",
             "applicationCategory": "EducationalApplication",
@@ -118,26 +135,26 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Môn Tiếng Anh trên Đồng Hành Cùng Bạn có những tính năng gì?",
+            "name": "Đồng Hành Cùng Bạn gồm những gì?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Gia sư AI cung cấp 4 tính năng cốt lõi: (1) Trò chuyện AI (/tro-truyen) - sửa lỗi ngữ pháp & diễn đạt; (2) Luyện nói AI (/luyen-noi) - nhận diện giọng nói & chỉnh phát âm; (3) Luyện viết IELTS (/luyen-viet) - chấm điểm Band Score & gợi ý sửa bài; (4) Thẻ từ vựng SRS Offline (/luyen-tap) - ôn tập từ vựng không cần kết nối mạng qua IndexedDB/PWA."
+              "text": "Hai trụ: Học tập và Ghi chú, cùng Bạn Đồng Hành — người bạn AI nhớ ngữ cảnh việc học của bạn. Trụ Học tập có môn Tiếng Anh (lộ trình CEFR A1–C2), môn Lập trình và bốn môn Toán, Vật lý, Hoá học, Sinh học."
             }
           },
           {
             "@type": "Question",
-            "name": "Chế độ Học Offline SRS Flashcards hoạt động như thế nào?",
+            "name": "Môn Tiếng Anh có những tính năng gì?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Hệ thống tự động lưu trữ bộ thẻ SRS FSRS và tải trước âm thanh phát âm vào IndexedDB browser. Học viên có thể ôn tập từ vựng, nghe audio và đánh giá mức độ ghi nhớ ngay cả khi không có kết nối Internet."
+              "text": "Trò chuyện với gia sư AI (sửa lỗi kèm giải thích bằng tiếng Việt); luyện nói song ngữ — AI trả lời bằng giọng tiếng Anh chuẩn và sửa lỗi bằng giọng tiếng Việt; luyện viết chấm điểm kiểu IELTS; thẻ từ vựng ôn tập ngắt quãng, từ điển, mẫu câu thông dụng và truyện song ngữ."
             }
           },
           {
             "@type": "Question",
-            "name": "Có những đường dẫn tiện ích công khai nào trên ứng dụng?",
+            "name": "Có học được khi không có mạng không?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Ứng dụng hỗ trợ các đường dẫn tiếng Việt tối ưu SEO: /lo-trinh-hoc (Lộ trình CEFR), /luyen-tap (SRS Flashcard), /tro-truyen (AI Chat), /luyen-noi (AI Speaking), /luyen-viet (AI Writing), /tu-dien (Từ điển 10k từ), /bai-hoc (Ngữ pháp), /cau-thong-dung (Mẫu câu giao tiếp), /thu-thach (Thử thách 1 phút)."
+              "text": "Được với phần dữ liệu bài học. Khi bạn đã đăng nhập và học ít nhất một phiên, ứng dụng tải dần dữ liệu môn Tiếng Anh (từ điển, bài học, mẫu câu, truyện) về máy để mở lại khi mất mạng. Ứng dụng không tải khi máy bật chế độ tiết kiệm dữ liệu, và bạn có thể tắt mục \"Tải để học ngoại tuyến\" trong Cài đặt. Các tính năng dùng AI (trò chuyện, luyện nói, chấm bài viết) vẫn cần mạng."
             }
           },
           {
@@ -145,7 +162,7 @@
             "name": "Ứng dụng có miễn phí không?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Có. Gói Miễn phí cung cấp các lượt học từ vựng, chat, nói và viết mỗi ngày. Gói VIP cho phép tự chọn bài trong nội dung đã mở và không giới hạn lượt AI trong thời gian gói có hiệu lực."
+              "text": "Có. Bạn có thể bắt đầu không cần đăng nhập, với các tính năng AI dùng thử có hạn mức. Tài khoản Miễn phí có lượt AI mỗi ngày theo hạn mức hiển thị trong ứng dụng. VIP cho phép tự chọn bài trong nội dung đã mở và không giới hạn lượt AI trong thời gian gói còn hiệu lực."
             }
           }
         ]

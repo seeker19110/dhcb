@@ -239,7 +239,7 @@ export default function HubLogin() {
           Đồng Hành Cùng Bạn
         </h1>
         <p className="text-zinc-300 text-xs sm:text-sm mt-1">
-          Một tài khoản cho cả nền tảng — năm trụ và mọi môn học
+          Một tài khoản cho cả nền tảng — Học tập, Ghi chú và mọi môn học
         </p>
       </div>
 
