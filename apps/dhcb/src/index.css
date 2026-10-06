@@ -123,6 +123,13 @@ html[data-sidebar='collapsed'] {
   --sidebar-w: 4.5rem;
 }
 
+/* Trang không bao giờ có sidebar (đăng nhập, onboarding, trang giới thiệu — `isNavHiddenPath` ở
+   lib/studios.ts) → không chừa lề trái. Thiếu luật này thì các trang đó có dải trống 256px ở
+   desktop (audit UI/UX 2026-09-30 minor 11). */
+html[data-sidebar='none'] {
+  --sidebar-w: 0px;
+}
+
 /* [P0-4, 2026-09-17] CHẾ ĐỘ TẬP TRUNG (`Layout.tsx` prop `focus`) — ẩn hẳn BottomNav trên
    trang ngồi học lâu, cùng cơ chế `data-sidebar` ở trên: cờ đặt lên <html>
    (`document.documentElement.dataset.focus`), không phải prop truyền xuống, để BottomNav
