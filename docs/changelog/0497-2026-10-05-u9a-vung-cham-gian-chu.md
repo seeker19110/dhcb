@@ -123,7 +123,18 @@ trang theo `realDataMocks` (U3) để không đo trúng màn lỗi.
 
 ## Cổng cuối
 
-(điền sau khi chạy: `test:coverage`, build, typecheck sau khi xoá `dist`, E2E a11y + liên quan)
+- `test:coverage`: 792 file / 18.481 test ✅ (1 file, 2 test bỏ qua sẵn có), độ phủ 95,08 /
+  90,96 / 95,63 / 95,73 (stmts/branches/funcs/lines) — trên sàn 93/89/93/93.
+- Build ✅ · `size` ✅ (JS đầu 152,54/160 kB, CSS 23,94/26 kB brotli) · typecheck sau khi xoá
+  `packages/*/dist dist dist-server` ✅ · lint 0 cảnh báo ✅ · Prettier ✅.
+- E2E (2 worker, 20,8 phút): **578/578** ✅ — `a11y.spec.ts` + `a11y-aaa.spec.ts` (A/AA + AAA, 3
+  theme) + `u9-touch-target-text-spacing` + 19 file chạm cùng component (`mobile-layout-guards`,
+  `u6-user-preferences`, `lang-of-parts`, `landmark-title`, `header-back-touch-target`,
+  `cefr-tab-touch-target`, `bottomnav`, `english-subject-home`, `outline-english`,
+  `outline-programming`, `programming-home`, `companion-history`, `guest-home`, `listening`,
+  `listening-phrases`, `practice-direction`, `smoke`, `authenticated`, `a11y-modals`).
+- `codemap impact`: `Layout.tsx` 88 file, `KaraokeText.tsx` 20 file, `VoicePicker.tsx` 3 file —
+  phần hiển thị của các trang đó nằm trong danh sách đo của cổng mới hoặc của E2E trên.
 
 ## Còn tồn / đề xuất (chờ chủ dự án xác nhận)
 
