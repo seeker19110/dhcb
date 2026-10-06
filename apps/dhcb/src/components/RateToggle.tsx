@@ -16,14 +16,16 @@ export default function RateToggle() {
     <div
       role="group"
       title="Chọn tốc độ phát (áp dụng cho cả app)"
-      className="tap-44-y flex rounded-full bg-zinc-800 p-0.5 text-[11px] leading-none shrink-0"
+      className="tap-44-y flex rounded-full bg-zinc-800 text-[11px] leading-none shrink-0"
     >
+      {/* [U9a, M20] Mỗi mức là một đích chạm 44×44 (trước đây cao 40px, mức "1×" chỉ rộng
+          28px). Bỏ đệm `p-0.5` của khung để cụm không cao quá 44px. */}
       {RATES.map((r) => (
         <button
           key={r}
           type="button"
           onClick={() => choose(r)}
-          className={`px-2 py-1 rounded-full transition cursor-pointer ${
+          className={`tap-44 flex items-center justify-center px-2 rounded-full transition cursor-pointer ${
             rate === r
               ? 'bg-accent-500/30 text-accent-300 theme-light:text-accent-800'
               : 'text-zinc-400'

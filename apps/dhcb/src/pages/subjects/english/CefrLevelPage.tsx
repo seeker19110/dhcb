@@ -1050,7 +1050,7 @@ export default function CefrLevelPage() {
             {/* Mục tiêu can-do — mặc định LUÔN MỞ ở mọi cấp (A1→C2), vẫn thu gọn được nếu
                 người dùng tự bấm ẩn (thuộc tính open chỉ set giá trị ban đầu). */}
             <details open className="mt-4 pt-4 border-t border-zinc-800/80 group">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-300 flex items-center gap-1.5 select-none">
+              <summary className="tap-44-y cursor-pointer list-none text-sm font-semibold text-zinc-300 flex items-center gap-1.5 select-none">
                 <Sparkles className={`w-4 h-4 shrink-0 ${accent.text}`} />
                 <span className="flex-1">
                   {isA
@@ -1098,7 +1098,7 @@ export default function CefrLevelPage() {
               {prevLevel && (
                 <button
                   onClick={() => nav(duongDanLoTrinh(prevLevel.id))}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-sm font-medium transition"
+                  className="tap-44-y inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-sm font-medium transition"
                 >
                   {isA ? `Học tiếp cấp ${prevLevel.id}` : `Continue ${prevLevel.id}`}
                   <ChevronRight className="w-4 h-4" />
@@ -1170,7 +1170,9 @@ export default function CefrLevelPage() {
                       {isA ? 'Học tiếp' : 'Continue'} · {isA ? 'Phần' : 'Part'}{' '}
                       {(next?.unitIndex ?? 0) + 1} — {isA ? next?.unit.titleVi : next?.unit.titleEn}
                     </p>
-                    <p className="text-sm font-semibold text-white truncate mt-0.5">{nextLabel}</p>
+                    <p className="text-sm font-semibold text-white break-words mt-0.5">
+                      {nextLabel}
+                    </p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-zinc-400 shrink-0" />
                 </button>
@@ -1185,7 +1187,7 @@ export default function CefrLevelPage() {
                   {nextLevel && !(lockedMap.get(nextLevel.id) ?? false) && (
                     <button
                       onClick={() => nav(duongDanLoTrinh(nextLevel.id))}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-sm font-medium transition"
+                      className="tap-44-y inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-sm font-medium transition"
                     >
                       {isA ? `Sang cấp ${nextLevel.id}` : `Go to ${nextLevel.id}`}
                       <ChevronRight className="w-4 h-4" />
@@ -1237,7 +1239,7 @@ export default function CefrLevelPage() {
                   cuộn tay). Thu gọn mặc định để không chiếm chỗ ở cấp có ít unit. */}
               {level.units.length > 4 && (
                 <details className="glass rounded-2xl p-4 mb-4 group">
-                  <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-300 flex items-center gap-1.5 select-none">
+                  <summary className="tap-44-y cursor-pointer list-none text-sm font-semibold text-zinc-300 flex items-center gap-1.5 select-none">
                     <Layers className={`w-4 h-4 shrink-0 ${accent.text}`} />
                     <span className="flex-1">
                       {isA
@@ -1263,7 +1265,7 @@ export default function CefrLevelPage() {
                             {ui + 1}
                           </span>
                           <span className="text-base shrink-0">{unit.emoji}</span>
-                          <span className="flex-1 min-w-0 truncate">
+                          <span className="flex-1 min-w-0 break-words">
                             {isA ? unit.titleVi : unit.titleEn}
                           </span>
                         </a>
@@ -1373,7 +1375,7 @@ function UnitSection({
       >
         <CheckCircle2 className={`w-4 h-4 shrink-0 ${accent.text}`} />
         <span className="text-lg shrink-0">{unit.emoji}</span>
-        <span className="flex-1 min-w-0 text-sm font-medium text-zinc-300 truncate">
+        <span className="flex-1 min-w-0 text-sm font-medium text-zinc-300 break-words">
           {isA ? unit.titleVi : unit.titleEn}
         </span>
         <span className={`text-xs shrink-0 ${accent.text}`}>{isA ? 'Hoàn thành' : 'Done'}</span>
@@ -1407,13 +1409,13 @@ function UnitSection({
           {isA ? 'Phần' : 'Part'} {index + 1}
         </span>
         <span className="text-xl">{unit.emoji}</span>
-        <h4 className="flex-1 min-w-0 font-semibold text-white text-base truncate">
+        <h4 className="flex-1 min-w-0 font-semibold text-white text-base break-words">
           {isA ? unit.titleVi : unit.titleEn}
         </h4>
         {allDone && expanded && (
           <button
             onClick={() => setExpanded(false)}
-            className="text-xs text-zinc-400 hover:text-zinc-200 transition shrink-0"
+            className="tap-44 flex items-center justify-center text-xs text-zinc-400 hover:text-zinc-200 transition shrink-0"
           >
             {isA ? 'Thu gọn' : 'Collapse'}
           </button>
@@ -1433,7 +1435,7 @@ function UnitSection({
                   <button
                     key={c.id}
                     onClick={() => onOpenCircle(c)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border transition hover:border-zinc-500 ${full ? `${accent.soft} ${accent.ring}` : 'bg-zinc-900/70 border-zinc-800 text-zinc-300'}`}
+                    className={`tap-44-touch-y flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs border transition hover:border-zinc-500 ${full ? `${accent.soft} ${accent.ring}` : 'bg-zinc-900/70 border-zinc-800 text-zinc-300'}`}
                   >
                     <span>{c.emoji}</span>
                     <span>{isA ? c.titleVi : c.titleEn}</span>
@@ -1476,12 +1478,12 @@ function UnitSection({
                       <BookOpen className={`w-4 h-4 shrink-0 ${accent.text}`} />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-200 truncate">
+                      <p className="text-sm font-medium text-zinc-200 break-words">
                         {/* [U4] tên "tiếng Việt" có khi là tiếng Anh ("This / That / …"). */}
                         <MixedLangText text={isA ? g.titleVi : g.titleEn} />
                       </p>
                       {/* [U4 · WCAG 3.1.2] công thức trộn Anh/Việt → `lang` theo từng đoạn. */}
-                      <p className="text-xs text-zinc-400 font-mono truncate">
+                      <p className="text-xs text-zinc-400 font-mono break-words">
                         <MixedLangText text={g.structure} />
                       </p>
                     </div>
@@ -1510,14 +1512,14 @@ function UnitSection({
                   <button
                     key={i}
                     onClick={() => onOpenDialogue(unit.id, dl)}
-                    className={`w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl border transition hover:border-zinc-600 ${viewed ? `${accent.soft} ${accent.ring}` : 'bg-zinc-900/70 border-zinc-800'}`}
+                    className={`tap-44-y w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl border transition hover:border-zinc-600 ${viewed ? `${accent.soft} ${accent.ring}` : 'bg-zinc-900/70 border-zinc-800'}`}
                   >
                     {viewed ? (
                       <CheckCircle2 className={`w-4 h-4 shrink-0 ${accent.text}`} />
                     ) : (
                       <MessageCircle className={`w-4 h-4 shrink-0 ${accent.text}`} />
                     )}
-                    <span className="flex-1 min-w-0 text-sm font-medium text-zinc-200 truncate">
+                    <span className="flex-1 min-w-0 text-sm font-medium text-zinc-200 break-words">
                       {isA ? dl.titleVi : dl.titleEn}
                     </span>
                     <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
@@ -1537,7 +1539,7 @@ function UnitSection({
       {hiddenCount > 0 && !allDone && (
         <button
           onClick={() => setShowDone((v) => !v)}
-          className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 py-2 transition"
+          className="tap-44-y mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 py-2 transition"
         >
           <CheckCircle2 className="w-3.5 h-3.5 text-accent-400 theme-light:text-accent-800" />
           {showDone

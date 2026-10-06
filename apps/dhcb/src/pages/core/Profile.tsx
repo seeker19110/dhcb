@@ -177,8 +177,8 @@ export default function Profile() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-400 text-2xl font-bold text-white">
           {user.name[0]?.toUpperCase()}
         </div>
-        <p className="t-body mt-3 truncate font-semibold text-content">{user.name}</p>
-        <p className="t-caption mt-1 flex items-center justify-center gap-1.5 truncate text-content-muted">
+        <p className="t-body mt-3 break-words font-semibold text-content">{user.name}</p>
+        <p className="t-caption mt-1 flex items-center justify-center gap-1.5 break-words text-content-muted">
           <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {user.email}
         </p>
         <span
@@ -249,8 +249,8 @@ export default function Profile() {
                   {user.name[0]?.toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white text-lg truncate">{user.name}</p>
-                  <p className="text-sm text-zinc-400 truncate flex items-center gap-1.5 mt-0.5">
+                  <p className="font-semibold text-white text-lg break-words">{user.name}</p>
+                  <p className="text-sm text-zinc-400 break-words flex items-center gap-1.5 mt-0.5">
                     <Mail className="w-3.5 h-3.5 shrink-0" /> {user.email}
                   </p>
                   <span
@@ -318,7 +318,7 @@ export default function Profile() {
                         <p className="font-semibold text-white text-sm group-hover:text-accent-300 transition-colors">
                           {st.title}
                         </p>
-                        <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed line-clamp-1">
+                        <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed break-words">
                           {st.subtitle}
                         </p>
                       </div>
@@ -341,7 +341,7 @@ export default function Profile() {
                         <p className="font-semibold text-white text-sm group-hover:text-accent-300 transition-colors">
                           {hub.title}
                         </p>
-                        <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed line-clamp-1">
+                        <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed break-words">
                           {hub.desc}
                         </p>
                       </div>
@@ -368,7 +368,7 @@ export default function Profile() {
                   <p className="font-semibold text-white text-[15px]">
                     {isA ? 'Giao diện' : 'Theme'}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 break-words mt-0.5">
                     {isA ? 'Xanh đêm · Blue sky' : 'Night blue · Blue sky'}
                   </p>
                 </div>
@@ -387,7 +387,7 @@ export default function Profile() {
                   <p className="font-semibold text-white text-[15px]">
                     {isA ? 'Cài đặt' : 'Settings'}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 break-words mt-0.5">
                     {isA
                       ? 'Tốc độ học, giọng đọc AI, âm thanh, nhóm tuổi & chiều học'
                       : 'Study speed, AI voice, sound effects, age group & direction'}
@@ -409,7 +409,7 @@ export default function Profile() {
                   <p className="font-semibold text-white text-[15px]">
                     {isA ? 'Tiến độ học tập' : 'Learning Progress'}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 break-words mt-0.5">
                     {isA
                       ? 'Chuỗi ngày học, từ vựng, lộ trình CEFR & kết quả luyện tập'
                       : 'Streak, vocabulary, CEFR roadmap & practice scores'}
@@ -431,7 +431,7 @@ export default function Profile() {
                   <p className="font-semibold text-white text-[15px]">
                     {isA ? 'Lịch sử học' : 'Learning history'}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 break-words mt-0.5">
                     {isA
                       ? 'Các phiên chat, viết, nói trước đây'
                       : 'Past chat, writing and speaking sessions'}
@@ -454,7 +454,7 @@ export default function Profile() {
                   <p className="font-semibold text-white text-[15px]">
                     {isA ? 'Đóng góp ý kiến & Báo lỗi' : 'Feedback & Bug Report'}
                   </p>
-                  <p className="text-xs text-zinc-400 truncate mt-0.5">
+                  <p className="text-xs text-zinc-400 break-words mt-0.5">
                     {isA
                       ? 'Gửi đề xuất tính năng, báo lỗi hoặc góp ý nội dung bài học'
                       : 'Suggest features, report issues or content improvements'}
@@ -551,7 +551,7 @@ export default function Profile() {
                       >
                         {a.icon}
                       </span>
-                      <span className="text-[11px] text-zinc-400 text-center leading-tight line-clamp-2">
+                      <span className="text-[11px] text-zinc-400 text-center leading-tight break-words">
                         {name}
                       </span>
                     </div>
@@ -597,7 +597,7 @@ export default function Profile() {
                           >
                             <span className="text-lg shrink-0">{def.icon}</span>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-white truncate">{name}</p>
+                              <p className="text-sm font-semibold text-white break-words">{name}</p>
                               <p className="text-xs text-amber-300 theme-light:text-amber-900 mt-0.5 flex items-center gap-1">
                                 <Gift className="w-3 h-3" />
                                 {isA

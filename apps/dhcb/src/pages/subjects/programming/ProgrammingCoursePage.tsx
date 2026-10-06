@@ -243,7 +243,7 @@ export default function ProgrammingCoursePage() {
                         >
                           <span className="flex items-center gap-2 min-w-0">
                             <Play className="w-4 h-4 shrink-0" />
-                            <span className="truncate">Học bài: {lesson.title}</span>
+                            <span className="min-w-0 break-words">Học bài: {lesson.title}</span>
                           </span>
                           {isLessonCompleted(progress, lesson.id) && (
                             <CheckCircle2 className="w-4 h-4 shrink-0" />

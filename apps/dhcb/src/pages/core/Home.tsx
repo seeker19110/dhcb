@@ -312,7 +312,7 @@ export default function Home() {
                 />
               </h3>
               <p
-                className={`${isDesktop ? 'mt-0.5' : 'mt-1 line-clamp-1'} text-sm text-zinc-400 leading-relaxed read-measure`}
+                className={`${isDesktop ? 'mt-0.5' : 'mt-1'} text-sm text-zinc-400 leading-relaxed read-measure`}
               >
                 {notesSpace.desc}
               </p>

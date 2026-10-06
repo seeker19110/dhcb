@@ -147,7 +147,7 @@ export default function CefrExam({
         </p>
         <button
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm transition"
+          className="tap-44-y inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm transition"
         >
           <ArrowLeft className="w-4 h-4" /> {isA ? 'Quay lại' : 'Back'}
         </button>
@@ -331,7 +331,7 @@ export default function CefrExam({
       <div className="flex items-center justify-between">
         <button
           onClick={onClose}
-          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition"
+          className="tap-44-y flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition"
         >
           <ArrowLeft className="w-4 h-4" /> {isA ? 'Thoát' : 'Exit'}
         </button>

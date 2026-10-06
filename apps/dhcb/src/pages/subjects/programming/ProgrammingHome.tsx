@@ -381,7 +381,7 @@ export default function ProgrammingHome() {
                 >
                   <span className="flex items-center gap-2 w-full">
                     <Play className="w-4 h-4 text-accent-400 shrink-0" />
-                    <span className="truncate">{course.title}</span>
+                    <span className="min-w-0 break-words">{course.title}</span>
                   </span>
                   <span className="text-xs font-normal text-zinc-400 leading-relaxed">
                     {course.canDo}
@@ -426,7 +426,7 @@ export default function ProgrammingHome() {
               >
                 <span className="flex items-center gap-2 w-full">
                   <Map className="w-4 h-4 text-accent-400 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{path.title}</span>
+                  <span className="min-w-0 break-words">{path.title}</span>
                 </span>
                 <span className="text-xs font-normal text-zinc-400 leading-relaxed">
                   {path.tagline}

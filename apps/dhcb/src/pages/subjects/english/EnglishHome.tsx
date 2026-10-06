@@ -336,7 +336,7 @@ export default function EnglishHome() {
                   A1-C2
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-zinc-400 break-words leading-relaxed">
                 6 cấp độ chuẩn hóa, 5-20 từ mới mỗi ngày theo vòng tròn chủ đề ngữ cảnh.
               </p>
             </div>
@@ -357,7 +357,7 @@ export default function EnglishHome() {
                   Có phiên âm
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-zinc-400 break-words leading-relaxed">
                 Tra cứu phát âm chuẩn IPA, câu ví dụ thực tế và giải thích chi tiết ngữ cảnh.
               </p>
             </div>
@@ -380,8 +380,8 @@ export default function EnglishHome() {
                 <Bookmark className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">Ngữ Pháp</h4>
-                <p className="text-[11px] text-zinc-400 truncate">100+ chủ điểm</p>
+                <h4 className="font-semibold text-white text-xs break-words">Ngữ Pháp</h4>
+                <p className="text-[11px] text-zinc-400 break-words">100+ chủ điểm</p>
               </div>
             </button>
 
@@ -394,8 +394,8 @@ export default function EnglishHome() {
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">Mẫu Câu</h4>
-                <p className="text-[11px] text-zinc-400 truncate">Giao tiếp nhanh</p>
+                <h4 className="font-semibold text-white text-xs break-words">Mẫu Câu</h4>
+                <p className="text-[11px] text-zinc-400 break-words">Giao tiếp nhanh</p>
               </div>
             </button>
 
@@ -408,8 +408,8 @@ export default function EnglishHome() {
                 <BookOpen className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">Truyện song ngữ</h4>
-                <p className="text-[11px] text-zinc-400 truncate">Chữ sáng theo giọng đọc</p>
+                <h4 className="font-semibold text-white text-xs break-words">Truyện song ngữ</h4>
+                <p className="text-[11px] text-zinc-400 break-words">Chữ sáng theo giọng đọc</p>
               </div>
             </button>
 
@@ -422,10 +422,10 @@ export default function EnglishHome() {
                 <Target className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">
+                <h4 className="font-semibold text-white text-xs break-words">
                   {isA ? 'Ôn thi' : 'Exam prep'}
                 </h4>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isA ? 'Kế hoạch tới ngày thi' : 'Plan to exam day'}
                 </p>
               </div>
@@ -440,10 +440,10 @@ export default function EnglishHome() {
                 <Sparkles className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">
+                <h4 className="font-semibold text-white text-xs break-words">
                   {isA ? 'Cài đặt môn' : 'Subject settings'}
                 </h4>
-                <p className="text-[11px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 break-words">
                   {isA ? 'Chiều học · tốc độ · giọng' : 'Direction · pace · voice'}
                 </p>
               </div>
@@ -458,8 +458,8 @@ export default function EnglishHome() {
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-white text-xs truncate">Sổ lỗi sai</h4>
-                <p className="text-[11px] text-zinc-400 truncate">Khắc phục lỗ hổng</p>
+                <h4 className="font-semibold text-white text-xs break-words">Sổ lỗi sai</h4>
+                <p className="text-[11px] text-zinc-400 break-words">Khắc phục lỗ hổng</p>
               </div>
             </button>
           </div>

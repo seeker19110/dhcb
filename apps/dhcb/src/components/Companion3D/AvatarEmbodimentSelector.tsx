@@ -45,7 +45,7 @@ export default function AvatarEmbodimentSelector({
             key={mode.id}
             type="button"
             onClick={() => onModeChange(mode.id)}
-            className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+            className={`tap-44-y flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               isActive
                 ? 'bg-cyan-500/20 text-cyan-300 theme-light:text-cyan-800 shadow-[0_0_12px_rgba(6,182,212,0.25)] border border-cyan-500/40'
                 : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200 border border-transparent'

@@ -218,7 +218,7 @@ export default function EnglishSettings() {
             <button
               onClick={() => chooseSound(true)}
               aria-pressed={soundOn}
-              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition ${
+              className={`tap-44-y flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition ${
                 soundOn
                   ? 'bg-accent-500/20 border-accent-500/60 text-accent-300 theme-light:text-accent-800'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
@@ -229,7 +229,7 @@ export default function EnglishSettings() {
             <button
               onClick={() => chooseSound(false)}
               aria-pressed={!soundOn}
-              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition ${
+              className={`tap-44-y flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium border transition ${
                 !soundOn
                   ? 'bg-accent-500/20 border-accent-500/60 text-accent-300 theme-light:text-accent-800'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'

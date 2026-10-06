@@ -18,7 +18,7 @@ export const EdgeAiIndicator: React.FC<EdgeAiIndicatorProps> = ({ className = ''
     <>
       <button
         onClick={() => setShowDetails(true)}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition border ${
+        className={`tap-44-y inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition border ${
           isWebGpu
             ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-800 border-emerald-500/30'
             : capability.inferenceMode === 'wasm'

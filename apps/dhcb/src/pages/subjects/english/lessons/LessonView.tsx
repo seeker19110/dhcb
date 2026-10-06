@@ -545,8 +545,9 @@ export function LessonView({
       </button>
     </div>
   )
-  // Chế độ nghe. `tap-44-coarse-y`: trên màn cảm ứng nút cao đủ 44px để bấm (mobile mở trong
-  // bảng "Tuỳ chọn nghe" nên không tốn chỗ hàng chính); với chuột giữ cỡ gọn như cũ.
+  // Chế độ nghe. `tap-44-touch-y`: trên màn hẹp hoặc màn cảm ứng nút cao đủ 44px để bấm (mobile
+  // mở trong bảng "Tuỳ chọn nghe" nên không tốn chỗ hàng chính); desktop dùng chuột giữ cỡ gọn.
+  // [U9a] Trước đây `tap-44-coarse-y` — chỉ theo `pointer: coarse`, nên khung hẹp vẫn 20–24px.
   const khoiCheDo = (
     <div className="flex items-center gap-1">
       <Volume2 className="w-3 h-3 text-zinc-400 shrink-0" />
@@ -554,7 +555,7 @@ export function LessonView({
         <button
           key={m.key}
           onClick={() => changeMode(m.key)}
-          className={`tap-44-coarse-y flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
+          className={`tap-44-touch-y flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
             mode === m.key
               ? 'bg-violet-500/20 text-violet-300 theme-light:text-violet-800 border border-violet-500/40'
               : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -570,7 +571,7 @@ export function LessonView({
       type="button"
       onClick={() => setVoiceSettingsOpen((o) => !o)}
       aria-expanded={voiceSettingsOpen}
-      className={`tap-44-coarse-y flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
+      className={`tap-44-touch-y flex items-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
         voiceSettingsOpen ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-400 hover:text-zinc-200'
       }`}
     >

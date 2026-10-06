@@ -266,7 +266,7 @@ export default function Notes() {
             aria-label="Lọc theo dự án"
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm focus:outline-none"
+            className="tap-44-y px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm focus:outline-none"
           >
             <option value="">Tất cả dự án</option>
             {projects.map((p) => (
