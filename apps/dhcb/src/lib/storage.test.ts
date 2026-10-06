@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import {
   getStreak,
@@ -6,6 +6,7 @@ import {
   shouldCelebrateStreak,
   markStreakCelebrated,
   daysSinceLastActivity,
+  hasEverStudied,
   register,
   login,
   logout,
@@ -152,6 +153,59 @@ describe('daysSinceLastActivity — luồng "quay lại sau khi bỏ bẵng" (�
     setActivity('u1', 10)
     expect(daysSinceLastActivity('u1', 5)).toBeNull()
     expect(daysSinceLastActivity('u1', 10)).toBe(10)
+  })
+})
+
+describe('hasEverStudied — điều kiện "đã học ≥ 1 phiên" của tải ngoại tuyến (audit M14)', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('chưa có dữ liệu nào → false', () => {
+    expect(hasEverStudied('u1')).toBe(false)
+  })
+
+  it('uid rỗng → false (không quét)', () => {
+    setActivity('', 0)
+    expect(hasEverStudied('')).toBe(false)
+  })
+
+  it('có một ngày học, kể cả cách đây hơn 365 ngày → true (không giới hạn khung)', () => {
+    setActivity('u1', 400)
+    expect(hasEverStudied('u1')).toBe(true)
+  })
+
+  it('bản ghi ngày có nhưng mọi lượt = 0 (mở app không học) → false', () => {
+    const date = dayAgo(1)
+    localStorage.setItem(usageKey('u1', date), JSON.stringify(activity(date, 0)))
+    expect(hasEverStudied('u1')).toBe(false)
+  })
+
+  it('bản ghi cũ thiếu cột stt/pronounce/learn nhưng có chat → true', () => {
+    const date = dayAgo(2)
+    localStorage.setItem(
+      usageKey('u1', date),
+      JSON.stringify({ date, chatCount: 1, writingCount: 0, speakingCount: 0 }),
+    )
+    expect(hasEverStudied('u1')).toBe(true)
+  })
+
+  it('chỉ người KHÁC đã học → false; uid dài hơn cùng tiền tố không bị khớp nhầm', () => {
+    setActivity('u2', 0)
+    setActivity('u1_x', 0)
+    expect(hasEverStudied('u1')).toBe(false)
+  })
+
+  it('JSON hỏng → bỏ qua bản ghi đó, không throw', () => {
+    localStorage.setItem(usageKey('u1', dayAgo(0)), '{hỏng')
+    expect(hasEverStudied('u1')).toBe(false)
+  })
+
+  it('localStorage bị chặn (ném lỗi khi duyệt khoá) → false, không throw', () => {
+    setActivity('u1', 0)
+    const spy = vi.spyOn(localStorage, 'key').mockImplementation(() => {
+      throw new Error('SecurityError')
+    })
+    expect(hasEverStudied('u1')).toBe(false)
+    spy.mockRestore()
   })
 })
 

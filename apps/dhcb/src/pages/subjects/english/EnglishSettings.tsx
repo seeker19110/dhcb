@@ -17,6 +17,7 @@ import Layout from '../../../components/Layout'
 import { PageShell } from '@core/PageShell'
 import VoicePicker from '../../../components/VoicePicker'
 import RateToggle from '../../../components/RateToggle'
+import OfflineDownloadSetting from '../../../components/OfflineDownloadSetting'
 import { useAuth } from '../../../context/useAuth'
 import { useLang } from '../../../context/useLang'
 import { getDirection, setDirection } from '../../../lib/storage'
@@ -364,6 +365,9 @@ export default function EnglishSettings() {
               : 'Weeks start on Monday. Any study activity counts towards your weekly goal.'}
           </p>
         </section>
+
+        {/* Tải để học ngoại tuyến (audit M14) — dữ liệu tải về là của môn Tiếng Anh. */}
+        <OfflineDownloadSetting isVi={isUiVi} />
       </PageShell>
     </div>
   )
