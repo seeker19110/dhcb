@@ -14,6 +14,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 import {
   CheckCircle2,
   Circle,
@@ -34,6 +35,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import Layout from '../../../components/Layout'
+import Disclosure from '../../../components/Disclosure'
 import { useAuth } from '../../../context/useAuth'
 import {
   fetchSpecProgress,
@@ -146,9 +148,11 @@ function StageLessons({ stageId }: { stageId: string }) {
           <li key={id}>{tieuDe(id)}</li>
         ))}
       </ul>
+      {/* [0500, audit mục 7] Bề ngang theo nội dung từ `sm` — nút kéo hết khung ~1.100px ở
+          1440px là mẫu của mobile. Đây là hành động CHÍNH của chặng nên là `primary`. */}
       <button
         onClick={() => nav(`${PROGRAMMING_PREFIX}/bac/p6`)}
-        className="tap-44 w-full py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+        className={buttonClass({ variant: 'primary', className: 'w-full sm:w-auto' })}
       >
         Vào học chặng này
       </button>
@@ -193,53 +197,61 @@ function StageBlock({
         </p>
       </div>
 
-      <ol className="space-y-3">
-        {stage.modules.map((mod, i) => (
-          <li key={mod.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 space-y-2">
-            <h4 className="text-sm font-bold text-white">
-              {i + 1}. {mod.title}
-            </h4>
-            <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5 read-measure">
-              {mod.topics.map((topic) => (
-                <li key={topic}>{topic}</li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ol>
+      {/* [0500, audit M22] Danh sách module GẬP sẵn: 4 chặng × 5 module mở cả ra chiếm phần lớn
+          12.118px của trang ở 390px. Chi tiết đầy đủ vẫn ở trang chặng ("Mở chặng …"). */}
+      <Disclosure summary={`Xem ${stage.modules.length} module của chặng`}>
+        <ol className="space-y-3">
+          {stage.modules.map((mod, i) => (
+            <li key={mod.id} className="space-y-1">
+              <h4 className="text-sm font-bold text-white">
+                {i + 1}. {mod.title}
+              </h4>
+              <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5 read-measure">
+                {mod.topics.map((topic) => (
+                  <li key={topic}>{topic}</li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </Disclosure>
 
       <StageLessons stageId={stage.id} />
 
       <ProjectBlock project={stage.project} tone="stage" />
 
-      <button
-        onClick={onOpen}
-        className="tap-44 w-full py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-      >
-        Mở chặng {stage.tier.toUpperCase()} — chi tiết & nghiệm thu
-      </button>
-
-      {onToggle && (
+      {/* [0500] Hai hành động cuối chặng chung MỘT hàng từ `sm` và theo bề ngang nội dung. "Mở
+          chặng" là nút PHỤ: nút chính của chặng là "Vào học chặng này" ở khối bài học. */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <button
-          onClick={onToggle}
-          // Đã xong là trạng thái CHỐT ở server (không kéo lùi) — nút khoá lại thay vì để bấm
-          // rồi không có gì đổi, người học tưởng hỏng.
-          disabled={dangLuu || xong}
-          aria-pressed={xong}
-          className={`tap-44 w-full flex items-center justify-center gap-2 py-3 rounded-2xl border font-semibold text-sm transition disabled:opacity-60 ${
-            xong
-              ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200 theme-light:text-emerald-900'
-              : 'bg-zinc-950 border-zinc-700 text-zinc-100 hover:border-accent-500/60'
-          }`}
+          onClick={onOpen}
+          className={buttonClass({ variant: 'secondary', className: 'w-full sm:w-auto' })}
         >
-          {xong ? (
-            <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-          ) : (
-            <Circle className="w-4 h-4" aria-hidden="true" />
-          )}
-          {xong ? 'Đã xong chặng này' : 'Đánh dấu đã xong chặng này'}
+          Mở chặng {stage.tier.toUpperCase()} — chi tiết & nghiệm thu
         </button>
-      )}
+
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            // Đã xong là trạng thái CHỐT ở server (không kéo lùi) — nút khoá lại thay vì để bấm
+            // rồi không có gì đổi, người học tưởng hỏng.
+            disabled={dangLuu || xong}
+            aria-pressed={xong}
+            className={`tap-44 w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl border font-semibold text-sm transition-colors disabled:opacity-60 ${
+              xong
+                ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200 theme-light:text-emerald-900'
+                : 'bg-zinc-950 border-zinc-700 text-zinc-100 hover:border-accent-500/60'
+            }`}
+          >
+            {xong ? (
+              <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <Circle className="w-4 h-4" aria-hidden="true" />
+            )}
+            {xong ? 'Đã xong chặng này' : 'Đánh dấu đã xong chặng này'}
+          </button>
+        )}
+      </div>
     </li>
   )
 }
@@ -336,11 +348,12 @@ export default function ProgrammingSpecializationPage() {
                 )
               }
               disabled={dangLuu}
-              className={`tap-44 w-full py-3.5 rounded-2xl font-semibold text-sm transition disabled:opacity-60 ${
-                dangTheo
-                  ? 'bg-zinc-950 border border-zinc-700 text-zinc-100 hover:border-accent-500/60'
-                  : 'bg-accent-500 hover:bg-accent-400 text-black'
-              }`}
+              // [0500] `primary` khi chưa theo, `outline` khi đang theo (bỏ theo là hành động phụ);
+              // bề ngang theo nội dung từ `sm` thay vì kéo hết khung ở desktop.
+              className={buttonClass({
+                variant: dangTheo ? 'outline' : 'primary',
+                className: 'w-full sm:w-auto',
+              })}
             >
               {dangLuu ? 'Đang lưu…' : dangTheo ? 'Bỏ theo hướng này' : 'Chọn hướng này'}
             </button>
@@ -393,59 +406,66 @@ export default function ProgrammingSpecializationPage() {
             code chạy được nhưng chậm hoặc không an toàn.
           </p>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 space-y-2">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Boxes className="w-4 h-4 text-accent-400" aria-hidden="true" />
-              <span>Module điển hình &amp; trách nhiệm</span>
-            </h3>
-            <p className="text-xs text-zinc-300 leading-relaxed read-measure">
-              Mỗi module chịu trách nhiệm MỘT việc — và quan trọng không kém: không được làm việc
-              gì.
-            </p>
-            <ul className="space-y-2">
-              {spec.architecture.modules.map((mod) => (
-                <li key={mod.name} className="text-sm text-zinc-200 leading-relaxed read-measure">
-                  <span className="font-semibold text-white">{mod.name}</span> — {mod.role}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* [0500, audit M22] Năm khối kiến trúc GẬP sẵn — đọc khi đặc tả, không phải mỗi lần mở
+              trang. Đoạn giới thiệu phía trên vẫn hiện để người đọc biết bên trong có gì. */}
+          <Disclosure
+            summary={`Xem kiến trúc chi tiết (${countArchitectureItems(spec)} mục)`}
+            className="rounded-2xl border border-zinc-800 bg-zinc-900/80"
+          >
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 space-y-2">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Boxes className="w-4 h-4 text-accent-400" aria-hidden="true" />
+                <span>Module điển hình &amp; trách nhiệm</span>
+              </h3>
+              <p className="text-xs text-zinc-300 leading-relaxed read-measure">
+                Mỗi module chịu trách nhiệm MỘT việc — và quan trọng không kém: không được làm việc
+                gì.
+              </p>
+              <ul className="space-y-2">
+                {spec.architecture.modules.map((mod) => (
+                  <li key={mod.name} className="text-sm text-zinc-200 leading-relaxed read-measure">
+                    <span className="font-semibold text-white">{mod.name}</span> — {mod.role}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <ArchList
-            icon={<FileSignature className="w-4 h-4 text-accent-400" aria-hidden="true" />}
-            title="Hợp đồng giữa các module"
-            hint="Cái gì đi qua ranh giới và ràng buộc nào phải giữ. Đây là thứ quyết định hai phần code ghép được với nhau."
-            items={spec.architecture.contracts}
-          />
+            <ArchList
+              icon={<FileSignature className="w-4 h-4 text-accent-400" aria-hidden="true" />}
+              title="Hợp đồng giữa các module"
+              hint="Cái gì đi qua ranh giới và ràng buộc nào phải giữ. Đây là thứ quyết định hai phần code ghép được với nhau."
+              items={spec.architecture.contracts}
+            />
 
-          <ArchList
-            icon={<GitBranch className="w-4 h-4 text-accent-400" aria-hidden="true" />}
-            title="Quyết định phải chốt sớm"
-            hint="Những lựa chọn mà đổi về sau rất đắt. Chốt xong nên ghi thành ADR kèm phương án đã loại."
-            items={spec.architecture.keyDecisions}
-          />
+            <ArchList
+              icon={<GitBranch className="w-4 h-4 text-accent-400" aria-hidden="true" />}
+              title="Quyết định phải chốt sớm"
+              hint="Những lựa chọn mà đổi về sau rất đắt. Chốt xong nên ghi thành ADR kèm phương án đã loại."
+              items={spec.architecture.keyDecisions}
+            />
 
-          <ArchList
-            icon={<Gauge className="w-4 h-4 text-accent-400" aria-hidden="true" />}
-            title="Yêu cầu phi chức năng (NFR)"
-            hint="Phải ghi thành SỐ trong đặc tả. NFR không đo được là NFR không tồn tại."
-            items={spec.architecture.nfrs}
-          />
+            <ArchList
+              icon={<Gauge className="w-4 h-4 text-accent-400" aria-hidden="true" />}
+              title="Yêu cầu phi chức năng (NFR)"
+              hint="Phải ghi thành SỐ trong đặc tả. NFR không đo được là NFR không tồn tại."
+              items={spec.architecture.nfrs}
+            />
 
-          <div className="rounded-2xl border border-accent-500/40 bg-zinc-900 p-4 space-y-2">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <ClipboardCheck className="w-4 h-4 text-accent-400" aria-hidden="true" />
-              <span>Checklist khi viết đặc tả cho hướng này</span>
-            </h3>
-            <p className="text-xs text-zinc-300 leading-relaxed read-measure">
-              Thiếu ô nào thì bên thi hành (người hoặc AI) sẽ tự đoán — và thường đoán sai.
-            </p>
-            <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
-              {spec.architecture.specChecklist.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
+            <div className="rounded-2xl border border-accent-500/40 bg-zinc-900 p-4 space-y-2">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4 text-accent-400" aria-hidden="true" />
+                <span>Checklist khi viết đặc tả cho hướng này</span>
+              </h3>
+              <p className="text-xs text-zinc-300 leading-relaxed read-measure">
+                Thiếu ô nào thì bên thi hành (người hoặc AI) sẽ tự đoán — và thường đoán sai.
+              </p>
+              <ul className="text-sm text-zinc-200 leading-relaxed space-y-1.5 list-disc pl-5 read-measure">
+                {spec.architecture.specChecklist.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </Disclosure>
         </section>
 
         {/* ② Bốn chặng */}

@@ -62,7 +62,7 @@ function Tab({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition border ${
+      className={`tap-44-y flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition border ${
         active
           ? 'bg-zinc-800 border-zinc-700 text-white'
           : 'border-transparent text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800/50'
@@ -395,7 +395,7 @@ export default function History() {
             <p className="text-zinc-400 text-xs mt-1 mb-4">Bắt đầu luyện tập để xem lại ở đây!</p>
             <button
               onClick={() => nav(EMPTY_CTA[tab].path)}
-              className="flex items-center gap-1.5 bg-accent-500/15 hover:bg-accent-500/25 text-accent-300 theme-light:text-accent-800 text-sm font-medium px-4 py-2.5 rounded-xl transition"
+              className="tap-44-y flex items-center gap-1.5 bg-accent-500/15 hover:bg-accent-500/25 text-accent-300 theme-light:text-accent-800 text-sm font-medium px-4 py-2.5 rounded-xl transition"
             >
               {EMPTY_CTA[tab].label} <ChevronRight className="w-4 h-4" />
             </button>

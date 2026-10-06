@@ -16,7 +16,7 @@
 // học ép cột bài còn ~424px — hẹp hơn cả máy tính bảng 768px. Mở rộng ở dải này là việc TẠM
 // (không ghi localStorage, tự thu lại khi chọn một trang): lựa chọn đã lưu chỉ áp từ 1280px, để
 // người bấm "mở rộng" ở màn 1440px không vô tình ép cột chữ khi sang laptop 1024px.
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   BookOpen,
@@ -40,8 +40,9 @@ import {
   writeOpenGroups,
   type NavChild,
 } from '../lib/navTree'
-import { STUDIOS, NAV_HIDDEN_PATHS } from '../lib/studios'
+import { STUDIOS, isNavHidden, isNavHiddenPath } from '../lib/studios'
 import { useMediaQuery } from '../lib/useIsDesktopViewport'
+import { sidebarPlanLabel } from '../lib/planLabel'
 import {
   COMPANION_PATHS,
   LEARNING_PATHS,
@@ -140,12 +141,6 @@ const ACTIVE_ORDER: Item[] = [
   ...CORE_BOTTOM,
 ]
 
-/** Nhãn lối vào trang gói ở chân sidebar — theo gói THẬT, gọn hơn khi thu gọn. */
-function nhanGoi(laVip: boolean, thuGon: boolean): string {
-  if (laVip) return thuGon ? 'VIP' : 'Gói VIP'
-  return thuGon ? 'Nâng cấp' : 'Free · Nâng cấp'
-}
-
 function readCollapsed(): boolean {
   try {
     return localStorage.getItem(STORAGE_KEY) === '1'
@@ -168,16 +163,22 @@ export default function DesktopSidebar() {
   const collapsed = isNarrowDesktop ? narrowExpandedAt !== location.pathname : savedCollapsed
   const [openGroups, setOpenGroups] = useState<string[]>(readOpenGroups)
 
-  // Trang đăng nhập/onboarding không có sidebar → nội dung không được chừa lề trái.
-  const hidden = !user || NAV_HIDDEN_PATHS.includes(location.pathname)
+  const hidden = isNavHidden(location.pathname, user)
+  const neverSidebar = isNavHiddenPath(location.pathname)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement
-    root.dataset.sidebar = hidden ? 'off' : collapsed ? 'collapsed' : 'expanded'
+    root.dataset.sidebar = neverSidebar
+      ? 'none'
+      : hidden
+        ? 'off'
+        : collapsed
+          ? 'collapsed'
+          : 'expanded'
     return () => {
       delete root.dataset.sidebar
     }
-  }, [hidden, collapsed])
+  }, [neverSidebar, hidden, collapsed])
 
   if (hidden) return null
 
@@ -416,14 +417,16 @@ export default function DesktopSidebar() {
           [2026-10-01, audit M8] Nhãn đọc GÓI THẬT của phiên (`user.plan` — server đã xét hạn
           gói qua `resolvePlan`). Trước đây ghi cứng "Free · Nâng cấp" (thu gọn: "VIP") cho MỌI
           người, nên người dùng VIP thấy chữ "Free" ngay cạnh trang ghi "Bạn đang dùng gói VIP",
-          còn người dùng Free ở thanh thu gọn lại thấy chữ "VIP" như một huy hiệu. */}
+          còn người dùng Free ở thanh thu gọn lại thấy chữ "VIP" như một huy hiệu.
+          [2026-10-05, đợt U5] VIP vĩnh viễn ghi rõ "VIP vĩnh viễn", VIP có hạn ghi ngày hết hạn
+          — cùng hàm `sidebarPlanLabel` với trang /nang-cap để hai nơi không nói khác nhau. */}
       <Link
         to="/nang-cap"
         className={`tap-44-coarse-y flex items-center px-3 py-2 text-xs text-content-muted hover:text-content transition ${
           collapsed ? 'justify-center text-center' : ''
         }`}
       >
-        {nhanGoi(user?.plan === 'vip', collapsed)}
+        {sidebarPlanLabel(user?.plan, user?.planExpiresAt, collapsed)}
       </Link>
     </aside>
   )

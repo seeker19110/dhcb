@@ -66,7 +66,10 @@ export default function SubjectDetail() {
   // Chỉ TĂNG khi người dùng bấm "Thử lại" — không retry tự động, cùng lý do với Subjects.tsx.
   const [retryToken, setRetryToken] = useState(0)
   const [selectedGrade, setSelectedGrade] = useState<string>('grade_12')
-  const [activeTab, setActiveTab] = useState<'solver' | 'curriculum' | 'practice'>('solver')
+  // [U9b, minor 12 audit 2026-09-30 — chủ dự án chốt 2026-10-05] Trang môn mở tab BÀI HỌC trước,
+  // "AI giải bài tập" xếp sau: người tới trang môn để học, công cụ giải hộ là phụ. Chỉ mở thẳng
+  // tab giải khi có đề truyền vào (`?q=` từ ô hỏi ở Trang chủ — xem nhánh đọc query bên dưới).
+  const [activeTab, setActiveTab] = useState<'solver' | 'curriculum' | 'practice'>('curriculum')
   const [difficultyFilter, setDifficultyFilter] = useState<
     'all' | 'basic' | 'intermediate' | 'advanced'
   >('all')
@@ -177,6 +180,9 @@ export default function SubjectDetail() {
   const stemSubject = getStemSubject(subjectId)
   const currentGradeData =
     curriculumList.find((g) => g.grade === selectedGrade) || curriculumList[0]
+  // Môn chưa có khung chương trình thì hai tab đầu không có gì để hiện — rơi về tab giải bài
+  // thay vì một vùng trống (bốn môn STEM hiện đều có khung, đây là lưới an toàn).
+  const tab = currentGradeData ? activeTab : 'solver'
 
   const handleSolve = (e: React.FormEvent) => {
     e.preventDefault()
@@ -518,34 +524,27 @@ export default function SubjectDetail() {
           </div>
         </section>
 
-        {/* Tab chuyển đổi tính năng: Giải bài tập AI vs Kho chương trình vs Luyện tập */}
+        {/* Tab chuyển đổi tính năng: Bài học (chương trình) → Luyện tập → AI giải bài tập */}
         <div className="flex gap-2 border-b border-zinc-800 pb-2">
           <button
-            onClick={() => setActiveTab('solver')}
-            className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
-              activeTab === 'solver'
-                ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>AI giải bài tập</span>
-          </button>
-          <button
+            type="button"
             onClick={() => setActiveTab('curriculum')}
+            aria-pressed={tab === 'curriculum'}
             className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
-              activeTab === 'curriculum'
+              tab === 'curriculum'
                 ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Chương Trình & Công Thức ({currentGradeData?.chapters.length || 0})</span>
+            <span>Bài học & công thức ({currentGradeData?.chapters.length || 0})</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('practice')}
+            aria-pressed={tab === 'practice'}
             className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
-              activeTab === 'practice'
+              tab === 'practice'
                 ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
@@ -553,10 +552,23 @@ export default function SubjectDetail() {
             <Flame className="w-4 h-4 text-orange-400 theme-light:text-orange-900" />
             <span>Bài tập trọng tâm</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('solver')}
+            aria-pressed={tab === 'solver'}
+            className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+              tab === 'solver'
+                ? 'bg-accent-500/20 text-accent-400 theme-light:text-accent-800 border border-accent-500/30'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>AI giải bài tập</span>
+          </button>
         </div>
 
         {/* TAB 1: AI SOLVER */}
-        {activeTab === 'solver' && (
+        {tab === 'solver' && (
           <div className="space-y-6">
             {/* Khung giải bài tập */}
             <section className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5 space-y-4 shadow-xl">
@@ -740,7 +752,7 @@ export default function SubjectDetail() {
         )}
 
         {/* TAB 2: CURRICULUM & FORMULAS */}
-        {activeTab === 'curriculum' && currentGradeData && (
+        {tab === 'curriculum' && currentGradeData && (
           <div className="space-y-4">
             {currentGradeData.chapters.map((chap, chapIdx) => (
               <div
@@ -774,7 +786,7 @@ export default function SubjectDetail() {
 
                 {/* Danh sách công thức cốt lõi */}
                 <div className="space-y-2">
-                  <span className={`text-xs font-semibold ${theme.accent}r block`}>
+                  <span className={`text-xs font-semibold ${theme.accent} block`}>
                     Công thức & Định lý cốt lõi:
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -800,7 +812,7 @@ export default function SubjectDetail() {
         )}
 
         {/* TAB 3: PRACTICE PROBLEMS */}
-        {activeTab === 'practice' && currentGradeData && (
+        {tab === 'practice' && currentGradeData && (
           <div className="space-y-4">
             {/* Bộ lọc độ khó */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">

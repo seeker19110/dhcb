@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { STUDIOS, NAV_HIDDEN_PATHS } from './studios'
+import { STUDIOS, NAV_HIDDEN_PATHS, isNavHidden, isNavHiddenPath } from './studios'
 
 // Cổng canh registry studio — hàng chục file phụ thuộc (codemap 2026-09-15), và hai chỗ tra theo id
 // (`DesktopSidebar.studio()`, `breadcrumb.studioPath()`) NÉM LỖI LÚC NẠP MODULE khi id không có:
@@ -48,5 +48,31 @@ describe('STUDIOS — không gian nền tảng', () => {
 
   it('trang ẩn thanh điều hướng vẫn là login + onboarding', () => {
     expect(NAV_HIDDEN_PATHS).toEqual(['/login', '/onboarding'])
+  })
+})
+
+describe('isNavHidden / isNavHiddenPath (audit 2026-09-30 minor 11)', () => {
+  const guest = { isGuest: true }
+  const member = { isGuest: false }
+
+  it('chưa có user (đang tải) → ẩn thanh, nhưng trang thường KHÔNG thuộc nhóm "không bao giờ có sidebar"', () => {
+    expect(isNavHidden('/', null)).toBe(true)
+    expect(isNavHidden('/', undefined)).toBe(true)
+    expect(isNavHiddenPath('/')).toBe(false)
+  })
+
+  it('login, onboarding, trang giới thiệu → ẩn với MỌI người, quyết theo đường dẫn', () => {
+    for (const p of ['/login', '/onboarding', '/welcome', '/learn-vietnamese']) {
+      expect(isNavHiddenPath(p)).toBe(true)
+      expect(isNavHidden(p, guest)).toBe(true)
+      expect(isNavHidden(p, member)).toBe(true)
+    }
+  })
+
+  it('trang thường: khách và thành viên đều có thanh điều hướng', () => {
+    for (const p of ['/', '/goc-hoc-tap']) {
+      expect(isNavHidden(p, guest)).toBe(false)
+      expect(isNavHidden(p, member)).toBe(false)
+    }
   })
 })

@@ -23,3 +23,26 @@ describe('PathStageQuiz — trạng thái đóng ban đầu (SSR)', () => {
     expect(html).not.toMatch(/\d+\/\d+ câu đúng/)
   })
 })
+
+describe('PathStageQuiz — dạng gọn cho danh sách chặng (changelog 0500, audit M22)', () => {
+  const html = renderToStaticMarkup(
+    <PathStageQuiz
+      inline
+      pathId="principal-ai"
+      stageId="ai-s1"
+      stageName="Ứng dụng LLM"
+      topics={[]}
+    />,
+  )
+
+  it('chỉ còn MỘT nút, không có hộp nhãn "Bài kiểm sau chặng" lặp lại', () => {
+    expect(html).not.toContain('Bài kiểm sau chặng</span>')
+    expect(html.match(/<button/g)).toHaveLength(1)
+    expect(html).toContain('aria-expanded="false"')
+  })
+
+  it('tên đọc của nút kèm tên chặng và chứa trọn chữ hiển thị (WCAG 2.4.6 + 2.5.3)', () => {
+    expect(html).toContain('aria-label="Mở bài kiểm sau chặng Ứng dụng LLM"')
+    expect(html).toContain('>Mở bài kiểm</span>')
+  })
+})

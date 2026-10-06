@@ -299,7 +299,7 @@ export default function Login() {
               type="button"
               onClick={() => setLang(l)}
               aria-pressed={lang === l}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${
+              className={`tap-44 flex items-center justify-center px-2.5 text-xs font-semibold rounded-lg transition ${
                 lang === l
                   ? 'bg-zinc-700 text-white shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -334,7 +334,7 @@ export default function Login() {
                 setError('')
                 setInvalidFields([])
               }}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
+              className={`tap-44-y flex-1 py-2 text-sm font-medium rounded-lg transition ${
                 mode === m
                   ? 'bg-zinc-700 text-white shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-300'
@@ -415,9 +415,9 @@ export default function Login() {
                 onClick={() => setShowPw((p) => !p)}
                 aria-label={showPw ? T.hidePassword : T.showPassword}
                 aria-pressed={showPw}
-                /* h-8 w-8 = 32px: đạt target-size WCAG 2.2 AA (≥24px). Nằm gọn trong pr-11 (44px)
-                   của ô nhập nên không đè lên chữ. */
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
+                /* [U9a] h-11 w-11 = 44px (luật vùng chạm của dự án; trước đây 32px). Sát mép phải
+                   ô nhập, rộng đúng bằng đệm pr-11 (44px) nên không đè lên chữ. */
+                className="absolute right-0 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
               >
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>

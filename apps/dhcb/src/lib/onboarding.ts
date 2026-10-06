@@ -4,7 +4,7 @@
 // Chiến lược 2 tầng giống profile (lib/auth.ts): cache localStorage (~1ms, ghi
 // ngay lúc onboarding xong) → Supabase (chạy nền, cho thiết bị mới chưa có cache).
 import { useEffect, useState } from 'react'
-import { getAuthHeader } from '@core/authHeader'
+import { getAuthHeader, getStoredToken } from '@core/authHeader'
 import type { Level, AgeGroup } from '../types'
 import type { DailySpeed } from './curriculum'
 
@@ -54,6 +54,9 @@ export function cacheOnboarding(uid: string, data: OnboardingData): void {
 // Đọc từ GET /api/profile (Giai đoạn C — trước đây gọi thẳng Supabase `profiles` qua RLS).
 // Trả null khi chưa onboarded / lỗi mạng / dữ liệu lạ. Thành công thì tự ghi cache.
 export async function fetchOnboarding(uid: string): Promise<OnboardingData | null> {
+  // [audit 2026-09-30 minor 7] Khách (chưa có cờ phiên) không có hồ sơ trên server — gọi
+  // /api/profile chỉ để nhận 401 đỏ trong console mỗi lần tải trang.
+  if (!getStoredToken()) return null
   try {
     const resp = await fetch('/api/profile', { headers: getAuthHeader() })
     if (!resp.ok) return null
@@ -125,4 +128,48 @@ export function useOnboarding(uid: string | undefined): OnboardingData | null {
     }
   }, [uid])
   return data
+}
+
+// ── [U9b, 2026-10-05] Môn đã chọn lúc onboarding ─────────────────────────────────────────────
+// Trước đây Onboarding chỉ dùng môn vừa chọn để ĐIỀU HƯỚNG rồi quên luôn, nên Trang chủ của
+// người vừa chọn "Tiếng Anh" vẫn hỏi lại "Bắt đầu: Chọn môn" (audit 2026-09-30 M19). Lưu cục
+// bộ theo từng tài khoản — đây là LỰA CHỌN của người học, không phải tiến độ: thiết bị mới
+// chưa có khoá này thì Trang chủ về đúng hành vi cũ (mời chọn môn), không bịa gì thêm.
+const CHOSEN_SUBJECT_KEY = (uid: string) => `dhcb_onboarding_subject_${uid}`
+
+export function setChosenSubject(uid: string, subjectId: string): void {
+  try {
+    localStorage.setItem(CHOSEN_SUBJECT_KEY(uid), subjectId)
+  } catch {
+    /* localStorage đầy/bị chặn — chỉ mất gợi ý ở Trang chủ, không vỡ luồng */
+  }
+}
+
+/** Môn đã chọn lúc onboarding; `undefined` khi chưa chọn / bỏ qua bước chọn môn / lỗi đọc. */
+export function getChosenSubject(uid: string): string | undefined {
+  try {
+    const v = localStorage.getItem(CHOSEN_SUBJECT_KEY(uid))
+    return v ? v : undefined
+  } catch {
+    return undefined
+  }
+}
+
+// Mục tiêu onboarding → tình huống mặc định của màn Trò chuyện (`SITUATIONS` ở types.ts).
+// Trước đây Trò chuyện luôn mở "Phỏng vấn xin việc" kể cả với người vừa chọn "Giao tiếp hàng
+// ngày" (audit M19). Mục tiêu lạ / chưa onboarding → tán gẫu xã giao: tình huống nhẹ nhất,
+// hợp với người mới hơn một buổi phỏng vấn.
+const SITUATION_BY_GOAL: Readonly<Record<string, string>> = {
+  daily: 'small_talk',
+  travel: 'hotel_travel',
+  work: 'office_meeting',
+  ielts: 'free',
+}
+export const DEFAULT_CHAT_SITUATION = 'small_talk'
+
+export function situationForGoal(goal: string | undefined): string {
+  if (!goal || !Object.prototype.hasOwnProperty.call(SITUATION_BY_GOAL, goal)) {
+    return DEFAULT_CHAT_SITUATION
+  }
+  return SITUATION_BY_GOAL[goal]!
 }

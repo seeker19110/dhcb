@@ -1,6 +1,8 @@
 // apps/dhcb/src/components/PvPArena/PvPArenaCard.tsx — Thẻ hiển thị Đấu Trường 1v1 PvP.
 import { useState } from 'react'
 import { Swords } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
+import { FEATURE_DESC_CLASS, FEATURE_TITLE_CLASS } from '@core/cardStyles'
 import PvPArenaLobbyModal from './PvPArenaLobbyModal.js'
 
 export default function PvPArenaCard() {
@@ -9,9 +11,9 @@ export default function PvPArenaCard() {
   return (
     <>
       {/* [S06b, 2026-09-24] Chữ đọc và nút nằm trên nền token ĐẶC (`bg-surface-card`, nút
-          `bg-amber-500`) thay cho gradient — axe không xác định được màu nền gradient nên cổng
+          `buttonClass`) thay cho gradient — axe không xác định được màu nền gradient nên cổng
           AAA không đo được 7:1. Gradient amber→orange chỉ còn là dải trang trí ở mép trên. */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/40 bg-surface-card p-5 shadow-xl transition-all duration-300 hover:border-amber-500/60 mb-6">
+      <div className="relative overflow-hidden rounded-3xl border border-amber-500/40 bg-surface-card p-4 sm:p-5 shadow-lg transition-colors duration-300 hover:border-amber-500/60">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500"
@@ -30,10 +32,10 @@ export default function PvPArenaCard() {
                   Xếp hạng theo điểm
                 </span>
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-content mt-1">
+              <h3 className={`mt-1 ${FEATURE_TITLE_CLASS}`}>
                 Đấu trường 1v1: từ vựng nhanh & bắt lỗi ngữ pháp
               </h3>
-              <p className="text-xs sm:text-sm text-content-secondary mt-0.5 leading-relaxed">
+              <p className={FEATURE_DESC_CLASS}>
                 Đấu với đối thủ AI: phản xạ từ vựng 5s, bắt lỗi ngữ pháp cấp tốc, tích lũy điểm xếp
                 hạng và leo Bảng xếp hạng.
               </p>
@@ -43,7 +45,13 @@ export default function PvPArenaCard() {
           <button
             type="button"
             onClick={() => setIsOpenModal(true)}
-            className="tap-44 w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs sm:text-sm shadow-lg transition active:scale-95 flex items-center justify-center gap-2 shrink-0"
+            // [0500, audit M17] Nút PHỤ: ở trang Luyện tập thẻ này đứng ngay dưới Sổ tay lỗi (nút
+            // chính) — hai nút chính cam + đỏ cạnh nhau làm mắt mất điểm neo. Biến thể `secondary`
+            // vẫn mang màu thương hiệu, cùng một hình ở mọi trang có thẻ này.
+            className={buttonClass({
+              variant: 'secondary',
+              className: 'w-full sm:w-auto shrink-0',
+            })}
           >
             <Swords className="w-4 h-4" />
             <span>Vào đấu trường</span>

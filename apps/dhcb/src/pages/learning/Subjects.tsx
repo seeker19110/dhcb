@@ -226,7 +226,7 @@ export default function Subjects() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm môn học, công thức hoặc chủ đề..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-accent-500 transition"
+              className="tap-44-y w-full pl-9 pr-4 py-2.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-accent-500 transition"
             />
           </div>
 

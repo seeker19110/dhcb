@@ -47,7 +47,7 @@ export default function OutlinePrevNext({
       {prev?.href ? (
         <Link to={prev.href} className={lop}>
           <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span className="line-clamp-2 break-words text-left">
+          <span className="break-words text-left">
             {labels.prev}: <span lang={titleLang}>{prev.title}</span>
           </span>
         </Link>
@@ -57,7 +57,7 @@ export default function OutlinePrevNext({
       )}
       {next?.href && (
         <Link to={next.href} className={lop}>
-          <span className="line-clamp-2 break-words text-right">
+          <span className="break-words text-right">
             {labels.next}: <span lang={titleLang}>{next.title}</span>
           </span>
           <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />

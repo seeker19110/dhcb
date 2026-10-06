@@ -47,11 +47,12 @@ const STATUS_TEXT: Record<PrecacheBlockReason | 'ready', { vi: string; en: strin
 type SummaryState =
   { status: 'loading' } | { status: 'error' } | { status: 'ready'; summary: DataPackSummary }
 
-export default function OfflineDownloadSetting({ isA }: { isA: boolean }) {
+// `isVi` = ngôn ngữ GIAO DIỆN là tiếng Việt (tách khỏi chiều học từ đợt minor 13).
+export default function OfflineDownloadSetting({ isVi }: { isVi: boolean }) {
   const { user } = useAuth()
   const [enabled, setEnabled] = useState<boolean>(isOfflineDownloadEnabled)
   const [summary, setSummary] = useState<SummaryState>({ status: 'loading' })
-  const lang = isA ? 'vi' : 'en'
+  const lang = isVi ? 'vi' : 'en'
 
   // Đọc tổng dung lượng từ manifest (vài chục KB) — chỉ khi mở trang Cài đặt.
   useEffect(() => {
@@ -95,15 +96,15 @@ export default function OfflineDownloadSetting({ isA }: { isA: boolean }) {
 
   let sizeText: string
   if (summary.status === 'loading') {
-    sizeText = isA ? 'Đang tính dung lượng…' : 'Calculating size…'
+    sizeText = isVi ? 'Đang tính dung lượng…' : 'Calculating size…'
   } else if (summary.status === 'error') {
-    sizeText = isA
+    sizeText = isVi
       ? 'Chưa đọc được dung lượng — cần kết nối mạng, mở lại trang sau.'
       : 'Could not read the size — needs a connection, try again later.'
   } else {
     const total = formatMegabytes(summary.summary.totalBytes, lang)
     const done = formatMegabytes(summary.summary.cachedBytes, lang)
-    sizeText = isA
+    sizeText = isVi
       ? `Dung lượng ước lượng: ${total} trên máy · đã tải ${done}.`
       : `Estimated size: ${total} on this device · ${done} downloaded.`
   }
@@ -115,11 +116,11 @@ export default function OfflineDownloadSetting({ isA }: { isA: boolean }) {
           <div className="flex items-center gap-2">
             <Download className="w-4 h-4 text-accent-400 shrink-0" aria-hidden="true" />
             <label htmlFor={SWITCH_ID} className="text-sm font-semibold text-white">
-              {isA ? 'Tải để học ngoại tuyến' : 'Download for offline study'}
+              {isVi ? 'Tải để học ngoại tuyến' : 'Download for offline study'}
             </label>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            {isA
+            {isVi
               ? 'Tải dần từ điển, bài học, mẫu câu và truyện môn Tiếng Anh về máy để mở lại khi mất mạng. Chỉ dùng trên máy này.'
               : 'Gradually saves the English dictionary, lessons, phrases and stories to this device so they open without a connection.'}
           </p>
@@ -131,17 +132,22 @@ export default function OfflineDownloadSetting({ isA }: { isA: boolean }) {
           aria-checked={enabled}
           aria-describedby={`${SWITCH_ID}-status`}
           onClick={toggle}
-          // Cùng khuôn công tắc viên thuốc 44×24 của VoicePicker (không .tap-44 để giữ hình dáng;
-          // rộng 44px + đứng riêng một hàng vẫn đạt WCAG 2.2 AA 2.5.8).
-          className={`relative w-11 h-6 rounded-full transition shrink-0 ${
-            enabled ? 'bg-accent-500' : 'bg-zinc-700'
-          }`}
+          // Cùng khuôn công tắc của VoicePicker sau đợt U9a: nút trong suốt 44×44 (vùng chạm), viên
+          // thuốc 44×24 vẽ bên trong.
+          className="tap-44 flex items-center justify-center rounded-full shrink-0"
         >
           <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-              enabled ? 'translate-x-5' : ''
+            aria-hidden="true"
+            className={`relative w-11 h-6 rounded-full transition ${
+              enabled ? 'bg-accent-500' : 'bg-zinc-700'
             }`}
-          />
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                enabled ? 'translate-x-5' : ''
+              }`}
+            />
+          </span>
         </button>
       </div>
       <div id={`${SWITCH_ID}-status`} className="mt-3 space-y-1">

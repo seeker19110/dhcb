@@ -14,13 +14,7 @@ import { useAuth } from '../../context/useAuth'
 import { useLang } from '../../context/useLang'
 import { useCloudSync } from '../../lib/useCloudSync'
 import { useOnboarding } from '../../lib/onboarding'
-import {
-  getStreak,
-  getUsage,
-  getChatSessions,
-  getWritingSubs,
-  getSpeakingSessions,
-} from '../../lib/storage'
+import { getStreak, getChatSessions, getWritingSubs, getSpeakingSessions } from '../../lib/storage'
 import { getLearnedWords, getLearnedCount } from '../../lib/vocab'
 import { getSRSStats } from '../../lib/srs'
 import { getMistakeStats } from '../../lib/mistakes'
@@ -42,7 +36,6 @@ import {
 import { getWeeklyProgress } from '../../lib/weeklyGoal'
 import { effectivePlan } from '../../lib/promo'
 import { fetchWeeklyCredit, type WeeklyCreditInfo } from '../../lib/weeklyCredit'
-import { getLimits } from '../../lib/appSettings'
 
 // Số tuần của lịch hoạt động trên desktop (bố cục tuần-theo-cột — xem chú thích ở khối
 // render). HAI mức, chọn theo bề ngang thật ĐO ĐƯỢC chứ không theo cảm giác: cột trái
@@ -92,8 +85,9 @@ export default function Dashboard() {
     key: '',
     status: 'loading',
   })
-  // Gói Free: kho lượt AI tuần chung nằm ở server (weekly_ai_credit), không suy ra được
-  // từ dữ liệu local per-mode — hạn mức là TỔNG/ngày nên phải hỏi server (usage-summary.ts).
+  // Lượt AI: hạn mức là TỔNG/ngày cho MỌI gói (GĐ1), không suy ra được từ dữ liệu local
+  // per-mode — phải hỏi server (usage-summary.ts). [audit M9] Trước đây chỉ hỏi cho gói Free,
+  // VIP đọc hạn mức theo chế độ đã bỏ → hiện "0/".
   const [weeklyRetryRevision, setWeeklyRetryRevision] = useState(0)
   const weeklyRetryGuardRef = useRef(false)
   const weeklyRetryRef = useRef<HTMLButtonElement>(null)
@@ -106,11 +100,9 @@ export default function Dashboard() {
   const weeklyCreditKey = `weekly-credit:${user?.id ?? 'anonymous'}:${currentPlan}:${weeklyRetryRevision}`
   const cefrKey = `cefr:${user?.id ?? 'anonymous'}:${syncVersion}:${curriculumRetryRevision}`
   const weeklyCredit: DashboardResource<WeeklyCreditInfo | null> =
-    currentPlan !== 'free'
-      ? { key: weeklyCreditKey, status: 'ready', data: null }
-      : weeklyCreditResource.key === weeklyCreditKey
-        ? weeklyCreditResource
-        : { key: weeklyCreditKey, status: 'loading' }
+    weeklyCreditResource.key === weeklyCreditKey
+      ? weeklyCreditResource
+      : { key: weeklyCreditKey, status: 'loading' }
   const cefrState: DashboardResource<LevelProgress[]> =
     cefrResource.key === cefrKey ? cefrResource : { key: cefrKey, status: 'loading' }
   const weeklyCreditInfo =
@@ -126,7 +118,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
-    if (currentPlan !== 'free') return
     let alive = true
     fetchWeeklyCredit().then((info) => {
       if (!alive) return
@@ -144,7 +135,7 @@ export default function Dashboard() {
     return () => {
       alive = false
     }
-  }, [currentPlan, user, weeklyCreditKey])
+  }, [user, weeklyCreditKey])
   // Kết quả thi cuối cấp — để hiện huy hiệu "🎓 Đã qua" cạnh từng cấp.
   // syncVersion: KHÔNG dùng trong thân hàm nhưng BẮT BUỘC có trong deps — báo hiệu cloud sync
   // vừa kéo dữ liệu mới, cần đọc lại localStorage (xem cảnh báo trong useCloudSync.ts).
@@ -206,8 +197,6 @@ export default function Dashboard() {
   // Số liệu đọc tức thì từ localStorage (re-tính khi đã nạp xong dữ liệu).
   const stats = useMemo(() => {
     if (!user) return null
-    const usage = getUsage(user.id)
-    const limit = getLimits()[effectivePlan(user.plan)]
     return {
       streak: getStreak(user.id),
       week: getActivity7Days(user.id),
@@ -226,8 +215,6 @@ export default function Dashboard() {
         : { done: 0, total: 0 },
       srs: getSRSStats(user.id),
       mistakes: getMistakeStats(user.id),
-      usage,
-      limit,
       chatN: getChatSessions(user.id).length,
       writeN: getWritingSubs(user.id).length,
       speakN: getSpeakingSessions(user.id).length,
@@ -304,12 +291,9 @@ export default function Dashboard() {
               onToggle={() => setEnglishDetailsExpanded((value) => !value)}
               srsDue={stats.srs.due}
               weeklyCredit={{
-                currentPlan,
                 info: weeklyCreditInfo,
                 status: weeklyCredit.status,
                 retryRevision: weeklyRetryRevision,
-                usage: stats.usage,
-                limit: stats.limit,
               }}
               weeklyCreditRetryRef={weeklyRetryRef}
               onRetryWeeklyCredit={retryWeeklyCredit}

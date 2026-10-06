@@ -142,9 +142,9 @@ test.describe('S04 — direction độc lập UI', () => {
   test('Settings thật lưu B, reload Practice dùng B dù UI được gieo vi', async ({ page }) => {
     const audio = await setup(page, 'A', 'vi')
     await page.goto('/cai-dat')
-    await page.getByRole('button').filter({ hasText: 'Tiếng Việt (học tiếng Anh)' }).click()
+    await page.getByRole('button', { name: 'Người nước ngoài học tiếng Việt', exact: true }).click()
     await expect(
-      page.getByRole('button').filter({ hasText: 'English (learn Vietnamese)' }),
+      page.getByRole('button', { name: 'Người nước ngoài học tiếng Việt', exact: true }),
     ).toBeVisible()
     expect(await page.evaluate(() => localStorage.getItem('et_direction'))).toBe('B')
     await page.goto('/luyen-tap')

@@ -39,7 +39,7 @@ import { startListening, isSTTSupported } from '../../../lib/stt'
 import { startRecording, isRecordingSupported, type Recorder } from '../../../lib/sttServer'
 import { speakBilingual, stopSpeaking, isTTSSupported, getRatePref } from '../../../lib/tts'
 import { effectivePlan } from '../../../lib/promo'
-import { getLimits } from '../../../lib/appSettings'
+import { hasReachedDailyLimit } from '../../../lib/appSettings'
 import { haptics } from '../../../lib/haptics'
 import {
   SITUATIONS,
@@ -733,11 +733,11 @@ export default function Speaking() {
 
   async function startSession(situation: string, level: Level) {
     const usage = getUsage(user.id)
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (speakingCount đếm theo ngày, không còn đúng ý nghĩa) — để server tự chặn.
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
     if (
       effectivePlan(user.plan) !== 'free' &&
-      usage.speakingCount >= getLimits()[effectivePlan(user.plan)].speaking
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
     ) {
       // SetupScreen chỉ đọc prop `error` (banner limitHit chỉ render khi đã có session) —
       // set cả hai để không "bấm mà không có gì xảy ra".
@@ -841,11 +841,11 @@ export default function Speaking() {
 
     // ── Chưa ghi → bắt đầu ghi ──────────────────────────────────────────
     if (!session) return
-    // Chặn nếu hết lượt nhận diện giọng nói (STT) trong ngày — đếm riêng với hội thoại.
-    // Gói Free: kho lượt tuần chung nằm ở server — để server tự chặn.
+    // Chặn nếu đã hết hạn mức TỔNG lượt AI/ngày (STT cũng tính vào tổng — GĐ1). Gói Free giữ
+    // nguyên cách cũ: để server tự chặn.
     if (
       effectivePlan(user.plan) !== 'free' &&
-      getUsage(user.id).sttCount >= getLimits()[effectivePlan(user.plan)].stt
+      hasReachedDailyLimit(getUsage(user.id), effectivePlan(user.plan))
     ) {
       setLimitHit(true)
       toast.error(
@@ -909,11 +909,11 @@ export default function Speaking() {
       return
     }
     const usage = getUsage(user.id)
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (speakingCount đếm theo ngày, không còn đúng ý nghĩa) — để server tự chặn.
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
     if (
       effectivePlan(user.plan) !== 'free' &&
-      usage.speakingCount >= getLimits()[effectivePlan(user.plan)].speaking
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
     ) {
       setLimitHit(true)
       return
@@ -1018,11 +1018,11 @@ export default function Speaking() {
   async function endAndGrade() {
     if (!session || loading || evaluating) return
     const usage = getUsage(user.id)
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (speakingCount đếm theo ngày, không còn đúng ý nghĩa) — để server tự chặn.
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
     if (
       effectivePlan(user.plan) !== 'free' &&
-      usage.speakingCount >= getLimits()[effectivePlan(user.plan)].speaking
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
     ) {
       setLimitHit(true)
       return

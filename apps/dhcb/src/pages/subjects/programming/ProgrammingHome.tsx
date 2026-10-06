@@ -201,7 +201,7 @@ export default function ProgrammingHome() {
             aria-valuemax={total}
           >
             <div
-              className="h-full bg-emerald-500 transition-all"
+              className="h-full bg-emerald-500 transition-[width]"
               style={{ width: `${total > 0 ? Math.round((done / total) * 100) : 0}%` }}
             />
           </div>
@@ -381,9 +381,11 @@ export default function ProgrammingHome() {
                 >
                   <span className="flex items-center gap-2 w-full">
                     <Play className="w-4 h-4 text-accent-400 shrink-0" />
-                    <span className="truncate">{course.title}</span>
+                    <span className="min-w-0 break-words">{course.title}</span>
                   </span>
-                  <span className="text-xs font-normal text-zinc-400 leading-relaxed">
+                  {/* [0500, audit M22] `read-measure`: nút giãn hết bề ngang khối (~1.100px ở 1440)
+                      nên mô tả khoá từng chạy 140+ ký tự một dòng. */}
+                  <span className="text-xs font-normal text-zinc-400 leading-relaxed read-measure">
                     {course.canDo}
                   </span>
                 </button>
@@ -426,9 +428,9 @@ export default function ProgrammingHome() {
               >
                 <span className="flex items-center gap-2 w-full">
                   <Map className="w-4 h-4 text-accent-400 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{path.title}</span>
+                  <span className="min-w-0 break-words">{path.title}</span>
                 </span>
-                <span className="text-xs font-normal text-zinc-400 leading-relaxed">
+                <span className="text-xs font-normal text-zinc-400 leading-relaxed read-measure">
                   {path.tagline}
                 </span>
               </button>

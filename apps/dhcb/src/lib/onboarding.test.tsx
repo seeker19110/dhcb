@@ -11,7 +11,13 @@ import {
   pushAgeGroup,
   isValidAgeGroup,
   useOnboarding,
+  setChosenSubject,
+  getChosenSubject,
+  situationForGoal,
+  DEFAULT_CHAT_SITUATION,
 } from './onboarding'
+import { SITUATIONS } from '../types'
+import { SESSION_MARKER_KEY } from '@core/authHeader'
 
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -25,6 +31,7 @@ function mockProfileResponse(body: unknown, ok = true) {
 
 beforeEach(() => {
   localStorage.clear()
+  localStorage.setItem(SESSION_MARKER_KEY, 'session:test')
   vi.clearAllMocks()
 })
 
@@ -103,6 +110,13 @@ describe('cache localStorage', () => {
 })
 
 describe('fetchOnboarding', () => {
+  it('khách không có cờ phiên → null và không gọi /api/profile', async () => {
+    localStorage.removeItem(SESSION_MARKER_KEY)
+    mockProfileResponse({ userLevel: 'beginner', onboarded: true })
+    expect(await fetchOnboarding('guest-1')).toBeNull()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('hàng hợp lệ → trả dữ liệu VÀ tự ghi cache', async () => {
     mockProfileResponse({
       userLevel: 'intermediate',
@@ -249,6 +263,7 @@ describe('useOnboarding (hook)', () => {
 
   it('chưa có cache → gọi fetch nền rồi cập nhật state', async () => {
     localStorage.clear()
+    localStorage.setItem(SESSION_MARKER_KEY, 'session:test')
     mockProfileResponse({
       userLevel: 'advanced',
       goal: 'work',
@@ -285,5 +300,47 @@ describe('useOnboarding (hook)', () => {
       resolveFetch({ ok: true, json: async () => ({ onboarded: false }) })
     })
     container.remove()
+  })
+})
+
+// [U9b] Môn đã chọn + tình huống Trò chuyện theo mục tiêu (audit 2026-09-30 M19).
+describe('môn đã chọn lúc onboarding', () => {
+  it('chưa chọn → undefined; chọn rồi đọc lại đúng, tách theo tài khoản', () => {
+    expect(getChosenSubject('u1')).toBeUndefined()
+    setChosenSubject('u1', 'english')
+    expect(getChosenSubject('u1')).toBe('english')
+    expect(getChosenSubject('u2')).toBeUndefined()
+  })
+
+  it('localStorage ném lỗi → đọc ra undefined, ghi không ném', () => {
+    const get = vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    const set = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    expect(() => setChosenSubject('u1', 'english')).not.toThrow()
+    expect(getChosenSubject('u1')).toBeUndefined()
+    get.mockRestore()
+    set.mockRestore()
+  })
+})
+
+describe('situationForGoal', () => {
+  it('mỗi mục tiêu onboarding ra một tình huống CÓ THẬT trong SITUATIONS, không phải phỏng vấn', () => {
+    const co = new Set(SITUATIONS.map((s) => s.value))
+    for (const goal of ['daily', 'travel', 'work', 'ielts']) {
+      const s = situationForGoal(goal)
+      expect(co.has(s)).toBe(true)
+      expect(s).not.toBe('job_interview')
+    }
+    expect(situationForGoal('daily')).toBe('small_talk')
+    expect(situationForGoal('travel')).toBe('hotel_travel')
+  })
+
+  it('mục tiêu lạ / rỗng / tên thuộc tính kế thừa → mặc định tán gẫu', () => {
+    expect(situationForGoal(undefined)).toBe(DEFAULT_CHAT_SITUATION)
+    expect(situationForGoal('')).toBe(DEFAULT_CHAT_SITUATION)
+    expect(situationForGoal('toString')).toBe(DEFAULT_CHAT_SITUATION)
   })
 })

@@ -146,6 +146,89 @@ describe('LessonAnimation', () => {
     expect(moDiChuyen).toMatch(/opacity="0.4"/)
   })
 
+  it('fallback ẩn hình đến muộn ngay cả khi CSS animation bị tắt', () => {
+    const h = renderToStaticMarkup(
+      <LessonAnimation
+        spec={{
+          ...spec,
+          shapes: [
+            {
+              kind: 'circle',
+              id: 'delayed',
+              cx: 10,
+              cy: 10,
+              r: 3,
+              keyframes: [
+                { atMs: 500, opacity: 0 },
+                { atMs: 1500, opacity: 1 },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    const group = /<g data-animated="true"[^>]*>/.exec(h)![0]
+    expect(group).toMatch(/(?:;|style=")opacity:0(?:;|")/)
+    expect(/<circle[^>]*>/.exec(h)![0]).not.toContain('opacity=')
+  })
+
+  it('fallback lấy transform và origin của mốc đầu, kể cả mốc đầu sau 0ms', () => {
+    const h = renderToStaticMarkup(
+      <LessonAnimation
+        spec={{
+          ...spec,
+          shapes: [
+            {
+              kind: 'rect',
+              id: 'initial',
+              x: 30,
+              y: 20,
+              w: 8,
+              h: 60,
+              origin: [34, 80],
+              keyframes: [
+                { atMs: 250, dx: 12, dy: 8, rotate: 90, scale: 0.5, scaleY: 0.5 },
+                { atMs: 2000, dx: 60, dy: 20, rotate: 0, scale: 1, scaleY: 1 },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    const group = /<g data-animated="true"[^>]*>/.exec(h)![0]
+    expect(group).toContain('transform:translate(12px, 8px) rotate(90deg) scale(0.5, 0.25)')
+    expect(group).toContain('transform-origin:34px 80px')
+  })
+
+  it('fallback không nhân đôi opacity tĩnh ở nhóm cha khi chỉ animate vị trí', () => {
+    const h = renderToStaticMarkup(
+      <LessonAnimation
+        spec={{
+          ...spec,
+          shapes: [
+            {
+              kind: 'circle',
+              id: 'static-opacity',
+              cx: 60,
+              cy: 10,
+              r: 3,
+              opacity: 0.4,
+              keyframes: [
+                { atMs: 0, dx: 14 },
+                { atMs: 2000, dx: 40 },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    const group = /<g data-animated="true"[^>]*>/.exec(h)![0]
+    expect(group).not.toMatch(/(?:;|style=")opacity:/)
+    expect(group).toContain('transform:translate(14px, 0px) rotate(0deg) scale(1, 1)')
+    expect(group).toContain('transform-origin:60px 10px')
+    expect(/<circle[^>]*>/.exec(h)![0]).toContain('opacity="0.4"')
+  })
+
   // Bẫy 2026-09-26: CSS tự lấy trạng thái nền cho 0%/100% còn thiếu và bỏ qua mốc thiếu opacity.
   // Luật đọc mốc nằm ở animationKeyframes.ts; ca này canh bộ vẽ thật sự in đủ mọi mốc ra CSS.
   it('CSS in đủ mọi thuộc tính ở mọi mốc, kể cả 0% và 100% mà người soạn không khai', () => {
@@ -372,6 +455,7 @@ afterEach(() => {
   root = null
   container?.remove()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   rongSvgGia = 358
 })
 
@@ -409,5 +493,103 @@ describe('LessonAnimation — nút "Xem lớn"', () => {
     await act(async () => nut('Đóng')?.click())
     expect(document.querySelector('dialog')).toBeNull()
     expect(document.activeElement).toBe(nut('Xem lớn'))
+  })
+})
+
+function endAnimation(target: Element, animationName: string, pseudoElement = '') {
+  const event = new Event('animationend', { bubbles: true })
+  Object.defineProperties(event, {
+    animationName: { value: animationName },
+    pseudoElement: { value: pseudoElement },
+  })
+  target.dispatchEvent(event)
+}
+
+describe('LessonAnimation — phát lại', () => {
+  it('kết thúc hữu hạn, phát lại hai lượt với tên mới và giữ DOM/focus', async () => {
+    await veVao({ ...spec, loop: false })
+    const group = container.querySelector<SVGGElement>('g[data-animated]')!
+    const button = nut('Tạm dừng hoạt ảnh')!
+    button.focus()
+    const first = group.style.animationName
+    await act(async () => endAnimation(group, first))
+    expect(nut('Chạy lại hoạt ảnh')).toBe(button)
+    await act(async () => button.click())
+    const second = group.style.animationName
+    expect(second).not.toBe(first)
+    expect(container.querySelector('g[data-animated]')).toBe(group)
+    expect(document.activeElement).toBe(button)
+    await act(async () => endAnimation(group, first))
+    expect(nut('Tạm dừng hoạt ảnh')).toBe(button)
+    await act(async () => endAnimation(group, second))
+    await act(async () => button.click())
+    expect(group.style.animationName).not.toBe(second)
+  })
+
+  it('tạm dừng/tiếp tục giữ tên lượt; bỏ sự kiện từ con, pseudo và tên lạ', async () => {
+    await veVao({ ...spec, loop: false })
+    const group = container.querySelector<SVGGElement>('g[data-animated]')!
+    const name = group.style.animationName
+    await act(async () => nut('Tạm dừng hoạt ảnh')?.click())
+    expect(container.querySelector('style')?.textContent).toContain('animation-play-state: paused')
+    await act(async () => nut('Chạy hoạt ảnh')?.click())
+    expect(group.style.animationName).toBe(name)
+    await act(async () => {
+      endAnimation(group.firstElementChild!, name)
+      endAnimation(group, name, '::before')
+      endAnimation(group, 'unknown')
+    })
+    expect(nut('Tạm dừng hoạt ảnh')).toBeDefined()
+  })
+
+  it('hoạt họa lặp không chuyển sang kết thúc', async () => {
+    await veVao(spec)
+    const group = container.querySelector<SVGGElement>('g[data-animated]')!
+    await act(async () => endAnimation(group, group.style.animationName))
+    expect(nut('Tạm dừng hoạt ảnh')).toBeDefined()
+  })
+
+  it('hộp lớn nhận thời gian theo ID sau SVG mount và dùng chung nút phát', async () => {
+    const times = new Map([
+      ['bi', 730],
+      ['nhan', 410],
+    ])
+    const getter = vi.spyOn(Element.prototype, 'getAnimations')
+    const animations: { currentTime: number }[] = []
+    getter.mockImplementation(function (this: Element) {
+      const id = (this as Element).getAttribute('data-animation-shape')!
+      const animation = { currentTime: (this as Element).closest('dialog') ? 0 : times.get(id)! }
+      if ((this as Element).closest('dialog')) animations.push(animation)
+      return [animation as Animation]
+    })
+    await veVao({
+      ...spec,
+      viewBoxWidth: 716,
+      shapes: [
+        ...spec.shapes.map((shape) =>
+          shape.id === 'nhan'
+            ? {
+                ...shape,
+                keyframes: [
+                  { atMs: 0, dx: 0 },
+                  { atMs: 2000, dx: 10 },
+                ],
+              }
+            : shape,
+        ),
+        { kind: 'label', id: 'small', x: 10, y: 30, size: 12, text: 'nhỏ' },
+      ],
+    })
+    await act(async () => nut('Xem lớn')?.click())
+    expect(animations.map((animation) => animation.currentTime)).toEqual([730, 410])
+    const zoomButton = document.querySelector<HTMLButtonElement>('dialog button')!
+    expect(zoomButton.getAttribute('aria-label')).toBe('Tạm dừng hoạt ảnh')
+    await act(async () => zoomButton.click())
+    expect(zoomButton.getAttribute('aria-label')).toBe('Chạy hoạt ảnh')
+    expect(nut('Chạy hoạt ảnh')).toBeDefined()
+    const zoomGroup = document.querySelector<SVGGElement>('dialog g[data-animated]')!
+    await act(async () => endAnimation(zoomGroup, zoomGroup.style.animationName))
+    expect(nut('Chạy lại hoạt ảnh')).toBeUndefined()
+    getter.mockRestore()
   })
 })

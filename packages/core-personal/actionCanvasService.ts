@@ -1,92 +1,130 @@
 // packages/core-personal/actionCanvasService.ts — Động cơ Điều phối & Bố cục Không gian làm việc Tự trị V4.2.
 // Changelog 0485: mẫu canvas bỏ nút miền `life` ("Giấc ngủ 7.5h", "Focus Score 85+" — số không đo
 // từ đâu) và không còn gán nút vào các miền đã xoá (career/startup/life).
+//
+// [2026-10-05, audit UI/UX M11, đợt U5 — docs/changelog/0495-*.md] Người mới mở /action-canvas
+// từng thấy ngay 4 thẻ dựng sẵn ("Luyện phản xạ IELTS Speaking…", "Full-Duplex 3D", "Holodeck
+// Panel Mock", "Điểm số IELTS"…) trông như kế hoạch của CHÍNH MÌNH, kèm thẻ giao cho "AI". Nay:
+//   - chưa lưu canvas nào → `createEmptyCanvas` (không thẻ nào), giao diện hiện hướng dẫn;
+//   - "Tạo sơ đồ từ mục tiêu" (người dùng tự bấm, tự nhập mục tiêu) dựng KHUNG MẪU mà mọi thẻ
+//     ngoài mục tiêu đều ghi rõ "Ví dụ:" + "Gợi ý mẫu", trạng thái Bản nháp, người làm là Bạn —
+//     không giả vờ AI đã phân tích hay sẽ làm hộ (skill life-career-strategic-advisor §2).
 import {
   ActionCanvasState,
   CanvasNode,
   CanvasEdge,
   ACTION_CANVAS_VERSION,
+  CANVAS_ASSIGNEE_LABELS,
+  CANVAS_DOMAIN_LABELS,
+  CANVAS_STATUS_LABELS,
 } from '@dhcb/core-contracts/actionCanvas'
 
+// Giới hạn `title` trong hợp đồng (CanvasNodeSchema/ActionCanvasStateSchema) — tiền tố + câu mục
+// tiêu 200 ký tự từng vượt giới hạn, canvas không lưu lại được.
+const TITLE_MAX = 200
+export const EMPTY_CANVAS_TITLE = 'Kế hoạch hành động của bạn'
+const EXAMPLE_HINT = 'Gợi ý mẫu — sửa lại cho đúng việc của bạn, hoặc xoá thẻ này.'
+
+function clampTitle(text: string): string {
+  return text.length > TITLE_MAX ? text.slice(0, TITLE_MAX) : text
+}
+
 export class ActionCanvasService {
+  /** Canvas chưa có thẻ nào — trạng thái đầu của người chưa từng lưu sơ đồ. */
+  static createEmptyCanvas(params: { canvasId: string; personId: string }): ActionCanvasState {
+    const now = new Date().toISOString()
+    return {
+      canvasId: params.canvasId,
+      personId: params.personId,
+      title: EMPTY_CANVAS_TITLE,
+      nodes: [],
+      edges: [],
+      viewport: { zoom: 1.0, panX: 0, panY: 0 },
+      lastEditedBy: 'user',
+      schemaVersion: ACTION_CANVAS_VERSION,
+      createdAt: now,
+      updatedAt: now,
+    }
+  }
+
+  /**
+   * Khung mẫu từ câu mục tiêu người dùng nhập: mục tiêu → (ví dụ) bài học + (ví dụ) việc Ghi chú →
+   * (ví dụ) mốc tự đánh giá. KHÔNG phải phân tích AI — mọi thẻ ví dụ đều ghi rõ là ví dụ.
+   */
   static synthesizeCrossDomainGoalCanvas(params: {
     canvasId: string
     personId: string
     goalPrompt: string
   }): ActionCanvasState {
     const now = new Date().toISOString()
-    const { canvasId, personId, goalPrompt } = params
+    const { canvasId, personId } = params
+    const goalTitle = clampTitle(params.goalPrompt.trim() || 'Mục tiêu của bạn')
+
+    const baseNode = {
+      status: 'draft' as const,
+      assignedTo: 'user' as const,
+      createdAt: now,
+      updatedAt: now,
+    }
 
     const rootNode: CanvasNode = {
+      ...baseNode,
       id: '10000000-0000-4000-8000-000000000001',
       type: 'goal',
-      title: goalPrompt,
-      content: 'Mục tiêu tổng thể, nối việc học với ghi chú công việc của bạn.',
+      title: goalTitle,
+      content: 'Mục tiêu bạn vừa nhập. Các thẻ "Ví dụ" bên dưới chỉ là khung gợi ý.',
       domain: 'general',
       x: 400,
       y: 50,
       width: 260,
       height: 120,
       color: '#00f0ff',
-      status: 'in_progress',
-      tags: ['strategic', 'north-star'],
-      assignedTo: 'user',
-      createdAt: now,
-      updatedAt: now,
+      tags: ['muc-tieu'],
     }
 
     const learningNode: CanvasNode = {
+      ...baseNode,
       id: '10000000-0000-4000-8000-000000000002',
       type: 'task',
-      title: 'Luyện phản xạ IELTS Speaking & Từ vựng chuyên ngành',
-      content: 'Hoàn thành 3 buổi đàm thoại Full-Duplex 3D mỗi tuần và 50 từ SRS.',
+      title: 'Ví dụ: bài học phục vụ mục tiêu',
+      content: `Ghi bài học hoặc kỹ năng cần luyện. ${EXAMPLE_HINT}`,
       domain: 'learning',
       x: 100,
       y: 250,
       width: 240,
       height: 130,
       color: '#38bdf8',
-      status: 'in_progress',
-      tags: ['ielts', 'daily-drill'],
-      assignedTo: 'companion_ai',
-      createdAt: now,
-      updatedAt: now,
+      tags: ['vi-du'],
     }
 
     const workNode: CanvasNode = {
+      ...baseNode,
       id: '10000000-0000-4000-8000-000000000003',
       type: 'task',
-      title: 'Triển khai Dự án Portfolio Quốc tế',
-      content: 'Viết tài liệu kỹ thuật bằng tiếng Anh và tích hợp kiến trúc microservices.',
+      title: 'Ví dụ: việc cần làm trong Ghi chú',
+      content: `Ghi một việc cụ thể bạn sẽ làm rồi theo dõi ở Ghi chú. ${EXAMPLE_HINT}`,
       domain: 'work',
       x: 400,
       y: 250,
       width: 240,
       height: 130,
       color: '#22c55e',
-      status: 'in_progress',
-      tags: ['portfolio', 'deliverable'],
-      assignedTo: 'user',
-      createdAt: now,
-      updatedAt: now,
+      tags: ['vi-du'],
     }
 
-    const decisionNode: CanvasNode = {
+    const reviewNode: CanvasNode = {
+      ...baseNode,
       id: '10000000-0000-4000-8000-000000000005',
       type: 'decision_bridge',
-      title: 'Đánh giá Sẵn sàng Phỏng vấn Quốc tế',
-      content: 'Chạy giả lập hội đồng Holodeck Panel Mock trước khi nộp hồ sơ.',
+      title: 'Ví dụ: mốc tự đánh giá',
+      content: `Chọn ngày nhìn lại xem bạn đã tiến tới mục tiêu đến đâu. ${EXAMPLE_HINT}`,
       domain: 'general',
       x: 400,
       y: 450,
       width: 260,
       height: 120,
       color: '#a855f7',
-      status: 'draft',
-      tags: ['milestone', 'gate'],
-      assignedTo: 'companion_ai',
-      createdAt: now,
-      updatedAt: now,
+      tags: ['vi-du'],
     }
 
     const edges: CanvasEdge[] = [
@@ -95,39 +133,39 @@ export class ActionCanvasService {
         sourceNodeId: rootNode.id,
         targetNodeId: learningNode.id,
         relationship: 'requires',
-        label: 'Yêu cầu năng lực',
+        label: 'Cần học',
       },
       {
         id: '20000000-0000-4000-8000-000000000002',
         sourceNodeId: rootNode.id,
         targetNodeId: workNode.id,
         relationship: 'contributes_to',
-        label: 'Dự án thực tế',
+        label: 'Cần làm',
       },
       {
         id: '20000000-0000-4000-8000-000000000004',
         sourceNodeId: learningNode.id,
-        targetNodeId: decisionNode.id,
+        targetNodeId: reviewNode.id,
         relationship: 'contributes_to',
-        label: 'Điểm số IELTS',
+        label: 'Góp vào',
       },
       {
         id: '20000000-0000-4000-8000-000000000005',
         sourceNodeId: workNode.id,
-        targetNodeId: decisionNode.id,
+        targetNodeId: reviewNode.id,
         relationship: 'contributes_to',
-        label: 'Dự án hoàn tất',
+        label: 'Góp vào',
       },
     ]
 
     return {
       canvasId,
       personId,
-      title: `Lộ trình: ${goalPrompt}`,
-      nodes: [rootNode, learningNode, workNode, decisionNode],
+      title: clampTitle(`Bản nháp: ${goalTitle}`),
+      nodes: [rootNode, learningNode, workNode, reviewNode],
       edges,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
-      lastEditedBy: 'companion_ai',
+      lastEditedBy: 'user',
       schemaVersion: ACTION_CANVAS_VERSION,
       createdAt: now,
       updatedAt: now,
@@ -212,34 +250,39 @@ export class ActionCanvasService {
     const lines: string[] = []
     lines.push(`# ${canvas.title}`)
     lines.push(``)
-    lines.push(`*Tạo bởi Bạn Đồng Hành AI — Phiên bản: ${canvas.schemaVersion}*`)
     lines.push(`*Thời gian: ${new Date(canvas.updatedAt).toLocaleString('vi-VN')}*`)
     lines.push(``)
-    lines.push(`## 1. Danh sách Mục tiêu & Nhiệm vụ Đa miền`)
+    lines.push(`## 1. Mục tiêu & việc cần làm`)
     lines.push(``)
 
+    if (canvas.nodes.length === 0) {
+      lines.push(`Chưa có thẻ nào.`)
+      lines.push(``)
+    }
+
     canvas.nodes.forEach((n, idx) => {
+      // Canvas lưu cũ có thể không qua được hợp đồng (API trả nguyên văn) — có nhãn dự phòng.
       const statusEmoji = n.status === 'completed' ? '✅' : n.status === 'blocked' ? '🚫' : '⏳'
-      lines.push(`### ${idx + 1}. ${statusEmoji} [${n.domain.toUpperCase()}] ${n.title}`)
       lines.push(
-        `- **Phân loại**: ${n.type} | **Phụ trách**: ${n.assignedTo} | **Trạng thái**: ${n.status}`,
+        `### ${idx + 1}. ${statusEmoji} [${CANVAS_DOMAIN_LABELS[n.domain] ?? CANVAS_DOMAIN_LABELS.general}] ${n.title}`,
+      )
+      lines.push(
+        `- **Người làm**: ${CANVAS_ASSIGNEE_LABELS[n.assignedTo] ?? CANVAS_ASSIGNEE_LABELS.user} | **Trạng thái**: ${CANVAS_STATUS_LABELS[n.status] ?? n.status}`,
       )
       if (n.tags.length > 0) {
         lines.push(`- **Thẻ**: ${n.tags.map((t) => `#${t}`).join(' ')}`)
       }
-      lines.push(`- **Nội dung**: ${n.content}`)
+      if (n.content) lines.push(`- **Nội dung**: ${n.content}`)
       lines.push(``)
     })
 
     if (canvas.edges.length > 0) {
-      lines.push(`## 2. Mạng lưới Quan hệ Nhân quả & Phụ thuộc`)
+      lines.push(`## 2. Liên kết giữa các thẻ`)
       lines.push(``)
       canvas.edges.forEach((e) => {
         const source = canvas.nodes.find((n) => n.id === e.sourceNodeId)?.title || 'N/A'
         const target = canvas.nodes.find((n) => n.id === e.targetNodeId)?.title || 'N/A'
-        lines.push(
-          `- **[${source}]** --(${e.relationship}${e.label ? `: ${e.label}` : ''})--> **[${target}]**`,
-        )
+        lines.push(`- **${source}** → ${e.label || 'liên quan tới'} → **${target}**`)
       })
       lines.push(``)
     }

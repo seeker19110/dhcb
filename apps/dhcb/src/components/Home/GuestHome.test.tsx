@@ -41,6 +41,15 @@ describe('GuestHome', () => {
     expect(primaryLinks[0]?.getAttribute('href')).toBe('/bat-dau')
   })
 
+  it('[U9b] có liên kết "Đăng nhập" bằng chữ tới /login cho người đã có tài khoản', () => {
+    render()
+    const login = Array.from(container.querySelectorAll('a')).find(
+      (a) => a.textContent === 'Đăng nhập',
+    )
+    expect(login?.getAttribute('href')).toBe('/login')
+    expect(login?.className).not.toContain('bg-accent-500')
+  })
+
   it('dưới nút chính có dòng "Không cần tài khoản"', () => {
     render()
     expect(container.textContent).toContain('Không cần tài khoản')

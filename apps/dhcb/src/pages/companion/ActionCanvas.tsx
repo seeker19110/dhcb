@@ -14,6 +14,7 @@ import InteractiveCanvasViewport from '../../components/ActionCanvas/Interactive
 import CanvasAiOrchestratorModal from '../../components/ActionCanvas/CanvasAiOrchestratorModal'
 import CanvasExportModal from '../../components/ActionCanvas/CanvasExportModal'
 import { PageShell } from '@core/PageShell'
+import LoadError from '../../components/LoadError'
 import {
   Sparkles,
   LayoutGrid,
@@ -31,6 +32,10 @@ export default function ActionCanvas() {
   const toast = useToast()
   const [canvas, setCanvas] = useState<ActionCanvasState | null>(null)
   const [loading, setLoading] = useState(true)
+  // Lỗi tải canvas — tách khỏi trạng thái tải: trước đây lỗi chỉ hiện toast rồi để vòng quay
+  // "Đang khởi tạo…" chạy mãi (CLAUDE.md §4.3: tải/rỗng/lỗi phải tách bạch).
+  const [loadError, setLoadError] = useState(false)
+  const [loadRevision, setLoadRevision] = useState(0)
   const [saving, setSaving] = useState(false)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [aiModalOpen, setAiModalOpen] = useState(false)
@@ -44,6 +49,7 @@ export default function ActionCanvas() {
     let mounted = true
     const loadCanvas = async () => {
       setLoading(true)
+      setLoadError(false)
       try {
         const data = await fetchActionCanvas()
         if (mounted) {
@@ -51,7 +57,7 @@ export default function ActionCanvas() {
         }
       } catch {
         if (mounted) {
-          toast.error('Không thể tải Action Canvas.')
+          setLoadError(true)
         }
       } finally {
         if (mounted) {
@@ -63,7 +69,7 @@ export default function ActionCanvas() {
     return () => {
       mounted = false
     }
-  }, [toast])
+  }, [loadRevision])
 
   const handleSave = async () => {
     if (!canvas || saving) return
@@ -78,13 +84,24 @@ export default function ActionCanvas() {
     }
   }
 
+  // Trả `false` khi người dùng huỷ; NÉM lỗi khi tạo thất bại để hộp thoại giữ nguyên câu mục
+  // tiêu vừa gõ (trước đây hộp thoại vẫn đóng như thể đã thành công).
   const handleSynthesize = async (prompt: string) => {
+    // Tạo sơ đồ GHI ĐÈ sơ đồ đã lưu ở server — hỏi trước khi đang có thẻ (đợt U5).
+    if (
+      canvas &&
+      canvas.nodes.length > 0 &&
+      !window.confirm('Tạo sơ đồ mới sẽ thay thế sơ đồ hiện tại. Tiếp tục?')
+    ) {
+      return
+    }
     try {
       const newCanvas = await synthesizeGoalCanvas(prompt)
       setCanvas(newCanvas)
       toast.success('Đã tạo bản nháp sơ đồ — sửa các nút cho khớp mục tiêu của bạn.')
-    } catch {
+    } catch (err) {
       toast.error('Chưa tạo được sơ đồ. Thử lại nhé.')
+      throw err
     }
   }
 
@@ -103,6 +120,11 @@ export default function ActionCanvas() {
         const data = await res.json()
         setCanvas(data.canvas)
         toast.success('Đã tự động căn chỉnh sơ đồ!')
+      } else if (res.status === 404) {
+        // Bố cục chạy trên bản ĐÃ LƯU ở server — sơ đồ chưa lưu thì báo rõ thay vì im lặng.
+        toast.error('Hãy bấm Lưu sơ đồ trước khi tự động bố cục.')
+      } else {
+        toast.error('Lỗi khi tự động sắp xếp.')
       }
     } catch {
       toast.error('Lỗi khi tự động sắp xếp.')
@@ -115,7 +137,8 @@ export default function ActionCanvas() {
       setExportData(data)
       setExportModalOpen(true)
     } catch {
-      toast.error('Lỗi khi xuất tài liệu.')
+      // Xuất từ bản ĐÃ LƯU ở server — chưa lưu thì server trả 404.
+      toast.error('Chưa xuất được. Nếu bạn vừa tạo hoặc sửa sơ đồ, hãy bấm Lưu rồi thử lại.')
     }
   }
 
@@ -123,7 +146,9 @@ export default function ActionCanvas() {
     if (!canvas) return
     const now = new Date().toISOString()
     const newNode: CanvasNode = {
-      id: 'node-' + Date.now(),
+      // Hợp đồng bắt id là UUID — id kiểu 'node-<số>' cũ khiến thẻ thêm tay KHÔNG BAO GIỜ lưu
+      // được (server trả 400). Đợt U5 đưa "Thêm thẻ" lên màn rỗng nên phải sửa cùng.
+      id: crypto.randomUUID(),
       type: 'task',
       title: 'Nhiệm vụ mới',
       content: 'Nhấn để chỉnh sửa nội dung chi tiết...',
@@ -235,7 +260,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={zoomOut}
-                className="p-1.5 text-zinc-400 hover:text-zinc-200"
+                className="tap-44 flex items-center justify-center text-zinc-400 hover:text-zinc-200"
                 title="Thu nhỏ"
               >
                 <ZoomOut className="w-3.5 h-3.5" />
@@ -246,7 +271,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={zoomIn}
-                className="p-1.5 text-zinc-400 hover:text-zinc-200"
+                className="tap-44 flex items-center justify-center text-zinc-400 hover:text-zinc-200"
                 title="Phóng to"
               >
                 <ZoomIn className="w-3.5 h-3.5" />
@@ -254,7 +279,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={resetView}
-                className="p-1.5 text-zinc-400 hover:text-zinc-200 border-l border-zinc-800"
+                className="tap-44 flex items-center justify-center text-zinc-400 hover:text-zinc-200 border-l border-zinc-800"
                 title="Đặt lại góc nhìn"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -286,11 +311,61 @@ export default function ActionCanvas() {
           </div>
         </div>
 
-        {loading || !canvas ? (
-          <div className="flex flex-col items-center justify-center h-[500px] rounded-2xl border border-zinc-800 bg-zinc-900/40">
+        {loading ? (
+          <div
+            role="status"
+            className="flex flex-col items-center justify-center h-[500px] rounded-2xl border border-zinc-800 bg-zinc-900/40"
+          >
             <Loader2 className="w-8 h-8 text-cyan-400 theme-light:text-cyan-800 animate-spin mb-2" />
-            <span className="text-xs text-zinc-400">Đang khởi tạo không gian Action Canvas...</span>
+            <span className="text-xs text-zinc-400">Đang tải kế hoạch hành động…</span>
           </div>
+        ) : loadError || !canvas ? (
+          <LoadError
+            message="Chưa tải được kế hoạch hành động."
+            onRetry={() => setLoadRevision((n) => n + 1)}
+          />
+        ) : canvas.nodes.length === 0 ? (
+          // [audit M11, đợt U5] Người chưa có sơ đồ thấy HƯỚNG DẪN, không còn 4 thẻ dựng sẵn
+          // trông như kế hoạch của chính mình.
+          <section
+            aria-labelledby="action-canvas-empty-heading"
+            className="flex flex-col items-center justify-center text-center gap-3 min-h-[420px] rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40 px-6 py-10"
+          >
+            <h2 id="action-canvas-empty-heading" className="text-base font-bold text-white">
+              Chưa có sơ đồ nào
+            </h2>
+            <p className="max-w-md text-sm text-zinc-300 leading-relaxed">
+              Sơ đồ giúp bạn chia một mục tiêu thành các bước: bài học cần luyện, việc cần làm trong
+              Ghi chú và mốc tự đánh giá. Bắt đầu bằng một trong hai cách:
+            </p>
+            <ul className="max-w-md text-left text-sm text-zinc-300 leading-relaxed list-disc pl-5 space-y-1">
+              <li>
+                <strong className="text-white">Tạo sơ đồ từ mục tiêu</strong> — nhập mục tiêu, ứng
+                dụng dựng một khung mẫu có các thẻ &ldquo;Ví dụ&rdquo; để bạn sửa lại.
+              </li>
+              <li>
+                <strong className="text-white">Thêm thẻ</strong> — tự vẽ từng bước từ đầu.
+              </li>
+            </ul>
+            <div className="flex flex-wrap justify-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setAiModalOpen(true)}
+                className="tap-44 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-cyan-500 to-blue-500 text-zinc-950 hover:opacity-90 transition"
+              >
+                <Sparkles className="w-4 h-4" />
+                Tạo sơ đồ từ mục tiêu
+              </button>
+              <button
+                type="button"
+                onClick={handleAddNode}
+                className="tap-44 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Thêm thẻ
+              </button>
+            </div>
+          </section>
         ) : (
           <InteractiveCanvasViewport
             nodes={canvas.nodes}

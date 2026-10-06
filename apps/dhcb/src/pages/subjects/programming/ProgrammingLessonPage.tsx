@@ -42,6 +42,7 @@ import RunOutput, { type RunState } from '../../../components/programming/RunOut
 import StepBar, { type LessonStep } from '../../../components/programming/StepBar'
 import StepRail from '../../../components/programming/StepRail'
 import { PageShell } from '@core/PageShell'
+import { LessonAnimation } from '@core/LessonAnimation'
 import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport, useMediaQuery } from '../../../lib/useIsDesktopViewport'
 import { PROGRAMMING_PREFIX, duongDanBaiHoc, duongDanKhoa } from '../../../lib/programmingRoutes'
@@ -82,6 +83,7 @@ import { getLevelIdOfLesson } from '@dhcb/subject-programming/curriculum'
 import { z } from 'zod'
 import {
   gradeTestCase,
+  gradeGitTestCase,
   allTestsPassed,
   checkParsonsOrder,
   parsonsShuffle,
@@ -356,7 +358,16 @@ function LessonBody({
       // Owner đổi giữa lúc chấm → lượt này thuộc phiên cũ: không hiện, không ghi gì thêm.
       if (theHeOwnerRef.current !== luot) return
       out.push(
-        gradeTestCase(testCase, r.output, r.error ?? (r.timedOut ? 'Quá thời gian' : undefined)),
+        lesson.language === 'git'
+          ? gradeGitTestCase(testCase, {
+              ...r,
+              error: r.error ?? (r.timedOut ? 'Quá thời gian' : undefined),
+            })
+          : gradeTestCase(
+              testCase,
+              r.output,
+              r.error ?? (r.timedOut ? 'Quá thời gian' : undefined),
+            ),
       )
       setCham({ owner: chuLuot, grading: true, results: [...out] })
     }
@@ -637,6 +648,12 @@ function LessonBody({
                   <div className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5">
                     <LessonProse text={lesson.theory} />
                   </div>
+                  {lesson.animation && (
+                    <LessonAnimation
+                      spec={lesson.animation}
+                      className="rounded-3xl border border-line-subtle bg-surface-card p-5 read-body [&_svg]:mx-auto [&_svg]:max-w-2xl"
+                    />
+                  )}
                 </section>
               )}
 

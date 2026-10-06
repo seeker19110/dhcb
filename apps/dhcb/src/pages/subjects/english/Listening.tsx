@@ -1,5 +1,5 @@
 // Listening — trang "Thư viện Nghe" (/listening), gom mọi nội dung để NGHE-HIỂU (khác /phrases và
-// mục "Nghe" ở /practice vốn là bài tập CÓ CHẤM ĐIỂM). 2 tab: Câu thông dụng · Hội thoại.
+// mục "Nghe" ở /practice vốn là bài tập CÓ CHẤM ĐIỂM). 2 tab: Mẫu câu · Hội thoại.
 // Tab Truyện trước đây ở đây đã tách thành trang riêng /stories (2026-08-02, xem Stories.tsx)
 // để dễ phát triển thêm tính năng sau.
 // Xem docs/research/dac-ta-trang-nghe-2026-08-01.md mục 6 + danh-muc-truyen-nghe-2026-08-01.md mục 9.
@@ -212,7 +212,7 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={T.phrasesSearchPlaceholder}
-          className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
+          className="tap-44-y w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
         />
       </div>
 

@@ -7,7 +7,7 @@ import { startListening, isSTTSupported } from '../../../lib/stt'
 import { callClaude, parseJson } from '../../../lib/ai'
 import { interviewAnswerFeedbackPrompt } from '../../../prompts'
 import { effectivePlan } from '../../../lib/promo'
-import { getLimits } from '../../../lib/appSettings'
+import { hasReachedDailyLimit } from '../../../lib/appSettings'
 import { CHALLENGE_TOPICS } from '../../../data/challengeTopics'
 import type { User } from '../../../types'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
@@ -122,11 +122,11 @@ export function ReverseInterview({
 
   async function grade() {
     if (!topic || gradingRef.current) return
-    // Free plan: server tự chặn theo kho lượt tuần (không suy được từ localStorage) —
-    // chỉ chặn TRƯỚC ở client cho gói trả phí, giống Speaking.tsx.
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chỉ chặn TRƯỚC ở client cho VIP theo tổng bộ đếm
+    // local, giống Speaking.tsx; gói Free để server tự chặn.
     const plan = effectivePlan(user.plan)
     const usage = getUsage(user.id)
-    if (plan !== 'free' && usage.speakingCount >= getLimits()[plan].speaking) {
+    if (plan !== 'free' && hasReachedDailyLimit(usage, plan)) {
       setLimitHit(true)
       return
     }

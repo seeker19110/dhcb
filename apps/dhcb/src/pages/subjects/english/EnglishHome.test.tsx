@@ -94,4 +94,13 @@ describe('EnglishHome — trang tổng quan môn Tiếng Anh', () => {
       ).toBe(true)
     }
   })
+
+  // [U9b, audit 2026-09-30 M19] Người chọn "10 phút" ở onboarding thấy "0 / 10", không "0 / 50".
+  it('mục tiêu từ vựng trong ngày theo tốc độ đã chọn, không theo trần 5 lượt', async () => {
+    localStorage.setItem('et_speed_u1', '10')
+    await hien()
+    const text = container.textContent ?? ''
+    expect(text).toMatch(/Mục tiêu hôm nay:\s*0\s*\/\s*10 từ vựng/)
+    expect(text).not.toMatch(/\/\s*50 từ vựng/)
+  })
 })

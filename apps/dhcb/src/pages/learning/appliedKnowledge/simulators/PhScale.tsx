@@ -13,10 +13,10 @@ export function PhScale() {
     <div className="p-6 rounded-2xl bg-zinc-900 border border-indigo-500/40 space-y-6">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
         <div>
-          <h3 className="text-base font-bold text-indigo-400 theme-light:text-indigo-800 flex items-center gap-2">
+          <h2 className="text-base font-bold text-indigo-400 theme-light:text-indigo-800 flex items-center gap-2">
             <Activity className="w-5 h-5" />
             Mô Phỏng 8: Thang Đo pH & Nồng Độ Ion [H+] = 10^(-pH)
-          </h3>
+          </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
             Hóa học lớp 11 & cơ chế trung hòa axit dịch vị dạ dày
           </p>

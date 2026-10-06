@@ -363,7 +363,7 @@ export default function CommonPhrases() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={T.phrasesSearchPlaceholder}
-              className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
+              className="tap-44-y w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
             />
             {search && (
               <button
@@ -380,7 +380,7 @@ export default function CommonPhrases() {
           <div className="flex gap-2 pb-1 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveStruct(null)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+              className={`tap-44-touch shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                 activeStruct === null
                   ? 'bg-white/10 text-white border-white/20'
                   : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-zinc-300'
@@ -392,7 +392,7 @@ export default function CommonPhrases() {
               <button
                 key={type}
                 onClick={() => setActiveStruct(activeStruct === type ? null : type)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                className={`tap-44-touch shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                   activeStruct === type
                     ? 'bg-accent-500/20 text-accent-300 border-accent-500/30'
                     : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:text-zinc-300'
@@ -458,7 +458,7 @@ export default function CommonPhrases() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={T.phrasesSearchPlaceholder}
-            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-base text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
+            className="tap-44-y w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-base text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
           />
           {search && (
             <button

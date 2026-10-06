@@ -19,6 +19,7 @@ export function runGit(code: string, options: GitRunOptions = {}): Promise<CodeR
   const r = chayLenh(code, options.lenhChuanBi ?? [])
   return Promise.resolve({
     output: r.output,
+    ...(r.gitState ? { gitState: r.gitState } : {}),
     // Lệnh gõ sai KHÔNG phải "sự cố hệ thống" mà là một phần bài học: output vẫn giữ nguyên
     // dòng `loi: …` để học viên đọc, và trường error cho phép bộ chấm đánh rớt ca đó.
     ...(r.error ? { error: r.error } : {}),

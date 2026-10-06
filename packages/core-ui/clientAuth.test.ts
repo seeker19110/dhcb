@@ -272,6 +272,21 @@ describe('packages/core-ui/clientAuth.ts', () => {
       expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
     })
 
+    it('khách: server trả 200 { authenticated: false } → null, không gọi ?action=me, không đặt cờ', async () => {
+      // [audit 2026-09-30 minor 7] Server không còn trả 401 khi không có cookie (console khách sạch).
+      const { getCurrentUser } = await import('./clientAuth.js')
+      localStorage.removeItem('gsa_session_present_v1')
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ authenticated: false }),
+      } as unknown as Response)
+
+      expect(await getCurrentUser()).toBeNull()
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(localStorage.getItem('gsa_session_present_v1')).toBeNull()
+    })
+
     it('mất mạng lúc đổi cookie → null chứ KHÔNG ném lỗi (AuthProvider vẫn dựng được UI)', async () => {
       const { getCurrentUser } = await import('./clientAuth.js')
       localStorage.removeItem('gsa_session_present_v1')

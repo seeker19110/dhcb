@@ -6,10 +6,10 @@ export function CapstoneProjects() {
   return (
     <div className="space-y-4">
       <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
-        <h3 className="text-base font-bold text-amber-400 theme-light:text-amber-800 flex items-center gap-2">
+        <h2 className="text-base font-bold text-amber-400 theme-light:text-amber-800 flex items-center gap-2">
           <Lightbulb className="w-5 h-5" />
           Thư Viện Thử Thách & Dự Án Tự Làm Tại Nhà (Hands-on Mini Projects)
-        </h3>
+        </h2>
         <p className="text-xs text-zinc-400 mt-1">
           Các dự án thực chiến 15–30 phút giúp học sinh và gia đình ứng dụng lý thuyết vào thực tế
         </p>
@@ -28,7 +28,7 @@ export function CapstoneProjects() {
                 </span>
                 <span className="text-xs text-zinc-500">{item.gradeLabel}</span>
               </div>
-              <h4 className="text-sm font-bold text-zinc-100">{item.miniProject.title}</h4>
+              <h3 className="text-sm font-bold text-zinc-100">{item.miniProject.title}</h3>
               <div className="space-y-1.5 pt-1">
                 {item.miniProject.steps.map((step, idx) => (
                   <div key={idx} className="text-xs text-zinc-300 flex items-start gap-2">

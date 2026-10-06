@@ -31,7 +31,9 @@ describe('Action Canvas API Handler (/api/action-canvas)', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns default or existing canvas on GET with 200', async () => {
+  // [audit M11, đợt U5] Người chưa lưu canvas nào nhận canvas RỖNG — không còn 4 thẻ mẫu dựng
+  // sẵn trông như kế hoạch của chính mình.
+  it('GET khi chưa lưu canvas → 200 với canvas rỗng (không thẻ, không cạnh)', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
       userId: '11111111-1111-4111-8111-111111111111',
     })
@@ -44,7 +46,9 @@ describe('Action Canvas API Handler (/api/action-canvas)', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.success).toBe(true)
-    expect(data.canvas.nodes.length).toBeGreaterThan(0)
+    expect(data.canvas.nodes).toEqual([])
+    expect(data.canvas.edges).toEqual([])
+    expect(data.canvas.title).toBe('Kế hoạch hành động của bạn')
     expect(data.canvas.schemaVersion).toBe('v4.2.0')
   })
 

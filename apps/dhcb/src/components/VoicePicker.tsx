@@ -164,18 +164,22 @@ export default function VoicePicker({ plan, isA }: Props) {
             role="switch"
             aria-checked={random}
             onClick={toggleRandom}
-            // KHÔNG dùng .tap-44 ở đây: đây là công tắc dạng viên thuốc 44×24 — ép cao 44px
-            // sẽ biến nó thành khối chữ nhật, hỏng hẳn hình dáng công tắc. Rộng 44px (w-11)
-            // + đứng riêng một hàng có khoảng cách rộng nên vẫn đạt WCAG 2.2 AA (2.5.8).
-            className={`relative w-11 h-6 rounded-full transition shrink-0 ${
-              random ? 'bg-accent-500' : 'bg-zinc-700'
-            }`}
+            // [U9a, M20] Vùng chạm 44×44 (luật dự án), hình viên thuốc 44×24 VẼ BÊN TRONG: nút
+            // trong suốt cao 44px, thanh trượt là <span> con. Trước đây cả nút chỉ cao 24px.
+            className="tap-44 flex items-center justify-center rounded-full shrink-0"
           >
             <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-                random ? 'translate-x-5' : ''
+              aria-hidden="true"
+              className={`relative w-11 h-6 rounded-full transition ${
+                random ? 'bg-accent-500' : 'bg-zinc-700'
               }`}
-            />
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                  random ? 'translate-x-5' : ''
+                }`}
+              />
+            </span>
           </button>
         </div>
       </div>
@@ -215,7 +219,7 @@ export default function VoicePicker({ plan, isA }: Props) {
                             : `${v.id}${slowHint}`
                   }
                   aria-pressed={isAllowed ? isSelected : undefined}
-                  className={`relative flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium border transition ${
+                  className={`tap-44-y relative flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium border transition ${
                     isSelected
                       ? 'bg-accent-500/20 border-accent-500/60 text-accent-300 theme-light:text-accent-800'
                       : isAllowed
@@ -269,17 +273,21 @@ export default function VoicePicker({ plan, isA }: Props) {
             role="switch"
             aria-checked={nativeOn}
             onClick={toggleNative}
-            // Cùng lý do với công tắc giọng ngẫu nhiên phía trên: không dùng .tap-44 để giữ
-            // hình dáng viên thuốc 44×24 (vẫn đạt WCAG 2.2 AA 2.5.8).
-            className={`relative w-11 h-6 rounded-full transition shrink-0 ${
-              nativeOn ? 'bg-accent-500' : 'bg-zinc-700'
-            }`}
+            // Cùng cách với công tắc giọng ngẫu nhiên phía trên: nút 44×44, viên thuốc vẽ bên trong.
+            className="tap-44 flex items-center justify-center rounded-full shrink-0"
           >
             <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-                nativeOn ? 'translate-x-5' : ''
+              aria-hidden="true"
+              className={`relative w-11 h-6 rounded-full transition ${
+                nativeOn ? 'bg-accent-500' : 'bg-zinc-700'
               }`}
-            />
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                  nativeOn ? 'translate-x-5' : ''
+                }`}
+              />
+            </span>
           </button>
         </div>
 
@@ -292,7 +300,7 @@ export default function VoicePicker({ plan, isA }: Props) {
                 onClick={() => chooseNative(v.id)}
                 aria-pressed={nativeVoice === v.id}
                 title={`${v.id} — ${v.gender === 'female' ? (isA ? 'Nữ' : 'Female') : isA ? 'Nam' : 'Male'}`}
-                className={`flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium border transition ${
+                className={`tap-44-y flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium border transition ${
                   nativeVoice === v.id
                     ? 'bg-accent-500/20 border-accent-500/60 text-accent-300 theme-light:text-accent-800'
                     : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'

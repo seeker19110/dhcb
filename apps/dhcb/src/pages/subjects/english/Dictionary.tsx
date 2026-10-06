@@ -93,7 +93,9 @@ export default function Dictionary() {
   const onboarding = useOnboarding(user?.id) // nhóm tuổi (GĐ 4, PROGRESS.md) — lọc vòng từ vựng
   const dir = getDirection()
   const isA = dir === 'A'
-  const [tab, setTab] = useState<Tab>('today')
+  // [audit 2026-09-30 minor 2] Trang tên "Từ điển" thì mở ra là ô TRA TỪ — trước đây mở tab
+  // thẻ ghi nhớ "Hôm nay", người vào tra từ phải tìm tab trước. Thẻ ghi nhớ vẫn cách một chạm.
+  const [tab, setTab] = useState<Tab>('search')
   const [badges, setBadges] = useState({ srsDue: 0, hardCount: 0 })
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
@@ -264,7 +266,7 @@ export default function Dictionary() {
                 <button
                   key={key}
                   onClick={() => setTab(key)}
-                  className={`relative flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition ${
+                  className={`tap-44-y relative flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition ${
                     tab === key
                       ? 'bg-accent-500/20 text-accent-300 theme-light:text-accent-800 border border-accent-500/40'
                       : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-zinc-200'
@@ -295,7 +297,7 @@ export default function Dictionary() {
                 <button
                   key={key}
                   onClick={() => setTab(key)}
-                  className={`relative flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition ${
+                  className={`tap-44-y relative flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition ${
                     tab === key
                       ? 'bg-accent-500/20 text-accent-300 theme-light:text-accent-800 border border-accent-500/40'
                       : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-zinc-200'
@@ -340,7 +342,7 @@ export default function Dictionary() {
                       ? 'Gõ tiếng Anh hoặc tiếng Việt để tra…'
                       : 'Search in English or Vietnamese…'
                   }
-                  className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
+                  className="tap-44-y w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
                 />
                 {query && (
                   <button
@@ -667,7 +669,7 @@ export default function Dictionary() {
                               <button
                                 key={w}
                                 onClick={() => setQuery(w)}
-                                className="text-xs px-2.5 py-1 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 hover:border-accent-500/50 hover:text-accent-300 transition"
+                                className="tap-44 text-xs px-2.5 py-1 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 hover:border-accent-500/50 hover:text-accent-300 transition"
                               >
                                 {w}
                               </button>
@@ -750,7 +752,7 @@ export default function Dictionary() {
                 setPosFilter(null)
               }}
               placeholder={isA ? 'Gõ tiếng Anh hoặc tiếng Việt…' : 'English or Vietnamese…'}
-              className="w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-base leading-tight text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
+              className="tap-44-y w-full bg-zinc-900/80 border border-zinc-800 rounded-xl pl-9 pr-9 py-2.5 text-base leading-tight text-white placeholder:text-zinc-400 outline-none focus:border-accent-500/60 focus:bg-zinc-900 transition"
             />
             {query && (
               <button

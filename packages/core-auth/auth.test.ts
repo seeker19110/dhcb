@@ -313,9 +313,10 @@ describe('/api/auth — action session-from-cookie (đăng nhập nối tiếp g
     expect(authService.createSession).not.toHaveBeenCalled()
   })
 
-  it('không có cookie → 401', async () => {
+  it('không có cookie → 200 { authenticated: false } (khách, không phải lỗi — audit minor 7)', async () => {
     const resp = await handler(makeCookieRequest())
-    expect(resp.status).toBe(401)
+    expect(resp.status).toBe(200)
+    expect(await resp.json()).toEqual({ authenticated: false })
     expect(authService.validateSessionToken).not.toHaveBeenCalled()
   })
 

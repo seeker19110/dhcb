@@ -66,6 +66,14 @@ export interface TodayInput {
    * dữ liệu cũ trong localStorage không được làm trắng Trang chủ. Vắng = không lọc.
    */
   knownSubjectIds?: readonly string[]
+  /**
+   * [U9b, 2026-10-05] Môn người học CHỦ ĐỘNG chọn lúc onboarding (kèm tên để dựng chữ). Chỉ dùng
+   * khi KHÔNG có tín hiệu nào: thay "Chọn môn để bắt đầu" (hỏi lại điều vừa trả lời) bằng lời
+   * mời vào đúng môn đó. Đây là lựa chọn của người học, KHÔNG phải tiến độ — nên mục vẫn là
+   * `pick` (nhãn "Bắt đầu: …"), không bao giờ thành "Học tiếp" một bài chưa từng mở. Môn lạ
+   * (ngoài `knownSubjectIds`) bị bỏ qua như mọi tín hiệu lạ khác.
+   */
+  chosenSubject?: { id: string; label?: string }
 }
 
 /** Môn này có bất kỳ tín hiệu nào không (kể cả tín hiệu không dùng làm việc để học)? */
@@ -164,7 +172,7 @@ export function buildTodayPlan(input: TodayInput): TodayPlan {
   const chinh = coPhien[0]?.signal ?? coBaiKeTiep[0]?.signal ?? coOnTap[0]?.signal
   const plan = chinh
     ? keHoachCoViec(chinh, signals, subjectsSeen, input.now)
-    : keHoachChonMon(coMat, subjectsSeen, input.now)
+    : keHoachChonMon(coMat, subjectsSeen, input.now, monDaChon(input))
   return plan
 }
 
@@ -205,6 +213,14 @@ function keHoachCoViec(
   return { primary, secondary, subjectsSeen: [...subjectsSeen], builtAt: now }
 }
 
+/** Môn đã chọn lúc onboarding, nếu hợp lệ theo `knownSubjectIds`. */
+function monDaChon(input: TodayInput): { id: string; label?: string } | undefined {
+  const chon = input.chosenSubject
+  if (!chon || !chon.id) return undefined
+  if (input.knownSubjectIds && !input.knownSubjectIds.includes(chon.id)) return undefined
+  return chon
+}
+
 /**
  * Kế hoạch khi KHÔNG có việc nào: mời chọn môn.
  *
@@ -215,9 +231,23 @@ function keHoachChonMon(
   coMat: readonly SubjectSignal[],
   subjectsSeen: readonly string[],
   now: number,
+  daChon?: { id: string; label?: string },
 ): TodayPlan {
   const motMon = coMat.length === 1 ? coMat[0] : undefined
   const daTungHoc = coMat.length > 0
+  // [U9b] Người mới vừa chọn môn ở onboarding, chưa học gì: mời vào ĐÚNG môn đó. Tiêu đề theo
+  // khuôn "lời dẫn — việc" mà `todayCardText.tachLoiMoi` tách thành dòng nguồn + nhãn nút.
+  if (!daTungHoc && daChon) {
+    const primary: TodayItem = {
+      id: todayItemId('pick', daChon.id, undefined),
+      kind: 'pick',
+      subjectId: daChon.id,
+      title: `Môn bạn đã chọn — học ${daChon.label ?? daChon.id}`,
+      href: `/goc-hoc-tap/${daChon.id}`,
+      evidenceSource: 'none',
+    }
+    return { primary, secondary: [], subjectsSeen: [...subjectsSeen], builtAt: now }
+  }
   const primary: TodayItem = {
     id: todayItemId('pick', motMon?.subjectId, undefined),
     kind: 'pick',

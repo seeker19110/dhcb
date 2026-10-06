@@ -316,3 +316,57 @@ describe('buildTodayPlan — mọi môn đều là môn có thật', () => {
     }
   })
 })
+
+// [U9b, audit 2026-09-30 M19] Người vừa chọn môn ở onboarding không bị hỏi lại "Chọn môn".
+describe('buildTodayPlan — môn đã chọn lúc onboarding', () => {
+  const KNOWN = SUPPORTED_SUBJECTS.map((s) => s.id)
+
+  it('chưa có tín hiệu + đã chọn Tiếng Anh: pick vào ĐÚNG môn đó, không phải "Chọn môn"', () => {
+    const p = buildTodayPlan({
+      signals: [],
+      now: NOW,
+      knownSubjectIds: KNOWN,
+      chosenSubject: { id: 'english', label: 'Tiếng Anh' },
+    })
+    expect(TodayPlanSchema.parse(p)).toBeTruthy()
+    expect(p.primary?.kind).toBe('pick')
+    expect(p.primary?.subjectId).toBe('english')
+    expect(p.primary?.href).toBe('/goc-hoc-tap/english')
+    expect(p.primary?.title).toBe('Môn bạn đã chọn — học Tiếng Anh')
+    expect(p.primary?.evidenceSource).toBe('none')
+    // Lựa chọn không phải tiến độ: không bịa môn vào danh sách "đã thấy".
+    expect(p.subjectsSeen).toEqual([])
+  })
+
+  it('đã có tín hiệu thật thì lựa chọn onboarding KHÔNG lấn tín hiệu', () => {
+    const p = buildTodayPlan({
+      signals: [{ subjectId: 'programming', next: next('programming', 'p1-u1-l2') }],
+      now: NOW,
+      chosenSubject: { id: 'english', label: 'Tiếng Anh' },
+    })
+    expect(p.primary?.kind).toBe('next')
+    expect(p.primary?.subjectId).toBe('programming')
+  })
+
+  it('đã đi hết nội dung (có dấu vết, không còn việc) → vẫn lời mời "chọn môn hoặc khoá mới"', () => {
+    const p = buildTodayPlan({
+      signals: [{ subjectId: 'programming', lastEvidenceAt: NOW - 1000 }],
+      now: NOW,
+      chosenSubject: { id: 'english', label: 'Tiếng Anh' },
+    })
+    expect(p.primary?.title).toContain('đi hết nội dung')
+  })
+
+  it('môn lạ (không còn trong registry) hoặc id rỗng → về đúng hành vi cũ', () => {
+    for (const chosenSubject of [{ id: 'astrology' }, { id: '' }]) {
+      const p = buildTodayPlan({ signals: [], now: NOW, knownSubjectIds: KNOWN, chosenSubject })
+      expect(p.primary?.href).toBe('/goc-hoc-tap')
+      expect(p.primary?.subjectId).toBeUndefined()
+    }
+  })
+
+  it('thiếu tên môn thì dùng mã môn — vẫn không trống chữ', () => {
+    const p = buildTodayPlan({ signals: [], now: NOW, chosenSubject: { id: 'physics' } })
+    expect(p.primary?.title).toBe('Môn bạn đã chọn — học physics')
+  })
+})

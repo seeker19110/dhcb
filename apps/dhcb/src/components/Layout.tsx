@@ -10,7 +10,7 @@ import { buildCrumbs, defaultBackDestination, type Crumb } from '../lib/breadcru
 import { useIsDesktopViewport } from '../lib/useIsDesktopViewport'
 
 /**
- * Đọc `document.documentElement.dataset.sidebar` ('expanded' | 'collapsed' | 'off') mà
+ * Đọc `document.documentElement.dataset.sidebar` ('expanded' | 'collapsed' | 'off' | 'none') mà
  * `DesktopSidebar.tsx` tự ghi khi mở/thu gọn — theo dõi bằng MutationObserver vì đây là state
  * của MỘT component khác, không có qua props/context (cùng cơ chế đã dùng cho `--sidebar-w`).
  * Layout dùng giá trị này để ẩn nút "Trang chủ" ở header khi sidebar đang MỞ RỘNG (hai lối về
@@ -89,7 +89,6 @@ export default function Layout({
   // chuyển Studio (dropdown "Studio" ở header) đã GỠ HẲN khỏi Layout — ô chọn miền trùng lặp
   // với sidebar/trang Hồ sơ, không còn phục vụ mục đích riêng nào ở đây.
   const isDesktop = useIsDesktopViewport()
-  const isHome = location.pathname === '/'
   // Sidebar đang MỞ RỘNG thì ẩn nút "Trang chủ" ở header (trùng với nút "Trang chủ" đứng đầu
   // sidebar) — thu gọn ('collapsed') hoặc không có sidebar ('off'/trang đăng nhập) thì hiện lại.
   const sidebarState = useSidebarDataset()
@@ -254,7 +253,10 @@ export default function Layout({
               <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-accent-500 via-accent-400 to-indigo-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                 <BookOpen className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="font-bold text-sm text-white hidden sm:inline tracking-tight">
+              <span
+                lang="vi"
+                className="font-bold text-sm text-white hidden sm:inline tracking-tight"
+              >
                 {T.appName}
               </span>
             </Link>
@@ -264,9 +266,14 @@ export default function Layout({
         {/* Title/subtitle — như cũ, hiện ở MỌI kích thước. Không còn Breadcrumb riêng: nhãn
             nút Back ở trên đã lấy đúng đốt cha (xem `backLabel`), vẽ thêm breadcrumb là lặp
             chữ với chính nhãn đó (bài học 2026-09-17). */}
+        {/* [U9a, WCAG 1.4.12] Tiêu đề XUỐNG DÒNG thay vì `truncate`: khi người dùng giãn chữ
+            (khoảng cách chữ/dòng theo WCAG) tiêu đề dài bị cắt "…" mất chữ ở 390px. Tiêu đề quá
+            dài nay thành 2 dòng, header cao thêm một chút nhưng không mất nội dung. */}
         <div className="flex-1 min-w-0">
-          {title && <p className="font-semibold text-[15px] truncate text-white">{title}</p>}
-          {subtitle && <p className="text-xs text-zinc-400 truncate">{subtitle}</p>}
+          {title && (
+            <p className="font-semibold text-[15px] leading-snug break-words text-white">{title}</p>
+          )}
+          {subtitle && <p className="text-xs text-zinc-400 break-words">{subtitle}</p>}
         </div>
 
         {/* Streak — TOÀN CỤC.
@@ -299,15 +306,16 @@ export default function Layout({
             (HomeUniversalAiBar) đã là hai lối vào AI, nút thứ ba ở đây chỉ thêm khe không
             cần thiết trong 4 khe header di động. Trang khác (kể cả mobile) vẫn giữ — đây
             thường là lối AI DUY NHẤT ở đó. */}
-        {/* GIỮ transition-all: hover đổi màu nền/viền, active đổi transform (scale). */}
-        {!(isHome && !isDesktop) && (
+        {/* `transition` (màu + transform), KHÔNG `transition-all`: hover đổi nền/viền, active đổi
+            scale — `transition-all` còn làm viền lấy nét hiện dần 200ms (audit M17, changelog 0500). */}
+        {(isDesktop || focus) && (
           <button
             onClick={() => nav('/ban-dong-hanh')}
             // [U4 · WCAG 3.1.2] nhãn viết cứng tiếng Việt — đúng giọng khi trang là tiếng Anh.
             lang="vi"
             aria-label="Mở Bạn Đồng Hành AI"
             title="Bạn Đồng Hành AI (Live Voice & Executive Suite)"
-            className="tap-44 relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent-500/15 hover:bg-accent-500/25 border border-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-semibold transition-all active:scale-95 group shadow-sm shrink-0"
+            className="tap-44 relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent-500/15 hover:bg-accent-500/25 border border-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-semibold transition active:scale-95 group shadow-sm shrink-0"
           >
             <Bot className="w-3.5 h-3.5 text-accent-400 group-hover:scale-110 transition-transform" />
             <span className="hidden md:inline">Đồng Hành AI</span>

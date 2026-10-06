@@ -39,9 +39,14 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
 `packages/core-personal/actionCanvasService.ts`, trang `/action-canvas`, component
 `apps/dhcb/src/components/ActionCanvas/`. Lối vào duy nhất là banner cuối studio "Kế hoạch".
 
-- `synthesizeCrossDomainGoalCanvas` dựng đồ thị nút **từ mẫu** theo câu mục tiêu:
-  `goal` → `task` → `decision_bridge`. Đây không phải phân tích AI — giao diện gọi là "bản nháp sơ
-  đồ từ khung mẫu" (changelog 0485).
+- Chưa lưu canvas nào → `GET /api/action-canvas` trả `createEmptyCanvas` (không thẻ); trang hiện
+  màn hướng dẫn với hai lối "Tạo sơ đồ từ mục tiêu" / "Thêm thẻ" (changelog 0495, audit M11).
+  **Đừng** quay lại tự dựng thẻ mẫu cho người chưa yêu cầu.
+- `synthesizeCrossDomainGoalCanvas` dựng đồ thị nút **từ mẫu** theo câu mục tiêu người dùng nhập:
+  `goal` → `task` → `decision_bridge`. Đây không phải phân tích AI — mọi thẻ ngoài mục tiêu có tiêu
+  đề "Ví dụ: …" + "Gợi ý mẫu", trạng thái Bản nháp, người làm là Bạn (changelog 0485, 0495).
+- Nhãn hiển thị (miền/trạng thái/người làm) lấy từ `CANVAS_*_LABELS` trong hợp đồng — không in mã
+  enum thô ra giao diện hay bản xuất Markdown.
 - Miền của nút (`CanvasDomainSchema`): chỉ `learning` · `work` (Ghi chú) · `general`. Canvas lưu từ
   trước có `career`/`startup`/`life` được hợp đồng đổi về `general` khi đọc — **đừng** bỏ bước đổi
   này (lưu lại canvas cũ sẽ lỗi 400).

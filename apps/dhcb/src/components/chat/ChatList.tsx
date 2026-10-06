@@ -153,7 +153,7 @@ export default function ChatList({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm theo tên bạn bè…"
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/60 transition-colors"
+            className="tap-44-y w-full pl-9 pr-3 py-1.5 text-xs bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/60 transition-colors"
           />
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function ChatList({
                 <p className="text-xs">Chưa có tin nhắn nào.</p>
                 <Link
                   to="/ban-be"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-zinc-200 transition-colors"
+                  className="tap-44-y inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-zinc-200 transition-colors"
                 >
                   <Users size={14} /> Xem danh sách bạn bè
                 </Link>

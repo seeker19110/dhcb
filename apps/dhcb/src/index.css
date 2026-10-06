@@ -123,6 +123,13 @@ html[data-sidebar='collapsed'] {
   --sidebar-w: 4.5rem;
 }
 
+/* Trang không bao giờ có sidebar (đăng nhập, onboarding, trang giới thiệu — `isNavHiddenPath` ở
+   lib/studios.ts) → không chừa lề trái. Thiếu luật này thì các trang đó có dải trống 256px ở
+   desktop (audit UI/UX 2026-09-30 minor 11). */
+html[data-sidebar='none'] {
+  --sidebar-w: 0px;
+}
+
 /* [P0-4, 2026-09-17] CHẾ ĐỘ TẬP TRUNG (`Layout.tsx` prop `focus`) — ẩn hẳn BottomNav trên
    trang ngồi học lâu, cùng cơ chế `data-sidebar` ở trên: cờ đặt lên <html>
    (`document.documentElement.dataset.focus`), không phải prop truyền xuống, để BottomNav
@@ -271,7 +278,10 @@ html[data-kbd-nav][data-focus='1'] {
   a:focus-visible,
   input:focus-visible,
   textarea:focus-visible,
-  select:focus-visible {
+  select:focus-visible,
+  /* `summary` (khối gập `<details>`, vd components/Disclosure.tsx) cũng là điều khiển nhận tiêu
+     điểm — thiếu nó thì rơi về viền mặc định của trình duyệt, không theo token (changelog 0500). */
+  summary:focus-visible {
     /* Token riêng theo theme thay cho --a-500: ở Blue sky/Nhi đồng a-500 chỉ 2,65–2,70:1 so với
        nền, dưới sàn 3:1 của WCAG 1.4.11 (audit 2026-09-30 C1). */
     outline: 2px solid rgb(var(--focus-ring));
@@ -283,9 +293,26 @@ html[data-kbd-nav][data-focus='1'] {
   a:focus:not(:focus-visible),
   input:focus:not(:focus-visible),
   textarea:focus:not(:focus-visible),
-  select:focus:not(:focus-visible) {
+  select:focus:not(:focus-visible),
+  summary:focus:not(:focus-visible) {
     outline: none;
   }
+}
+
+/* ===== VIỀN LẤY NÉT HIỆN TỨC THÌ (audit 2026-09-30 M17, changelog 0500) =====
+   `transition-all` (còn ~150 chỗ, gỡ dần khi đụng tới — skill ui-ux mục 10.A.1) làm cả viền
+   lấy nét chuyển động: đo được viền 0px → 2px sau ~200ms, người dùng bàn phím mất dấu vị trí
+   (mục 10.A.4). `transition-colors` của Tailwind 4 cũng liệt kê `outline-color`.
+   Trình duyệt chọn danh sách thuộc tính chuyển động theo style SAU KHI đổi trạng thái, nên khi
+   phần tử VỪA nhận tiêu điểm, danh sách dưới đây được dùng: nó giữ màu/nền/viền/độ mờ/transform
+   (hover vẫn mượt) nhưng bỏ `outline-*` và `box-shadow` (vòng `ring-*`) → viền hiện ngay đủ dày,
+   đủ màu. Thời lượng vẫn lấy từ class của phần tử; phần tử không khai transition thì không đổi gì.
+   Đặt NGOÀI `@layer` để thắng utility `transition-all`/`transition` (utility nằm trong layer).
+   Cổng canh: `apps/dhcb/src/pages/core/DesignSystem.design.test.ts`. */
+:focus-visible {
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke, opacity, transform,
+    translate, scale, rotate;
 }
 
 /* ===== THANG CHỮ NGỮ NGHĨA =====
@@ -417,6 +444,28 @@ html[data-kbd-nav][data-focus='1'] {
      được mật độ danh sách dài — luật 44px của dự án là luật cho vùng CHẠM. */
   @media (pointer: coarse) {
     .tap-44-coarse-y {
+      min-height: 44px;
+    }
+  }
+
+  /* [U9a, audit UI/UX 2026-09-30 M20] Ép 44px ở MỌI màn chạm: màn hẹp (< 1024px — điện thoại,
+     tablet dọc) HOẶC con trỏ chính là ngón tay. Dùng cho danh sách chip DÀY (vd 40 chip vòng từ
+     vựng ở trang cấp CEFR): ở desktop dùng chuột giữ cỡ gọn 30px (đã qua sàn 24px của WCAG
+     2.5.8), còn trên điện thoại mỗi chip đủ 44px để chạm. Khác `tap-44-coarse-y` ở chỗ áp cả
+     cho khung nhìn hẹp: đã hiện giao diện mobile thì theo luật vùng chạm của mobile. */
+  @media (max-width: 1023.98px), (pointer: coarse) {
+    .tap-44-touch-y {
+      min-height: 44px;
+    }
+    /* Biến thể ép CẢ chiều rộng — chip chữ rất ngắn ("A2", "B1"). */
+    .tap-44-touch {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Thanh trượt `<input type="range">` mặc định chỉ cao 16px — cả hàng thành vùng kéo 44px
+       (rãnh và nút kéo vẫn vẽ ở giữa). Áp chung một chỗ thay vì vá từng thanh trượt ở các
+       trình mô phỏng "Ứng dụng thực tế" + "Lộ trình ôn thi". */
+    input[type='range'] {
       min-height: 44px;
     }
   }

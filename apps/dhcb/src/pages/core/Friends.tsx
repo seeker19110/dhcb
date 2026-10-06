@@ -138,7 +138,7 @@ export default function Friends() {
                   <Link
                     to={`/tin-nhan?peerId=${encodeURIComponent(friend.id)}`}
                     aria-label={`Nhắn tin với ${friend.name}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600/20 text-blue-400 theme-light:text-blue-800 hover:bg-blue-600/30 text-xs font-semibold min-h-[36px] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600/20 text-blue-400 theme-light:text-blue-800 hover:bg-blue-600/30 text-xs font-semibold tap-44-y transition-colors"
                   >
                     <MessageSquare size={14} />
                     <span>Nhắn tin</span>
@@ -147,7 +147,7 @@ export default function Friends() {
                     type="button"
                     aria-label={`Huỷ kết bạn với ${friend.name}`}
                     onClick={() => handleRemove(friend)}
-                    className="inline-flex items-center justify-center min-w-[36px] min-h-[36px] rounded-full text-zinc-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+                    className="tap-44 inline-flex items-center justify-center rounded-full text-zinc-400 hover:text-red-400 hover:bg-white/5 transition-colors"
                   >
                     <UserMinus size={16} />
                   </button>

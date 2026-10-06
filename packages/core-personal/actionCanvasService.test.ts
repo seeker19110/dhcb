@@ -1,6 +1,7 @@
 // packages/core-personal/actionCanvasService.test.ts
 import { describe, it, expect } from 'vitest'
-import { ActionCanvasService } from './actionCanvasService.js'
+import { ActionCanvasService, EMPTY_CANVAS_TITLE } from './actionCanvasService.js'
+import { ActionCanvasStateSchema } from '@dhcb/core-contracts/actionCanvas'
 
 describe('ActionCanvasService', () => {
   // Changelog 0485: ba trụ Career · Startup · Life đã gỡ — mẫu canvas không còn gán nút vào đó, và
@@ -53,8 +54,72 @@ describe('ActionCanvasService', () => {
     })
 
     const md = ActionCanvasService.exportCanvasToMarkdown(canvas)
-    expect(md).toContain('# Lộ trình: Chuyển ngành Software Engineer')
-    expect(md).toContain('Danh sách Mục tiêu & Nhiệm vụ Đa miền')
-    expect(md).toContain('Mạng lưới Quan hệ Nhân quả')
+    expect(md).toContain('# Bản nháp: Chuyển ngành Software Engineer')
+    expect(md).toContain('Mục tiêu & việc cần làm')
+    expect(md).toContain('Liên kết giữa các thẻ')
+    // Nhãn tiếng Việt, không lộ mã enum thô.
+    expect(md).toContain('[Học tập]')
+    expect(md).toContain('**Người làm**: Bạn')
+    expect(md).toContain('**Trạng thái**: Bản nháp')
+    expect(md).not.toMatch(/LEARNING|companion_ai|in_progress|requires|contributes_to/)
+  })
+})
+
+// [audit M11, đợt U5] Không còn thẻ bịa gán cho người dùng.
+describe('ActionCanvasService — không dựng kế hoạch giả cho người dùng', () => {
+  const ids = {
+    canvasId: '11111111-1111-4111-8111-111111111111',
+    personId: '22222222-2222-4222-8222-222222222222',
+  }
+
+  it('canvas rỗng: không thẻ, không cạnh, hợp lệ theo hợp đồng', () => {
+    const canvas = ActionCanvasService.createEmptyCanvas(ids)
+    expect(canvas.nodes).toEqual([])
+    expect(canvas.edges).toEqual([])
+    expect(canvas.title).toBe(EMPTY_CANVAS_TITLE)
+    expect(ActionCanvasStateSchema.safeParse(canvas).success).toBe(true)
+  })
+
+  it('khung mẫu: mọi thẻ ngoài mục tiêu ghi rõ "Ví dụ", là Bản nháp, người làm là Bạn', () => {
+    const canvas = ActionCanvasService.synthesizeCrossDomainGoalCanvas({
+      ...ids,
+      goalPrompt: 'Đạt IELTS 7.0',
+    })
+    const [goal, ...examples] = canvas.nodes
+    expect(goal!.title).toBe('Đạt IELTS 7.0')
+    for (const n of examples) {
+      expect(n.title.startsWith('Ví dụ:')).toBe(true)
+      expect(n.content).toContain('Gợi ý mẫu')
+    }
+    for (const n of canvas.nodes) {
+      expect(n.status).toBe('draft')
+      expect(n.assignedTo).toBe('user')
+    }
+    expect(JSON.stringify(canvas)).not.toMatch(/Holodeck|Full-Duplex|Focus Score|IELTS Speaking/)
+    expect(ActionCanvasStateSchema.safeParse(canvas).success).toBe(true)
+  })
+
+  it('câu mục tiêu dài 200 ký tự: tiêu đề vẫn trong giới hạn hợp đồng (lưu lại được)', () => {
+    const canvas = ActionCanvasService.synthesizeCrossDomainGoalCanvas({
+      ...ids,
+      goalPrompt: 'a'.repeat(200),
+    })
+    expect(canvas.title.length).toBeLessThanOrEqual(200)
+    expect(ActionCanvasStateSchema.safeParse(canvas).success).toBe(true)
+  })
+
+  it('câu mục tiêu rỗng/chỉ khoảng trắng → tiêu đề mặc định, không rỗng', () => {
+    const canvas = ActionCanvasService.synthesizeCrossDomainGoalCanvas({
+      ...ids,
+      goalPrompt: '   ',
+    })
+    expect(canvas.nodes[0]!.title).toBe('Mục tiêu của bạn')
+  })
+
+  it('xuất Markdown canvas rỗng nói "Chưa có thẻ nào"', () => {
+    const md = ActionCanvasService.exportCanvasToMarkdown(
+      ActionCanvasService.createEmptyCanvas(ids),
+    )
+    expect(md).toContain('Chưa có thẻ nào.')
   })
 })

@@ -113,39 +113,44 @@ export default function KaraokeText({
       title={label}
       aria-label={label}
       disabled={disabled && !isControlled}
-      className={`flex items-start gap-2 text-left transition group disabled:opacity-40 ${buttonClass}`}
+      // [U9a, M20] Vùng chạm ≥ 44px trên màn chạm (`tap-44-touch-y`): câu một dòng trước đây
+      // chỉ cao 22px. Nút căn GIỮA theo chiều dọc một khối con (icon + chữ, căn đầu dòng như cũ)
+      // nên câu ngắn không bị dồn lên trên, câu nhiều dòng thì cao hơn 44px sẵn — không đổi.
+      className={`tap-44-touch-y flex items-center text-left transition group disabled:opacity-40 ${buttonClass}`}
     >
-      {/* Icon loa / dừng */}
-      <span
-        className={`shrink-0 ${bSize} flex items-center justify-center transition
+      <span className="flex flex-1 min-w-0 items-start gap-2">
+        {/* Icon loa / dừng */}
+        <span
+          className={`shrink-0 ${bSize} flex items-center justify-center transition
         ${displayPlaying ? accent : idle}`}
-      >
-        {displayPlaying ? (
-          <Square className={`${iSize} fill-current`} />
-        ) : (
-          <Volume2 className={iSize} />
-        )}
-      </span>
+        >
+          {displayPlaying ? (
+            <Square className={`${iSize} fill-current`} />
+          ) : (
+            <Volume2 className={iSize} />
+          )}
+        </span>
 
-      {/* Văn bản: từng chữ highlight đúng lúc đọc (min-w-0 để câu dài xuống dòng gọn) */}
-      <span className={`min-w-0 ${textClass}`}>
-        {parts.map((part, i) => {
-          // Đoạn rỗng '' chỉ sinh ra ở đầu/cuối khi text có khoảng trắng thừa; bỏ qua để
-          // chỉ số từ (wi) khớp với bộ đếm của audio (dùng text.trim().split ở tts.ts).
-          if (part === '') return null
-          if (/^\s+$/.test(part)) return <span key={i}>{part}</span>
-          const thisIdx = wi++
-          return (
-            <span
-              key={i}
-              className={
-                displayPlaying && thisIdx === displayWordIdx ? wordHl : 'transition-colors'
-              }
-            >
-              {part}
-            </span>
-          )
-        })}
+        {/* Văn bản: từng chữ highlight đúng lúc đọc (min-w-0 để câu dài xuống dòng gọn) */}
+        <span className={`min-w-0 ${textClass}`}>
+          {parts.map((part, i) => {
+            // Đoạn rỗng '' chỉ sinh ra ở đầu/cuối khi text có khoảng trắng thừa; bỏ qua để
+            // chỉ số từ (wi) khớp với bộ đếm của audio (dùng text.trim().split ở tts.ts).
+            if (part === '') return null
+            if (/^\s+$/.test(part)) return <span key={i}>{part}</span>
+            const thisIdx = wi++
+            return (
+              <span
+                key={i}
+                className={
+                  displayPlaying && thisIdx === displayWordIdx ? wordHl : 'transition-colors'
+                }
+              >
+                {part}
+              </span>
+            )
+          })}
+        </span>
       </span>
     </button>
   )

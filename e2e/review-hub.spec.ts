@@ -36,15 +36,35 @@ function vnDateOffset(offsetDays: number): string {
   return new Date(ms).toISOString().slice(0, 10)
 }
 
-test('hàng đợi rỗng → nói rõ bằng chữ + có lối "Học tiếp", không phải màn trắng', async ({
+test('hàng đợi rỗng (đã có thẻ, chưa tới hạn) → nói rõ bằng chữ + có lối "Học tiếp", không phải màn trắng', async ({
   page,
 }) => {
+  // Một thẻ hạn NGÀY MAI: người này đã học, chỉ là hôm nay chưa có gì đến hạn.
+  await seedSrs(page, { apple: theQuaHan(Date.now() + 86_400_000) })
   await mockLogin(page, 'vi')
   await page.goto('/goc-hoc-tap/on-tap', { waitUntil: 'domcontentloaded' })
 
   const trangThai = page.getByRole('status')
   await expect(trangThai).toContainText('Hôm nay không có gì đến hạn')
   await expect(page.getByRole('link', { name: /Học tiếp/ })).toBeVisible()
+})
+
+// [U9b, audit 2026-09-30 M19] Người chưa học gì không được bảo "quay lại ngày mai".
+test('người chưa học gì → không hứa "ngày mai", chỉ lối bắt đầu vào đúng môn đã chọn', async ({
+  page,
+}) => {
+  await page.addInitScript(
+    (key) => localStorage.setItem(key, 'english'),
+    `dhcb_onboarding_subject_${USER_ID}`,
+  )
+  await mockLogin(page, 'vi')
+  await page.goto('/goc-hoc-tap/on-tap', { waitUntil: 'domcontentloaded' })
+
+  const trangThai = page.getByRole('status')
+  await expect(trangThai).toContainText('Chưa có gì để ôn')
+  await expect(trangThai).not.toContainText('ngày mai')
+  const batDau = page.getByRole('link', { name: 'Bắt đầu học bài đầu tiên' })
+  await expect(batDau).toHaveAttribute('href', '/goc-hoc-tap/english')
 })
 
 test('có thẻ của 3 nguồn → gộp thành các nhóm môn, mỗi nhóm dẫn tới màn ôn của môn đó', async ({

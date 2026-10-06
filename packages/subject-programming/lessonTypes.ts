@@ -4,6 +4,29 @@
 // về nhà → ⑧ thẻ SRS (⑧ nối vào SRS chung ở PR sau — schema đã chừa chỗ).
 // Zod validate ở test (chặn CI khi soạn nội dung sai khuôn) — dữ liệu là hằng biên dịch.
 import { z } from 'zod'
+import { isCanonicalGitPath } from './gitSim.js'
+import { LessonAnimationSchema } from '@dhcb/core-contracts/lessonAnimation'
+
+const GitPathSchema = z.string().max(120).refine(isCanonicalGitPath, 'Duong dan Git phai canonical')
+export const GitAssertionSchema = z.discriminatedUnion('type', [
+  z
+    .object({
+      type: z.literal('workdirContent'),
+      path: GitPathSchema,
+      content: z.string().max(500),
+    })
+    .strict(),
+  z
+    .object({ type: z.literal('headContent'), path: GitPathSchema, content: z.string().max(500) })
+    .strict(),
+  z.object({ type: z.literal('stagedAbsent'), path: GitPathSchema }).strict(),
+  z.object({ type: z.literal('headAbsent'), path: GitPathSchema }).strict(),
+  z.object({ type: z.literal('historyAbsent'), path: GitPathSchema }).strict(),
+  z.object({ type: z.literal('commitMessage'), content: z.string().max(500) }).strict(),
+  z
+    .object({ type: z.literal('headIgnoreProbe'), path: GitPathSchema, ignored: z.boolean() })
+    .strict(),
+])
 
 /** Một ca chấm cho bài Make: chạy code học viên với stdin này, so output. */
 export const TestCaseSchema = z
@@ -24,6 +47,7 @@ export const TestCaseSchema = z
      *  bài soạn trước vẫn giữ nguyên hành vi. Mục đích: một bài chấm được trên NHIỀU cảnh dữ
      *  liệu (có NULL, bảng rỗng, thứ tự khác) để bắt lời giải chỉ đúng với đúng một bộ số.
      *  Ngôn ngữ khác SQL bỏ qua trường này. */
+    gitAssertions: z.array(GitAssertionSchema).min(1).max(12).optional(),
     datasetSql: z.string().min(1).max(4000).optional(),
   })
   .strict()
@@ -98,6 +122,8 @@ export const LessonSchema = z
     hook: z.string().min(1).max(600),
     /** ② Khái niệm — đoạn văn thuần, xuống dòng bằng \n (chưa cần markdown ở PR-L3). */
     theory: z.string().min(1).max(4000),
+    /** Minh hoạ cơ chế ở bước Khái niệm; không tham gia chấm điểm hay tiến độ. */
+    animation: LessonAnimationSchema.optional(),
     /** ③ Ví dụ mẫu chạy được, chú thích TỪNG DÒNG bằng comment tiếng Việt trong code. */
     workedExample: z
       .object({
@@ -156,6 +182,10 @@ export const LessonSchema = z
       .optional(),
   })
   .strict()
+  .refine(
+    (l) => l.language === 'git' || l.make.testCases.every((c) => c.gitAssertions === undefined),
+    { message: 'Git assertions chi hop le voi language git' },
+  )
   .refine((l) => l.predict.answerIndex < l.predict.choices.length, {
     message: 'predict.answerIndex vượt quá số lựa chọn',
   })

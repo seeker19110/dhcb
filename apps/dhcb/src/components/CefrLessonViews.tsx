@@ -72,7 +72,7 @@ import { shouldAlignPopoverRightFor } from '../lib/popoverAlign'
 import { speakingFullEvaluationPrompt } from '../prompts'
 import { effectivePlan } from '../lib/promo'
 import { isFeatureEnabled } from '../lib/planFeatures'
-import { getLimits } from '../lib/appSettings'
+import { hasReachedDailyLimit } from '../lib/appSettings'
 import { useApiThrottle } from '../lib/useApiThrottle'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
 import MixedLangText from './MixedLangText'
@@ -113,7 +113,7 @@ export function GrammarDetail({
     <div className="animate-fade-in">
       <button
         onClick={onBack}
-        className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition mb-3"
+        className="tap-44-y flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition mb-3"
       >
         <ChevronLeft className="w-4 h-4" /> {isA ? 'Quay lại' : 'Back'}
       </button>
@@ -269,7 +269,7 @@ export function QuizCard({ item, isA }: { item: QuizItem; isA: boolean }) {
               key={i}
               disabled={answered}
               onClick={() => setPick(i)}
-              className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition ${cls}`}
+              className={`tap-44-y w-full text-left text-sm px-3 py-2 rounded-lg border transition ${cls}`}
             >
               {opt}
               {answered && i === item.answer && <Check className="inline w-3.5 h-3.5 ml-1.5" />}
@@ -525,7 +525,7 @@ export function VocabFlash({
     <div className="animate-fade-in">
       <button
         onClick={onBack}
-        className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition mb-3"
+        className="tap-44-y flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition mb-3"
       >
         <ChevronLeft className="w-4 h-4" /> {isA ? 'Quay lại' : 'Back'}
       </button>
@@ -538,7 +538,7 @@ export function VocabFlash({
       {idx === 0 && !done && pool.length >= TESTOUT_CHOICES && (
         <button
           onClick={startTestOut}
-          className="w-full flex items-center justify-center gap-2 mb-3 py-2.5 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 text-violet-300 theme-light:text-violet-800 text-sm font-medium transition"
+          className="tap-44-y w-full flex items-center justify-center gap-2 mb-3 py-2.5 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 text-violet-300 theme-light:text-violet-800 text-sm font-medium transition"
         >
           <Zap className="w-4 h-4" />{' '}
           {isA ? 'Tôi đã biết vòng này — kiểm tra nhanh' : 'I already know this set — quick test'}
@@ -1045,7 +1045,7 @@ export function DialogueView({
     if (rpEvaluating || !rolePlay) return
     const usage = getUsage(userId)
     const planForLimit = effectivePlan(plan)
-    if (planForLimit !== 'free' && usage.speakingCount >= getLimits()[planForLimit].speaking) {
+    if (planForLimit !== 'free' && hasReachedDailyLimit(usage, planForLimit)) {
       setRpError(
         isA
           ? 'Bạn đã dùng hết lượt chấm điểm hôm nay. Thử lại vào ngày mai nhé.'
@@ -1130,19 +1130,19 @@ export function DialogueView({
           {/* Nút back */}
           <button
             onClick={onBack}
-            className="shrink-0 text-xs text-zinc-400 hover:text-white transition flex items-center gap-1"
+            className="tap-44-touch-y shrink-0 text-xs text-zinc-400 hover:text-white transition flex items-center gap-1"
           >
             <ChevronLeft className="w-3.5 h-3.5" /> {isA ? 'Quay lại' : 'Back'}
           </button>
 
-          <div className="h-3.5 w-px bg-zinc-700" />
+          <div aria-hidden="true" className="hidden lg:block h-3.5 w-px bg-zinc-700" />
 
           {/* Play / Pause / Resume / Stop */}
           <div className="flex items-center gap-1.5">
             {isIdle && (
               <button
                 onClick={() => void startPlayAll()}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-medium transition"
+                className="tap-44-touch-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-medium transition"
               >
                 <Play className="w-3 h-3 fill-current" />
                 {isA ? 'Phát tất cả' : 'Play all'}
@@ -1151,7 +1151,7 @@ export function DialogueView({
             {playing && !paused && (
               <button
                 onClick={handlePause}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 theme-light:text-amber-800 text-xs font-medium transition"
+                className="tap-44-touch-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 theme-light:text-amber-800 text-xs font-medium transition"
               >
                 <Pause className="w-3 h-3 fill-current" />
                 {isA ? 'Dừng' : 'Pause'}
@@ -1160,7 +1160,7 @@ export function DialogueView({
             {paused && (
               <button
                 onClick={handleResume}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-medium transition"
+                className="tap-44-touch-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-medium transition"
               >
                 <Play className="w-3 h-3 fill-current" />
                 {isA ? 'Tiếp' : 'Resume'}
@@ -1169,14 +1169,14 @@ export function DialogueView({
             {!isIdle && (
               <button
                 onClick={handleStop}
-                className="w-6 h-6 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+                className="tap-44-touch w-6 h-6 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
               >
                 <Square className="w-3 h-3 fill-current" />
               </button>
             )}
           </div>
 
-          <div className="h-3.5 w-px bg-zinc-700" />
+          <div aria-hidden="true" className="hidden lg:block h-3.5 w-px bg-zinc-700" />
 
           {/* Tốc độ đọc */}
           <div className="flex items-center gap-1">
@@ -1184,7 +1184,7 @@ export function DialogueView({
               <button
                 key={s}
                 onClick={() => changeSpeed(s)}
-                className={`px-1.5 py-0.5 rounded text-xs font-medium transition ${
+                className={`tap-44-touch flex items-center justify-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
                   speed === s
                     ? 'bg-sky-500/20 text-sky-300 theme-light:text-sky-800 border border-sky-500/40'
                     : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -1195,7 +1195,7 @@ export function DialogueView({
             ))}
           </div>
 
-          <div className="h-3.5 w-px bg-zinc-700" />
+          <div aria-hidden="true" className="hidden lg:block h-3.5 w-px bg-zinc-700" />
 
           {/* Chế độ nghe: EN / EN+VI / VI */}
           <div className="flex items-center gap-1">
@@ -1204,7 +1204,7 @@ export function DialogueView({
               <button
                 key={m.key}
                 onClick={() => changeMode(m.key)}
-                className={`px-1.5 py-0.5 rounded text-xs font-medium transition ${
+                className={`tap-44-touch flex items-center justify-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
                   mode === m.key
                     ? 'bg-violet-500/20 text-violet-300 theme-light:text-violet-800 border border-violet-500/40'
                     : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -1215,7 +1215,7 @@ export function DialogueView({
             ))}
           </div>
 
-          <div className="h-3.5 w-px bg-zinc-700" />
+          <div aria-hidden="true" className="hidden lg:block h-3.5 w-px bg-zinc-700" />
 
           {/* Đóng vai — chỉ VIP. Free thấy nút khoá + link nâng cấp. */}
           {!rolePlay && (
@@ -1228,7 +1228,7 @@ export function DialogueView({
                   setRolePicker((o) => !o)
                 }}
                 aria-expanded={rolePicker}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                className={`tap-44-touch-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition ${
                   rolePicker
                     ? 'bg-violet-500/20 text-violet-300 theme-light:text-violet-800'
                     : 'bg-zinc-800 text-zinc-300 hover:text-white'
@@ -1251,13 +1251,13 @@ export function DialogueView({
                       <div className="flex flex-col gap-1.5">
                         <button
                           onClick={() => void startRolePlay('A')}
-                          className="text-left px-3 py-2 rounded-lg bg-zinc-900/80 border border-zinc-800 hover:border-accent-500/50 text-sm text-zinc-100 transition"
+                          className="tap-44-y text-left px-3 py-2 rounded-lg bg-zinc-900/80 border border-zinc-800 hover:border-accent-500/50 text-sm text-zinc-100 transition"
                         >
                           {speakerName('A')}
                         </button>
                         <button
                           onClick={() => void startRolePlay('B')}
-                          className="text-left px-3 py-2 rounded-lg bg-zinc-900/80 border border-zinc-800 hover:border-accent-500/50 text-sm text-zinc-100 transition"
+                          className="tap-44-y text-left px-3 py-2 rounded-lg bg-zinc-900/80 border border-zinc-800 hover:border-accent-500/50 text-sm text-zinc-100 transition"
                         >
                           {speakerName('B')}
                         </button>
@@ -1279,7 +1279,7 @@ export function DialogueView({
                       </p>
                       <Link
                         to="/cai-dat"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-400 theme-light:text-accent-700 hover:underline"
+                        className="tap-44-y inline-flex items-center gap-1 text-xs font-semibold text-accent-400 theme-light:text-accent-700 hover:underline"
                       >
                         {isA ? 'Nâng cấp VIP →' : 'Upgrade to VIP →'}
                       </Link>
@@ -1293,7 +1293,7 @@ export function DialogueView({
           {rolePlay && (
             <button
               onClick={stopRolePlay}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 theme-light:text-red-700 text-xs font-medium transition"
+              className="tap-44-touch-y flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 theme-light:text-red-700 text-xs font-medium transition"
             >
               <Square className="w-3 h-3 fill-current" />
               {isA ? 'Dừng đóng vai' : 'Stop role-play'}
@@ -1315,7 +1315,7 @@ export function DialogueView({
                 type="button"
                 onClick={() => setVoiceSettingsOpen((o) => !o)}
                 aria-expanded={voiceSettingsOpen}
-                className={`px-1.5 py-0.5 rounded text-xs font-medium transition ${
+                className={`tap-44-touch flex items-center justify-center px-1.5 py-0.5 rounded text-xs font-medium transition ${
                   voiceSettingsOpen
                     ? 'bg-zinc-800 text-zinc-200'
                     : 'text-zinc-400 hover:text-zinc-200'

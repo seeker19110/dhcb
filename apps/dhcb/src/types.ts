@@ -160,24 +160,10 @@ export interface DailyUsage {
   learnCount?: number
 }
 
-// Giới hạn theo gói HIỂN THỊ ở client (server vẫn là nơi chặn thật — packages/core-billing/
-// usage.ts). GĐ1 2026-09-12: Free hưởng thẳng hạn mức Plus cũ = 30 lượt/ngày (server tính là
-// TỔNG mọi tính năng/ngày, con số đọc từ app_settings), VIP không giới hạn (số rất lớn thay
-// Infinity). Trong lúc khuyến mãi ra mắt (src/lib/promo.ts), effectivePlan() nâng Free → VIP.
-const UNLIMITED = 1_000_000
-export const LIMITS: Record<
-  Plan,
-  { chat: number; writing: number; speaking: number; stt: number; pronounce: number }
-> = {
-  free: { chat: 30, writing: 30, speaking: 30, stt: 30, pronounce: 30 },
-  vip: {
-    chat: UNLIMITED,
-    writing: UNLIMITED,
-    speaking: UNLIMITED,
-    stt: UNLIMITED,
-    pronounce: UNLIMITED,
-  },
-}
+// [2026-10-05, audit M9] Hạn mức theo gói KHÔNG còn khai ở đây: hình dạng thật là MỘT con số
+// TỔNG lượt AI/ngày cho mỗi gói — xem hợp đồng `@dhcb/core-contracts/appSettings` và
+// `src/lib/appSettings.ts`. Bản cũ `LIMITS` (hạn mức theo từng chế độ, VIP "không giới hạn") đã
+// sai từ GĐ1 và là nguồn của lỗi hiển thị "0/".
 
 // Chiều A: nhãn tiếng Việt | Chiều B: nhãn tiếng Anh
 export const SITUATIONS: { value: string; labelA: string; labelB: string }[] = [

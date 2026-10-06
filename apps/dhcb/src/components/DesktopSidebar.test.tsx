@@ -11,8 +11,11 @@ import DesktopSidebar from './DesktopSidebar'
 
 // `plan` đổi được theo từng ca (nhãn gói ở chân sidebar đọc gói thật của phiên).
 let planGiaLap: 'free' | 'vip' = 'free'
+let hanGoiGiaLap: string | null = null
 vi.mock('../context/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'u1', name: 'An', onboarded: true, plan: planGiaLap } }),
+  useAuth: () => ({
+    user: { id: 'u1', name: 'An', onboarded: true, plan: planGiaLap, planExpiresAt: hanGoiGiaLap },
+  }),
 }))
 
 function render(pathname: string) {
@@ -49,6 +52,7 @@ function setViewportWidth(width: number) {
 beforeEach(() => {
   localStorage.clear()
   planGiaLap = 'free'
+  hanGoiGiaLap = null
   // Các test cấu trúc cây canh sidebar MỞ RỘNG — bề rộng desktop phổ biến nhất.
   setViewportWidth(1440)
 })
@@ -239,12 +243,20 @@ describe('DesktopSidebar — nhãn gói theo phiên', () => {
     expect(thuGon).not.toContain('>VIP</a>')
   })
 
-  it('tài khoản VIP: "Gói VIP" / "VIP", không bao giờ ghi "Free"', () => {
+  // [2026-10-05, đợt U5] VIP không có ngày hết hạn = VIP vĩnh viễn — nói rõ như vậy.
+  it('tài khoản VIP vĩnh viễn: "VIP vĩnh viễn" / "VIP", không bao giờ ghi "Free"', () => {
     planGiaLap = 'vip'
     const moRong = render('/tien-do')
-    expect(moRong).toContain('>Gói VIP</a>')
+    expect(moRong).toContain('>VIP vĩnh viễn</a>')
     expect(moRong).not.toContain('Free · Nâng cấp')
     setViewportWidth(1024)
     expect(render('/tien-do')).toContain('>VIP</a>')
+  })
+
+  it('tài khoản VIP có hạn: ghi ngày hết hạn theo giờ Việt Nam', () => {
+    planGiaLap = 'vip'
+    // 17:30 UTC ngày 31/12 = 00:30 ngày 01/01 giờ VN — phải ra ngày theo giờ VN.
+    hanGoiGiaLap = '2026-12-31T17:30:00.000Z'
+    expect(render('/tien-do')).toContain('>VIP đến 01/01/2027</a>')
   })
 })

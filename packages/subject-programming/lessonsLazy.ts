@@ -4434,7 +4434,7 @@ export const LESSON_INDEX: readonly LessonSummary[] = [
   {
     id: 'mathai-u3-l3',
     unitId: 'mathai-u3',
-    title: 'Gradient descent tự cài — và learning rate quá to thì văng',
+    title: 'Gradient descent tự cài — learning rate đổi đường đi thế nào?',
     language: 'python',
     srsCardCount: 3,
   },

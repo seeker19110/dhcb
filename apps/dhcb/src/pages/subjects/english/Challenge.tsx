@@ -20,7 +20,7 @@ import { useApiThrottle } from '../../../lib/useApiThrottle'
 import { getUsage, incrementUsage, getDirection } from '../../../lib/storage'
 import type { Direction } from '../../../types'
 import { effectivePlan } from '../../../lib/promo'
-import { getLimits, isLeaderboardEnabled } from '../../../lib/appSettings'
+import { hasReachedDailyLimit, isLeaderboardEnabled } from '../../../lib/appSettings'
 import { vnDateStr } from '../../../lib/date'
 import { callClaude, parseJson } from '../../../lib/ai'
 import { speak } from '../../../lib/tts'
@@ -502,18 +502,10 @@ export default function Challenge() {
     if (!challenge) return
     const usage = getUsage(uid)
     const isTyped = stage === 'typed'
-    // Gói Free: kho lượt tuần chung nằm ở server — để server tự chặn, không chặn cục bộ
-    // theo dữ liệu local nữa (sttCount/chatCount đếm theo ngày, không còn đúng ý nghĩa).
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1): nhận diện giọng nói và chấm bài cùng trừ một kho,
+    // nên chỉ còn MỘT lần kiểm (gõ tay cũng tốn lượt chấm). Gói Free để server tự chặn.
     const plan = effectivePlan(user.plan)
-    if (plan !== 'free' && !isTyped && usage.sttCount >= getLimits()[plan].stt) {
-      toast.error(
-        isA
-          ? 'Hết lượt nhận diện giọng nói hôm nay. Bạn có thể gõ tay thay vào.'
-          : "You've used all speech-recognition turns today. You can type instead.",
-      )
-      return
-    }
-    if (plan !== 'free' && usage.chatCount >= getLimits()[plan].chat) {
+    if (plan !== 'free' && hasReachedDailyLimit(usage, plan)) {
       toast.error(
         isA ? 'Hết lượt AI hôm nay. Thử lại ngày mai.' : "You've used all AI turns today.",
       )

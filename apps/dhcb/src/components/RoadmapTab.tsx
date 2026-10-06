@@ -147,9 +147,9 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
 
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <h3 className="font-bold text-white text-base leading-tight">
+                  <h2 className="font-bold text-white text-base leading-tight">
                     {isA ? level.titleVi : level.titleEn}
-                  </h3>
+                  </h2>
                   {isCurrent && (
                     <span
                       className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${a.soft} ${a.text}`}
@@ -253,7 +253,7 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
                 )}
                 <button
                   onClick={() => nav(duongDanLoTrinh(level.id))}
-                  className="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-sm font-medium transition"
+                  className="tap-44-y mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 text-sm font-medium transition"
                 >
                   {complete
                     ? isA

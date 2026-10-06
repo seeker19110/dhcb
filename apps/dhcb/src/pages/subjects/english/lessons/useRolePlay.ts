@@ -20,7 +20,7 @@ import { callClaude, parseJson } from '../../../../lib/ai'
 import { speakingFullEvaluationPrompt } from '../../../../prompts'
 import { effectivePlan } from '../../../../lib/promo'
 import { isFeatureEnabled } from '../../../../lib/planFeatures'
-import { getLimits } from '../../../../lib/appSettings'
+import { hasReachedDailyLimit } from '../../../../lib/appSettings'
 import { useApiThrottle } from '../../../../lib/useApiThrottle'
 import type { Speed, WordSync } from './shared'
 
@@ -262,7 +262,7 @@ export function useRolePlay({
     if (rpEvaluating || !rolePlay) return
     const usage = getUsage(userId)
     const planForLimit = effectivePlan(plan)
-    if (planForLimit !== 'free' && usage.speakingCount >= getLimits()[planForLimit].speaking) {
+    if (planForLimit !== 'free' && hasReachedDailyLimit(usage, planForLimit)) {
       setRpError(
         isA
           ? 'Bạn đã dùng hết lượt chấm điểm hôm nay. Thử lại vào ngày mai nhé.'
