@@ -225,13 +225,11 @@ describe('VIP không giới hạn — nâng cấp/rollback contract', () => {
     expect(mod.getDailyLimit('vip')).toBe(300)
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          json: async () => ({ ...base, vipUnlimited: true }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ ...base, vipUnlimited: true }),
+      }),
     )
     await mod.refreshAppSettings()
     expect(mod.hasUnlimitedAi('vip')).toBe(true)
@@ -268,13 +266,11 @@ describe('VIP không giới hạn — nâng cấp/rollback contract', () => {
     const unsubscribe = mod.subscribeAppSettings(listener)
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          json: async () => ({ ...base, vipUnlimited: true }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ ...base, vipUnlimited: true }),
+      }),
     )
     await mod.refreshAppSettings()
     expect(listener).toHaveBeenCalledTimes(1)
@@ -288,13 +284,11 @@ describe('VIP không giới hạn — nâng cấp/rollback contract', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          status: 200,
-          json: async () => ({ ...base, vipUnlimited: 'true' }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ ...base, vipUnlimited: 'true' }),
+      }),
     )
     await mod.refreshAppSettings()
     expect(mod.hasUnlimitedAi('vip')).toBe(false)
