@@ -284,7 +284,11 @@ export default async function handler(req: Request): Promise<Response> {
   // Không tạo phiên mới, không kéo dài hạn và không tiết lộ token cookie.
   if (result.data.action === 'session-from-cookie') {
     const cookieToken = readSessionCookie(req)
-    if (!cookieToken) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
+    // [audit 2026-09-30 minor 7] KHÔNG có cookie = khách chưa đăng nhập — trạng thái BÌNH
+    // THƯỜNG, không phải lỗi. Mọi trang khách gọi action này lúc tải (client không đọc được
+    // cookie HttpOnly nên không tự biết có phiên SSO hay không); trả 401 ở đây làm console đỏ
+    // mỗi lần khách mở trang. Cookie CÓ nhưng sai/hết hạn vẫn 401 như cũ.
+    if (!cookieToken) return jsonResponse({ authenticated: false }, 200, allHeaders)
 
     const session = await validateSessionToken(cookieToken).catch(() => null)
     if (!session) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
