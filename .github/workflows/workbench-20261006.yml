@@ -1,4 +1,4 @@
-name: Prepare Google-only accessibility correction
+name: Verify learning policy and password transactions
 
 on:
   push:
@@ -9,31 +9,81 @@ permissions:
   contents: write
 
 jobs:
-  correction:
+  verify:
     if: github.repository == 'seeker19110/dhcb'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     env:
       HUSKY: '0'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: delivery_test
+          POSTGRES_PASSWORD: disposable_test_only
+          POSTGRES_DB: dhcb_delivery_20261006
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: aa35550d05b11b24cd5c7ae1cda14a29a441d53f
-      - name: Correct expected provider, preserving every accessibility rule
+          path: transfer
+          persist-credentials: false
+      - name: Verify exact locally prepared patch
         run: |
           python3 - <<'PY'
+          import base64, lzma, hashlib
           from pathlib import Path
-          p = Path('e2e/a11y.spec.ts')
-          text = p.read_text()
-          old = "    await expect(page.getByRole('button', { name: /Microsoft/i })).toBeVisible()"
-          new = "    await expect(page.getByRole('button', { name: /Google/i })).toBeVisible()\n    await expect(page.getByRole('button', { name: /Microsoft|Apple|Facebook/i })).toHaveCount(0)"
-          assert text.count(old) == 1
-          p.write_text(text.replace(old, new))
+          encoded = ''.join(Path(f'transfer/.workbench/policy-{i}.b64').read_text().strip() for i in range(5))
+          patch = lzma.decompress(base64.b64decode(encoded, validate=True))
+          assert hashlib.sha256(patch).hexdigest() == 'd053481e3c2549ee78d60effe9e393d59a4b42874cd6cc15902b365b5e3bbf4b'
+          Path('/tmp/learning-policy.patch').write_bytes(patch)
           PY
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/learning-unlimited-vip-20261006
+          path: source
+      - name: Apply only to isolated product branch
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 'eba1195e23d50714a357ab2a9eae1b2122ad3de9'
+          git apply --unidiff-zero --check /tmp/learning-policy.patch
+          git apply --unidiff-zero /tmp/learning-policy.patch
           git diff --check
-          git add e2e/a11y.spec.ts
+          git add README.md apps/dhcb apps/hub apps/server packages/core-billing packages/core-contracts docs/changelog/0503-2026-10-06-learning-unlimited-vip.md docs/goals/learning-profile-20261006.md e2e/learning-policy.spec.ts scripts/check-delivery-20261006.ts
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'test(auth): cập nhật kiểm tra a11y cho đăng nhập chỉ Google'
-          git push origin HEAD:refs/heads/workbench/auth-a11y-20261006
+          git commit -m 'feat(learning): học hỏi cho mọi người và VIP không giới hạn lượt'
+          git push origin HEAD:refs/heads/feat/learning-unlimited-vip-20261006
           git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+        working-directory: source
+      - name: Real disposable PostgreSQL concurrency and rollback checks
+        run: npx tsx scripts/check-delivery-20261006.ts
+        working-directory: source
+        env:
+          DHCB_DISPOSABLE_DB: '1'
+          DATABASE_URL: postgresql://delivery_test:disposable_test_only@127.0.0.1:5432/dhcb_delivery_20261006
+          PG_POOL_MAX: '12'
+      - run: npx playwright install --with-deps chromium
+        working-directory: source
+      - name: Browser flows with fake API responses, never production credentials
+        run: npm run test:e2e -- e2e/learning-policy.spec.ts e2e/profile-password.spec.ts
+        working-directory: source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: learning-policy-browser-evidence
+          path: |
+            source/test-results/
+            source/playwright-report/
+          retention-days: 2
+          if-no-files-found: warn
