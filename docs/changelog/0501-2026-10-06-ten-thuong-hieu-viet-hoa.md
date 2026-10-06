@@ -1,6 +1,6 @@
 # 0501 — Tên thương hiệu viết hoa từng chữ ở tiêu đề tab, hub và trang giới thiệu (2026-10-06)
 
-- **Ngày:** 2026-10-06 · **PR:** (điền sau khi tạo) · **Loại:** `fix(copy)`.
+- **Ngày:** 2026-10-06 · **PR:** #1249 · **Loại:** `fix(copy)`.
 - **Nguồn:** đề xuất 3 của changelog `0499` (PR #1246). Chủ dự án chốt cả 3 đề xuất ngày
   2026-10-06; với đề xuất 3 chọn **đổi sang viết hoa** "Đồng Hành Cùng Bạn" cho thống nhất với
   header, trang đăng nhập, hub và PWA. Đề xuất 1 (PWA `short_name` "Đồng Hành") và 2 (trang giới
