@@ -28,6 +28,8 @@ import {
 } from 'lucide-react'
 import Layout from '../../../components/Layout.js'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
+import { SECTION_TITLE_CLASS as TIEU_DE_MUC } from '@core/cardStyles'
 import { ContinueCard } from '../../../components/learning/ContinueCard'
 import PricePromoBanner from '../../../components/PricePromoBanner.js'
 import RewardTipBanner from '../../../components/RewardTipBanner.js'
@@ -240,7 +242,7 @@ export default function EnglishHome() {
               {srsDue > 0 && (
                 <button
                   onClick={() => nav(`${continueHref}?tab=srs&cap=${COMEBACK_SRS_CARDS}`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 theme-light:text-sky-900 text-sm font-medium transition"
+                  className={buttonClass({ variant: 'outline', className: 'flex-1' })}
                 >
                   <Brain className="w-4 h-4" />
                   {isA
@@ -250,7 +252,9 @@ export default function EnglishHome() {
               )}
               <button
                 onClick={() => nav(`${continueHref}?tab=today&cap=${COMEBACK_NEW_WORDS}`)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-accent-500/15 hover:bg-accent-500/25 text-accent-300 text-sm font-medium transition"
+                // [0500] Biến thể `secondary` — bản cũ thiếu `theme-light:text-accent-800` nên chữ
+                // accent-300 nhạt trên nền sáng (Blue sky).
+                className={buttonClass({ variant: 'secondary', className: 'flex-1' })}
               >
                 <Sparkles className="w-4 h-4" />
                 {isA ? `Học ${COMEBACK_NEW_WORDS} từ mới` : `Learn ${COMEBACK_NEW_WORDS} words`}
@@ -286,7 +290,7 @@ export default function EnglishHome() {
               <div className="p-1.5 rounded-lg bg-accent-500/15 text-accent-400 border border-accent-500/20">
                 <Bot className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-white">Gia sư luyện 4 kỹ năng AI</h3>
+              <h3 className={TIEU_DE_MUC}>Gia sư luyện 4 kỹ năng AI</h3>
             </div>
           </div>
 
@@ -338,7 +342,7 @@ export default function EnglishHome() {
           {/* Lộ trình CEFR */}
           <button
             onClick={() => nav(duongDanLoTrinh())}
-            className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-emerald-500/50 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex items-start gap-3.5"
+            className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-emerald-500/50 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex items-start gap-3.5"
           >
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
               <Target className="w-5 h-5 text-zinc-950 font-bold" />
@@ -359,7 +363,7 @@ export default function EnglishHome() {
           {/* Từ điển Song Ngữ */}
           <button
             onClick={() => nav(duongDanTuDien())}
-            className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-amber-500/50 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex items-start gap-3.5"
+            className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-amber-500/50 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex items-start gap-3.5"
           >
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
               <BookOpen className="w-5 h-5 text-zinc-950 font-bold" />
@@ -381,7 +385,9 @@ export default function EnglishHome() {
         {/* ── THƯ VIỆN & TÀI NGUYÊN HỌC TẬP MỞ RỘNG ── */}
         <section aria-label="Tài nguyên học tập" className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-xs font-bold text-zinc-400">Tài nguyên & công cụ bổ trợ</h3>
+            {/* [0500, audit mục 7] Cùng một thang với tiêu đề mục phía trên — trước đây mục này
+                12px xám, mục kia 14px trắng: hai mục ngang cấp mà trông như hai cấp khác nhau. */}
+            <h3 className={TIEU_DE_MUC}>Tài nguyên & công cụ bổ trợ</h3>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -505,7 +511,7 @@ export default function EnglishHome() {
           <button
             onClick={() => nav('/tien-do')}
             aria-label="Xem bảng tiến độ"
-            className="bg-zinc-900/70 border border-zinc-800/80 hover:border-accent-500/40 rounded-2xl p-4 flex items-center gap-3.5 transition-all duration-200 group hover:bg-zinc-800/60 active:scale-98 animate-fade-in shadow-sm"
+            className="bg-zinc-900/70 border border-zinc-800/80 hover:border-accent-500/40 rounded-2xl p-4 flex items-center gap-3.5 transition duration-200 group hover:bg-zinc-800/60 active:scale-98 animate-fade-in shadow-sm"
           >
             <div className="w-9 h-9 rounded-xl bg-accent-500/10 border border-accent-500/20 group-hover:bg-accent-500/20 flex items-center justify-center shrink-0 transition">
               <TrendingUp className="w-4 h-4 text-accent-400" />
@@ -518,7 +524,7 @@ export default function EnglishHome() {
           <button
             onClick={() => nav('/lich-su-hoc')}
             aria-label="Xem lịch sử học"
-            className="bg-zinc-900/70 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl p-4 flex items-center gap-3.5 transition-all duration-200 group hover:bg-zinc-800/60 active:scale-98 animate-fade-in shadow-sm"
+            className="bg-zinc-900/70 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl p-4 flex items-center gap-3.5 transition duration-200 group hover:bg-zinc-800/60 active:scale-98 animate-fade-in shadow-sm"
           >
             <div className="w-9 h-9 rounded-xl bg-zinc-800/80 border border-zinc-700/50 group-hover:bg-zinc-700 flex items-center justify-center shrink-0 transition">
               <History className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />

@@ -27,6 +27,7 @@ import Field from '../../../components/Field'
 import LoadError from '../../../components/LoadError'
 import Layout from '../../../components/Layout'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 import { useToast } from '@core/ToastProvider'
 import {
   listWorkProjects,
@@ -48,6 +49,11 @@ import {
   type WorkDocument,
 } from '@dhcb/core-contracts/work'
 import { usePageTitle } from '../../../lib/usePageTitle'
+
+// Tab đang chọn: màu ACCENT như mọi điều hướng khác của app (thanh bên, thanh đáy). Trước 0500
+// trang này dùng riêng `blue-600` — lệch màu thương hiệu ở theme không phải xanh (audit M17).
+const TAB_DANG_CHON =
+  'bg-accent-500/15 text-accent-300 theme-light:text-accent-800 border border-accent-500/30'
 
 // Ngưỡng cảnh báo đếm ký tự: chỉ hiện khi người dùng đã dùng quá 80% hạn mức. Hiện sớm hơn
 // thì con số chỉ làm nhiễu ô nhập (luật "chống nhiễu giao diện" — UiNoise.design.test.ts).
@@ -251,10 +257,15 @@ export default function Notes() {
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
           Ghi chú
         </h1>
-        <div className="flex items-center gap-2 shrink-0">
+        {/* `flex-wrap`: ba điều khiển dùng nút chuẩn (`buttonClass`, chữ không xuống dòng) rộng
+            hơn bản tự ghép cũ — ở 320–390px chúng tràn ngang nếu ép một hàng (changelog 0500,
+            cổng e2e/mobile-layout-guards.spec.ts). */}
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => nav(duongDanGhiChuKanban())}
-            className="tap-44 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-black text-sm font-bold transition shadow-sm"
+            // [0500, audit M17] Lối sang trang khác → nút VIỀN, không phải nút chính: nút chính
+            // của trang là "Thêm …" trong từng tab (accent). Trước đây nền blue-500 lệch accent.
+            className={buttonClass({ variant: 'outline' })}
             title="Bảng Kanban tương tác"
           >
             <FolderKanban className="w-4 h-4" />
@@ -278,7 +289,7 @@ export default function Notes() {
           <button
             onClick={loadData}
             disabled={loading}
-            className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-sm font-medium border border-zinc-800 transition shadow-sm"
+            className={buttonClass({ variant: 'outline' })}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Làm mới
@@ -291,9 +302,7 @@ export default function Notes() {
         <button
           onClick={() => setActiveTab('tasks')}
           className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-            activeTab === 'tasks'
-              ? 'bg-blue-600/20 text-blue-400 theme-light:text-blue-800 border border-blue-500/30'
-              : 'text-zinc-400 hover:text-zinc-200'
+            activeTab === 'tasks' ? TAB_DANG_CHON : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <CheckSquare className="w-4 h-4" />
@@ -302,9 +311,7 @@ export default function Notes() {
         <button
           onClick={() => setActiveTab('projects')}
           className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-            activeTab === 'projects'
-              ? 'bg-blue-600/20 text-blue-400 theme-light:text-blue-800 border border-blue-500/30'
-              : 'text-zinc-400 hover:text-zinc-200'
+            activeTab === 'projects' ? TAB_DANG_CHON : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <FolderKanban className="w-4 h-4" />
@@ -313,9 +320,7 @@ export default function Notes() {
         <button
           onClick={() => setActiveTab('meetings')}
           className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-            activeTab === 'meetings'
-              ? 'bg-blue-600/20 text-blue-400 theme-light:text-blue-800 border border-blue-500/30'
-              : 'text-zinc-400 hover:text-zinc-200'
+            activeTab === 'meetings' ? TAB_DANG_CHON : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -324,9 +329,7 @@ export default function Notes() {
         <button
           onClick={() => setActiveTab('documents')}
           className={`tap-44 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-            activeTab === 'documents'
-              ? 'bg-blue-600/20 text-blue-400 theme-light:text-blue-800 border border-blue-500/30'
-              : 'text-zinc-400 hover:text-zinc-200'
+            activeTab === 'documents' ? TAB_DANG_CHON : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -336,7 +339,7 @@ export default function Notes() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-blue-400 theme-light:text-blue-800 animate-spin mb-4" />
+          <Loader2 className="w-8 h-8 text-accent-400 theme-light:text-accent-800 animate-spin mb-4" />
           <p className="text-zinc-400 text-sm">Đang tải dữ liệu công việc...</p>
         </div>
       ) : loadError ? (
@@ -354,7 +357,7 @@ export default function Notes() {
                 <h3 className="text-base font-semibold text-zinc-200">Danh sách công việc</h3>
                 <button
                   onClick={() => setShowTaskModal(true)}
-                  className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-[#fff] text-xs font-semibold shadow-md transition"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Thêm công việc
@@ -433,7 +436,7 @@ export default function Notes() {
                 <h3 className="text-base font-semibold text-zinc-200">Dự án đang thực hiện</h3>
                 <button
                   onClick={() => setShowProjectModal(true)}
-                  className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-[#fff] text-xs font-semibold shadow-md transition"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Tạo dự án mới
@@ -503,7 +506,7 @@ export default function Notes() {
                 </h3>
                 <button
                   onClick={() => setShowMeetingModal(true)}
-                  className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-[#fff] text-xs font-semibold shadow-md transition"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Ghi lại cuộc họp
@@ -541,7 +544,7 @@ export default function Notes() {
                                 key={idx}
                                 className="text-xs text-zinc-300 flex items-center gap-2"
                               >
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent-400" />
                                 {item}
                               </li>
                             ))}
@@ -562,7 +565,7 @@ export default function Notes() {
                 <h3 className="text-base font-semibold text-zinc-200">Ghi chú đã lưu</h3>
                 <button
                   onClick={() => setShowDocModal(true)}
-                  className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-[#fff] text-xs font-semibold shadow-md transition"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Thêm ghi chú
@@ -592,7 +595,7 @@ export default function Notes() {
                         {doc.summary}
                       </p>
                       {doc.contentUri && (
-                        <div className="text-xs text-blue-400 theme-light:text-blue-800 mt-3 truncate">
+                        <div className="text-xs text-accent-400 theme-light:text-accent-800 mt-3 truncate">
                           URI: {doc.contentUri}
                         </div>
                       )}
@@ -619,7 +622,7 @@ export default function Notes() {
                     value={projectForm.name}
                     onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
                     placeholder="VD: Nâng cấp Platform V2"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -635,7 +638,7 @@ export default function Notes() {
                       setProjectForm({ ...projectForm, description: e.target.value })
                     }
                     placeholder="Chi tiết phạm vi và mục tiêu..."
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -648,7 +651,7 @@ export default function Notes() {
                     type="date"
                     value={projectForm.deadline}
                     onChange={(e) => setProjectForm({ ...projectForm, deadline: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -658,14 +661,14 @@ export default function Notes() {
                 type="button"
                 onClick={() => setShowProjectModal(false)}
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-sm hover:bg-zinc-700 transition"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Huỷ
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className={buttonClass({ variant: 'primary' })}
               >
                 {submitting ? 'Đang lưu…' : 'Tạo dự án'}
               </button>
@@ -688,7 +691,7 @@ export default function Notes() {
                     value={taskForm.title}
                     onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                     placeholder="VD: Viết Unit tests cho Career API"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -705,7 +708,7 @@ export default function Notes() {
                   id="work-task-project"
                   value={taskForm.projectId}
                   onChange={(e) => setTaskForm({ ...taskForm, projectId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                 >
                   <option value="">Không gán dự án</option>
                   {projects.map((p) => (
@@ -731,7 +734,7 @@ export default function Notes() {
                       priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent',
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -748,7 +751,7 @@ export default function Notes() {
                     type="date"
                     value={taskForm.dueAt}
                     onChange={(e) => setTaskForm({ ...taskForm, dueAt: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -758,14 +761,14 @@ export default function Notes() {
                 type="button"
                 onClick={() => setShowTaskModal(false)}
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-sm hover:bg-zinc-700 transition"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Huỷ
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className={buttonClass({ variant: 'primary' })}
               >
                 {submitting ? 'Đang lưu…' : 'Tạo công việc'}
               </button>
@@ -788,7 +791,7 @@ export default function Notes() {
                     value={meetingForm.title}
                     onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })}
                     placeholder="VD: Weekly Sprint Planning"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -805,7 +808,7 @@ export default function Notes() {
                       onChange={(e) =>
                         setMeetingForm({ ...meetingForm, scheduledAt: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                     />
                   )}
                 </Field>
@@ -821,7 +824,7 @@ export default function Notes() {
                       onChange={(e) =>
                         setMeetingForm({ ...meetingForm, durationMinutes: Number(e.target.value) })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                     />
                   )}
                 </Field>
@@ -836,7 +839,7 @@ export default function Notes() {
                     value={meetingForm.summary}
                     onChange={(e) => setMeetingForm({ ...meetingForm, summary: e.target.value })}
                     placeholder="Các quyết định và thảo luận chính..."
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -852,7 +855,7 @@ export default function Notes() {
                       setMeetingForm({ ...meetingForm, actionItems: e.target.value })
                     }
                     placeholder="VD: Nam hoàn thiện tài liệu API&#10;Hoa deploy staging..."
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -862,14 +865,14 @@ export default function Notes() {
                 type="button"
                 onClick={() => setShowMeetingModal(false)}
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-sm hover:bg-zinc-700 transition"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Huỷ
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className={buttonClass({ variant: 'primary' })}
               >
                 {submitting ? 'Đang lưu…' : 'Lưu biên bản'}
               </button>
@@ -892,7 +895,7 @@ export default function Notes() {
                     value={docForm.title}
                     onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
                     placeholder="VD: Architecture Spec V2"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -915,7 +918,7 @@ export default function Notes() {
                         'spec' | 'minutes' | 'proposal' | 'report' | 'note',
                     })
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                 >
                   <option value="spec">Technical Spec</option>
                   <option value="minutes">Meeting Minutes</option>
@@ -935,7 +938,7 @@ export default function Notes() {
                   id="work-doc-project"
                   value={docForm.projectId}
                   onChange={(e) => setDocForm({ ...docForm, projectId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                 >
                   <option value="">Không gán dự án</option>
                   {projects.map((p) => (
@@ -961,7 +964,7 @@ export default function Notes() {
                       onChange={(e) => setDocForm({ ...docForm, summary: e.target.value })}
                       placeholder="Viết nội dung ghi chú..."
                       aria-describedby={`${id}-dem`}
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                     />
                     {/* `aria-live=polite`: người dùng trình đọc màn hình nghe được số ký tự còn
                         lại khi sắp chạm ngưỡng, thay vì chỉ thấy ô nhập lặng lẽ ngừng nhận chữ. */}
@@ -987,7 +990,7 @@ export default function Notes() {
                     value={docForm.contentUri}
                     onChange={(e) => setDocForm({ ...docForm, contentUri: e.target.value })}
                     placeholder="VD: docs/specs/v2-spec.md hoặc https://..."
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-blue-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-sm focus:border-accent-500"
                   />
                 )}
               </Field>
@@ -997,14 +1000,14 @@ export default function Notes() {
                 type="button"
                 onClick={() => setShowDocModal(false)}
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-sm hover:bg-zinc-700 transition"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Huỷ
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="tap-44 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-[#fff] text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className={buttonClass({ variant: 'primary' })}
               >
                 {submitting ? 'Đang lưu…' : 'Lưu ghi chú'}
               </button>

@@ -183,7 +183,9 @@ export default function ProgrammingAbout() {
             {NANG_LUC.map((nl) => (
               <div key={nl.nhom}>
                 <dt className="text-sm font-bold text-white">{nl.nhom}</dt>
-                <dd className="text-sm text-zinc-200 leading-relaxed mt-0.5">{nl.noi_dung}</dd>
+                <dd className="text-sm text-zinc-200 leading-relaxed mt-0.5 read-measure">
+                  {nl.noi_dung}
+                </dd>
               </div>
             ))}
           </dl>

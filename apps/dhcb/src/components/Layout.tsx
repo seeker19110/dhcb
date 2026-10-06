@@ -299,7 +299,8 @@ export default function Layout({
             (HomeUniversalAiBar) đã là hai lối vào AI, nút thứ ba ở đây chỉ thêm khe không
             cần thiết trong 4 khe header di động. Trang khác (kể cả mobile) vẫn giữ — đây
             thường là lối AI DUY NHẤT ở đó. */}
-        {/* GIỮ transition-all: hover đổi màu nền/viền, active đổi transform (scale). */}
+        {/* `transition` (màu + transform), KHÔNG `transition-all`: hover đổi nền/viền, active đổi
+            scale — `transition-all` còn làm viền lấy nét hiện dần 200ms (audit M17, changelog 0500). */}
         {!(isHome && !isDesktop) && (
           <button
             onClick={() => nav('/ban-dong-hanh')}
@@ -307,7 +308,7 @@ export default function Layout({
             lang="vi"
             aria-label="Mở Bạn Đồng Hành AI"
             title="Bạn Đồng Hành AI (Live Voice & Executive Suite)"
-            className="tap-44 relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent-500/15 hover:bg-accent-500/25 border border-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-semibold transition-all active:scale-95 group shadow-sm shrink-0"
+            className="tap-44 relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-accent-500/15 hover:bg-accent-500/25 border border-accent-500/30 text-accent-300 theme-light:text-accent-800 text-xs font-semibold transition active:scale-95 group shadow-sm shrink-0"
           >
             <Bot className="w-3.5 h-3.5 text-accent-400 group-hover:scale-110 transition-transform" />
             <span className="hidden md:inline">Đồng Hành AI</span>

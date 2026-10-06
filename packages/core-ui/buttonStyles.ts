@@ -28,11 +28,21 @@
  * - `primary`   — hành động chính, MỖI MÀN HÌNH CHỈ NÊN CÓ MỘT. Nhiều nút primary cùng lúc thì
  *   không còn nút nào nổi bật, mắt người dùng mất điểm neo.
  * - `secondary` — hành động phụ quan trọng, vẫn mang màu thương hiệu nhưng nền nhạt.
- * - `ghost`     — hành động phụ trợ/huỷ bỏ, chỉ hiện nền khi rê chuột.
+ * - `outline`   — hành động trung tính có khung (Huỷ, Làm mới, lối sang trang khác). Viền
+ *   `line-strong` + chữ `content`, không mang màu thương hiệu nên đứng cạnh nút `primary` mà
+ *   không tranh điểm neo.
  * - `danger`    — thao tác phá huỷ (xoá, huỷ gói). Cố ý dùng màu hồng-đỏ cố định, không theo
  *   accent: cảnh báo phải trông GIỐNG NHAU ở cả 5 theme, không hoà vào màu thương hiệu.
+ *
+ * Bốn biến thể trên là BỘ CHUẨN (audit 2026-09-30 M17, changelog 0500: chính/phụ/viền/nguy
+ * hiểm). `ghost` là biến thể phụ trợ dạng CHỮ (không khung, chỉ hiện nền khi rê chuột) — giữ
+ * cho các nút kiểu liên kết đã dùng nó; khung cho nút trung tính thì dùng `outline`, đừng ghép
+ * `ghost` + `border` tại chỗ gọi.
+ *
+ * Màu nút chính là ACCENT (đợt 0469). Xanh lá mang nghĩa "đúng" trong app — không dùng làm nền
+ * nút hành động.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost'
 
 /**
  * Cỡ nút. `md` là mặc định và là cỡ nên dùng cho gần như mọi chỗ.
@@ -58,6 +68,10 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
   // đã được đo đạt ngưỡng WCAG trên cả 5 theme (scripts/contrast-audit.ts), nên không phải
   // đoán xem bậc nào đủ tương phản ở theme nào.
   ghost: 'bg-transparent text-content hover:bg-surface-raised active:bg-surface-raised/70',
+  // Viền `line-strong` (token đã đo ở cả 3 theme) — nền trong suốt để nút ngồi được trên cả nền
+  // trang lẫn nền thẻ mà không lộ một mảng màu lệch bề mặt.
+  outline:
+    'border border-line-strong bg-transparent text-content hover:bg-surface-raised hover:border-accent-500/60 active:bg-surface-raised/70',
   // Hồng-đỏ cố định + chữ trắng cố định `#fff`: nền này luôn tối ở mọi theme nên chữ trắng
   // luôn đúng, nhưng phải viết `text-[#fff]` chứ KHÔNG phải `text-white` — `text-white` map
   // sang `--c-white` và sẽ bị đảo thành chữ tối ở 3 theme nền sáng (CLAUDE.md mục 4.5).
@@ -75,17 +89,20 @@ const SIZE_CLASS: Record<ButtonSize, string> = {
 /**
  * Phần dùng chung cho mọi nút.
  *
- * `focus-visible` (không phải `focus`) để viền lấy nét chỉ hiện khi đi bằng bàn phím — bấm
- * chuột không làm loé viền, nhưng người dùng bàn phím vẫn luôn thấy mình đang ở đâu (WCAG
- * 2.4.7). Viền lấy nét KHÔNG được bỏ đi ở bất kỳ biến thể nào.
+ * Viền lấy nét: KHÔNG tự khai ở đây — dùng luật chung `button:focus-visible` / `a:focus-visible`
+ * trong `apps/dhcb/src/index.css` (outline 2px màu token `--focus-ring`, đã đo ≥ 3:1 ở cả 3
+ * theme). Trước changelog 0500 chỗ này đặt `focus-visible:outline-none` + `ring-accent-400`:
+ * nó TẮT viền chung và thay bằng vòng accent sáng — đúng loại viền mà audit 2026-09-30 C1 đo
+ * được chỉ ~2,6:1 ở Blue sky. Nút nào chuyển sang `buttonClass` là tụt tương phản viền lấy nét.
+ *
+ * `transition-colors` chứ không `transition-all`: `transition-all` làm cả độ dày viền lấy nét
+ * chuyển động, viền hiện dần trong 200ms (audit M17, skill ui-ux mục 10.A.1/A.4).
  *
  * `disabled:pointer-events-none` đi kèm `disabled:opacity-50`: chỉ làm mờ thôi thì nút vẫn
  * bắt được rê chuột và vẫn đổi màu, khiến người dùng tưởng bấm được.
  */
 const BASE_CLASS =
   'inline-flex items-center justify-center whitespace-nowrap font-semibold transition-colors ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ' +
-  'focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base ' +
   'disabled:opacity-50 disabled:pointer-events-none'
 
 export interface ButtonStyleOptions {
