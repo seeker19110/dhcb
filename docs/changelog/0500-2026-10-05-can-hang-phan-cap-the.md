@@ -1,6 +1,6 @@
 # 0500 — Căn hàng, phân cấp thẻ: nút chuẩn, viền lấy nét tức thì, gọn trang dài Lập trình (2026-10-05)
 
-- **Ngày:** 2026-10-05 · **PR:** (điền khi tạo PR) · **Loại:** `fix(ui)` · **Nhánh:**
+- **Ngày:** 2026-10-05 · **PR:** #1247 · **Loại:** `fix(ui)` · **Nhánh:**
   `claude/can-hang-phan-cap-the`.
 - **Nguồn:** audit `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` mục 5 **M17** + **M22**, mục 7
   (nhận xét bố cục từ ảnh). Một trong 6 đợt chạy song song sau U1–U4, U6, U8.
