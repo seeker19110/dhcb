@@ -44,12 +44,14 @@ import {
   resetCounter,
   validateAuth,
   logSecurityEvent,
+  isTrustedMutation,
 } from './security.js'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { sendVerificationCode, verifyCode, isEmailVerified } from './emailVerification.js'
 import { isAdminUser } from './adminAuth.js'
 import { grantSignupTrial, SIGNUP_TRIAL_DAYS } from './trial.js'
 import { changeEmail } from './changeEmail.js'
+import { changePassword, getPasswordStatus } from './changePassword.js'
 import { requestPasswordReset, resetPassword } from './passwordReset.js'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { isReservedName } from './reservedNames.js'
@@ -138,6 +140,14 @@ const ResetPasswordSchema = z.object({
   token: z.string().trim().min(20).max(200),
   newPassword: NewPasswordSchema,
 })
+const ChangePasswordSchema = z
+  .object({
+    action: z.literal('change-password'),
+    currentPassword: z.string().min(1).max(200),
+    newPassword: NewPasswordSchema,
+  })
+  .strict()
+
 const BodySchema = z.union([
   RegisterSchema,
   LoginSchema,
@@ -151,6 +161,7 @@ const BodySchema = z.union([
   SendVerificationSchema,
   VerifyEmailSchema,
   ChangeEmailSchema,
+  ChangePasswordSchema,
   RequestPasswordResetSchema,
   ResetPasswordSchema,
 ])
@@ -239,6 +250,23 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const url = new URL(req.url)
+
+  // Chỉ tiết lộ việc có mật khẩu cục bộ cho chính chủ tài khoản; không trả hash.
+  if (req.method === 'GET' && url.searchParams.get('action') === 'password-status') {
+    const auth = await validateAuth(req)
+    if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
+    try {
+      const hasPassword = await getPasswordStatus(auth.userId)
+      if (hasPassword === null) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
+      return jsonResponse({ hasPassword }, 200, { ...allHeaders, 'Cache-Control': 'no-store' })
+    } catch {
+      return jsonResponse(
+        { error: 'Không tải được thông tin bảo mật. Thử lại sau.' },
+        503,
+        allHeaders,
+      )
+    }
+  }
 
   if (req.method === 'GET' && url.searchParams.get('action') === 'me') {
     const auth = await validateAuth(req)
@@ -443,6 +471,60 @@ export default async function handler(req: Request): Promise<Response> {
     // quà làm hỏng việc xác thực: hàm này tự nuốt lỗi, trả false.
     const trialGranted = await grantSignupTrial(auth.userId)
     return jsonResponse({ ok: true, trialGranted, trialDays: SIGNUP_TRIAL_DAYS }, 200, allHeaders)
+  }
+
+  if (result.data.action === 'change-password') {
+    // Kiểm tại handler cả khi được gọi ngoài Express wrapper (test/adapter khác).
+    if (!isTrustedMutation(req)) return jsonResponse({ error: 'Forbidden' }, 403, allHeaders)
+    const auth = await validateAuth(req)
+    if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
+    const windowMs = 15 * 60_000
+    if (!(await consumeWindowCounter(`change-password:${auth.userId}`, 5, windowMs))) {
+      return jsonResponse(
+        { error: 'Đã thử đổi mật khẩu quá nhiều lần. Thử lại sau 15 phút.' },
+        429,
+        { ...allHeaders, 'Retry-After': String(windowMs / 1000) },
+      )
+    }
+    try {
+      const changed = await changePassword(
+        auth.userId,
+        result.data.currentPassword,
+        result.data.newPassword,
+      )
+      if (!changed.ok) {
+        const messages: Record<typeof changed.reason, string> = {
+          wrong_password: 'Mật khẩu hiện tại không đúng.',
+          no_password:
+            'Tài khoản dùng đăng nhập liên kết chưa có mật khẩu riêng. Hãy quản lý mật khẩu tại nhà cung cấp đăng nhập.',
+          same_password: 'Mật khẩu mới phải khác mật khẩu hiện tại.',
+          changed_concurrently:
+            'Thông tin bảo mật vừa thay đổi. Hãy đăng nhập lại trước khi thử tiếp.',
+        }
+        logSecurityEvent('CHANGE_PASSWORD_FAILED', clientIp, {
+          userId: auth.userId,
+          reason: changed.reason,
+        })
+        return jsonResponse(
+          { error: messages[changed.reason], code: changed.reason },
+          changed.reason === 'changed_concurrently' ? 409 : 400,
+          allHeaders,
+        )
+      }
+      logSecurityEvent('CHANGE_PASSWORD_OK', clientIp, { userId: auth.userId })
+      return jsonResponse({ ok: true }, 200, {
+        ...allHeaders,
+        'Cache-Control': 'no-store',
+        'Set-Cookie': buildClearSessionCookie(reqHost),
+      })
+    } catch {
+      // Không ghi đối tượng lỗi DB: nó có thể chứa tham số nhạy cảm.
+      return jsonResponse(
+        { error: 'Chưa đổi được mật khẩu. Vui lòng thử lại sau.' },
+        503,
+        allHeaders,
+      )
+    }
   }
 
   if (result.data.action === 'change-email') {

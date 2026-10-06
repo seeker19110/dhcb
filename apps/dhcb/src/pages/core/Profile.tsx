@@ -28,6 +28,8 @@ import CompanionLinkSection from '../../components/CompanionLinkSection'
 import QuestsPanel from '../../components/QuestsPanel'
 import EmailVerifySection from '../../components/EmailVerifySection'
 import TwoFactorSection from '../../components/TwoFactorSection'
+import PasswordChangeSection from '../../components/PasswordChangeSection'
+import { clearStoredToken } from '@core/authHeader'
 import UpgradeSection from '../../components/UpgradeSection'
 import PricePromoBanner from '../../components/PricePromoBanner'
 import FeedbackModal from '../../components/FeedbackModal'
@@ -139,6 +141,23 @@ export default function Profile() {
     await logout()
     await refresh()
     nav('/login')
+  }
+
+  async function passwordChanged() {
+    clearStoredToken()
+    try {
+      await refresh()
+      toast.success(
+        isA
+          ? 'Đã đổi mật khẩu. Vui lòng đăng nhập lại.'
+          : 'Password changed. Please sign in again.',
+      )
+      nav('/login', { replace: true })
+    } catch {
+      // Mật khẩu đã đổi và phiên đã thu hồi: tải lại trang đăng nhập nếu refresh lỗi,
+      // không để UI giữ hồ sơ đã đăng xuất hoặc báo nhầm đổi mật khẩu thất bại.
+      window.location.replace('/login')
+    }
   }
 
   if (!user) return null
@@ -514,6 +533,7 @@ export default function Profile() {
             )}
 
             {/* Xác thực hai bước (tuỳ chọn) */}
+            <PasswordChangeSection key={user.id} isA={isA} onChanged={passwordChanged} />
             <TwoFactorSection isA={isA} />
 
             {/* Mời bạn cùng học */}

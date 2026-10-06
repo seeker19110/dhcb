@@ -159,3 +159,17 @@ describe('HubLogin', () => {
     expect(byId('hub-password').getAttribute('aria-invalid')).toBe('true')
   })
 })
+
+describe('Google là nhà cung cấp đăng nhập duy nhất hiển thị', () => {
+  it('cả đăng nhập và đăng ký giữ Google + email, không còn nút nhà cung cấp ẩn', async () => {
+    await mountForm()
+    for (const mode of ['Đăng nhập', 'Đăng ký mới']) {
+      await click(modeButton(mode))
+      const buttons = [...host.querySelectorAll('button')].map((b) => b.textContent).join(' ')
+      expect(buttons).toContain('Google')
+      expect(buttons).not.toMatch(/Facebook|Apple|Microsoft/)
+      expect(host.querySelector('input[type="email"]')).not.toBeNull()
+      expect(host.querySelector('input[type="password"]')).not.toBeNull()
+    }
+  })
+})
