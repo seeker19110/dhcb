@@ -7,8 +7,9 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    /* [audit 2026-09-30 minor 10] Cùng font Inter tự host với app chính (import ở main.tsx). */
     font-family:
+      'Inter Variable',
       system-ui,
       -apple-system,
       BlinkMacSystemFont,
@@ -20,6 +21,14 @@
       'Open Sans',
       'Helvetica Neue',
       sans-serif;
+  }
+
+  /* Cuộn mượt CHỈ khi người dùng không bật "giảm chuyển động" (WCAG 2.3.3) — trước đây
+     `scroll-behavior: smooth` áp vô điều kiện. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
