@@ -69,18 +69,21 @@
 - Kịch bản cổng tải trên bản build PROD (đăng nhập giả lập bằng `e2e/helpers/auth.ts`, 8 giây):
   khách 6 · đăng nhập chưa học 8 · **đăng nhập + đã học 317 (tải chạy)** · đã học + Save-Data 8 ·
   đã học + công tắc tắt 8. Mạng chậm giả lập (300 ms/file, chặn SW): đang tải 8,1 MB thì bấm tắt →
-  0 yêu cầu trong 6 giây tiếp; bật lại → tải tiếp 13 file trong 4 giây.
+  0 yêu cầu trong 6 giây tiếp; bật lại → tải tiếp 13 file trong 4 giây. Công tắc đo được vùng chạm
+  44×44. Đo lại trên bản build của kết quả gộp `main` cuối: cùng số.
 - Test mới/sửa: `offlineDownload.test.ts` 30 ca (mọi lý do chặn + thứ tự ưu tiên, công tắc, Save-Data,
   localStorage bị chặn, MB) · `storage.test.ts` +8 ca `hasEverStudied` · `theme.test.ts` +8 ca
   prefers-color-scheme · `publicMetadata.test.ts` 29 ca (câu chữ cũ, JSON-LD hợp lệ, preconnect,
   theme mặc định HTML ↔ manifest ↔ `theme.ts`, script chống nhá màu, khuôn đảo màu hai lần).
   **Đối chứng âm:** đặt lại HTML/manifest/Landing/WordDetail bản `main`, giữ test → 17/29 đỏ.
 - Typecheck (đã xoá `packages/*/dist dist dist-server`) ✅ · Lint 0 cảnh báo ✅ · Prettier ✅ ·
-  Build ✅ · size-limit 153,03/160 kB JS, 23,86/26 kB CSS ✅.
-- `test:coverage`: 794 file / 18556 test ✅, độ phủ 95,10 / 90,99 / 95,64 / 95,74.
+  Build ✅ · size-limit 154,29/160 kB JS, 23,95/26 kB CSS ✅ (đo trên kết quả gộp `main` cuối).
+- `test:coverage` (trên kết quả gộp `main` cuối): 803 file / 18712 test ✅, độ phủ 95,12 / 91,00 /
+  95,70 / 95,77.
 - E2E `a11y.spec.ts` + `a11y-aaa.spec.ts` lọc `/welcome|/learn-vietnamese|/cai-dat|/tu-dien`
-  (3 theme): **18/18** ✅. Trang chi tiết từ (ngoài cổng) quét axe riêng 3 theme × (từ có / từ
-  không có): 0 vi phạm.
+  (3 theme): **21/21** ✅; các spec chạm Cài đặt/tiêu đề (`bottomnav`, `practice-direction`,
+  `profile-save-recovery`, `u9-touch-target-text-spacing`, `landmark-title`): **91/91** ✅. Trang
+  chi tiết từ (ngoài cổng) quét axe riêng 3 theme × (từ có / từ không có): 0 vi phạm.
 - **Tầng 8b** (bản build PROD, tự xem ảnh), 1440 + 390, máy sáng + máy tối:
   - `/welcome`, `/learn-vietnamese` máy sáng — trước: nền tối chữ sáng giữa thanh bên + nav sáng
     (đúng mô tả M13); sau: Blue sky sáng đồng bộ thanh bên, tiêu đề nhấn xanh đậm đọc rõ;
@@ -91,6 +94,19 @@
   - chi tiết từ `hello` 390 Blue sky — trước nền tối, sau sáng.
 
 ## Còn tồn / ghi chú cho phiên điều phối (KHÔNG sửa PROGRESS.md theo luật đợt)
+
+- **Trùng số changelog:** `main` đã có `0496-2026-10-05-gitignore-state-grading.md` (phiên khác).
+  File này GIỮ số 0496 do phiên điều phối giao; `scripts/changelog.test.ts` cho phép trùng số (phá
+  hoà theo ngày rồi tên file).
+- Gộp `main` (hai lần, merge không rebase): xung đột ở `Landing.tsx` — U9a thêm `tap-44-y` cho
+  liên kết "Xem toàn bộ nền tảng", giữ cả hai. Công tắc "Tải để học ngoại tuyến" theo khuôn công
+  tắc mới của U9a (nút 44×44, viên thuốc 44×24 vẽ bên trong) và đọc ngôn ngữ GIAO DIỆN (`isUiVi`)
+  vì minor 13 đã tách khỏi chiều học. Tên sản phẩm trong manifest/tiêu đề do #1246/#1249 đổi —
+  giữ nguyên của họ.
+- **Sự cố trong phiên (đã khắc phục):** lệnh `git checkout -q -- .` gõ nhầm đã hoàn tác mọi thay
+  đổi chưa commit trên 16 file; hook `block-dangerous-git.sh` không bắt được dạng có cờ `-q --`.
+  Đã khôi phục từ bản sao lưu + áp lại từng bước sửa, rồi chạy lại ĐỦ cổng trên kết quả gộp. Đề
+  xuất (chờ chủ dự án): mở rộng hook bắt cả `git checkout [cờ] -- .`.
 
 - Cổng tải ngầm chỉ có test hàm thuần + kiểm tay trên bản PROD; chưa có E2E cố định vì Playwright
   chạy dev server (`import.meta.env.PROD = false` → luôn `unsupported`). Muốn chặn hồi quy ở CI
