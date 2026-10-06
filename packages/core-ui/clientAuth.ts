@@ -621,17 +621,9 @@ export function clearProfileCache(): void {
   /* no-op */
 }
 
-// Tải trước (preload) SDK của cả 4 nhà cung cấp OAuth
+// Chỉ Google đang hiển thị (quyết định 2026-10-06). Giữ adapter của các nhà cung cấp
+// cũ để không xoá liên kết tài khoản; không tải SDK không dùng trên màn đăng nhập.
 export function preloadOAuthProviders(): void {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
   if (googleClientId) void loadGoogleScript().catch(() => undefined)
-
-  const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID as string | undefined
-  if (facebookAppId) void loadFacebookScript(facebookAppId).catch(() => undefined)
-
-  const appleClientId = import.meta.env.VITE_APPLE_CLIENT_ID as string | undefined
-  if (appleClientId) void loadAppleScript().catch(() => undefined)
-
-  const microsoftClientId = import.meta.env.VITE_MICROSOFT_CLIENT_ID as string | undefined
-  if (microsoftClientId) void loadMicrosoftScript().catch(() => undefined)
 }

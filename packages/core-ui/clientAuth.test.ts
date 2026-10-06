@@ -837,7 +837,7 @@ describe('getCurrentUser / adoptSessionFromCookie — nhánh còn thiếu (Đợ
 })
 
 describe('preloadOAuthProviders — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)', () => {
-  it('có đủ 4 biến môi trường client id → gọi tải cả 4 script, không throw', async () => {
+  it('có đủ client id vẫn chỉ preload Google, không tải SDK của nhà cung cấp ẩn', async () => {
     vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'g-preload')
     vi.stubEnv('VITE_FACEBOOK_APP_ID', 'fb-preload')
     vi.stubEnv('VITE_APPLE_CLIENT_ID', 'apple-preload')
@@ -845,6 +845,10 @@ describe('preloadOAuthProviders — nhánh còn thiếu (Đợt 2 coverage 2026-
     const { preloadOAuthProviders } = await import('./clientAuth.js')
     try {
       expect(() => preloadOAuthProviders()).not.toThrow()
+      const scriptUrls = [...document.querySelectorAll('script[src]')]
+        .map((el) => el.getAttribute('src'))
+        .join(' ')
+      expect(scriptUrls).not.toMatch(/connect\.facebook|appleid\.cdn-apple|alcdn\.msauth/)
     } finally {
       vi.unstubAllEnvs()
     }

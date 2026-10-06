@@ -56,7 +56,8 @@ for (const theme of THEMES) {
     await page.goto('/login')
     // Chờ nút OAuth cuối cùng render xong rồi mới quét: các nút này hiện SAU form nên
     // quét sớm sẽ bỏ sót chúng (đã từng làm cổng lọt lỗi contrast + target-size).
-    await expect(page.getByRole('button', { name: /Microsoft/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Google/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Microsoft|Apple|Facebook/i })).toHaveCount(0)
     const { all } = await scan(page)
     expect(all).toEqual([])
   })
