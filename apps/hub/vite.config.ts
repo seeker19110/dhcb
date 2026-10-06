@@ -2,7 +2,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// apps/hub — trang giới thiệu tổng thể nền tảng "Đồng hành cùng bạn" (PR-7,
+// apps/hub — trang giới thiệu tổng thể nền tảng "Đồng Hành Cùng Bạn" (PR-7,
 // docs/research/dac-ta-gd1-tach-loi-monorepo-2026-07-31.md §7). Vite app ĐỘC LẬP với
 // apps/dhcb (không dùng chung vite.config.ts gốc) — tránh đụng cấu hình build phức
 // tạp (dev middleware gọi API, code-splitting) của app tiếng Anh đang chạy thật.

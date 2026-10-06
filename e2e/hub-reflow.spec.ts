@@ -59,12 +59,12 @@ for (const path of ['/', '/login']) {
 
 test('hub: logo-link có tên đọc được dù chữ thương hiệu ẩn ở điện thoại', async ({ page }) => {
   await openHub(page, '/', 390)
-  await expect(page.getByRole('link', { name: /Đồng hành cùng bạn/ }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /Đồng Hành Cùng Bạn/ }).first()).toBeVisible()
 })
 
 test('hub /login: logo-link có tên đọc được', async ({ page }) => {
   await openHub(page, '/login', 390)
-  await expect(page.getByRole('link', { name: /Đồng hành cùng bạn.*trang chủ/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Đồng Hành Cùng Bạn.*trang chủ/ })).toBeVisible()
 })
 
 test('hub: nút "Đăng nhập" và "Bắt đầu" nằm gọn trong khung 320px', async ({ page }) => {

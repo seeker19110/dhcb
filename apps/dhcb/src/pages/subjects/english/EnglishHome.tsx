@@ -73,7 +73,7 @@ import {
 const RECENT_WORDS_FOR_SPEAKING = 8
 
 export default function EnglishHome() {
-  usePageTitle('Tiếng Anh | Đồng hành cùng bạn')
+  usePageTitle('Tiếng Anh | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
   const syncVersion = useCloudSync(user?.id)

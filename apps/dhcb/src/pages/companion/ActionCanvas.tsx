@@ -28,7 +28,7 @@ import {
 } from 'lucide-react'
 
 export default function ActionCanvas() {
-  usePageTitle('Kế hoạch hành động | Đồng hành cùng bạn')
+  usePageTitle('Kế hoạch hành động | Đồng Hành Cùng Bạn')
   const toast = useToast()
   const [canvas, setCanvas] = useState<ActionCanvasState | null>(null)
   const [loading, setLoading] = useState(true)

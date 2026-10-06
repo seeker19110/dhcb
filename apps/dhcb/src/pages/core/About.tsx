@@ -207,7 +207,7 @@ export default function About() {
   const isA = lang === 'vi'
   const nav = useNavigate()
 
-  usePageTitle('Giới thiệu | Đồng hành cùng bạn')
+  usePageTitle('Giới thiệu | Đồng Hành Cùng Bạn')
 
   return (
     <div className="min-h-dvh bg-zinc-950">

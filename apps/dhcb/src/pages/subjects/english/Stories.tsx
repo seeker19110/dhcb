@@ -71,7 +71,7 @@ function EmptyState({ isA }: { isA: boolean }) {
 }
 
 export default function Stories() {
-  usePageTitle('Truyện song ngữ | Đồng hành cùng bạn')
+  usePageTitle('Truyện song ngữ | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { T } = useLang()
   const isA = getDirection() === 'A'

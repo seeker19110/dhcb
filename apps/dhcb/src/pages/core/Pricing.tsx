@@ -20,7 +20,7 @@ export default function Pricing() {
   // [Slice 04] Chữ giao diện theo ngôn ngữ giao diện, không theo chiều học Tiếng Anh.
   const isA = useLang().lang === 'vi'
 
-  usePageTitle('Nâng cấp VIP | Đồng hành cùng bạn')
+  usePageTitle('Nâng cấp VIP | Đồng Hành Cùng Bạn')
 
   return (
     <div className="min-h-dvh bg-zinc-950">

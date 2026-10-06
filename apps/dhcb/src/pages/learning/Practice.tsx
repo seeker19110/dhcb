@@ -118,7 +118,7 @@ export default function Practice() {
   const ownerToken = useMemo(() => ({ owner: user?.id }), [user?.id])
   const uiLang: 'vi' | 'en' = useLang().lang === 'vi' ? 'vi' : 'en'
   const isUiVi = uiLang === 'vi'
-  usePageTitle(isUiVi ? 'Luyện tập | Đồng hành cùng bạn' : 'Practice | Your Companion')
+  usePageTitle(isUiVi ? 'Luyện tập | Đồng Hành Cùng Bạn' : 'Practice | Đồng Hành Cùng Bạn')
   const [mode, setMode] = useState<Mode>('hub')
   const [pool, setPool] = useState<DictEntry[]>([])
   const [poolState, setPoolState] = useState<'loading' | 'ready' | 'error'>('loading')

@@ -236,7 +236,7 @@ function ResultView({
 }
 
 export default function Writing() {
-  usePageTitle('Luyện viết & chấm điểm | Môn tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Luyện viết & chấm điểm | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const user = useAuth().user! // RequireAuth đã đảm bảo có user trước khi vào trang
   const toast = useToast()
   useCloudSync(user.id) // kéo lượt dùng từ Supabase khi mở trang

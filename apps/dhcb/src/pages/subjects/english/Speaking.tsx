@@ -566,7 +566,7 @@ function currentTimeMs(): number {
 
 // ── Main Speaking page ──────────────────────────────────────────────────
 export default function Speaking() {
-  usePageTitle('Luyện nói song ngữ | Môn tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Luyện nói song ngữ | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const user = useAuth().user! // RequireAuth đã đảm bảo có user trước khi vào trang
   const toast = useToast()
   useCloudSync(user.id) // kéo lịch sử + lượt dùng từ Supabase khi mở trang

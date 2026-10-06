@@ -78,7 +78,7 @@ export default function Profile() {
   // Gọi trước `if (!user) return null` bên dưới — hook có điều kiện là vi phạm Rules of Hooks.
   const isDesktop = useIsDesktopViewport()
 
-  usePageTitle('Trang cá nhân | Đồng hành cùng bạn')
+  usePageTitle('Trang cá nhân | Đồng Hành Cùng Bạn')
 
   // Backfill huy hiệu — chạy trong callback bất đồng bộ để không setState đồng bộ
   // trong effect (luật react-hooks/set-state-in-effect).

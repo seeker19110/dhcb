@@ -60,7 +60,7 @@ function isStageUnlocked(index: number, done: Set<string>): boolean {
 }
 
 export default function ProgrammingProjectPage() {
-  usePageTitle('Dự án trục | Môn Lập trình · Đồng hành cùng bạn')
+  usePageTitle('Dự án trục | Môn Lập trình · Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()

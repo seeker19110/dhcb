@@ -33,7 +33,7 @@ type Tab = 'phrases' | 'dialogues'
 const TABS: Tab[] = ['phrases', 'dialogues']
 
 export default function Listening() {
-  usePageTitle('Luyện nghe | Môn tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Luyện nghe | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const { user } = useAuth()
   const { T } = useLang()
   const [searchParams, setSearchParams] = useSearchParams()

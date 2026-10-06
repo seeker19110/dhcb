@@ -354,7 +354,7 @@ export default function MistakeBank() {
   // Toàn bộ lỗi (tab "Tất cả") giữ ở state, cập nhật lại sau mỗi lần xóa.
   const [all, setAll] = useState<Mistake[]>(() => getMistakes(user.id))
 
-  usePageTitle('Sổ tay lỗi sai | Đồng hành cùng bạn')
+  usePageTitle('Sổ tay lỗi sai | Đồng Hành Cùng Bạn')
 
   const totalDue = deck.length
   const current = deck[pos]

@@ -121,7 +121,7 @@ export default function StartByIntent() {
   const [canhBao, setCanhBao] = useState('')
   const [dangMo, setDangMo] = useState(true)
 
-  usePageTitle('Bắt đầu | Đồng hành cùng bạn')
+  usePageTitle('Bắt đầu | Đồng Hành Cùng Bạn')
 
   // Bước "lớp" CHỈ hiện khi trong lựa chọn có môn STEM — không hỏi thừa người học Lập trình.
   const steps = useMemo<StepId[]>(() => {

@@ -72,7 +72,7 @@ export default function LiveLocation() {
   )
   const sharing = !!me?.sharingEnabled
 
-  usePageTitle('Đi chung | Đồng hành cùng bạn')
+  usePageTitle('Đi chung | Đồng Hành Cùng Bạn')
 
   // ── Nạp danh sách chuyến + vào thẳng chuyến nếu mở bằng link mời ────────────────────────
   useEffect(() => {
