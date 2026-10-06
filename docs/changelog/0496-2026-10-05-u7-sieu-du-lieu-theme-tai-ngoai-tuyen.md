@@ -1,6 +1,6 @@
 # 0496 — Đợt U7 audit UI/UX: siêu dữ liệu, theme mặc định, tải ngoại tuyến có điều kiện (2026-10-05)
 
-- **Ngày:** 2026-10-05 (xong 2026-10-06) · **PR:** #(điền khi tạo) · **Loại:** `fix(ui)`.
+- **Ngày:** 2026-10-05 (xong 2026-10-06) · **PR:** #1255 · **Loại:** `fix(ui)`.
 - **Phạm vi:** đợt U7 trong `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` mục 12: **M12 + M13
   - M14**. Quyết định chủ dự án 2026-10-05 cho M14: chỉ tải ngầm khi đã đăng nhập + đã học ≥ 1
     phiên, bỏ qua khi Save-Data, có công tắc "Tải để học ngoại tuyến" ở Cài đặt mặc định BẬT.
