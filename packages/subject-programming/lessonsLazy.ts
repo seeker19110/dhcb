@@ -246,7 +246,7 @@ export const LESSON_INDEX: readonly LessonSummary[] = [
     unitId: 'p3-u11',
     title: 'Dòng lệnh và cấu trúc dự án — dọn nhà cho code của bạn',
     language: 'git',
-    srsCardCount: 3,
+    srsCardCount: 4,
   },
   {
     id: 'p3-u11-l2',

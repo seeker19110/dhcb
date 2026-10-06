@@ -7,26 +7,134 @@
 // hành thật) nên bài dạy nó bằng lý thuyết + việc về nhà, và nói thẳng điều đó.
 import type { ProgrammingLesson } from '../lessonTypes.js'
 
+// ── Bài p3-u11-l1: kho mẫu + tiêu chí chấm TRẠNG THÁI (đặc tả docs/specs/2026-10-05-gitignore-state-grading.md).
+// Kho mẫu dựng qua `stdinLines` (= lệnh chuẩn bị của gitSim, chạy trước code học viên, không in
+// ra). Mọi "bí mật" và "trọng số" dưới đây là CHỮ GIẢ — không có khoá thật nào trong bài.
+// Mỗi kho khai MỘT lần dạng [đường dẫn, nội dung] rồi sinh cả lệnh echo lẫn tiêu chí chấm từ
+// cùng dữ liệu đó, để lệnh dựng kho và điều chấm không thể lệch nhau.
+type TepMau = readonly [path: string, content: string]
+
+interface KhoMau {
+  readme: string
+  /** File PHẢI bị .gitignore bỏ qua: không vào commit nào, nhưng vẫn còn trong thư mục. */
+  tepCam: readonly TepMau[]
+}
+
+/** Kho công khai: tên file học viên thấy được khi gõ ls. */
+const KHO_QUAN: KhoMau = {
+  readme: '# Quan cua toi',
+  tepCam: [
+    ['.env', 'API_KEY=khoa-gia-chi-de-hoc'],
+    ['model.pt', 'trong-so-gia-pt'],
+    ['model.pth', 'trong-so-gia-pth'],
+    ['model.safetensors', 'trong-so-gia-safetensors'],
+    ['checkpoints/epoch-1.pt', 'trong-so-gia-epoch-1'],
+    ['__pycache__/app.cpython-312.pyc', 'bytecode-gia'],
+  ],
+}
+
+/** Kho của ca ẩn: tên, nội dung và độ sâu thư mục khác hẳn — bắt lời giải chép cứng theo kho
+ *  công khai (vd ghi đè README bằng chữ của kho kia, hay liệt kê đúng tên model.pt). */
+const KHO_TIEM_BANH: KhoMau = {
+  readme: '# Tiem banh mi co Ba',
+  tepCam: [
+    ['.env', 'DB_PASSWORD=mat-khau-gia'],
+    ['config/.env', 'API_TOKEN=token-gia'],
+    ['weights/best.pth', 'trong-so-gia-best'],
+    ['lora.safetensors', 'trong-so-gia-lora'],
+    ['models/final/adapter.safetensors', 'trong-so-gia-adapter'],
+    ['final.pt', 'trong-so-gia-final'],
+    ['src/__pycache__/main.cpython-312.pyc', 'bytecode-gia-main'],
+  ],
+}
+
+/** Lệnh dựng kho: init sẵn (học viên gõ lại git init cũng chỉ được báo "da la kho git roi"),
+ *  mỗi file một lệnh echo riêng — shell mô phỏng không hiểu \n, && hay heredoc. */
+function lenhDungKho(kho: KhoMau): string[] {
+  return [
+    'git init',
+    `echo "${kho.readme}" > README.md`,
+    ...kho.tepCam.map(([path, content]) => `echo "${content}" > ${path}`),
+  ]
+}
+
+/** echo luôn thêm một dấu xuống dòng cuối — nội dung file thật trong kho là vậy. */
+const noiDungFile = (chu: string) => `${chu}\n`
+const LOI_NHAN_COMMIT = 'Chuan hoa cau truc'
+/** Chữ in ra duy nhất được kiểm: có chạy git commit. Chỉ để phản hồi sớm (thiếu commit thì
+ *  học viên thấy lại transcript); bằng chứng thật nằm ở gitAssertions, không ở chữ in ra. */
+const DA_CHAY_COMMIT = '$ git commit'
+
+/** Đường dẫn mẫu để thử .gitignore ĐÃ COMMIT (grader tự thử, không cần có trong kho). */
+const PHAI_BI_BO_QUA = [
+  '.env',
+  'config/.env',
+  'a.pt',
+  'runs/b.pt',
+  'c.pth',
+  'runs/d.pth',
+  'e.safetensors',
+  'models/f.safetensors',
+  '__pycache__/g.pyc',
+  'src/__pycache__/h.pyc',
+] as const
+/** Ca âm: mẫu rộng quá tay (`*`, `.env*`, `*.pt*`…) sẽ chặn nhầm những file này. Không xếp file
+ *  tên `__pycache__` vào đây: mẫu `__pycache__` (không gạch chéo) vẫn là lời giải đúng như Git. */
+const KHONG_DUOC_BO_QUA = [
+  'README.md',
+  '.gitignore',
+  '.env.example',
+  'config/.env.example',
+  'a.pt.txt',
+  'notes.pth.md',
+  'weights.safetensors.json',
+  'src/app.py',
+  'requirements.txt',
+] as const
+
+const lichSuKhongCo = (kho: KhoMau) =>
+  kho.tepCam.map(([path]) => ({ type: 'historyAbsent' as const, path }))
+const vanTrongThuMuc = (kho: KhoMau) =>
+  kho.tepCam.map(([path, content]) => ({
+    type: 'workdirContent' as const,
+    path,
+    content: noiDungFile(content),
+  }))
+const commitDung = (kho: KhoMau) => [
+  { type: 'commitMessage' as const, content: LOI_NHAN_COMMIT },
+  { type: 'headContent' as const, path: 'README.md', content: noiDungFile(kho.readme) },
+]
+
 export const P3U11_LESSONS: ProgrammingLesson[] = [
   {
     id: 'p3-u11-l1',
     unitId: 'p3-u11',
     language: 'git',
     title: 'Dòng lệnh và cấu trúc dự án — dọn nhà cho code của bạn',
-    hook: 'Mở một thư mục dự án của người làm nghề, bạn thấy README.md, .gitignore, src/, tests/ — luôn luôn cùng một bộ khung. Không phải vì họ thích ngăn nắp, mà vì người lạ (và chính họ sáu tháng sau) tìm được thứ cần trong ba giây.',
+    hook: 'Mở một thư mục dự án của người làm nghề, bạn thấy README.md, .gitignore, src/, tests/ — luôn luôn cùng một bộ khung. Không phải vì họ thích ngăn nắp, mà vì người lạ (và chính họ sáu tháng sau) tìm được thứ cần trong ba giây. Còn thứ KHÔNG có trong kho cũng quan trọng không kém: khoá bí mật và file trọng số mô hình AI nặng hàng GB.',
     theory:
-      'DÒNG LỆNH: cửa sổ chỉ có chữ, gõ lệnh thì máy làm. Chậm hơn bấm chuột lúc đầu, nhưng mọi công cụ của nghề đều điều khiển bằng nó, và nó GHI LẠI ĐƯỢC — một dòng lệnh gửi cho đồng nghiệp là họ làm lại y hệt, còn "bấm vào nút thứ ba từ trên xuống" thì không.\n\nNăm lệnh dùng hằng ngày:\n    pwd                        # tôi đang đứng ở thư mục nào\n    ls                         # thư mục này có gì\n    cat ten_file               # xem nội dung file\n    echo "chu" > file          # ghi chữ vào file (> ghi đè, >> nối thêm vào cuối)\n    rm ten_file                # xoá file — KHÔNG có thùng rác, xoá là mất\n\nCẤU TRÚC DỰ ÁN CHUẨN — bốn thứ mọi kho tử tế đều có:\n\n1. README.md — dự án làm gì, chạy thế nào, ai làm. File đầu tiên người ta đọc.\n2. .gitignore — danh sách thứ KHÔNG đưa vào Git.\n3. Thư mục mã nguồn (src/ hoặc theo quy ước ngôn ngữ) — code thật nằm gọn một chỗ.\n4. File khai báo thư viện cần cài (requirements.txt cho Python, package.json cho JavaScript) — để người khác dựng lại đúng môi trường của bạn.\n\n.GITIGNORE QUAN TRỌNG HƠN BẠN TƯỞNG. Ba nhóm phải bỏ vào đó:\n- File bí mật: .env, khoá API. Lỡ commit khoá lên GitHub công khai thì coi như đã lộ — có bot quét liên tục, xoá đi cũng muộn vì lịch sử Git còn giữ. Đây là tai nạn kinh điển, mỗi năm hàng nghìn người dính.\n- File máy tự sinh: __pycache__/, node_modules/, dist/. Chúng dựng lại được từ mã nguồn, đưa vào kho chỉ làm nặng.\n- File riêng của máy bạn: cấu hình trình soạn thảo, file rác hệ điều hành.\n\nMÔI TRƯỜNG ẢO (venv) — phần này bạn phải làm trên máy thật, sandbox không chạy được nên đây là lý thuyết cho việc về nhà. Vấn đề: dự án A cần thư viện phiên bản 1, dự án B cần phiên bản 2, cài chung một chỗ thì đá nhau. Môi trường ảo cho mỗi dự án một "tủ thuốc" riêng:\n    python3 -m venv .venv            # tạo môi trường ảo trong thư mục .venv\n    source .venv/bin/activate        # bật nó lên (Windows: .venv\\Scripts\\activate)\n    pip install -r requirements.txt  # cài đúng bộ thư viện của dự án\nVà .venv/ luôn nằm trong .gitignore — nó là thứ dựng lại được, không phải mã nguồn.',
+      'DÒNG LỆNH: cửa sổ chỉ có chữ, gõ lệnh thì máy làm. Chậm hơn bấm chuột lúc đầu, nhưng mọi công cụ của nghề đều điều khiển bằng nó, và nó GHI LẠI ĐƯỢC — một dòng lệnh gửi cho đồng nghiệp là họ làm lại y hệt, còn "bấm vào nút thứ ba từ trên xuống" thì không.\n\nNăm lệnh dùng hằng ngày:\n    pwd                        # tôi đang đứng ở thư mục nào\n    ls                         # thư mục này có gì\n    cat ten_file               # xem nội dung file\n    echo "chu" > file          # ghi chữ vào file (> ghi đè, >> nối thêm vào cuối)\n    rm ten_file                # xoá file — KHÔNG có thùng rác, xoá là mất\n\nCẤU TRÚC DỰ ÁN CHUẨN — bốn thứ mọi kho tử tế đều có:\n\n1. README.md — dự án làm gì, chạy thế nào, ai làm. File đầu tiên người ta đọc.\n2. .gitignore — danh sách thứ KHÔNG đưa vào Git.\n3. Thư mục mã nguồn (src/ hoặc theo quy ước ngôn ngữ) — code thật nằm gọn một chỗ.\n4. File khai báo thư viện cần cài (requirements.txt cho Python, package.json cho JavaScript) — để người khác dựng lại đúng môi trường của bạn.\n\n.GITIGNORE QUAN TRỌNG HƠN BẠN TƯỞNG. Bốn nhóm phải bỏ vào đó:\n- File bí mật: .env, khoá API. Lỡ commit khoá lên GitHub công khai thì coi như đã lộ — có bot quét liên tục, xoá đi cũng muộn vì lịch sử Git còn giữ. Đây là tai nạn kinh điển, mỗi năm hàng nghìn người dính.\n- Trọng số mô hình AI (checkpoint): *.pt, *.pth (PyTorch), *.safetensors. Một file có thể nặng vài GB; đưa vào Git là mọi người clone kho phải tải lại nó mãi mãi, kể cả khi bạn xoá ở commit sau.\n- File máy tự sinh: __pycache__/, node_modules/, dist/. Chúng dựng lại được từ mã nguồn, đưa vào kho chỉ làm nặng.\n- File riêng của máy bạn: cấu hình trình soạn thảo, file rác hệ điều hành.\n\nMỖI DÒNG MỘT MẪU:\n    .env              # đúng tên này, ở thư mục nào cũng khớp\n    *.pt              # dấu * = "tên gì cũng được": model.pt, checkpoints/epoch-1.pt\n    __pycache__/      # gạch chéo cuối = một THƯ MỤC, bỏ qua mọi thứ bên trong\nDòng bắt đầu bằng # là chú thích, dòng trống bị bỏ qua, thứ tự các dòng không quan trọng. Cẩn thận mẫu rộng quá tay: .env* chặn luôn .env.example (file mẫu NÊN có trong kho để người khác biết cần khai biến gì), còn *.pt* chặn cả ghi-chu.pt.txt.\n\n.GITIGNORE KHÔNG LÀM GÌ — ba hiểu lầm hay gặp:\n1. Nó KHÔNG xoá file. File bị bỏ qua vẫn nằm nguyên trong máy bạn, ls và cat vẫn thấy; Git chỉ làm ngơ nó khi bạn git add . và git status.\n2. Nó chỉ có tác dụng với file CHƯA được theo dõi. File đã commit từ trước (hoặc đã git add trước khi bạn viết mẫu) vẫn bị Git theo dõi như thường — thêm vào .gitignore lúc đó là quá muộn. Trên máy thật phải bỏ theo dõi bằng git rm --cached ten_file, và nếu đó là khoá bí mật thì coi như đã lộ: đổi khoá mới.\n3. Nó không xoá được thứ đã nằm trong lịch sử. Vì vậy viết .gitignore TRƯỚC commit đầu tiên.\n\nMô hình lớn cần chia sẻ trong dự án thật thì dùng Git LFS (Git chỉ giữ một "phiếu hẹn", file thật nằm ở kho riêng) hoặc kho lưu trữ đối tượng như S3, Cloudflare R2 — không nhét vào lịch sử Git.\n\nGIỚI HẠN CỦA BỘ MÔ PHỎNG Ở ĐÂY: nó hiểu ba dạng mẫu ở trên (tên cụ thể, một dấu *, thư mục có / ở cuối). Mẫu có !, ?, [ ], **, dấu \\ hay / ở đầu hoặc giữa sẽ bị báo lỗi kèm số dòng — Git thật hiểu được chúng, chỉ là sandbox chưa mô phỏng. Sandbox cũng không có git add -f, Git LFS hay dung lượng file thật; file "trọng số" trong bài chỉ là vài chữ giả.\n\nMÔI TRƯỜNG ẢO (venv) — phần này bạn phải làm trên máy thật, sandbox không chạy được nên đây là lý thuyết cho việc về nhà. Vấn đề: dự án A cần thư viện phiên bản 1, dự án B cần phiên bản 2, cài chung một chỗ thì đá nhau. Môi trường ảo cho mỗi dự án một "tủ thuốc" riêng:\n    python3 -m venv .venv            # tạo môi trường ảo trong thư mục .venv\n    source .venv/bin/activate        # bật nó lên (Windows: .venv\\Scripts\\activate)\n    pip install -r requirements.txt  # cài đúng bộ thư viện của dự án\nVà .venv/ luôn nằm trong .gitignore — nó là thứ dựng lại được, không phải mã nguồn.',
     workedExample: {
+      // Kho mẫu của ví dụ (khác kho của bài tự viết): một web Node có .env giả, file log và
+      // node_modules/ — để thấy git status làm ngơ chúng mà ls/cat vẫn thấy.
       code: `git init
-echo "# Quan cua toi" > README.md
-echo ".env" > .gitignore
-echo "__pycache__/" >> .gitignore
-cat .gitignore
-git add .
-git commit -m "Chuan hoa cau truc du an"
 ls
-git log --oneline`,
-      stdinLines: [],
+echo ".env" > .gitignore
+echo "*.log" >> .gitignore
+echo "node_modules/" >> .gitignore
+cat .gitignore
+git status
+git add .
+git commit -m "Them gitignore"
+ls
+cat .env`,
+      stdinLines: [
+        'git init',
+        'echo "# Web ban hang" > README.md',
+        'echo "SECRET=chu-gia-chi-de-hoc" > .env',
+        'echo "loi-gia" > server.log',
+        'echo "thu-vien-gia" > node_modules/react.js',
+      ],
     },
     predict: {
       code: `echo "dong mot" > ghi_chu.txt
@@ -36,7 +144,7 @@ cat ghi_chu.txt`,
       choices: ['dong hai', 'dong mot\ndong hai', 'dong mot', 'Báo lỗi vì file đã tồn tại'],
       answerIndex: 0,
       explain:
-        'Dấu > GHI ĐÈ: lần thứ hai xoá sạch nội dung cũ rồi viết lại. Muốn NỐI THÊM vào cuối thì dùng >> (hai dấu). Nhầm hai dấu này là cách nhanh nhất để tự xoá mất công sức của mình — nên nhớ: một dấu = thay thế, hai dấu = thêm vào.',
+        'Dấu > GHI ĐÈ: lần thứ hai xoá sạch nội dung cũ rồi viết lại. Muốn NỐI THÊM vào cuối thì dùng >> (hai dấu). Nhầm hai dấu này là cách nhanh nhất để tự xoá mất công sức của mình — nên nhớ: một dấu = thay thế, hai dấu = thêm vào. Viết .gitignore nhiều dòng cũng vậy: dòng đầu >, các dòng sau >>.',
     },
     parsons: {
       prompt: 'Xếp các lệnh: dựng bộ khung chuẩn cho một dự án mới rồi chốt commit đầu tiên.',
@@ -44,69 +152,119 @@ cat ghi_chu.txt`,
         'git init',
         'echo "# Du an cua toi" > README.md',
         'echo ".env" > .gitignore',
-        'echo "node_modules/" >> .gitignore',
+        'echo "*.pt" >> .gitignore',
         'git add .',
         'git commit -m "Khoi tao cau truc du an"',
       ],
     },
     make: {
       prompt:
-        'Chuẩn hoá kho dự án cửa hàng theo khuôn nghề. Gõ các lệnh để:\n\n1. Khởi tạo kho git.\n2. Tạo README.md nội dung: # Quan cua toi\n3. Tạo .gitignore chứa ĐÚNG HAI DÒNG, theo thứ tự:\n.env\n__pycache__/\n(dòng đầu dùng >, dòng thứ hai dùng >> để nối thêm — dùng > hai lần là bạn xoá mất dòng đầu)\n4. Xem lại nội dung .gitignore bằng cat.\n5. Đưa tất cả vào Git và chốt commit với lời nhắn: Chuan hoa cau truc\n6. Liệt kê file trong thư mục.',
-      starterCode: `git init\n# tao README.md\n\n# tao .gitignore hai dong (chu y > va >>)\n\n# kiem lai bang cat, roi add + commit, cuoi cung ls\n`,
+        'Kho dự án cửa hàng đã được git init sẵn và đang có: README.md, file bí mật .env (khoá GIẢ, chỉ để học), bốn file trọng số mô hình AI — model.pt, model.pth, model.safetensors, checkpoints/epoch-1.pt — và thư mục máy tự sinh __pycache__/. Gõ ls để xem.\n\nViệc của bạn:\n1. Viết .gitignore bỏ qua: .env, mọi file đuôi .pt, .pth, .safetensors và thư mục __pycache__/. Mỗi dòng một mẫu — dòng đầu dùng >, các dòng sau dùng >>.\n2. Kiểm bằng git status: chỉ còn README.md và .gitignore chờ được add.\n3. Đưa README.md và chính .gitignore vào Git, chốt commit với lời nhắn: Chuan hoa cau truc\n4. KHÔNG xoá file nào — .gitignore chỉ khiến Git làm ngơ, file vẫn nằm trong máy bạn.\n\nBài chấm TRẠNG THÁI KHO thật (commit mới nhất, toàn bộ lịch sử, thư mục làm việc và .gitignore bạn đã commit), không chấm chữ in ra — thứ tự các dòng trong .gitignore tuỳ bạn. Ca ẩn chạy trên một kho khác với tên file khác, nên đừng liệt kê từng tên file: hãy dùng mẫu có dấu *.',
+      starterCode: `git init\n# kho da co san file - go ls de xem\nls\n\n# viet .gitignore: dong dau dung >, cac dong sau dung >>\n\n# kiem bang git status, roi add + commit\n`,
       testCases: [
         {
-          stdinLines: [],
-          expected: '.env\n__pycache__/',
+          stdinLines: lenhDungKho(KHO_QUAN),
+          expected: DA_CHAY_COMMIT,
           match: 'contains',
           hidden: false,
-          label: 'cat .gitignore hiện đủ hai dòng đúng thứ tự (dùng đúng > rồi >>)',
+          label:
+            'Commit mới nhất có lời nhắn "Chuan hoa cau truc", chụp README.md và chính .gitignore',
+          gitAssertions: [
+            ...commitDung(KHO_QUAN),
+            { type: 'headIgnoreProbe', path: '.gitignore', ignored: false },
+          ],
         },
         {
-          stdinLines: [],
-          expected: 'Chuan hoa cau truc',
+          stdinLines: lenhDungKho(KHO_QUAN),
+          expected: DA_CHAY_COMMIT,
           match: 'contains',
           hidden: false,
-          label: 'Commit đúng lời nhắn',
+          label:
+            'Không file bí mật, trọng số hay cache nào lọt vào BẤT KỲ commit nào (kể cả commit cũ)',
+          gitAssertions: lichSuKhongCo(KHO_QUAN),
         },
         {
-          stdinLines: [],
-          expected: '.gitignore\nREADME.md',
+          stdinLines: lenhDungKho(KHO_QUAN),
+          expected: DA_CHAY_COMMIT,
           match: 'contains',
           hidden: false,
-          label: 'ls hiện đủ cả hai file của bộ khung',
+          label: '.gitignore không xoá file: .env, trọng số và cache vẫn nguyên trong thư mục',
+          gitAssertions: vanTrongThuMuc(KHO_QUAN),
         },
         {
-          stdinLines: [],
-          expected: '[main c1] Chuan hoa cau truc\n 2 file trong ban chup',
+          stdinLines: lenhDungKho(KHO_QUAN),
+          expected: DA_CHAY_COMMIT,
+          match: 'contains',
+          hidden: false,
+          label:
+            '.gitignore đã commit chặn đủ .env, *.pt, *.pth, *.safetensors, __pycache__/ — ở gốc lẫn thư mục con',
+          gitAssertions: PHAI_BI_BO_QUA.map((path) => ({
+            type: 'headIgnoreProbe' as const,
+            path,
+            ignored: true,
+          })),
+        },
+        {
+          stdinLines: lenhDungKho(KHO_QUAN),
+          expected: DA_CHAY_COMMIT,
+          match: 'contains',
+          hidden: false,
+          label:
+            '.gitignore không chặn nhầm file thường: README.md, .env.example, a.pt.txt, notes.pth.md, mã nguồn',
+          gitAssertions: KHONG_DUOC_BO_QUA.map((path) => ({
+            type: 'headIgnoreProbe' as const,
+            path,
+            ignored: false,
+          })),
+        },
+        {
+          stdinLines: lenhDungKho(KHO_TIEM_BANH),
+          expected: DA_CHAY_COMMIT,
           match: 'contains',
           hidden: true,
-          label: 'Ca ẩn: commit chụp ĐỦ 2 file (git add . lấy cả file ẩn .gitignore)',
+          label: 'Ca ẩn: kho khác tên file — commit đúng, không file bị bỏ qua nào trong lịch sử',
+          gitAssertions: [...commitDung(KHO_TIEM_BANH), ...lichSuKhongCo(KHO_TIEM_BANH)],
+        },
+        {
+          stdinLines: lenhDungKho(KHO_TIEM_BANH),
+          expected: DA_CHAY_COMMIT,
+          match: 'contains',
+          hidden: true,
+          label: 'Ca ẩn: kho khác tên file — mọi file bị bỏ qua vẫn còn trong thư mục làm việc',
+          gitAssertions: vanTrongThuMuc(KHO_TIEM_BANH),
         },
       ],
       hints: [
-        'Bộ khung tối thiểu chỉ gồm hai file: README.md và .gitignore. Tạo bằng echo "…" > ten_file.',
-        'Hai dòng trong .gitignore: dòng đầu echo ".env" > .gitignore, dòng sau echo "__pycache__/" >> .gitignore. Dùng > cả hai lần là dòng đầu bị xoá mất.',
-        'Xong phần file thì: cat .gitignore để kiểm, rồi git add . (dấu chấm = tất cả), git commit -m "Chuan hoa cau truc", cuối cùng ls.',
+        'Năm mẫu cần có: .env · *.pt · *.pth · *.safetensors · __pycache__/. Dấu * nghĩa là "tên gì cũng được", nên *.pt khớp cả model.pt lẫn checkpoints/epoch-1.pt — không cần liệt kê từng file.',
+        'Dòng đầu: echo ".env" > .gitignore. Các dòng sau: echo "*.pt" >> .gitignore … Dùng > từ dòng thứ hai trở đi là bạn xoá mất các dòng trước. Đừng viết .env* hay *.pt* — chúng chặn nhầm .env.example và ghi-chu.pt.txt.',
+        'Khi git status chỉ còn README.md và .gitignore thì git add . đã an toàn (hoặc git add README.md .gitignore). Rồi git commit -m "Chuan hoa cau truc". Không rm file nào: chúng phải còn trong thư mục.',
       ],
       sampleSolution: `git init
-echo "# Quan cua toi" > README.md
+ls
 echo ".env" > .gitignore
+echo "*.pt" >> .gitignore
+echo "*.pth" >> .gitignore
+echo "*.safetensors" >> .gitignore
 echo "__pycache__/" >> .gitignore
-cat .gitignore
+git status
 git add .
-git commit -m "Chuan hoa cau truc"
+git commit -m "${LOI_NHAN_COMMIT}"
 ls`,
     },
     homework:
-      'Về nhà (trên máy thật): mở terminal ở thư mục dự án của bạn, tạo môi trường ảo bằng python3 -m venv .venv rồi bật lên, cài thư viện và ghi lại danh sách bằng pip freeze > requirements.txt. Nhớ thêm .venv/ vào .gitignore trước khi commit. Sau bước này, bất kỳ ai clone kho của bạn cũng dựng lại được đúng môi trường chỉ bằng hai lệnh — đó là ranh giới giữa "code chạy trên máy tôi" và "dự án người khác dùng được".',
+      'Về nhà (trên máy thật): mở terminal ở thư mục dự án của bạn, tạo môi trường ảo bằng python3 -m venv .venv rồi bật lên, cài thư viện và ghi lại danh sách bằng pip freeze > requirements.txt. Nhớ thêm .venv/ vào .gitignore trước khi commit — dự án có huấn luyện mô hình thì thêm cả *.pt, *.pth, *.safetensors. Rồi gõ git status để chắc chắn chúng không còn hiện ra. Sau bước này, bất kỳ ai clone kho của bạn cũng dựng lại được đúng môi trường chỉ bằng hai lệnh — đó là ranh giới giữa "code chạy trên máy tôi" và "dự án người khác dùng được".',
     srsCards: [
       {
         hoi: 'Dấu > và >> khi ghi vào file khác nhau thế nào?',
         dap: 'Một dấu > GHI ĐÈ: xoá sạch nội dung cũ rồi viết lại. Hai dấu >> NỐI THÊM vào cuối. Nhầm hai dấu này là cách nhanh nhất để tự xoá mất công sức của mình.',
       },
       {
-        hoi: 'Ba nhóm thứ phải bỏ vào .gitignore là gì?',
-        dap: '(1) File bí mật: .env, khoá API — lỡ commit lên GitHub công khai là coi như đã lộ. (2) File máy tự sinh: __pycache__/, node_modules/, dist/ — dựng lại được. (3) File riêng của máy bạn: cấu hình trình soạn thảo, rác hệ điều hành.',
+        hoi: 'Bốn nhóm thứ phải bỏ vào .gitignore là gì?',
+        dap: '(1) File bí mật: .env, khoá API — lỡ commit lên GitHub công khai là coi như đã lộ. (2) Trọng số mô hình AI: *.pt, *.pth, *.safetensors — nặng, cần chia sẻ thì dùng Git LFS hoặc kho lưu trữ đối tượng. (3) File máy tự sinh: __pycache__/, node_modules/, dist/ — dựng lại được. (4) File riêng của máy bạn: cấu hình trình soạn thảo, rác hệ điều hành.',
+      },
+      {
+        hoi: 'Thêm .env vào .gitignore SAU KHI đã commit nó thì chuyện gì xảy ra?',
+        dap: 'Không gì cả: .gitignore chỉ có tác dụng với file CHƯA được theo dõi, nên Git vẫn theo dõi .env như cũ, và bản cũ vẫn nằm trong lịch sử. Trên máy thật phải bỏ theo dõi bằng git rm --cached .env, rồi đổi khoá mới vì khoá cũ coi như đã lộ. Bài học: viết .gitignore TRƯỚC commit đầu tiên.',
       },
       {
         hoi: 'Môi trường ảo (venv) giải quyết vấn đề gì?',

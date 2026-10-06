@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { mockLogin } from './helpers/auth'
 
-// PR A dùng bài Git hiện có: CodeMirror, runner và phản hồi chấm thật.
-// Chưa thay tiêu chí bài học legacy; assertion state dành cho PR nội dung kế tiếp.
-test('Git ignore qua trang bài thật: giữ file, bỏ khỏi add, báo pattern lỗi và giữ sample legacy', async ({
+// PR A dựng engine; lát B1 (spec 2026-10-05-gitignore-state-grading) thay rubric bài p3-u11-l1
+// bằng tiêu chí trạng thái. Kiểm qua trang bài thật: CodeMirror, runner, kho mẫu và grader thật.
+test('Git ignore qua trang bài thật: giữ file, bỏ khỏi status, báo pattern lỗi, chấm trạng thái', async ({
   page,
 }) => {
   test.setTimeout(120_000)
@@ -13,32 +13,40 @@ test('Git ignore qua trang bài thật: giữ file, bỏ khỏi add, báo patter
   await expect(editor).toBeVisible({ timeout: 30_000 })
   await expect(editor).toHaveClass(/cm-content/)
 
-  // Cố ý bỏ cat .gitignore: ca công khai đầu không đạt và hiện transcript để đối chiếu.
-  // Secret là chữ giả. Việc đọc được sau commit chứng minh ignore không xóa workdir.
-  await editor.fill(
-    [
-      'git init',
-      'echo "# Quan cua toi" > README.md',
-      'echo "FAKE_ONLY_WORKDIR" > .env',
-      'echo ".env" > .gitignore',
-      'echo "__pycache__/" >> .gitignore',
-      'git add .',
-      'git commit -m "Chuan hoa cau truc"',
-      'cat .env',
-      'git status',
-      'ls',
-    ].join('\n'),
-  )
+  const ignoreDung = [
+    'echo ".env" > .gitignore',
+    'echo "*.pt" >> .gitignore',
+    'echo "*.pth" >> .gitignore',
+    'echo "*.safetensors" >> .gitignore',
+    'echo "__pycache__/" >> .gitignore',
+  ]
+
+  // Cố ý chưa commit: ca công khai đầu không đạt và hiện transcript để đối chiếu. Kho mẫu
+  // (chữ giả) đã init sẵn nên git init lặp lại chỉ được báo, không lỗi. Đọc được .env chứng
+  // minh ignore không xóa workdir; status chỉ còn hai file không bị bỏ qua.
+  await editor.fill(['git init', ...ignoreDung, 'cat .env', 'git status', 'ls'].join('\n'))
   await page.getByRole('button', { name: 'Chấm bài', exact: true }).click()
   const actual = page
     .locator('p')
     .filter({ hasText: /^Máy của bạn in ra:/ })
     .locator('code')
     .first()
-  await expect(actual).toContainText('[main c1] Chuan hoa cau truc\n 2 file trong ban chup')
-  await expect(actual).toContainText('$ cat .env\nFAKE_ONLY_WORKDIR')
-  await expect(actual).toContainText('Khong co gi de commit, thu muc lam viec sach')
+  await expect(actual).toContainText('$ git init\nThu muc nay da la kho git roi')
+  await expect(actual).toContainText('$ cat .env\nAPI_KEY=khoa-gia-chi-de-hoc')
+  await expect(actual).toContainText(
+    'File chua duoc theo doi (can git add):\n  .gitignore\n  README.md\n$ ls',
+  )
   await expect(actual).toContainText('$ ls\n.env\n.gitignore\nREADME.md')
+  await expect(page.getByText('Đạt toàn bộ test!', { exact: true })).not.toBeVisible()
+
+  // Commit đúng nhưng xóa .env để né: output có git commit, trạng thái thư mục vẫn rớt.
+  await editor.fill(
+    [...ignoreDung, 'rm .env', 'git add .', 'git commit -m "Chuan hoa cau truc"'].join('\n'),
+  )
+  await page.getByRole('button', { name: 'Chấm bài', exact: true }).click()
+  await expect(
+    page.getByText('Trang thai Git chua dat tieu chi cua ca cham.', { exact: true }).first(),
+  ).toBeVisible()
   await expect(page.getByText('Đạt toàn bộ test!', { exact: true })).not.toBeVisible()
 
   // Cú pháp ngoài subset phải thành lỗi nhìn thấy được, không silently bỏ qua.
@@ -49,10 +57,10 @@ test('Git ignore qua trang bài thật: giữ file, bỏ khỏi add, báo patter
   await expect(publicError).toContainText('basename literal, mot *, hoac thu muc literal/')
   await expect(page.getByText('Đạt toàn bộ test!', { exact: true })).not.toBeVisible()
 
-  // Code mẫu gốc vẫn đi qua editor và grader thật; không sửa lesson/registry hoặc mock runner.
+  // Code mẫu đi qua editor và grader thật; không mock runner.
   await page.getByRole('button', { name: 'Xem code mẫu', exact: true }).click()
   await expect(editor).toContainText('git commit -m "Chuan hoa cau truc"')
   await page.getByRole('button', { name: 'Chấm bài', exact: true }).click()
   await expect(page.getByText('Đạt toàn bộ test!', { exact: true })).toBeVisible()
-  await expect(page.getByText('Đã chấm xong 4 ca: đạt 4/4.', { exact: true })).toBeVisible()
+  await expect(page.getByText('Đã chấm xong 7 ca: đạt 7/7.', { exact: true })).toBeVisible()
 })

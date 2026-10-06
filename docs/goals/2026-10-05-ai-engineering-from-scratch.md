@@ -78,7 +78,7 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - PR tài liệu: [#1236](https://github.com/seeker19110/dhcb/pull/1236). Chủ dự án đã duyệt phương án, cho phép PR/merge tài liệu khi kiểm tra đạt ngày 2026-10-05.
 - Cổng đặc tả và pilot: chương trình/hoạt họa #1236, replay #1238 và Git state/ignore #1240 đã merge. C1 #1237 và pilot gradient/replay #1241 đã merge sau required quality/e2e/metadata đạt, gồm sáu shard E2E. Pilot đã có trên main, không phải khóa mới hoặc mở lại chấm Python.
 - Blocker phát hành khóa: bộ chấm Python/JS/TS/SQL còn đóng. Chủ dự án xác nhận chưa có staging và yêu cầu chuẩn bị gói trước. ADR/spec gói chưa kích hoạt ở Draft PR [#1239](https://github.com/seeker19110/dhcb/pull/1239), còn chờ lựa chọn kiến trúc Docker rootless hoặc microVM; chưa chạy probe, triển khai worker hay mở chấm.
-- Next best slice: PR A mô phỏng Git ignore và chấm trạng thái đã qua review độc lập và full gate tại máy, chờ CI/merge theo spec #1240. Sau A merge, PR B mở rộng bài `p3-u11-l1` và hoạt họa bản sao workdir/staging/HEAD. Map K1 chưa thay nghiệm thu nội dung 20 khóa.
+- Next best slice: PR A (#1243) đã có trên main. PR B tách theo quyết định chủ dự án: **B1** (nội dung + rubric trạng thái `p3-u11-l1`) xong ở commit cục bộ, changelog 0506, chờ PR/CI; **B2** (hoạt họa workdir/staging/HEAD) chờ storyboard được chuyên gia duyệt. Map K1 chưa thay nghiệm thu nội dung 20 khóa.
 - Quyền: được triển khai source theo yêu cầu của chủ dự án sau cổng spec; chủ dự án đã cấp quyền PR/merge các lát mã theo đặc tả được duyệt, bắt đầu C1, với điều kiện required quality/e2e đạt trước merge. Quyền deploy production chưa được cấp.
 
 ## 6. Iteration log
@@ -162,6 +162,13 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Gói grader #1239 còn Draft. Chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước; snapshot tài liệu đã đóng gói ở outputs, chưa có runtime hoặc activation. Quyết định kiến trúc còn chờ.
 - Giới hạn phiên: usage 91%, áp dụng CLAUDE.md mục 3: hoàn tất lát đang làm, mở PR rồi dừng ở checkpoint. Không tự bắt đầu PR B trong phiên này.
 - Next: sau A đạt required quality/e2e và merge, biên soạn/hoạt họa `p3-u11-l1` theo storyboard đã review. Quyền PR/merge có điều kiện vẫn còn; chưa có quyền deploy production.
+
+### Iteration 7 — 2026-10-06
+
+- State: VERIFYING. Slice B1 (chủ dự án chọn tách PR B): chỉ nội dung + rubric trạng thái bài `p3-u11-l1` trên engine PR A; không đổi ID/Make/quyền completed, không mở grader thiếu cách ly. Changelog [0506](../changelog/0506-2026-10-06-p3-u11-l1-noi-dung-rubric.md).
+- Rubric: 7 ca (5 công khai, 2 ẩn trên kho khác tên file); kho mẫu chữ giả qua `stdinLines`, `git init` lặp lại không lỗi; `commitMessage` HEAD, `headContent` README, `historyAbsent` + `workdirContent` mọi file bị bỏ qua, 10 probe dương và 9 probe âm (`.env.example`, `a.pt.txt`, `notes.pth.md`…). Bỏ hết điều kiện transcript cũ.
+- Bằng chứng tại máy: test rubric 25/25 (lời giải tương đương đạt; echo transcript, xoá file, thiếu mẫu, `*`/`.env*`, HEAD sai lời nhắn, `.env` trong lịch sử sau reset, chép cứng kho công khai đều rớt). Suite liên quan 391 file/12.952 test đạt; build/typecheck/lint/format/audit:prose đạt. E2E chưa chạy được tại máy (không tải được Chromium); full coverage chưa chạy — thuộc CI.
+- Checkpoint: **B1 xong (chờ PR/CI), B2 chờ storyboard được chuyên gia duyệt.** Evidence map giữ EXTEND, bổ sung bằng chứng mục ignore sau khi B1 merge.
 
 ## 7. Final audit
 
