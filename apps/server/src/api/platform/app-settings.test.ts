@@ -16,9 +16,11 @@ vi.mock('@dhcb/core-db/settings', () => ({
 }))
 
 import handler from './app-settings.js'
+import { PublicAppSettingsSchema } from '@dhcb/core-contracts/appSettings'
 
+// Hình dạng THẬT của packages/core-db/settings.ts sau GĐ1: một con số tổng/ngày mỗi gói.
 const SETTINGS = {
-  limits: { pro: 30, vip: 300 },
+  limits: { free: 30, vip: 300 },
   promoUntil: null,
   aiCircuitBreaker: false,
   leaderboardEnabled: false,
@@ -55,6 +57,14 @@ describe('GET /api/app-settings', () => {
     expect(res.status).toBe(200)
     expect(res.headers.get('ETag')).toBe(`"${SETTINGS.updatedAt}"`)
     expect(await res.json()).toEqual(SETTINGS)
+  })
+
+  // [audit M9] Hợp đồng dùng chung với client + mock E2E: body thật PHẢI parse được qua schema.
+  it('body khớp hợp đồng PublicAppSettingsSchema (client đọc được hạn mức tổng/ngày)', async () => {
+    const res = await handler(new Request('http://localhost/api/app-settings'))
+    const parsed = PublicAppSettingsSchema.safeParse(await res.json())
+    expect(parsed.success).toBe(true)
+    expect(parsed.success && parsed.data.limits).toEqual({ free: 30, vip: 300 })
   })
 
   it('If-None-Match khớp ETag hiện tại → 304 rỗng', async () => {

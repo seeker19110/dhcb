@@ -124,12 +124,6 @@ vi.mock('../../lib/weeklyGoal', () => ({
 }))
 vi.mock('../../lib/promo', () => ({ effectivePlan: (plan: 'free' | 'vip') => plan }))
 vi.mock('../../lib/weeklyCredit', () => ({ fetchWeeklyCredit: mocks.fetchWeeklyCredit }))
-vi.mock('../../lib/appSettings', () => ({
-  getLimits: () => ({
-    free: { chat: 3, speaking: 3, writing: 3 },
-    vip: { chat: 30, speaking: 30, writing: 30 },
-  }),
-}))
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -268,25 +262,39 @@ describe('Dashboard — async truth, retry và focus', () => {
     expect(container.textContent).not.toContain('1/30')
   })
 
-  it('VIP là not-applicable và không gọi endpoint quota Free', async () => {
+  // [audit M9] VIP cũng có hạn mức TỔNG/ngày (300) — phải hỏi server như Free, không còn
+  // đọc hạn mức theo chế độ ở client (từng ra "0/").
+  it('VIP cũng hỏi server và hiện "x/300 lượt"', async () => {
     mocks.user = { ...mocks.user, plan: 'vip' }
+    mocks.fetchWeeklyCredit.mockResolvedValueOnce({
+      plan: 'vip',
+      freeWeeklyCredit: 288,
+      freeWeeklyCap: 300,
+    })
     await renderDashboard()
-    expect(mocks.fetchWeeklyCredit).not.toHaveBeenCalled()
+    expect(mocks.fetchWeeklyCredit).toHaveBeenCalledTimes(1)
+    expect(container.textContent).toContain('288/300 lượt')
   })
 
-  it('đổi Free → VIP không gọi thêm endpoint và response Free cũ không xuất hiện', async () => {
+  it('đổi Free → VIP gọi lại endpoint và response Free cũ không xuất hiện', async () => {
     const oldFreeRequest = deferred<WeeklyCreditInfo | null>()
-    mocks.fetchWeeklyCredit.mockReturnValueOnce(oldFreeRequest.promise)
+    const vipRequest = deferred<WeeklyCreditInfo | null>()
+    mocks.fetchWeeklyCredit
+      .mockReturnValueOnce(oldFreeRequest.promise)
+      .mockReturnValueOnce(vipRequest.promise)
     await renderDashboard()
     mocks.user = { ...mocks.user, plan: 'vip' }
     await rerenderDashboard()
-    expect(mocks.fetchWeeklyCredit).toHaveBeenCalledTimes(1)
+    expect(mocks.fetchWeeklyCredit).toHaveBeenCalledTimes(2)
 
     await act(async () =>
       oldFreeRequest.resolve({ plan: 'free', freeWeeklyCredit: 4, freeWeeklyCap: 30 }),
     )
     expect(container.textContent).not.toContain('4/30')
-    expect(container.querySelector('#dashboard-weekly-credit-heading')).toBeNull()
+    await act(async () =>
+      vipRequest.resolve({ plan: 'vip', freeWeeklyCredit: 250, freeWeeklyCap: 300 }),
+    )
+    expect(container.textContent).toContain('250/300')
   })
 
   function openEnglishDetails(): HTMLButtonElement {

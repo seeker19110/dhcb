@@ -49,7 +49,13 @@ export default async function handler(req: Request): Promise<Response> {
     })
 
     const type = query.success ? query.data.type : undefined
-    const briefing = await generateProactiveBriefing(pool, person.id, { type })
+    // personId (personal.persons) và userId (profiles, từ token) là HAI id khác nhau — bản cũ
+    // truyền nhầm personId làm userId nên luôn đọc ra 0 thẻ ôn (audit M10, đợt U5).
+    const briefing = await generateProactiveBriefing(
+      pool,
+      { personId: person.id, userId: auth.userId },
+      { type },
+    )
 
     return jsonResponse({ briefing }, 200, headers)
   } catch (err: unknown) {

@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { PublicAppSettingsSchema } from '../../packages/core-contracts/appSettings'
 
 // Giả "đã đăng nhập" cho E2E: gieo trước cờ phiên không bí mật (đúng key mà
 // src/lib/authHeader.ts đọc — gsa_session_present_v1) + chặn network `GET
@@ -14,16 +15,16 @@ export const USER_ID = 'e2e-user-0001'
 // chỉ dùng ở vài test riêng quét theme này.
 export type ThemeName = 'dark-blue' | 'blue-sky' | 'kid'
 
-const MOCK_APP_SETTINGS = {
-  limits: {
-    free: { chat: 5, writing: 5, speaking: 5, stt: 5, pronounce: 5 },
-    pro: { chat: 100, writing: 100, speaking: 100, stt: 100, pronounce: 100 },
-    vip: { chat: 1000000, writing: 1000000, speaking: 1000000, stt: 1000000, pronounce: 1000000 },
-  },
+// [2026-10-05, audit M9] Mock `/api/app-settings` PARSE qua đúng hợp đồng Zod mà server + client
+// dùng — một nguồn sự thật cho hình dạng dữ liệu. Trước đây mock giữ hình dạng cũ (hạn mức theo
+// từng chế độ + gói `pro` đã xoá) nên mọi cổng E2E xanh trong khi production hiện "0/". Lệch hợp
+// đồng nay là lỗi ngay lúc nạp file test, không im lặng nữa.
+export const MOCK_APP_SETTINGS = PublicAppSettingsSchema.parse({
+  limits: { free: 30, vip: 300 },
   promoUntil: null,
   leaderboardEnabled: false,
   updatedAt: '1970-01-01T00:00:00.000Z',
-}
+})
 
 export async function mockLogin(
   page: Page,

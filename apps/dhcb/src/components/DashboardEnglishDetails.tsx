@@ -111,12 +111,9 @@ function Bar({ pct, color }: { pct: number; color: string }) {
 }
 
 export interface DashboardEnglishDetailsWeeklyCredit {
-  currentPlan: 'free' | 'vip'
   info: { freeWeeklyCredit: number; freeWeeklyCap: number } | null
   status: 'loading' | 'ready' | 'error'
   retryRevision: number
-  usage: { chatCount: number; speakingCount: number; writingCount: number }
-  limit: { chat: number; speaking: number; writing: number }
 }
 
 export interface DashboardEnglishDetailsCefr {
@@ -298,107 +295,71 @@ export default function DashboardEnglishDetails({
         </div>
       </div>
 
-      {/* Lượt dùng AI — gói Free: MỘT hạn mức TỔNG/ngày cho mọi tính năng AI (GĐ1 2026-09-12,
-          xem api/usage-summary.ts); VIP: hiển thị theo từng tính năng/ngày. Heading recovery
-          target §4.1 — luôn visible, KHÔNG nằm trong panel disclosure. Cố tình COMPACT (không
-          phải bản đầy đủ như panel "Hôm nay" cũ) — chuyển toàn bộ số/card lặp vào panel để đạt
-          budget chiều cao §3. */}
+      {/* Lượt dùng AI — MỘT hạn mức TỔNG/ngày cho mọi tính năng AI, CẢ Free lẫn VIP (GĐ1
+          2026-09-12). Số đọc từ SERVER (api/usage-summary.ts) vì bộ đếm local theo từng chế độ
+          không cộng ra được con số server chặn. [2026-10-05, audit M9] Trước đây nhánh VIP hiện
+          3 ô Chat/Nói/Viết đọc hạn mức THEO CHẾ ĐỘ đã bỏ từ GĐ1 → mẫu số `undefined`, ra "0/".
+          Heading recovery target §4.1 — luôn visible, KHÔNG nằm trong panel disclosure. */}
       <div className="mt-2">
-        {weeklyCredit.currentPlan === 'free' ? (
-          <div className="bg-zinc-900/60 border border-zinc-800/70 rounded-2xl p-2.5">
-            <div className="flex items-start justify-between gap-2">
-              <h3
-                id="dashboard-weekly-credit-heading"
-                tabIndex={-1}
-                className="text-[11px] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-md"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-accent-400 shrink-0 mt-0.5" />
-                <span>{vi ? 'Lượt AI hôm nay' : 'AI credits today'}</span>
-              </h3>
-              {weeklyCreditInfo && (
-                <span className="text-sm font-semibold text-accent-300 theme-light:text-accent-800 shrink-0">
-                  {weeklyCreditInfo.freeWeeklyCredit}/{weeklyCreditInfo.freeWeeklyCap}
-                </span>
-              )}
-            </div>
-            {weeklyCreditInfo ? (
-              <div className="mt-1.5">
-                <Bar
-                  pct={(weeklyCreditInfo.freeWeeklyCredit / weeklyCreditInfo.freeWeeklyCap) * 100}
-                  color="bg-accent-500"
-                />
-              </div>
-            ) : weeklyCredit.status === 'error' ? (
-              <div role="status" className="mt-1 flex items-center gap-2 flex-wrap">
-                <p className="text-sm text-zinc-300 leading-relaxed">
-                  {vi ? 'Chưa tải được lượt AI hôm nay.' : 'Today’s AI credits are unavailable.'}
-                </p>
-                <button
-                  ref={weeklyCreditRetryRef}
-                  type="button"
-                  onClick={onRetryWeeklyCredit}
-                  className="min-h-11 px-2 text-sm font-semibold text-accent-300 theme-light:text-accent-800 rounded-lg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
-                >
-                  {vi ? 'Thử lại' : 'Retry'}
-                </button>
-              </div>
-            ) : weeklyCredit.retryRevision > 0 ? (
-              <div role="status" className="mt-1 flex items-center gap-2 flex-wrap">
-                <p className="text-sm text-zinc-300 leading-relaxed">
-                  {vi ? 'Đang tải lại lượt AI…' : 'Reloading AI credits…'}
-                </p>
-                <button
-                  ref={weeklyCreditRetryRef}
-                  type="button"
-                  aria-disabled="true"
-                  onClick={onRetryWeeklyCredit}
-                  className="min-h-11 px-2 text-sm font-semibold text-zinc-400 rounded-lg cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
-                >
-                  {vi ? 'Đang thử lại…' : 'Retrying…'}
-                </button>
-              </div>
-            ) : (
-              <p role="status" className="mt-1 text-sm text-zinc-300 leading-relaxed">
-                {vi ? 'Đang tải lượt AI…' : 'Loading AI credits…'}
-              </p>
+        <div className="bg-zinc-900/60 border border-zinc-800/70 rounded-2xl p-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <h3
+              id="dashboard-weekly-credit-heading"
+              tabIndex={-1}
+              className="text-[11px] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-md"
+            >
+              <MessageCircle className="w-3.5 h-3.5 text-accent-400 shrink-0 mt-0.5" />
+              <span>{vi ? 'Lượt AI còn lại hôm nay' : 'AI credits left today'}</span>
+            </h3>
+            {weeklyCreditInfo && (
+              <span className="text-sm font-semibold text-accent-300 theme-light:text-accent-800 shrink-0">
+                {weeklyCreditInfo.freeWeeklyCredit}/{weeklyCreditInfo.freeWeeklyCap}{' '}
+                {vi ? 'lượt' : 'credits'}
+              </span>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              {
-                icon: <MessageCircle className="w-4 h-4 text-accent-400" />,
-                label: vi ? 'Chat' : 'Chat',
-                used: weeklyCredit.usage.chatCount,
-                max: weeklyCredit.limit.chat,
-              },
-              {
-                icon: <Mic className="w-4 h-4 text-sky-400 theme-light:text-sky-900" />,
-                label: vi ? 'Nói' : 'Speak',
-                used: weeklyCredit.usage.speakingCount,
-                max: weeklyCredit.limit.speaking,
-              },
-              {
-                icon: <PenLine className="w-4 h-4 text-violet-400 theme-light:text-violet-800" />,
-                label: vi ? 'Viết' : 'Write',
-                used: weeklyCredit.usage.writingCount,
-                max: weeklyCredit.limit.writing,
-              },
-            ].map((m) => (
-              <div
-                key={m.label}
-                className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3 text-center"
+          {weeklyCreditInfo ? (
+            <div className="mt-1.5">
+              <Bar
+                pct={(weeklyCreditInfo.freeWeeklyCredit / weeklyCreditInfo.freeWeeklyCap) * 100}
+                color="bg-accent-500"
+              />
+            </div>
+          ) : weeklyCredit.status === 'error' ? (
+            <div role="status" className="mt-1 flex items-center gap-2 flex-wrap">
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                {vi ? 'Chưa tải được lượt AI hôm nay.' : 'Today’s AI credits are unavailable.'}
+              </p>
+              <button
+                ref={weeklyCreditRetryRef}
+                type="button"
+                onClick={onRetryWeeklyCredit}
+                className="min-h-11 px-2 text-sm font-semibold text-accent-300 theme-light:text-accent-800 rounded-lg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
               >
-                <div className="flex justify-center mb-1.5">{m.icon}</div>
-                <p className="text-base font-bold text-white leading-none">
-                  {m.used}
-                  <span className="text-zinc-400 text-xs">/{m.max}</span>
-                </p>
-                <p className="text-[11px] text-zinc-400 mt-1">{m.label}</p>
-              </div>
-            ))}
-          </div>
-        )}
+                {vi ? 'Thử lại' : 'Retry'}
+              </button>
+            </div>
+          ) : weeklyCredit.retryRevision > 0 ? (
+            <div role="status" className="mt-1 flex items-center gap-2 flex-wrap">
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                {vi ? 'Đang tải lại lượt AI…' : 'Reloading AI credits…'}
+              </p>
+              <button
+                ref={weeklyCreditRetryRef}
+                type="button"
+                aria-disabled="true"
+                onClick={onRetryWeeklyCredit}
+                className="min-h-11 px-2 text-sm font-semibold text-zinc-400 rounded-lg cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+              >
+                {vi ? 'Đang thử lại…' : 'Retrying…'}
+              </button>
+            </div>
+          ) : (
+            <p role="status" className="mt-1 text-sm text-zinc-300 leading-relaxed">
+              {vi ? 'Đang tải lượt AI…' : 'Loading AI credits…'}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── Disclosure: đóng mặc định ở MỌI viewport, không auto mở/đóng ─────────────────── */}

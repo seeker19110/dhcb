@@ -42,6 +42,7 @@ import {
 } from '../lib/navTree'
 import { STUDIOS, NAV_HIDDEN_PATHS } from '../lib/studios'
 import { useMediaQuery } from '../lib/useIsDesktopViewport'
+import { sidebarPlanLabel } from '../lib/planLabel'
 import {
   COMPANION_PATHS,
   LEARNING_PATHS,
@@ -139,12 +140,6 @@ const ACTIVE_ORDER: Item[] = [
   ...MAIN_NAV,
   ...CORE_BOTTOM,
 ]
-
-/** Nhãn lối vào trang gói ở chân sidebar — theo gói THẬT, gọn hơn khi thu gọn. */
-function nhanGoi(laVip: boolean, thuGon: boolean): string {
-  if (laVip) return thuGon ? 'VIP' : 'Gói VIP'
-  return thuGon ? 'Nâng cấp' : 'Free · Nâng cấp'
-}
 
 function readCollapsed(): boolean {
   try {
@@ -416,14 +411,16 @@ export default function DesktopSidebar() {
           [2026-10-01, audit M8] Nhãn đọc GÓI THẬT của phiên (`user.plan` — server đã xét hạn
           gói qua `resolvePlan`). Trước đây ghi cứng "Free · Nâng cấp" (thu gọn: "VIP") cho MỌI
           người, nên người dùng VIP thấy chữ "Free" ngay cạnh trang ghi "Bạn đang dùng gói VIP",
-          còn người dùng Free ở thanh thu gọn lại thấy chữ "VIP" như một huy hiệu. */}
+          còn người dùng Free ở thanh thu gọn lại thấy chữ "VIP" như một huy hiệu.
+          [2026-10-05, đợt U5] VIP vĩnh viễn ghi rõ "VIP vĩnh viễn", VIP có hạn ghi ngày hết hạn
+          — cùng hàm `sidebarPlanLabel` với trang /nang-cap để hai nơi không nói khác nhau. */}
       <Link
         to="/nang-cap"
         className={`tap-44-coarse-y flex items-center px-3 py-2 text-xs text-content-muted hover:text-content transition ${
           collapsed ? 'justify-center text-center' : ''
         }`}
       >
-        {nhanGoi(user?.plan === 'vip', collapsed)}
+        {sidebarPlanLabel(user?.plan, user?.planExpiresAt, collapsed)}
       </Link>
     </aside>
   )

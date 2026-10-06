@@ -16,7 +16,7 @@ import { writingSystemPrompt } from '../../../prompts'
 import { useOnboarding } from '../../../lib/onboarding'
 import type { WritingSubmission, Direction } from '../../../types'
 import { effectivePlan } from '../../../lib/promo'
-import { getLimits } from '../../../lib/appSettings'
+import { hasReachedDailyLimit } from '../../../lib/appSettings'
 import { useEdgeAi } from '../../../lib/edgeAi/useEdgeAi.js'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { PageShell } from '@core/PageShell'
@@ -309,11 +309,11 @@ export default function Writing() {
       return
     }
     const usage = getUsage(user.id)
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (writingCount đếm theo ngày, không còn đúng ý nghĩa) — để server tự chặn.
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
     if (
       effectivePlan(user.plan) !== 'free' &&
-      usage.writingCount >= getLimits()[effectivePlan(user.plan)].writing
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
     ) {
       setError(
         isA ? 'Bạn đã dùng hết lượt chấm bài hôm nay.' : "You've used all grading sessions today.",

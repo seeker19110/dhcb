@@ -1,9 +1,38 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 
-import { getAppSettings, getLimits, isLeaderboardEnabled, refreshAppSettings } from './appSettings'
-import { LIMITS as DEFAULT_LIMITS } from '../types'
+import {
+  getAppSettings,
+  getDailyLimit,
+  getLimits,
+  hasReachedDailyLimit,
+  isLeaderboardEnabled,
+  refreshAppSettings,
+  totalAiUsage,
+} from './appSettings'
+import { DEFAULT_PLAN_DAILY_LIMITS } from '@dhcb/core-contracts/appSettings'
+import type { DailyUsage } from '../types'
 
 const CACHE_KEY = 'app_settings_cache'
+
+// Hình dạng CŨ (trước GĐ1) — hạn mức theo từng chế độ. Cache localStorage của bản phát hành
+// trước còn nằm trên máy người dùng: phải bị bỏ qua, không được rò `undefined` ra giao diện.
+const LEGACY_PER_MODE_LIMITS = {
+  free: { chat: 5, writing: 5, speaking: 5, stt: 5, pronounce: 5 },
+  vip: { chat: 1000000, writing: 1000000, speaking: 1000000, stt: 1000000, pronounce: 1000000 },
+}
+
+function usage(overrides: Partial<DailyUsage> = {}): DailyUsage {
+  return {
+    date: '2026-10-05',
+    chatCount: 0,
+    writingCount: 0,
+    speakingCount: 0,
+    sttCount: 0,
+    pronounceCount: 0,
+    learnCount: 0,
+    ...overrides,
+  }
+}
 
 describe('appSettings — cache localStorage + refresh từ server', () => {
   beforeEach(() => {
@@ -14,15 +43,16 @@ describe('appSettings — cache localStorage + refresh từ server', () => {
     vi.unstubAllGlobals()
   })
 
-  it('chưa có cache → dùng DEFAULT_LIMITS, promoUntil null, leaderboard tắt', () => {
+  it('chưa có cache → hạn mức mặc định Free 30 / VIP 300, promoUntil null, leaderboard tắt', () => {
     expect(getAppSettings().promoUntil).toBeNull()
     expect(isLeaderboardEnabled()).toBe(false)
-    expect(getLimits()).toEqual(DEFAULT_LIMITS)
+    expect(getLimits()).toEqual(DEFAULT_PLAN_DAILY_LIMITS)
+    expect(getLimits()).toEqual({ free: 30, vip: 300 })
   })
 
   it('refreshAppSettings: fetch OK → cập nhật current + ghi localStorage', async () => {
     const newSettings = {
-      limits: DEFAULT_LIMITS,
+      limits: { free: 30, vip: 300 },
       promoUntil: '2026-12-31T00:00:00.000Z',
       leaderboardEnabled: true,
       updatedAt: '2026-08-01T00:00:00.000Z',
@@ -32,13 +62,38 @@ describe('appSettings — cache localStorage + refresh từ server', () => {
       vi.fn().mockResolvedValue({
         status: 200,
         ok: true,
-        json: async () => newSettings,
+        // Server trả thêm `aiCircuitBreaker` — trường lạ bị bỏ, không làm hỏng parse.
+        json: async () => ({ ...newSettings, aiCircuitBreaker: false }),
       }),
     )
     await refreshAppSettings()
     expect(getAppSettings().promoUntil).toBe('2026-12-31T00:00:00.000Z')
     expect(isLeaderboardEnabled()).toBe(true)
+    expect(getDailyLimit('vip')).toBe(300)
     expect(JSON.parse(localStorage.getItem(CACHE_KEY)!)).toEqual(newSettings)
+  })
+
+  it('refreshAppSettings: body lệch hợp đồng (hạn mức theo chế độ) → giữ giá trị cũ, không ghi cache', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          limits: LEGACY_PER_MODE_LIMITS,
+          promoUntil: null,
+          leaderboardEnabled: false,
+          updatedAt: '2026-09-01T00:00:00.000Z',
+        }),
+      }),
+    )
+    const before = getAppSettings()
+    await refreshAppSettings()
+    expect(getAppSettings()).toBe(before)
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull()
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
   })
 
   it('refreshAppSettings: server trả 304 → giữ nguyên cache, không parse json', async () => {
@@ -66,6 +121,40 @@ describe('appSettings — cache localStorage + refresh từ server', () => {
   })
 })
 
+describe('appSettings — hạn mức TỔNG/ngày (audit M9)', () => {
+  it('totalAiUsage cộng mọi chế độ tốn AI, KHÔNG cộng learnCount (học từ không tốn API)', () => {
+    expect(
+      totalAiUsage(
+        usage({
+          chatCount: 1,
+          writingCount: 2,
+          speakingCount: 3,
+          sttCount: 4,
+          pronounceCount: 5,
+          learnCount: 99,
+        }),
+      ),
+    ).toBe(15)
+  })
+
+  it('totalAiUsage chịu được bản ghi cũ thiếu pronounceCount', () => {
+    const old = usage({ chatCount: 2 })
+    delete old.pronounceCount
+    expect(totalAiUsage(old)).toBe(2)
+  })
+
+  it('hasReachedDailyLimit: dưới hạn mức → false; ĐÚNG bằng hạn mức → true (biên)', () => {
+    expect(hasReachedDailyLimit(usage({ chatCount: 299 }), 'vip')).toBe(false)
+    expect(hasReachedDailyLimit(usage({ chatCount: 150, speakingCount: 150 }), 'vip')).toBe(true)
+    expect(hasReachedDailyLimit(usage({ writingCount: 29 }), 'free')).toBe(false)
+    expect(hasReachedDailyLimit(usage({ writingCount: 20, sttCount: 10 }), 'free')).toBe(true)
+  })
+
+  it('hasReachedDailyLimit: chưa dùng lượt nào thì chưa chạm hạn mức', () => {
+    expect(hasReachedDailyLimit(usage(), 'vip')).toBe(false)
+  })
+})
+
 // loadFromLocalStorage() chỉ chạy 1 LẦN lúc import module (khởi tạo biến `current`),
 // nên phải reset module + import lại để phủ các nhánh đọc cache lúc khởi động.
 describe('appSettings — khởi tạo `current` từ cache localStorage lúc load module', () => {
@@ -74,26 +163,46 @@ describe('appSettings — khởi tạo `current` từ cache localStorage lúc lo
     vi.resetModules()
   })
 
-  it('cache hợp lệ (có limits + updatedAt) → dùng luôn, bù mặc định promoUntil/leaderboard', async () => {
+  it('cache hợp lệ theo hợp đồng → dùng luôn', async () => {
     localStorage.setItem(
       CACHE_KEY,
-      JSON.stringify({ limits: DEFAULT_LIMITS, updatedAt: '2026-01-01T00:00:00.000Z' }),
+      JSON.stringify({
+        limits: { free: 40, vip: 400 },
+        promoUntil: null,
+        leaderboardEnabled: true,
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      }),
     )
     const mod = await import('./appSettings')
     expect(mod.getAppSettings().updatedAt).toBe('2026-01-01T00:00:00.000Z')
-    expect(mod.getAppSettings().promoUntil).toBeNull()
-    expect(mod.isLeaderboardEnabled()).toBe(false)
+    expect(mod.getLimits()).toEqual({ free: 40, vip: 400 })
+    expect(mod.isLeaderboardEnabled()).toBe(true)
   })
 
-  it('cache thiếu limits → coi như không có cache, dùng DEFAULT_SETTINGS', async () => {
+  it('cache hình dạng CŨ (hạn mức theo chế độ) → bỏ qua, dùng mặc định', async () => {
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({
+        limits: LEGACY_PER_MODE_LIMITS,
+        promoUntil: null,
+        leaderboardEnabled: false,
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    )
+    const mod = await import('./appSettings')
+    expect(mod.getLimits()).toEqual(DEFAULT_PLAN_DAILY_LIMITS)
+    expect(mod.getAppSettings().updatedAt).toBe('1970-01-01T00:00:00.000Z')
+  })
+
+  it('cache thiếu limits → coi như không có cache, dùng mặc định', async () => {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt: '2026-01-01T00:00:00.000Z' }))
     const mod = await import('./appSettings')
-    expect(mod.getLimits()).toEqual(DEFAULT_LIMITS)
+    expect(mod.getLimits()).toEqual(DEFAULT_PLAN_DAILY_LIMITS)
   })
 
-  it('cache là JSON hỏng → bắt lỗi, dùng DEFAULT_SETTINGS', async () => {
+  it('cache là JSON hỏng → bắt lỗi, dùng mặc định', async () => {
     localStorage.setItem(CACHE_KEY, '{bad json')
     const mod = await import('./appSettings')
-    expect(mod.getLimits()).toEqual(DEFAULT_LIMITS)
+    expect(mod.getLimits()).toEqual(DEFAULT_PLAN_DAILY_LIMITS)
   })
 })

@@ -17,6 +17,7 @@
  */
 
 import { test, expect, type Page, type Route } from '@playwright/test'
+import { MOCK_APP_SETTINGS } from './helpers/auth'
 
 /* ── Hằng số ─────────────────────────────────────────────────────────────── */
 
@@ -524,11 +525,7 @@ async function mockAllAdminApis(page: Page): Promise<void> {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        promoUntil: null,
-        aiCircuitBreaker: false,
-        leaderboardEnabled: false,
-      }),
+      body: JSON.stringify(MOCK_APP_SETTINGS),
     }),
   )
 }
@@ -557,7 +554,11 @@ test.describe('Admin Dashboard — /admin-s', () => {
       r.fulfill({ status: 401, body: '{"error":"Unauthorized"}' }),
     )
     await page.route('**/api/app-settings**', (r: Route) =>
-      r.fulfill({ status: 200, contentType: 'application/json', body: '{"promoUntil":null}' }),
+      r.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_APP_SETTINGS),
+      }),
     )
     await page.goto(ADMIN_URL, { timeout: GOTO_TIMEOUT })
     await expect(page).toHaveURL(/\/login/, { timeout: 10000 })
@@ -579,7 +580,11 @@ test.describe('Admin Dashboard — /admin-s', () => {
       r.fulfill({ status: 403, body: '{"error":"Forbidden"}' }),
     )
     await page.route('**/api/app-settings**', (r: Route) =>
-      r.fulfill({ status: 200, contentType: 'application/json', body: '{"promoUntil":null}' }),
+      r.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_APP_SETTINGS),
+      }),
     )
     await page.goto(ADMIN_URL, { timeout: GOTO_TIMEOUT })
     await page.waitForTimeout(3000)
@@ -772,7 +777,11 @@ test.describe('Admin Dashboard — /admin-s', () => {
       }),
     )
     await page.route('**/api/app-settings**', (r: Route) =>
-      r.fulfill({ status: 200, contentType: 'application/json', body: '{"promoUntil":null}' }),
+      r.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_APP_SETTINGS),
+      }),
     )
     await page.goto(`${ADMIN_URL}?tab=usage`, { timeout: GOTO_TIMEOUT })
     await expect(page.getByRole('heading', { name: 'Quản trị hệ thống' })).toBeVisible({
@@ -1349,7 +1358,11 @@ test.describe('Admin Dashboard — /admin-s', () => {
       })
     })
     await page.route('**/api/app-settings**', (r: Route) =>
-      r.fulfill({ status: 200, contentType: 'application/json', body: '{"promoUntil":null}' }),
+      r.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(MOCK_APP_SETTINGS),
+      }),
     )
     await page.goto(`${ADMIN_URL}?tab=usage`, { timeout: GOTO_TIMEOUT })
     await page

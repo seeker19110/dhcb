@@ -34,6 +34,26 @@ export const CanvasNodeStatusSchema = z.enum(['draft', 'in_progress', 'blocked',
 
 export type CanvasNodeStatus = z.infer<typeof CanvasNodeStatusSchema>
 
+// [2026-10-05, audit M11, đợt U5] Nhãn HIỂN THỊ tiếng Việt cho mã enum — dùng chung cho thẻ trên
+// canvas và bản xuất Markdown, để người dùng không thấy mã thô ("in progress", "LEARNING", "You").
+export const CANVAS_DOMAIN_LABELS: Record<CanvasDomain, string> = {
+  learning: 'Học tập',
+  work: 'Ghi chú',
+  general: 'Chung',
+}
+
+export const CANVAS_STATUS_LABELS: Record<CanvasNodeStatus, string> = {
+  draft: 'Bản nháp',
+  in_progress: 'Đang làm',
+  blocked: 'Đang vướng',
+  completed: 'Đã xong',
+}
+
+export const CANVAS_ASSIGNEE_LABELS: Record<'user' | 'companion_ai', string> = {
+  user: 'Bạn',
+  companion_ai: 'Bạn Đồng Hành',
+}
+
 export const CanvasNodeSchema = z
   .object({
     id: UuidSchema,

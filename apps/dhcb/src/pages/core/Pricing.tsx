@@ -10,6 +10,7 @@ import { MAIN_CONTENT_ID } from '@core/PageShell'
 import Layout from '../../components/Layout'
 import UpgradeSection from '../../components/UpgradeSection'
 import PricePromoBanner from '../../components/PricePromoBanner'
+import VipPlanSummary from '../../components/VipPlanSummary'
 import { usePageTitle } from '../../lib/usePageTitle'
 import { useAuth } from '../../context/useAuth'
 import { useLang } from '../../context/useLang'
@@ -36,13 +37,10 @@ export default function Pricing() {
 
         <PricePromoBanner isA={isA} />
 
-        {/* Đã là VIP thì UpgradeSection tự trả về null — khi đó nói rõ thay vì để trang trống. */}
+        {/* Đã là VIP thì UpgradeSection tự trả về null — khi đó hiện khối "Gói của bạn" (hạn
+            dùng · lượt AI hôm nay · quyền lợi) thay vì một dòng chữ (audit M8, đợt U5). */}
         {user?.plan === 'vip' ? (
-          <p className="text-sm text-zinc-300 bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4">
-            {isA
-              ? 'Bạn đang dùng gói VIP — gói cao nhất hiện có. Không còn gì để nâng cấp thêm.'
-              : "You're on VIP — the highest plan available. Nothing left to upgrade."}
-          </p>
+          <VipPlanSummary isA={isA} planExpiresAt={user.planExpiresAt} />
         ) : (
           <UpgradeSection isA={isA} currentPlan={user?.plan ?? 'free'} variant="full" />
         )}

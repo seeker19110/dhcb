@@ -34,6 +34,8 @@ export default function CanvasAiOrchestratorModal({
     try {
       await onSynthesize(prompt.trim())
       onClose()
+    } catch {
+      // Trang cha đã báo lỗi bằng toast — giữ hộp thoại mở, giữ câu mục tiêu để thử lại.
     } finally {
       setLoading(false)
     }

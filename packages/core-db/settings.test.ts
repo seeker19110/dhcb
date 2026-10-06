@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { getAppSettings, isSubjectEnforced, invalidateSettingsCache } from './settings.js'
+import {
+  DEFAULT_PLAN_DAILY_LIMITS,
+  PublicAppSettingsSchema,
+} from '@dhcb/core-contracts/appSettings'
 
 const queryMock = vi.fn()
 vi.mock('./pgPool.js', () => ({
@@ -43,6 +47,10 @@ describe('settings — getAppSettings', () => {
     expect(res.limits.free).toBe(30)
     expect(res.limits.vip).toBe(300)
     expect(res.promoUntil).toBeNull()
+    // [audit M9] Mặc định server và mặc định hiển thị của client (hợp đồng dùng chung) không
+    // được lệch nhau; kết quả cũng phải parse được qua hợp đồng công khai.
+    expect(res.limits).toEqual(DEFAULT_PLAN_DAILY_LIMITS)
+    expect(PublicAppSettingsSchema.safeParse(res).success).toBe(true)
   })
 
   it('DB ném lỗi → fallback chỉ để hiển thị', async () => {

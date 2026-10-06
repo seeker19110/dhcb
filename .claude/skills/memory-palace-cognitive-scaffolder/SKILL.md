@@ -90,3 +90,9 @@ gọi**, theo luật từ dữ liệu trong CSDL (`packages/core-personal/proact
 **không gọi AI**. Không có lịch tự chạy "trước khi người dùng thức giấc". Nếu sau này thêm bước
 gọi AI thì phải qua đếm lượt (`checkAndConsumeUsage`) và đọc ngữ cảnh qua `contextEngine` theo
 consent.
+
+Luật nội dung (changelog 0495, audit M10): bản tin CHỈ đếm việc thật của hai trụ còn lại — thẻ ôn
+đến hạn (`english.learning_progress`, đọc bằng `userId`) và việc chưa xong / đến hạn trong Ghi chú
+(`worklife.tasks`, đọc bằng `personId`; `personId` ≠ `userId`). Không mục trụ đã xoá, không số gán
+cứng, **lỗi CSDL là lỗi** (ném ra, API 500 — không bịa số), không khen khi chưa có bằng chứng hành
+động, sáng/tối tính theo giờ Việt Nam.

@@ -23,12 +23,9 @@ function baseProps(
     onToggle: () => {},
     srsDue: 3,
     weeklyCredit: {
-      currentPlan: 'free',
       info: { freeWeeklyCredit: 10, freeWeeklyCap: 30 },
       status: 'ready',
       retryRevision: 0,
-      usage: { chatCount: 0, speakingCount: 0, writingCount: 0 },
-      limit: { chat: 3, speaking: 3, writing: 3 },
     },
     weeklyCreditRetryRef: { current: null },
     onRetryWeeklyCredit: () => {},
@@ -217,18 +214,18 @@ describe('DashboardEnglishDetails (R3-4)', () => {
     expect(container.textContent).not.toMatch(/Error|undefined|NaN/)
   })
 
-  it('VIP hiện lưới 3 tính năng thay vì thẻ lượt Free', () => {
+  // [audit M9] VIP từng hiện lưới Chat/Nói/Viết đọc hạn mức THEO CHẾ ĐỘ (đã bỏ từ GĐ1) → "0/".
+  // Nay mọi gói cùng một thẻ: số còn lại / hạn mức TỔNG/ngày do server trả.
+  it('VIP dùng chung thẻ lượt TỔNG/ngày: hiện "x/300 lượt", không có mẫu số rỗng', () => {
     render({
       weeklyCredit: {
-        currentPlan: 'vip',
-        info: null,
+        info: { freeWeeklyCredit: 288, freeWeeklyCap: 300 },
         status: 'ready',
         retryRevision: 0,
-        usage: { chatCount: 2, speakingCount: 1, writingCount: 0 },
-        limit: { chat: 30, speaking: 30, writing: 30 },
       },
     })
-    expect(container.querySelector('#dashboard-weekly-credit-heading')).toBeNull()
-    expect(container.textContent).toContain('Chat')
+    expect(container.querySelector('#dashboard-weekly-credit-heading')).not.toBeNull()
+    expect(container.textContent).toContain('288/300 lượt')
+    expect(container.textContent).not.toMatch(/\d\/(\s|$)|undefined|NaN/)
   })
 })

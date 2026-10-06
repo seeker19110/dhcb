@@ -29,7 +29,7 @@ import { useVisualViewportHeight } from '../../../lib/useVisualViewportHeight'
 import { useOnboarding } from '../../../lib/onboarding'
 import { callClaude, parseJson, hasNumberFields } from '../../../lib/ai'
 import { effectivePlan } from '../../../lib/promo'
-import { getLimits } from '../../../lib/appSettings'
+import { hasReachedDailyLimit } from '../../../lib/appSettings'
 import { chatSystemPrompt, chatFullEvaluationPrompt, situationLabel } from '../../../prompts'
 import {
   SITUATIONS,
@@ -525,10 +525,12 @@ export default function Chat() {
 
   async function startSession(situation: string, level: Level) {
     const usage = getUsage(user.id)
-    const limit = getLimits()[effectivePlan(user.plan)]
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (chatCount đếm theo ngày/theo mode, không còn đúng ý nghĩa) — để server tự chặn.
-    if (effectivePlan(user.plan) !== 'free' && usage.chatCount >= limit.chat) {
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
+    if (
+      effectivePlan(user.plan) !== 'free' &&
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
+    ) {
       // SetupScreen chỉ đọc prop `error` (banner limitHit chỉ render khi đã có session) —
       // set cả hai để không "bấm mà không có gì xảy ra".
       setLimitHit(true)
@@ -608,10 +610,12 @@ export default function Chat() {
       return
     }
     const usage = getUsage(user.id)
-    const limit = getLimits()[effectivePlan(user.plan)]
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (chatCount đếm theo ngày/theo mode, không còn đúng ý nghĩa) — để server tự chặn.
-    if (effectivePlan(user.plan) !== 'free' && usage.chatCount >= limit.chat) {
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
+    if (
+      effectivePlan(user.plan) !== 'free' &&
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
+    ) {
       setLimitHit(true)
       return
     }
@@ -706,10 +710,12 @@ export default function Chat() {
   async function endAndGrade() {
     if (!session || loading || evaluating) return
     const usage = getUsage(user.id)
-    const limit = getLimits()[effectivePlan(user.plan)]
-    // Gói Free: kho lượt tuần chung nằm ở server, không suy ra được từ dữ liệu local
-    // (chatCount đếm theo ngày/theo mode, không còn đúng ý nghĩa) — để server tự chặn.
-    if (effectivePlan(user.plan) !== 'free' && usage.chatCount >= limit.chat) {
+    // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
+    // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
+    if (
+      effectivePlan(user.plan) !== 'free' &&
+      hasReachedDailyLimit(usage, effectivePlan(user.plan))
+    ) {
       setLimitHit(true)
       return
     }
