@@ -23,7 +23,6 @@ import { z } from 'zod'
 import { useParams, useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import { duongDanLoTrinh } from '../../../lib/englishRoutes'
 import {
-  ChevronLeft,
   ChevronRight,
   ChevronDown,
   BookOpen,
@@ -884,13 +883,7 @@ export default function CefrLevelPage() {
 
   return shell(
     <div className="animate-fade-in">
-      {/* Về trang lộ trình (tổng quan 4 cấp ở /lo-trinh-hoc) */}
-      <button
-        onClick={() => nav(duongDanLoTrinh())}
-        className="tap-44-y flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition mb-3"
-      >
-        <ChevronLeft className="w-4 h-4" /> {isA ? 'Lộ trình A1 → C2' : 'Roadmap A1 → C2'}
-      </button>
+      {/* [audit 2026-09-30 minor 3] Header đã có nút quay lại Lộ trình CEFR cùng đích. */}
 
       {/* Thanh tab học của cấp — ẩn khi cấp còn khóa */}
       {!locked && (
@@ -1409,9 +1402,9 @@ function UnitSection({
           {isA ? 'Phần' : 'Part'} {index + 1}
         </span>
         <span className="text-xl">{unit.emoji}</span>
-        <h4 className="flex-1 min-w-0 font-semibold text-white text-base break-words">
+        <h2 className="flex-1 min-w-0 font-semibold text-white text-base break-words">
           {isA ? unit.titleVi : unit.titleEn}
-        </h4>
+        </h2>
         {allDone && expanded && (
           <button
             onClick={() => setExpanded(false)}
