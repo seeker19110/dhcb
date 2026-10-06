@@ -1,6 +1,6 @@
 # 0501 — Một luật "Tiếp tục" cho mọi danh sách duyệt tuần tự (2026-10-06)
 
-- **Ngày:** 2026-10-06 · **PR:** _(điền khi tạo PR)_ · **Loại:** `fix(ux)`.
+- **Ngày:** 2026-10-06 · **PR:** #1253 · **Loại:** `fix(ux)`.
 - **Phạm vi:** nối tiếp đợt U9b (changelog `0498`, audit 2026-09-30 **M19**). Đợt 0498 sửa gợi ý
   "Tiếp tục" ở Bài hội thoại nhưng ghi nợ: **Câu thông dụng** vẫn trỏ "chủ đề đầu tiên chưa xem".
   Rà thêm thấy tab Câu thông dụng trong **Luyện nghe** chép đúng khuôn sai đó.
