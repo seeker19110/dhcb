@@ -2,7 +2,8 @@
 export const t = {
   vi: {
     // Layout / Header
-    appName: 'Gia sư AI',
+    // [audit 2026-09-30 minor 8] Tên sản phẩm thống nhất với trang đăng nhập, hub và PWA.
+    appName: 'Đồng Hành Cùng Bạn',
     aboutApp: 'Giới thiệu ứng dụng',
     home: 'Trang chủ',
     profile: 'Trang cá nhân',
@@ -21,8 +22,8 @@ export const t = {
 
     // Home
     greeting: 'Xin chào bạn',
-    dirLabelA: '🇻🇳 Người Việt học tiếng Anh',
-    dirLabelB: '🌍 Người nước ngoài học tiếng Việt',
+    dirLabelA: 'Người Việt học tiếng Anh',
+    dirLabelB: 'Người nước ngoài học tiếng Việt',
     toggleDirTitleA: 'Chuyển sang dạy tiếng Việt cho người nước ngoài',
     toggleDirTitleB: 'Chuyển sang dạy tiếng Anh cho người Việt',
     streakDays: 'ngày liên tiếp',
@@ -178,11 +179,13 @@ export const t = {
     posPageTitle: 'Từ loại',
     posPageSub: 'Danh từ, động từ, tính từ và nhiều hơn nữa',
 
-    // Trang Nghe (/listening)
-    navListening: 'Nghe',
-    listeningPageTitle: 'Nghe',
-    listeningPageSub: 'Câu thông dụng · Hội thoại · Kho truyện song ngữ',
-    tabPhrases: 'Câu thông dụng',
+    // Trang Luyện nghe (/listening). [audit 2026-09-30 minor 4] Header cùng tên với mục
+    // "Luyện nghe" ở thanh bên; tab đầu đổi thành "Mẫu câu" để không trùng tên trang riêng
+    // "Câu thông dụng" (/cau-thong-dung). Truyện đã tách sang trang riêng.
+    navListening: 'Luyện nghe',
+    listeningPageTitle: 'Luyện nghe',
+    listeningPageSub: 'Mẫu câu · Hội thoại',
+    tabPhrases: 'Mẫu câu',
     tabDialogues: 'Hội thoại',
     tabStories: 'Truyện',
     kindFairyTale: 'Cổ tích',
@@ -209,7 +212,7 @@ export const t = {
 
   en: {
     // Layout / Header
-    appName: 'AI Tutor',
+    appName: 'Đồng Hành Cùng Bạn',
     aboutApp: 'About the app',
     home: 'Home',
     profile: 'Profile',
@@ -228,8 +231,8 @@ export const t = {
 
     // Home
     greeting: 'Hi there',
-    dirLabelA: '🇻🇳 Vietnamese learning English',
-    dirLabelB: '🌍 Foreigners learning Vietnamese',
+    dirLabelA: 'Vietnamese speakers learning English',
+    dirLabelB: 'Learners of Vietnamese',
     toggleDirTitleA: 'Switch to teaching Vietnamese for foreigners',
     toggleDirTitleB: 'Switch to teaching English for Vietnamese speakers',
     streakDays: 'day streak',
@@ -387,8 +390,8 @@ export const t = {
     // Listening page (/listening)
     navListening: 'Listening',
     listeningPageTitle: 'Listening',
-    listeningPageSub: 'Common phrases · Conversations · Bilingual story library',
-    tabPhrases: 'Common phrases',
+    listeningPageSub: 'Sentence patterns · Conversations',
+    tabPhrases: 'Sentence patterns',
     tabDialogues: 'Conversations',
     tabStories: 'Stories',
     kindFairyTale: 'Fairy tales',
