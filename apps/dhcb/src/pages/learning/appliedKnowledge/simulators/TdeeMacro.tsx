@@ -24,10 +24,10 @@ export function TdeeMacro() {
     <div className="p-6 rounded-2xl bg-zinc-900 border border-rose-500/40 space-y-6">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
         <div>
-          <h3 className="text-base font-bold text-rose-400 theme-light:text-rose-800 flex items-center gap-2">
+          <h2 className="text-base font-bold text-rose-400 theme-light:text-rose-800 flex items-center gap-2">
             <HeartPulse className="w-5 h-5" />
             Mô phỏng 9: Chuyển hóa năng lượng tế bào BMR/TDEE & phân bổ macro
-          </h3>
+          </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
             Sinh học chuyển hóa lớp 10 & Khoa học dinh dưỡng giảm mỡ tăng cơ
           </p>
