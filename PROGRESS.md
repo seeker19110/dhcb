@@ -174,9 +174,20 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Engine Git theo đặc tả #1240 đã qua review và full gate tại máy, chờ CI/merge; tiếp theo là nội dung/hoạt họa `p3-u11-l1`. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
 
+- **[2026-10-06 — cập nhật hiện trạng] Không còn PR mở; `main` ở #1256.** Đã merge sau mục dưới:
+  U5 #1244 · U9a #1248 · U9b #1245 · minor 1–14 #1246 · Git ignore + chấm trạng thái #1243 ·
+  U7 #1255 · đổi mật khẩu/Google #1252 · học hỏi + VIP không giới hạn lượt AI #1256 (changelog
+  `0501`–`0503`). Nghĩa là **U1–U9 đều đã có source trên `main`** (danh sách "6/9" bên dưới là
+  mốc 2026-10-05, giữ làm lịch sử). Đang giao subagent (chưa merge): đổi `text-[Npx]` → rem và
+  hạ nợ `FontSizeRem.design.test.ts` về 0 · "Học tiếp" cho 4 môn STEM + thống nhất "Vật lí" ·
+  bài `p3-u11-l1` + hoạt họa Git (PR B của goal AI Engineering).
+  Còn chờ chủ dự án: việc tay mục A bên dưới (VAPID/nginx/firewall, `ALLOWED_ORIGINS`, câu Free
+  cũ trong `plan_marketing_bullets`, `cwv:prod`), quyết định kiến trúc gói chấm #1239, chuyên gia
+  rà S10b/S12.
+
 - **[2026-09-30] Sửa theo audit UI/UX chuẩn 2026** ([báo cáo](docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md),
   `docs/changelog/0466-*.md`, PR #1197): 8 critical · 22 major · 14 minor, chia **9 đợt U1–U9** (mục 12 báo
-  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **Đã xong 6/9 đợt (2026-10-03 → 2026-10-05):**
+  cáo), mỗi đợt một PR kèm ảnh trước/sau (Tầng 8b). **Mốc 2026-10-05: xong 6/9 đợt:**
   - U1 #1222 (`0487`): viền focus, toast, manifest, tiêu đề trang, `<main>`/skip link;
   - U2 #1223 (`0488`): form xác thực, hub tràn ngang;
   - U3 #1231 (`0489`): 14 trang tương phản, đưa vào cổng;
