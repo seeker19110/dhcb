@@ -45,7 +45,7 @@ const StudioProactive = lazyWithRetry(
 )
 
 export default function Companion() {
-  usePageTitle('Bạn Đồng Hành | Đồng hành cùng bạn')
+  usePageTitle('Bạn Đồng Hành | Đồng Hành Cùng Bạn')
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()

@@ -36,7 +36,7 @@ export default function ResetPassword() {
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
-  usePageTitle('Đặt lại mật khẩu | Đồng hành cùng bạn')
+  usePageTitle('Đặt lại mật khẩu | Đồng Hành Cùng Bạn')
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

@@ -114,7 +114,7 @@ export default function Dashboard() {
   const cefr = cefrState.status === 'ready' ? cefrState.data : []
   const ready = cefrState.status === 'ready'
 
-  usePageTitle('Tiến độ học tập | Đồng hành cùng bạn')
+  usePageTitle('Tiến độ học tập | Đồng Hành Cùng Bạn')
 
   useEffect(() => {
     if (!user) return

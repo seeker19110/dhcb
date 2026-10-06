@@ -58,7 +58,7 @@ const MUC_LUC = [
 ] as const
 
 export default function ProgrammingHome() {
-  usePageTitle('Môn Lập trình | Đồng hành cùng bạn')
+  usePageTitle('Môn Lập trình | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
   const [progress, setProgress] = useState<ProgrammingLessonProgress[]>([])

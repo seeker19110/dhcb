@@ -60,7 +60,7 @@ export default function Intake() {
   const [error, setError] = useState('')
   const [checking, setChecking] = useState(true)
 
-  usePageTitle('Bắt đầu | Đồng hành cùng bạn')
+  usePageTitle('Bắt đầu | Đồng Hành Cùng Bạn')
 
   // Đã trả lời rồi thì không hỏi lại — đi thẳng tới onboarding của môn.
   //

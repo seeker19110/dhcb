@@ -76,7 +76,7 @@ function nguonAnh(uid: string, now: number) {
 }
 
 export default function ReviewHub() {
-  usePageTitle('Ôn tập hôm nay · Đồng hành cùng bạn')
+  usePageTitle('Ôn tập hôm nay · Đồng Hành Cùng Bạn')
   const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const cap = useMemo(() => docCapTuQuery(searchParams), [searchParams])

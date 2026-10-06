@@ -312,7 +312,7 @@ export default function History() {
   const { user } = useAuth()
   useCloudSync(user?.id)
 
-  usePageTitle('Lịch sử học tập | Đồng hành cùng bạn')
+  usePageTitle('Lịch sử học tập | Đồng Hành Cùng Bạn')
 
   const [tab, setTab] = useState<ActiveTab>('chat')
   const step = useIsDesktopViewport() ? STEP_DESKTOP : STEP_MOBILE

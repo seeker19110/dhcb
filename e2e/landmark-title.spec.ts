@@ -11,7 +11,7 @@ import { muteTts } from './helpers/tts'
 // Mỗi route phải có ĐÚNG MỘT `<main id="noi-dung-chinh">`, tiêu đề tab riêng theo một khuôn hậu
 // tố, và không trùng tiêu đề của route khác.
 
-const BRAND = 'Đồng hành cùng bạn'
+const BRAND = 'Đồng Hành Cùng Bạn'
 
 interface RouteCase {
   path: string

@@ -88,7 +88,7 @@ const QUICK_TOPICS = [
 ]
 
 export default function Dictionary() {
-  usePageTitle('Từ điển Anh-Việt | Đồng hành cùng bạn')
+  usePageTitle('Từ điển Anh-Việt | Đồng Hành Cùng Bạn')
   const { user } = useAuth()
   const onboarding = useOnboarding(user?.id) // nhóm tuổi (GĐ 4, PROGRESS.md) — lọc vòng từ vựng
   const dir = getDirection()

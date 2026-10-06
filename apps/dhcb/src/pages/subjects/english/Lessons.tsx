@@ -105,7 +105,7 @@ function LoiTai({
 
 // ── Trang chính ───────────────────────────────────────────────────────────────
 export default function Lessons() {
-  usePageTitle('Bài học | Môn tiếng Anh · Đồng hành cùng bạn')
+  usePageTitle('Bài học | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const dir: Direction = getDirection()
   const isA = dir === 'A'
   // Ngưỡng 1024px quyết ở JS, không phải `lg:` — xem lý do trong `TwoPane.tsx`: ẩn bằng CSS

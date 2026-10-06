@@ -12,9 +12,9 @@ import { useDocumentLangOverride } from '../../lib/documentLang'
 // (chiều A, tiếng Việt) — KHÔNG gộp chung 1 component vì đối tượng, kênh phân phối (Reddit/expat
 // group vs TikTok VN) và ngôn ngữ nội dung khác hẳn nhau, gộp lại sẽ rối hơn là tách.
 const TITLE =
-  'Learn Vietnamese by Speaking with AI — Corrections Explained in English | Đồng hành cùng bạn'
+  'Learn Vietnamese by Speaking with AI — Corrections Explained in English | Đồng Hành Cùng Bạn'
 const DESCRIPTION =
-  'Practice real Vietnamese conversation with an AI tutor. Mistakes are explained back to you in English, in a real Vietnamese voice. Free. One subject inside Đồng hành cùng bạn, a personal companion platform.'
+  'Practice real Vietnamese conversation with an AI tutor. Mistakes are explained back to you in English, in a real Vietnamese voice. Free. One subject inside Đồng Hành Cùng Bạn, a personal companion platform.'
 
 const MODES = [
   {
@@ -116,7 +116,7 @@ export default function LandingEn() {
               <span className="font-semibold text-accent-400">Language subject</span>
               <span aria-hidden="true">·</span>
               <span>
-                part of the <span lang="vi">Đồng hành cùng bạn</span> platform
+                part of the <span lang="vi">Đồng Hành Cùng Bạn</span> platform
               </span>
             </p>
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl lg:leading-[1.15] xl:text-5xl xl:leading-[1.1]">

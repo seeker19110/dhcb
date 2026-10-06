@@ -117,7 +117,7 @@ test('a11y AAA chiều B: chữ nội dung trang Exam prep đạt tương phản
 // Canh bất biến của đợt trả nợ: chiều B KHÔNG được lọt chuỗi tiếng Việt nào ra giao diện.
 test('chiều B: trang Ôn thi không lọt chuỗi tiếng Việt nào', async ({ page }) => {
   await gotoPlanB(page)
-  const text = (await page.locator('main').innerText()).replace(/Đồng hành cùng bạn/g, '')
+  const text = (await page.locator('main').innerText()).replace(/Đồng Hành Cùng Bạn/gi, '')
   // Dấu phụ tiếng Việt (ăâêôơưđ + thanh điệu) — tiếng Anh không có ký tự nào trong dải này.
   expect(text).not.toMatch(/[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i)
 })

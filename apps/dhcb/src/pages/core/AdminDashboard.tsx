@@ -123,7 +123,7 @@ export default function AdminDashboard() {
     TABS.some((t) => t.key === tabParam) ? (tabParam as TabKey) : 'usage',
   )
 
-  usePageTitle('Quản trị | Đồng hành cùng bạn')
+  usePageTitle('Quản trị | Đồng Hành Cùng Bạn')
 
   const toggle = (key: TabKey) => {
     const next = openKey === key ? null : key

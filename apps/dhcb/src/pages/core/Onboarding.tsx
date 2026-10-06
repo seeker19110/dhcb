@@ -117,7 +117,7 @@ function OnboardingForm() {
     }
   }, [])
 
-  usePageTitle('Làm quen | Đồng hành cùng bạn')
+  usePageTitle('Làm quen | Đồng Hành Cùng Bạn')
 
   // Đo rớt từng bước — đây là cổng bắt buộc duy nhất còn lại trước khi vào app (Intake đã
   // tắt, xem App.tsx RequireAuth). refCode dùng chung khuôn "loại:bước" như Daily Plan.

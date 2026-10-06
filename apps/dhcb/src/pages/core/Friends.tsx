@@ -23,7 +23,7 @@ export default function Friends() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
-  usePageTitle('Bạn bè | Đồng hành cùng bạn')
+  usePageTitle('Bạn bè | Đồng Hành Cùng Bạn')
 
   useEffect(() => {
     let cancelled = false
