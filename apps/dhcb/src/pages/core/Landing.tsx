@@ -13,9 +13,9 @@ import { MAIN_CONTENT_ID } from '@core/PageShell'
 // khoá quảng cáo), KHÔNG phải trang chủ nền tảng. Trang chủ nền tảng là apps/hub (giới
 // thiệu đủ 5 trụ). Vì vậy trang này phải nói rõ tiếng Anh là MỘT MÔN của nền tảng và có
 // đường dẫn sang phần còn lại — tránh để người đọc hiểu nhầm nền tảng chỉ dạy tiếng Anh.
-const TITLE = 'Nói tiếng Anh với AI — sửa lỗi bằng giọng Việt | Môn tiếng Anh · Đồng hành cùng bạn'
+const TITLE = 'Nói tiếng Anh với AI — sửa lỗi bằng giọng Việt | Môn tiếng Anh · Đồng Hành Cùng Bạn'
 const DESCRIPTION =
-  'Nói tiếng Anh với AI — sai chỗ nào, được giảng lại bằng tiếng Việt. Miễn phí. Hội thoại giọng Anh chuẩn, sửa lỗi & giải thích bằng giọng tiếng Việt. Môn Tiếng Anh thuộc nền tảng đồng hành cá nhân Đồng hành cùng bạn.'
+  'Nói tiếng Anh với AI — sai chỗ nào, được giảng lại bằng tiếng Việt. Miễn phí. Hội thoại giọng Anh chuẩn, sửa lỗi & giải thích bằng giọng tiếng Việt. Môn Tiếng Anh thuộc nền tảng đồng hành cá nhân Đồng Hành Cùng Bạn.'
 
 const MODES = [
   {
@@ -123,7 +123,7 @@ export default function Landing() {
                 Môn tiếng Anh
               </span>
               <span aria-hidden="true">·</span>
-              <span>một môn của nền tảng Đồng hành cùng bạn</span>
+              <span>một môn của nền tảng Đồng Hành Cùng Bạn</span>
             </p>
             <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-5xl lg:leading-[1.1]">
               Nói tiếng Anh với AI

@@ -40,7 +40,7 @@ async function fetchWordVisemes(text: string): Promise<Viseme[][] | null> {
 }
 
 export default function AvatarDemo() {
-  usePageTitle('Demo avatar | Đồng hành cùng bạn')
+  usePageTitle('Demo avatar | Đồng Hành Cùng Bạn')
   // Dùng state (không dùng ref) vì phần tử audio được TRUYỀN XUỐNG AvatarSpeaking lúc render
   // — luật react-hooks refs cấm đọc ref.current trong render.
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null)

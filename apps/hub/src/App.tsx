@@ -25,7 +25,7 @@ import { ThemeToggle } from '@core/ThemeToggle'
 import HubLogin from './pages/HubLogin'
 import { SUBJECT_CATALOG } from './subjectsCatalog.generated'
 
-// Trang chủ hub — nền tảng "Đồng hành cùng bạn" (https://www.donghanhcungban.org)
+// Trang chủ hub — nền tảng "Đồng Hành Cùng Bạn" (https://www.donghanhcungban.org)
 //
 // LUẬT NỘI DUNG CỦA TRANG NÀY (chốt 2026-08-25, theo đặc tả kiến trúc platform
 // `docs/research/kien-truc-va-ha-tang.md` mục [1]):
@@ -279,7 +279,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
             (WCAG 2.4.4/4.1.2, axe link-name). */}
         <a
           href="/"
-          aria-label="Đồng hành cùng bạn — trang chủ"
+          aria-label="Đồng Hành Cùng Bạn — trang chủ"
           className="flex items-center gap-2.5 group shrink-0"
         >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-accent-500 to-accent-400 flex items-center justify-center shadow-lg shadow-accent-500/20 group-hover:scale-105 transition-transform">
@@ -287,7 +287,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
           </div>
           <div className="hidden min-[560px]:flex flex-col">
             <span className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5">
-              Đồng hành cùng bạn
+              Đồng Hành Cùng Bạn
               <span className="hidden md:inline text-[11px] uppercase font-semibold px-1.5 py-0.5 rounded bg-accent-500/10 text-accent-300 theme-light:text-accent-800 border border-accent-500/25">
                 Nền tảng
               </span>
@@ -1072,7 +1072,7 @@ function FaqSection() {
 
   const faqs = [
     {
-      q: '"Đồng hành cùng bạn" là gì — một app học tiếng Anh phải không?',
+      q: '"Đồng Hành Cùng Bạn" là gì — một app học tiếng Anh phải không?',
       a: 'Không. Đây là nền tảng đồng hành cá nhân gồm trụ Học tập (nhiều môn) và trụ Ghi chú (việc cần làm, dự án, cuộc họp, tài liệu), nối với nhau bằng Bạn Đồng Hành — một tác tử AI hiểu ngữ cảnh của bạn ở cả hai. Tiếng Anh là MỘT MÔN trong trụ Học tập; nó là môn đầu tiên nên hiện đầy đủ nhất, chứ không phải toàn bộ nền tảng.',
     },
     {
@@ -1191,7 +1191,7 @@ function Footer({ stats }: { stats: HubStats | null }) {
         <div className="md:col-span-2 flex flex-col gap-2">
           <div className="flex items-center gap-2 text-zinc-100 font-bold text-sm">
             <Sparkles className="w-4 h-4 text-accent-300 theme-light:text-accent-800" />
-            <span>Đồng hành cùng bạn</span>
+            <span>Đồng Hành Cùng Bạn</span>
           </div>
           <p className="text-zinc-200 text-xs leading-relaxed max-w-sm">
             Nền tảng đồng hành cá nhân: học tập, sự nghiệp, khởi nghiệp, và công việc gắn liền đời

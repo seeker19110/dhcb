@@ -76,7 +76,7 @@ export default function Home() {
   // tải xong (dòng "Nhiệm vụ x/y" tự ẩn, xem `buildWeekRhythm`), không toast lỗi.
   const [questsStatus, setQuestsStatus] = useState<QuestsStatus | null>(null)
 
-  usePageTitle('Trang chủ | Đồng hành cùng bạn')
+  usePageTitle('Trang chủ | Đồng Hành Cùng Bạn')
 
   useEffect(() => {
     let cancelled = false

@@ -270,7 +270,7 @@ export default function ExamPlanPage() {
   // [Slice 04] Chữ giao diện theo ngôn ngữ giao diện, không theo chiều học Tiếng Anh.
   const isA = useLang().lang === 'vi'
   usePageTitle(
-    isA ? 'Đếm ngược kỳ thi | Đồng hành cùng bạn' : 'Exam countdown | Đồng hành cùng bạn',
+    isA ? 'Đếm ngược kỳ thi | Đồng Hành Cùng Bạn' : 'Exam countdown | Đồng Hành Cùng Bạn',
   )
   const { user } = useAuth()
   const uid = user?.id ?? ''

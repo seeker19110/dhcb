@@ -273,7 +273,7 @@ export default function HubLogin() {
       <div className="mb-6 text-center animate-fade-in">
         <a
           href="/"
-          aria-label="Đồng hành cùng bạn — về trang chủ"
+          aria-label="Đồng Hành Cùng Bạn — về trang chủ"
           className="inline-flex items-center gap-2 mb-3 group"
         >
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-500 to-accent-400 flex items-center justify-center text-[#09090b] shadow-xl shadow-accent-500/30 group-hover:scale-105 transition-transform">
@@ -281,7 +281,7 @@ export default function HubLogin() {
           </div>
         </a>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-          Đồng hành cùng bạn
+          Đồng Hành Cùng Bạn
         </h1>
         <p className="text-zinc-300 text-xs sm:text-sm mt-1">
           Một tài khoản cho cả nền tảng — Học tập, Ghi chú và mọi môn học

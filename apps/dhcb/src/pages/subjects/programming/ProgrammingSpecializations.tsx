@@ -93,7 +93,7 @@ function SpecCard({
 }
 
 export default function ProgrammingSpecializations() {
-  usePageTitle('Các hướng chuyên sâu | Môn Lập trình · Đồng hành cùng bạn')
+  usePageTitle('Các hướng chuyên sâu | Môn Lập trình · Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
   const [progress, setProgress] = useState<SpecProgressSnapshot>(EMPTY_SPEC_PROGRESS)

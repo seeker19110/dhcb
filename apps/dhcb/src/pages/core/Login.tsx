@@ -51,7 +51,7 @@ export default function Login() {
   const [forgotSending, setForgotSending] = useState(false)
   const [isPopupBlocked, setIsPopupBlocked] = useState(false)
 
-  usePageTitle('Đăng nhập | Đồng hành cùng bạn')
+  usePageTitle('Đăng nhập | Đồng Hành Cùng Bạn')
 
   useEffect(() => {
     // 1. Tải trước SDK OAuth

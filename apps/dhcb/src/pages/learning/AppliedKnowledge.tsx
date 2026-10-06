@@ -17,7 +17,7 @@ import { CapstoneProjects } from './appliedKnowledge/tabs/CapstoneProjects'
 // Mọi thanh trượt mô phỏng đều lấy chữ mô tả từ <span> bên trên, KHÔNG gắn với ô nhập
 // → trình đọc màn hình chỉ đọc "slider" (axe: label). Gắn aria-label cho từng thanh.
 export default function AppliedKnowledge() {
-  usePageTitle('Ứng dụng thực tế | Đồng hành cùng bạn')
+  usePageTitle('Ứng dụng thực tế | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const [activeTab, setActiveTab] = useState<'simulators' | 'library' | 'explainer' | 'projects'>(
     'simulators',

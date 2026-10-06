@@ -108,7 +108,7 @@ const KHONG_CO: string[] = [
 ]
 
 export default function ProgrammingAbout() {
-  usePageTitle('Giới thiệu môn Lập trình | Đồng hành cùng bạn')
+  usePageTitle('Giới thiệu môn Lập trình | Đồng Hành Cùng Bạn')
   const nav = useNavigate()
   const { user } = useAuth()
 
