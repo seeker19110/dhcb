@@ -197,7 +197,7 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
                 <span className="w-16 shrink-0 text-zinc-400">{isA ? 'Từ vựng' : 'Vocab'}</span>
                 <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${a.bar} transition-all`}
+                    className={`h-full rounded-full ${a.bar} transition-[width]`}
                     style={{ width: `${pct(v.done, v.total)}%` }}
                   />
                 </div>
@@ -209,7 +209,7 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
                 <span className="w-16 shrink-0 text-zinc-400">{isA ? 'Ngữ pháp' : 'Grammar'}</span>
                 <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${a.bar} transition-all`}
+                    className={`h-full rounded-full ${a.bar} transition-[width]`}
                     style={{ width: `${pct(g.done, g.total)}%` }}
                   />
                 </div>

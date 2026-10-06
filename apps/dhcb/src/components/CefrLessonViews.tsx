@@ -430,7 +430,7 @@ export function VocabFlash({
         </div>
         <div className="h-1 bg-zinc-800 rounded-full">
           <div
-            className="h-full bg-violet-500 rounded-full transition-all"
+            className="h-full bg-violet-500 rounded-full transition-[width]"
             style={{ width: `${(testOutIdx / testOutQs.length) * 100}%` }}
           />
         </div>
@@ -455,7 +455,7 @@ export function VocabFlash({
                 onClick={() => {
                   if (testOutSel === null) setTestOutSel(opt)
                 }}
-                className={`w-full text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-all ${cls}`}
+                className={`w-full text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-colors ${cls}`}
               >
                 {opt}
               </button>
@@ -608,7 +608,7 @@ export function VocabFlash({
           </div>
           <div className="h-1 bg-zinc-800 rounded-full mb-4">
             <div
-              className="h-full bg-accent-500 rounded-full transition-all"
+              className="h-full bg-accent-500 rounded-full transition-[width]"
               style={{ width: `${(idx / cards.length) * 100}%` }}
             />
           </div>
@@ -1336,7 +1336,7 @@ export function DialogueView({
         {(playing || rolePlay) && activeLine !== null && dialogue.lines.length > 0 && (
           <div aria-hidden="true" className="h-1 bg-zinc-800 rounded-full mt-2 overflow-hidden">
             <div
-              className="h-full bg-accent-500 rounded-full transition-all duration-300"
+              className="h-full bg-accent-500 rounded-full transition-[width] duration-300"
               style={{ width: `${((activeLine + 1) / dialogue.lines.length) * 100}%` }}
             />
           </div>
@@ -1416,7 +1416,7 @@ export function DialogueView({
             return (
               <div key={i} className={`flex ${isB ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 border transition-all ${
+                  className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 border transition ${
                     isActive
                       ? isMyTurn
                         ? 'ring-2 ring-offset-1 ring-offset-zinc-950 ring-accent-500/60 animate-pulse'

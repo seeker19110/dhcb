@@ -115,6 +115,20 @@ export interface ButtonStyleOptions {
 }
 
 /**
+ * Chỉ phần MÀU + trạng thái của một biến thể (nền, chữ, rê chuột, bấm) — không có chiều cao,
+ * đệm, `whitespace-nowrap`.
+ *
+ * VÌ SAO (changelog 0501): có những "nút" là cả một hàng nhiều dòng — vd "Học bài: <tên bài dài>"
+ * ở trang bậc/khoá Lập trình, tên bài xuống 2–3 dòng ở 390px. `buttonClass` đặt chiều cao cố định
+ * (`h-11`) và cấm xuống dòng nên sẽ cắt chữ; đè bằng `className` thì thứ tự thắng của hai lớp
+ * cùng thuộc tính do stylesheet quyết định, không do thứ tự viết. Lấy riêng phần màu ở đây để
+ * hàng nhiều dòng vẫn dùng ĐÚNG màu của biến thể, không chép lại chuỗi màu.
+ */
+export function buttonVariantClass(variant: ButtonVariant = 'primary'): string {
+  return VARIANT_CLASS[variant]
+}
+
+/**
  * Sinh chuỗi class của nút mà không dựng component.
  *
  * VÌ SAO TÁCH RA: rất nhiều "nút" trong app thật ra là `<Link>` của react-router hoặc thẻ

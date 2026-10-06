@@ -191,7 +191,7 @@ export default function Subjects() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4">
             <button
               onClick={() => goToSubjects(nav, 'mathematics')}
-              className="tap-44 flex items-center justify-between p-3 rounded-2xl bg-zinc-950/70 hover:bg-zinc-800 border border-blue-500/30 hover:border-blue-500/60 text-left transition-all active:scale-[0.98] group"
+              className="tap-44 flex items-center justify-between p-3 rounded-2xl bg-zinc-950/70 hover:bg-zinc-800 border border-blue-500/30 hover:border-blue-500/60 text-left transition active:scale-[0.98] group"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <Calculator className="w-4 h-4 text-blue-400 theme-light:text-blue-800 shrink-0" />
@@ -204,7 +204,7 @@ export default function Subjects() {
 
             <button
               onClick={() => nav('/ung-dung-thuc-te')}
-              className="tap-44 flex items-center justify-between p-3 rounded-2xl bg-zinc-950/70 hover:bg-zinc-800 border border-cyan-500/30 hover:border-cyan-500/60 text-left transition-all active:scale-[0.98] group"
+              className="tap-44 flex items-center justify-between p-3 rounded-2xl bg-zinc-950/70 hover:bg-zinc-800 border border-cyan-500/30 hover:border-cyan-500/60 text-left transition active:scale-[0.98] group"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <Sparkles className="w-4 h-4 text-cyan-400 theme-light:text-cyan-800 shrink-0" />
@@ -269,7 +269,7 @@ export default function Subjects() {
         <button
           type="button"
           onClick={() => nav('/ung-dung-thuc-te')}
-          className="tap-44 w-full text-left p-5 rounded-3xl bg-gradient-to-r from-accent-600/20 via-blue-600/20 to-purple-600/20 border border-accent-500/40 hover:border-accent-500/80 cursor-pointer transition-all flex items-center justify-between group shadow-lg active:scale-[0.99]"
+          className="tap-44 w-full text-left p-5 rounded-3xl bg-gradient-to-r from-accent-600/20 via-blue-600/20 to-purple-600/20 border border-accent-500/40 hover:border-accent-500/80 cursor-pointer transition flex items-center justify-between group shadow-lg active:scale-[0.99]"
         >
           <div className="flex items-center gap-4">
             <div className="p-3.5 rounded-2xl bg-accent-500/20 text-accent-400 theme-light:text-accent-800 group-hover:scale-110 transition">
@@ -343,7 +343,7 @@ export default function Subjects() {
               return (
                 <div
                   key={sub.id}
-                  className={`relative h-full overflow-hidden bg-zinc-900/80 rounded-3xl border transition-all flex flex-col justify-between group shadow-sm hover:shadow-lg animate-fade-up ${style.border}`}
+                  className={`relative h-full overflow-hidden bg-zinc-900/80 rounded-3xl border transition flex flex-col justify-between group shadow-sm hover:shadow-lg animate-fade-up ${style.border}`}
                   style={{ animationDelay: `${subIdx * 80}ms` }}
                 >
                   {/* Illustration nền mờ — góc phải trên */}
@@ -403,29 +403,28 @@ export default function Subjects() {
                     </div>
 
                     {/* Mức độ chuẩn hóa */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-                        <GraduationCap className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                        <span>Cấp độ:</span>
-                        <div className="flex gap-1 flex-wrap">
-                          {sub.standardLevels.map((lvl) => (
-                            <span
-                              key={lvl}
-                              className="px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-300 border border-zinc-800 text-[11px] uppercase font-mono"
-                            >
-                              {lvl.replace('grade_', 'Lớp ')}
-                            </span>
-                          ))}
-                        </div>
+                    {/* [0501, audit mục 7 — căn hàng] Lưới 3 cột (biểu tượng · nhãn · giá trị) cho
+                        cả hai dòng: nhãn không còn bị bẻ "Cấp / độ:" ở thẻ STEM, và giá trị của
+                        hai dòng bắt đầu cùng một mép. */}
+                    <div className="mb-4 grid grid-cols-[auto_auto_minmax(0,1fr)] items-start gap-x-1.5 gap-y-2 text-xs text-zinc-400">
+                      <GraduationCap className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                      <span className="whitespace-nowrap">Cấp độ:</span>
+                      <div className="flex gap-1 flex-wrap">
+                        {sub.standardLevels.map((lvl) => (
+                          <span
+                            key={lvl}
+                            className="px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-300 border border-zinc-800 text-[11px] uppercase font-mono"
+                          >
+                            {lvl.replace('grade_', 'Lớp ')}
+                          </span>
+                        ))}
                       </div>
 
-                      <div className="flex items-start gap-1.5 text-xs text-zinc-400">
-                        <Layers className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
-                        <span className="shrink-0">Chế độ chấm:</span>
-                        <span className="min-w-0 text-zinc-300">
-                          {sub.evaluationModes.map(evaluationModeLabel).join(', ')}
-                        </span>
-                      </div>
+                      <Layers className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+                      <span className="whitespace-nowrap">Chế độ chấm:</span>
+                      <span className="min-w-0 text-zinc-300">
+                        {sub.evaluationModes.map(evaluationModeLabel).join(', ')}
+                      </span>
                     </div>
                   </div>
 
@@ -441,7 +440,10 @@ export default function Subjects() {
                       // Tiếng Anh xanh lá, các môn khác màu accent: cùng vai trò mà khác màu thì
                       // người học tưởng hai nút khác nghĩa. Xanh lá dành cho nghĩa "đúng"
                       // (CLAUDE.md §4.8), không làm màu thương hiệu của một môn.
-                      className={buttonClass({ variant: 'primary', size: 'lg', fullWidth: true })}
+                      // [0501, audit M17] `secondary`: sáu thẻ môn là sáu lựa chọn NGANG NHAU — sáu
+                      // nút accent đặc giống hệt nhau thì không còn nút nào là nút chính (luật
+                      // "một nút chính mỗi màn hình", buttonStyles.ts). Vẫn MỘT hình cho mọi môn.
+                      className={buttonClass({ variant: 'secondary', size: 'lg', fullWidth: true })}
                     >
                       <Bot className="w-4 h-4" />
                       {/* Một khuôn nhãn cho cả 6 môn (quyết định chủ dự án 2026-09-15, Q2). */}

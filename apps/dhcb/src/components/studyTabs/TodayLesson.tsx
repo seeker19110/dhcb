@@ -657,7 +657,7 @@ export function TodayLesson({
         </div>
         <div className="h-1 bg-zinc-800 rounded-full">
           <div
-            className="h-full bg-violet-500 rounded-full transition-all"
+            className="h-full bg-violet-500 rounded-full transition-[width]"
             style={{ width: `${(quizIdx / quizQs.length) * 100}%` }}
           />
         </div>
@@ -700,7 +700,7 @@ export function TodayLesson({
                     }
                   }
                 }}
-                className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-all ${cls}`}
+                className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[15px] transition-colors ${cls}`}
               >
                 <QuizOptionKey index={optIdx} />
                 <span className="min-w-0 flex-1">{opt}</span>
@@ -741,7 +741,7 @@ export function TodayLesson({
         </div>
         <div className="h-1 bg-zinc-800 rounded-full mb-4">
           <div
-            className="h-full bg-violet-500 rounded-full transition-all"
+            className="h-full bg-violet-500 rounded-full transition-[width]"
             style={{ width: `${((reviewIdx + 1) / wrongWords.length) * 100}%` }}
           />
         </div>
@@ -839,7 +839,7 @@ export function TodayLesson({
       </div>
       <div className="h-1 bg-zinc-800 rounded-full mb-4">
         <div
-          className="h-full bg-accent-500 rounded-full transition-all duration-300"
+          className="h-full bg-accent-500 rounded-full transition-[width] duration-300"
           style={{ width: `${(idx / batch.length) * 100}%` }}
         />
       </div>

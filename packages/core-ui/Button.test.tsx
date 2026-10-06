@@ -83,3 +83,14 @@ describe('bất biến tương phản: chữ trắng trên nền accent đặc',
     ).toEqual([])
   })
 })
+
+describe('buttonVariantClass — chỉ phần màu của biến thể (changelog 0501)', () => {
+  it('trùng phần màu trong buttonClass và KHÔNG mang chiều cao/cấm xuống dòng', async () => {
+    const { buttonVariantClass } = await import('./buttonStyles.js')
+    for (const variant of ['primary', 'secondary', 'outline', 'danger', 'ghost'] as const) {
+      const mau = buttonVariantClass(variant)
+      expect(buttonClass({ variant })).toContain(mau)
+      expect(mau).not.toMatch(/\bh-\d|whitespace-nowrap|\bpx-\d/)
+    }
+  })
+})

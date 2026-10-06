@@ -40,13 +40,23 @@ const PRIORITY_FILES = [
   'apps/dhcb/src/components/PathStageQuiz.tsx',
   'apps/dhcb/src/components/Layout.tsx',
   'apps/dhcb/src/components/BottomNav.tsx',
+  // Đợt 0501 — luồng học chính.
+  'apps/dhcb/src/pages/learning/Subjects.tsx',
+  'apps/dhcb/src/components/CefrLessonViews.tsx',
+  'apps/dhcb/src/components/studyTabs/TodayLesson.tsx',
+  'apps/dhcb/src/components/studyTabs/SRSReview.tsx',
+  'apps/dhcb/src/components/RoadmapTab.tsx',
+  'apps/dhcb/src/pages/subjects/programming/ProgrammingLevelPage.tsx',
+  'apps/dhcb/src/pages/subjects/programming/ProgrammingCoursePage.tsx',
+  'apps/dhcb/src/pages/subjects/programming/ProgrammingPathStagePage.tsx',
+  'apps/dhcb/src/components/programming/LessonStartButton.tsx',
 ]
 
 describe('transition-all — chỉ được GIẢM (audit M17)', () => {
   // Mốc đo sau đợt 0500. Gỡ thêm chỗ nào thì HẠ số này xuống; đừng bao giờ nâng lên — code mới
   // khai đúng thuộc tính (`transition-colors`/`transition`/`transition-transform`), skill ui-ux
   // mục 10.A.1.
-  const BASELINE = 151
+  const BASELINE = 130 // đợt 0501 (đợt 0500: 151)
 
   it(`toàn kho ≤ ${BASELINE} chỗ`, () => {
     const files = ['apps/dhcb/src', 'apps/hub/src', 'packages'].flatMap((d) =>
@@ -107,6 +117,30 @@ describe('Nút chính theo accent, không tự ghép màu lệch (audit M17)', (
     const src = read('apps/dhcb/src/pages/domains/notes/Notes.tsx')
     expect(src).not.toMatch(/bg-blue-(500|600)\b(?!\/)/)
     expect(src).not.toMatch(/bg-blue-600\/20/)
+  })
+})
+
+describe('Không còn hàng nút chính giống hệt nhau (đợt 0501)', () => {
+  it('trang bậc/khoá/chặng Lập trình dùng LessonStartButton, không chép tay nút accent đặc', () => {
+    for (const f of ['ProgrammingLevelPage', 'ProgrammingCoursePage', 'ProgrammingPathStagePage']) {
+      const src = read(`apps/dhcb/src/pages/subjects/programming/${f}.tsx`)
+      expect(src, f).toContain('<LessonStartButton')
+      expect(src, f).not.toMatch(/w-full[^"]*bg-accent-500 hover:bg-accent-400/)
+    }
+  })
+
+  it('Góc học tập: nút của từng thẻ môn là `secondary`, không phải sáu nút `primary`', () => {
+    const src = read('apps/dhcb/src/pages/learning/Subjects.tsx')
+    expect(src).toMatch(/variant: 'secondary', size: 'lg', fullWidth: true/)
+    expect(src).not.toMatch(/variant: 'primary', size: 'lg', fullWidth: true/)
+  })
+
+  it('không ghép `ghost` + `border` tại chỗ gọi — dùng biến thể `outline`', () => {
+    const files = listSource(join(REPO, 'apps/dhcb/src'))
+    const offenders = files
+      .filter((f) => /variant: 'ghost' \}\)\}[^`]*\bborder\b/.test(readFileSync(f, 'utf8')))
+      .map((f) => f.slice(REPO.length + 1))
+    expect(offenders).toEqual([])
   })
 })
 
