@@ -20,7 +20,7 @@ import KaraokeText, { KARAOKE_INDENT } from '../../../components/KaraokeText'
 import { useAuth } from '../../../context/useAuth'
 import { useLang } from '../../../context/useLang'
 import { getDirection } from '../../../lib/storage'
-import { getViewedIds, markViewed } from '../../../lib/viewedTracking'
+import { markViewed, markLastOpened, suggestContinue } from '../../../lib/viewedTracking'
 import { speak, stopSpeaking, unlockAudio, type Voice } from '../../../lib/tts'
 import { pickRandomVoice } from '../../../lib/voiceTiers'
 import type { Plan } from '../../../types'
@@ -124,12 +124,12 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
     loadIndex().then(setIndex)
   }, [])
 
-  const nextUnviewed = useMemo(() => {
-    if (!uid || !index || index.length === 0) return null
-    const viewed = getViewedIds('listening', uid)
-    return index.find((m) => !viewed.has(m.starter)) ?? null
+  // Luật "Tiếp tục" chung (`suggestContinue`): mẫu đang nghe dở trước, rồi mới mẫu chưa xem.
+  const goiY = useMemo(
+    () => suggestContinue('listening', uid, index ?? [], (m) => m.starter),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, index, viewedRefresh])
+    [uid, index, viewedRefresh],
+  )
 
   const groups = useMemo(() => {
     if (!index) return []
@@ -151,7 +151,10 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
   async function open(meta: SubjectMeta) {
     setOpening(true)
     const s = await loadSubject(meta)
-    if (uid) markViewed('listening', uid, meta.starter)
+    if (uid) {
+      markViewed('listening', uid, meta.starter)
+      markLastOpened('listening', uid, meta.starter)
+    }
     setViewedRefresh((v) => v + 1)
     setSelected(s)
     setOpening(false)
@@ -191,11 +194,11 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
 
   return (
     <div className="space-y-4">
-      {nextUnviewed && !searching && (
+      {goiY && !searching && (
         <ContinueRow
-          label={T.phrasesContinue}
-          title={nextUnviewed.starter}
-          onClick={() => open(nextUnviewed)}
+          label={goiY.kind === 'start' ? T.phrasesStart : T.phrasesContinue}
+          title={goiY.item.starter}
+          onClick={() => open(goiY.item)}
         />
       )}
 

@@ -20,12 +20,7 @@ import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { getDirection } from '../../../lib/storage'
 import { useAuth } from '../../../context/useAuth'
-import {
-  getViewedIds,
-  markViewed,
-  markLastOpened,
-  getLastOpened,
-} from '../../../lib/viewedTracking'
+import { markViewed, markLastOpened, suggestContinue } from '../../../lib/viewedTracking'
 import { loadIndex, loadLesson, type Lesson, type LessonMeta } from '../../../data/lessons/loader'
 import {
   cayBaiHoiThoai,
@@ -254,14 +249,10 @@ export default function Lessons() {
       const ke = viTri >= 0 ? index[viTri + 1] : undefined
       return ke ? { meta: ke, nhan: isA ? 'Bài tiếp theo' : 'Next lesson' } : null
     }
-    const moGanNhat = getLastOpened('lessons', uid)
-    const dangHoc = moGanNhat === null ? undefined : index.find((m) => String(m.id) === moGanNhat)
-    if (dangHoc) return { meta: dangHoc, nhan: isA ? 'Tiếp tục' : 'Continue' }
-    const viewed = getViewedIds('lessons', uid)
-    const dauTien = index.find((m) => !viewed.has(String(m.id)))
-    if (!dauTien) return null
-    const nhan = viewed.size === 0 ? (isA ? 'Bắt đầu' : 'Start') : isA ? 'Tiếp tục' : 'Continue'
-    return { meta: dauTien, nhan }
+    const g = suggestContinue('lessons', uid, index, (m) => String(m.id))
+    if (!g) return null
+    const nhan = g.kind === 'start' ? (isA ? 'Bắt đầu' : 'Start') : isA ? 'Tiếp tục' : 'Continue'
+    return { meta: g.item, nhan }
   })()
 
   // Gợi ý dùng chung cho cả màn danh sách mobile lẫn cột trái desktop.

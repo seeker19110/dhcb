@@ -174,6 +174,7 @@ export const t = {
     phrasesNoResult: 'Không tìm thấy kết quả phù hợp.',
     phrasesLoadMore: 'Tải thêm',
     phrasesContinue: 'Tiếp tục',
+    phrasesStart: 'Bắt đầu',
 
     // Parts of speech
     posPageTitle: 'Từ loại',
@@ -382,6 +383,7 @@ export const t = {
     phrasesNoResult: 'No results found.',
     phrasesLoadMore: 'Load more',
     phrasesContinue: 'Continue',
+    phrasesStart: 'Start',
 
     // Parts of speech
     posPageTitle: 'Parts of Speech',
