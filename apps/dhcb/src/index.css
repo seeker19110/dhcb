@@ -271,7 +271,10 @@ html[data-kbd-nav][data-focus='1'] {
   a:focus-visible,
   input:focus-visible,
   textarea:focus-visible,
-  select:focus-visible {
+  select:focus-visible,
+  /* `summary` (khối gập `<details>`, vd components/Disclosure.tsx) cũng là điều khiển nhận tiêu
+     điểm — thiếu nó thì rơi về viền mặc định của trình duyệt, không theo token (changelog 0500). */
+  summary:focus-visible {
     /* Token riêng theo theme thay cho --a-500: ở Blue sky/Nhi đồng a-500 chỉ 2,65–2,70:1 so với
        nền, dưới sàn 3:1 của WCAG 1.4.11 (audit 2026-09-30 C1). */
     outline: 2px solid rgb(var(--focus-ring));
@@ -283,9 +286,26 @@ html[data-kbd-nav][data-focus='1'] {
   a:focus:not(:focus-visible),
   input:focus:not(:focus-visible),
   textarea:focus:not(:focus-visible),
-  select:focus:not(:focus-visible) {
+  select:focus:not(:focus-visible),
+  summary:focus:not(:focus-visible) {
     outline: none;
   }
+}
+
+/* ===== VIỀN LẤY NÉT HIỆN TỨC THÌ (audit 2026-09-30 M17, changelog 0500) =====
+   `transition-all` (còn ~150 chỗ, gỡ dần khi đụng tới — skill ui-ux mục 10.A.1) làm cả viền
+   lấy nét chuyển động: đo được viền 0px → 2px sau ~200ms, người dùng bàn phím mất dấu vị trí
+   (mục 10.A.4). `transition-colors` của Tailwind 4 cũng liệt kê `outline-color`.
+   Trình duyệt chọn danh sách thuộc tính chuyển động theo style SAU KHI đổi trạng thái, nên khi
+   phần tử VỪA nhận tiêu điểm, danh sách dưới đây được dùng: nó giữ màu/nền/viền/độ mờ/transform
+   (hover vẫn mượt) nhưng bỏ `outline-*` và `box-shadow` (vòng `ring-*`) → viền hiện ngay đủ dày,
+   đủ màu. Thời lượng vẫn lấy từ class của phần tử; phần tử không khai transition thì không đổi gì.
+   Đặt NGOÀI `@layer` để thắng utility `transition-all`/`transition` (utility nằm trong layer).
+   Cổng canh: `apps/dhcb/src/pages/core/DesignSystem.design.test.ts`. */
+:focus-visible {
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke, opacity, transform,
+    translate, scale, rotate;
 }
 
 /* ===== THANG CHỮ NGỮ NGHĨA =====

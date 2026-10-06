@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 import {
   Map,
   Clock,
@@ -126,7 +127,7 @@ export default function ProgrammingPathPage() {
 
         {/* Thông tin đầu vào + tiến độ tổng — đọc từ tiến độ hướng sẵn có */}
         <section className="rounded-3xl border border-accent-500/40 bg-zinc-900 p-5 space-y-3">
-          <p className="text-sm text-zinc-200 leading-relaxed">{path.forWho}</p>
+          <p className="text-sm text-zinc-200 leading-relaxed read-measure">{path.forWho}</p>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-950 border border-zinc-800 text-zinc-300">
               <Lock className="w-3 h-3" aria-hidden="true" />
@@ -160,7 +161,7 @@ export default function ProgrammingPathPage() {
                 <BookOpen className="w-5 h-5 text-accent-400 shrink-0" aria-hidden="true" />
                 <span>Chặng nền tảng — bắt đầu từ số 0</span>
               </h2>
-              <p className="text-sm text-zinc-300 leading-relaxed">
+              <p className="text-sm text-zinc-300 leading-relaxed read-measure">
                 Chưa từng lập trình, bạn bắt đầu ở P1. Nếu đã có kinh nghiệm, làm chẩn đoán phía
                 trên để tìm điểm vào phù hợp — không cần học lại điều đã vững.
               </p>
@@ -220,7 +221,7 @@ export default function ProgrammingPathPage() {
                 Giai đoạn {idx + 1}: {phase.name}
               </span>
             </h2>
-            <p className="text-sm text-zinc-300 leading-relaxed">{phase.canDo}</p>
+            <p className="text-sm text-zinc-300 leading-relaxed read-measure">{phase.canDo}</p>
 
             {isPhaseDrafting(phase) ? (
               <p className="flex items-start gap-2 text-sm text-zinc-300 rounded-2xl bg-zinc-950 border border-zinc-800 p-3">
@@ -275,43 +276,57 @@ export default function ProgrammingPathPage() {
                           {ref.stageId.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-300 leading-relaxed">{ref.why}</p>
-                      {coBai ? (
-                        <button
-                          onClick={() => nav(duongVaoHoc)}
-                          className="tap-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-xs transition active:scale-[0.98]"
-                        >
-                          <Play className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Vào học chặng này</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => nav(duongXemBanDo)}
-                          className="tap-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-accent-500/60 text-zinc-200 font-semibold text-xs transition active:scale-[0.98]"
-                        >
-                          <Map className="w-3.5 h-3.5 text-accent-400" aria-hidden="true" />
-                          <span>Xem bản đồ chặng (bài đang soạn)</span>
-                        </button>
-                      )}
-                      {user &&
-                        (stageHasQuiz(ref.stageId) ? (
+                      <p className="text-xs text-zinc-300 leading-relaxed read-measure">
+                        {ref.why}
+                      </p>
+                      {/* [0500, audit M22] Hành động của chặng gom vào MỘT hàng: nút học + nút bài
+                          kiểm dạng gọn. Trước đây mỗi chặng thêm một hộp "Bài kiểm sau chặng — Mở
+                          bài kiểm" (lặp 32 lần ở `principal-ai`) hoặc dòng "Chặng này chưa có bài
+                          kiểm." — chặng không có bài kiểm nay đơn giản là không có nút đó. */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        {coBai ? (
+                          <button
+                            onClick={() => nav(duongVaoHoc)}
+                            className={buttonClass({
+                              variant: 'primary',
+                              size: 'sm',
+                              className: 'tap-44',
+                            })}
+                          >
+                            <Play className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Vào học chặng này</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => nav(duongXemBanDo)}
+                            className={buttonClass({
+                              variant: 'outline',
+                              size: 'sm',
+                              className: 'tap-44',
+                            })}
+                          >
+                            <Map className="w-3.5 h-3.5 text-accent-400" aria-hidden="true" />
+                            <span>Xem bản đồ chặng (bài đang soạn)</span>
+                          </button>
+                        )}
+                        {user && stageHasQuiz(ref.stageId) && (
                           <PathStageQuiz
+                            inline
                             pathId={path.id}
                             stageId={ref.stageId}
                             stageName={stage?.name ?? ref.stageId}
                             topics={stage?.modules.flatMap((m) => m.topics) ?? []}
                             onPassed={reloadPathProgress}
                           />
-                        ) : (
-                          <p className="text-[11px] text-zinc-500">Chặng này chưa có bài kiểm.</p>
-                        ))}
+                        )}
+                      </div>
                     </li>
                   )
                 })}
               </ol>
             )}
 
-            <p className="flex items-start gap-2 text-xs text-zinc-300 leading-relaxed">
+            <p className="flex items-start gap-2 text-xs text-zinc-300 leading-relaxed read-measure">
               <Award className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" aria-hidden="true" />
               <span>
                 <strong className="text-zinc-200">Bằng chứng chốt giai đoạn:</strong>{' '}

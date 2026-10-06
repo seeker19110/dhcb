@@ -41,6 +41,12 @@ import {
 } from 'lucide-react'
 import Layout from '../../components/Layout.js'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
+import {
+  FEATURE_DESC_CLASS as MO_TA_THE_NOI_BAT,
+  FEATURE_TITLE_CLASS as TIEU_DE_THE_NOI_BAT,
+  SECTION_TITLE_CLASS as TIEU_DE_MUC,
+} from '@core/cardStyles'
 import PvPArenaCard from '../../components/PvPArena/PvPArenaCard.js'
 import { useLang } from '../../context/useLang'
 import { useAuth } from '../../context/useAuth'
@@ -307,7 +313,7 @@ export default function Practice() {
             gradient: axe không xác định được màu nền của gradient nên không đo được 7:1 (cổng
             AAA báo `incomplete`). Gradient rose→amber chỉ còn là dải trang trí mảnh ở mép trên,
             nằm NGOÀI vùng chữ. */}
-        <div className="relative overflow-hidden p-4 sm:p-5 rounded-3xl bg-surface-card border border-rose-500/30 hover:border-rose-500/60 transition-all duration-200 shadow-lg group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="relative overflow-hidden p-4 sm:p-5 rounded-3xl bg-surface-card border border-rose-500/30 hover:border-rose-500/60 transition-colors duration-200 shadow-lg group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 to-amber-500"
@@ -318,17 +324,19 @@ export default function Practice() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-bold text-content text-base">Sổ tay sửa lỗi đa môn AI</h3>
+                <h3 className={TIEU_DE_THE_NOI_BAT}>Sổ tay sửa lỗi đa môn AI</h3>
               </div>
-              <p className="text-xs text-content-secondary leading-relaxed max-w-xl">
+              <p className={MO_TA_THE_NOI_BAT}>
                 Tự động tổng hợp các bẫy biến đổi Toán - Lý - Hóa, lỗi phát âm IPA, sai ngữ pháp
                 IELTS để bạn ôn tập ngắt quãng (SRS) và không lặp lại lỗi sai.
               </p>
             </div>
           </div>
+          {/* [0500, audit M17] Nút CHÍNH của trang (accent) — trước đây đỏ, đứng cạnh nút cam của
+              Đấu trường: hai nút chính khác màu tranh nhau điểm neo. Đấu trường nay là nút phụ. */}
           <button
             onClick={() => nav(duongDanSoTayLoiSai())}
-            className="tap-44 w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-400 text-black font-bold text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95 shrink-0"
+            className={buttonClass({ variant: 'primary', className: 'w-full sm:w-auto shrink-0' })}
           >
             <span>Mở sổ lỗi & ôn tập</span>
             <ArrowRight className="w-4 h-4" />
@@ -370,8 +378,7 @@ export default function Practice() {
             </div>
           )}
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold text-zinc-300 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <h2 className={TIEU_DE_MUC}>
               {isUiVi ? '1. 8 chế độ luyện tập phản xạ nhanh' : '1. Eight quick practice modes'}
             </h2>
           </div>
@@ -555,10 +562,7 @@ export default function Practice() {
             đây chỉ giữ 4 lối tắt một dòng, KHÔNG nhân bản mô tả; kho học liệu bổ trợ đã gỡ hẳn
             khỏi trang này, vào qua thẻ "Tiếng Anh CEFR" ở mục 3. */}
         <section aria-labelledby="practice-ai-tutor" className="space-y-3">
-          <h2
-            id="practice-ai-tutor"
-            className="px-1 text-xs font-bold text-accent-400 theme-light:text-accent-800"
-          >
+          <h2 id="practice-ai-tutor" className={`px-1 ${TIEU_DE_MUC}`}>
             {isUiVi
               ? '2. Luyện với gia sư AI · Tiếng Anh'
               : '2. Practice with the AI tutor · English'}
@@ -586,9 +590,7 @@ export default function Practice() {
         {/* ── 3. LUYỆN TẬP 5 MÔN HỌC CỐT LÕI & GIẢI ĐỀ AI ── */}
         <section aria-label="Luyện tập 5 Môn học cốt lõi" className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold text-blue-300 theme-light:text-blue-800">
-              3. Luyện tập 5 môn học & giải đề từng bước
-            </h2>
+            <h2 className={TIEU_DE_MUC}>3. Luyện tập 5 môn học & giải đề từng bước</h2>
             <button
               onClick={() => goToSubjects(nav)}
               className="text-[11px] text-zinc-400 hover:text-blue-300 transition flex items-center gap-1 font-medium"
@@ -602,7 +604,7 @@ export default function Practice() {
             {/* Toán Học */}
             <button
               onClick={() => goToSubjects(nav, 'mathematics')}
-              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-blue-500/30 hover:border-blue-500/60 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
+              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-blue-500/30 hover:border-blue-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -629,7 +631,7 @@ export default function Practice() {
             {/* Vật Lý */}
             <button
               onClick={() => goToSubjects(nav, 'physics')}
-              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-cyan-500/30 hover:border-cyan-500/60 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
+              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-cyan-500/30 hover:border-cyan-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -656,7 +658,7 @@ export default function Practice() {
             {/* Hóa Học */}
             <button
               onClick={() => goToSubjects(nav, 'chemistry')}
-              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-amber-500/30 hover:border-amber-500/60 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
+              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-amber-500/30 hover:border-amber-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -683,7 +685,7 @@ export default function Practice() {
             {/* Sinh Học */}
             <button
               onClick={() => goToSubjects(nav, 'biology')}
-              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-emerald-500/30 hover:border-emerald-500/60 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
+              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-emerald-500/30 hover:border-emerald-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -710,7 +712,7 @@ export default function Practice() {
             {/* Tiếng Anh Song Ngữ */}
             <button
               onClick={() => nav(duongDanMonTiengAnh())}
-              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-purple-500/30 hover:border-purple-500/60 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
+              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-purple-500/30 hover:border-purple-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -737,7 +739,7 @@ export default function Practice() {
             {/* 10 Simulators Thí Nghiệm */}
             <button
               onClick={() => nav('/ung-dung-thuc-te')}
-              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-teal-500/30 hover:border-teal-500/60 text-left transition-all duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
+              className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-teal-500/30 hover:border-teal-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
             >
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">

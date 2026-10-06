@@ -60,14 +60,14 @@ export default function BottomNav({ companionHasNote = false }: Props) {
         <Link
           to="/"
           aria-current={isHome ? 'page' : undefined}
-          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-all duration-200 group ${
+          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-colors duration-200 group ${
             isHome
               ? 'text-accent-400 theme-light:text-accent-800 font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <div
-            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 ${
+            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition duration-200 ${
               isHome
                 ? 'bg-accent-500/15 text-accent-400 theme-light:text-accent-800 shadow-sm shadow-accent-500/20'
                 : 'group-hover:bg-zinc-800/40 group-active:scale-95'
@@ -81,14 +81,14 @@ export default function BottomNav({ companionHasNote = false }: Props) {
         {/* Tab 2: Góc học tập — nhãn rút gọn "Học" (≤ 8 ký tự, P1-7 lệnh 9). */}
         <SubjectsLink
           ariaCurrent={isLearning ? 'page' : undefined}
-          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-all duration-200 group ${
+          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-colors duration-200 group ${
             isLearning
               ? 'text-emerald-400 theme-light:text-emerald-800 font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <div
-            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 ${
+            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition duration-200 ${
               isLearning
                 ? 'bg-emerald-500/15 text-emerald-400 theme-light:text-emerald-800 shadow-sm shadow-emerald-500/20'
                 : 'group-hover:bg-zinc-800/40 group-active:scale-95'
@@ -103,11 +103,11 @@ export default function BottomNav({ companionHasNote = false }: Props) {
         <Link
           to="/ban-dong-hanh"
           aria-current={isCompanion ? 'page' : undefined}
-          className="bottom-nav-orb-link tap-44 relative flex flex-col items-center justify-center -mt-3.5 text-center text-xs font-medium transition-all duration-200 group"
+          className="bottom-nav-orb-link tap-44 relative flex flex-col items-center justify-center -mt-3.5 text-center text-xs font-medium transition-colors duration-200 group"
           title="Agent Bạn Đồng Hành"
         >
           <div
-            className={`bottom-nav-orb relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-600 via-accent-500 to-indigo-500 text-zinc-950 shadow-lg transition-all duration-200 group-hover:scale-110 group-active:scale-95 ${
+            className={`bottom-nav-orb relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-accent-600 via-accent-500 to-indigo-500 text-zinc-950 shadow-lg transition duration-200 group-hover:scale-110 group-active:scale-95 ${
               isCompanion ? 'ring-2 ring-accent-400 ring-offset-2 ring-offset-zinc-950' : ''
             }`}
           >
@@ -142,14 +142,14 @@ export default function BottomNav({ companionHasNote = false }: Props) {
         <Link
           to="/goc-hoc-tap/on-tap"
           aria-current={isReview ? 'page' : undefined}
-          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-all duration-200 group ${
+          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-colors duration-200 group ${
             isReview
               ? 'text-sky-400 theme-light:text-sky-800 font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <div
-            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 ${
+            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition duration-200 ${
               isReview
                 ? 'bg-sky-500/15 text-sky-400 theme-light:text-sky-800 shadow-sm shadow-sky-500/20'
                 : 'group-hover:bg-zinc-800/40 group-active:scale-95'
@@ -165,14 +165,14 @@ export default function BottomNav({ companionHasNote = false }: Props) {
           to="/trang-ca-nhan"
           aria-current={isProfile ? 'page' : undefined}
           title="Hồ sơ cá nhân"
-          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-all duration-200 group ${
+          className={`tap-44 relative flex flex-col items-center justify-center gap-1 text-center text-xs font-medium transition-colors duration-200 group ${
             isProfile
               ? 'text-accent-400 theme-light:text-accent-800 font-semibold'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <div
-            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 ${
+            className={`flex items-center justify-center py-1 px-2.5 rounded-xl transition duration-200 ${
               isProfile
                 ? 'bg-accent-500/15 text-accent-400 theme-light:text-accent-800 shadow-sm shadow-accent-500/20'
                 : 'group-hover:bg-zinc-800/40 group-active:scale-95'

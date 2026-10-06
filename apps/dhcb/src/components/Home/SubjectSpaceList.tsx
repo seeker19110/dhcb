@@ -98,7 +98,13 @@ export default function SubjectSpaceList({
     return (
       <li
         key={entry.id}
-        className={isDesktop ? 'p-4 rounded-3xl border border-zinc-800 bg-zinc-900/90' : 'p-4'}
+        // [0500, audit mục 7 — căn hàng] Desktop: thẻ là cột flex, hàng hành động đẩy xuống đáy
+        // (`mt-auto`). Lưới đã kéo các thẻ cùng hàng cao bằng nhau, nhưng trước đây nút "Thử 5
+        // phút" bám ngay dưới nội dung nên lệch nhau giữa thẻ có dòng lối tắt (Tiếng Anh) và thẻ
+        // không có (Toán học) — mắt phải dò lại từng thẻ.
+        className={
+          isDesktop ? 'flex flex-col p-4 rounded-3xl border border-zinc-800 bg-zinc-900/90' : 'p-4'
+        }
       >
         <button
           onClick={() => nav(entry.ctaPath)}
@@ -131,7 +137,11 @@ export default function SubjectSpaceList({
           </div>
         </button>
         {(isDesktop || isEmptyState) && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pl-[3.625rem]">
+          <div
+            className={`flex flex-wrap items-center gap-x-4 gap-y-1 pl-[3.625rem] ${
+              isDesktop ? 'mt-auto pt-2' : 'mt-2'
+            }`}
+          >
             {isDesktop &&
               shortcuts.map((sc) => (
                 <button

@@ -21,10 +21,24 @@ describe('Button', () => {
     expect(html).toContain('Đang xử lý')
   })
 
-  it('mọi biến thể đều giữ viền lấy nét bằng bàn phím', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger'] as const) {
-      expect(buttonClass({ variant })).toContain('focus-visible:ring-2')
+  it('mọi biến thể dùng viền lấy nét CHUNG của index.css, không tự tắt hay thay nó', () => {
+    // Viền chung (`--focus-ring`) đã đo ≥ 3:1 ở cả 3 theme; vòng `ring-accent-*` cũ chỉ ~2,6:1
+    // ở Blue sky (audit 2026-09-30 C1). `outline-none` mà lọt lại là mất viền lấy nét chuẩn.
+    for (const variant of ['primary', 'secondary', 'outline', 'danger', 'ghost'] as const) {
+      const cls = buttonClass({ variant })
+      expect(cls).not.toMatch(/outline-none/)
+      expect(cls).not.toMatch(/focus-visible:ring/)
+      // `transition-all` làm viền lấy nét hiện dần 200ms (audit M17) — chỉ chuyển màu.
+      expect(cls).toContain('transition-colors')
+      expect(cls).not.toMatch(/\btransition-all\b/)
     }
+  })
+
+  it('biến thể viền (`outline`) có khung bằng token, không mang màu thương hiệu làm nền', () => {
+    const cls = buttonClass({ variant: 'outline' })
+    expect(cls).toContain('border-line-strong')
+    expect(cls).toContain('bg-transparent')
+    expect(cls).not.toMatch(/\bbg-accent-500\b(?!\/)/)
   })
 
   it('nút chính KHÔNG bao giờ dùng text-white trên nền accent', () => {
