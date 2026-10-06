@@ -1,5 +1,5 @@
 // src/pages/AvatarDemo.tsx — PoC "avatar AI nói chuyện" (mô phỏng khẩu hình theo audio TTS).
-// Trang DEMO ẨN — chỉ vào được qua URL trực tiếp (/avatar-demo), KHÔNG có trong menu/BottomNav,
+// Trang DEMO ẨN — CHỈ ADMIN, vào qua URL trực tiếp (/avatar-demo), KHÔNG có trong menu/BottomNav,
 // KHÔNG gắn vào luồng Luyện nói thật. Xem docs/research/dac-ta-avatar-ai-noi-chuyen-2026-07-28.md
 // (mục 5, bước 1 "PoC nhỏ") — chứng minh cơ chế viseme animation chạy đúng trước khi mở rộng.
 import { MAIN_CONTENT_ID } from '@core/PageShell'

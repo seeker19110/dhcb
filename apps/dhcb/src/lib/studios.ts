@@ -75,3 +75,20 @@ export const STUDIOS: Studio[] = [
 /** Trang KHÔNG có thanh điều hướng nào (đăng nhập, onboarding) — dùng chung cho
  *  BottomNav (mobile) và DesktopSidebar (desktop) để hai bên ẩn/hiện y hệt nhau. */
 export const NAV_HIDDEN_PATHS = ['/login', '/onboarding']
+
+/** Trang giới thiệu công khai (Việt + Anh) — trang bán hàng cho người CHƯA dùng app: thanh bên
+ *  "Hồ sơ · Tiến độ · Free · Nâng cấp" chỉ làm rối (audit UI/UX 2026-09-30 minor 11). Quyết theo
+ *  ĐƯỜNG DẪN, không theo "là khách": `user` chỉ biết sau một vòng mạng, quyết theo nó thì trang
+ *  nhảy bố cục (lề trái 256px → 0) ngay sau khi tải. */
+export const LANDING_PATHS = ['/welcome', '/learn-vietnamese']
+
+/** Trang không bao giờ có thanh điều hướng — nội dung KHÔNG chừa lề cho thanh bên. */
+export function isNavHiddenPath(pathname: string): boolean {
+  return NAV_HIDDEN_PATHS.includes(pathname) || LANDING_PATHS.includes(pathname)
+}
+
+/** Một nơi quyết định có ẩn thanh điều hướng (BottomNav + DesktopSidebar) hay không. Khi
+ *  chưa có `user` (đang tải) cũng ẩn, nhưng lề trái vẫn giữ — xem DesktopSidebar. */
+export function isNavHidden(pathname: string, user: unknown): boolean {
+  return !user || isNavHiddenPath(pathname)
+}

@@ -16,7 +16,7 @@
 // học ép cột bài còn ~424px — hẹp hơn cả máy tính bảng 768px. Mở rộng ở dải này là việc TẠM
 // (không ghi localStorage, tự thu lại khi chọn một trang): lựa chọn đã lưu chỉ áp từ 1280px, để
 // người bấm "mở rộng" ở màn 1440px không vô tình ép cột chữ khi sang laptop 1024px.
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   BookOpen,
@@ -40,7 +40,7 @@ import {
   writeOpenGroups,
   type NavChild,
 } from '../lib/navTree'
-import { STUDIOS, NAV_HIDDEN_PATHS } from '../lib/studios'
+import { STUDIOS, isNavHidden, isNavHiddenPath } from '../lib/studios'
 import { useMediaQuery } from '../lib/useIsDesktopViewport'
 import { sidebarPlanLabel } from '../lib/planLabel'
 import {
@@ -163,16 +163,22 @@ export default function DesktopSidebar() {
   const collapsed = isNarrowDesktop ? narrowExpandedAt !== location.pathname : savedCollapsed
   const [openGroups, setOpenGroups] = useState<string[]>(readOpenGroups)
 
-  // Trang đăng nhập/onboarding không có sidebar → nội dung không được chừa lề trái.
-  const hidden = !user || NAV_HIDDEN_PATHS.includes(location.pathname)
+  const hidden = isNavHidden(location.pathname, user)
+  const neverSidebar = isNavHiddenPath(location.pathname)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement
-    root.dataset.sidebar = hidden ? 'off' : collapsed ? 'collapsed' : 'expanded'
+    root.dataset.sidebar = neverSidebar
+      ? 'none'
+      : hidden
+        ? 'off'
+        : collapsed
+          ? 'collapsed'
+          : 'expanded'
     return () => {
       delete root.dataset.sidebar
     }
-  }, [hidden, collapsed])
+  }, [neverSidebar, hidden, collapsed])
 
   if (hidden) return null
 

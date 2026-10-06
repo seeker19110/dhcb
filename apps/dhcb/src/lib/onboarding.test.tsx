@@ -17,6 +17,7 @@ import {
   DEFAULT_CHAT_SITUATION,
 } from './onboarding'
 import { SITUATIONS } from '../types'
+import { SESSION_MARKER_KEY } from '@core/authHeader'
 
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -30,6 +31,7 @@ function mockProfileResponse(body: unknown, ok = true) {
 
 beforeEach(() => {
   localStorage.clear()
+  localStorage.setItem(SESSION_MARKER_KEY, 'session:test')
   vi.clearAllMocks()
 })
 
@@ -108,6 +110,13 @@ describe('cache localStorage', () => {
 })
 
 describe('fetchOnboarding', () => {
+  it('khách không có cờ phiên → null và không gọi /api/profile', async () => {
+    localStorage.removeItem(SESSION_MARKER_KEY)
+    mockProfileResponse({ userLevel: 'beginner', onboarded: true })
+    expect(await fetchOnboarding('guest-1')).toBeNull()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('hàng hợp lệ → trả dữ liệu VÀ tự ghi cache', async () => {
     mockProfileResponse({
       userLevel: 'intermediate',
@@ -254,6 +263,7 @@ describe('useOnboarding (hook)', () => {
 
   it('chưa có cache → gọi fetch nền rồi cập nhật state', async () => {
     localStorage.clear()
+    localStorage.setItem(SESSION_MARKER_KEY, 'session:test')
     mockProfileResponse({
       userLevel: 'advanced',
       goal: 'work',

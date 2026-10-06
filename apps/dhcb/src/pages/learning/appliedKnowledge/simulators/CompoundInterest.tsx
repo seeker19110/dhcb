@@ -22,10 +22,10 @@ export function CompoundInterest() {
     <div className="p-6 rounded-2xl bg-zinc-900 border border-emerald-500/40 space-y-6">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
         <div>
-          <h3 className="text-base font-bold text-emerald-400 theme-light:text-emerald-800 flex items-center gap-2">
+          <h2 className="text-base font-bold text-emerald-400 theme-light:text-emerald-800 flex items-center gap-2">
             <Calculator className="w-5 h-5" />
             Mô Phỏng 2: Sức Mạnh Lãi Kép Cấp Số Nhân & Kế Hoạch FIRE ($A = P(1+r)^n$)
-          </h3>
+          </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
             Toán Đại Số Lớp 11 & Chiến lược Tự Do Tài Chính (FIRE)
           </p>

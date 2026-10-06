@@ -324,7 +324,7 @@ export default function Practice() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className={TIEU_DE_THE_NOI_BAT}>Sổ tay sửa lỗi đa môn AI</h3>
+                <h2 className={TIEU_DE_THE_NOI_BAT}>Sổ tay sửa lỗi đa môn AI</h2>
               </div>
               <p className={MO_TA_THE_NOI_BAT}>
                 Tự động tổng hợp các bẫy biến đổi Toán - Lý - Hóa, lỗi phát âm IPA, sai ngữ pháp

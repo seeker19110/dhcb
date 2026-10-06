@@ -16,10 +16,10 @@ export function EvnElectricity() {
     <div className="p-6 rounded-2xl bg-zinc-900 border border-yellow-500/40 space-y-6">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
         <div>
-          <h3 className="text-base font-bold text-yellow-400 theme-light:text-yellow-800 flex items-center gap-2">
+          <h2 className="text-base font-bold text-yellow-400 theme-light:text-yellow-800 flex items-center gap-2">
             <Zap className="w-5 h-5" />
             Mô Phỏng 4: Công Suất Điện & Tối Ưu Hóa Đơn EVN 6 Bậc ($A = P \\cdot t$)
-          </h3>
+          </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
             Vật lý điện học lớp 9 & biểu giá điện bậc thang sinh hoạt EVN
           </p>

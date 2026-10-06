@@ -869,12 +869,16 @@ export default function App() {
                           </RequireAccount>
                         }
                       />
+                      {/* [audit 2026-09-30 minor 5] Trang thử nghiệm avatar — CHỈ admin. Trước đây
+                          bọc AllowGuest nên ai gõ URL cũng vào được một bản thử chưa hoàn thiện. */}
                       <Route
                         path="/avatar-demo"
                         element={
-                          <AllowGuest>
-                            <AvatarDemo />
-                          </AllowGuest>
+                          <RequireAccount>
+                            <RequireAdmin>
+                              <AvatarDemo />
+                            </RequireAdmin>
+                          </RequireAccount>
                         }
                       />
                       {/* ── Gom URL trùng (Đợt 3, docs/research/nang-tam-du-an-2026-08-24.md §4) ──

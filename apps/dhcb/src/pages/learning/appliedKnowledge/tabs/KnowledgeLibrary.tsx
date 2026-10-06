@@ -114,7 +114,7 @@ export function KnowledgeLibrary() {
                   </span>
                   <span className="text-xs text-zinc-400">• {item.topic}</span>
                 </div>
-                <h4 className="text-base font-bold text-zinc-100">{item.title}</h4>
+                <h2 className="text-base font-bold text-zinc-100">{item.title}</h2>
               </div>
             </div>
 

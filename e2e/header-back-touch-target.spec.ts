@@ -63,9 +63,13 @@ for (const width of [320, 390]) {
           await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
           await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
         }
+        // [audit 2026-09-30 minor 9] Dưới 1024px có ĐÚNG MỘT lối vào Bạn Đồng Hành: Orb ở
+        // BottomNav khi thanh đáy hiện; nút ở header khi thanh đáy ẩn (chế độ tập trung của bài
+        // Lập trình).
+        const bottomNavVisible = await page.locator('nav.bottom-nav').isVisible()
         await expect(
           page.locator('header').getByRole('button', { name: 'Mở Bạn Đồng Hành AI' }),
-        ).toBeVisible()
+        ).toHaveCount(bottomNavVisible ? 0 : 1)
 
         if (route.name === 'CEFR') {
           await back.click()

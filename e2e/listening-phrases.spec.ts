@@ -1,4 +1,4 @@
-// e2e/listening-phrases.spec.ts — Cổng canh audit 2026-09-22 P0-1: tab "Câu thông dụng" của
+// e2e/listening-phrases.spec.ts — Cổng canh audit 2026-09-22 P0-1: tab "Mẫu câu" (trước là "Câu thông dụng") của
 // Luyện nghe từng in phẳng 1.000 thẻ (74.309px ở 390px). Nay nhóm theo chủ đề + tìm kiếm +
 // "Xem thêm"; trang ở 390px phải nằm trong ~4 màn hình.
 import { test, expect } from '@playwright/test'
@@ -7,7 +7,7 @@ import { muteTts } from './helpers/tts'
 
 const ROUTE = '/goc-hoc-tap/english/luyen-nghe'
 
-test.describe('Luyện nghe — tab Câu thông dụng', () => {
+test.describe('Luyện nghe — tab Mẫu câu', () => {
   test.beforeEach(async ({ page }) => {
     await mockLogin(page)
     await muteTts(page)

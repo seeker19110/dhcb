@@ -174,7 +174,11 @@
   --a-500: 249 115 22;
   --a-600: 234 88 12;
   --a-700: 154 52 18;
-  --a-800: 154 52 18;
+  /* [audit 2026-09-30 minor 2] Trước đây a-800 = a-700 (154 52 18) chỉ 6,77:1 trên nền thẻ
+     #fdf6e1 — trượt AAA cho chữ nội dung `theme-light:text-accent-800` (nhãn "Mẹo" ở tab Tra từ,
+     lộ ra khi Từ điển mở tab này mặc định). 142 48 17 = 7,53:1, vẫn cùng sắc cam và đậm hơn a-700
+     đúng thứ tự thang màu. */
+  --a-800: 142 48 17;
   --a-900: 124 45 18;
   /* Viền focus bàn phím (WCAG 1.4.11 ≥ 3:1 trên nền trang/thẻ/ô nổi) — = a-700; a-500 cũ chỉ 2,70:1 (audit 2026-09-30 C1), nay 7,05:1.
      Cổng: apps/dhcb/src/lib/themeContrast.test.ts. */

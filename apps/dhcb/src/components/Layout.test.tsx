@@ -123,7 +123,7 @@ describe('Layout — header mobile 4 khe (P0-4)', () => {
     expect(demSoPhanTuTuongTac(html)).toBeLessThanOrEqual(3)
   })
 
-  it('trang chủ, mobile (390px): ẩn nút "Đồng Hành AI" (Orb + ô hỏi đã là 2 lối vào)', () => {
+  it('trang chủ, mobile (390px): ẩn nút "Đồng Hành AI" (Orb ở BottomNav đã là lối vào)', () => {
     withViewport(390)
     const html = renderToStaticMarkup(
       <MemoryRouter>
@@ -133,8 +133,20 @@ describe('Layout — header mobile 4 khe (P0-4)', () => {
     expect(html).not.toContain('Mở Bạn Đồng Hành AI')
   })
 
-  it('trang thường, mobile (390px): VẪN giữ nút "Đồng Hành AI"', () => {
+  // [audit 2026-09-30 minor 9] Dưới 1024px Orb của BottomNav luôn có mặt → header không lặp
+  // lối vào thứ hai, ở MỌI trang (không chỉ Trang chủ).
+  it('trang thường, mobile (390px): KHÔNG còn nút "Đồng Hành AI" ở header', () => {
     withViewport(390)
+    const html = renderToStaticMarkup(
+      <MemoryRouter initialEntries={['/bai-hoc']}>
+        <Layout title="Bài học" />
+      </MemoryRouter>,
+    )
+    expect(html).not.toContain('Mở Bạn Đồng Hành AI')
+  })
+
+  it('trang thường, desktop (≥1024px): còn nút "Đồng Hành AI" (không có BottomNav)', () => {
+    withViewport(1280)
     const html = renderToStaticMarkup(
       <MemoryRouter initialEntries={['/bai-hoc']}>
         <Layout title="Bài học" />

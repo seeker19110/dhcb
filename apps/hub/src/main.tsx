@@ -1,3 +1,6 @@
+// Font Inter tự host — cùng gói và cùng cách nạp với app chính (apps/dhcb/src/main.tsx), để hub
+// và app trông là MỘT sản phẩm (audit 2026-09-30 minor 10).
+import '@fontsource-variable/inter/wght.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { applyTheme, getTheme } from '@core/theme'

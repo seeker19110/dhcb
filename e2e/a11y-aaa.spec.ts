@@ -621,6 +621,8 @@ for (const theme of THEMES) {
   test(`a11y AAA: hai mặt thẻ từ theme=${theme}`, async ({ page }) => {
     await mockLogin(page, 'vi', theme)
     await page.goto('/tu-dien', { waitUntil: 'domcontentloaded' })
+    // [audit 2026-09-30 minor 2] Từ điển nay mở ô tra từ; thẻ ghi nhớ ở tab "Hôm nay".
+    await page.getByRole('button', { name: 'Hôm nay', exact: true }).click()
     const card = page.locator('button.flip-scene').first()
     const front = card.locator('.flip-face').first()
     const back = card.locator('.flip-back')

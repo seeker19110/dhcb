@@ -4,7 +4,7 @@
 // Chiến lược 2 tầng giống profile (lib/auth.ts): cache localStorage (~1ms, ghi
 // ngay lúc onboarding xong) → Supabase (chạy nền, cho thiết bị mới chưa có cache).
 import { useEffect, useState } from 'react'
-import { getAuthHeader } from '@core/authHeader'
+import { getAuthHeader, getStoredToken } from '@core/authHeader'
 import type { Level, AgeGroup } from '../types'
 import type { DailySpeed } from './curriculum'
 
@@ -54,6 +54,9 @@ export function cacheOnboarding(uid: string, data: OnboardingData): void {
 // Đọc từ GET /api/profile (Giai đoạn C — trước đây gọi thẳng Supabase `profiles` qua RLS).
 // Trả null khi chưa onboarded / lỗi mạng / dữ liệu lạ. Thành công thì tự ghi cache.
 export async function fetchOnboarding(uid: string): Promise<OnboardingData | null> {
+  // [audit 2026-09-30 minor 7] Khách (chưa có cờ phiên) không có hồ sơ trên server — gọi
+  // /api/profile chỉ để nhận 401 đỏ trong console mỗi lần tải trang.
+  if (!getStoredToken()) return null
   try {
     const resp = await fetch('/api/profile', { headers: getAuthHeader() })
     if (!resp.ok) return null

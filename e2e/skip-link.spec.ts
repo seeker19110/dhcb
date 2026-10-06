@@ -15,7 +15,7 @@ test('Tab lần đầu là skip link, Enter đưa tiêu điểm thẳng vào n�
   await page.setViewportSize({ width: 1440, height: 1000 })
   // Chọn trang NHIỀU điểm dừng Tab nhất — nơi liên kết này có giá trị rõ nhất.
   await page.goto('/lo-trinh-hoc/a1')
-  await expect(page.getByRole('button', { name: /Lộ trình A1/ }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /Lộ trình CEFR/ }).first()).toBeVisible()
 
   // 1) Điểm dừng Tab ĐẦU TIÊN của trang phải là skip link. Bản đầu đặt nó trong `Layout` và
   //    đo ra sai: `DesktopSidebar` render TRƯỚC `Layout` nên Tab lần 1 rơi vào logo sidebar,

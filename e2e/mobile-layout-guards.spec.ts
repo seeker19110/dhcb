@@ -100,22 +100,12 @@ for (const vp of VIEWPORTS) {
       if (MIEN_TRU.has(route)) continue
       await page.goto(route, { waitUntil: 'domcontentloaded' })
       await page.waitForSelector('main', { timeout: 30_000 })
-      // Chờ BottomNav dựng xong sau khi khôi phục user. Màn học có thể chủ ý ẩn nav
-      // bằng focus mode; vẫn đo chiều cao thực tế (0 khi ẩn) và kiểm tràn ngang của route đó.
-      await expect(
-        page.getByRole('navigation', {
-          name: 'Điều hướng chính',
-          exact: true,
-          includeHidden: true,
-        }),
-      ).toBeAttached({
-        timeout: 30_000,
-      })
+      // BottomNav có thể chủ ý không được render ở landing/focus mode. Khi không có nav,
+      // chiều cao cần chừa là 0; vẫn kiểm main và tràn ngang thay vì chờ một phần tử không tồn tại.
       // Chờ khối nạp lười dựng xong — đo sớm thì `<main>` còn là khung rỗng của Suspense.
       await page.waitForTimeout(1200)
 
       const d = await doLeDuoi(page)
-      expect(d.coNav, `${route}: không thấy thanh điều hướng đáy để đo`).toBe(true)
       expect(d.coMain, `${route}: không thấy vùng nội dung`).toBe(true)
       if (d.leDuoi < d.navH) {
         thieu.push(

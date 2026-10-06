@@ -42,7 +42,7 @@ export function AiExplainer() {
           <Sparkles className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-base font-bold">Trợ lý AI giải đáp bản chất đời sống</h3>
+          <h2 className="text-base font-bold">Trợ lý AI giải đáp bản chất đời sống</h2>
           <p className="text-xs text-zinc-400">
             Đặt bất kỳ câu hỏi nào về tính ứng dụng của kiến thức vào cuộc sống
           </p>

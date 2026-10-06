@@ -147,9 +147,9 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
 
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <h3 className="font-bold text-white text-base leading-tight">
+                  <h2 className="font-bold text-white text-base leading-tight">
                     {isA ? level.titleVi : level.titleEn}
-                  </h3>
+                  </h2>
                   {isCurrent && (
                     <span
                       className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${a.soft} ${a.text}`}

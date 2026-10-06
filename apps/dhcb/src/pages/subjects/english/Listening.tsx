@@ -1,5 +1,5 @@
 // Listening — trang "Thư viện Nghe" (/listening), gom mọi nội dung để NGHE-HIỂU (khác /phrases và
-// mục "Nghe" ở /practice vốn là bài tập CÓ CHẤM ĐIỂM). 2 tab: Câu thông dụng · Hội thoại.
+// mục "Nghe" ở /practice vốn là bài tập CÓ CHẤM ĐIỂM). 2 tab: Mẫu câu · Hội thoại.
 // Tab Truyện trước đây ở đây đã tách thành trang riêng /stories (2026-08-02, xem Stories.tsx)
 // để dễ phát triển thêm tính năng sau.
 // Xem docs/research/dac-ta-trang-nghe-2026-08-01.md mục 6 + danh-muc-truyen-nghe-2026-08-01.md mục 9.

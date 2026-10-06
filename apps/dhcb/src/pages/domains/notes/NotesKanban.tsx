@@ -162,7 +162,7 @@ export default function NotesKanban() {
               <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-400 theme-light:text-amber-900" />
-                  <h3 className="text-sm font-bold text-white">CẦN THỰC HIỆN</h3>
+                  <h2 className="text-sm font-bold text-white">CẦN THỰC HIỆN</h2>
                   <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-xs font-bold text-zinc-300">
                     {todoTasks.length}
                   </span>
@@ -256,7 +256,7 @@ export default function NotesKanban() {
               <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 theme-light:text-emerald-900" />
-                  <h3 className="text-sm font-bold text-white">ĐÃ HOÀN THÀNH</h3>
+                  <h2 className="text-sm font-bold text-white">ĐÃ HOÀN THÀNH</h2>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 theme-light:bg-emerald-50 text-xs font-bold text-emerald-300 theme-light:text-emerald-900">
                     {doneTasks.length}
                   </span>
