@@ -163,6 +163,20 @@ for (const route of AUTHED_ROUTES) {
   }
 }
 
+// [audit 2026-09-30 minor 2] Từ điển nay mở mặc định ô TRA TỪ, nên vòng AUTHED_ROUTES ở trên quét
+// tab đó. Tab thẻ ghi nhớ "Hôm nay" (trước là mặc định) quét riêng ở đây để cổng không mất phủ.
+for (const theme of THEMES) {
+  test(`a11y: /tu-dien tab "Hôm nay" theme=${theme} — 0 vi phạm A/AA`, async ({ page }) => {
+    await mockLogin(page, 'vi', theme)
+    await page.goto('/tu-dien', { waitUntil: 'domcontentloaded' })
+    await page.getByRole('button', { name: 'Hôm nay', exact: true }).click()
+    await expect(page.locator('button.flip-scene').first()).toBeVisible()
+    await waitForStableDom(page)
+    const { all } = await scan(page)
+    expect(all).toEqual([])
+  })
+}
+
 // ── [U3] TRANG CHỈ RỚT AA KHI CÓ DỮ LIỆU THẬT (audit UI/UX 2026-09-30, mục C4 + 11) ─────
 // Audit đo 14 trang trượt axe AA khi có dữ liệu thật mà KHÔNG trang nào nằm trong cổng: hoặc
 // trang vắng mặt khỏi danh sách quét, hoặc API riêng của trang không được mock nên phần tử rớt
