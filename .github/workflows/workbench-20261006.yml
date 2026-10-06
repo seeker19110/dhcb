@@ -1,4 +1,4 @@
-name: Verify profile password update 20261006
+name: Prepare Google-only accessibility correction
 
 on:
   push:
@@ -9,61 +9,31 @@ permissions:
   contents: write
 
 jobs:
-  verify:
+  correction:
     if: github.repository == 'seeker19110/dhcb'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     env:
       HUSKY: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          path: transfer
-          persist-credentials: false
-      - name: Verify exact patch prepared locally
+          ref: aa35550d05b11b24cd5c7ae1cda14a29a441d53f
+      - name: Correct expected provider, preserving every accessibility rule
         run: |
           python3 - <<'PY'
-          import base64, gzip, hashlib
           from pathlib import Path
-          encoded = ''.join(Path(f'transfer/.workbench/auth-{i}.b64').read_text().strip() for i in range(3))
-          patch = gzip.decompress(base64.b64decode(encoded, validate=True))
-          assert hashlib.sha256(patch).hexdigest() == 'b90323ee17429d9fc3997f3f33a2798dbd46519a3327adaa2178cca0bad1478f'
-          Path('/tmp/profile-auth.patch').write_bytes(patch)
+          p = Path('e2e/a11y.spec.ts')
+          text = p.read_text()
+          old = "    await expect(page.getByRole('button', { name: /Microsoft/i })).toBeVisible()"
+          new = "    await expect(page.getByRole('button', { name: /Google/i })).toBeVisible()\n    await expect(page.getByRole('button', { name: /Microsoft|Apple|Facebook/i })).toHaveCount(0)"
+          assert text.count(old) == 1
+          p.write_text(text.replace(old, new))
           PY
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/profile-password-google-20261006
-          path: source
-      - name: Apply patch only to isolated source branch
-        working-directory: source
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = '4fe3eb2d5d1e80ef5301533a66adf2b0cac3bb98'
-          git apply --check /tmp/profile-auth.patch
-          git apply /tmp/profile-auth.patch
           git diff --check
-          git add -- apps/dhcb/src apps/hub/src packages/core-auth packages/core-ui e2e/profile-password.spec.ts docs/changelog/0502-2026-10-06-profile-password-google.md
+          git add e2e/a11y.spec.ts
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'feat(auth): đổi mật khẩu trong hồ sơ và chỉ hiển thị Google'
-          git push origin HEAD:refs/heads/feat/profile-password-google-20261006
+          git commit -m 'test(auth): cập nhật kiểm tra a11y cho đăng nhập chỉ Google'
+          git push origin HEAD:refs/heads/workbench/auth-a11y-20261006
           git rev-parse HEAD
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm ci --no-audit --no-fund
-        working-directory: source
-      - run: npx playwright install --with-deps chromium
-        working-directory: source
-      - name: Browser tests with mock APIs, no production credentials
-        run: npm run test:e2e -- e2e/profile-password.spec.ts
-        working-directory: source
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: profile-password-browser-evidence
-          path: |
-            source/test-results/
-            source/playwright-report/
-          retention-days: 2
-          if-no-files-found: warn
