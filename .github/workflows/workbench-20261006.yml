@@ -1,4 +1,4 @@
-name: Verify admin unlimited policy assertions
+name: Integrate upstream UI without losing learning policy
 
 on:
   push:
@@ -9,72 +9,99 @@ permissions:
   contents: write
 
 jobs:
-  verify:
+  integrate:
     if: github.repository == 'seeker19110/dhcb'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     env:
       HUSKY: '0'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: b5663f2ba48ade03d994845e1aea09572e1c989e
-      - name: Update two obsolete expectations, keep quota and rollback assertions
+          ref: 6d59c3cbc37f35bc8fb41c97d2088fa5849bb024
+          fetch-depth: 0
+      - name: Merge known upstream commit and reconcile only HTML content
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-commit --no-ff 5c9aa1ecd2a09ee40ef5b4a08c943b8b6efdfe1b || true
           python3 - <<'PY'
+          import json, re, subprocess
           from pathlib import Path
-          p = Path('e2e/admin.spec.ts')
-          s = p.read_text()
-          start = s.index("  test('Limits: Hiện input Free và VIP'")
-          end = s.index("  test('Limits: Bật checkbox khuyến mãi")
-          assert s[start:end].count('  test(') == 2
-          replacement = r'''  test('Limits: chỉ Free có ô hạn mức; VIP được mô tả không giới hạn', async ({ page }) => {
-              await gotoAdmin(page, 'limits')
-              await expect(page.getByLabel('Gói Free (lượt/ngày)')).toBeVisible({
-                timeout: VISIBLE_TIMEOUT,
-              })
-              await expect(page.getByLabel('Gói VIP (lượt/ngày)')).toHaveCount(0)
-              await expect(page.getByText(/VIP không giới hạn lượt AI\/ngày/)).toBeVisible()
-            })
-
-            test('Limits: Free=200; lưu thay đổi Free không làm mất cấu hình VIP cũ để rollback', async ({ page }) => {
-              await gotoAdmin(page, 'limits')
-              const freeInput = page.getByLabel('Gói Free (lượt/ngày)')
-              await expect(freeInput).toHaveValue('200', { timeout: VISIBLE_TIMEOUT })
-              await expect(page.locator('input[type="number"]')).toHaveCount(1)
-              const posted = page.waitForRequest(
-                (request) => request.url().endsWith('/api/admin-settings') && request.method() === 'POST',
-              )
-              await freeInput.fill('201')
-              await page.getByRole('button', { name: 'Lưu cấu hình' }).first().click()
-              expect((await posted).postDataJSON().limits).toEqual({ free: 201, vip: 999 })
-            })
-
-          '''
-          p.write_text(s[:start] + replacement + s[end:])
+          upstream = '5c9aa1ecd2a09ee40ef5b4a08c943b8b6efdfe1b'
+          paths = ['apps/dhcb/index.html', 'apps/hub/index.html']
+          conflicts = subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=U'], text=True).splitlines()
+          assert set(conflicts) <= set(paths), conflicts
+          assert Path('.git/MERGE_HEAD').read_text().strip() == upstream
+          def show(ref, path):
+              return subprocess.check_output(['git', 'show', f'{ref}:{path}'], text=True)
+          for path in paths:
+              ours = show('HEAD', path)
+              merged = show(upstream, path)
+              # Keep upstream theme defaults, anti-flash script and removal of provider preconnects.
+              # Replace only agreed product copy, never their new runtime/offline behavior.
+              patterns = [r'<title>[\s\S]*?</title>']
+              patterns += [r'<meta\b(?=[^>]*(?:name|property)="' + re.escape(name) + r'")[^>]*>' for name in ['description', 'keywords', 'og:title', 'og:description', 'twitter:title', 'twitter:description']]
+              for pattern in patterns:
+                  source = re.search(pattern, ours)
+                  target = re.search(pattern, merged)
+                  if source and target:
+                      merged = merged[:target.start()] + source.group(0) + merged[target.end():]
+              if path == 'apps/dhcb/index.html':
+                  original_blocks = [json.loads(m.group(1)) for m in re.finditer(r'<script type="application/ld\+json">([\s\S]*?)</script>', ours)]
+                  app_copy = original_blocks[0]['@graph'][0]['description']
+                  def update_json(match):
+                      data = json.loads(match.group(1))
+                      if '@graph' in data:
+                          for item in data['@graph']:
+                              if item.get('@type') == 'WebApplication':
+                                  item['name'] = 'Đồng Hành Cùng Bạn — Học hỏi và tự học tốt hơn'
+                                  item['description'] = app_copy
+                      if data.get('@type') == 'FAQPage':
+                          # Preserve the newly added offline-download explanation from upstream.
+                          for question in data['mainEntity']:
+                              if question['name'] == 'Ứng dụng có miễn phí không?':
+                                  question['acceptedAnswer']['text'] = 'Có. Bạn có thể bắt đầu không cần đăng nhập, với các tính năng AI dùng thử có hạn mức. Tài khoản Miễn phí có lượt AI mỗi ngày theo hạn mức hiển thị trong ứng dụng. VIP cho phép tự chọn bài trong nội dung đã mở và không giới hạn lượt AI trong thời gian gói còn hiệu lực.'
+                      return '<script type="application/ld+json">\n' + json.dumps(data, ensure_ascii=False, indent=2) + '\n    </script>'
+                  merged = re.sub(r'<script type="application/ld\+json">([\s\S]*?)</script>', update_json, merged)
+              Path(path).write_text(merged)
+          test = Path('apps/dhcb/src/lib/publicMetadata.test.ts')
+          text = test.read_text()
+          assert text.count("expect(APP_HTML).toMatch(/30 lượt/)") == 1
+          text = text.replace('FAQ nói đúng hạn mức gói Miễn phí (30 lượt AI/ngày) và gói VIP', 'FAQ phân biệt AI miễn phí có hạn mức với VIP không giới hạn khi còn hiệu lực')
+          text = text.replace('expect(APP_HTML).toMatch(/30 lượt/)', 'expect(APP_HTML).toMatch(/hạn mức hiển thị/)')
+          text = text.replace('expect(APP_HTML).toMatch(/VIP/)', 'expect(APP_HTML).toMatch(/VIP.*không giới hạn lượt AI.*hiệu lực/)')
+          test.write_text(text)
+          subprocess.run(['git', 'add', *paths, str(test)], check=True)
+          assert not subprocess.check_output(['git', 'diff', '--name-only', '--diff-filter=U'], text=True).strip()
           PY
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: npm ci --no-audit --no-fund
-      - name: Format and publish correction to isolated branch only
+      - name: Format and publish integrated tree to temporary branch
         run: |
-          npx prettier --write e2e/admin.spec.ts
+          npx prettier --write apps/dhcb/index.html apps/hub/index.html apps/dhcb/src/lib/publicMetadata.test.ts
           git diff --check
-          git add e2e/admin.spec.ts
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'test(billing): kiểm tra VIP không giới hạn và giữ cấu hình Free'
-          git push origin HEAD:refs/heads/workbench/admin-policy-20261006
-          git rev-parse HEAD
+          git add apps/dhcb/index.html apps/hub/index.html apps/dhcb/src/lib/publicMetadata.test.ts
+          git commit -m 'merge: giữ theme và tải ngoại tuyến mới cùng chính sách học tập'
+          git push origin HEAD:refs/heads/workbench/policy-upstream-20261006
+          mkdir -p /tmp/integration
+          git diff --binary 6d59c3cbc37f35bc8fb41c97d2088fa5849bb024 HEAD > /tmp/integration/upstream.patch
+          git diff --name-only 6d59c3cbc37f35bc8fb41c97d2088fa5849bb024 HEAD > /tmp/integration/paths.txt
+          tar -czf /tmp/integration/updated-files.tar.gz -T /tmp/integration/paths.txt
+          git rev-parse HEAD > /tmp/integration/SHA
+      - name: Check merged metadata, theme, offline gates and public content
+        run: npx vitest run apps/dhcb/src/lib/publicMetadata.test.ts apps/dhcb/src/lib/offlineDownload.test.ts packages/core-ui/theme.test.ts apps/dhcb/src/components/Home/GuestHome.test.tsx
       - run: npx playwright install --with-deps chromium
-      - name: Verify the real admin form using mock API data
-        run: npm run test:e2e -- e2e/admin.spec.ts --grep 'Limits:'
+      - name: Check integrated public and admin browser flows
+        run: npm run test:e2e -- e2e/learning-policy.spec.ts e2e/admin.spec.ts --grep 'Limits:|giới thiệu|Giới thiệu|VIP|tiếng Anh'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: admin-policy-browser-evidence
+          name: integrated-upstream-evidence
           path: |
+            /tmp/integration/
             test-results/
             playwright-report/
           retention-days: 2
