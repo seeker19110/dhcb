@@ -12,7 +12,9 @@ export default function MessageInput({
   onSendMessage,
   onTyping,
   disabled = false,
-  placeholder = 'Nhập tin nhắn… (Enter để gửi, Shift+Enter xuống dòng)',
+  // [audit 2026-09-30 minor 14] Không ghi "(Enter để gửi…)" — dài, bị cắt ở màn hẹp và sai
+  // nghĩa trên bàn phím điện thoại. `enterKeyHint="send"` ở dưới thay vai trò đó.
+  placeholder = 'Nhập tin nhắn…',
 }: MessageInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -66,6 +68,7 @@ export default function MessageInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
+          enterKeyHint="send"
           className="w-full resize-none bg-transparent text-sm text-white placeholder-zinc-400 focus:outline-none max-h-[120px] py-1 leading-relaxed"
           aria-label="Nhập tin nhắn"
         />
