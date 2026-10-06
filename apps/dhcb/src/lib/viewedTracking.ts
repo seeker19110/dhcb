@@ -54,3 +54,37 @@ export function getLastOpened(namespace: string, uid: string): string | null {
     return null
   }
 }
+
+/** Gợi ý đầu danh sách: mục nào, và gọi là "Tiếp tục" hay "Bắt đầu". */
+export interface ContinueSuggestion<T> {
+  item: T
+  /** `continue` khi đã từng mở/xem mục nào đó trong danh sách; `start` với người mới. */
+  kind: 'continue' | 'start'
+}
+
+/**
+ * MỘT luật gợi ý "Tiếp tục" cho mọi danh sách duyệt tuần tự (bài hội thoại, câu thông dụng, mẫu
+ * câu luyện nghe) — trước đây mỗi trang tự chép "mục đầu tiên chưa xem", nên vừa mở mục 1 quay ra
+ * đã thấy "Tiếp tục: mục 2" (audit 2026-09-30 M19). Thứ tự:
+ *  1. mục MỞ GẦN NHẤT còn trong danh sách → "Tiếp tục" chính mục đó (mục đang học);
+ *  2. không có → mục đầu tiên chưa xem; nhãn "Bắt đầu" nếu chưa xem mục nào, ngược lại "Tiếp tục"
+ *     (người đã xem trước khi có khoá "mở gần nhất");
+ *  3. đã xem hết, không có mục mở gần nhất → không gợi ý.
+ */
+export function suggestContinue<T>(
+  namespace: string,
+  uid: string,
+  items: readonly T[],
+  keyOf: (item: T) => string,
+): ContinueSuggestion<T> | null {
+  if (!uid || items.length === 0) return null
+  const moGanNhat = getLastOpened(namespace, uid)
+  if (moGanNhat !== null) {
+    const dangHoc = items.find((it) => keyOf(it) === moGanNhat)
+    if (dangHoc !== undefined) return { item: dangHoc, kind: 'continue' }
+  }
+  const viewed = getViewedIds(namespace, uid)
+  const dauTien = items.find((it) => !viewed.has(keyOf(it)))
+  if (dauTien === undefined) return null
+  return { item: dauTien, kind: viewed.size === 0 ? 'start' : 'continue' }
+}

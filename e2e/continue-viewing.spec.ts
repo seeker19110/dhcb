@@ -28,18 +28,22 @@ test.describe('Gợi ý "Tiếp tục" — đánh dấu đã xem', () => {
     await expect(page.getByRole('button', { name: /^Tiếp tục\s*Bài 1/ })).toBeVisible()
   })
 
-  test('CommonPhrases: gợi ý chủ đề đầu tiên chưa xem, mở xong thì đổi gợi ý', async ({ page }) => {
+  // [U9b nối tiếp] Cùng luật `suggestContinue`: mở chủ đề rồi quay lại → "Tiếp tục" CHÍNH chủ đề
+  // đó (đang học), không nhảy sang chủ đề kế như trước.
+  test('CommonPhrases: người mới → "Bắt đầu"; mở một chủ đề rồi quay lại → "Tiếp tục" đúng chủ đề đó', async ({
+    page,
+  }) => {
     await mockLogin(page, 'vi')
     await page.goto('/cau-thong-dung')
-    await page.waitForTimeout(500)
-    const cta = page.getByRole('button', { name: /Tiếp tục/ })
+    const cta = page.getByRole('button', { name: /^Bắt đầu/ })
     await expect(cta).toBeVisible()
-    const firstLabel = await cta.innerText()
+    const chuDe = (await cta.innerText()).replace(/^Bắt đầu\s*/, '').trim()
+    expect(chuDe.length).toBeGreaterThan(0)
     await cta.click()
-    await page.waitForTimeout(300)
+    await expect(page.getByRole('button', { name: /^Bắt đầu/ })).toHaveCount(0)
     await page.goto('/cau-thong-dung')
-    await page.waitForTimeout(500)
-    const secondLabel = await page.getByRole('button', { name: /Tiếp tục/ }).innerText()
-    expect(secondLabel).not.toBe(firstLabel)
+    const tiepTuc = page.getByRole('button', { name: /^Tiếp tục/ })
+    await expect(tiepTuc).toBeVisible()
+    await expect(tiepTuc).toContainText(chuDe)
   })
 })

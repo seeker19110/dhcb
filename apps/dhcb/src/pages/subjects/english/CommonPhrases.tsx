@@ -10,7 +10,7 @@ import { useAuth } from '../../../context/useAuth'
 import KaraokeText from '../../../components/KaraokeText'
 import { loadIndex, loadSubject } from '../../../data/patterns/loader'
 import type { SubjectMeta, Subject } from '../../../data/patterns/loader'
-import { getViewedIds, markViewed } from '../../../lib/viewedTracking'
+import { markViewed, markLastOpened, suggestContinue } from '../../../lib/viewedTracking'
 
 const PAGE_SIZE = 7
 
@@ -216,13 +216,13 @@ export default function CommonPhrases() {
     loadIndex().then(setIndexData)
   }, [])
 
-  // Chủ đề đầu tiên (theo thứ tự danh sách gốc) CHƯA xem — gợi ý "Tiếp tục".
-  const nextUnviewed = useMemo(() => {
-    if (!uid || indexData.length === 0) return null
-    const viewed = getViewedIds('phrases', uid)
-    return indexData.find((m) => !viewed.has(m.starter)) ?? null
+  // Gợi ý đầu danh sách — luật chung `suggestContinue` (chủ đề đang học trước, rồi mới tới chủ đề
+  // đầu tiên chưa xem). Trước đây là "đầu tiên chưa xem": vừa mở chủ đề 1 đã bị mời sang chủ đề 2.
+  const goiY = useMemo(
+    () => suggestContinue('phrases', uid, indexData, (m) => m.starter),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, indexData, viewedRefresh])
+    [uid, indexData, viewedRefresh],
+  )
 
   const filtered = useMemo(() => {
     let list = indexData
@@ -274,6 +274,7 @@ export default function CommonPhrases() {
     window.scrollTo({ top: 0 })
     if (uid) {
       markViewed('phrases', uid, meta.starter)
+      markLastOpened('phrases', uid, meta.starter)
       setViewedRefresh((k) => k + 1)
     }
   }
@@ -340,12 +341,12 @@ export default function CommonPhrases() {
             {T.phrasesPageTitle}
           </h1>
 
-          {/* Gợi ý "Tiếp tục" — chủ đề đầu tiên chưa xem, ẩn khi đang tìm kiếm */}
-          {nextUnviewed && !search.trim() && (
+          {/* Gợi ý "Tiếp tục"/"Bắt đầu" — ẩn khi đang tìm kiếm */}
+          {goiY && !search.trim() && (
             <ContinueRow
-              label={T.phrasesContinue}
-              title={nextUnviewed.starter}
-              onClick={() => openSubject(nextUnviewed)}
+              label={goiY.kind === 'start' ? T.phrasesStart : T.phrasesContinue}
+              title={goiY.item.starter}
+              onClick={() => openSubject(goiY.item)}
             />
           )}
 

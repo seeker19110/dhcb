@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getViewedIds, markViewed, markLastOpened, getLastOpened } from './viewedTracking'
+import {
+  getViewedIds,
+  markViewed,
+  markLastOpened,
+  getLastOpened,
+  suggestContinue,
+} from './viewedTracking'
 
 describe('viewedTracking — theo dõi "đã xem" (Lessons/CommonPhrases)', () => {
   beforeEach(() => localStorage.clear())
@@ -60,5 +66,39 @@ describe('viewedTracking — mục mở gần nhất (U9b)', () => {
     expect(getLastOpened('lessons', 'u1')).toBeNull()
     get.mockRestore()
     set.mockRestore()
+  })
+})
+
+describe('suggestContinue — một luật "Tiếp tục" cho mọi danh sách (U9b)', () => {
+  beforeEach(() => localStorage.clear())
+  const ds = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+  const key = (x: { id: string }) => x.id
+
+  it('người mới → "Bắt đầu" mục đầu tiên', () => {
+    expect(suggestContinue('phrases', 'u1', ds, key)).toEqual({ item: ds[0], kind: 'start' })
+  })
+
+  it('vừa mở mục a (chưa xong) → "Tiếp tục" chính a, KHÔNG nhảy sang b', () => {
+    markViewed('phrases', 'u1', 'a')
+    markLastOpened('phrases', 'u1', 'a')
+    expect(suggestContinue('phrases', 'u1', ds, key)).toEqual({ item: ds[0], kind: 'continue' })
+  })
+
+  it('dữ liệu cũ chỉ có "đã xem" (chưa có khoá mở gần nhất) → mục đầu chưa xem, nhãn "Tiếp tục"', () => {
+    markViewed('phrases', 'u1', 'a')
+    expect(suggestContinue('phrases', 'u1', ds, key)).toEqual({ item: ds[1], kind: 'continue' })
+  })
+
+  it('mục mở gần nhất đã bị gỡ khỏi danh sách → rơi về mục đầu chưa xem', () => {
+    markViewed('phrases', 'u1', 'a')
+    markLastOpened('phrases', 'u1', 'zz')
+    expect(suggestContinue('phrases', 'u1', ds, key)?.item).toBe(ds[1])
+  })
+
+  it('đã xem hết và không có mục mở gần nhất / chưa đăng nhập / danh sách rỗng → null', () => {
+    for (const x of ds) markViewed('phrases', 'u1', x.id)
+    expect(suggestContinue('phrases', 'u1', ds, key)).toBeNull()
+    expect(suggestContinue('phrases', '', ds, key)).toBeNull()
+    expect(suggestContinue('phrases', 'u2', [], key)).toBeNull()
   })
 })
