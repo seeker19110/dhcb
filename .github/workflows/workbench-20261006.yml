@@ -1,0 +1,43 @@
+name: Prepare isolated workbench 20261006
+
+on:
+  push:
+    branches: [workbench/learning-profile-20261006]
+    paths: [.github/workflows/workbench-20261006.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    if: github.repository == 'seeker19110/dhcb'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: bfec265cdaf21bf21cdace8b6fddff113cfca4e4
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked development dependencies without production credentials
+        run: npm ci --no-audit --no-fund
+        env:
+          HUSKY: '0'
+      - name: Package tracked source and development dependencies only
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/dhcb-workbench
+          git archive --format=tar HEAD > /tmp/dhcb-workbench/source.tar
+          tar -czf /tmp/dhcb-workbench/dependencies.tar.gz node_modules
+          tar -czf /tmp/dhcb-workbench/node-runtime.tar.gz -C "$(dirname "$(command -v node)")" node
+          git rev-parse HEAD > /tmp/dhcb-workbench/BASE_SHA
+          node --version > /tmp/dhcb-workbench/NODE_VERSION
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isolated-workbench-20261006
+          path: /tmp/dhcb-workbench/
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
