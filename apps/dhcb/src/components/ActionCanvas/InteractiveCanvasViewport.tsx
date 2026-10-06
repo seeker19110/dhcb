@@ -1,5 +1,12 @@
 import React, { useRef, useState } from 'react'
-import { CanvasNode, CanvasEdge, CanvasViewport } from '@dhcb/core-contracts/actionCanvas'
+import {
+  CANVAS_ASSIGNEE_LABELS,
+  CANVAS_DOMAIN_LABELS,
+  CANVAS_STATUS_LABELS,
+  CanvasNode,
+  CanvasEdge,
+  CanvasViewport,
+} from '@dhcb/core-contracts/actionCanvas'
 import { CheckCircle2, AlertCircle, Clock, User, Bot, Trash2 } from 'lucide-react'
 
 interface InteractiveCanvasViewportProps {
@@ -36,12 +43,6 @@ const DOMAIN_COLORS: Record<string, { border: string; bg: string; text: string; 
     text: 'text-purple-400 theme-light:text-purple-800',
     glow: 'rgba(168, 85, 247, 0.2)',
   },
-}
-
-const DOMAIN_LABELS: Record<string, string> = {
-  learning: 'Học tập',
-  work: 'Ghi chú',
-  general: 'Chung',
 }
 
 export default function InteractiveCanvasViewport({
@@ -240,16 +241,16 @@ export default function InteractiveCanvasViewport({
                     ' bg-zinc-950/60 border border-zinc-800'
                   }
                 >
-                  {DOMAIN_LABELS[node.domain] ?? DOMAIN_LABELS.general}
+                  {CANVAS_DOMAIN_LABELS[node.domain] ?? CANVAS_DOMAIN_LABELS.general}
                 </span>
                 <div className="flex items-center gap-1 text-[11px] text-zinc-400">
                   {node.assignedTo === 'companion_ai' ? (
                     <span className="flex items-center gap-0.5 text-cyan-300 theme-light:text-cyan-900 font-medium">
-                      <Bot className="w-3 h-3" /> AI
+                      <Bot className="w-3 h-3" /> {CANVAS_ASSIGNEE_LABELS.companion_ai}
                     </span>
                   ) : (
                     <span className="flex items-center gap-0.5 text-zinc-400">
-                      <User className="w-3 h-3" /> You
+                      <User className="w-3 h-3" /> {CANVAS_ASSIGNEE_LABELS.user}
                     </span>
                   )}
                   {isSelected && (
@@ -283,7 +284,7 @@ export default function InteractiveCanvasViewport({
                   ) : (
                     <Clock className="w-3 h-3 text-amber-400 theme-light:text-amber-900" />
                   )}
-                  <span className="capitalize">{node.status.replace('_', ' ')}</span>
+                  <span>{CANVAS_STATUS_LABELS[node.status] ?? node.status}</span>
                 </span>
                 {node.tags.length > 0 && (
                   <span className="text-zinc-500 font-mono">#{node.tags[0]}</span>

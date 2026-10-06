@@ -81,7 +81,7 @@ const PLAN_INFO: Record<
   },
 }
 
-function PlanFeatureCard({
+export function PlanFeatureCard({
   planKey,
   isA,
   isCurrent,
