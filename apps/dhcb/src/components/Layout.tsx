@@ -253,7 +253,10 @@ export default function Layout({
               <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-accent-500 via-accent-400 to-indigo-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                 <BookOpen className="w-3.5 h-3.5 text-white" />
               </div>
-              <span lang="vi" className="font-bold text-sm text-white hidden sm:inline tracking-tight">
+              <span
+                lang="vi"
+                className="font-bold text-sm text-white hidden sm:inline tracking-tight"
+              >
                 {T.appName}
               </span>
             </Link>
