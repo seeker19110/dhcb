@@ -1,4 +1,4 @@
-name: Verify learning policy and password transactions
+name: Verify admin unlimited policy assertions
 
 on:
   push:
@@ -12,78 +12,70 @@ jobs:
   verify:
     if: github.repository == 'seeker19110/dhcb'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     env:
       HUSKY: '0'
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: delivery_test
-          POSTGRES_PASSWORD: disposable_test_only
-          POSTGRES_DB: dhcb_delivery_20261006
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
-          path: transfer
-          persist-credentials: false
-      - name: Verify exact locally prepared patch
+          ref: b5663f2ba48ade03d994845e1aea09572e1c989e
+      - name: Update two obsolete expectations, keep quota and rollback assertions
         run: |
           python3 - <<'PY'
-          import base64, lzma, hashlib
           from pathlib import Path
-          encoded = ''.join(Path(f'transfer/.workbench/policy-{i}.b64').read_text().strip() for i in range(5))
-          patch = lzma.decompress(base64.b64decode(encoded, validate=True))
-          assert hashlib.sha256(patch).hexdigest() == 'd053481e3c2549ee78d60effe9e393d59a4b42874cd6cc15902b365b5e3bbf4b'
-          Path('/tmp/learning-policy.patch').write_bytes(patch)
+          p = Path('e2e/admin.spec.ts')
+          s = p.read_text()
+          start = s.index("  test('Limits: Hiện input Free và VIP'")
+          end = s.index("  test('Limits: Bật checkbox khuyến mãi")
+          assert s[start:end].count('  test(') == 2
+          replacement = r'''  test('Limits: chỉ Free có ô hạn mức; VIP được mô tả không giới hạn', async ({ page }) => {
+              await gotoAdmin(page, 'limits')
+              await expect(page.getByLabel('Gói Free (lượt/ngày)')).toBeVisible({
+                timeout: VISIBLE_TIMEOUT,
+              })
+              await expect(page.getByLabel('Gói VIP (lượt/ngày)')).toHaveCount(0)
+              await expect(page.getByText(/VIP không giới hạn lượt AI\/ngày/)).toBeVisible()
+            })
+
+            test('Limits: Free=200; lưu thay đổi Free không làm mất cấu hình VIP cũ để rollback', async ({ page }) => {
+              await gotoAdmin(page, 'limits')
+              const freeInput = page.getByLabel('Gói Free (lượt/ngày)')
+              await expect(freeInput).toHaveValue('200', { timeout: VISIBLE_TIMEOUT })
+              await expect(page.locator('input[type="number"]')).toHaveCount(1)
+              const posted = page.waitForRequest(
+                (request) => request.url().endsWith('/api/admin-settings') && request.method() === 'POST',
+              )
+              await freeInput.fill('201')
+              await page.getByRole('button', { name: 'Lưu cấu hình' }).first().click()
+              expect((await posted).postDataJSON().limits).toEqual({ free: 201, vip: 999 })
+            })
+
+          '''
+          p.write_text(s[:start] + replacement + s[end:])
           PY
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/learning-unlimited-vip-20261006
-          path: source
-      - name: Apply only to isolated product branch
-        working-directory: source
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = 'eba1195e23d50714a357ab2a9eae1b2122ad3de9'
-          git apply --unidiff-zero --check /tmp/learning-policy.patch
-          git apply --unidiff-zero /tmp/learning-policy.patch
-          git diff --check
-          git add README.md apps/dhcb apps/hub apps/server packages/core-billing packages/core-contracts docs/changelog/0503-2026-10-06-learning-unlimited-vip.md docs/goals/learning-profile-20261006.md e2e/learning-policy.spec.ts scripts/check-delivery-20261006.ts
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'feat(learning): học hỏi cho mọi người và VIP không giới hạn lượt'
-          git push origin HEAD:refs/heads/feat/learning-unlimited-vip-20261006
-          git rev-parse HEAD
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: npm ci --no-audit --no-fund
-        working-directory: source
-      - name: Real disposable PostgreSQL concurrency and rollback checks
-        run: npx tsx scripts/check-delivery-20261006.ts
-        working-directory: source
-        env:
-          DHCB_DISPOSABLE_DB: '1'
-          DATABASE_URL: postgresql://delivery_test:disposable_test_only@127.0.0.1:5432/dhcb_delivery_20261006
-          PG_POOL_MAX: '12'
+      - name: Format and publish correction to isolated branch only
+        run: |
+          npx prettier --write e2e/admin.spec.ts
+          git diff --check
+          git add e2e/admin.spec.ts
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test(billing): kiểm tra VIP không giới hạn và giữ cấu hình Free'
+          git push origin HEAD:refs/heads/workbench/admin-policy-20261006
+          git rev-parse HEAD
       - run: npx playwright install --with-deps chromium
-        working-directory: source
-      - name: Browser flows with fake API responses, never production credentials
-        run: npm run test:e2e -- e2e/learning-policy.spec.ts e2e/profile-password.spec.ts
-        working-directory: source
+      - name: Verify the real admin form using mock API data
+        run: npm run test:e2e -- e2e/admin.spec.ts --grep 'Limits:'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: learning-policy-browser-evidence
+          name: admin-policy-browser-evidence
           path: |
-            source/test-results/
-            source/playwright-report/
+            test-results/
+            playwright-report/
           retention-days: 2
           if-no-files-found: warn
