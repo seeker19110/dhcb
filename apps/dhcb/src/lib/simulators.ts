@@ -176,7 +176,7 @@ export function calculateLoanAmortization(
   }
 }
 
-// 4. Tính toán & Cắt giảm Tiền điện EVN (Vật lý — Công suất P = U*I, A = P*t, Biểu giá 6 bậc)
+// 4. Tính toán & Cắt giảm Tiền điện EVN (Vật lí — Công suất P = U*I, A = P*t, Biểu giá 6 bậc)
 export interface EvnTierBreakdown {
   tier: number
   kwhInTier: number
@@ -260,7 +260,7 @@ export function calculateEvnElectricityBill(
   }
 }
 
-// 5. Thuyết Tương Đối Einstein & Hệ thống GPS (Vật lý Hiện đại)
+// 5. Thuyết Tương Đối Einstein & Hệ thống GPS (Vật lí Hiện đại)
 export interface GpsRelativityResult {
   days: number
   srDilationUs: number
@@ -284,7 +284,7 @@ export function calculateGpsRelativity(days: number): GpsRelativityResult {
   }
 }
 
-// 6. Khoảng Cách Phanh An Toàn & Động Năng Xe Cộ (Vật lý — Động học & Ma sát)
+// 6. Khoảng Cách Phanh An Toàn & Động Năng Xe Cộ (Vật lí — Động học & Ma sát)
 export interface BrakingDistanceResult {
   reactionDistanceM: number
   brakingDistanceM: number

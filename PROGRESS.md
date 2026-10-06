@@ -210,7 +210,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   tắt; cổng chặn kiểu viết HOA cũ quay lại) — M15 xong. **Đợt 3 (`docs/changelog/0471-*.md`)**:
   thanh công cụ bài hội thoại mobile 167px → 57px một hàng (tuỳ chỉnh vào bảng "Tuỳ chọn nghe",
   nút Back header về danh sách); khối "Học tiếp" dùng chung `ContinueCard`/`ContinueRow` cho trang
-  môn Tiếng Anh + Lập trình và ba danh sách (PR #1205). **Việc kế tiếp:** "Học tiếp" cho bốn môn STEM (cần
+  môn Tiếng Anh + Lập trình và ba danh sách (PR #1205). **Việc kế tiếp (đã làm ở `0505`, chưa có PR):** "Học tiếp" cho bốn môn STEM (cần
   hàm "lá kế tiếp chưa xong" + chốt lớp mặc định); thống nhất tên "Bài học hôm nay" ↔ "Các bài hội
   thoại mẫu thông dụng" và "Vật lý"/"Vật lí" trong đợt câu chữ.
 

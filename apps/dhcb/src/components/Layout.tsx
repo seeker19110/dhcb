@@ -107,7 +107,7 @@ export default function Layout({
   const backLabel = ancestors[ancestors.length - 1]?.label ?? T.home
   // [2026-10-01, audit đồng nhất bố cục] Đích MẶC ĐỊNH của nút Back = đúng đốt cha đang làm
   // nhãn. Trước đây mặc định cứng là '/', nên 21 trang không truyền `onBack`/`backTo` có nút
-  // ghi "← Vật lý" / "← Tiến độ" / "← Hồ sơ" mà bấm lại về Trang chủ — nhãn nói một đằng, nút
+  // ghi "← Vật lí" / "← Tiến độ" / "← Hồ sơ" mà bấm lại về Trang chủ — nhãn nói một đằng, nút
   // làm một nẻo. Trang có cha là Trang chủ (Hồ sơ, Tiến độ…) vẫn về '/' như cũ.
   const backDest = backTo ?? defaultBackDestination(ancestors)
 

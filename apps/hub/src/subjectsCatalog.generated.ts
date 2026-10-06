@@ -32,7 +32,7 @@ export const SUBJECT_CATALOG: readonly SubjectCatalogEntry[] = [
   },
   {
     id: 'physics',
-    label: 'Vật lý',
+    label: 'Vật lí',
     order: 2,
     ctaPath: '/goc-hoc-tap/physics',
     status: 'preview',

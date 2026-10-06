@@ -33,6 +33,7 @@ import { goToSubjects } from '../../lib/subjectsHost'
 import { isAppHostSubject, subjectHomePath } from '@dhcb/core-learner/subjectHome'
 import { duongDanDanhSachBai, getStemSubject } from '../../lib/stemLessonRoutes'
 import { usePageTitle } from '../../lib/usePageTitle'
+import StemContinueBlock from '../../components/learning/StemContinueBlock'
 
 interface SolvedStep {
   title: string
@@ -486,6 +487,7 @@ export default function SubjectDetail() {
             Nó còn là lỗi ngữ nghĩa: trang có HAI thẻ `<h1>`. Nay hero là tiêu đề duy nhất. */}
         {/* Lối vào kho bài học có chấm điểm của môn (bốn môn STEM). Đặt ngay dưới hero vì đây
             là việc người học tới trang môn để làm, còn khung chương trình bên dưới chỉ để tra. */}
+        {stemSubject && <StemContinueBlock subject={stemSubject} />}
         {stemSubject && (
           <Link
             to={duongDanDanhSachBai(stemSubject.id)}

@@ -78,7 +78,7 @@ export function KnowledgeLibrary() {
           {[
             { id: 'all', label: 'Tất cả môn' },
             { id: 'math', label: 'Toán học' },
-            { id: 'physics', label: 'Vật lý' },
+            { id: 'physics', label: 'Vật lí' },
             { id: 'chemistry', label: 'Hóa học' },
             { id: 'biology', label: 'Sinh học' },
             { id: 'informatics', label: 'Tin học & AI' },

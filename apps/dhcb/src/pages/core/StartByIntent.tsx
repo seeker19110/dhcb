@@ -48,7 +48,7 @@ const SUBJECT_OPTIONS: { value: IntentSubjectId; label: string }[] = [
   { value: 'english', label: 'Tiếng Anh' },
   { value: 'programming', label: 'Lập trình' },
   { value: 'mathematics', label: 'Toán học' },
-  { value: 'physics', label: 'Vật lý' },
+  { value: 'physics', label: 'Vật lí' },
   { value: 'chemistry', label: 'Hóa học' },
   { value: 'biology', label: 'Sinh học' },
 ]

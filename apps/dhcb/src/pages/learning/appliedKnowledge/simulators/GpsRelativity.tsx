@@ -17,7 +17,7 @@ export function GpsRelativity() {
             Mô phỏng 5: Thuyết tương đối Einstein & độ trôi vị trí vệ tinh GPS
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Vật lý hiện đại lớp 12 & Công nghệ định vị toàn cầu
+            Vật lí hiện đại lớp 12 & Công nghệ định vị toàn cầu
           </p>
         </div>
         <span className="text-xs px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 theme-light:text-cyan-800 font-mono font-bold">

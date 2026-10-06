@@ -207,7 +207,7 @@ describe('trang Môn học — trạng thái tải/lỗi/rỗng', () => {
     expect(chu()).toContain('Tiếng Anh')
 
     // Giờ mới thả response CŨ của "Tất cả môn". Nó KHÔNG được xuất hiện.
-    // Nhãn phải là chuỗi KHÔNG có sẵn trên trang: "Vật lý" trượt ca này vì phụ đề tĩnh
+    // Nhãn phải là chuỗi KHÔNG có sẵn trên trang: "Vật lí" trượt ca này vì phụ đề tĩnh
     // của trang đã liệt kê sẵn tên môn, test sẽ đỏ cả khi mã chạy đúng.
     act(() => {
       giaiPhongLuot1([manifest({ id: 'physics', label: 'MônCũKhôngĐượcHiện', category: 'stem' })])
@@ -292,11 +292,11 @@ describe('trang Môn học — nút "Vào môn …"', () => {
     listSubjectsMock.mockResolvedValue([
       manifest({ id: 'english', label: 'Tiếng Anh' }),
       manifest({ id: 'programming', label: 'Lập trình', category: 'stem' }),
-      manifest({ id: 'physics', label: 'Vật lý', category: 'stem' }),
+      manifest({ id: 'physics', label: 'Vật lí', category: 'stem' }),
     ])
     await hienVaChay()
     const text = container.textContent ?? ''
-    for (const label of ['Vào môn Tiếng Anh', 'Vào môn Lập trình', 'Vào môn Vật lý']) {
+    for (const label of ['Vào môn Tiếng Anh', 'Vào môn Lập trình', 'Vào môn Vật lí']) {
       expect(text).toContain(label)
     }
     expect(text).not.toContain('Không Gian Học Tiếng Anh')

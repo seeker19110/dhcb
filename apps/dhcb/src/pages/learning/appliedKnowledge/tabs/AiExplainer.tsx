@@ -16,7 +16,7 @@ export function AiExplainer() {
     setTimeout(() => {
       if (q.toLowerCase().includes('tiền điện') || q.toLowerCase().includes('điều hòa')) {
         setAiAnswer(
-          '**Nguyên lý Vật lý ứng dụng:** Điều hòa hoạt động theo chu trình Carnot ngược và bơm nhiệt. Khi bạn cài đặt 18°C, chênh lệch nhiệt độ giữa trong phòng và ngoài trời (~35°C) quá lớn, máy nén Inverter phải chạy 100% công suất liên tục, tiêu tốn khoảng 1.5 - 1.8 kWh mỗi giờ. Nếu bạn cài đặt 26-27°C kèm theo một quạt gió nhỏ, máy nén chỉ cần duy trì công suất thấp (~0.6 - 0.75 kWh), giúp tiết kiệm hơn 40% điện năng mà cảm giác mát vẫn dịu nhẹ, không bị khô da hay sốc nhiệt.',
+          '**Nguyên lý Vật lí ứng dụng:** Điều hòa hoạt động theo chu trình Carnot ngược và bơm nhiệt. Khi bạn cài đặt 18°C, chênh lệch nhiệt độ giữa trong phòng và ngoài trời (~35°C) quá lớn, máy nén Inverter phải chạy 100% công suất liên tục, tiêu tốn khoảng 1.5 - 1.8 kWh mỗi giờ. Nếu bạn cài đặt 26-27°C kèm theo một quạt gió nhỏ, máy nén chỉ cần duy trì công suất thấp (~0.6 - 0.75 kWh), giúp tiết kiệm hơn 40% điện năng mà cảm giác mát vẫn dịu nhẹ, không bị khô da hay sốc nhiệt.',
         )
       } else if (q.toLowerCase().includes('đạo hàm') || q.toLowerCase().includes('ai')) {
         setAiAnswer(
@@ -28,7 +28,7 @@ export function AiExplainer() {
         )
       } else {
         setAiAnswer(
-          `**Phân tích liên môn cho câu hỏi "${q}":** Mọi kiến thức phổ thông đều là viên gạch giải quyết bài toán đời sống. Ví dụ: Toán học cung cấp tư duy tối ưu hóa và định lượng rủi ro; Vật lý giải thích cơ chế vận hành năng lượng và chuyển động xung quanh ta; Hóa học bảo vệ sức khỏe và lựa chọn vật liệu tiêu dùng an toàn; Sinh học tối ưu hóa thể trạng và cơ thể sống. Khi kết hợp các môn này, bạn có bộ công cụ đa chiều để ra quyết định thông minh trong công việc và cuộc sống.`,
+          `**Phân tích liên môn cho câu hỏi "${q}":** Mọi kiến thức phổ thông đều là viên gạch giải quyết bài toán đời sống. Ví dụ: Toán học cung cấp tư duy tối ưu hóa và định lượng rủi ro; Vật lí giải thích cơ chế vận hành năng lượng và chuyển động xung quanh ta; Hóa học bảo vệ sức khỏe và lựa chọn vật liệu tiêu dùng an toàn; Sinh học tối ưu hóa thể trạng và cơ thể sống. Khi kết hợp các môn này, bạn có bộ công cụ đa chiều để ra quyết định thông minh trong công việc và cuộc sống.`,
         )
       }
       setIsExplaining(false)

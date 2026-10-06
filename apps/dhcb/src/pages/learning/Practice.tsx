@@ -628,7 +628,7 @@ export default function Practice() {
               </div>
             </button>
 
-            {/* Vật Lý */}
+            {/* Vật lí */}
             <button
               onClick={() => goToSubjects(nav, 'physics')}
               className="tap-44 p-4 rounded-3xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-cyan-500/30 hover:border-cyan-500/60 text-left transition duration-200 group active:scale-[0.98] shadow-sm flex flex-col justify-between"
@@ -639,7 +639,7 @@ export default function Practice() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <h3 className="font-bold text-white text-sm">Vật Lý</h3>
+                    <h3 className="font-bold text-white text-sm">Vật lí</h3>
                     <span className="text-[0.6875rem] px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 theme-light:text-cyan-800 font-semibold border border-cyan-500/20">
                       Thí nghiệm mô phỏng
                     </span>

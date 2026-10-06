@@ -76,7 +76,7 @@ test('sidebar desktop: mục "Tiếng Anh" trong Góc học tập mở cấp 2 v
   await expect(tools).toBeVisible()
   for (const label of [
     'Lộ trình CEFR',
-    'Bài học hôm nay',
+    'Bài hội thoại mẫu',
     'Câu thông dụng',
     'Sổ tay lỗi sai',
     'Ôn thi',

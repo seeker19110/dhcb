@@ -50,7 +50,7 @@ describe('subjectApi', () => {
 
   it('listSubjects should filter by category', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-      okResponse({ subjects: [manifest({ id: 'physics', label: 'Vật lý', category: 'stem' })] }),
+      okResponse({ subjects: [manifest({ id: 'physics', label: 'Vật lí', category: 'stem' })] }),
     )
 
     const result = await listSubjects('stem')

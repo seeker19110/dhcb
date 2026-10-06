@@ -98,7 +98,7 @@ export const APPLIED_KNOWLEDGE_DATABASE: AppliedConcept[] = [
     subject: 'physics',
     level: 'high_school',
     gradeLabel: 'Lớp 12',
-    topic: 'Vật lý hiện đại — Thuyết tương đối hẹp & rộng',
+    topic: 'Vật lí hiện đại — Thuyết tương đối hẹp & rộng',
     theorySummary:
       'Vật thể chuyển động nhanh thì thời gian trôi chậm lại ($-7.2\\,\\mu\\text{s}/\\text{ngày}$). Vật ở nơi trường trọng lực yếu hơn thì thời gian trôi nhanh hơn ($+45.8\\,\\mu\\text{s}/\\text{ngày}$).',
     intuitivePrinciple:

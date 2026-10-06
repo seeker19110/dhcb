@@ -124,7 +124,7 @@ export function SimulatorsLab({ activeSimulator, setActiveSimulator }: Props) {
           <div className="flex items-center justify-between">
             <Zap className="w-5 h-5 text-yellow-400 theme-light:text-yellow-800" />
             <span className="text-[0.6875rem] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 theme-light:text-yellow-800 font-mono">
-              Vật lý
+              Vật lí
             </span>
           </div>
           <div className="text-xs font-bold mt-2">4. Tiền điện EVN</div>

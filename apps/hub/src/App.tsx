@@ -181,7 +181,7 @@ export const SUBJECT_COPY: Record<
   physics: {
     emoji: '⚛️',
     icon: BookOpen,
-    tagline: 'Cơ · Nhiệt · Điện từ · Quang · Vật lý hiện đại',
+    tagline: 'Cơ · Nhiệt · Điện từ · Quang · Vật lí hiện đại',
     description:
       'Các bài đang ở dạng xem trước, hoàn thiện dần: hiểu bản chất hiện tượng trước, rồi mới đến công thức và bài tập định lượng.',
     highlight: 'Mô phỏng tương tác để nhìn thấy hiện tượng chứ không chỉ đọc công thức.',
@@ -1083,7 +1083,7 @@ function FaqSection() {
     },
     {
       q: 'Hiện tại những môn nào đã mở?',
-      a: 'Tiếng Anh và Lập trình đang học được. Toán, Vật lý, Hóa học và Sinh học có nội dung xem trước và đang hoàn thiện. Các môn không có cùng mức độ hoàn thiện; trạng thái được ghi rõ ở phần môn học.',
+      a: 'Tiếng Anh và Lập trình đang học được. Toán, Vật lí, Hóa học và Sinh học có nội dung xem trước và đang hoàn thiện. Các môn không có cùng mức độ hoàn thiện; trạng thái được ghi rõ ở phần môn học.',
     },
     {
       q: 'Tôi đã biết cơ bản, có phải học lại từ đầu không?',

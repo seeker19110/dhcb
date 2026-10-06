@@ -126,7 +126,7 @@ export const GAME_SPECIALIZATION: ProgrammingSpecialization = {
         },
         {
           id: 'game-s2-m2',
-          title: 'Vật lý',
+          title: 'Vật lí',
           topics: [
             'Bước cố định cho vật lý, tách khỏi tốc độ vẽ',
             'Xung lượng, ràng buộc, khớp nối',
@@ -156,7 +156,7 @@ export const GAME_SPECIALIZATION: ProgrammingSpecialization = {
         name: 'Game có chiều sâu hệ thống',
         brief: 'Trò chơi với vật lý, AI đối thủ và trình soạn màn chơi riêng.',
         requirements: [
-          'Vật lý tất định với bước cố định, tái lập được bằng hạt giống',
+          'Vật lí tất định với bước cố định, tái lập được bằng hạt giống',
           'Ít nhất 10 màn tạo bằng công cụ tự viết',
           'Lưu/tải game tương thích với bản lưu của phiên bản trước',
         ],

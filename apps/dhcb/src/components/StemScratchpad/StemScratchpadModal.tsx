@@ -192,7 +192,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                   ? '🔢 Toán học'
                   : subj === 'chemistry'
                     ? '🧪 Hóa học'
-                    : '⚡ Vật lý'}
+                    : '⚡ Vật lí'}
               </button>
             ))}
           </div>
