@@ -7,6 +7,7 @@ import { useNavigate, useParams, Navigate } from 'react-router-dom'
 import { BookOpen, Hammer, Trophy, Lock, CheckCircle2, Play } from 'lucide-react'
 import Layout from '../../../components/Layout'
 import LangBadge from '../../../components/programming/LangBadge'
+import LessonStartButton from '../../../components/programming/LessonStartButton'
 import { useAuth } from '../../../context/useAuth'
 import { isLessonCompleted } from '../../../lib/programmingProgress'
 import { markLevelEntered, loiGiaiThichKhoa } from '../../../lib/programmingLevelLock'
@@ -15,6 +16,7 @@ import { getUnitSummaries } from '@dhcb/subject-programming/lessonsLoader'
 import { buildSlugSegment, idFromSlugSegment } from '@core/slug'
 import { PROGRAMMING_PREFIX, duongDanBac, duongDanBaiHoc } from '../../../lib/programmingRoutes'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { buildLevelOutline } from '../../../lib/outline/programmingOutline'
@@ -109,7 +111,10 @@ export default function ProgrammingLevelPage() {
         aria-valuemin={0}
         aria-valuemax={lessonCount}
       >
-        <div className="h-full bg-emerald-500 transition-all" style={{ width: `${percent}%` }} />
+        <div
+          className="h-full bg-emerald-500 transition-[width]"
+          style={{ width: `${percent}%` }}
+        />
       </div>
     ) : null
 
@@ -174,7 +179,7 @@ export default function ProgrammingLevelPage() {
                 </p>
                 <button
                   onClick={() => nav(PROGRAMMING_PREFIX)}
-                  className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   <Play className="w-4 h-4" />
                   <span>Quay lại học tiếp</span>
@@ -283,20 +288,11 @@ export default function ProgrammingLevelPage() {
                             <div key={lesson.id} className="space-y-1.5">
                               {/* Ngôn ngữ hiện TRƯỚC khi bấm (PR-UX1) — học viên biết sắp viết gì. */}
                               <LangBadge language={lesson.language} />
-                              <button
+                              <LessonStartButton
+                                title={lesson.title}
+                                done={isLessonCompleted(progress, lesson.id)}
                                 onClick={() => nav(duongDanBaiHoc(lesson))}
-                                className="tap-44 w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition active:scale-[0.98]"
-                              >
-                                <span className="flex items-center gap-2 min-w-0">
-                                  <Play className="w-4 h-4 shrink-0" />
-                                  <span className="min-w-0 break-words">
-                                    Học bài: {lesson.title}
-                                  </span>
-                                </span>
-                                {isLessonCompleted(progress, lesson.id) && (
-                                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                                )}
-                              </button>
+                              />
                             </div>
                           ))}
                       </div>

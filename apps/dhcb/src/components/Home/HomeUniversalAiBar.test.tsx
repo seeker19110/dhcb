@@ -219,6 +219,8 @@ describe('validation', () => {
     await render('account')
     const toggle = findByText('button', 'Xem 4 gợi ý nhanh')
     expect(toggle?.previousElementSibling?.classList.contains('min-h-14')).toBe(true)
+    // Từ `sm` câu lỗi dài nhất chỉ còn tối đa hai dòng → giữ 40px (changelog 0501).
+    expect(toggle?.previousElementSibling?.classList.contains('sm:min-h-10')).toBe(true)
     expect(toggle?.previousElementSibling?.querySelector('[role="alert"]')).toBeNull()
   })
 

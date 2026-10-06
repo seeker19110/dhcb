@@ -233,7 +233,7 @@ export default function ActivityResult(props: ActivityResultProps) {
                           aria-expanded={mo}
                           aria-controls={moId}
                           onClick={() => batTat(key)}
-                          className={`${buttonClass({ variant: 'ghost' })} tap-44 border border-line-subtle`}
+                          className={`${buttonClass({ variant: 'outline' })} tap-44`}
                         >
                           <ChevronDown
                             className={`h-4 w-4 transition-transform motion-reduce:transition-none ${mo ? 'rotate-180' : ''}`}

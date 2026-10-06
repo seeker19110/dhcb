@@ -325,8 +325,12 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
       </form>
 
       {/* Copy validation dài tối đa ba dòng ở 320px: 3×16px line-height + 8px margin = 56px.
-          Reserve sẵn đúng 3.5rem để toggle/panel bên dưới không dịch khi lỗi xuất hiện. */}
-      <div className="min-h-14">
+          Reserve sẵn đúng 3.5rem để toggle/panel bên dưới không dịch khi lỗi xuất hiện.
+          [0501, audit mục 7 — nhịp dọc] Từ `sm` (≥ 640px) câu lỗi dài nhất (~95 ký tự) chỉ
+          còn tối đa HAI dòng — kể cả cột chính hẹp ~424px ở 1024px — nên giữ 2×16 + 8 = 40px.
+          Giữ 56px ở mọi bề rộng làm khoảng trống rỗng dưới ô hỏi thành khe ~70px, lệch hẳn
+          nhịp 12px của các khối phía trên. */}
+      <div className="min-h-14 sm:min-h-10">
         {error && (
           <p
             role="alert"

@@ -8,9 +8,10 @@
 // `docs/specs/2026-08-31-dot-4-p5-tam-truong.md`.
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { BookOpen, CheckCircle2, Play, Target, Trophy } from 'lucide-react'
+import { BookOpen, Target, Trophy } from 'lucide-react'
 import Layout from '../../../components/Layout'
 import LangBadge from '../../../components/programming/LangBadge'
+import LessonStartButton from '../../../components/programming/LessonStartButton'
 import { PageShell } from '@core/PageShell'
 import { useAuth } from '../../../context/useAuth'
 import {
@@ -99,7 +100,7 @@ export default function ProgrammingPathStagePage() {
             aria-valuemax={lessonCount}
           >
             <div
-              className="h-full bg-emerald-500 transition-all"
+              className="h-full bg-emerald-500 transition-[width]"
               style={{ width: `${Math.round((completedCount / lessonCount) * 100)}%` }}
             />
           </div>
@@ -121,18 +122,11 @@ export default function ProgrammingPathStagePage() {
                 {lessons.map((lesson) => (
                   <div key={lesson.id} className="space-y-1.5">
                     <LangBadge language={lesson.language} />
-                    <button
+                    <LessonStartButton
+                      title={lesson.title}
+                      done={isLessonCompleted(progress, lesson.id)}
                       onClick={() => nav(duongDanBaiHoc(lesson))}
-                      className="tap-44 w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition active:scale-[0.98]"
-                    >
-                      <span className="flex items-center gap-2 min-w-0">
-                        <Play className="w-4 h-4 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0 break-words">Học bài: {lesson.title}</span>
-                      </span>
-                      {isLessonCompleted(progress, lesson.id) && (
-                        <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      )}
-                    </button>
+                    />
                   </div>
                 ))}
               </div>

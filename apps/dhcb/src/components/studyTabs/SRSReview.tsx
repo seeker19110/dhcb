@@ -252,7 +252,7 @@ export function SRSReview({
           {/* Thanh tiến độ + giải thích phạm vi: bao nhiêu từ × bao nhiêu giọng của gói */}
           <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-sky-500 rounded-full transition-all"
+              className="h-full bg-sky-500 rounded-full transition-[width]"
               style={{
                 width: `${Math.round(((preloading ? (preloadProgress?.done ?? 0) : offlineStatus.cachedCount) / Math.max(offlineStatus.totalDue, 1)) * 100)}%`,
               }}
@@ -275,7 +275,7 @@ export function SRSReview({
       </div>
       <div className="h-1 bg-zinc-800 rounded-full mb-4">
         <div
-          className="h-full bg-sky-500 rounded-full transition-all"
+          className="h-full bg-sky-500 rounded-full transition-[width]"
           style={{ width: `${(idx / Math.max(due.length, 1)) * 100}%` }}
         />
       </div>

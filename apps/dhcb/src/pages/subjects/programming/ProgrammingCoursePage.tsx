@@ -6,9 +6,10 @@
 // P1–P6, không nhất thiết bài "của riêng" khoá). Cố ý theo đúng bố cục ProgrammingLevelPage để
 // người dùng thấy quen tay: tiêu đề + can-do → dải tiến độ → danh sách chương/bài.
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
-import { BookOpen, CheckCircle2, FlaskConical, PackageCheck, Play } from 'lucide-react'
+import { BookOpen, CheckCircle2, FlaskConical, PackageCheck } from 'lucide-react'
 import Layout from '../../../components/Layout'
 import LangBadge from '../../../components/programming/LangBadge'
+import LessonStartButton from '../../../components/programming/LessonStartButton'
 import { isLessonCompleted } from '../../../lib/programmingProgress'
 import { getShortCourse } from '@dhcb/subject-programming/courses/registry'
 import { PageShell } from '@core/PageShell'
@@ -155,7 +156,7 @@ export default function ProgrammingCoursePage() {
                   aria-valuemax={lessonCount}
                 >
                   <div
-                    className="h-full bg-emerald-500 transition-all"
+                    className="h-full bg-emerald-500 transition-[width]"
                     style={{ width: `${Math.round((completedCount / lessonCount) * 100)}%` }}
                   />
                 </div>
@@ -237,18 +238,11 @@ export default function ProgrammingCoursePage() {
                     {lessons.map((lesson) => (
                       <div key={lesson.id} className="space-y-1.5">
                         <LangBadge language={lesson.language} />
-                        <button
+                        <LessonStartButton
+                          title={lesson.title}
+                          done={isLessonCompleted(progress, lesson.id)}
                           onClick={() => nav(duongDanBaiHoc(lesson, { courseId: course.id }))}
-                          className="tap-44 w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition active:scale-[0.98]"
-                        >
-                          <span className="flex items-center gap-2 min-w-0">
-                            <Play className="w-4 h-4 shrink-0" />
-                            <span className="min-w-0 break-words">Học bài: {lesson.title}</span>
-                          </span>
-                          {isLessonCompleted(progress, lesson.id) && (
-                            <CheckCircle2 className="w-4 h-4 shrink-0" />
-                          )}
-                        </button>
+                        />
                       </div>
                     ))}
                   </div>

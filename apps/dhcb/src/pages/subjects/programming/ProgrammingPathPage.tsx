@@ -196,7 +196,13 @@ export default function ProgrammingPathPage() {
                       </span>
                       <button
                         onClick={() => nav(duongDanBac(level))}
-                        className="tap-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-xs transition active:scale-[0.98]"
+                        // [0501] `secondary`: bốn bậc nền tảng là bốn lựa chọn ngang nhau — bốn nút
+                        // accent đặc cạnh nhau thì không còn nút nào là nút chính.
+                        className={buttonClass({
+                          variant: 'secondary',
+                          size: 'sm',
+                          className: 'tap-44',
+                        })}
                       >
                         <Play className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{completed ? 'Ôn lại bậc này' : 'Học bậc này'}</span>
