@@ -8,6 +8,7 @@
 //  - lỗi tải   → coi như chưa có bằng chứng, gợi ý bài đầu (không khẳng định đã học gì);
 //  - sẵn sàng  → bài kế tiếp thật.
 import { useMemo } from 'react'
+import { ListChecks } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ContinueCard } from './ContinueCard'
 import { useStemCompletionState } from '../../lib/useStemCompletionState'
@@ -33,6 +34,7 @@ export default function StemContinueBlock({ subject }: { subject: StemSubject })
         eyebrow="Đã học xong"
         title={`Bạn đã hoàn thành mọi bài chuẩn môn ${subject.label}`}
         actionLabel="Xem lại danh sách bài"
+        icon={ListChecks}
         onAction={() => nav(duongDanDanhSachBai(subject.id))}
       />
     )
@@ -47,7 +49,17 @@ export default function StemContinueBlock({ subject }: { subject: StemSubject })
     <ContinueCard
       eyebrow={eyebrow}
       title={pick.lesson.title}
-      meta={<span className="text-xs font-semibold text-zinc-400">Lớp {pick.grade}</span>}
+      meta={
+        <>
+          <span className="text-xs font-semibold text-zinc-400">Lớp {pick.grade}</span>
+          {/* Lỗi tải trông giống "chưa học" (cùng nhãn "Bắt đầu") nên phải nói thật, nhẹ nhàng. */}
+          {tienDo.stateStatus === 'error' && (
+            <p role="status" className="basis-full text-sm leading-relaxed text-zinc-300">
+              Chưa tải được tiến độ — đang gợi ý bài đầu tiên.
+            </p>
+          )}
+        </>
+      }
       actionLabel={pick.resuming ? 'Học tiếp' : pick.fresh ? 'Bắt đầu học' : 'Học bài này'}
       onAction={() => nav(duongDanBaiHoc(subject.id, pick.lesson.id, pick.lesson.title))}
     />
