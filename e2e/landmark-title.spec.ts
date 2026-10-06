@@ -25,11 +25,11 @@ const PUBLIC_ROUTES: RouteCase[] = [
 ]
 
 const AUTHED_ROUTES: RouteCase[] = [
-  // M7 — 7 route từng thiếu đích skip link (2 route công khai ở trên)
+  // M7 — 7 route từng thiếu đích skip link (2 route công khai ở trên; /avatar-demo kiểm riêng
+  // bằng phiên admin ở dưới)
   { path: '/bat-dau', title: 'Bắt đầu' },
   { path: '/nang-cap', title: 'Nâng cấp VIP' },
   { path: '/tin-nhan', title: 'Tin nhắn' },
-  { path: '/avatar-demo', title: 'Demo avatar' },
   { path: '/goc-hoc-tap/english/tro-truyen', title: 'Trò chuyện với gia sư AI' },
   { path: '/goc-hoc-tap/english/luyen-noi', title: 'Luyện nói song ngữ' },
   { path: '/lap-trinh/chay-thu', title: 'Môn Lập trình' },
@@ -85,6 +85,21 @@ test.describe('mọi route có <main id="noi-dung-chinh"> và tiêu đề riêng
       expect(seen.get(tab), `"${tab}" trùng giữa ${seen.get(tab)} và ${path}`).toBeUndefined()
       seen.set(tab, path)
     }
+  })
+
+  // [audit 2026-09-30 minor 5] /avatar-demo nay CHỈ admin — kiểm riêng bằng phiên admin, và
+  // người dùng thường gõ URL thì bị đưa về Trang chủ.
+  test('/avatar-demo: admin vào được — đích skip link + tiêu đề riêng', async ({ page }) => {
+    await mockLogin(page, 'vi', 'blue-sky', { isAdmin: true })
+    await muteTts(page)
+    await checkRoute(page, { path: '/avatar-demo', title: 'Demo avatar' })
+  })
+
+  test('/avatar-demo: người dùng không phải admin bị chuyển về Trang chủ', async ({ page }) => {
+    await mockLogin(page, 'vi', 'blue-sky')
+    await muteTts(page)
+    await page.goto('/avatar-demo', { waitUntil: 'domcontentloaded' })
+    await expect(page).toHaveURL(/\/$/)
   })
 
   test('liên kết "Bỏ qua tới nội dung chính" đưa tiêu điểm vào <main> ở trang Trò chuyện', async ({
