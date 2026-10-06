@@ -6,6 +6,7 @@ import { Home, GraduationCap, Brain, Sparkles, User } from 'lucide-react'
 import { useAuth } from '../context/useAuth'
 import { useLang } from '../context/useLang'
 import SubjectsLink from './SubjectsLink'
+import { isNavHidden } from '../lib/studios'
 // Bảng tiền tố đường dẫn dùng CHUNG với DesktopSidebar — xem lib/navPaths.ts
 import {
   LEARNING_PATHS,
@@ -14,8 +15,6 @@ import {
   PROFILE_PATHS,
   matchesNav,
 } from '../lib/navPaths'
-
-const HIDDEN_PATHS = ['/login', '/onboarding']
 
 interface Props {
   /** Đồng Hành có ghi chú mới chưa xem — chấm báo nhỏ trên Orb. Nguồn dữ liệu thật nối ở P2-11. */
@@ -27,7 +26,8 @@ export default function BottomNav({ companionHasNote = false }: Props) {
   const { T, lang } = useLang()
   const location = useLocation()
 
-  if (!user || HIDDEN_PATHS.includes(location.pathname)) return null
+  // Cùng luật ẩn với DesktopSidebar (lib/studios.ts) — hai thanh ẩn/hiện y hệt nhau.
+  if (isNavHidden(location.pathname, user)) return null
 
   const isHome = location.pathname === '/'
   // `/goc-hoc-tap/on-tap` nằm TRONG `LEARNING_PATHS` (tiền tố `/goc-hoc-tap`) nên phải xét
