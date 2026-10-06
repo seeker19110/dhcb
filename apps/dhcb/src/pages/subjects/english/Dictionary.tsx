@@ -669,7 +669,7 @@ export default function Dictionary() {
                               <button
                                 key={w}
                                 onClick={() => setQuery(w)}
-                                className="text-xs px-2.5 py-1 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 hover:border-accent-500/50 hover:text-accent-300 transition"
+                                className="tap-44 text-xs px-2.5 py-1 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 hover:border-accent-500/50 hover:text-accent-300 transition"
                               >
                                 {w}
                               </button>
