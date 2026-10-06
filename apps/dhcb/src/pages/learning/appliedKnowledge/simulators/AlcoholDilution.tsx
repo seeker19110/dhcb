@@ -13,10 +13,10 @@ export function AlcoholDilution() {
     <div className="p-6 rounded-2xl bg-zinc-900 border border-purple-500/40 space-y-6">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
         <div>
-          <h3 className="text-base font-bold text-purple-400 theme-light:text-purple-800 flex items-center gap-2">
+          <h2 className="text-base font-bold text-purple-400 theme-light:text-purple-800 flex items-center gap-2">
             <FlaskConical className="w-5 h-5" />
             Mô Phỏng 7: Nồng Độ Dung Dịch & Công Thức Pha Cồn 70° ($C_1 V_1 = C_2 V_2$)
-          </h3>
+          </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
             Hóa học lớp 8-9 & quy chuẩn sát khuẩn y tế chuẩn WHO
           </p>
