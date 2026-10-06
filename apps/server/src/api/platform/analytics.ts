@@ -25,6 +25,8 @@ import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 // impression/click mà không cần migration hay metadata tự do.
 // [2026-09-13] onboarding_step_view: đo rớt từng bước Intake/Onboarding (refCode =
 // `intake:<step>`/`onboarding:<step>`) — điều tra vì sao chỉ 20% đăng ký hoàn thành phiên đầu.
+// [2026-10-05, U9b] onboarding_skip: bấm "Bỏ qua" trong Onboarding (refCode = `onboarding:<step>`
+// hoặc `onboarding:subject`) — đo cạnh onboarding_step_view.
 const EVENT_TYPES = [
   'landing_view',
   'cta_click',
@@ -32,6 +34,7 @@ const EVENT_TYPES = [
   'daily_plan_impression',
   'daily_plan_click',
   'onboarding_step_view',
+  'onboarding_skip',
   'session_done_view',
   'session_done_more',
 ] as const

@@ -26,7 +26,7 @@ import { useApiThrottle } from '../../../lib/useApiThrottle'
 import { useMountedRef } from '../../../lib/useMountedRef'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { useVisualViewportHeight } from '../../../lib/useVisualViewportHeight'
-import { useOnboarding } from '../../../lib/onboarding'
+import { useOnboarding, situationForGoal } from '../../../lib/onboarding'
 import { callClaude, parseJson, hasNumberFields } from '../../../lib/ai'
 import { effectivePlan } from '../../../lib/promo'
 import { getLimits } from '../../../lib/appSettings'
@@ -57,6 +57,7 @@ function SetupScreen({
   error,
   dir,
   defaultLevel,
+  defaultGoal,
   practiceWords,
 }: {
   onStart: (situation: string, level: Level) => void
@@ -65,10 +66,13 @@ function SetupScreen({
   dir: Direction
   // Trình độ khai lúc onboarding (U-3) — làm mặc định thay vì cứng 'intermediate'
   defaultLevel?: Level
+  // [U9b] Mục tiêu khai lúc onboarding → tình huống mặc định (thay cho "Phỏng vấn xin việc" cứng
+  // với MỌI người, kể cả người vừa chọn "Giao tiếp hàng ngày" — audit 2026-09-30 M19).
+  defaultGoal?: string
   // Từ mục tiêu đến từ màn "xong batch" của lộ trình (?words=..., đề xuất B)
   practiceWords?: string[]
 }) {
-  const [situation, setSituation] = useState('job_interview')
+  const [situation, setSituation] = useState(() => situationForGoal(defaultGoal))
   const [level, setLevel] = useState<Level>(defaultLevel ?? 'intermediate')
   // Onboarding có thể về TRỄ (thiết bị mới phải fetch DB) — chỉ áp lại mặc định
   // khi người dùng CHƯA tự bấm chọn, tránh ghi đè lựa chọn tay.
@@ -76,6 +80,10 @@ function SetupScreen({
   useEffect(() => {
     if (defaultLevel && !levelTouched.current) setLevel(defaultLevel)
   }, [defaultLevel])
+  const situationTouched = useRef(false)
+  useEffect(() => {
+    if (defaultGoal && !situationTouched.current) setSituation(situationForGoal(defaultGoal))
+  }, [defaultGoal])
   const isA = dir === 'A'
 
   return (
@@ -121,7 +129,10 @@ function SetupScreen({
               id="situation"
               name="situation"
               value={situation}
-              onChange={(e) => setSituation(e.target.value)}
+              onChange={(e) => {
+                situationTouched.current = true
+                setSituation(e.target.value)
+              }}
               className="w-full bg-zinc-950/90 border border-zinc-800 rounded-2xl px-4 py-3.5 text-sm text-white appearance-none outline-none focus:border-accent-500/70 transition shadow-inner"
             >
               {SITUATIONS.map((s) => (
@@ -800,6 +811,7 @@ export default function Chat() {
               error={error}
               dir={dir}
               defaultLevel={onboarding?.level}
+              {...(onboarding?.goal ? { defaultGoal: onboarding.goal } : {})}
               practiceWords={practiceWords}
             />
 

@@ -64,6 +64,18 @@ export default function GuestHome() {
           Bắt đầu — chọn việc đầu tiên
         </Link>
         <p className="text-sm text-zinc-400">Không cần tài khoản</p>
+        {/* [U9b, audit 2026-09-30 mục 8] Người cũ đổi máy cần một lối đăng nhập BẰNG CHỮ — trước
+            đây chỉ có nút tròn chữ cái đầu ở header, phải đoán. Liên kết chữ, không phải nút
+            chính thứ hai: CTA "Bắt đầu" vẫn là nút chính duy nhất (AC-2). */}
+        <p className="text-sm text-zinc-400">
+          Đã có tài khoản?{' '}
+          <Link
+            to="/login"
+            className="tap-44 inline-flex items-center font-semibold text-content underline underline-offset-2 hover:no-underline"
+          >
+            Đăng nhập
+          </Link>
+        </p>
       </div>
 
       {/* ── Khối 3: Dải môn + 2 trụ ── */}

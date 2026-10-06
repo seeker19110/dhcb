@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { getViewedIds, markViewed } from './viewedTracking'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { getViewedIds, markViewed, markLastOpened, getLastOpened } from './viewedTracking'
 
 describe('viewedTracking — theo dõi "đã xem" (Lessons/CommonPhrases)', () => {
   beforeEach(() => localStorage.clear())
@@ -34,5 +34,31 @@ describe('viewedTracking — theo dõi "đã xem" (Lessons/CommonPhrases)', () =
   it('dữ liệu localStorage hỏng → Set rỗng, không lỗi', () => {
     localStorage.setItem('et_viewed_lessons_u1', 'not-json{{')
     expect(getViewedIds('lessons', 'u1').size).toBe(0)
+  })
+})
+
+describe('viewedTracking — mục mở gần nhất (U9b)', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('chưa mở gì → null; mở rồi đọc lại đúng mục mở SAU CÙNG, tách theo người và danh sách', () => {
+    expect(getLastOpened('lessons', 'u1')).toBeNull()
+    markLastOpened('lessons', 'u1', '1')
+    markLastOpened('lessons', 'u1', '3')
+    expect(getLastOpened('lessons', 'u1')).toBe('3')
+    expect(getLastOpened('lessons', 'u2')).toBeNull()
+    expect(getLastOpened('phrases', 'u1')).toBeNull()
+  })
+
+  it('localStorage ném lỗi → đọc null, ghi không ném', () => {
+    const get = vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    const set = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    expect(() => markLastOpened('lessons', 'u1', '1')).not.toThrow()
+    expect(getLastOpened('lessons', 'u1')).toBeNull()
+    get.mockRestore()
+    set.mockRestore()
   })
 })

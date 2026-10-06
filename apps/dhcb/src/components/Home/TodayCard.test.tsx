@@ -245,4 +245,15 @@ describe('TodayCard — hàm chữ nghĩa thuần', () => {
     expect(nhanChinh(het)).toBe('Bắt đầu: Chọn môn hoặc khoá mới')
     expect(dongNguon(het, NOW)).toBe('Bạn đã đi hết nội dung đang có')
   })
+
+  it('[U9b] pick "môn bạn đã chọn": nhãn nút nói đúng môn, dòng nguồn nói vì sao', () => {
+    const daChon = item({
+      kind: 'pick',
+      evidenceSource: 'none',
+      hint: undefined,
+      title: 'Môn bạn đã chọn — học Tiếng Anh',
+    })
+    expect(nhanChinh(daChon)).toBe('Bắt đầu: Học Tiếng Anh')
+    expect(dongNguon(daChon, NOW)).toBe('Môn bạn đã chọn')
+  })
 })

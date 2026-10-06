@@ -126,3 +126,47 @@ export function useOnboarding(uid: string | undefined): OnboardingData | null {
   }, [uid])
   return data
 }
+
+// ── [U9b, 2026-10-05] Môn đã chọn lúc onboarding ─────────────────────────────────────────────
+// Trước đây Onboarding chỉ dùng môn vừa chọn để ĐIỀU HƯỚNG rồi quên luôn, nên Trang chủ của
+// người vừa chọn "Tiếng Anh" vẫn hỏi lại "Bắt đầu: Chọn môn" (audit 2026-09-30 M19). Lưu cục
+// bộ theo từng tài khoản — đây là LỰA CHỌN của người học, không phải tiến độ: thiết bị mới
+// chưa có khoá này thì Trang chủ về đúng hành vi cũ (mời chọn môn), không bịa gì thêm.
+const CHOSEN_SUBJECT_KEY = (uid: string) => `dhcb_onboarding_subject_${uid}`
+
+export function setChosenSubject(uid: string, subjectId: string): void {
+  try {
+    localStorage.setItem(CHOSEN_SUBJECT_KEY(uid), subjectId)
+  } catch {
+    /* localStorage đầy/bị chặn — chỉ mất gợi ý ở Trang chủ, không vỡ luồng */
+  }
+}
+
+/** Môn đã chọn lúc onboarding; `undefined` khi chưa chọn / bỏ qua bước chọn môn / lỗi đọc. */
+export function getChosenSubject(uid: string): string | undefined {
+  try {
+    const v = localStorage.getItem(CHOSEN_SUBJECT_KEY(uid))
+    return v ? v : undefined
+  } catch {
+    return undefined
+  }
+}
+
+// Mục tiêu onboarding → tình huống mặc định của màn Trò chuyện (`SITUATIONS` ở types.ts).
+// Trước đây Trò chuyện luôn mở "Phỏng vấn xin việc" kể cả với người vừa chọn "Giao tiếp hàng
+// ngày" (audit M19). Mục tiêu lạ / chưa onboarding → tán gẫu xã giao: tình huống nhẹ nhất,
+// hợp với người mới hơn một buổi phỏng vấn.
+const SITUATION_BY_GOAL: Readonly<Record<string, string>> = {
+  daily: 'small_talk',
+  travel: 'hotel_travel',
+  work: 'office_meeting',
+  ielts: 'free',
+}
+export const DEFAULT_CHAT_SITUATION = 'small_talk'
+
+export function situationForGoal(goal: string | undefined): string {
+  if (!goal || !Object.prototype.hasOwnProperty.call(SITUATION_BY_GOAL, goal)) {
+    return DEFAULT_CHAT_SITUATION
+  }
+  return SITUATION_BY_GOAL[goal]!
+}
