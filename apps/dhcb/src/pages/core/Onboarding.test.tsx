@@ -16,11 +16,14 @@ const saveOnboardingMock = vi.hoisted(() =>
 const cacheMock = vi.hoisted(() => vi.fn())
 const speedMock = vi.hoisted(() => vi.fn())
 const refreshMock = vi.hoisted(() => vi.fn(async () => ({ id: 'u1', onboarded: true })))
+const trackMock = vi.hoisted(() => vi.fn())
+const chosenMock = vi.hoisted(() => vi.fn())
 vi.mock('../../lib/cloud', () => ({ saveOnboarding: saveOnboardingMock }))
-vi.mock('../../lib/analytics', () => ({ track: () => undefined }))
+vi.mock('../../lib/analytics', () => ({ track: trackMock }))
 vi.mock('../../lib/onboarding', () => ({
   cacheOnboarding: cacheMock,
   minutesToSpeed: () => 10,
+  setChosenSubject: chosenMock,
 }))
 vi.mock('../../lib/curriculum', () => ({ setDailySpeed: speedMock }))
 vi.mock('../../context/useAuth', () => ({
@@ -40,6 +43,8 @@ describe('Onboarding — chọn môn trước', () => {
     refreshMock.mockReset().mockResolvedValue({ id: 'u1', onboarded: true })
     cacheMock.mockReset()
     speedMock.mockReset()
+    trackMock.mockReset()
+    chosenMock.mockReset()
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -189,5 +194,79 @@ describe('Onboarding — chọn môn trước', () => {
     expect(cacheMock).not.toHaveBeenCalled()
     expect(refreshMock).not.toHaveBeenCalled()
     expect(container.textContent).toBe('ĐÃ-RỜI-TRANG')
+  })
+
+  // ── [U9b] audit 2026-09-30 M19 + mục 8 ─────────────────────────────────────────────────────
+  it('lưu xong thì nhớ môn vừa chọn cho đúng tài khoản (Trang chủ không hỏi lại "Chọn môn")', async () => {
+    hien()
+    act(() => nut(/Toán học/).click())
+    act(() => nut(/Bắt đầu học/).click())
+    await chay()
+    await chay()
+    expect(chosenMock).toHaveBeenCalledWith('u1', 'mathematics')
+  })
+
+  it('"Bỏ qua" ngay ở bước chọn môn: lưu mặc định, KHÔNG gán môn nào, về Trang chủ, ghi sự kiện bỏ qua', async () => {
+    hien()
+    act(() => nut(/^Bỏ qua$/).click())
+    await chay()
+    await chay()
+    expect(saveOnboardingMock).toHaveBeenCalledTimes(1)
+    expect(saveOnboardingMock.mock.calls[0]![0]).toEqual({
+      level: 'beginner',
+      goal: 'daily',
+      dailyMinutes: 10,
+      ageGroup: 'nguoi_lon',
+    })
+    expect(chosenMock).not.toHaveBeenCalled()
+    expect(trackMock).toHaveBeenCalledWith('onboarding_skip', { refCode: 'onboarding:subject' })
+    expect(container.textContent).toContain('TRANG-CHU')
+  })
+
+  it('"Bỏ qua" giữa luồng Tiếng Anh giữ những gì đã chọn, phần còn lại mặc định, tới trang môn', async () => {
+    hien()
+    act(() => nut(/Tiếng Anh/).click())
+    act(() => nut(/Thanh niên/).click())
+    act(() => nut(/Tiếp theo/).click())
+    act(() => nut(/Trung cấp/).click())
+    act(() => nut(/^Bỏ qua$/).click())
+    await chay()
+    await chay()
+    expect(saveOnboardingMock.mock.calls[0]![0]).toEqual({
+      level: 'intermediate',
+      goal: 'daily',
+      dailyMinutes: 10,
+      ageGroup: 'thanh_nien',
+    })
+    expect(trackMock).toHaveBeenCalledWith('onboarding_skip', { refCode: 'onboarding:1' })
+    expect(chosenMock).toHaveBeenCalledWith('u1', 'english')
+    expect(container.textContent).toContain('TRANG-TIENG-ANH')
+  })
+
+  it('nút trình độ / mục tiêu / số phút có aria-pressed như nút nhóm tuổi', () => {
+    hien()
+    act(() => nut(/Tiếng Anh/).click())
+    act(() => nut(/Tiếp theo/).click())
+    expect(nut(/Cơ bản/).getAttribute('aria-pressed')).toBe('true')
+    expect(nut(/Nâng cao/).getAttribute('aria-pressed')).toBe('false')
+    act(() => nut(/Tiếp theo/).click())
+    expect(nut(/Giao tiếp hàng ngày/).getAttribute('aria-pressed')).toBe('true')
+    expect(nut(/Du lịch/).getAttribute('aria-pressed')).toBe('false')
+    act(() => nut(/Tiếp theo/).click())
+    expect(nut(/^10phút/).getAttribute('aria-pressed')).toBe('true')
+    act(() => nut(/^20phút/).click())
+    expect(nut(/^20phút/).getAttribute('aria-pressed')).toBe('true')
+    expect(nut(/^10phút/).getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('bước nào cũng có "Quay lại"/"Chọn môn khác" đi đúng một bước lùi', () => {
+    hien()
+    act(() => nut(/Tiếng Anh/).click())
+    act(() => nut(/Tiếp theo/).click())
+    expect(container.textContent).toContain('Bước 2 / 4')
+    act(() => nut(/Quay lại/).click())
+    expect(container.textContent).toContain('Bước 1 / 4')
+    act(() => nut(/Chọn môn khác/).click())
+    expect(container.textContent).toContain('Bạn muốn học gì?')
   })
 })

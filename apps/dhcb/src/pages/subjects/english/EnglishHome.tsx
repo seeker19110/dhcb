@@ -58,7 +58,7 @@ import { getDoneGrammar, computeLockedMapFromServer } from '../../../lib/cefrPro
 import { englishNext, duongDanCapCefr } from '../../../lib/today/englishNext'
 import { getPassedExamLevels } from '../../../lib/cefrExam'
 import { getSRSStats } from '../../../lib/srs'
-import { getDailyLearned, getDailyMax } from '../../../lib/curriculum'
+import { getDailyLearned, getDailySpeed } from '../../../lib/curriculum'
 import {
   shouldShowComeback,
   dismissComebackToday,
@@ -115,6 +115,10 @@ export default function EnglishHome() {
     isA,
   })
   const nextLabel = nextItem?.title ?? ''
+  // [U9b, audit 2026-09-30 M19] Chưa có dấu vết học nào (cùng định nghĩa "bằng chứng" của thẻ
+  // "Hôm nay" — useTodayPlan) thì KHÔNG nói "Học tiếp": người vừa xong onboarding chưa học gì để
+  // mà tiếp. Nói đúng: đây là bài đầu tiên, nút là "Bắt đầu".
+  const chuaHocGi = learned.size === 0 && doneGrammar.size === 0 && examPassed.size === 0
   const continueHref = continueLevelId ? duongDanCapCefr(continueLevelId) : ''
 
   const showComeback = !comebackClosed && !!continueLevelId && shouldShowComeback(uid)
@@ -130,7 +134,9 @@ export default function EnglishHome() {
 
   const srsDue = getSRSStats(user.id).due
   const dailyLearned = getDailyLearned(user.id)
-  const dailyMax = getDailyMax(user.id)
+  // [U9b] Mục tiêu NGÀY là tốc độ người học chọn (onboarding: 10 phút → 10 từ), không phải trần
+  // 5 lượt × tốc độ (`getDailyMax` = 50) — trước đây người chọn 10 phút thấy "0 / 50 từ vựng".
+  const dailyGoal = getDailySpeed(user.id)
 
   function goToNextStep() {
     if (continueHref) nav(continueHref)
@@ -162,11 +168,11 @@ export default function EnglishHome() {
                   </span>
                 </h2>
                 <p className="text-xs text-zinc-400">
-                  {isA ? 'Hôm nay đã học:' : 'Today learned:'}{' '}
+                  {isA ? 'Mục tiêu hôm nay:' : "Today's goal:"}{' '}
                   <span className="text-emerald-400 theme-light:text-emerald-900 font-bold">
                     {dailyLearned}
                   </span>{' '}
-                  / {dailyMax} từ vựng
+                  / {dailyGoal} {isA ? 'từ vựng' : 'words'}
                 </p>
               </div>
             </div>
@@ -189,9 +195,17 @@ export default function EnglishHome() {
             <ContinueCard
               frame="inset"
               headingLevel={3}
-              eyebrow={isA ? 'Bài tiếp theo theo lộ trình' : 'Next roadmap lesson'}
+              eyebrow={
+                chuaHocGi
+                  ? isA
+                    ? 'Bài đầu tiên theo lộ trình'
+                    : 'First roadmap lesson'
+                  : isA
+                    ? 'Bài tiếp theo theo lộ trình'
+                    : 'Next roadmap lesson'
+              }
               title={nextLabel || (isA ? 'Bắt đầu bài học mới' : 'Start new lesson')}
-              actionLabel={isA ? 'Học tiếp' : 'Continue'}
+              actionLabel={chuaHocGi ? (isA ? 'Bắt đầu' : 'Start') : isA ? 'Học tiếp' : 'Continue'}
               onAction={goToNextStep}
             />
           )}

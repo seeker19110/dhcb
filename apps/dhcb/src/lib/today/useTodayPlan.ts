@@ -22,6 +22,7 @@ import { isGuestId } from '@core/guestId'
 import { fetchProgressWithStatus, type ProgrammingLessonProgress } from '../programmingProgress'
 import { listResumableSessions, type SessionOwner } from '../learningSession'
 import { getDirection } from '../storage'
+import { getChosenSubject } from '../onboarding'
 import { englishNext, ENGLISH_SUBJECT_ID } from './englishNext'
 import type { programmingNext as ProgrammingNextFn } from './programmingNext'
 import { resumePointFromSummary, resumeTarget } from './resumePoint'
@@ -216,10 +217,20 @@ export function useTodayPlan(uid: string): UseTodayPlanResult {
       })
     }
 
+    // [U9b] Môn chọn lúc onboarding — chỉ có tác dụng khi chưa có tín hiệu nào (xem resolver).
+    const chosenId = getChosenSubject(uid)
     return buildTodayPlan({
       signals: [...byId.values()],
       now: mountedAt,
       knownSubjectIds: KNOWN_SUBJECT_IDS,
+      ...(chosenId
+        ? {
+            chosenSubject: {
+              id: chosenId,
+              ...(SUBJECT_LABELS[chosenId] ? { label: SUBJECT_LABELS[chosenId] } : {}),
+            },
+          }
+        : {}),
     })
   }, [uid, cefrLoaded, levels, circleById, progress, progressState, mountedAt, programmingModule])
 

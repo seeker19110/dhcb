@@ -20,7 +20,12 @@ import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { getDirection } from '../../../lib/storage'
 import { useAuth } from '../../../context/useAuth'
-import { getViewedIds, markViewed } from '../../../lib/viewedTracking'
+import {
+  getViewedIds,
+  markViewed,
+  markLastOpened,
+  getLastOpened,
+} from '../../../lib/viewedTracking'
 import { loadIndex, loadLesson, type Lesson, type LessonMeta } from '../../../data/lessons/loader'
 import {
   cayBaiHoiThoai,
@@ -183,7 +188,10 @@ export default function Lessons() {
   // CTA "Tiếp tục bài N" đọc trực tiếp localStorage mỗi render nên tự tính lại đúng.
   const idDangMo = selectedMeta?.id ?? null
   useEffect(() => {
-    if (uid && idDangMo !== null) markViewed('lessons', uid, String(idDangMo))
+    if (uid && idDangMo !== null) {
+      markViewed('lessons', uid, String(idDangMo))
+      markLastOpened('lessons', uid, String(idDangMo))
+    }
   }, [idDangMo, uid])
 
   // ── Điều hướng ─────────────────────────────────────────────────────────────
@@ -233,23 +241,35 @@ export default function Lessons() {
     setChiMuc({ trangThai: 'dang-tai', lan: chiMuc.lan + 1 })
   }
 
-  // Bài đầu tiên (theo thứ tự danh sách) CHƯA xem — gợi ý "Tiếp tục bài N". Đây là gợi ý bài
-  // CHƯA XEM, KHÔNG phải khôi phục lượt đang học dở (S09 không lưu vị trí trong bài).
-  const nextUnviewed = (() => {
+  // Gợi ý đầu danh sách — [U9b, audit 2026-09-30 M19] trước đây LUÔN là "bài đầu tiên chưa xem",
+  // nên vừa mở Bài 1 (chưa học xong) quay ra đã thấy "Tiếp tục: Bài 2". Nay nói đúng điều đang xảy
+  // ra (S09 vẫn không lưu vị trí TRONG bài — "Tiếp tục" là mở lại bài, không phải lượt):
+  //  · đang mở một bài (cột trái desktop) → "Bài tiếp theo": bài KẾ bài đang mở theo thứ tự;
+  //  · không mở bài nào, đã có bài mở gần nhất → "Tiếp tục": chính bài đang học đó;
+  //  · chưa có → bài đầu tiên chưa xem, nhãn "Bắt đầu" nếu chưa xem bài nào (người mới).
+  const goiY = (() => {
     if (!uid || index.length === 0) return null
+    if (idDangMo !== null) {
+      const viTri = index.findIndex((m) => m.id === idDangMo)
+      const ke = viTri >= 0 ? index[viTri + 1] : undefined
+      return ke ? { meta: ke, nhan: isA ? 'Bài tiếp theo' : 'Next lesson' } : null
+    }
+    const moGanNhat = getLastOpened('lessons', uid)
+    const dangHoc = moGanNhat === null ? undefined : index.find((m) => String(m.id) === moGanNhat)
+    if (dangHoc) return { meta: dangHoc, nhan: isA ? 'Tiếp tục' : 'Continue' }
     const viewed = getViewedIds('lessons', uid)
-    // Bài ĐANG MỞ coi như đã xem ngay trong lượt render này: `markViewed` chạy ở effect (SAU
-    // commit) và không setState, nên nếu chỉ đọc localStorage thì gợi ý vẫn trỏ vào chính bài
-    // đang mở cho tới lần render kế tiếp.
-    return index.find((m) => m.id !== idDangMo && !viewed.has(String(m.id))) ?? null
+    const dauTien = index.find((m) => !viewed.has(String(m.id)))
+    if (!dauTien) return null
+    const nhan = viewed.size === 0 ? (isA ? 'Bắt đầu' : 'Start') : isA ? 'Tiếp tục' : 'Continue'
+    return { meta: dauTien, nhan }
   })()
 
-  // Gợi ý "Tiếp tục bài N" — dùng chung cho cả màn danh sách mobile lẫn cột trái desktop.
-  const continueCta = nextUnviewed && !query.trim() && (
+  // Gợi ý dùng chung cho cả màn danh sách mobile lẫn cột trái desktop.
+  const continueCta = goiY && !query.trim() && (
     <ContinueRow
-      label={isA ? 'Tiếp tục' : 'Continue'}
-      title={isA ? `Bài ${nextUnviewed.id}: ${nextUnviewed.title}` : `Lesson ${nextUnviewed.id}`}
-      onClick={() => chonBai(nextUnviewed)}
+      label={goiY.nhan}
+      title={isA ? `Bài ${goiY.meta.id}: ${goiY.meta.title}` : `Lesson ${goiY.meta.id}`}
+      onClick={() => chonBai(goiY.meta)}
       className="mb-4"
     />
   )

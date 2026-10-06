@@ -24,7 +24,9 @@ import { useAuth } from '../../context/useAuth'
 import { getSrsSnapshot } from '../../lib/srs'
 import { getDueProgCards } from '../../lib/programmingSrs'
 import { getDueStemCards } from '../../lib/stemSrs'
-import { getDueMistakes } from '../../lib/mistakes'
+import { getDueMistakes, getMistakes } from '../../lib/mistakes'
+import { getChosenSubject } from '../../lib/onboarding'
+import { subjectHomePath } from '@dhcb/core-learner/subjectHome'
 import {
   buildReviewQueue,
   nhanMon,
@@ -178,6 +180,19 @@ export default function ReviewHub() {
 
   const conLai = queue ? Math.max(0, queue.totalDue - queue.items.length) : 0
 
+  // [U9b, audit 2026-09-30 M19] "Không có gì đến hạn — quay lại ngày mai" chỉ ĐÚNG với người đã
+  // có thẻ/lỗi đang chờ lịch ôn. Người chưa học gì (kho SRS chung — gồm cả thẻ `prog:`/`stem:` —
+  // rỗng, chưa có lỗi nào, chưa nộp bài STEM nào trên máy) thì "ngày mai" cũng chẳng có gì: phải
+  // chỉ lối BẮT ĐẦU, vào đúng môn đã chọn lúc onboarding nếu có.
+  const chuaCoGiDeOn =
+    !!user &&
+    queue?.totalDue === 0 &&
+    Object.keys(getSrsSnapshot(user.id)).length === 0 &&
+    getMistakes(user.id).length === 0 &&
+    monStemDaHocTrenMay(user.id).length === 0
+  const monDaChon = user ? getChosenSubject(user.id) : undefined
+  const loiBatDau = monDaChon ? subjectHomePath(monDaChon) : '/goc-hoc-tap'
+
   return (
     <>
       <Layout title="Ôn tập hôm nay" />
@@ -195,7 +210,30 @@ export default function ReviewHub() {
           </p>
         )}
 
-        {queue && queue.totalDue === 0 && (
+        {chuaCoGiDeOn && (
+          <div
+            className="rounded-3xl border border-zinc-800 bg-zinc-900/80 p-5 space-y-3"
+            role="status"
+          >
+            <p className="flex items-center gap-2 text-sm font-bold text-content">
+              <Sparkles className="w-5 h-5 text-accent-400" aria-hidden="true" />
+              <span>Chưa có gì để ôn — bạn chưa học bài nào</span>
+            </p>
+            <p className="text-sm text-content-secondary leading-relaxed">
+              Học xong bài đầu tiên, những từ và câu bạn vừa gặp sẽ tự vào lịch ôn ở đây, đúng lúc
+              trí nhớ sắp quên.
+            </p>
+            <Link
+              to={loiBatDau}
+              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+            >
+              <span>Bắt đầu học bài đầu tiên</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </Link>
+          </div>
+        )}
+
+        {queue && queue.totalDue === 0 && !chuaCoGiDeOn && (
           <div
             className="rounded-3xl border border-zinc-800 bg-zinc-900/80 p-5 space-y-3"
             role="status"

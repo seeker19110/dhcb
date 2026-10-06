@@ -16,6 +16,10 @@ export type AnalyticsEvent =
   | 'daily_plan_impression'
   | 'daily_plan_click'
   | 'onboarding_step_view'
+  // [2026-10-05, U9b] Bấm "Bỏ qua" trong Onboarding — refCode = `onboarding:<bước>` hoặc
+  // `onboarding:subject` (bỏ qua ngay ở bước chọn môn). Tách khỏi `onboarding_step_view` để phễu
+  // phân biệt được "bỏ qua có chủ đích" với "rời đi giữa chừng".
+  | 'onboarding_skip'
   // [2026-09-17, P1-6] SessionDone (lệnh 8): xem/mở CTA phụ của màn kết phiên gộp.
   | 'session_done_view'
   | 'session_done_more'

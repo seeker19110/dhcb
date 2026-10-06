@@ -4,30 +4,28 @@ import { mockLogin } from './helpers/auth'
 // Gợi ý "Tiếp tục" (đánh dấu "đã xem" cho Lessons/CommonPhrases) — phần phụ của
 // U-5, xem docs/research/cai-tien-ui-ux.md.
 test.describe('Gợi ý "Tiếp tục" — đánh dấu đã xem', () => {
-  test('Lessons: chưa xem gì → gợi ý bài 1; mở bài 1 xong quay lại → gợi ý bài 2', async ({
+  // [U9b, audit 2026-09-30 M19] Hợp đồng mới: "Tiếp tục" trỏ BÀI ĐANG HỌC (bài mở gần nhất),
+  // không phải "bài đầu tiên chưa xem" — vừa mở Bài 1 thì "Tiếp tục" phải là Bài 1, không Bài 2.
+  test('Lessons: người mới → "Bắt đầu" bài 1; đang mở bài 1 → "Bài tiếp theo" bài 2; quay lại danh sách → "Tiếp tục" bài 1', async ({
     page,
   }) => {
     await mockLogin(page, 'vi')
     await page.goto('/bai-hoc')
-    await page.waitForTimeout(500)
-    const cta = page.getByRole('button', { name: /Tiếp tục/ })
+    const cta = page.getByRole('button', { name: /^Bắt đầu\s*Bài 1/ })
     await expect(cta).toBeVisible()
-    await expect(cta).toContainText('Bài 1')
     await cta.click()
     // [2026-09-05, đợt 1 "desktop giáo dục"] Playwright chạy ở 1280px, tức nhánh MASTER–DETAIL:
-    // danh sách bài KHÔNG bị thay thế nữa mà ở nguyên cột trái, nội dung bài mở ở cột phải.
-    // Vì vậy không còn (và không cần) nút "← Danh sách" để quay lại — gợi ý "Tiếp tục" phải tự
-    // nhảy sang bài 2 NGAY sau khi bài 1 được đánh dấu đã xem, không qua bước quay lại nào.
-    // Kiểm bằng `aria-current` của mục trong danh sách chứ không bằng chữ tiêu đề: ở khuôn
-    // master–detail tiêu đề bài xuất hiện ở CẢ hai chỗ (mục danh sách + thanh header), nên
-    // `getByText` sẽ vi phạm strict-mode. `aria-current` cũng chính là thứ ta cam kết cho
-    // trình đọc màn hình, nên kiểm nó là kiểm đúng hợp đồng a11y.
-    // [S09c] Bài đang mở nay nằm trên URL (`?lesson=1`): router áp điều hướng ở một lượt render
-    // SAU cú bấm, nên ngay sau click nút "Tiếp tục" (vẫn chứa tên bài 1) và thẻ bài 1 cùng khớp
-    // /Giới thiệu bản thân/ → strict-mode ném lỗi tức thì, không chờ. Nhắm thẳng thẻ bài bằng id
-    // ổn định của nó để assertion được phép chờ; hợp đồng kiểm (aria-current) giữ nguyên.
+    // danh sách bài ở nguyên cột trái, nội dung bài mở ở cột phải. Kiểm bằng `aria-current` của
+    // thẻ bài (id ổn định) — tiêu đề bài xuất hiện ở CẢ hai chỗ nên `getByText` vi phạm
+    // strict-mode; `aria-current` cũng chính là hợp đồng a11y.
     await expect(page.locator('#lesson-card-1')).toHaveAttribute('aria-current', 'true')
-    await expect(page.getByRole('button', { name: /Tiếp tục/ })).toContainText('Bài 2')
+    // Đang mở bài 1: gợi ý ở cột trái là bài KẾ TIẾP, gọi đúng tên "Bài tiếp theo".
+    await expect(page.getByRole('button', { name: /^Bài tiếp theo\s*Bài 2/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Tiếp tục/ })).toHaveCount(0)
+
+    // Rời bài về danh sách: "Tiếp tục" là chính bài đang học — Bài 1.
+    await page.goto('/bai-hoc')
+    await expect(page.getByRole('button', { name: /^Tiếp tục\s*Bài 1/ })).toBeVisible()
   })
 
   test('CommonPhrases: gợi ý chủ đề đầu tiên chưa xem, mở xong thì đổi gợi ý', async ({ page }) => {

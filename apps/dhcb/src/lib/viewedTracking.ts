@@ -32,3 +32,25 @@ export function markViewed(namespace: string, uid: string, id: string): void {
   set.add(id)
   writeSet(KEY(namespace, uid), set)
 }
+
+// [U9b, 2026-10-05] Mục MỞ GẦN NHẤT của một danh sách — "bài đang học". Trước đây gợi ý "Tiếp tục"
+// ở Lessons.tsx trỏ "mục đầu tiên CHƯA XEM", nên vừa mở Bài 1 (chưa học xong) là "Tiếp tục" nhảy
+// sang Bài 2 (audit 2026-09-30 M19). App không có tín hiệu "đã học xong" cho bài hội thoại (nợ
+// S11-1), nên "đang học" trung thực nhất là bài mở gần nhất.
+const LAST_KEY = (namespace: string, uid: string) => `et_last_opened_${namespace}_${uid}`
+
+export function markLastOpened(namespace: string, uid: string, id: string): void {
+  try {
+    localStorage.setItem(LAST_KEY(namespace, uid), id)
+  } catch {
+    /* localStorage đầy/bị chặn — chỉ mất gợi ý "Tiếp tục" */
+  }
+}
+
+export function getLastOpened(namespace: string, uid: string): string | null {
+  try {
+    return localStorage.getItem(LAST_KEY(namespace, uid))
+  } catch {
+    return null
+  }
+}
