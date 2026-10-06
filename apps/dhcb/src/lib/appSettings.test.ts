@@ -206,3 +206,93 @@ describe('appSettings — khởi tạo `current` từ cache localStorage lúc lo
     expect(mod.getLimits()).toEqual(DEFAULT_PLAN_DAILY_LIMITS)
   })
 })
+
+describe('VIP không giới hạn — nâng cấp/rollback contract', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.resetModules()
+  })
+  afterEach(() => vi.unstubAllGlobals())
+  const base = {
+    limits: { free: 30, vip: 300 },
+    promoUntil: null,
+    leaderboardEnabled: false,
+    updatedAt: '2026-10-06:vip-unlimited',
+  }
+
+  it('chỉ mở vô hạn khi server xác nhận; Free vẫn chặn ở hạn mức cấu hình', async () => {
+    const mod = await import('./appSettings')
+    expect(mod.getDailyLimit('vip')).toBe(300)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ ...base, vipUnlimited: true }),
+      }),
+    )
+    await mod.refreshAppSettings()
+    expect(mod.hasUnlimitedAi('vip')).toBe(true)
+    expect(mod.hasUnlimitedAi('free')).toBe(false)
+    expect(mod.getDailyLimit('vip')).toBe(Infinity)
+    expect(mod.hasReachedDailyLimit(usage({ chatCount: 1_000_000 }), 'vip')).toBe(false)
+    expect(mod.hasReachedDailyLimit(usage({ chatCount: 30 }), 'free')).toBe(true)
+    expect(JSON.parse(localStorage.getItem(CACHE_KEY)!)).toEqual({ ...base, vipUnlimited: true })
+  })
+
+  it('server rollback không còn flag → UI dùng lại cap, không giữ lời hứa cũ', async () => {
+    const mod = await import('./appSettings')
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ ...base, vipUnlimited: true }),
+        })
+        .mockResolvedValueOnce({ ok: true, status: 200, json: async () => base }),
+    )
+    await mod.refreshAppSettings()
+    expect(mod.hasUnlimitedAi('vip')).toBe(true)
+    await mod.refreshAppSettings()
+    expect(mod.hasUnlimitedAi('vip')).toBe(false)
+    expect(mod.getDailyLimit('vip')).toBe(300)
+  })
+
+  it('UI được thông báo khi hydrate xong và có thể hủy đăng ký', async () => {
+    const mod = await import('./appSettings')
+    const listener = vi.fn()
+    const unsubscribe = mod.subscribeAppSettings(listener)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ ...base, vipUnlimited: true }),
+      }),
+    )
+    await mod.refreshAppSettings()
+    expect(listener).toHaveBeenCalledTimes(1)
+    unsubscribe()
+    await mod.refreshAppSettings()
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('flag sai kiểu bị từ chối, không nới quyền hiển thị', async () => {
+    const mod = await import('./appSettings')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ ...base, vipUnlimited: 'true' }),
+      }),
+    )
+    await mod.refreshAppSettings()
+    expect(mod.hasUnlimitedAi('vip')).toBe(false)
+    expect(mod.getDailyLimit('vip')).toBe(300)
+    warn.mockRestore()
+  })
+})

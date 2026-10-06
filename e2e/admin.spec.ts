@@ -901,20 +901,28 @@ test.describe('Admin Dashboard — /admin-s', () => {
     await expect(page.getByText('Khuyến mãi ra mắt')).toBeVisible({ timeout: VISIBLE_TIMEOUT })
   })
 
-  test('Limits: Hiện input Free và VIP', async ({ page }) => {
+  test('Limits: chỉ Free có ô hạn mức; VIP được mô tả không giới hạn', async ({ page }) => {
     await gotoAdmin(page, 'limits')
-    await expect(page.getByText('Gói Free (lượt/ngày)')).toBeVisible({ timeout: VISIBLE_TIMEOUT })
-    await expect(page.getByText('Gói VIP (lượt/ngày)')).toBeVisible()
+    await expect(page.getByLabel('Gói Free (lượt/ngày)')).toBeVisible({
+      timeout: VISIBLE_TIMEOUT,
+    })
+    await expect(page.getByLabel('Gói VIP (lượt/ngày)')).toHaveCount(0)
+    await expect(page.getByText(/VIP không giới hạn lượt AI\/ngày/)).toBeVisible()
   })
 
-  test('Limits: Giá trị Free=200, VIP=999', async ({ page }) => {
+  test('Limits: Free=200; lưu thay đổi Free không làm mất cấu hình VIP cũ để rollback', async ({
+    page,
+  }) => {
     await gotoAdmin(page, 'limits')
-    await expect(page.locator('input[type="number"]').first()).toHaveValue('200', {
-      timeout: VISIBLE_TIMEOUT,
-    })
-    await expect(page.locator('input[type="number"]').last()).toHaveValue('999', {
-      timeout: VISIBLE_TIMEOUT,
-    })
+    const freeInput = page.getByLabel('Gói Free (lượt/ngày)')
+    await expect(freeInput).toHaveValue('200', { timeout: VISIBLE_TIMEOUT })
+    await expect(page.locator('input[type="number"]')).toHaveCount(1)
+    const posted = page.waitForRequest(
+      (request) => request.url().endsWith('/api/admin-settings') && request.method() === 'POST',
+    )
+    await freeInput.fill('201')
+    await page.getByRole('button', { name: 'Lưu cấu hình' }).first().click()
+    expect((await posted).postDataJSON().limits).toEqual({ free: 201, vip: 999 })
   })
 
   test('Limits: Bật checkbox khuyến mãi → hiện datetime picker', async ({ page }) => {

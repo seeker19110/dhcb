@@ -16,9 +16,13 @@ import { formatPlanExpiry, isLifetimeVip } from '../lib/planLabel'
 type CreditState =
   | { status: 'loading' }
   | { status: 'ready'; remaining: number | null; cap: number }
+  | { status: 'unlimited'; usedToday: number }
   | { status: 'error' }
 
 function toCreditState(info: WeeklyCreditInfo | null): CreditState {
+  if (info?.unlimited === true && info.usedToday !== undefined) {
+    return { status: 'unlimited', usedToday: info.usedToday }
+  }
   return info
     ? { status: 'ready', remaining: info.freeWeeklyCredit, cap: info.freeWeeklyCap }
     : { status: 'error' }
@@ -80,8 +84,8 @@ export default function VipPlanSummary({
           <p className="text-sm text-zinc-300 mt-0.5">{termText}</p>
           <p className="text-sm text-zinc-300">
             {isA
-              ? 'Đây là gói cao nhất hiện có — không còn gì để nâng cấp thêm.'
-              : 'This is the highest plan available — nothing left to upgrade.'}
+              ? 'Tự chọn bài trong nội dung đã mở; lộ trình là gợi ý, không phải thứ tự bắt buộc.'
+              : 'Choose freely from available lessons; the learning path is a guide, not a required order.'}
           </p>
         </div>
       </div>
@@ -90,7 +94,13 @@ export default function VipPlanSummary({
         <h3 className="text-sm font-semibold text-white">
           {isA ? 'Lượt AI hôm nay' : 'AI credits today'}
         </h3>
-        {credit.status === 'ready' && credit.remaining !== null ? (
+        {credit.status === 'unlimited' ? (
+          <p className="text-sm text-zinc-300 mt-1">
+            {isA
+              ? `Không giới hạn lượt AI trong thời gian gói có hiệu lực. Hôm nay đã dùng ${credit.usedToday} lượt.`
+              : `Unlimited AI turns while your plan is active. ${credit.usedToday} used today.`}
+          </p>
+        ) : credit.status === 'ready' && credit.remaining !== null ? (
           <p className="text-sm text-zinc-300 mt-1">
             {isA
               ? `Đã dùng ${credit.cap - credit.remaining}/${credit.cap} lượt — còn ${credit.remaining} lượt, tính chung mọi tính năng AI, làm mới mỗi ngày.`

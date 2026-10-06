@@ -10,6 +10,7 @@
 // GET /api/app-settings
 
 import { getAppSettings } from '@dhcb/core-db/settings'
+import { AI_USAGE_POLICY_VERSION, hasUnlimitedAiTurns } from '@dhcb/core-billing/aiUsagePolicy'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -30,7 +31,12 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const settings = await getAppSettings()
-  const etag = `"${settings.updatedAt}"`
+  const data = {
+    ...settings,
+    vipUnlimited: hasUnlimitedAiTurns('vip'),
+    updatedAt: `${settings.updatedAt}:${AI_USAGE_POLICY_VERSION}`,
+  }
+  const etag = `"${data.updatedAt}"`
 
   // Cache ngắn ở CDN/trình duyệt cộng thêm cơ chế ETag — số này hiếm khi đổi.
   const headers = { ...allHeaders, 'Cache-Control': 'public, max-age=60', ETag: etag }
@@ -39,7 +45,7 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(null, { status: 304, headers })
   }
 
-  return jsonResponse(settings, 200, headers)
+  return jsonResponse(data, 200, headers)
 }
 
 export const config = { runtime: 'edge' }

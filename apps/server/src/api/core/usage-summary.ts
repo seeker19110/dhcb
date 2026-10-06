@@ -23,6 +23,7 @@ import {
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { lookupPlan, DEFAULT_SUBJECT, AI_USAGE_COLUMNS } from '@dhcb/core-billing/usage'
 import { getAppSettings } from '@dhcb/core-db/settings'
+import { hasUnlimitedAiTurns } from '@dhcb/core-billing/aiUsagePolicy'
 import { vnDateStr } from '@dhcb/core-db/date'
 
 export default async function handler(req: Request): Promise<Response> {
@@ -51,10 +52,20 @@ export default async function handler(req: Request): Promise<Response> {
     const { rows } = await pool.query<{ used: string | null }>(
       `select ${AI_USAGE_COLUMNS.join(' + ')} as used
          from public.daily_usage
-        where user_id = $1 and day = $2::date and subject = $3`,
+        where user_id = $1 and day = $2 and subject = $3`,
       [auth.userId, today, DEFAULT_SUBJECT],
     )
     const used = Number(rows[0]?.used ?? 0)
+    if (!Number.isSafeInteger(used) || used < 0) throw new Error('Invalid usage total')
+    if (hasUnlimitedAiTurns(plan)) {
+      // Không gửi Infinity qua JSON; null + cờ tường minh khác với "chưa đọc được lượt".
+      // Các field cũ giữ tên để client đã phát hành không vỡ; client mới đọc nhánh unlimited.
+      return jsonResponse(
+        { plan, unlimited: true, usedToday: used, freeWeeklyCredit: null, freeWeeklyCap: 0 },
+        200,
+        { ...allHeaders, 'Cache-Control': 'no-store' },
+      )
+    }
     // Kẹp về [0, cap] — admin có thể hạ hạn mức xuống dưới số đã dùng, không được hiện số âm.
     const remaining = Math.max(0, Math.min(cap - used, cap))
 

@@ -55,9 +55,9 @@ describe('apps/dhcb/index.html', () => {
     for (const [, body] of blocks) expect(() => JSON.parse(body)).not.toThrow()
   })
 
-  it('FAQ nói đúng hạn mức gói Miễn phí (30 lượt AI/ngày) và gói VIP', () => {
-    expect(APP_HTML).toMatch(/30 lượt/)
-    expect(APP_HTML).toMatch(/VIP/)
+  it('FAQ phân biệt AI miễn phí có hạn mức với VIP không giới hạn khi còn hiệu lực', () => {
+    expect(APP_HTML).toMatch(/hạn mức hiển thị/)
+    expect(APP_HTML).toMatch(/VIP.*không giới hạn lượt AI.*hiệu lực/)
   })
 
   it('không preconnect tới nhà cung cấp AI / api.sentry.io (client không bao giờ gọi)', () => {

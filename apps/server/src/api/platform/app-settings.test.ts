@@ -16,6 +16,7 @@ vi.mock('@dhcb/core-db/settings', () => ({
 }))
 
 import handler from './app-settings.js'
+import { AI_USAGE_POLICY_VERSION } from '@dhcb/core-billing/aiUsagePolicy'
 import { PublicAppSettingsSchema } from '@dhcb/core-contracts/appSettings'
 
 // Hình dạng THẬT của packages/core-db/settings.ts sau GĐ1: một con số tổng/ngày mỗi gói.
@@ -55,8 +56,12 @@ describe('GET /api/app-settings', () => {
   it('thành công → 200, trả đúng dữ liệu + ETag', async () => {
     const res = await handler(new Request('http://localhost/api/app-settings'))
     expect(res.status).toBe(200)
-    expect(res.headers.get('ETag')).toBe(`"${SETTINGS.updatedAt}"`)
-    expect(await res.json()).toEqual(SETTINGS)
+    expect(res.headers.get('ETag')).toBe(`"${SETTINGS.updatedAt}:${AI_USAGE_POLICY_VERSION}"`)
+    expect(await res.json()).toEqual({
+      ...SETTINGS,
+      vipUnlimited: true,
+      updatedAt: `${SETTINGS.updatedAt}:${AI_USAGE_POLICY_VERSION}`,
+    })
   })
 
   // [audit M9] Hợp đồng dùng chung với client + mock E2E: body thật PHẢI parse được qua schema.
@@ -70,9 +75,19 @@ describe('GET /api/app-settings', () => {
   it('If-None-Match khớp ETag hiện tại → 304 rỗng', async () => {
     const res = await handler(
       new Request('http://localhost/api/app-settings', {
-        headers: { 'if-none-match': `"${SETTINGS.updatedAt}"` },
+        headers: { 'if-none-match': `"${SETTINGS.updatedAt}:${AI_USAGE_POLICY_VERSION}"` },
       }),
     )
     expect(res.status).toBe(304)
   })
+})
+
+it('ETag bản cũ không che chính sách mới khi DB settings chưa đổi', async () => {
+  const res = await handler(
+    new Request('http://localhost/api/app-settings', {
+      headers: { 'if-none-match': `"${SETTINGS.updatedAt}"` },
+    }),
+  )
+  expect(res.status).toBe(200)
+  expect((await res.json()).vipUnlimited).toBe(true)
 })

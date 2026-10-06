@@ -1,19 +1,21 @@
 # Đồng Hành
 
-**Đồng Hành** đang chuyển từ ứng dụng gia sư AI Việt ⇄ Anh thành một **Personal AI Companion
-đa lĩnh vực**: hiểu người dùng xuyên thời gian, kết nối mục tiêu giữa học tập, nghề nghiệp, công
-việc, dự án và đời sống, nhưng chỉ hành động trong phạm vi quyền được cấp.
+**Đồng Hành Cùng Bạn** hỗ trợ mọi người học hỏi, hiểu sâu hơn và từng bước nâng cao khả năng
+**tự học**. Bài học, thực hành, ôn tập, Ghi chú và Bạn Đồng Hành AI cùng phục vụ việc học;
+không khôi phục các trụ Sự nghiệp, Khởi nghiệp và Đời sống đã gỡ.
 
-Sản phẩm production hiện tại là **Learning / Gia sư ngôn ngữ AI song ngữ Việt ⇄ Anh**, đang chạy
-tại <https://en-vi.donghanhcungban.org>. Đây là domain đầu tiên và là nền sản phẩm thật để chuyển
-dần sang Đồng Hành Platform V2; không có kế hoạch viết lại một lần hoặc làm gián đoạn người dùng.
+Ứng dụng chính: <https://www.donghanhcungban.org>. Khách có thể bắt đầu không đăng nhập,
+trải nghiệm AI trong hạn mức riêng được kiểm soát ở server. Tài khoản Free có hạn mức AI/ngày.
+VIP mở quyền chọn thứ tự bài trong nội dung đã có và không giới hạn lượt AI/ngày khi gói còn
+hiệu lực; vẫn giữ xác thực, chống lạm dụng, thống kê và cầu dao chi phí. Triển khai phải qua CI
+và xác minh bản deploy, không chỉ đổi nội dung quảng cáo.
 
 ## Hiện tại: Learning production
 
 - Chat gia sư AI, luyện viết và chấm điểm, luyện nói qua STT + phản hồi bằng giọng nói.
 - Lộ trình từ vựng, SRS, phát âm và CEFR A1 → C2; từ điển 12.000+ mục.
 - Tiến độ, streak, thử thách, huy hiệu, referral, thông báo và quản trị.
-- Gói Free / Pro / VIP; thanh toán VietQR qua SePay, webhook cấp quyền atomic và idempotent.
+- Gói Free / VIP; thanh toán VietQR qua SePay, webhook cấp quyền atomic và idempotent.
 - Hai chiều Việt ⇄ Anh, giao diện song ngữ, mobile-first và bốn theme đạt WCAG AA.
 - PostgreSQL tự host, Express, React/Vite; triển khai VPS sau Cloudflare với CI đầy đủ.
 
@@ -22,7 +24,7 @@ engine chính cho hội thoại và trải nghiệm voice mới**; các provider
 như adapter hoặc fallback trong giai đoạn chuyển đổi. Việc chuyển provider phải đi qua benchmark,
 cost/latency evidence và rollout có thể rollback, không thay đổi production chỉ bằng sửa tài liệu.
 
-## Tương lai: Đồng Hành Platform V2
+## Tài liệu kiến trúc V2 tham khảo (không phải quyền lợi đang cung cấp)
 
 V2 dùng modular monolith, contract rõ ràng và migration kiểu strangler. Trọng tâm không phải tạo
 thêm một chatbot, mà xây một companion có continuity và kiểm soát được:
@@ -34,13 +36,13 @@ thêm một chatbot, mà xây một companion có continuity và kiểm soát đ
 - **Companion Runtime** — intent → context → plan → policy → capability → validated result.
 - **Capability Registry + Automation** — mọi thao tác có schema, quyền, risk, budget, audit và revoke.
 - **Decision / Outcome Loop** — lưu giả định, bằng chứng, lựa chọn và học từ kết quả thực tế.
-- **Các domain theo thứ tự** — Learning đa môn → Career → Work → Startup → Life.
+- **Phạm vi đang triển khai** — Học tập đa môn và Ghi chú; không tự mở lại các domain đã gỡ.
 
 Các invariant quan trọng: planning không đồng nghĩa execution; AI output không trực tiếp sửa
 billing, permissions, mastery hoặc authoritative state; external write cần đúng authority; dữ liệu
 nhạy cảm không tự động đi xuyên domain.
 
-Roadmap chính thức: [V2 Roadmap](docs/architecture-v2/21-ROADMAP.md). Kiến trúc:
+Kho tham khảo kiến trúc: [V2 Roadmap](docs/architecture-v2/21-ROADMAP.md). Kiến trúc:
 [System Architecture](docs/architecture-v2/02-SYSTEM-ARCHITECTURE.md). Chiến lược chuyển đổi:
 [Migration V1 → V2](docs/architecture-v2/20-MIGRATION-V1-V2.md). Trạng thái có bằng chứng:
 [PROGRESS.md](PROGRESS.md).

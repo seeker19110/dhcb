@@ -8,11 +8,12 @@ import { getPgPool } from '@dhcb/core-db/pgPool'
 import { vnDateStr } from '@dhcb/core-db/date'
 import { resolvePlan, type Plan } from './plan.js'
 import { effectivePlan } from './promo.js'
+import { hasUnlimitedAiTurns } from './aiUsagePolicy.js'
 import { getAppSettings, isSubjectEnforced } from '@dhcb/core-db/settings'
 
 // 'code_feedback' (PR-L5, môn Lập trình): AI đọc code góp ý / gợi ý Socratic / giải thích lỗi.
 // Cột riêng để tách được CHI PHÍ theo tính năng trên dashboard admin; hạn mức thì vẫn theo
-// đúng luật chung (một hạn mức TỔNG/ngày cho mọi mode cộng lại, khác nhau giữa Free và VIP).
+// Free dùng hạn mức tổng/ngày; VIP không giới hạn lượt nhưng vẫn ghi đủ thống kê.
 export type UsageMode = 'chat' | 'writing' | 'speaking' | 'stt' | 'pronounce' | 'code_feedback'
 
 // Môn học — mặc định 'english' ở MỌI lời gọi hiện tại (chỉ có 1 môn tồn tại). Khi thêm môn
@@ -23,9 +24,8 @@ export type UsageMode = 'chat' | 'writing' | 'speaking' | 'stt' | 'pronounce' | 
 export const DEFAULT_SUBJECT = 'english'
 
 // Hạn mức theo gói ĐỌC TỪ DB (bảng app_settings, admin chỉnh qua /api/admin-settings) —
-// xem settings.ts để biết giá trị mặc định khi DB chưa có dòng cấu hình. Từ GĐ1 (2026-09-12)
-// CẢ HAI gói Free và VIP đều enforce qua bảng này: `limits.free` (mặc định 30 = hạn mức Plus cũ)
-// và `limits.vip`.
+// Free theo `limits.free`. Quyết định 2026-10-06: VIP không chặn tổng lượt/ngày;
+// `limits.vip` giữ trong DB để tương thích/rollback, không phải quyền lợi đang áp dụng.
 
 // Tên cột tương ứng trong bảng daily_usage
 const COLUMN: Record<UsageMode, string> = {
@@ -68,7 +68,7 @@ function today(): string {
   return vnDateStr()
 }
 
-// Từ GĐ1 (2026-09-12) cả Free lẫn VIP đều theo hạn mức TỔNG/ngày nên chỉ còn MỘT thông điệp:
+// Free theo hạn mức TỔNG/ngày nên khi chạm hạn mức dùng thông điệp:
 // hết lượt hôm nay thì mai có lại, không còn cơ chế "học thêm để được thêm lượt" của kho trượt.
 const LIMIT_MESSAGE = 'Bạn đã dùng hết lượt hôm nay. Thử lại vào ngày mai nhé.'
 
@@ -135,7 +135,25 @@ export async function checkAndConsumeUsage(
 
     const plan = await lookupPlan(userId)
 
-    // ── Free và VIP: 1 hạn mức TỔNG/ngày cho MỌI mode cộng lại ──
+    // VIP: ghi nhận một lượt bằng UPSERT atomic, KHÔNG giả vô hạn bằng một số trần lớn.
+    // Phải xác minh được gói và ghi thống kê thành công mới gọi provider. Việc hoàn lượt
+    // tiếp tục dùng đúng cột/ngày này khi provider lỗi. Rate limit và breaker vẫn giữ nguyên.
+    if (hasUnlimitedAiTurns(plan)) {
+      const column = COLUMN[mode] // chỉ lấy từ whitelist nội bộ, không từ chuỗi SQL của client
+      const recorded = await pool.query<{ recorded: boolean }>(
+        `insert into public.daily_usage (user_id, day, subject, ${column})
+         values ($1, $2, $3, 1)
+         on conflict (user_id, day, subject)
+         do update set ${column} = daily_usage.${column} + 1
+         returning true as recorded`,
+        [userId, day, DEFAULT_SUBJECT],
+      )
+      return recorded.rows[0]?.recorded === true
+        ? { ok: true, day }
+        : { ok: false, message: CIRCUIT_BREAKER_MESSAGE }
+    }
+
+    // ── Free: 1 hạn mức TỔNG/ngày cho MỌI mode cộng lại ──
     // GĐ1 2026-09-12: Free dùng chung đúng cơ chế này (trước đây là kho lượt cửa sổ trượt 7
     // ngày qua consume_rolling_credit), chỉ khác con số hạn mức — cả hai đều đọc từ app_settings.
     const col = COLUMN[mode]

@@ -111,7 +111,12 @@ function Bar({ pct, color }: { pct: number; color: string }) {
 }
 
 export interface DashboardEnglishDetailsWeeklyCredit {
-  info: { freeWeeklyCredit: number; freeWeeklyCap: number } | null
+  info: {
+    freeWeeklyCredit: number | null
+    freeWeeklyCap: number
+    unlimited?: true
+    usedToday?: number
+  } | null
   status: 'loading' | 'ready' | 'error'
   retryRevision: number
 }
@@ -309,16 +314,33 @@ export default function DashboardEnglishDetails({
               className="text-[11px] text-zinc-400 flex items-start gap-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring rounded-md"
             >
               <MessageCircle className="w-3.5 h-3.5 text-accent-400 shrink-0 mt-0.5" />
-              <span>{vi ? 'Lượt AI còn lại hôm nay' : 'AI credits left today'}</span>
+              <span>
+                {weeklyCreditInfo?.unlimited
+                  ? vi
+                    ? 'Lượt AI hôm nay'
+                    : 'AI turns today'
+                  : vi
+                    ? 'Lượt AI còn lại hôm nay'
+                    : 'AI credits left today'}
+              </span>
             </h3>
             {weeklyCreditInfo && (
               <span className="text-sm font-semibold text-accent-300 theme-light:text-accent-800 shrink-0">
-                {weeklyCreditInfo.freeWeeklyCredit}/{weeklyCreditInfo.freeWeeklyCap}{' '}
-                {vi ? 'lượt' : 'credits'}
+                {weeklyCreditInfo.unlimited
+                  ? vi
+                    ? 'Không giới hạn'
+                    : 'Unlimited'
+                  : `${weeklyCreditInfo.freeWeeklyCredit}/${weeklyCreditInfo.freeWeeklyCap} ${vi ? 'lượt' : 'credits'}`}
               </span>
             )}
           </div>
-          {weeklyCreditInfo ? (
+          {weeklyCreditInfo?.unlimited ? (
+            <p className="text-sm text-zinc-300 mt-1">
+              {vi
+                ? `Đã dùng ${weeklyCreditInfo.usedToday ?? 0} lượt hôm nay. Gói còn hiệu lực: không giới hạn lượt AI.`
+                : `${weeklyCreditInfo.usedToday ?? 0} turns used today. Unlimited AI turns while your plan is active.`}
+            </p>
+          ) : weeklyCreditInfo && weeklyCreditInfo.freeWeeklyCredit !== null ? (
             <div className="mt-1.5">
               <Bar
                 pct={(weeklyCreditInfo.freeWeeklyCredit / weeklyCreditInfo.freeWeeklyCap) * 100}

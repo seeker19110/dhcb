@@ -15,9 +15,11 @@ export interface WeeklyCreditInfo {
   plan: 'free' | 'vip'
   freeWeeklyCredit: number | null // null = server không đọc được (fail-open, UI ẩn số)
   freeWeeklyCap: number
+  unlimited?: true
+  usedToday?: number
 }
 
-const WeeklyCreditInfoSchema = z
+const LimitedCreditInfoSchema = z
   .object({
     plan: z.enum(['free', 'vip']),
     freeWeeklyCredit: z.number().int().finite().nullable(),
@@ -37,6 +39,19 @@ const WeeklyCreditInfoSchema = z
     }
   })
 
+const WeeklyCreditInfoSchema = z.union([
+  z
+    .object({
+      plan: z.literal('vip'),
+      unlimited: z.literal(true),
+      usedToday: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+      freeWeeklyCredit: z.null(),
+      freeWeeklyCap: z.literal(0),
+    })
+    .strict(),
+  LimitedCreditInfoSchema,
+])
+
 // Lỗi mạng/server → coi như hết lượt (an toàn hơn là coi như còn — tránh hiển thị sai
 // "còn nhiều lượt" trong khi server có thể đang chặn thật). UI nơi gọi tự xử lý null/lỗi
 // hiển thị phù hợp (vd ẩn số, không chặn cứng — chặn thật vẫn do server quyết định).
@@ -45,7 +60,9 @@ export async function fetchWeeklyCredit(): Promise<WeeklyCreditInfo | null> {
     const resp = await fetch('/api/usage-summary', { headers: getAuthHeader() })
     if (!resp.ok) return null
     const parsed = WeeklyCreditInfoSchema.safeParse(await resp.json())
-    if (!parsed.success || parsed.data.freeWeeklyCredit === null) return null
+    if (!parsed.success) return null
+    if ('unlimited' in parsed.data && parsed.data.unlimited) return parsed.data
+    if (parsed.data.freeWeeklyCredit === null) return null
     return parsed.data
   } catch {
     return null

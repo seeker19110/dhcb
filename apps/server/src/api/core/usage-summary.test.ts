@@ -65,12 +65,19 @@ describe('GET /api/usage-summary', () => {
     expect(res.status).toBe(401)
   })
 
-  it('gói VIP → cap = hạn mức VIP, trừ đúng số đã dùng hôm nay', async () => {
+  it('VIP → trạng thái unlimited tường minh và thống kê thật', async () => {
     lookupPlanMock.mockResolvedValue('vip')
     query.mockResolvedValue({ rows: [{ used: '20' }] })
     const res = await handler(new Request('http://localhost/api/usage-summary'))
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ plan: 'vip', freeWeeklyCredit: 280, freeWeeklyCap: 300 })
+    expect(await res.json()).toEqual({
+      plan: 'vip',
+      unlimited: true,
+      usedToday: 20,
+      freeWeeklyCredit: null,
+      freeWeeklyCap: 0,
+    })
+    expect(res.headers.get('Cache-Control')).toBe('no-store')
   })
 
   it('gói Free → cap = hạn mức Free (30), còn lại = 30 − đã dùng', async () => {
@@ -97,6 +104,7 @@ describe('GET /api/usage-summary', () => {
     await handler(new Request('http://localhost/api/usage-summary'))
     const [sql, params] = query.mock.calls[0] as [string, unknown[]]
     expect(sql).toMatch(/subject\s*=\s*\$3/)
+    expect(sql).not.toContain('$2::date') // daily_usage.day là TEXT trong schema/migration thật
     expect(params).toEqual(['user-1', expect.any(String), 'english'])
   })
 
@@ -108,3 +116,28 @@ describe('GET /api/usage-summary', () => {
     expect(await res.json()).toEqual({ plan: 'free', freeWeeklyCredit: null, freeWeeklyCap: 0 })
   })
 })
+
+it('VIP đã dùng vượt hạn mức cũ vẫn là unlimited, không bịa số còn lại', async () => {
+  lookupPlanMock.mockResolvedValue('vip')
+  query.mockResolvedValue({ rows: [{ used: '9999' }] })
+  const res = await handler(new Request('http://localhost/api/usage-summary'))
+  expect(await res.json()).toEqual({
+    plan: 'vip',
+    unlimited: true,
+    usedToday: 9999,
+    freeWeeklyCredit: null,
+    freeWeeklyCap: 0,
+  })
+})
+
+it.each(['NaN', '-1', '1.5', '9007199254740992'])(
+  'thống kê hỏng %s không biến thành quyền unlimited',
+  async (used) => {
+    lookupPlanMock.mockResolvedValue('vip')
+    query.mockResolvedValue({ rows: [{ used }] })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const res = await handler(new Request('http://localhost/api/usage-summary'))
+    expect(await res.json()).toEqual({ plan: 'free', freeWeeklyCredit: null, freeWeeklyCap: 0 })
+    warn.mockRestore()
+  },
+)

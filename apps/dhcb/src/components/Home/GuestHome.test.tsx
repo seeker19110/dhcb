@@ -61,7 +61,7 @@ describe('GuestHome', () => {
       (a) => !a.className.includes('bg-accent-500'),
     )
     const subjectLinks = SUBJECT_ENTRIES.map((entry) =>
-      links.find((a) => a.textContent === entry.label),
+      links.find((a) => a.getAttribute('href') === entry.ctaPath),
     )
     // Bất biến: không môn nào "nổi" hơn — đúng thứ tự SUBJECT_ENTRIES, không sắp lại theo môn nào.
     subjectLinks.forEach((a, i) => {
@@ -73,7 +73,18 @@ describe('GuestHome', () => {
   it('có Companion (svg trang trí) + bong bóng chào', () => {
     render()
     expect(container.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
-    expect(container.textContent).toContain('Chào bạn. Mình là Bạn Đồng Hành')
+    expect(container.textContent).toContain('Học điều bạn muốn. Hiểu điều bạn học.')
+    expect(container.textContent).toContain('tự học tốt hơn')
+  })
+
+  it('STEM nói rõ xem trước, không hứa hoàn thiện ngang môn đã mở', () => {
+    render()
+    for (const entry of SUBJECT_ENTRIES) {
+      const chip = container.querySelector(`a[href="${entry.ctaPath}"]`)
+      if (entry.status === 'preview') expect(chip?.textContent).toContain('Xem trước')
+      else expect(chip?.textContent).not.toContain('Xem trước')
+    }
+    expect(container.querySelector('a[href="/gioi-thieu"]')).not.toBeNull()
   })
 
   it('bấm CTA gọi track cta_click với refCode guest_home_start', async () => {

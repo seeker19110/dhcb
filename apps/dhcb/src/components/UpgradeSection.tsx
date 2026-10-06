@@ -23,6 +23,8 @@ import { useToast } from '@core/ToastProvider'
 import { Skeleton } from './Skeleton'
 import LoadError from './LoadError'
 import { getPlanMarketing } from '../lib/planMarketing'
+import { getDailyLimit, hasUnlimitedAi } from '../lib/appSettings'
+import { useAppSettings } from '../lib/useAppSettings'
 import type { Plan } from '../types'
 
 const CYCLE_LABEL: Record<PayableCycle, { vi: string; en: string }> = {
@@ -61,7 +63,7 @@ const PLAN_INFO: Record<
   vip: {
     badge: '👑',
     title: { vi: 'VIP', en: 'VIP' },
-    tagline: { vi: 'Đỉnh cao Công nghệ AI', en: 'For serious practice' },
+    tagline: { vi: 'Tự do lựa chọn cách học', en: 'Learn in your own order' },
     bullets: [
       {
         // Gemini Live CHƯA kiểm chứng với key thật (nợ mở PROGRESS.md #15) — bắt buộc gắn
@@ -74,8 +76,8 @@ const PLAN_INFO: Record<
         en: '3D memory palace: remember vocabulary spatially',
       },
       {
-        vi: '300 lượt AI/ngày (gấp 10 lần gói Free) + 16 giọng đọc bản xứ chất lượng cao',
-        en: '300 AI turns/day (10x the Free plan) + 16 high-quality native voices',
+        vi: 'Tự chọn thứ tự bài trong nội dung đã mở, không phải học lại chỉ để mở khóa',
+        en: 'Choose freely from available lessons without repeating levels just to unlock content',
       },
     ],
   },
@@ -90,6 +92,7 @@ export function PlanFeatureCard({
   isA: boolean
   isCurrent: boolean
 }) {
+  useAppSettings()
   const fetched = getPlanMarketing()?.plans[planKey]
   const hasFetchedContent = !!fetched && (fetched.badge !== '' || fetched.bullets.length > 0)
   const info = hasFetchedContent
@@ -105,6 +108,31 @@ export function PlanFeatureCard({
           : PLAN_INFO[planKey].bullets,
       }
     : PLAN_INFO[planKey]
+  // Hạn mức là hợp đồng sản phẩm, không lấy từ lời quảng cáo có thể đã cũ trong DB.
+  const unlimited = hasUnlimitedAi(planKey)
+  const dailyLimit = getDailyLimit(planKey)
+  const usageBenefit = unlimited
+    ? {
+        vi: 'Không giới hạn lượt AI trong thời gian gói có hiệu lực',
+        en: 'Unlimited AI turns while your plan is active',
+      }
+    : {
+        vi: `${dailyLimit} lượt AI/ngày, tính chung các tính năng`,
+        en: `${dailyLimit} AI turns/day, shared across features`,
+      }
+  const benefits = [
+    usageBenefit,
+    ...info.bullets.filter(
+      (bullet) =>
+        !/(?:lượt|AI turns?|credits?|unlimited|không giới hạn)/i.test(`${bullet.vi} ${bullet.en}`),
+    ),
+  ]
+  if (planKey === 'vip' && !benefits.some((bullet) => /Tự chọn thứ tự bài/.test(bullet.vi))) {
+    benefits.push({
+      vi: 'Tự chọn thứ tự bài trong nội dung đã mở',
+      en: 'Choose freely from available lessons',
+    })
+  }
   return (
     <div
       className={`rounded-xl border p-3 ${
@@ -122,7 +150,7 @@ export function PlanFeatureCard({
       </div>
       <p className="text-xs text-zinc-400 mb-1.5">{isA ? info.tagline.vi : info.tagline.en}</p>
       <ul className="space-y-1">
-        {info.bullets.map((b, i) => (
+        {benefits.map((b, i) => (
           <li key={i} className="text-xs text-zinc-300 flex gap-1.5">
             <span className="text-accent-400 shrink-0" aria-hidden>
               •

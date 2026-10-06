@@ -77,10 +77,8 @@ export default function Landing() {
 
   function handleCtaClick() {
     track('cta_click')
-    // Login.tsx hiện chưa đọc query param để chọn sẵn tab đăng ký (chỉ có state nội bộ
-    // mode='login'|'register', mặc định 'login') — trỏ thẳng sang /login, người dùng tự bấm
-    // tab "Đăng ký" ở đó.
-    nav('/login')
+    // Giữ mục tiêu tiếng Anh và cho dùng thử trước; tài khoản chỉ cần khi lưu/đồng bộ.
+    nav('/bat-dau?mon=english')
   }
 
   return (
