@@ -46,6 +46,8 @@ export async function broadcastToSession(
 // Socket đang mở TRONG TIẾN TRÌNH NÀY, gom theo chuyến.
 const socketsBySession = new Map<string, Set<WebSocket>>()
 const channelUnsubscribers = new Map<string, () => void>()
+// Chủ của từng socket — cần để thu hồi đúng socket của người vừa rời chuyến.
+const socketOwner = new WeakMap<WebSocket, string>()
 
 export function _resetWsLocationStateForTests(): void {
   socketsBySession.clear()
@@ -58,7 +60,21 @@ function ensureChannelSubscription(sessionId: string): void {
   const unsub = subscribeChannel(sessionChannel(sessionId), (payload) => {
     const sockets = socketsBySession.get(sessionId)
     if (!sockets) return
-    for (const ws of sockets) send(ws, payload as WsLocationServerEvent)
+    const event = payload as WsLocationServerEvent
+    // Thu hồi quyền ngay khi có sự kiện rời/kết thúc (vá 2026-10-07): trước đây socket của người
+    // đã RỜI chuyến vẫn nhận vị trí tới khi nó tự gửi sự kiện kế tiếp.
+    if (event.type === 'member_left') {
+      for (const ws of [...sockets]) {
+        if (socketOwner.get(ws) === event.userId) removeSocket(sessionId, ws)
+      }
+      for (const ws of sockets) send(ws, event)
+      return
+    }
+    const recipients = [...sockets]
+    for (const ws of recipients) send(ws, event)
+    if (event.type === 'session_ended') {
+      for (const ws of recipients) removeSocket(sessionId, ws)
+    }
   })
   channelUnsubscribers.set(sessionId, unsub)
 }
@@ -119,6 +135,7 @@ export function attachLocationWebSocketServer(server: HttpServer): void {
 export function handleConnection(ws: WebSocket, userId: string): void {
   // Chuyến mà socket này đang theo dõi — mỗi lần subscribe đều kiểm quyền lại ở DB.
   const joined = new Set<string>()
+  socketOwner.set(ws, userId)
 
   ws.on('message', (raw: RawData) => {
     void handleClientEvent(ws, userId, joined, raw)

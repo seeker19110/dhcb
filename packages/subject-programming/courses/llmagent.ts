@@ -15,7 +15,7 @@ export const LLMAGENT_COURSE: ShortCourse = {
       id: 'llmagent-c1',
       title: 'NLP → LLM',
       summary:
-        'Tokenizer BPE mini, embedding & cosine similarity, mô hình ngôn ngữ next-token, bản đồ Transformer, prompt & giới hạn.',
+        'Tokenizer subword theo luật cố định (và BPE học gộp cặp ra sao), embedding & cosine similarity, mô hình ngôn ngữ next-token, bản đồ Transformer, prompt & giới hạn.',
       lessonIds: [
         'llmagent-u1-l1',
         'llmagent-u1-l2',
