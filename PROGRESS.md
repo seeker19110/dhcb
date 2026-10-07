@@ -199,7 +199,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
   Kèm #1232 (`0493`): thứ bậc tiêu đề ở Góc học tập và trang môn STEM.
   **Cập nhật 2026-10-07:** U5/U7/U9 + chuyển px→rem đã merge (xem mục trên); đo lại phát hiện 8
-  lỗi WCAG còn sót, sửa ở `0511` (U10, nhánh `claude/wcag-no-conlai-u10`) — xem nợ audit UI/UX.
+  lỗi WCAG còn sót, sửa ở `0512` (U10, nhánh `claude/wcag-no-conlai-u10`) — xem nợ audit UI/UX.
   **[2026-10-01] Một phần U9 + M15 đã làm** ([audit đồng nhất bố cục](docs/audit/2026-10-01-audit-dong-nhat-bo-cuc-trai-nghiem-hoc.md),
   `docs/changelog/0467-*.md`, PR #1200): thanh bên thu gọn ở 1024–1279px (M18), lý thuyết STEM có `<h3>` +
   chỉ số dưới (M15 phần cấu trúc), nút Back header đúng đích ở 21 trang, chế độ tập trung + "Bài
@@ -1164,12 +1164,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   chữ của `packages/core-personal/lifeSynthesisService.ts` (nhận xét, khó khăn, khuyến nghị đều
   soạn sẵn) rồi mới gắn lại `LifeSynthesisDashboard`.
 - 🟡 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` —
-  HẠ MỨC từ 🔴 sau changelog `0511`, 2026-10-07] Phần WCAG 2.2 A/AA của audit ĐÃ ĐÓNG.** U1–U9 +
+  HẠ MỨC từ 🔴 sau changelog `0512`, 2026-10-07] Phần WCAG 2.2 A/AA của audit ĐÃ ĐÓNG.** U1–U9 +
   đợt minor (#1222–#1255) đóng 8 critical + major/minor. Đo lại bằng máy trên `main` `e3afc29`
   (56 route × 320/390/1440 × 3 theme, mock E2E) còn sót 8 lỗi — đặt lại mật khẩu trượt
   `target-size`, 10 `<main>` không `id` (Luyện viết mobile, `/bat-dau/doi-song`, Kết bạn…), 3 màn
   không `<h1>`, h2→h4 ở chi tiết hướng, `/action-canvas` tràn 76px ở 320px, tiêu đề tab bài hội
-  thoại trùng — đã sửa ở `0511` (nhánh `claude/wcag-no-conlai-u10`, chưa PR) + cổng
+  thoại trùng — đã sửa ở `0512` (nhánh `claude/wcag-no-conlai-u10`, chưa PR) + cổng
   `e2e/a11y-u10-recheck.spec.ts`. Sau sửa: 0 vi phạm axe A/AA, 0 tràn ngang, mọi route một
   `main#noi-dung-chinh` + một `<h1>`. **Còn mở (không phải lỗi WCAG / cần quyết định):** rail mục
   lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn
