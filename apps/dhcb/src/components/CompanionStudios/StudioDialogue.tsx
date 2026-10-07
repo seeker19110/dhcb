@@ -254,7 +254,7 @@ export default function StudioDialogue({
               <button
                 onClick={voice.start}
                 disabled={!voice.supported}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 disabled:opacity-50 text-white font-bold text-sm shadow-xl transition-all transform hover:scale-105"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 disabled:opacity-50 text-white font-bold text-sm shadow-xl transition transform hover:scale-105"
               >
                 <Mic className="w-5 h-5" />
                 Nhấn để nói
@@ -303,7 +303,7 @@ export default function StudioDialogue({
                 <button
                   key={d.id}
                   onClick={() => setSelectedDomain(d.id)}
-                  className={`tap-44-y flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 shrink-0 ${
+                  className={`tap-44-y flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition duration-200 shrink-0 ${
                     isSelected
                       ? 'bg-accent-500 text-black shadow-md shadow-accent-500/25 ring-1 ring-accent-400/40 scale-105'
                       : 'bg-zinc-900/90 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800/80'
@@ -334,7 +334,7 @@ export default function StudioDialogue({
                   )}
 
                   <div
-                    className={`max-w-[88%] sm:max-w-[78%] rounded-3xl p-5 shadow-sm transition-all ${
+                    className={`max-w-[88%] sm:max-w-[78%] rounded-3xl p-5 shadow-sm transition ${
                       isBot
                         ? 'bg-zinc-900/90 border border-zinc-800/80 text-zinc-200'
                         : 'bg-gradient-to-r from-accent-600 to-accent-500 text-white shadow-md'
@@ -455,7 +455,7 @@ export default function StudioDialogue({
                                   <button
                                     onClick={() => handleConfirmAction(action)}
                                     disabled={isActionLoading}
-                                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-black font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
+                                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-black font-semibold transition duration-200 flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
                                   >
                                     {isActionLoading ? (
                                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -467,7 +467,7 @@ export default function StudioDialogue({
                                   <button
                                     onClick={() => handleRejectAction(action)}
                                     disabled={isActionLoading}
-                                    className="flex-1 py-2 px-3 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 border border-zinc-700/80 active:scale-98"
+                                    className="flex-1 py-2 px-3 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 font-semibold transition duration-200 flex items-center justify-center gap-1.5 border border-zinc-700/80 active:scale-98"
                                   >
                                     <XCircle className="w-4 h-4" />
                                     Từ chối
@@ -517,10 +517,10 @@ export default function StudioDialogue({
                       setSelectedDomain(prompt.domain)
                       handleSend(prompt.text)
                     }}
-                    className="tap-44-y text-left p-3 rounded-2xl bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800/80 hover:border-accent-500/50 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-sm active:scale-98"
+                    className="tap-44-y text-left p-3 rounded-2xl bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800/80 hover:border-accent-500/50 text-xs font-medium text-zinc-300 hover:text-white transition duration-200 flex items-center justify-between group shadow-sm active:scale-98"
                   >
                     <span>{prompt.label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-accent-400 group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-accent-400 group-hover:translate-x-0.5 transition" />
                   </button>
                 ))}
               </div>

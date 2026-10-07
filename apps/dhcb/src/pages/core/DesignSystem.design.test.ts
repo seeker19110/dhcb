@@ -52,11 +52,27 @@ const PRIORITY_FILES = [
   'apps/dhcb/src/components/programming/LessonStartButton.tsx',
 ]
 
+// Khu Bạn Đồng Hành (`/ban-dong-hanh`) — thư mục gom trọn hoặc file lẻ.
+const COMPANION_AREA = [
+  'apps/dhcb/src/pages/companion',
+  'apps/dhcb/src/components/CompanionStudios',
+  'apps/dhcb/src/components/CompanionVoice',
+  'apps/dhcb/src/components/Companion3D',
+  'apps/dhcb/src/components/MemoryPalace',
+  'apps/dhcb/src/components/MetacognitiveReflection',
+  'apps/dhcb/src/components/ProactiveAgent',
+  'apps/dhcb/src/components/StemScratchpad',
+  'apps/dhcb/src/components/DebateArena',
+  'apps/dhcb/src/components/PvPArena',
+  'apps/dhcb/src/components/LifeSynthesis',
+  'apps/dhcb/src/components/ProactiveBriefingCard.tsx',
+]
+
 describe('transition-all — chỉ được GIẢM (audit M17)', () => {
   // Mốc đo sau đợt 0500. Gỡ thêm chỗ nào thì HẠ số này xuống; đừng bao giờ nâng lên — code mới
   // khai đúng thuộc tính (`transition-colors`/`transition`/`transition-transform`), skill ui-ux
   // mục 10.A.1.
-  const BASELINE = 130 // đợt 0501 (đợt 0500: 151)
+  const BASELINE = 51 // đợt 0513 khu Bạn Đồng Hành (0501: 130, 0500: 151)
 
   it(`toàn kho ≤ ${BASELINE} chỗ`, () => {
     const files = ['apps/dhcb/src', 'apps/hub/src', 'packages'].flatMap((d) =>
@@ -76,6 +92,14 @@ describe('transition-all — chỉ được GIẢM (audit M17)', () => {
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/\/\/.*$/gm, '')
     expect(code).not.toMatch(/\btransition-all\b/)
+  })
+
+  // Đợt 0513 — gỡ trọn khu Bạn Đồng Hành (studio + thẻ/modal của các tính năng đồng hành).
+  it.each(COMPANION_AREA)('%s không còn transition-all', (rel) => {
+    const files = rel.endsWith('.tsx') ? [join(REPO, rel)] : listSource(join(REPO, rel))
+    expect(files.length).toBeGreaterThan(0)
+    const offenders = files.filter((f) => /\btransition-all\b/.test(readFileSync(f, 'utf8')))
+    expect(offenders).toEqual([])
   })
 })
 

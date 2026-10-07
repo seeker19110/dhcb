@@ -105,7 +105,7 @@ export default function WorkplaceHarvesterCard() {
   }
 
   return (
-    <div className="bg-surface-card border border-amber-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition-all duration-300">
+    <div className="bg-surface-card border border-amber-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
@@ -171,7 +171,7 @@ export default function WorkplaceHarvesterCard() {
         <button
           type="submit"
           disabled={!testText.trim() || isHarvesting}
-          className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition-all disabled:opacity-50"
+          className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition disabled:opacity-50"
         >
           <Zap className="w-3.5 h-3.5" />
           <span>{isHarvesting ? 'Đang quét...' : 'Thu hoạch Lỗi'}</span>
@@ -184,7 +184,7 @@ export default function WorkplaceHarvesterCard() {
           {mistakes.map((m) => (
             <div
               key={m.id}
-              className="p-3.5 rounded-xl bg-surface-raised border border-line-subtle space-y-2 hover:border-line-strong transition-all"
+              className="p-3.5 rounded-xl bg-surface-raised border border-line-subtle space-y-2 hover:border-line-strong transition"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

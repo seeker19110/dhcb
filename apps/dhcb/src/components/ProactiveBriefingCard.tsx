@@ -41,7 +41,7 @@ export default function ProactiveBriefingCard() {
 
         <Link
           to="/ban-dong-hanh"
-          className="text-xs font-medium text-indigo-400 theme-light:text-indigo-800 hover:text-indigo-300 flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg bg-indigo-900/30 hover:bg-indigo-900/50 border border-indigo-500/20 transition-all"
+          className="text-xs font-medium text-indigo-400 theme-light:text-indigo-800 hover:text-indigo-300 flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg bg-indigo-900/30 hover:bg-indigo-900/50 border border-indigo-500/20 transition"
         >
           Hội thoại
           <ChevronRight className="w-3.5 h-3.5" />
@@ -56,7 +56,7 @@ export default function ProactiveBriefingCard() {
           <Link
             key={item.id}
             to={item.route}
-            className="flex items-center justify-between p-3 rounded-xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800 hover:border-zinc-700 transition-all group"
+            className="flex items-center justify-between p-3 rounded-xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-zinc-800 hover:border-zinc-700 transition group"
           >
             <div className="min-w-0 pr-2">
               <div className="flex items-center gap-2 mb-0.5">

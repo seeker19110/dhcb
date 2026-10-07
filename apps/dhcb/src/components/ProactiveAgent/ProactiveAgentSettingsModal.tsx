@@ -84,7 +84,7 @@ export default function ProactiveAgentSettingsModal({
                 type="button"
                 aria-pressed={frequency === mode}
                 onClick={() => setFrequency(mode)}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition border ${
                   frequency === mode
                     ? 'bg-accent-500 text-zinc-950 border-accent-400 shadow-md'
                     : 'bg-zinc-800/60 text-zinc-400 border-zinc-700 hover:text-zinc-200'
@@ -157,7 +157,7 @@ export default function ProactiveAgentSettingsModal({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 text-xs font-bold shadow-md transition-all disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 text-xs font-bold shadow-md transition disabled:opacity-50"
           >
             {saving ? 'Đang lưu...' : 'Lưu cấu hình'}
           </button>

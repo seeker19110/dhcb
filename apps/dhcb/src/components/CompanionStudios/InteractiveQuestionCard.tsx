@@ -120,7 +120,7 @@ export default function InteractiveQuestionCard({
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className={`w-full min-h-[44px] py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-all ${
+        className={`w-full min-h-[44px] py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition ${
           canSubmit
             ? 'bg-accent-500 hover:bg-accent-400 text-black shadow-md active:scale-98'
             : 'bg-zinc-800 text-zinc-400 cursor-not-allowed'

@@ -84,7 +84,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
   }
 
   return (
-    <div className="bg-surface-card border border-teal-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition-all duration-300">
+    <div className="bg-surface-card border border-teal-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
@@ -109,7 +109,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
         <button
           onClick={handleTestPhonetics}
           disabled={isAnalyzing}
-          className="self-start sm:self-auto shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-[#fff] text-xs font-semibold shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50"
+          className="self-start sm:self-auto shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-[#fff] text-xs font-semibold shadow-lg flex items-center gap-1.5 transition disabled:opacity-50"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>{isAnalyzing ? 'Đang phân tích...' : 'Kiểm tra Phát âm'}</span>
@@ -128,7 +128,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
                 setReport(null)
               }}
               aria-pressed={isSelected}
-              className={`tap-44-y px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all border ${
+              className={`tap-44-y px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition border ${
                 isSelected
                   ? 'bg-teal-950/60 theme-light:bg-teal-100 border-teal-400 text-teal-200 theme-light:text-teal-900 shadow-md shadow-teal-500/20'
                   : 'bg-surface-raised border-line-subtle text-content-secondary hover:text-content'
@@ -188,7 +188,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
                 stroke="#2dd4bf"
                 strokeWidth="8"
                 strokeLinecap="round"
-                className="transition-all duration-500 ease-out"
+                className="transition-[d] duration-500 ease-out"
               />
 
               {/* Mũi tên luồng khí (Airflow) */}

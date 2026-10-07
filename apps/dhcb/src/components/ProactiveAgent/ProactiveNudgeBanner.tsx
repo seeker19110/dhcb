@@ -70,7 +70,7 @@ export default function ProactiveNudgeBanner({
 
   return (
     <div
-      className={`relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-2xl border backdrop-blur-md shadow-lg transition-all duration-300 mb-3 animate-fade-in ${getPriorityColor()}`}
+      className={`relative flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-2xl border backdrop-blur-md shadow-lg transition duration-300 mb-3 animate-fade-in ${getPriorityColor()}`}
       role="alert"
     >
       <div className="flex items-start gap-3 flex-1 min-w-0 pr-2">
@@ -94,7 +94,7 @@ export default function ProactiveNudgeBanner({
             type="button"
             onClick={handleAction}
             disabled={isExecuting}
-            className="px-3.5 py-1.5 rounded-xl bg-accent-500 hover:bg-accent-400 active:scale-95 text-zinc-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3.5 py-1.5 rounded-xl bg-accent-500 hover:bg-accent-400 active:scale-95 text-zinc-950 font-bold text-xs shadow-md transition flex items-center gap-1.5 disabled:opacity-50"
           >
             {isExecuting ? 'Đang kích hoạt...' : nudge.suggestedAction.label}
           </button>

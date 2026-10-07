@@ -276,7 +276,7 @@ export default function PvPBattlefieldModal({
 
               <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden mb-4">
                 <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-1000 ease-linear"
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-[width] duration-1000 ease-linear"
                   style={{
                     width: `${(timeLeft / (currentQ.timeLimitSec || 5)) * 100}%`,
                   }}
@@ -326,7 +326,7 @@ export default function PvPBattlefieldModal({
                       type="button"
                       disabled={isSubmitting || selectedOption !== null}
                       onClick={() => handleOptionSelect(idx)}
-                      className={`tap-44 text-left p-3.5 rounded-2xl border transition-all text-xs sm:text-sm flex items-center justify-between gap-2 active:scale-98 ${btnStyle}`}
+                      className={`tap-44 text-left p-3.5 rounded-2xl border transition text-xs sm:text-sm flex items-center justify-between gap-2 active:scale-98 ${btnStyle}`}
                     >
                       <span>{opt}</span>
                       {roundResult && isCorrect && (

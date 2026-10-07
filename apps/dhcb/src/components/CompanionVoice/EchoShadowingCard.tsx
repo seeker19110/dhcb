@@ -83,7 +83,7 @@ export default function EchoShadowingCard() {
   }
 
   return (
-    <div className="bg-surface-card border border-sky-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition-all duration-300">
+    <div className="bg-surface-card border border-sky-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
@@ -148,7 +148,7 @@ export default function EchoShadowingCard() {
                   resetPractice()
                 }}
                 aria-pressed={isSelected}
-                className={`tap-44-y px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all border ${
+                className={`tap-44-y px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition border ${
                   isSelected
                     ? 'bg-sky-950/60 theme-light:bg-sky-100 border-sky-400 text-sky-200 theme-light:text-sky-900 shadow-md shadow-sky-500/20'
                     : 'bg-surface-raised border-line-subtle text-content-secondary hover:text-content'
@@ -203,7 +203,7 @@ export default function EchoShadowingCard() {
             </div>
             <button
               onClick={handlePlay}
-              className="w-full py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition-all bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-[#fff]"
+              className="w-full py-3 rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 transition bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-[#fff]"
             >
               {isPlaying ? (
                 <>

@@ -168,7 +168,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                 session?.turns.map((turn: DebateTurn) => (
                   <div
                     key={turn.id}
-                    className={`p-4 rounded-2xl border transition-all ${
+                    className={`p-4 rounded-2xl border transition ${
                       turn.speakerRole === 'user'
                         ? 'bg-indigo-950/30 border-indigo-500/30 ml-4 sm:ml-12'
                         : 'bg-zinc-900/70 border-white/10 mr-4 sm:mr-12'
@@ -285,7 +285,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
             <button
               type="submit"
               disabled={isSubmitting || !inputTurn.trim() || session?.status === 'completed'}
-              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
             >
               {isSubmitting ? '...' : 'Gửi'}
             </button>
@@ -294,7 +294,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                 type="button"
                 onClick={handleEvaluate}
                 disabled={isSubmitting}
-                className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-xs text-zinc-300 font-semibold transition-all"
+                className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-xs text-zinc-300 font-semibold transition"
               >
                 Tổng kết
               </button>
