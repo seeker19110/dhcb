@@ -101,12 +101,16 @@ function ArchList({
 function ProjectBlock({ project, tone }: { project: SpecProject; tone: 'stage' | 'capstone' }) {
   const border = tone === 'capstone' ? 'border-emerald-500/40' : 'border-zinc-800'
   const bg = tone === 'capstone' ? 'bg-emerald-500/10' : 'bg-zinc-950'
+  // [U10] Cấp tiêu đề theo chỗ đặt khối: dự án chặng nằm dưới <h3> tên chặng → h4; dự án tốt
+  // nghiệp nằm ngay dưới <h2> "Sản phẩm tốt nghiệp hướng" → h3. Trước đây luôn h4 nên trang nhảy
+  // h2 → h4 (WCAG 1.3.1, minor 1 của audit 2026-09-30 đo lại).
+  const Heading = tone === 'capstone' ? 'h3' : 'h4'
   return (
     <div className={`rounded-2xl border ${border} ${bg} p-4 space-y-2`}>
-      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+      <Heading className="text-sm font-bold text-white flex items-center gap-2">
         <Trophy className="w-4 h-4 text-accent-400 shrink-0" aria-hidden="true" />
         <span>Dự án: {project.name}</span>
-      </h4>
+      </Heading>
       <p className="text-sm text-zinc-200 leading-relaxed read-measure">{project.brief}</p>
       <p className="text-xs font-semibold text-zinc-200">Xong nghĩa là đạt đủ:</p>
       <ul className="text-sm text-zinc-200 leading-relaxed space-y-1 list-disc pl-5 read-measure">

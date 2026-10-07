@@ -4,7 +4,7 @@ import { Search, X, ChevronRight, Loader2 } from 'lucide-react'
 import { ContinueRow } from '../../../components/learning/ContinueCard'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
-import { PageShell } from '@core/PageShell'
+import { MAIN_CONTENT_ID, PageShell } from '@core/PageShell'
 import { useLang } from '../../../context/useLang'
 import { useAuth } from '../../../context/useAuth'
 import KaraokeText from '../../../components/KaraokeText'
@@ -285,7 +285,11 @@ export default function CommonPhrases() {
     return (
       <div className="h-[calc(100dvh-var(--bnav-h))] overflow-hidden bg-zinc-950 flex flex-col">
         <Layout backTo={duongDanMonTiengAnh()} title={selected.starter} back />
-        <main className="flex-1 overflow-hidden max-w-3xl mx-auto w-full px-4 py-4 flex flex-col">
+        <main
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="focus:outline-none flex-1 overflow-hidden max-w-3xl mx-auto w-full px-4 py-4 flex flex-col"
+        >
           {/* danh sách câu cuộn trong khung cố định, không đẩy trang xuống */}
           <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
             {selected.sentences.map((sent, idx) => (

@@ -19,7 +19,7 @@ import { effectivePlan } from '../../../lib/promo'
 import { hasReachedDailyLimit } from '../../../lib/appSettings'
 import { useEdgeAi } from '../../../lib/edgeAi/useEdgeAi.js'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
-import { PageShell } from '@core/PageShell'
+import { MAIN_CONTENT_ID, PageShell } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
 import EdgeAiIndicator from '../../../components/EdgeAi/EdgeAiIndicator'
 
@@ -228,7 +228,11 @@ function ResultView({
         backTo={duongDanMonTiengAnh()}
         title={dir === 'A' ? 'Kết quả chấm bài IELTS' : 'Writing Results'}
       />
-      <main className="max-w-2xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))]">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-2xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))]"
+      >
         <ResultPanel feedback={feedback} onReset={onReset} dir={dir} />
       </main>
     </div>
@@ -588,7 +592,11 @@ export default function Writing() {
         title={isA ? 'Luyện viết & chấm điểm' : 'Writing Practice & Grading'}
         backTo={duongDanMonTiengAnh()}
       />
-      <main className="max-w-2xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))] space-y-4 animate-fade-up">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-2xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))] space-y-4 animate-fade-up"
+      >
         {composer}
       </main>
     </div>

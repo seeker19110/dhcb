@@ -100,7 +100,6 @@ function LoiTai({
 
 // ── Trang chính ───────────────────────────────────────────────────────────────
 export default function Lessons() {
-  usePageTitle('Bài học | Môn tiếng Anh · Đồng Hành Cùng Bạn')
   const dir: Direction = getDirection()
   const isA = dir === 'A'
   // Ngưỡng 1024px quyết ở JS, không phải `lg:` — xem lý do trong `TwoPane.tsx`: ẩn bằng CSS
@@ -140,6 +139,13 @@ export default function Lessons() {
   // ── Bài được chọn: đọc từ URL, đối chiếu chỉ mục ──────────────────────────────
   const thamSo = docThamSoBai(location.search)
   const selectedMeta = thamSo.loai === 'so' ? (index.find((m) => m.id === thamSo.id) ?? null) : null
+  // [U10] Tiêu đề tab nói ĐÚNG bài đang mở (WCAG 2.4.2) — trước đây danh sách và mọi bài cùng
+  // một tiêu đề "Bài học", khác trang bài STEM/Lập trình vốn đặt theo tên bài.
+  usePageTitle(
+    selectedMeta
+      ? `${isA ? `Bài ${selectedMeta.id}` : `Lesson ${selectedMeta.id}`}: ${selectedMeta.title} | Môn tiếng Anh`
+      : 'Bài học | Môn tiếng Anh',
+  )
   const dangChoChiMuc = thamSo.loai === 'so' && chiMuc.trangThai === 'dang-tai'
   const baiSai =
     thamSo.loai === 'sai' ||
@@ -357,6 +363,12 @@ export default function Lessons() {
             [S09c] Không truyền title/subtitle bài: tên bài đã là <h1> trong nội dung. */}
         <Layout backTo={duongDanMonTiengAnh()} back focus />
         <PageShell width="standard" baseWidth="max-w-3xl">
+          {/* [U10] Chưa chọn bài thì cột phải chỉ là màn rỗng/đang tải — trang desktop không có
+              <h1> nào (đo lại audit 2026-09-30, cùng chữ với <h1> ẩn của khuôn mobile). Đã chọn
+              bài thì tên bài là <h1> trong `chiTiet`, không thêm cái thứ hai. */}
+          {!selectedMeta && (
+            <h1 className="sr-only">{isA ? 'Bài hội thoại mẫu' : 'Sample dialogues'}</h1>
+          )}
           <TwoPane
             isDesktop
             railSide="left"

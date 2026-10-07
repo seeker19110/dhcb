@@ -334,6 +334,9 @@ export default function StartByIntent() {
       className="focus:outline-none min-h-dvh flex items-center justify-center p-5 pb-32"
     >
       <div className="w-full max-w-md space-y-5 animate-fade-in">
+        {/* [U10] Lớp hỏi chỉ có <legend> từng bước — trang không có tiêu đề nào, người dùng
+            trình đọc màn hình nhảy theo tiêu đề không tìm được gì (WCAG 1.3.1/2.4.6). */}
+        <h1 className="sr-only">Bắt đầu</h1>
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-accent-400" aria-hidden="true" />
           <p className="text-xs text-zinc-400">Vài câu ngắn thôi, câu nào cũng bỏ qua được</p>
