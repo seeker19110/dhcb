@@ -83,7 +83,6 @@
     "restore:all": "tsx scripts/restore-all-from-r2.ts",
     "loadtest:k6": "k6 run scripts/load-test/k6-baseline.js",
     "stress:test": "tsx scripts/stress-test.ts",
-    "stress:test:ws": "tsx scripts/stress-test-ws.ts",
     "prepare": "husky",
     "swift:conformance": "tsx scripts/swift-conformance.ts",
     "kotlin:conformance": "tsx scripts/kotlin-conformance.ts",

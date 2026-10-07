@@ -31,8 +31,6 @@ warnIfClusterWithoutRedis()
 import { attachChatWebSocketServer } from '@dhcb/core-chat/wsHandler'
 import { attachLocationWebSocketServer } from '@dhcb/core-location/wsLocation'
 import { purgeExpiredPositions } from '@dhcb/core-location/locationService'
-import { attachVoiceWebSocketServer } from '@dhcb/core-ai/wsVoiceHandler'
-import { attachCoLearningWebSocketServer } from '@dhcb/core-ai/wsCoLearningHandler'
 import { attachGeminiLiveWebSocketServer } from '@dhcb/core-ai/wsGeminiLiveHandler'
 import { sendReminders, isLeakedVapidPublicKey } from './api/core/push.js'
 import { downgradeExpiredPlans } from './api/_lib/planExpiry.js'
@@ -353,8 +351,6 @@ const server = app.listen(PORT, () => {
 // packages/core-chat/wsHandler.ts.
 attachChatWebSocketServer(server)
 attachLocationWebSocketServer(server)
-attachVoiceWebSocketServer(server)
-attachCoLearningWebSocketServer(server)
 attachGeminiLiveWebSocketServer(server)
 
 // Tắt êm (graceful shutdown): PM2 gửi SIGINT khi stop/reload. Ngừng nhận kết nối mới,

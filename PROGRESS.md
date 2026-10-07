@@ -1180,7 +1180,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   vá 7 lỗ hổng.** (1) ✅ **ĐÃ VÁ ở changelog `0510`** (ngắt socket khi `member_left`/`session_ended`) — mô tả cũ: người đã RỜI chuyến mà giữ socket mở vẫn
   nhận vị trí của thành viên còn lại tới khi socket gửi sự kiện kế tiếp (fan-out ở
   `packages/core-location/wsLocation.ts` không kiểm lại quyền) — cần đẩy sự kiện thu hồi khi rời
-  chuyến. (2) **`/ws/voice-companion` và `/ws/co-learning-room` không có client nào gọi** — đã
+  chuyến. (2) ✅ **ĐÃ GỠ ở changelog `0513`** — mô tả cũ: **`/ws/voice-companion` và `/ws/co-learning-room` không có client nào gọi** — đã
   siết Origin/kích thước, chủ dự án quyết gỡ hay giữ. (3) **`appleboy/ssh-action@v1.2.5`** (cầm
   SSH key VPS) ghim theo tag, không theo commit SHA như mọi action khác trong repo. (4) Chưa quét
   được trang production từ phiên AI (proxy chặn domain) — bài thử "gọi thẳng IP gốc với
