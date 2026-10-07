@@ -1,5 +1,5 @@
 // packages/core-ai/audioCoLearningService.ts — Động cơ Phòng Học Nhóm Âm Thanh Thời Gian Thực V7.1
-// Mở rộng coLearningRoomService (text-only) thêm:
+// Dịch vụ phòng học nhóm có audio (kênh WebSocket đã gỡ 2026-10-07, còn REST). Gồm:
 //   - Quản lý phòng âm thanh với VAD tích hợp (phát hiện ai đang nói)
 //   - Relay PCM audio giữa các peer
 //   - AI Socratic Moderator tự động trigger khi phát hiện silence > threshold

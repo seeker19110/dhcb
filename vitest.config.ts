@@ -140,7 +140,7 @@ export default defineConfig({
       // loại mã mà test đơn vị không chạm tới được một cách trung thực — (a) nhánh phòng thủ
       // chết do `noUncheckedIndexedAccess` bắt viết (`?? ''`, `?? 0`) mà bất biến của chính
       // module bảo đảm không bao giờ kích hoạt, (b) vỏ bọc WebSocket/mạng sống
-      // (wsCoLearningHandler, wsGeminiLiveHandler, clientAuth…) thuộc phạm vi E2E. Ép 100
+      // (wsGeminiLiveHandler, clientAuth…) thuộc phạm vi E2E. Ép 100
       // chỉ đẻ ra test giả kiểm chính cái mock vừa dựng.
       thresholds: {
         statements: 93,

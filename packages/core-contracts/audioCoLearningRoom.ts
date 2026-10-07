@@ -1,5 +1,5 @@
 // packages/core-contracts/audioCoLearningRoom.ts — Hợp đồng dữ liệu V7.1 cho Phòng Học Nhóm Âm Thanh Thời Gian Thực
-// Kế thừa và mở rộng từ coLearningRoomService (text-only) thêm audio streaming protocol.
+// Lược đồ phòng học nhóm có audio (chỉ còn đường REST /api/co-learning-audio; kênh WebSocket đã gỡ 2026-10-07).
 import { z } from 'zod'
 
 export const AUDIO_CO_LEARNING_VERSION = 'v7.1.0'
