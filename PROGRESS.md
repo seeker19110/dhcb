@@ -1174,7 +1174,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `main#noi-dung-chinh` + một `<h1>`. **Còn mở (không phải lỗi WCAG / cần quyết định):** rail mục
   lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn
   hoá nút/`transition-all`/bề rộng (đợt cơ học — khu Bạn Đồng Hành đã gỡ hết `transition-all` ở
-  `0513`, toàn kho 130 → 51; còn hub 9, Onboarding 6, Luyện viết 3… và nút tự ghép class); việc tay mục A (`plan_marketing_bullets`, hub
+  `0513` #1264, toàn kho 130 → 51; còn hub 9, Onboarding 6, Luyện viết 3… và nút tự ghép class); việc tay mục A (`plan_marketing_bullets`, hub
   trong `ALLOWED_ORIGINS`, `cwv:prod`). Giới hạn: đo trên mock, không có trình đọc màn hình thật.
 
 - 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt
