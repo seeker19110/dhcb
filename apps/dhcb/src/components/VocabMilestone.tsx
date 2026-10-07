@@ -56,7 +56,7 @@ export default function VocabMilestone({ userId, refreshKey }: Props) {
       {/* Thanh tiến độ + các vạch mốc */}
       <div className="relative h-2 bg-zinc-800 rounded-full mb-1">
         <div
-          className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent-500 to-accent-400 rounded-full transition-all duration-500"
+          className="absolute left-0 top-0 h-full bg-gradient-to-r from-accent-500 to-accent-400 rounded-full transition-[width] duration-500"
           style={{ width: `${pct}%` }}
         />
         {/* Vạch đánh dấu từng mốc */}

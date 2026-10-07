@@ -26,79 +26,22 @@ function listSource(dir: string): string[] {
   return out
 }
 
-// Các trang lưu lượng cao đã chuẩn hoá ở đợt 0500 (+ khung dùng chung hiện trên MỌI trang).
-const PRIORITY_FILES = [
-  'apps/dhcb/src/pages/core/Home.tsx',
-  'apps/dhcb/src/components/Home/SubjectSpaceList.tsx',
-  'apps/dhcb/src/pages/learning/Practice.tsx',
-  'apps/dhcb/src/components/PvPArena/PvPArenaCard.tsx',
-  'apps/dhcb/src/pages/domains/notes/Notes.tsx',
-  'apps/dhcb/src/pages/subjects/english/EnglishHome.tsx',
-  'apps/dhcb/src/pages/subjects/programming/ProgrammingHome.tsx',
-  'apps/dhcb/src/pages/subjects/programming/ProgrammingSpecializationPage.tsx',
-  'apps/dhcb/src/pages/subjects/programming/ProgrammingPathPage.tsx',
-  'apps/dhcb/src/components/PathStageQuiz.tsx',
-  'apps/dhcb/src/components/Layout.tsx',
-  'apps/dhcb/src/components/BottomNav.tsx',
-  // Đợt 0501 — luồng học chính.
-  'apps/dhcb/src/pages/learning/Subjects.tsx',
-  'apps/dhcb/src/components/CefrLessonViews.tsx',
-  'apps/dhcb/src/components/studyTabs/TodayLesson.tsx',
-  'apps/dhcb/src/components/studyTabs/SRSReview.tsx',
-  'apps/dhcb/src/components/RoadmapTab.tsx',
-  'apps/dhcb/src/pages/subjects/programming/ProgrammingLevelPage.tsx',
-  'apps/dhcb/src/pages/subjects/programming/ProgrammingCoursePage.tsx',
-  'apps/dhcb/src/pages/subjects/programming/ProgrammingPathStagePage.tsx',
-  'apps/dhcb/src/components/programming/LessonStartButton.tsx',
-]
+// Bỏ comment trước khi dò: comment được phép NHẮC tên lớp để giải thích vì sao đã gỡ.
+const stripComments = (code: string) =>
+  code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
 
-// Khu Bạn Đồng Hành (`/ban-dong-hanh`) — thư mục gom trọn hoặc file lẻ.
-const COMPANION_AREA = [
-  'apps/dhcb/src/pages/companion',
-  'apps/dhcb/src/components/CompanionStudios',
-  'apps/dhcb/src/components/CompanionVoice',
-  'apps/dhcb/src/components/Companion3D',
-  'apps/dhcb/src/components/MemoryPalace',
-  'apps/dhcb/src/components/MetacognitiveReflection',
-  'apps/dhcb/src/components/ProactiveAgent',
-  'apps/dhcb/src/components/StemScratchpad',
-  'apps/dhcb/src/components/DebateArena',
-  'apps/dhcb/src/components/PvPArena',
-  'apps/dhcb/src/components/LifeSynthesis',
-  'apps/dhcb/src/components/ProactiveBriefingCard.tsx',
-]
-
-describe('transition-all — chỉ được GIẢM (audit M17)', () => {
-  // Mốc đo sau đợt 0500. Gỡ thêm chỗ nào thì HẠ số này xuống; đừng bao giờ nâng lên — code mới
-  // khai đúng thuộc tính (`transition-colors`/`transition`/`transition-transform`), skill ui-ux
-  // mục 10.A.1.
-  const BASELINE = 51 // đợt 0513 khu Bạn Đồng Hành (0501: 130, 0500: 151)
-
-  it(`toàn kho ≤ ${BASELINE} chỗ`, () => {
+describe('transition-all — đã gỡ hết (audit M17)', () => {
+  // Gỡ dần qua đợt 0500 (172 → 151) · 0501 (→ 130) · 0513 khu Bạn Đồng Hành (→ 51) · 0514 (→ 0).
+  // Code mới khai đúng thuộc tính: `transition-colors` · `transition` · `transition-[width]`…
+  // (skill ui-ux mục 10.A.1).
+  it('toàn kho không còn transition-all trong mã (ngoài comment)', () => {
     const files = ['apps/dhcb/src', 'apps/hub/src', 'packages'].flatMap((d) =>
       listSource(join(REPO, d)),
     )
     expect(files.length).toBeGreaterThan(300) // canh hàm quét hỏng rồi lặng lẽ quét rỗng
-    const count = files.reduce(
-      (n, f) => n + (readFileSync(f, 'utf8').match(/\btransition-all\b/g)?.length ?? 0),
-      0,
+    const offenders = files.filter((f) =>
+      /\btransition-all\b/.test(stripComments(readFileSync(f, 'utf8'))),
     )
-    expect(count).toBeLessThanOrEqual(BASELINE)
-  })
-
-  it.each(PRIORITY_FILES)('%s không còn transition-all trong class', (rel) => {
-    // Bỏ comment trước khi dò: comment được phép NHẮC tên lớp để giải thích vì sao đã gỡ.
-    const code = read(rel)
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/.*$/gm, '')
-    expect(code).not.toMatch(/\btransition-all\b/)
-  })
-
-  // Đợt 0513 — gỡ trọn khu Bạn Đồng Hành (studio + thẻ/modal của các tính năng đồng hành).
-  it.each(COMPANION_AREA)('%s không còn transition-all', (rel) => {
-    const files = rel.endsWith('.tsx') ? [join(REPO, rel)] : listSource(join(REPO, rel))
-    expect(files.length).toBeGreaterThan(0)
-    const offenders = files.filter((f) => /\btransition-all\b/.test(readFileSync(f, 'utf8')))
     expect(offenders).toEqual([])
   })
 })

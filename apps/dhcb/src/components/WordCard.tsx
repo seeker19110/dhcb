@@ -100,7 +100,7 @@ export default function WordCard({
             <div
               aria-hidden={flipped}
               style={{ visibility: flipped ? 'hidden' : 'visible' }}
-              className="flip-face bg-zinc-900 border border-zinc-800/80 group-hover:border-accent-500/50 shadow-xl w-full rounded-3xl p-8 sm:p-10 min-h-[220px] flex flex-col items-center justify-center text-center transition-all duration-300 relative overflow-hidden"
+              className="flip-face bg-zinc-900 border border-zinc-800/80 group-hover:border-accent-500/50 shadow-xl w-full rounded-3xl p-8 sm:p-10 min-h-[220px] flex flex-col items-center justify-center text-center transition-[border-color,visibility] duration-300 relative overflow-hidden"
             >
               <span
                 data-reading-content
@@ -126,7 +126,7 @@ export default function WordCard({
               aria-hidden={!flipped}
               data-reading-content
               style={{ visibility: flipped ? 'visible' : 'hidden' }}
-              className="flip-face flip-back bg-zinc-900 border border-zinc-800/80 shadow-xl w-full rounded-3xl p-8 sm:p-10 min-h-[220px] flex flex-col items-center justify-center text-center transition-all duration-300"
+              className="flip-face flip-back bg-zinc-900 border border-zinc-800/80 shadow-xl w-full rounded-3xl p-8 sm:p-10 min-h-[220px] flex flex-col items-center justify-center text-center transition-[visibility] duration-300"
             >
               <span className="text-2xl text-zinc-100 font-bold mb-2 tracking-tight">
                 {card.vi}

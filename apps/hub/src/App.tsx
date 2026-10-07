@@ -329,7 +329,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               </a>
               <a
                 href={APP_URL}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 transition-all hover:scale-[1.02]"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 transition hover:scale-[1.02]"
               >
                 <span>Vào nền tảng</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -345,7 +345,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               </a>
               <a
                 href={START_URL}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 hover:shadow-accent-500/30 transition-all hover:scale-[1.02]"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 hover:shadow-accent-500/30 transition hover:scale-[1.02]"
               >
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -411,7 +411,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 hover:shadow-accent-500/35 transition-all hover:scale-[1.02]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 hover:shadow-accent-500/35 transition hover:scale-[1.02]"
           >
             <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu học miễn phí'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -572,7 +572,7 @@ function PillarsSection() {
           return (
             <article
               key={p.id}
-              className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl p-6 border border-zinc-800 hover:border-accent-500/40 transition-all flex flex-col"
+              className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl p-6 border border-zinc-800 hover:border-accent-500/40 transition flex flex-col"
             >
               <div className="w-12 h-12 rounded-xl bg-accent-500/10 border border-accent-500/20 flex items-center justify-center mb-4">
                 <Icon className="w-6 h-6 text-accent-300 theme-light:text-accent-800" />
@@ -741,7 +741,7 @@ function SubjectsSection() {
             aria-selected={active === s.id}
             aria-controls={`panel-${s.id}`}
             onClick={() => setActive(s.id)}
-            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${
               active === s.id
                 ? 'bg-accent-500 text-[#09090b] shadow-lg shadow-accent-500/20 scale-105'
                 : 'bg-zinc-900 text-zinc-200 hover:text-white hover:bg-zinc-800 border border-zinc-800'
@@ -839,7 +839,7 @@ function SubjectsSection() {
           <div className="flex flex-wrap items-center gap-3">
             <a
               href={current.ctaUrl}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition-all shadow-md shadow-accent-500/20 hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition shadow-md shadow-accent-500/20 hover:scale-[1.02]"
             >
               <span>{current.ctaLabel}</span>
               <ArrowRight className="w-4 h-4" />
@@ -861,7 +861,7 @@ function SubjectsSection() {
           <div className="flex flex-wrap items-center gap-3">
             <a
               href={current.startWithUrl}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition-all shadow-md shadow-accent-500/20 hover:scale-[1.02]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition shadow-md shadow-accent-500/20 hover:scale-[1.02]"
             >
               <span>Bắt đầu với {current.name}</span>
               <ArrowRight className="w-4 h-4" />
@@ -949,7 +949,7 @@ function HowItWorksSection() {
         <div className="mt-10 text-center">
           <a
             href={START_URL}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition hover:scale-[1.02]"
           >
             <span>Bắt đầu ngay</span>
             <ArrowRight className="w-4 h-4" />
@@ -1176,7 +1176,7 @@ function CtaBanner({ stats }: { stats: HubStats | null }) {
           </p>
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition-all hover:scale-105"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition hover:scale-105"
           >
             <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu miễn phí'}</span>
             <ArrowRight className="w-4 h-4" />

@@ -345,7 +345,7 @@ export default function CefrExam({
       </div>
       <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full ${accent.bar} transition-all`}
+          className={`h-full rounded-full ${accent.bar} transition-[width]`}
           style={{ width: `${(current / questions.length) * 100}%` }}
         />
       </div>

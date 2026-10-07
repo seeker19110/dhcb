@@ -254,7 +254,7 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
                       <button
                         key={meta.starter}
                         onClick={() => open(meta)}
-                        className="text-left bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition-all flex items-center justify-between gap-2"
+                        className="text-left bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition flex items-center justify-between gap-2"
                       >
                         <p className="font-semibold text-white truncate">{meta.starter}</p>
                         <ChevronRight className="w-4 h-4 text-content-muted shrink-0" />
@@ -389,7 +389,7 @@ function DialogueGroups({
                 <button
                   key={`${entry.id}-${i}`}
                   onClick={() => onSelect(entry)}
-                  className="text-left bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition-all flex items-center justify-between gap-2"
+                  className="text-left bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition flex items-center justify-between gap-2"
                 >
                   <span className="font-medium text-white text-sm truncate">
                     {isA ? entry.dialogue.titleVi : entry.dialogue.titleEn}

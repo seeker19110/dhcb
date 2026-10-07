@@ -25,7 +25,7 @@ export default function StoryCard({ story, isA, onClick, progress }: Props) {
   return (
     <button
       onClick={onClick}
-      className="text-left bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition-all group"
+      className="text-left bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition group"
     >
       <div className="flex items-center gap-2 mb-1.5">
         <span className="text-lg leading-none" aria-hidden="true">

@@ -66,7 +66,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
       <span className="text-xs text-zinc-400 w-36 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${color} rounded-full transition-all duration-700`}
+          className={`h-full ${color} rounded-full transition-[width] duration-700`}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -203,7 +203,7 @@ function ResultPanel({
       <button
         onClick={onReset}
         aria-label={isA ? 'Bài viết mới' : 'New essay'}
-        className="w-full flex items-center justify-center gap-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:text-white rounded-2xl py-3.5 text-sm font-semibold transition-all duration-200 hover:bg-zinc-850 active:scale-[0.98] shadow-sm"
+        className="w-full flex items-center justify-center gap-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:text-white rounded-2xl py-3.5 text-sm font-semibold transition duration-200 hover:bg-zinc-850 active:scale-[0.98] shadow-sm"
       >
         <RotateCcw className="w-4 h-4" />
         {isA ? 'Viết bài luận mới' : 'New essay'}
@@ -512,7 +512,7 @@ export default function Writing() {
         onClick={submit}
         disabled={loading || !essay.trim() || !essayPrompt.trim() || isThrottled}
         aria-label={isA ? 'Chấm bài ngay' : 'Grade my essay'}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 text-white font-bold py-3.5 rounded-2xl text-sm transition-all duration-200 active:scale-[0.98] shadow-xl relative"
+        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 text-white font-bold py-3.5 rounded-2xl text-sm transition duration-200 active:scale-[0.98] shadow-xl relative"
       >
         {isThrottled && throttleCountdown > 0 ? (
           <>

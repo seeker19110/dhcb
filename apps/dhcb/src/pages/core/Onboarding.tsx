@@ -186,7 +186,7 @@ function OnboardingForm() {
     'tap-44 w-full bg-accent-500 hover:bg-accent-400 disabled:opacity-60 text-black font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 transition'
   const secondaryClass = 'tap-44 w-full text-sm text-zinc-400 hover:text-white py-2'
   const choiceClass = (active: boolean) =>
-    `w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+    `w-full flex items-center gap-4 p-4 rounded-2xl border transition ${
       active
         ? 'bg-accent-500/15 border-accent-500/50 text-white'
         : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:border-zinc-700'
@@ -254,7 +254,7 @@ function OnboardingForm() {
             {Array.from({ length: totalSteps }, (_, i) => (
               <div
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-accent-500' : 'bg-zinc-800'}`}
+                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i <= step ? 'bg-accent-500' : 'bg-zinc-800'}`}
               />
             ))}
           </div>
@@ -278,7 +278,7 @@ function OnboardingForm() {
                       setSubjectId(sub.id)
                       track('onboarding_step_view', { refCode: `onboarding:subject:${sub.id}` })
                     }}
-                    className="tap-44 w-full h-full flex flex-col items-center gap-2 p-4 rounded-2xl border bg-zinc-900/80 border-zinc-800 text-zinc-200 hover:border-accent-500/60 hover:text-white transition-all"
+                    className="tap-44 w-full h-full flex flex-col items-center gap-2 p-4 rounded-2xl border bg-zinc-900/80 border-zinc-800 text-zinc-200 hover:border-accent-500/60 hover:text-white transition"
                   >
                     <SubjectIllustration subjectId={sub.id} size="sm" />
                     <span className="font-semibold text-[0.9375rem]">{sub.label}</span>
@@ -327,7 +327,7 @@ function OnboardingForm() {
               disabled={busy}
               type="button"
               onClick={() => nav('/placement', { state: { from: 'onboarding' } })}
-              className="w-full flex items-center gap-3 p-4 mb-4 rounded-2xl border border-accent-500/40 bg-accent-500/10 text-left hover:bg-accent-500/15 transition-all"
+              className="w-full flex items-center gap-3 p-4 mb-4 rounded-2xl border border-accent-500/40 bg-accent-500/10 text-left hover:bg-accent-500/15 transition"
             >
               <Sparkles className="w-5 h-5 text-accent-400 shrink-0" />
               <div className="flex-1">
@@ -403,7 +403,7 @@ function OnboardingForm() {
                     type="button"
                     onClick={() => setGoal(g.value)}
                     aria-pressed={active}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition ${
                       active
                         ? colors[g.color]
                         : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
@@ -445,7 +445,7 @@ function OnboardingForm() {
                   // [U9b] Cùng hợp đồng với nút nhóm tuổi: trình đọc màn hình đọc được nút nào
                   // đang chọn, không chỉ dựa vào màu viền (audit mục 8).
                   aria-pressed={minutes === m}
-                  className={`p-5 rounded-2xl border text-center transition-all ${
+                  className={`p-5 rounded-2xl border text-center transition ${
                     minutes === m
                       ? 'bg-accent-500/15 border-accent-500/50 text-white'
                       : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:border-zinc-700'

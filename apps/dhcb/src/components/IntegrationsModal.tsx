@@ -126,7 +126,7 @@ export default function IntegrationsModal({ isOpen, onClose, itemData }: Integra
           <button
             onClick={handleSyncGoogleCalendar}
             disabled={syncing !== null}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-blue-500/50 transition-all group text-left"
+            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-blue-500/50 transition group text-left"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 theme-light:text-blue-800">
@@ -146,7 +146,7 @@ export default function IntegrationsModal({ isOpen, onClose, itemData }: Integra
           <button
             onClick={handleSyncNotion}
             disabled={syncing !== null}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-purple-500/50 transition-all group text-left"
+            className="w-full flex items-center justify-between p-3.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 hover:border-purple-500/50 transition group text-left"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 theme-light:text-purple-800">

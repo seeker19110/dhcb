@@ -19,7 +19,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
       <span className="text-xs text-zinc-400 w-36 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${color} rounded-full transition-all duration-700`}
+          className={`h-full ${color} rounded-full transition-[width] duration-700`}
           style={{ width: `${pct}%` }}
         />
       </div>
