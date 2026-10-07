@@ -4562,7 +4562,7 @@ export const LESSON_INDEX: readonly LessonSummary[] = [
     unitId: 'cv1-u2',
     title: 'Convolution 2D — tự cài bộ dò cạnh',
     language: 'python',
-    srsCardCount: 3,
+    srsCardCount: 4,
   },
   {
     id: 'cv1-u2-l2',
@@ -4721,7 +4721,7 @@ export const LESSON_INDEX: readonly LessonSummary[] = [
   {
     id: 'llmagent-u1-l1',
     unitId: 'llmagent-u1',
-    title: 'Văn bản thành số — tokenizer BPE mini tự cài',
+    title: 'Văn bản thành số — tokenizer subword theo luật cố định',
     language: 'python',
     srsCardCount: 3,
   },
