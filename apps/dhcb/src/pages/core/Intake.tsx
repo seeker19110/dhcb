@@ -23,6 +23,7 @@ import {
 } from '../../lib/intakeApi'
 import type { AgeGroup } from '../../types'
 import { Button } from '@core/Button'
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 
 const AGE_OPTIONS: { value: AgeGroup; label: string; hint: string }[] = [
   { value: 'nhi_dong', label: 'Dưới 10', hint: 'tuổi' },
@@ -104,7 +105,11 @@ export default function Intake() {
 
   if (checking) {
     return (
-      <main className="min-h-dvh flex items-center justify-center p-5">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none min-h-dvh flex items-center justify-center p-5"
+      >
         <p role="status" className="text-sm text-zinc-300 flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin" />
           Đang mở…
@@ -116,7 +121,11 @@ export default function Intake() {
   // ── Màn GỢI Ý: đúng MỘT việc nổi bật ────────────────────────────────────
   if (result) {
     return (
-      <main className="min-h-dvh flex items-center justify-center p-5">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none min-h-dvh flex items-center justify-center p-5"
+      >
         <div className="w-full max-w-md space-y-4 animate-fade-in">
           <h1 className="text-xl font-semibold text-white">Mình gợi ý bắt đầu từ đây nhé?</h1>
 
@@ -159,8 +168,14 @@ export default function Intake() {
 
   // ── Lớp HỎI ─────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-dvh flex items-center justify-center p-5">
+    <main
+      id={MAIN_CONTENT_ID}
+      tabIndex={-1}
+      className="focus:outline-none min-h-dvh flex items-center justify-center p-5"
+    >
       <div className="w-full max-w-md space-y-5 animate-fade-in">
+        {/* [U10] Lớp hỏi chỉ có <legend> từng bước — thêm tiêu đề trang ẩn (WCAG 1.3.1/2.4.6). */}
+        <h1 className="sr-only">Bắt đầu</h1>
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-accent-400" />
           <p className="text-xs text-zinc-400">Vài câu ngắn thôi, khoảng một phút rưỡi</p>

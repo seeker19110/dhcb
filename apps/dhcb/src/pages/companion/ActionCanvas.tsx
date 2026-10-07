@@ -227,8 +227,11 @@ export default function ActionCanvas() {
           Không Gian Làm Việc Trực Quan (Action Canvas)
         </h1>
 
+        {/* [U10] Hai cụm nút con cũng phải `flex-wrap`: chỉ hàng ngoài xuống dòng thì cụm
+            "zoom · Xuất Markdown · Lưu" vẫn là một khối liền dài ~380px → tràn ngang 76px ở 320px
+            (WCAG 1.4.10 Reflow, audit 2026-09-30 mục 3). */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3 bg-zinc-900/80 p-2.5 rounded-2xl border border-zinc-800/80 backdrop-blur-md">
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               onClick={() => setAiModalOpen(true)}
@@ -255,7 +258,7 @@ export default function ActionCanvas() {
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <div className="flex items-center bg-zinc-950 rounded-xl border border-zinc-800 p-0.5">
               <button
                 type="button"

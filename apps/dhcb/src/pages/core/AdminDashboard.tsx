@@ -13,6 +13,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import Layout from '../../components/Layout'
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { usePageTitle } from '../../lib/usePageTitle'
 import AdminUsersPanel from '../../components/admin/AdminUsersPanel'
 import AdminLimitsPanel from '../../components/admin/AdminLimitsPanel'
@@ -134,7 +135,11 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-dvh bg-zinc-950">
       <Layout title="Quản trị hệ thống" />
-      <main className="max-w-3xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))]">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-3xl mx-auto px-4 pt-6 pb-[calc(1.5rem+var(--bnav-h))]"
+      >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
           Quản trị hệ thống
         </h1>

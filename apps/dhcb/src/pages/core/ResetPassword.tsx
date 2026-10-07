@@ -159,7 +159,10 @@ export default function ResetPassword() {
                 onClick={() => setShowPw((p) => !p)}
                 aria-label={showPw ? T.hidePassword : T.showPassword}
                 aria-pressed={showPw}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300 p-0.5"
+                /* [U10] 44×44px như nút cùng chức năng ở Login.tsx (U9a). Trước đây chỉ 20×20px —
+                   trượt axe `target-size` (WCAG 2.5.8 AA) vì /reset-password chưa có trong cổng
+                   axe. Rộng đúng bằng đệm pr-11 của ô nhập nên không đè lên chữ. */
+                className="absolute right-0 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center text-zinc-400 hover:text-zinc-300 transition"
               >
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>

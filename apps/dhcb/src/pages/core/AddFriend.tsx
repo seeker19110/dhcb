@@ -6,6 +6,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { UserPlus, CheckCircle2 } from 'lucide-react'
 import Layout from '../../components/Layout'
 import { useToast } from '@core/ToastProvider'
+import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { lookupFriendByCode, addFriendByCode, type FriendUserSummary } from '../../lib/friends'
 
 export default function AddFriend() {
@@ -47,7 +48,11 @@ export default function AddFriend() {
   return (
     <div className="min-h-dvh bg-zinc-950">
       <Layout title="Kết bạn" />
-      <main className="max-w-md mx-auto px-4 pb-24 pt-4 text-center">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="focus:outline-none max-w-md mx-auto px-4 pb-24 pt-4 text-center"
+      >
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
           Kết bạn
         </h1>

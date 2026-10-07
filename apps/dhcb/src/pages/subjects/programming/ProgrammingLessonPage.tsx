@@ -41,7 +41,7 @@ import CodeSurface from '../../../components/programming/CodeSurface'
 import RunOutput, { type RunState } from '../../../components/programming/RunOutput'
 import StepBar, { type LessonStep } from '../../../components/programming/StepBar'
 import StepRail from '../../../components/programming/StepRail'
-import { PageShell } from '@core/PageShell'
+import { MAIN_CONTENT_ID, PageShell } from '@core/PageShell'
 import { LessonAnimation } from '@core/LessonAnimation'
 import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport, useMediaQuery } from '../../../lib/useIsDesktopViewport'
@@ -159,7 +159,12 @@ export default function ProgrammingLessonPage() {
     return (
       <div className="min-h-dvh bg-zinc-950 text-zinc-100">
         <Layout />
-        <main className="max-w-4xl mx-auto px-4 pt-6" aria-busy="true">
+        <main
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="focus:outline-none max-w-4xl mx-auto px-4 pt-6"
+          aria-busy="true"
+        >
           <p className="flex items-center gap-2 text-sm text-zinc-300" role="status">
             <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
             <span>Đang tải bài học…</span>
@@ -172,7 +177,11 @@ export default function ProgrammingLessonPage() {
     return (
       <div className="min-h-dvh bg-zinc-950 text-zinc-100">
         <Layout />
-        <main className="max-w-4xl mx-auto px-4 pt-6 space-y-3">
+        <main
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="focus:outline-none max-w-4xl mx-auto px-4 pt-6 space-y-3"
+        >
           <p className="text-sm text-zinc-200" role="alert">
             Không tải được nội dung bài học (mất mạng?). Thử lại nhé.
           </p>
