@@ -170,6 +170,13 @@ Mỗi slice sau M0 là một nhóm outcome nhỏ đủ kiểm chứng trong mộ
 - Bằng chứng tại máy: test rubric 25/25 (lời giải tương đương đạt; echo transcript, xoá file, thiếu mẫu, `*`/`.env*`, HEAD sai lời nhắn, `.env` trong lịch sử sau reset, chép cứng kho công khai đều rớt). Suite liên quan 391 file/12.952 test đạt; build/typecheck/lint/format/audit:prose đạt. E2E chưa chạy được tại máy (không tải được Chromium); full coverage chưa chạy — thuộc CI.
 - Checkpoint: **B1 xong (chờ PR/CI), B2 chờ storyboard được chuyên gia duyệt.** Evidence map giữ EXTEND, bổ sung bằng chứng mục ignore sau khi B1 merge.
 
+### Iteration 8 — 2026-10-07
+
+- State: VERIFYING. Slice FR-3a: sửa hai lỗi nội dung cũ do phiếu thí điểm nêu, không đổi ID/Make/ca chấm. Changelog [0511](../changelog/0511-2026-10-07-ai-engineering-fr3a-thuat-ngu.md), nhánh `claude/ai-engineering-tiep`, chưa PR.
+- Convolution: `cv1-u2-l1`, `cv2-u1-l4`, `mlds-u3-l1` đổi "bất biến tịnh tiến" → tương đương tịnh tiến; `cv1-u2-l1` thêm giới hạn ở viền và ghi chú cross-correlation, số minh họa được test tính lại. BPE: `llmagent-u1-l1` đổi tiêu đề thành tokenizer subword theo luật cố định (hướng a); bài BPE thật (hướng b) chờ lát contract ID.
+- Bằng chứng tại máy: test `packages/subject-programming` 92 file / 7.469 test đạt; typecheck, lint, audit:prose, audit:lessons đạt. Build/coverage/E2E thuộc CI.
+- Goal gap: chưa thêm bài mới; ba hoạt họa thí điểm còn lại chờ reviewer nội dung; B2 Git chờ chuyên gia; #1239 chờ kiến trúc.
+
 ## 7. Final audit
 
 - [ ] Mọi outcome trong snapshot nguồn có ánh xạ và bằng chứng bài DHCB trên `main`.
