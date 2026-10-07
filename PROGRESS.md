@@ -1186,7 +1186,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   mục 11 báo cáo. Kế hoạch trả nợ: đợt U1–U9 ở mục "Tiếp theo".
 
 - 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt
-  vá 7 lỗ hổng.** (1) **Kênh vị trí thu hồi chậm**: người đã RỜI chuyến mà giữ socket mở vẫn
+  vá 7 lỗ hổng.** (1) ✅ **ĐÃ VÁ ở changelog `0510`** (ngắt socket khi `member_left`/`session_ended`) — mô tả cũ: người đã RỜI chuyến mà giữ socket mở vẫn
   nhận vị trí của thành viên còn lại tới khi socket gửi sự kiện kế tiếp (fan-out ở
   `packages/core-location/wsLocation.ts` không kiểm lại quyền) — cần đẩy sự kiện thu hồi khi rời
   chuyến. (2) **`/ws/voice-companion` và `/ws/co-learning-room` không có client nào gọi** — đã

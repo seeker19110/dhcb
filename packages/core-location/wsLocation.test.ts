@@ -35,9 +35,13 @@ vi.mock('./locationService.js', () => ({
 }))
 
 const publishMock = vi.fn()
+const channelHandlers = vi.hoisted(() => ({ byChannel: new Map<string, (p: unknown) => void>() }))
 vi.mock('@dhcb/core-chat/redisChat', () => ({
   publish: (...a: unknown[]) => publishMock(...a),
-  subscribeChannel: () => () => {},
+  subscribeChannel: (channel: string, fn: (p: unknown) => void) => {
+    channelHandlers.byChannel.set(channel, fn)
+    return () => channelHandlers.byChannel.delete(channel)
+  },
 }))
 
 import { EventEmitter } from 'node:events'
@@ -183,5 +187,38 @@ describe('vá 2026-09-27 — Origin, kích thước khung, tần suất', () => 
     expect(recordPositionMock).not.toHaveBeenCalled()
     expect(publishMock).not.toHaveBeenCalled()
     expect(s.sent).toContainEqual(expect.objectContaining({ type: 'error' }))
+  })
+
+  describe('thu hồi socket khi rời chuyến / kết thúc chuyến', () => {
+    async function subscribeBoth() {
+      getActiveMembershipMock.mockResolvedValue({ sharingEnabled: true, precisionMode: 'exact' })
+      getSessionStateMock.mockResolvedValue(null)
+      const a = fakeSocket()
+      const b = fakeSocket()
+      handleConnection(a.ws as never, 'ua')
+      handleConnection(b.ws as never, 'ub')
+      await a.message({ type: 'subscribe', sessionId: SESSION_ID })
+      await b.message({ type: 'subscribe', sessionId: SESSION_ID })
+      return { a, b, push: channelHandlers.byChannel.get(`loc:session:${SESSION_ID}`)! }
+    }
+
+    it('member_left: socket của người rời không nhận vị trí kế tiếp, người còn lại vẫn nhận', async () => {
+      const { a, b, push } = await subscribeBoth()
+      push({ type: 'member_left', sessionId: SESSION_ID, userId: 'ua' })
+      const pos = { type: 'position', sessionId: SESSION_ID, member: { userId: 'ub' } }
+      push(pos)
+      expect(a.sent).not.toContainEqual(pos)
+      expect(b.sent).toContainEqual(pos)
+    })
+
+    it('session_ended: mọi socket được gỡ khỏi chuyến sau khi nhận thông báo', async () => {
+      const { a, b } = await subscribeBoth()
+      const push = channelHandlers.byChannel.get(`loc:session:${SESSION_ID}`)!
+      push({ type: 'session_ended', sessionId: SESSION_ID })
+      expect(a.sent).toContainEqual({ type: 'session_ended', sessionId: SESSION_ID })
+      expect(b.sent).toContainEqual({ type: 'session_ended', sessionId: SESSION_ID })
+      // Kênh đã được huỷ đăng ký vì không còn socket nào.
+      expect(channelHandlers.byChannel.has(`loc:session:${SESSION_ID}`)).toBe(false)
+    })
   })
 })
