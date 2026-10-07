@@ -417,7 +417,7 @@ export default function CommonPhrases() {
                   key={subj.starter}
                   onClick={() => openSubject(subj)}
                   disabled={loading}
-                  className={`text-left bg-zinc-900/80 border rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition-all group disabled:opacity-50 ${c.border}`}
+                  className={`text-left bg-zinc-900/80 border rounded-xl p-3 hover:bg-zinc-800/60 active:scale-[0.98] transition group disabled:opacity-50 ${c.border}`}
                 >
                   <div
                     className={`text-xs px-2 py-0.5 rounded-full inline-block mb-2 font-medium ${c.badge}`}

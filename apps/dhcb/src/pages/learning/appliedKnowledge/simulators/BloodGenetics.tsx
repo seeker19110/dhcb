@@ -95,7 +95,7 @@ export function BloodGenetics() {
                   </div>
                   <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
                     <div
-                      className="h-full bg-teal-500 transition-all duration-500"
+                      className="h-full bg-teal-500 transition-[width] duration-500"
                       style={{ width: `${res.percentage}%` }}
                     />
                   </div>

@@ -219,7 +219,7 @@ export default function NotesKanban() {
                     return (
                       <div
                         key={task.id}
-                        className="bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 rounded-xl p-3.5 space-y-2 shadow-sm group transition-all"
+                        className="bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 rounded-xl p-3.5 space-y-2 shadow-sm group transition"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-medium text-white leading-relaxed">

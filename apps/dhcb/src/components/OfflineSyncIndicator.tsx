@@ -104,7 +104,7 @@ export default function OfflineSyncIndicator() {
       aria-live="polite"
     >
       <div
-        className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl shadow-lg border text-sm font-medium transition-all ${tone}`}
+        className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl shadow-lg border text-sm font-medium transition ${tone}`}
       >
         <div className="flex items-center gap-2.5">
           {/* Biểu tượng KHÔNG đặt màu riêng: chúng thừa kế `currentColor` của dải, vốn đã được

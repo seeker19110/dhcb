@@ -473,7 +473,7 @@ export default function Dictionary() {
                         return (
                           <div
                             key={e.word}
-                            className="bg-zinc-900/90 border border-zinc-800/80 rounded-3xl p-5 sm:p-6 hover:border-accent-500/40 hover:bg-zinc-850 transition-all duration-200 shadow-sm"
+                            className="bg-zinc-900/90 border border-zinc-800/80 rounded-3xl p-5 sm:p-6 hover:border-accent-500/40 hover:bg-zinc-850 transition duration-200 shadow-sm"
                           >
                             {/* Header: từ + badge loại từ + phát âm + "đã học" */}
                             <div className="flex items-center gap-2.5 mb-2 flex-wrap">

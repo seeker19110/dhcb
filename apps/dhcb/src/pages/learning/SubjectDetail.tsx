@@ -763,7 +763,7 @@ export default function SubjectDetail() {
             {currentGradeData.chapters.map((chap, chapIdx) => (
               <div
                 key={chap.id}
-                className="bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-3xl p-5 space-y-4 transition-all shadow-sm animate-fade-up"
+                className="bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-3xl p-5 space-y-4 transition shadow-sm animate-fade-up"
                 style={{ animationDelay: `${chapIdx * 60}ms` }}
               >
                 {/* Header chương với illustration nhỏ */}

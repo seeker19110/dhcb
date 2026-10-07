@@ -810,7 +810,7 @@ export function LessonView({
                     role="group"
                     tabIndex={-1}
                     aria-label={nhanLuot(i + 1, speakerName(t.speaker), isA)}
-                    className={`max-w-[85%] rounded-2xl p-3.5 transition-all duration-300 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-accent-400 ${
+                    className={`max-w-[85%] rounded-2xl p-3.5 transition duration-300 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-accent-400 ${
                       isActive
                         ? isLeft
                           ? `${color.bg} border ${color.border} shadow-lg`

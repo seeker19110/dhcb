@@ -41,13 +41,13 @@ export function GameResult({
       <div className="flex items-center justify-center gap-3 pt-2">
         <button
           onClick={onRetry}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 min-h-11 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm font-semibold hover:bg-zinc-800 hover:border-zinc-700 transition-all duration-200 active:scale-95 shadow-sm"
+          className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 min-h-11 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm font-semibold hover:bg-zinc-800 hover:border-zinc-700 transition duration-200 active:scale-95 shadow-sm"
         >
           <RotateCcw className="w-4 h-4" /> {isUiVi ? 'Làm lại' : 'Retry'}
         </button>
         <button
           onClick={onExit}
-          className="flex-1 px-5 py-3.5 min-h-11 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 text-white text-sm font-bold hover:from-accent-400 hover:to-accent-500 transition-all duration-200 shadow-md active:scale-95"
+          className="flex-1 px-5 py-3.5 min-h-11 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 text-white text-sm font-bold hover:from-accent-400 hover:to-accent-500 transition duration-200 shadow-md active:scale-95"
         >
           {isUiVi ? 'Về Luyện tập' : 'Back to Practice'}
         </button>

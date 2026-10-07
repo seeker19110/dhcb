@@ -80,7 +80,7 @@ export function LessonList({
               // `aria-current="true"` chứ không chỉ đổi màu: người dùng trình đọc màn hình
               // cũng cần biết mục nào đang mở, mà màu thì họ không thấy.
               aria-current={isSelected ? 'true' : undefined}
-              className={`text-left w-full border transition-all group ${
+              className={`text-left w-full border transition group ${
                 compact ? 'rounded-xl p-2.5' : 'rounded-xl p-3.5 active:scale-[0.98]'
               } ${
                 isSelected

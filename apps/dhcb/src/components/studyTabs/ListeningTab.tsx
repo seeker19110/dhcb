@@ -182,7 +182,7 @@ function MeaningPractice({
     <div ref={questionContainer} className="animate-fade-in space-y-4">
       <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className="h-full bg-sky-500 rounded-full transition-all"
+          className="h-full bg-sky-500 rounded-full transition-[width]"
           style={{ width: `${(current / questions.length) * 100}%` }}
         />
       </div>
@@ -331,7 +331,7 @@ function DictationPractice({
     <div className="animate-fade-in space-y-4">
       <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className="h-full bg-sky-500 rounded-full transition-all"
+          className="h-full bg-sky-500 rounded-full transition-[width]"
           style={{ width: `${(current / items.length) * 100}%` }}
         />
       </div>

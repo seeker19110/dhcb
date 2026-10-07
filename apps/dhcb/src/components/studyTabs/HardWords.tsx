@@ -68,7 +68,7 @@ export function HardWords({
       </div>
       <div className="h-1 bg-zinc-800 rounded-full mb-4">
         <div
-          className="h-full bg-amber-500 rounded-full transition-all"
+          className="h-full bg-amber-500 rounded-full transition-[width]"
           style={{ width: `${(((idx % hardWords.length) + 1) / hardWords.length) * 100}%` }}
         />
       </div>
