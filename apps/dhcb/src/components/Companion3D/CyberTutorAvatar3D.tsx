@@ -279,7 +279,7 @@ export default function CyberTutorAvatar3D({
       ref={containerRef}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      className="relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-zinc-950 via-slate-950 to-zinc-950 p-4 shadow-2xl backdrop-blur-xl transition-all select-none"
+      className="relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-zinc-950 via-slate-950 to-zinc-950 p-4 shadow-2xl backdrop-blur-xl transition select-none"
     >
       <div className="absolute top-3 left-4 right-4 flex items-center justify-between pointer-events-none">
         <div className="flex items-center gap-2">

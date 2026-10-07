@@ -15,7 +15,7 @@ export default function MemoryPalaceCard() {
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-surface-card p-5 shadow-xl transition-all duration-300 hover:border-amber-500/50 mb-6">
+      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-surface-card p-5 shadow-xl transition duration-300 hover:border-amber-500/50 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/30 border border-amber-400/40 flex items-center justify-center text-2xl shadow-inner flex-shrink-0">
@@ -58,7 +58,7 @@ export default function MemoryPalaceCard() {
           <button
             type="button"
             onClick={() => setIsOpenModal(true)}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-bold text-xs sm:text-sm shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-bold text-xs sm:text-sm shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
           >
             <span>Khám phá Cung Điện</span>
             <span>🗝️</span>

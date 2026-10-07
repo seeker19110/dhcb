@@ -200,7 +200,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
               {modes.map((m) => (
                 <div
                   key={m.id}
-                  className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-amber-500/50 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-amber-500/50 transition group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-3">
                     <div

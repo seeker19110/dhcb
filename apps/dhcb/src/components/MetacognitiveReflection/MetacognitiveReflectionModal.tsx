@@ -99,7 +99,7 @@ export default function MetacognitiveReflectionModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('write')}
-                className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg font-medium transition ${
                   activeTab === 'write'
                     ? 'bg-teal-500 text-white'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -110,7 +110,7 @@ export default function MetacognitiveReflectionModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('history')}
-                className={`px-3 py-1 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg font-medium transition ${
                   activeTab === 'history'
                     ? 'bg-teal-500 text-white'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -123,7 +123,7 @@ export default function MetacognitiveReflectionModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
             >
               <X className="w-5 h-5" />
             </button>
@@ -151,7 +151,7 @@ export default function MetacognitiveReflectionModal({
                         d.id as 'learning' | 'career' | 'work' | 'startup' | 'life',
                       )
                     }
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
                       domain === d.id
                         ? 'bg-teal-500/20 border-teal-400 text-teal-300 theme-light:text-teal-900 shadow-sm'
                         : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
@@ -195,7 +195,7 @@ export default function MetacognitiveReflectionModal({
                   onChange={(e) => setUserText(e.target.value)}
                   placeholder="Hãy viết lại cảm nhận, suy nghĩ, sự ngập ngừng hoặc bài học của bạn một cách tự do không phán xét..."
                   rows={5}
-                  className="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all placeholder:text-zinc-500"
+                  className="w-full p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition placeholder:text-zinc-500"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export default function MetacognitiveReflectionModal({
                   type="button"
                   disabled={!userText.trim() || isSubmitting}
                   onClick={handleSubmit}
-                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold text-sm shadow-lg transition-all transform active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold text-sm shadow-lg transition transform active:scale-95 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <span>Đang phân tích nhận thức...</span>
@@ -330,7 +330,7 @@ export default function MetacognitiveReflectionModal({
                 history.map((h) => (
                   <div
                     key={h.id}
-                    className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-teal-500/30 transition-all space-y-2"
+                    className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-teal-500/30 transition space-y-2"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-teal-300 theme-light:text-teal-900">

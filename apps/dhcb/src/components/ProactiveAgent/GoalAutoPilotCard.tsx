@@ -12,7 +12,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
   const currentStep = plan.steps.find((s) => s.status === 'in_progress') || plan.steps[0]
 
   return (
-    <div className="p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md shadow-xl mb-4 transition-all">
+    <div className="p-4 rounded-3xl bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md shadow-xl mb-4 transition">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-accent-500 to-indigo-600 flex items-center justify-center text-zinc-950 font-black text-sm shadow-md">
@@ -44,7 +44,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
         </div>
         <div className="w-full h-2 rounded-full bg-zinc-800/80 overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-accent-500 via-indigo-500 to-emerald-400 transition-all duration-500 rounded-full"
+            className="h-full bg-gradient-to-r from-accent-500 via-indigo-500 to-emerald-400 transition-[width] duration-500 rounded-full"
             style={{ width: `${plan.progressPercentage}%` }}
           />
         </div>
@@ -69,7 +69,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
           <button
             type="button"
             onClick={() => onActionClick?.(currentStep.actionRoute)}
-            className="px-3 py-1.5 rounded-xl bg-accent-500 hover:bg-accent-400 active:scale-95 text-zinc-950 text-xs font-bold shadow-md transition-all flex-shrink-0"
+            className="px-3 py-1.5 rounded-xl bg-accent-500 hover:bg-accent-400 active:scale-95 text-zinc-950 text-xs font-bold shadow-md transition flex-shrink-0"
           >
             Thực hiện ➔
           </button>
@@ -81,7 +81,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
         {plan.steps.map((step: GoalAutoPilotStep) => (
           <div
             key={step.stepNumber}
-            className={`p-2 rounded-xl border text-[0.6875rem] font-medium transition-all ${
+            className={`p-2 rounded-xl border text-[0.6875rem] font-medium transition ${
               step.status === 'completed'
                 ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300 theme-light:text-emerald-900'
                 : step.status === 'in_progress'

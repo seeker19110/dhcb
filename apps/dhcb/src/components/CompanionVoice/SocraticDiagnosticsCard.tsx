@@ -90,7 +90,7 @@ export default function SocraticDiagnosticsCard() {
   }
 
   return (
-    <div className="bg-surface-card border border-violet-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition-all duration-300">
+    <div className="bg-surface-card border border-violet-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
@@ -137,7 +137,7 @@ export default function SocraticDiagnosticsCard() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedId(m.id)}
-                  className={`w-full text-left p-4 rounded-xl cursor-pointer border transition-all duration-200 ${
+                  className={`w-full text-left p-4 rounded-xl cursor-pointer border transition duration-200 ${
                     isSelected
                       ? 'bg-violet-950/40 border-violet-500 shadow-lg shadow-violet-500/10'
                       : 'bg-surface-raised border-line-subtle hover:border-line-strong'
@@ -174,7 +174,7 @@ export default function SocraticDiagnosticsCard() {
               <button
                 onClick={() => handleStartSession(currentTopic.id)}
                 disabled={isSubmitting}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-[#fff] font-semibold text-sm shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-[#fff] font-semibold text-sm shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Bắt đầu đối thoại dẫn dắt Socratic</span>
@@ -264,7 +264,7 @@ export default function SocraticDiagnosticsCard() {
               <button
                 type="submit"
                 disabled={!learnerAnswer.trim() || isSubmitting}
-                className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-[#fff] font-semibold text-xs flex items-center gap-1.5 shadow-lg transition-all disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-[#fff] font-semibold text-xs flex items-center gap-1.5 shadow-lg transition disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Gửi phản tư</span>

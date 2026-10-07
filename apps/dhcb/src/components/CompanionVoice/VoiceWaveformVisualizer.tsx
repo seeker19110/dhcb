@@ -22,7 +22,7 @@ export const VoiceWaveformVisualizer: React.FC<VoiceWaveformVisualizerProps> = (
         return (
           <div
             key={idx}
-            className="w-1.5 rounded-full bg-gradient-to-t from-sky-400 to-indigo-500 transition-all duration-75"
+            className="w-1.5 rounded-full bg-gradient-to-t from-sky-400 to-indigo-500 transition-[height,opacity] duration-75"
             style={{
               height: `${Math.max(4, heightPercent)}%`,
               opacity: active ? 0.9 : 0.3,

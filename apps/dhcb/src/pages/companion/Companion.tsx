@@ -496,7 +496,7 @@ export default function Companion() {
                 onClick={() => setActiveStudio(tab.id)}
                 // [S06c] Studio đang mở phải đọc được bằng trình đọc màn hình, không chỉ bằng màu.
                 aria-pressed={isCurrent}
-                className={`tap-44-y flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 relative ${
+                className={`tap-44-y flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-200 relative ${
                   isCurrent
                     ? 'bg-accent-500 text-black shadow-md shadow-accent-500/20 scale-[1.02]'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'

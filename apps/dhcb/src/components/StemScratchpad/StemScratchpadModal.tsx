@@ -182,7 +182,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                 key={subj}
                 type="button"
                 onClick={() => handleSubjectChange(subj)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                   subject === subj
                     ? 'bg-teal-500 text-zinc-950 shadow-md'
                     : 'text-zinc-400 hover:text-white'
@@ -295,7 +295,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
               <button
                 type="submit"
                 disabled={isValidating || !latexInput.trim() || problem?.isSolved}
-                className="px-4 py-2.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs sm:text-sm shadow-md transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isValidating ? '...' : 'Kiểm tra'}
               </button>
@@ -303,7 +303,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                 type="button"
                 onClick={handleGetHint}
                 disabled={!problem || problem.isSolved}
-                className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-xs text-amber-300 theme-light:text-amber-900 font-semibold transition-all"
+                className="px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-xs text-amber-300 theme-light:text-amber-900 font-semibold transition"
                 title="Nhận gợi ý"
               >
                 💡 Gợi ý

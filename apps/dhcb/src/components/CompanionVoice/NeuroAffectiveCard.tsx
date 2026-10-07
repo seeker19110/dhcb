@@ -124,7 +124,7 @@ export const NeuroAffectiveCard: React.FC = () => {
               </div>
               <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full transition-all"
+                  className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full transition-[width]"
                   style={{ width: `${state.focusScore}%` }}
                 />
               </div>
@@ -140,7 +140,7 @@ export const NeuroAffectiveCard: React.FC = () => {
               </div>
               <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${
+                  className={`h-full rounded-full transition-[width,background-color] ${
                     state.stressIndex > 70
                       ? 'bg-rose-500'
                       : state.stressIndex > 40

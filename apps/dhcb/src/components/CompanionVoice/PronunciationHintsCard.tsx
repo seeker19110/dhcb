@@ -56,7 +56,7 @@ export default function PronunciationHintsCard() {
 
         <button
           onClick={handlePlay}
-          className="tap-44-y flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-[#fff] shadow-lg hover:bg-indigo-500 transition-all"
+          className="tap-44-y flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-[#fff] shadow-lg hover:bg-indigo-500 transition"
         >
           {isPlaying ? (
             <>
@@ -82,7 +82,7 @@ export default function PronunciationHintsCard() {
                 setSentence(sample)
               }}
               aria-pressed={sentence === sample}
-              className={`tap-44-y rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`tap-44-y rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                 sentence === sample
                   ? 'bg-indigo-500/30 text-indigo-200 theme-light:text-indigo-800 border border-indigo-500/40'
                   : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-800'

@@ -146,7 +146,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
             type="button"
             onClick={onClose}
             aria-label="Đóng"
-            className="tap-44 shrink-0 w-11 h-11 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+            className="tap-44 shrink-0 w-11 h-11 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -159,7 +159,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
               key={room.id}
               type="button"
               onClick={() => handleSelectRoom(idx)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
                 activeRoomIndex === idx
                   ? 'bg-amber-500 text-zinc-950 shadow-md font-bold'
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -175,7 +175,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
           <button
             type="button"
             onClick={() => setIsCreatingRoom(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 border border-dashed border-amber-500/40 text-amber-300 theme-light:text-amber-900 hover:bg-amber-500/10 transition-all flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 border border-dashed border-amber-500/40 text-amber-300 theme-light:text-amber-900 hover:bg-amber-500/10 transition flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm phòng</span>
@@ -251,7 +251,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                           left: `${locus.spatialCoordinates.x}%`,
                           top: `${locus.spatialCoordinates.y}%`,
                         }}
-                        className={`absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-2xl transition-all transform hover:scale-125 flex items-center gap-1.5 shadow-lg ${
+                        className={`absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-2xl transition transform hover:scale-125 flex items-center gap-1.5 shadow-lg ${
                           isSelected
                             ? 'bg-amber-500 text-zinc-950 ring-4 ring-amber-500/30 scale-110 z-10 font-bold'
                             : locus.mastered
@@ -280,7 +280,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                         key={locus.id}
                         type="button"
                         onClick={() => handleSelectLocus(locus)}
-                        className={`p-3 rounded-xl text-left border transition-all flex items-start justify-between ${
+                        className={`p-3 rounded-xl text-left border transition flex items-start justify-between ${
                           selectedLocus?.id === locus.id
                             ? 'bg-amber-500/10 border-amber-500 text-amber-200 theme-light:text-amber-900'
                             : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
@@ -355,13 +355,13 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                     onChange={(e) => setRecallInput(e.target.value)}
                     placeholder="Nhắm mắt nhớ lại hình ảnh tại điểm neo này, gõ lại ý nghĩa khái niệm..."
                     rows={3}
-                    className="w-full p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 transition-all placeholder:text-zinc-500"
+                    className="w-full p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-amber-500 transition placeholder:text-zinc-500"
                   />
                   <button
                     type="button"
                     disabled={!recallInput.trim() || isVerifying}
                     onClick={handleVerifyRecall}
-                    className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-zinc-950 font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50"
+                    className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-zinc-950 font-bold text-xs shadow-md transition active:scale-95 disabled:opacity-50"
                   >
                     {isVerifying ? 'Đang đối chiếu đường mòn thần kinh...' : 'Xác thực điểm neo 🧠'}
                   </button>

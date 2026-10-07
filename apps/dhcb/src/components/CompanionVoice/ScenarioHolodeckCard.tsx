@@ -110,7 +110,7 @@ export default function ScenarioHolodeckCard() {
   }
 
   return (
-    <div className="bg-surface-card border border-indigo-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition-all duration-300">
+    <div className="bg-surface-card border border-indigo-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
@@ -204,7 +204,7 @@ export default function ScenarioHolodeckCard() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedScenarioId(sc.id)}
-                  className={`w-full text-left p-4 rounded-xl cursor-pointer border transition-all duration-200 ${
+                  className={`w-full text-left p-4 rounded-xl cursor-pointer border transition duration-200 ${
                     isSelected
                       ? 'bg-indigo-950/40 border-indigo-500 shadow-lg shadow-indigo-500/10'
                       : 'bg-surface-raised border-line-subtle hover:border-line-strong'
@@ -258,7 +258,7 @@ export default function ScenarioHolodeckCard() {
               <button
                 onClick={() => handleStartSession(currentScenario.id)}
                 disabled={isLoading}
-                className="w-full mt-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-[#fff] font-semibold text-sm shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="w-full mt-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-[#fff] font-semibold text-sm shadow-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Bước vào phòng giả lập ngay</span>
@@ -280,7 +280,7 @@ export default function ScenarioHolodeckCard() {
               return (
                 <div
                   key={p.id}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition ${
                     isLastSpeaker
                       ? 'bg-indigo-900/50 border-indigo-400 ring-2 ring-indigo-400/30'
                       : 'bg-surface-raised border-line-subtle opacity-70'
