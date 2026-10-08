@@ -11,6 +11,8 @@
 
 > Trạng thái: **Approved for implementation** — Triển khai diện mạo 3D Cyber-Humanoid Robot Avatar tương tác sống động, đồng bộ trực tiếp với luồng đàm thoại Full-Duplex Realtime Voice và phân tích âm học GOP.
 
+> **Cập nhật 2026-10-08 (changelog 0534):** `/api/realtime-multimodal` cùng `packages/core-ai/realtimeMultimodalService.ts` và `packages/core-contracts/realtimeMultimodal.ts` đã GỠ — không client nào gọi, Map phiên trong bộ nhớ không dọn. Đàm thoại thời gian thực thật đi qua `/api/gemini-live`.
+
 ---
 
 ## 1. Tóm tắt quyết định

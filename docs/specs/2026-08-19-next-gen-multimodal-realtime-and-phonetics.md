@@ -11,6 +11,8 @@
 
 > Trạng thái: **Approved for implementation** — Không giới hạn chi phí, tối ưu hoá trải nghiệm đàm thoại thời gian thực và đánh giá âm học đỉnh cao.
 
+> **Cập nhật 2026-10-08 (changelog 0534):** `/api/realtime-multimodal` cùng `packages/core-ai/realtimeMultimodalService.ts` và `packages/core-contracts/realtimeMultimodal.ts` đã GỠ — không client nào gọi, Map phiên trong bộ nhớ không dọn. Đàm thoại thời gian thực thật đi qua `/api/gemini-live`.
+
 ---
 
 ## 1. Tóm tắt quyết định
