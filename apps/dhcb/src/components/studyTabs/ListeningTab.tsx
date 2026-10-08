@@ -218,9 +218,23 @@ function DictationPractice({
   rate: number
 }) {
   const nav = useNavigate()
-  const [items] = useState<DictationItem[]>(() =>
+  const [items, setItems] = useState<DictationItem[]>(() =>
     buildDictationItems(isA, dialogues, words, DICTATION_COUNT),
   )
+  // Nguồn câu đổi SAU khi đã vào chế độ "Gõ lại" (hội thoại về muộn / Thử lại thành công): chỉ NỐI
+  // THÊM câu chưa có (khử trùng theo nội dung) — KHÔNG dựng lại cả danh sách, để câu đang gõ dở
+  // (`current`, `typed`, `scores`) không bị đảo/reset. Chỉ nối cuối nên chỉ số `current` luôn hợp lệ.
+  // Dùng khuôn "chỉnh state ngay lúc render" (React docs) thay vì effect để khỏi nháy một khung cũ.
+  const sourceKey = `${isA ? 'a' : 'b'}:${dialogues.length}:${words.length}`
+  const [syncedKey, setSyncedKey] = useState(sourceKey)
+  if (syncedKey !== sourceKey) {
+    setSyncedKey(sourceKey)
+    const known = new Set(items.map((i) => i.text))
+    const extra = buildDictationItems(isA, dialogues, words, DICTATION_COUNT).filter(
+      (i) => !known.has(i.text),
+    )
+    if (extra.length > 0) setItems([...items, ...extra])
+  }
   const [current, setCurrent] = useState(0)
   const [typed, setTyped] = useState('')
   const [checked, setChecked] = useState(false)

@@ -32,6 +32,7 @@ import { useDialogBehavior } from '../../components/useDialogBehavior'
 import { readDraft, clearDraft } from '../../lib/learningQuestionDraft'
 import { PageShell } from '@core/PageShell'
 import { buttonClass } from '@core/buttonStyles'
+import HistoryLoadNotice from '../../components/CompanionStudios/HistoryLoadNotice'
 
 // Nạp lười (Lazy-loading) từng Studio để giảm mạnh Initial Bundle Size
 const StudioDialogue = lazyWithRetry(
@@ -78,6 +79,9 @@ export default function Companion() {
       : '3d_cyber_avatar',
   )
   const [proactiveState, setProactiveState] = useState<ProactiveAgentState | null>(null)
+  // Tải lịch sử hội thoại hỏng → dòng báo nhẹ; `historyAttempt` tăng = tải lại.
+  const [historyFailed, setHistoryFailed] = useState(false)
+  const [historyAttempt, setHistoryAttempt] = useState(0)
 
   // [S10-1 / AC-3] Cùng khuôn `AbortController` với effect lịch sử ngay dưới: lượt cũ bị huỷ
   // trong cleanup, lượt mới tự gọi lại. KHÔNG dùng ref "đã chạy" để chống StrictMode — chính
@@ -96,7 +100,12 @@ export default function Companion() {
   }, [])
 
   // Nạp lại hội thoại đã lưu — mở lại trang là thấy tiếp cuộc trò chuyện trước, không phải bắt
-  // đầu lại từ đầu. Lỗi mạng thì im lặng giữ nguyên tin chào (không có gì để khôi phục thì thôi).
+  // đầu lại từ đầu.
+  //
+  // [Quyết định 2026-10-08, chủ dự án duyệt — thay cho "im lặng khi lỗi" cũ] Tải lịch sử hỏng thì
+  // báo NHẸ một dòng + nút "Thử lại" (`historyFailed`), KHÔNG chặn: tin chào và ô nhập vẫn dùng
+  // được, trò chuyện mới bình thường. Im lặng hoàn toàn khiến người dùng tưởng cuộc trò chuyện
+  // trước đã mất (CLAUDE.md mục 4.3), còn khối lỗi to thì quá nặng cho dữ liệu phụ.
   //
   // [Sửa 2026-09-15] Bản cũ dùng `historyLoadedRef` (khoá "đã chạy") CỘNG một cờ `cancelled`
   // trong cleanup. Hai thứ đó triệt tiêu nhau dưới `StrictMode`: lượt MỘT bật khoá rồi gọi
@@ -113,7 +122,9 @@ export default function Companion() {
 
     fetchCompanionHistory({ signal: controller.signal })
       .then((history) => {
-        if (controller.signal.aborted || history.length === 0) return
+        if (controller.signal.aborted) return
+        setHistoryFailed(false)
+        if (history.length === 0) return
         setMessages((prev) => {
           const daCo = new Set(prev.map((m) => m.id))
           const them = history
@@ -132,10 +143,13 @@ export default function Companion() {
           return them.length > 0 ? [...prev, ...them] : prev
         })
       })
-      .catch(() => {})
+      .catch(() => {
+        // Huỷ do rời trang/chạy lại effect không phải lỗi tải.
+        if (!controller.signal.aborted) setHistoryFailed(true)
+      })
 
     return () => controller.abort()
-  }, [])
+  }, [historyAttempt])
 
   // ── Chế độ giọng nói: STT → LLM → TTS (KHÔNG "live" — ghi âm xong mới gửi từng bước) ──
   const [voiceState, setVoiceState] = useState<CompanionVoiceState>('idle')
@@ -529,6 +543,15 @@ export default function Companion() {
               </button>
             </div>
           </div>
+        )}
+
+        {activeStudio === 'dialogue' && historyFailed && (
+          <HistoryLoadNotice
+            onRetry={() => {
+              setHistoryFailed(false)
+              setHistoryAttempt((n) => n + 1)
+            }}
+          />
         )}
 
         {/* Dynamic Studio Loading with Suspense */}

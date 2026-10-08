@@ -4,6 +4,13 @@ import { X, Compass, RefreshCw, TrendingUp, Zap, CheckCircle2 } from 'lucide-rea
 import type { LifeSynthesisReport, LifeDomainType } from '@dhcb/core-contracts/lifeSynthesis'
 import { generateCustomLifeSynthesisReport } from '../../lib/lifeSynthesisApi'
 import { buttonClass } from '@core/buttonStyles'
+import { diemHopLe } from '../../lib/lifeSynthesisFormat'
+
+// Thiếu số liệu → "Chưa đủ dữ liệu", không in "undefined%" hay số bịa.
+const fmtScore = (v: unknown) => {
+  const d = diemHopLe(v)
+  return d === null ? 'Chưa đủ dữ liệu' : `${d}%`
+}
 
 interface Props {
   report: LifeSynthesisReport
@@ -103,7 +110,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
                 Đồng bộ toàn diện
               </span>
               <div className="text-xl font-black text-accent-400 mt-1">
-                {report.holisticAlignmentScore}%
+                {fmtScore(report.holisticAlignmentScore)}
               </div>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
@@ -111,13 +118,13 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
                 Cộng hưởng đa miền
               </span>
               <div className="text-xl font-black text-indigo-400 theme-light:text-indigo-800 mt-1">
-                {report.lifeSynergyIndex}%
+                {fmtScore(report.lifeSynergyIndex)}
               </div>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center">
               <span className="text-[0.6875rem] font-semibold text-zinc-400">Bền bỉ nhận thức</span>
               <div className="text-xl font-black text-emerald-400 theme-light:text-emerald-900 mt-1">
-                {report.cognitiveResilienceScore}%
+                {fmtScore(report.cognitiveResilienceScore)}
               </div>
             </div>
           </div>
