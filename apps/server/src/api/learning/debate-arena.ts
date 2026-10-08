@@ -1,5 +1,5 @@
 // api/debate-arena.ts — REST handler cho Platform V5 AI Debate Arena & Socratic Multi-Agent.
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, badJsonOrInternalError } from '@dhcb/core-http/http'
 import {
   validateAuth,
   getCorsHeaders,
@@ -222,7 +222,7 @@ export default async function handler(req: Request): Promise<Response> {
 
       return jsonResponse({ error: 'Invalid action parameter' }, 400)
     } catch (err) {
-      return jsonResponse({ error: 'Invalid JSON payload', details: String(err) }, 400)
+      return badJsonOrInternalError(err, 'debate-arena')
     }
   }
 

@@ -138,7 +138,16 @@ export function handleConnection(ws: WebSocket, userId: string): void {
   socketOwner.set(ws, userId)
 
   ws.on('message', (raw: RawData) => {
-    void handleClientEvent(ws, userId, joined, raw)
+    // [2026-10-08] Bản cũ `void handleClientEvent(...)` không `.catch`: CSDL/Redis lỗi giữa chừng
+    // → promise bị từ chối không ai bắt (Node không có handler unhandledRejection → sập worker
+    // PM2) và người dùng không biết vị trí chưa được ghi. Nay log + báo lỗi cho client.
+    handleClientEvent(ws, userId, joined, raw).catch((err: unknown) => {
+      console.error(
+        `[location-ws] lỗi xử lý sự kiện (user ${userId}):`,
+        err instanceof Error ? err.message : err,
+      )
+      send(ws, { type: 'error', message: 'Máy chủ đang trục trặc, thử lại sau' })
+    })
   })
 
   ws.on('close', () => {

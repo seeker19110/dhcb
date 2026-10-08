@@ -1,5 +1,5 @@
 // api/stem-scratchpad.ts — REST handler cho Platform V5 STEM Interactive Scratchpad.
-import { jsonResponse } from '@dhcb/core-http/http'
+import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import { StemScratchpadService } from '@dhcb/core-ai/stemScratchpadService'
 import { StemProblemState, StemSubjectType } from '@dhcb/core-contracts/stemScratchpad'
@@ -230,7 +230,7 @@ export default async function handler(req: Request): Promise<Response> {
 
       return jsonResponse({ error: 'Invalid action parameter' }, 400)
     } catch (err) {
-      return jsonResponse({ error: 'Invalid JSON payload', details: String(err) }, 400)
+      return badJsonOrInternalError(err, 'stem-scratchpad')
     }
   }
 

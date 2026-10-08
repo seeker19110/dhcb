@@ -25,6 +25,24 @@ export function internalErrorResponse(
   return jsonResponse({ error: 'Internal server error' }, 500, headers)
 }
 
+// Dùng cho khối `try` bọc CẢ `await req.json()` LẪN phần xử lý (CSDL, AI…). Trước 2026-10-08
+// nhiều handler trả MỌI lỗi trong khối đó thành 400 "Invalid JSON payload" kèm `String(err)`:
+// CSDL rớt thì client nhận "lỗi của bạn" kèm thông điệp nội bộ của pg, còn server không ghi
+// một dòng log nào (catch đã nuốt, lỗi không tới được tầng routes.ts/Sentry).
+// Nay: chỉ SyntaxError (body không phải JSON — đúng thứ `req.json()` ném) mới là 400, giữ
+// nguyên hình dạng phản hồi cũ; mọi lỗi khác là lỗi máy chủ → 500 an toàn, có log.
+export function badJsonOrInternalError(
+  err: unknown,
+  context: string,
+  badJsonMessage = 'Invalid JSON payload',
+  headers: Record<string, string> = {},
+): Response {
+  if (err instanceof SyntaxError) {
+    return jsonResponse({ error: badJsonMessage, details: String(err) }, 400, headers)
+  }
+  return internalErrorResponse(err, headers, context)
+}
+
 // Lấy IP client — dùng cho rate limit + log bảo mật.
 //
 // [2026-08-26] SỬA LỖ HỔNG THẬT, đã xác minh trên production: bản cũ đọc PHẦN TỬ ĐẦU của

@@ -61,6 +61,60 @@ describe('chatPush: notifyOfflinePeers', () => {
     )
   })
 
+  it('CHẶN HỒI QUY 2026-10-08: tiêu đề thông báo mang tên THẬT của người gửi (profiles.name)', async () => {
+    vi.spyOn(redisChatModule, 'isOnline').mockResolvedValue(false)
+    // Giả lập đúng Postgres thật: public.profiles KHÔNG có cột display_name — câu lệnh đọc cột
+    // đó bị từ chối. Bản cũ dính lỗi này ở mọi lần gọi và catch rỗng che mất.
+    const queryMock = vi.fn().mockImplementation((query: string) => {
+      if (query.includes('profiles')) {
+        if (query.includes('display_name')) {
+          return Promise.reject(new Error('column "display_name" does not exist'))
+        }
+        return Promise.resolve({ rows: [{ name: 'Nguyen Van A' }] })
+      }
+      if (query.includes('push_subscriptions')) {
+        return Promise.resolve({
+          rows: [{ endpoint: 'https://fcm.googleapis.com/fcm/send/t', p256dh: 'p', auth_key: 'a' }],
+        })
+      }
+      return Promise.resolve({ rows: [] })
+    })
+    vi.spyOn(pgPoolModule, 'getPgPool').mockReturnValue({
+      query: queryMock,
+    } as unknown as ReturnType<typeof pgPoolModule.getPgPool>)
+    const sendPushMock = vi.spyOn(webpush, 'sendNotification').mockResolvedValue({} as never)
+
+    await notifyOfflinePeers(['peer-1'], 'sender-1', 'room-1', 'chào')
+
+    const payload = JSON.parse(String(sendPushMock.mock.calls[0]?.[1])) as { title: string }
+    expect(payload.title).toContain('Nguyen Van A')
+  })
+
+  it('không đọc được tên người gửi → vẫn gửi thông báo với tên mặc định và GHI LOG', async () => {
+    vi.spyOn(redisChatModule, 'isOnline').mockResolvedValue(false)
+    const queryMock = vi.fn().mockImplementation((query: string) => {
+      if (query.includes('profiles')) return Promise.reject(new Error('db down'))
+      if (query.includes('push_subscriptions')) {
+        return Promise.resolve({
+          rows: [{ endpoint: 'https://fcm.googleapis.com/fcm/send/t', p256dh: 'p', auth_key: 'a' }],
+        })
+      }
+      return Promise.resolve({ rows: [] })
+    })
+    vi.spyOn(pgPoolModule, 'getPgPool').mockReturnValue({
+      query: queryMock,
+    } as unknown as ReturnType<typeof pgPoolModule.getPgPool>)
+    const sendPushMock = vi.spyOn(webpush, 'sendNotification').mockResolvedValue({} as never)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const result = await notifyOfflinePeers(['peer-1'], 'sender-1', 'room-1', 'chào')
+
+    expect(result.sent).toBe(1)
+    const payload = JSON.parse(String(sendPushMock.mock.calls[0]?.[1])) as { title: string }
+    expect(payload.title).toContain('Bạn học')
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[chatPush]'), 'db down')
+  })
+
   it('CHẶN HỒI QUY 2026-09-27: KHÔNG gửi tới endpoint ngoài dịch vụ push (SSRF/lộ IP origin)', async () => {
     vi.spyOn(redisChatModule, 'isOnline').mockResolvedValue(false)
     const queryMock = vi.fn().mockImplementation((query: string) => {

@@ -89,8 +89,28 @@ export function attachChatWebSocketServer(server: HttpServer): void {
   })
 
   wss.on('connection', (ws: WebSocket, _req: IncomingMessage, auth: { userId: string }) => {
-    void handleConnection(ws, auth.userId)
+    handleConnection(ws, auth.userId).catch((err: unknown) => {
+      // Redis/CSDL lỗi lúc đăng ký presence → chưa kịp gắn listener 'message', socket mở mà
+      // "chết". Đóng hẳn (1011 = lỗi máy chủ) để client tự kết nối lại thay vì treo im lặng.
+      logWsError('kết nối', auth.userId, err)
+      ws.close(1011, 'server error')
+      // Listener 'close' chưa kịp gắn → tự dọn socket khỏi localSockets, tránh rò bộ nhớ.
+      handleDisconnect(ws, auth.userId).catch((cleanupErr: unknown) =>
+        logWsError('dọn kết nối lỗi', auth.userId, cleanupErr),
+      )
+    })
   })
+}
+
+// [2026-10-08] Các handler sự kiện chạy kiểu bắn-rồi-quên (callback của `ws` không chờ promise).
+// Trước đây gọi bằng `void handler()` không kèm `.catch`: một lần CSDL/Redis chập chờn là
+// promise bị từ chối không ai bắt → Node (không có handler `unhandledRejection`) SẬP cả worker
+// PM2, còn người gửi không nhận được phản hồi nào. Mọi lời gọi nền đều phải đi qua đây.
+function logWsError(stage: string, uid: string, err: unknown): void {
+  console.error(
+    `[chat-ws] lỗi xử lý ${stage} (user ${uid}):`,
+    err instanceof Error ? err.message : err,
+  )
 }
 
 async function handleConnection(ws: WebSocket, userId: string): Promise<void> {
@@ -111,14 +131,21 @@ async function handleConnection(ws: WebSocket, userId: string): Promise<void> {
   await broadcastPresence(userId, true)
 
   ws.on('message', (raw: RawData) => {
-    void handleClientMessage(ws, userId, raw)
+    handleClientMessage(ws, userId, raw).catch((err: unknown) => {
+      logWsError('sự kiện', userId, err)
+      // Người gửi phải biết thao tác KHÔNG thành công (vd tin nhắn chưa tới người nhận).
+      send(ws, {
+        type: 'error',
+        code: 'SERVER_ERROR',
+        message: 'Máy chủ đang trục trặc, thử lại sau',
+      })
+    })
   })
-  ws.on('close', () => {
-    void handleDisconnect(ws, userId)
-  })
-  ws.on('error', () => {
-    void handleDisconnect(ws, userId)
-  })
+  const disconnect = () => {
+    handleDisconnect(ws, userId).catch((err: unknown) => logWsError('ngắt kết nối', userId, err))
+  }
+  ws.on('close', disconnect)
+  ws.on('error', disconnect)
 }
 
 async function handleDisconnect(ws: WebSocket, userId: string): Promise<void> {
@@ -194,7 +221,10 @@ async function handleClientMessage(ws: WebSocket, userId: string, raw: RawData):
     const serverEvent: WsServerEvent = { type: 'message', message: result.message }
     send(ws, serverEvent) // phản hồi ngay cho chính người gửi, không chờ vòng pub/sub
     await Promise.all(memberIds.map((id) => publish(userChannel(id), serverEvent)))
-    void notifyOfflinePeers(memberIds, userId, event.roomId, result.message.content)
+    // Thông báo đẩy là việc nền, không chờ — nhưng lỗi (Redis isOnline…) vẫn phải được bắt.
+    notifyOfflinePeers(memberIds, userId, event.roomId, result.message.content).catch(
+      (err: unknown) => logWsError('thông báo đẩy', userId, err),
+    )
     return
   }
 

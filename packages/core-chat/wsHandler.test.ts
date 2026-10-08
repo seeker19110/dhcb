@@ -69,8 +69,12 @@ const { FakeWebSocket, FakeWebSocketServer } = vi.hoisted(() => {
     static OPEN = 1
     readyState = 1
     sent: unknown[] = []
+    closed: [number, string] | null = null
     send(data: string) {
       this.sent.push(JSON.parse(data))
+    }
+    close(code: number, reason: string) {
+      this.closed = [code, reason]
     }
   }
 
@@ -409,6 +413,93 @@ describe('attachChatWebSocketServer — luồng sau khi kết nối', () => {
 
     subHandler?.({ type: 'presence', userId: 'p3', online: true })
     expect(ws.sent).toContainEqual({ type: 'presence', userId: 'p3', online: true })
+  })
+
+  // [2026-10-08] Trước đây các handler chạy bằng `void handler()` không `.catch`: CSDL/Redis lỗi
+  // → promise bị từ chối không ai bắt (Node không có handler unhandledRejection → sập worker),
+  // người gửi không nhận phản hồi. Vitest cũng đánh đỏ cả lượt chạy khi có rejection bị bỏ rơi.
+  it('CHẶN HỒI QUY 2026-10-08: CSDL lỗi khi gửi tin → người gửi nhận SERVER_ERROR, có log, không rejection trôi nổi', async () => {
+    const ws = await connect('u1')
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    sendMessageMock.mockRejectedValue(new Error('db down'))
+
+    ws.emit(
+      'message',
+      Buffer.from(
+        JSON.stringify({
+          type: 'message',
+          roomId: '11111111-1111-4111-8111-111111111111',
+          content: 'hi',
+        }),
+      ),
+    )
+    await flush()
+    await flush()
+
+    expect(ws.sent).toContainEqual(expect.objectContaining({ type: 'error', code: 'SERVER_ERROR' }))
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('[chat-ws]'), 'db down')
+    errorLog.mockRestore()
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: Redis lỗi lúc kết nối → đóng socket 1011 thay vì để socket "chết" im lặng', async () => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    setPresenceMock.mockRejectedValue(new Error('redis down'))
+    const ws = await connect('u1')
+    await flush()
+
+    expect(ws.closed?.[0]).toBe(1011)
+    // Socket lỗi được dọn (presence xoá) dù listener 'close' chưa kịp gắn.
+    expect(clearPresenceMock).toHaveBeenCalledWith('u1')
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('[chat-ws]'), 'redis down')
+    errorLog.mockRestore()
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: lỗi khi ngắt kết nối → chỉ log, không rejection trôi nổi', async () => {
+    const ws = await connect('u1')
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    clearPresenceMock.mockRejectedValue(new Error('redis down'))
+
+    ws.emit('close')
+    await flush()
+    await flush()
+
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('ngắt kết nối'), 'redis down')
+    errorLog.mockRestore()
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: thông báo đẩy nền lỗi (Redis isOnline) → chỉ log, tin nhắn vẫn tới người gửi', async () => {
+    const ws = await connect('u1')
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    sendMessageMock.mockResolvedValue({
+      ok: true,
+      message: {
+        id: 'm1',
+        roomId: 'r1',
+        senderId: 'u1',
+        senderName: 'A',
+        content: 'hi',
+        createdAt: 'x',
+      },
+    })
+    getRoomMemberIdsMock.mockResolvedValue(['u2'])
+    isOnlineMock.mockRejectedValueOnce(new Error('redis down'))
+
+    ws.emit(
+      'message',
+      Buffer.from(
+        JSON.stringify({
+          type: 'message',
+          roomId: '11111111-1111-4111-8111-111111111111',
+          content: 'hi',
+        }),
+      ),
+    )
+    await flush()
+    await flush()
+
+    expect(ws.sent).toContainEqual(expect.objectContaining({ type: 'message' }))
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('thông báo đẩy'), 'redis down')
+    errorLog.mockRestore()
   })
 
   it('payload không phải JSON hợp lệ → trả lỗi BAD_JSON', async () => {

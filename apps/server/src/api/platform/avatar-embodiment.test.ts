@@ -13,6 +13,7 @@ vi.mock('@dhcb/core-db/featureState', () => ({
 
 import handler from './avatar-embodiment.js'
 import * as security from '@dhcb/core-auth/security'
+import { setFeatureState } from '@dhcb/core-db/featureState'
 
 describe('Avatar Embodiment API Handler (/api/avatar-embodiment)', () => {
   beforeEach(() => {
@@ -98,5 +99,29 @@ describe('Avatar Embodiment API Handler (/api/avatar-embodiment)', () => {
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toBe('invalid_request')
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: CSDL lỗi → 500 có log, KHÔNG phải 400 "Invalid payload" lộ lỗi pg', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(setFeatureState).mockRejectedValueOnce(
+      new Error('connect ECONNREFUSED 10.0.0.5:5432'),
+    )
+    const res = await handler(
+      new Request('http://localhost/api/avatar-embodiment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          renderMode: 'live_orb',
+          quality: 'medium',
+          emissiveAccent: 'purple',
+        }),
+      }),
+    )
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('ECONNREFUSED')
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('avatar-embodiment'))
   })
 })

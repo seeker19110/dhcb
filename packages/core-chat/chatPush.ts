@@ -50,18 +50,23 @@ export async function notifyOfflinePeers(
 
   const pool = getPgPool()
 
-  // Lấy tên người gửi
+  // Lấy tên người gửi — cùng nguồn `profiles.name` mà màn chat dùng (chatService.ts).
+  // [2026-10-08] Bản cũ đọc cột `display_name` KHÔNG tồn tại trên public.profiles: câu lệnh lỗi ở
+  // MỌI lần gọi, catch rỗng nuốt mất nên thông báo luôn ghi "Bạn học" mà không ai biết. Giữ
+  // fallback (thiếu tên không đáng chặn thông báo) nhưng phải để lại dấu vết trong log.
   let senderName = 'Bạn học'
   try {
-    const profileRes = await pool.query(
-      `select coalesce(display_name, 'Bạn học') as name from public.profiles where id = $1 limit 1`,
+    const profileRes = await pool.query<{ name: string | null }>(
+      'select name from public.profiles where id = $1 limit 1',
       [senderUserId],
     )
-    if (profileRes.rows[0]?.name) {
-      senderName = String(profileRes.rows[0].name)
-    }
-  } catch {
-    // Fallback tên mặc định
+    const name = profileRes.rows[0]?.name?.trim()
+    if (name) senderName = name
+  } catch (err) {
+    console.warn(
+      '[chatPush] không đọc được tên người gửi → dùng tên mặc định:',
+      err instanceof Error ? err.message : err,
+    )
   }
 
   // Rút gọn preview tin nhắn nếu quá dài

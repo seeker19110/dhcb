@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from './debate-arena.js'
 import * as security from '@dhcb/core-auth/security'
+import { getFeatureState } from '@dhcb/core-db/featureState'
 import * as usage from '@dhcb/core-billing/usage'
 import { generateChatText } from '@dhcb/core-ai/chatFallback'
 
@@ -499,5 +500,25 @@ describe('Debate Arena API Handler (/api/debate-arena)', () => {
       }),
     )
     expect(notFoundRes.status).toBe(404)
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: CSDL lỗi → 500 có log, KHÔNG phải 400 "Invalid JSON payload" lộ lỗi pg', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(getFeatureState).mockRejectedValueOnce(
+      new Error('connect ECONNREFUSED 10.0.0.5:5432'),
+    )
+    const res = await handler(
+      new Request('http://localhost/api/debate-arena?action=submit_turn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: 's-1', content: 'I think so.' }),
+      }),
+    )
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('ECONNREFUSED')
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('debate-arena'))
   })
 })

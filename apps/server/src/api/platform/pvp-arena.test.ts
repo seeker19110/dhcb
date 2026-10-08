@@ -1,6 +1,7 @@
 // api/pvp-arena.test.ts
 import { describe, it, expect, vi } from 'vitest'
 import handler, { leaderboardName } from './pvp-arena.js'
+import { setFeatureState } from '@dhcb/core-db/featureState'
 
 vi.mock('@dhcb/core-auth/security', () => ({
   validateAuth: vi.fn().mockResolvedValue({ userId: 'u-test-123' }),
@@ -24,6 +25,13 @@ vi.mock('@dhcb/core-db/pgPool', () => ({
   getPgPool: () => ({
     query: vi.fn(async (sql: string) => {
       executedSql.push(sql)
+      // Giống Postgres thật (đo bằng PREPARE trên CSDL đã migrate, 2026-10-08): public.profiles
+      // khoá theo `id`, KHÔNG có cột `user_id`; bảng users KHÔNG có cột `name` — câu lệnh tham
+      // chiếu các cột đó bị từ chối.
+      if (/profiles p on p\.user_id/.test(sql)) {
+        throw new Error('column p.user_id does not exist')
+      }
+      if (/\bu\.name\b/.test(sql)) throw new Error('column u.name does not exist')
       if (sql.includes('feature_state')) {
         const rows = [...store.entries()]
           .filter(([k]) => k.endsWith('|pvp_profile'))
@@ -352,6 +360,32 @@ describe('api/pvp-arena endpoint', () => {
     const { leaderboard } = await res.json()
     expect(leaderboard[0].name).toBe('Học viên #1')
     expect(leaderboard[0].winRate).toBe(75)
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: hồ sơ PvP mang tên THẬT (join profiles theo id, không phải "Học viên")', async () => {
+    store.clear()
+    const res = await handler(new Request('http://localhost/api/pvp-arena', { method: 'GET' }))
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { profile: { name: string } }
+    expect(data.profile.name).toBe('Player Test')
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: CSDL lỗi khi ghi trận → 500 có log, KHÔNG phải 400 "Invalid JSON" lộ lỗi pg', async () => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(setFeatureState).mockRejectedValueOnce(
+      new Error('connect ECONNREFUSED 10.0.0.5:5432'),
+    )
+    const res = await handler(
+      new Request('http://localhost/api/pvp-arena?action=matchmake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'vocab_speed_duel' }),
+      }),
+    )
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('ECONNREFUSED')
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('pvp-arena'))
+    errorLog.mockRestore()
   })
 
   it('truy vấn bảng xếp hạng KHÔNG đọc tên tài khoản (users.name) — chỉ biệt danh', async () => {

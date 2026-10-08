@@ -220,6 +220,17 @@ describe('markRead / deleteMessage / getRoomMemberIds / getRoomPeerIds', () => {
     expect(await getRoomMemberIds('room-1')).toEqual(['u2', 'u3'])
   })
 
+  it('CHẶN HỒI QUY 2026-10-08: getRoomMemberIds ép $2 về uuid (không so uuid với text)', async () => {
+    // `user_id <> coalesce($2, '')` khiến Postgres suy $2 là text → lỗi "operator does not
+    // exist: uuid <> text" ở MỌI lần gọi (đã đo bằng PREPARE trên CSDL đã migrate). Mock pg
+    // không tái hiện được lỗi kiểu, nên canh đúng hình dạng câu lệnh.
+    await getRoomMemberIds('room-1', 'u1')
+    const sql = String(mockQuery.mock.calls[0]?.[0])
+    expect(sql).not.toMatch(/coalesce\(\$2,\s*''\)/)
+    expect(sql).toContain('$2::uuid')
+    expect(mockQuery.mock.calls[0]?.[1]).toEqual(['room-1', 'u1'])
+  })
+
   it('getRoomPeerIds trả danh sách user_id là bạn chat cùng phòng', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ user_id: 'u2' }] })
     expect(await getRoomPeerIds('u1')).toEqual(['u2'])
