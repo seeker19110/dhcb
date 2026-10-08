@@ -320,7 +320,11 @@ function Navbar({ stats }: { stats: HubStats | null }) {
             <>
               <a
                 href={PROFILE_URL}
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-zinc-100 hover:text-white px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 transition"
+                className={buttonClass({
+                  variant: 'outline',
+                  size: 'sm',
+                  className: 'max-sm:hidden sm:h-11 sm:px-4 sm:text-sm',
+                })}
                 title="Trang cá nhân & quản lý tài khoản"
               >
                 <User className="w-3.5 h-3.5 text-accent-300 theme-light:text-accent-800" />
@@ -340,7 +344,11 @@ function Navbar({ stats }: { stats: HubStats | null }) {
             <>
               <a
                 href="/login"
-                className="text-xs sm:text-sm font-medium text-zinc-200 hover:text-white px-3 py-1.5 rounded-lg hover:bg-zinc-900 transition"
+                className={buttonClass({
+                  variant: 'ghost',
+                  size: 'sm',
+                  className: 'sm:h-11 sm:px-4 sm:text-sm',
+                })}
               >
                 Đăng nhập
               </a>
@@ -420,7 +428,12 @@ function Hero({ stats }: { stats: HubStats | null }) {
 
           <a
             href="#tru-cot"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-100 font-semibold text-base transition"
+            className={buttonClass({
+              variant: 'outline',
+              size: 'lg',
+              fullWidth: true,
+              className: 'sm:w-auto',
+            })}
           >
             <Layers className="w-4 h-4 text-accent-300 theme-light:text-accent-800" />
             <span>Nền tảng gồm những gì?</span>
@@ -694,10 +707,7 @@ function CompanionSection() {
         </div>
 
         <div className="mt-10 text-center">
-          <a
-            href={COMPANION_URL}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-accent-500/30 text-zinc-100 font-semibold text-sm transition"
-          >
+          <a href={COMPANION_URL} className={buttonClass({ variant: 'outline' })}>
             <MessageCircle className="w-4 h-4 text-accent-300 theme-light:text-accent-800" />
             <span>Trò chuyện với Bạn Đồng Hành</span>
           </a>
@@ -1003,7 +1013,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
           </div>
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="w-full py-3 px-4 rounded-xl border border-zinc-700 hover:bg-zinc-800 text-center font-semibold text-sm text-white transition block"
+            className={buttonClass({ variant: 'outline', fullWidth: true })}
           >
             {isLoggedIn ? 'Vào nền tảng' : 'Dùng thử miễn phí'}
           </a>

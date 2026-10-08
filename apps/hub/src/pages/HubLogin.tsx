@@ -286,7 +286,12 @@ export default function HubLogin() {
                 type="button"
                 onClick={handleLogout}
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 font-medium py-2.5 rounded-xl text-xs transition"
+                className={buttonClass({
+                  variant: 'outline',
+                  size: 'sm',
+                  fullWidth: true,
+                  className: 'tap-44',
+                })}
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Đăng xuất khỏi tài khoản này</span>

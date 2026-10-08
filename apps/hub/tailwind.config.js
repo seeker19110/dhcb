@@ -36,6 +36,25 @@ export default {
           800: 'rgb(var(--a-800) / <alpha-value>)',
           900: 'rgb(var(--a-900) / <alpha-value>)',
         },
+        // Token NGỮ NGHĨA — chép đúng ánh xạ của apps/dhcb/tailwind.config.js (biến CSS đã có sẵn
+        // vì hub nạp chung packages/core-ui/theme.css). Thiếu nhóm này thì `buttonClass` biến thể
+        // `outline`/`ghost` (dùng `border-line-strong`, `text-content`, `bg-surface-raised`) sinh
+        // ra class Tailwind không có màu → nút trong suốt, mất viền (changelog 0520).
+        surface: {
+          base: 'rgb(var(--surface-base) / <alpha-value>)',
+          card: 'rgb(var(--surface-card) / <alpha-value>)',
+          raised: 'rgb(var(--surface-raised) / <alpha-value>)',
+        },
+        line: {
+          subtle: 'rgb(var(--border-subtle) / <alpha-value>)',
+          strong: 'rgb(var(--border-strong) / <alpha-value>)',
+        },
+        content: {
+          DEFAULT: 'rgb(var(--text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--text-muted) / <alpha-value>)',
+          disabled: 'rgb(var(--text-disabled) / <alpha-value>)',
+        },
       },
     },
   },
