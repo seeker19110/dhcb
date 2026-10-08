@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Volume2, Loader2 } from 'lucide-react'
-import { getAuthHeader } from '@core/authHeader'
+import { useToast } from '@core/ToastProvider'
 import { getVoicePref, playAudioUrl, type Voice } from '../lib/tts'
 import { VOICE_OPTIONS, resolveActualVoice } from '../lib/voiceTiers'
+import { fetchPronunciation } from '../lib/pronunciationApi'
 
 interface Props {
   word: string
@@ -35,6 +36,7 @@ export default function WordVoiceCycleButton({ word, lang = 'en-US', isA = true 
   const [audioUrls, setAudioUrls] = useState<Partial<Record<Voice, string>>>({})
   // Giọng đang hiển thị nhãn — luôn theo giọng THẬT vừa phát (có thể bị server hạ theo gói).
   const [currentVoice, setCurrentVoice] = useState<Voice>(getVoicePref)
+  const toast = useToast()
 
   // Dự phòng Web Speech API khi /api/pronunciation lỗi — nút này giờ là nút loa DUY NHẤT
   // của thẻ nên phải có fallback như PronounceButton trước đây, không im lặng bỏ qua nữa.
@@ -78,36 +80,33 @@ export default function WordVoiceCycleButton({ word, lang = 'en-US', isA = true 
     }
 
     setLoading(true)
-    try {
-      const headers = await getAuthHeader()
-      const res = await fetch(
-        `/api/pronunciation?word=${encodeURIComponent(word)}&voice=${voice}&lang=${lang}`,
-        { headers },
-      )
-      const data = (await res.json()) as { audio_url?: string; voice?: string; error?: string }
+    const result = await fetchPronunciation(word, voice, lang)
+    setLoading(false)
 
-      if (!res.ok || !data.audio_url) {
-        throw new Error(data.error ?? `Lỗi ${res.status}`)
-      }
-      const audioUrl = data.audio_url
+    if (result.kind === 'ok') {
       // Server có thể đã HẠ giọng đoán (voice) xuống giọng khác nếu ngoài quyền gói hiện tại
       // (clampVoiceToPlan) — PHẢI hiện nhãn theo giọng server THẬT SỰ dùng, không phải giọng
       // client đoán, nếu không nhãn sẽ lệch với audio thật (bug đã gặp: cache voice_allowed
       // phía client lệch/rộng hơn gói thật).
-      const actualVoice = resolveActualVoice(voice, data.voice)
+      const actualVoice = resolveActualVoice(voice, result.voice)
       setCurrentVoice(actualVoice)
-
       // Cache theo giọng THẬT (actualVoice), không phải giọng đoán (voice) — tránh đọc nhầm
       // cache giữa 2 giọng khi server từng hạ gói.
+      const audioUrl = result.audioUrl
       setAudioUrls((prev) => ({ ...prev, [actualVoice]: audioUrl }))
       playAudioUrl(audioUrl)
-    } catch (err) {
-      console.error('Lỗi nghe giọng, dùng tạm Web Speech:', err)
-      setCurrentVoice(voice)
-      speakWithWebSpeech(voice)
-    } finally {
-      setLoading(false)
+      return
     }
+
+    // Hết lượt AI / quá nhiều yêu cầu: HIỆN câu thông báo của server (không nuốt), rồi vẫn đọc
+    // bằng Web Speech để thẻ học không bị câm.
+    if (result.kind === 'refused') {
+      toast.info(result.message)
+    } else {
+      console.error('Lỗi nghe giọng, dùng tạm Web Speech:', result.message)
+    }
+    setCurrentVoice(voice)
+    speakWithWebSpeech(voice)
   }
 
   return (

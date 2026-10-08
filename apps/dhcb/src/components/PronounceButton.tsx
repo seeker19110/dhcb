@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
 import { Volume2, Loader2, VolumeX } from 'lucide-react'
-import { getAuthHeader } from '@core/authHeader'
+import { useToast } from '@core/ToastProvider'
 import { getVoicePref, getVoiceRandomPref, playAudioUrl, type Voice } from '../lib/tts'
 import { VOICE_OPTIONS, pickRandomAllowedVoice, resolveActualVoice } from '../lib/voiceTiers'
+import { fetchPronunciation } from '../lib/pronunciationApi'
 
 interface Props {
   word: string
@@ -26,6 +27,7 @@ export default function PronounceButton({ word, lang = 'en-US', random = true }:
   // hay bị dùng lại cho nhiều từ khác nhau (ví dụ chuyển thẻ flashcard) mà state không bị
   // reset; nếu chỉ theo giọng thì từ mới sẽ phát nhầm audio của từ cũ đã lưu.
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({})
+  const toast = useToast()
 
   // Giọng của lần bấm trước — loại khỏi bể random để không bốc lại đúng giọng cũ (gói Free chỉ
   // 4 giọng nên random đều sẽ lặp ~25% số lần bấm, người dùng tưởng random không chạy).
@@ -85,32 +87,27 @@ export default function PronounceButton({ word, lang = 'en-US', random = true }:
     }
 
     setStatus('loading')
-    try {
-      // Gửi kèm JWT để server xác thực người dùng
-      const headers = await getAuthHeader()
-      const res = await fetch(
-        `/api/pronunciation?word=${encodeURIComponent(word)}&voice=${guessedVoice}&lang=${lang}`,
-        { headers },
-      )
-      const data = (await res.json()) as { audio_url?: string; voice?: string; error?: string }
+    const result = await fetchPronunciation(word, guessedVoice, lang)
+    setStatus('idle')
 
-      if (!res.ok || !data.audio_url) {
-        throw new Error(data.error ?? `Lỗi ${res.status}`)
-      }
-      const audioUrl = data.audio_url
-      const actualVoice = resolveActualVoice(guessedVoice, data.voice)
+    if (result.kind === 'ok') {
+      const actualVoice = resolveActualVoice(guessedVoice, result.voice)
       // Nhớ giọng THẬT vừa nghe (server có thể đã hạ giọng đoán) để lần bấm sau không lặp lại nó.
       lastVoiceRef.current = actualVoice
-
+      const audioUrl = result.audioUrl
       setAudioUrls((prev) => ({ ...prev, [`${word}|${actualVoice}|${lang}`]: audioUrl }))
-      setStatus('idle')
       playAudio(audioUrl)
-    } catch (err) {
-      console.error('Lỗi phát âm:', err)
-      // Fallback về Web Speech API nếu server lỗi
-      speakWithWebSpeech(guessedVoice)
-      setStatus('idle')
+      return
     }
+
+    // Hết lượt AI / quá nhiều yêu cầu: HIỆN câu thông báo của server (không nuốt), rồi vẫn đọc
+    // bằng Web Speech (miễn phí, trên máy) để người học không mất tiếng của từ.
+    if (result.kind === 'refused') {
+      toast.info(result.message)
+    } else {
+      console.error('Lỗi phát âm:', result.message)
+    }
+    speakWithWebSpeech(guessedVoice)
   }
 
   function playAudio(url: string) {

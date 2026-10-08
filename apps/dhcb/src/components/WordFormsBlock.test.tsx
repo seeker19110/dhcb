@@ -15,10 +15,12 @@ vi.mock('../data/formExamplesLoader.js', () => ({
 
 import WordFormsBlock from './WordFormsBlock'
 import { computeForms } from '../lib/wordForms'
+import { ToastProvider } from '@core/ToastProvider'
 
 // Render kiểm chứng component không lỗi và xuất đúng nội dung mong đợi (không cần trình duyệt thật).
+// Bọc ToastProvider như App.tsx: nút loa PronounceButton bên trong dùng useToast() để báo hết lượt AI.
 function render(el: React.ReactElement): string {
-  return renderToStaticMarkup(el)
+  return renderToStaticMarkup(<ToastProvider>{el}</ToastProvider>)
 }
 
 describe('WordFormsBlock', () => {
@@ -53,7 +55,8 @@ describe('WordFormsBlock', () => {
   })
 
   it('không có forms và không base: render rỗng', () => {
-    const html = render(<WordFormsBlock word="the" isA={true} />)
+    // Không bọc ToastProvider (nó tự render vùng thông báo) — nhánh rỗng không có nút loa nào.
+    const html = renderToStaticMarkup(<WordFormsBlock word="the" isA={true} />)
     expect(html).toBe('')
   })
 

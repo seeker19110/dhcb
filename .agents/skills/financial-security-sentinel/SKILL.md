@@ -88,6 +88,9 @@ dòng cũ trong DB được đọc thành `vip` tới hết `plan_expires_at`. G
    `checkAndConsumeUsage` (`packages/core-billing/usage.ts`) — Free 30 lượt/ngày tính tổng mọi
    tính năng, VIP theo cấu hình. Đếm ở SERVER, nguyên tử qua hàm SQL `consume_usage_total`; lỗi
    CSDL thì **từ chối** chứ không cho qua (fail-closed) — giữ nguyên tính chất này khi sửa.
+   Audio TTS cũng là chi phí AI: đường TẠO audio mới (cache MISS) của `/api/tts` và
+   `/api/pronunciation` trừ lượt mode `speaking` trước khi gọi provider; cache HIT miễn phí
+   (`/api/pronunciation` thêm từ changelog 0534).
    **Phanh khẩn cấp thật:** cầu dao `aiCircuitBreaker` (admin bật qua `/api/admin-settings`, migration
    `0005_ai_circuit_breaker.sql`) chặn MỌI lệnh gọi AI ngay, không phân biệt gói.
 2. **Model do server quyết** ở `packages/core-ai/aiConfig.ts` (client không chọn model). Đổi model

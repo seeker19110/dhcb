@@ -54,6 +54,16 @@ vi.mock('@dhcb/core-ai/elevenLabsTts', () => ({
   isValidElevenVoice: () => false,
 }))
 
+// Đếm lượt AI (Free/VIP): chỉ mock 2 hàm handler gọi. Logic đếm nguyên tử/fail-closed thật đã có
+// test riêng ở packages/core-billing/usage.test.ts — ở đây chỉ canh handler gọi ĐÚNG lúc.
+const checkAndConsumeUsage = vi.fn()
+const refundUsage = vi.fn()
+vi.mock('@dhcb/core-billing/usage', () => ({
+  checkAndConsumeUsage: (...args: unknown[]) => checkAndConsumeUsage(...args),
+  refundUsage: (...args: unknown[]) => refundUsage(...args),
+}))
+const CHARGED_DAY = '2026-10-08'
+
 async function importHandler() {
   vi.resetModules()
   const mod = await import('./pronunciation.js')
@@ -77,6 +87,11 @@ beforeEach(() => {
   saveAudio.mockReset()
   ensureProfileRow.mockReset().mockResolvedValue({ plan: 'free' })
   clampVoiceToPlan.mockReset().mockImplementation((v: string) => Promise.resolve(v))
+  // Ca "lấy pool lỗi" dùng vi.doMock (không bị restoreAllMocks gỡ) → dựng lại pool chuẩn trước
+  // MỖI ca để thứ tự chạy test không làm ca sau nhận nhầm pool hỏng.
+  vi.doMock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({ query }) }))
+  checkAndConsumeUsage.mockReset().mockResolvedValue({ ok: true, day: CHARGED_DAY })
+  refundUsage.mockReset().mockResolvedValue(undefined)
 })
 
 describe('/api/pronunciation', () => {
@@ -281,5 +296,111 @@ describe('/api/pronunciation', () => {
     const mod = await import('./pronunciation.js')
     const res = await mod.default(makeRequest('word=apple&voice=kore'))
     expect(res.status).toBe(500)
+  })
+})
+
+// Đề xuất (b) của audit 0526 (chủ dự án duyệt 2026-10-08): đường cache MISS gọi Google TTS tốn
+// tiền nên phải trừ lượt Free/VIP — cùng khuôn /api/tts. Cache HIT vẫn miễn phí.
+describe('/api/pronunciation — trừ lượt AI khi cache MISS', () => {
+  function missThenUpsert() {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] })
+  }
+
+  it('cache HIT không trừ lượt — kể cả khi đã hết lượt', async () => {
+    checkAndConsumeUsage.mockResolvedValue({ ok: false, message: 'Hết lượt' })
+    query
+      .mockResolvedValueOnce({
+        rows: [{ audio_url: 'https://cdn/apple.mp3', voice_version: 'v3' }],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Kore'))
+    expect(res.status).toBe(200)
+    expect(checkAndConsumeUsage).not.toHaveBeenCalled()
+    expect(refundUsage).not.toHaveBeenCalled()
+    expect(generateAudioFromGoogle).not.toHaveBeenCalled()
+  })
+
+  it('cache MISS trừ ĐÚNG 1 lượt speaking của user, TRƯỚC khi gọi Google', async () => {
+    missThenUpsert()
+    generateAudioFromGoogle.mockResolvedValue(new ArrayBuffer(8))
+    saveAudio.mockResolvedValue('https://cdn/apple.mp3')
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Kore'))
+    expect(res.status).toBe(200)
+    expect(checkAndConsumeUsage).toHaveBeenCalledExactlyOnceWith('user-1', 'speaking')
+    expect(checkAndConsumeUsage.mock.invocationCallOrder[0]).toBeLessThan(
+      generateAudioFromGoogle.mock.invocationCallOrder[0]!,
+    )
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+
+  it('hết lượt → 429 kèm đúng thông điệp của cổng, KHÔNG gọi Google, không lưu gì', async () => {
+    const message = 'Bạn đã dùng hết lượt hôm nay. Thử lại vào ngày mai nhé.'
+    checkAndConsumeUsage.mockResolvedValue({ ok: false, message })
+    query.mockResolvedValueOnce({ rows: [] })
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Kore'))
+    expect(res.status).toBe(429)
+    expect(((await res.json()) as { error: string }).error).toBe(message)
+    expect(generateAudioFromGoogle).not.toHaveBeenCalled()
+    expect(generateStudioAudioFromGoogle).not.toHaveBeenCalled()
+    expect(saveAudio).not.toHaveBeenCalled()
+    expect(query).toHaveBeenCalledTimes(1) // chỉ câu tra cache, không upsert
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+
+  it('cầu dao AI / lỗi xác minh lượt (fail-closed) → 429, KHÔNG gọi Google', async () => {
+    checkAndConsumeUsage.mockResolvedValue({
+      ok: false,
+      message: 'Hệ thống AI đang tạm dừng để bảo trì. Vui lòng thử lại sau ít phút.',
+    })
+    query.mockResolvedValueOnce({ rows: [] })
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Studio-O'))
+    expect(res.status).toBe(429)
+    expect(generateStudioAudioFromGoogle).not.toHaveBeenCalled()
+  })
+
+  it('Google lỗi → hoàn lượt vào ĐÚNG ngày đã trừ', async () => {
+    query.mockResolvedValueOnce({ rows: [] })
+    generateAudioFromGoogle.mockRejectedValue(new Error('upstream 500'))
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Kore'))
+    expect(res.status).toBe(500)
+    expect(refundUsage).toHaveBeenCalledExactlyOnceWith('user-1', 'speaking', CHARGED_DAY)
+  })
+
+  it('lưu file lỗi SAU khi Google đã trả audio → không hoàn (tiền API đã tốn, như /api/tts)', async () => {
+    query.mockResolvedValueOnce({ rows: [] })
+    generateAudioFromGoogle.mockResolvedValue(new ArrayBuffer(8))
+    saveAudio.mockRejectedValue(new Error('storage down'))
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Kore'))
+    expect(res.status).toBe(500)
+    expect(checkAndConsumeUsage).toHaveBeenCalledOnce()
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+
+  it('bị rate limit tạo audio mới (pron-gen) → không trừ lượt', async () => {
+    query.mockResolvedValueOnce({ rows: [] })
+    let call = 0
+    const security = await import('@dhcb/core-auth/security')
+    vi.spyOn(security, 'checkRateLimit').mockImplementation(async () => {
+      call++
+      return call === 1
+    })
+    const handler = await importHandler()
+    const res = await handler(makeRequest('word=apple&voice=Kore'))
+    expect(res.status).toBe(429)
+    expect(checkAndConsumeUsage).not.toHaveBeenCalled()
+  })
+
+  it('tham số không hợp lệ (400) → không trừ lượt', async () => {
+    const handler = await importHandler()
+    for (const qs of ['word=a%7Cb', 'word=apple&voice=unknown', 'word=apple&lang=fr-FR']) {
+      expect((await handler(makeRequest(qs))).status).toBe(400)
+    }
+    expect(checkAndConsumeUsage).not.toHaveBeenCalled()
   })
 })
