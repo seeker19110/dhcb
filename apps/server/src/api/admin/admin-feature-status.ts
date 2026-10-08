@@ -19,6 +19,7 @@ import {
 } from '@dhcb/core-auth/security'
 import { getUserById } from '@dhcb/core-auth/authService'
 import { isAdminUser } from '@dhcb/core-auth/adminAuth'
+import { secretMatches } from '@dhcb/core-auth/secretCompare'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { runAllFeatureChecks, summarizeOverallStatus } from '../_lib/featureStatusChecks.js'
 
@@ -56,12 +57,12 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (req.method === 'POST') {
     const cronKey = req.headers.get('x-cron-key')
-    const expectedCronKey = process.env.FEATURE_STATUS_CRON_KEY
 
     let triggeredBy: 'cron' | 'manual'
     let triggeredByEmail: string | null = null
 
-    if (expectedCronKey && cronKey === expectedCronKey) {
+    // So theo thời gian hằng; thiếu FEATURE_STATUS_CRON_KEY thì không bao giờ khớp.
+    if (secretMatches(cronKey, process.env.FEATURE_STATUS_CRON_KEY)) {
       triggeredBy = 'cron'
     } else {
       const auth = await validateAuth(req)

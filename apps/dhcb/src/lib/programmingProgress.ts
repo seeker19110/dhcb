@@ -91,8 +91,11 @@ export interface ProgressReadResult {
   fromCache: boolean
 }
 
-/** Đọc tiến độ kèm việc CÓ PHẢI rơi về cache hay không (S06-2: thẻ "Hôm nay" cần biết để báo lỗi). */
-export async function fetchProgressWithStatus(uid: string): Promise<ProgressReadResult> {
+/**
+ * Lõi chung của mọi lần đọc tiến độ: khách → cache (không lỗi); người có tài khoản → hỏi server,
+ * phủ mục còn chờ gửi rồi ghi cache; server/mạng hỏng → rơi về cache và báo `fromCache: true`.
+ */
+async function readProgress(uid: string): Promise<ProgressReadResult> {
   // Khách vãng lai: localStorage LÀ nguồn sự thật (không có tài khoản để lưu server).
   if (isGuestId(uid)) return { lessons: readCache(uid), fromCache: false }
   try {
@@ -105,6 +108,11 @@ export async function fetchProgressWithStatus(uid: string): Promise<ProgressRead
   } catch {
     return { lessons: readCache(uid), fromCache: true }
   }
+}
+
+/** Đọc tiến độ kèm việc CÓ PHẢI rơi về cache hay không (S06-2: thẻ "Hôm nay" cần biết để báo lỗi). */
+export function fetchProgressWithStatus(uid: string): Promise<ProgressReadResult> {
+  return readProgress(uid)
 }
 
 /** Đọc tiến độ: trả cache ngay nếu server lỗi (ngoại tuyến vẫn xem được). */
@@ -155,17 +163,8 @@ export async function saveLessonProgress(
 export async function fetchProgressWithState(
   uid: string,
 ): Promise<{ lessons: ProgrammingLessonProgress[]; state: 'ready' | 'error' }> {
-  if (isGuestId(uid)) return { lessons: readCache(uid), state: 'ready' }
-  try {
-    const res = await fetch('/api/programming/progress', { headers: getAuthHeader() })
-    if (!res.ok) return { lessons: readCache(uid), state: 'error' }
-    const body = (await res.json()) as { lessons: ProgrammingLessonProgress[] }
-    const lessons = overlayPending(uid, body.lessons ?? [])
-    writeCache(uid, lessons)
-    return { lessons, state: 'ready' }
-  } catch {
-    return { lessons: readCache(uid), state: 'error' }
-  }
+  const { lessons, fromCache } = await readProgress(uid)
+  return { lessons, state: fromCache ? 'error' : 'ready' }
 }
 
 export function isLessonCompleted(
