@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import MemoryPalaceExplorerModal from './MemoryPalaceExplorerModal.js'
 import { fetchMemoryPalaceState } from '../../lib/memoryPalaceApi.js'
 import type { MemoryPalaceState } from '@dhcb/core-contracts/memoryPalace'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function MemoryPalaceCard() {
   const [isOpenModal, setIsOpenModal] = useState(false)
@@ -58,7 +59,10 @@ export default function MemoryPalaceCard() {
           <button
             type="button"
             onClick={() => setIsOpenModal(true)}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-bold text-xs sm:text-sm shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
+            className={buttonClass({
+              variant: 'secondary',
+              className: 'w-full sm:w-auto shrink-0',
+            })}
           >
             <span>Khám phá Cung Điện</span>
             <span>🗝️</span>

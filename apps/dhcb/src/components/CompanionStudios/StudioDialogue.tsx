@@ -26,6 +26,7 @@ import ChatProse from './ChatProse'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import { ChatMessage, CompanionVoiceState, DOMAIN_OPTIONS, QUICK_PROMPTS } from './studioTypes'
+import { buttonClass } from '@core/buttonStyles'
 
 // Ánh xạ trạng thái pipeline STT→LLM→TTS sang state hiển thị của CompanionLiveOrb (quả cầu
 // hiệu ứng — không phụ thuộc audio "live" nào, chỉ vẽ theo state truyền vào).
@@ -269,7 +270,10 @@ export default function StudioDialogue({
                 </button>
                 <button
                   onClick={voice.stop}
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-black text-xs font-bold shadow-lg shadow-rose-600/20 transition animate-pulse"
+                  className={buttonClass({
+                    variant: 'danger',
+                    className: 'animate-pulse motion-reduce:animate-none',
+                  })}
                 >
                   <MicOff className="w-4 h-4" />
                   Dừng ghi âm
@@ -455,7 +459,10 @@ export default function StudioDialogue({
                                   <button
                                     onClick={() => handleConfirmAction(action)}
                                     disabled={isActionLoading}
-                                    className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-black font-semibold transition duration-200 flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
+                                    className={buttonClass({
+                                      variant: 'primary',
+                                      className: 'flex-1',
+                                    })}
                                   >
                                     {isActionLoading ? (
                                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -467,7 +474,10 @@ export default function StudioDialogue({
                                   <button
                                     onClick={() => handleRejectAction(action)}
                                     disabled={isActionLoading}
-                                    className="flex-1 py-2 px-3 rounded-xl bg-zinc-850 hover:bg-zinc-800 text-zinc-300 font-semibold transition duration-200 flex items-center justify-center gap-1.5 border border-zinc-700/80 active:scale-98"
+                                    className={buttonClass({
+                                      variant: 'outline',
+                                      className: 'flex-1',
+                                    })}
                                   >
                                     <XCircle className="w-4 h-4" />
                                     Từ chối

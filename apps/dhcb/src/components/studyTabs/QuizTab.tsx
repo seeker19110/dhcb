@@ -22,6 +22,7 @@ import {
   QUIZ_PASS_THRESHOLD_PCT,
 } from '../../lib/curriculum'
 import { GrammarQuizSource, QuizQuestion, buildQuiz } from './quizBuilders'
+import { buttonClass } from '@core/buttonStyles'
 
 // ── Tab Kiểm tra ──────────────────────────────────────────────────────────────
 export function QuizTab({
@@ -341,7 +342,12 @@ export function QuizTab({
       {selected !== null && (
         <button
           onClick={next}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white font-semibold transition animate-fade-in"
+          className={buttonClass({
+            variant: 'primary',
+            size: 'lg',
+            fullWidth: true,
+            className: 'animate-fade-in',
+          })}
         >
           {current + 1 >= questions.length
             ? isA

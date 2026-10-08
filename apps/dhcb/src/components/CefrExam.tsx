@@ -23,6 +23,7 @@ import { useToast } from '@core/ToastProvider'
 import { pullProgress } from '../lib/progressSync'
 import { startCefrAssessment, submitCefrAssessment } from '../lib/cefrAssessmentApi'
 import { claimCefrExamQuest } from '../lib/quests'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function CefrExam({
   uid,
@@ -306,14 +307,18 @@ export default function CefrExam({
           {!s.passed && (
             <button
               onClick={retry}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white font-semibold transition"
+              className={buttonClass({ variant: 'primary', size: 'lg', className: 'flex-1' })}
             >
               <RotateCcw className="w-4 h-4" /> {isA ? 'Thi lại (đề mới)' : 'Retry (new exam)'}
             </button>
           )}
           <button
             onClick={onClose}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold transition ${s.passed ? 'bg-accent-500 hover:bg-accent-400 text-black' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'}`}
+            className={buttonClass({
+              variant: s.passed ? 'primary' : 'outline',
+              size: 'lg',
+              className: 'flex-1',
+            })}
           >
             {isA ? 'Xong' : 'Done'}
           </button>

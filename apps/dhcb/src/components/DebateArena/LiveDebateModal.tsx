@@ -7,6 +7,7 @@ import {
   submitDebateTurnApi,
   evaluateDebateMatchApi,
 } from '../../lib/debateArenaApi.js'
+import { buttonClass } from '@core/buttonStyles'
 
 interface LiveDebateModalProps {
   onClose: () => void
@@ -285,7 +286,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
             <button
               type="submit"
               disabled={isSubmitting || !inputTurn.trim() || session?.status === 'completed'}
-              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-md transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+              className={buttonClass({ variant: 'primary' })}
             >
               {isSubmitting ? '...' : 'Gửi'}
             </button>

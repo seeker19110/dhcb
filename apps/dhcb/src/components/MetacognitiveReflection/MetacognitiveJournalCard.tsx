@@ -8,6 +8,7 @@ import type {
   SocraticDailyPrompt,
   MetacognitiveSummary,
 } from '@dhcb/core-contracts/metacognitiveReflection'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function MetacognitiveJournalCard() {
   const [isOpenModal, setIsOpenModal] = useState(false)
@@ -68,7 +69,10 @@ export default function MetacognitiveJournalCard() {
           <button
             type="button"
             onClick={() => setIsOpenModal(true)}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-teal-700 hover:bg-teal-800 text-[#fff] font-bold text-xs sm:text-sm shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
+            className={buttonClass({
+              variant: 'secondary',
+              className: 'w-full sm:w-auto shrink-0',
+            })}
           >
             <span>Phản tỉnh Socratic</span>
             <span>✨</span>

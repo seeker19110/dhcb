@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send } from 'lucide-react'
+import { buttonVariantClass } from '@core/buttonStyles'
 
 export interface MessageInputProps {
   onSendMessage: (text: string) => void
@@ -78,7 +79,7 @@ export default function MessageInput({
         type="submit"
         disabled={disabled || !text.trim()}
         aria-label="Gửi tin nhắn"
-        className="flex-shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className={`${buttonVariantClass('primary')} inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors disabled:pointer-events-none disabled:opacity-50`}
       >
         <Send size={18} />
       </button>

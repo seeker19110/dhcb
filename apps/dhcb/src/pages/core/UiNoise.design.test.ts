@@ -73,7 +73,7 @@ const SHADOW_COLOR_PATTERN =
 
 const ALLOWED_COLOR_SHADOW_COUNT: Record<string, number> = {
   'components/BottomNav.tsx': 4, // 4 tab đáy đang được chọn (route hiện tại)
-  'components/CompanionStudios/StudioDialogue.tsx': 4, // viewMode/domain đang chọn + nút "Dừng Ghi Âm"
+  'components/CompanionStudios/StudioDialogue.tsx': 3, // viewMode/domain đang chọn (bóng nút "Dừng Ghi Âm" nay nằm trong biến thể danger)
   'components/CompanionVoice/ArticulatoryPhoneticsVisualizer.tsx': 1, // âm vị đang chọn
   'components/CompanionVoice/EchoShadowingCard.tsx': 1, // đoạn đang chọn
   'components/CompanionVoice/ScenarioHolodeckCard.tsx': 1, // kịch bản đang chọn

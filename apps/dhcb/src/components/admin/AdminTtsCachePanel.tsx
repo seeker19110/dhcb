@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Database, RefreshCw, HardDrive, AlertTriangle, CheckCircle2, Search } from 'lucide-react'
 import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
+import { buttonClass } from '@core/buttonStyles'
 
 // Tab admin "Cache TTS & R2" — trả lời: cache có đang tiết kiệm tiền API không, và kho audio
 // trên Cloudflare R2 có khớp với DB không. Nguồn dữ liệu: /api/admin-tts-cache.
@@ -263,7 +264,7 @@ export default function AdminTtsCachePanel() {
             type="button"
             onClick={() => void startScan()}
             disabled={scanning || audit?.status === 'running'}
-            className="shrink-0 min-h-[44px] px-4 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-[#fff] font-medium inline-flex items-center gap-2"
+            className={buttonClass({ variant: 'primary', className: 'shrink-0' })}
           >
             <RefreshCw className={`w-4 h-4 ${audit?.status === 'running' ? 'animate-spin' : ''}`} />
             {audit?.status === 'running' ? 'Đang quét…' : 'Quét lại'}

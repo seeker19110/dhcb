@@ -10,6 +10,7 @@ import {
   Lock,
 } from 'lucide-react'
 import type { PeerStudyMatch, A2ANegotiationResult } from '@dhcb/core-contracts/a2aProtocol'
+import { buttonClass } from '@core/buttonStyles'
 
 // Dựng thông điệp bắt tay A2A — helper NGOÀI component (Date.now là hàm không
 // thuần, chỉ được gọi từ event handler, không được gọi trong lúc render).
@@ -192,7 +193,11 @@ export const A2ANegotiatorCard: React.FC = () => {
                         <button
                           onClick={() => handleStartHandshake(peer)}
                           disabled={actionLoading === peer.peerPersonId}
-                          className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[#fff] font-semibold text-xs transition disabled:opacity-50 shadow-sm"
+                          className={buttonClass({
+                            variant: 'secondary',
+                            size: 'sm',
+                            className: 'tap-44',
+                          })}
                         >
                           {actionLoading === peer.peerPersonId ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />

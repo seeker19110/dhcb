@@ -18,6 +18,7 @@ import {
 } from '@dhcb/core-contracts/scenarioHolodeck'
 import LoadError from '../LoadError'
 import { useCatalogList } from '../../lib/useCatalogList'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function ScenarioHolodeckCard() {
   // Danh sách kịch bản: trạng thái tải/lỗi/rỗng tách bạch (trước đây lỗi tải để thân thẻ trống trơn).
@@ -432,7 +433,7 @@ export default function ScenarioHolodeckCard() {
               <button
                 type="submit"
                 disabled={!userUtterance.trim() || isLoading}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[#fff] text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors disabled:opacity-50"
+                className={buttonClass({ variant: 'primary' })}
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Gửi</span>
@@ -441,7 +442,7 @@ export default function ScenarioHolodeckCard() {
                 type="button"
                 onClick={handleFinalize}
                 disabled={isLoading}
-                className="px-3 py-2.5 rounded-xl bg-surface-raised hover:bg-surface-card text-content-secondary text-xs font-medium border border-line-strong transition-colors"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Kết thúc
               </button>

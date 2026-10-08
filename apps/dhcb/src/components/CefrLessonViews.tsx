@@ -76,6 +76,7 @@ import { hasReachedDailyLimit } from '../lib/appSettings'
 import { useApiThrottle } from '../lib/useApiThrottle'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
 import MixedLangText from './MixedLangText'
+import { buttonClass } from '@core/buttonStyles'
 
 // ── Chi tiết 1 bài ngữ pháp ───────────────────────────────────────────────────
 export function GrammarDetail({
@@ -465,7 +466,12 @@ export function VocabFlash({
         {testOutSel !== null && (
           <button
             onClick={testOutNext}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white font-semibold transition animate-fade-in"
+            className={buttonClass({
+              variant: 'primary',
+              size: 'lg',
+              fullWidth: true,
+              className: 'animate-fade-in',
+            })}
           >
             {testOutIdx + 1 >= testOutQs.length
               ? isA

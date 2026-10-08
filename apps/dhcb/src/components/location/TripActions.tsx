@@ -8,6 +8,7 @@
 
 import { useState } from 'react'
 import { Flag, LogOut, Timer, XCircle } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   isOwner: boolean
@@ -59,7 +60,7 @@ function ConfirmButton({
         <button
           type="button"
           onClick={() => setAsking(false)}
-          className="tap-44 flex-1 rounded-lg border border-zinc-700 hover:bg-zinc-800/60 hover:border-zinc-600 transition-colors px-3 font-semibold text-zinc-100"
+          className={buttonClass({ variant: 'outline', className: 'flex-1' })}
         >
           Không
         </button>
@@ -69,7 +70,7 @@ function ConfirmButton({
             setAsking(false)
             onConfirm()
           }}
-          className="tap-44 flex-1 rounded-lg bg-rose-500 hover:bg-rose-400 transition-colors px-3 font-bold text-[#09090b]"
+          className={buttonClass({ variant: 'danger', className: 'flex-1' })}
         >
           {confirmLabel}
         </button>

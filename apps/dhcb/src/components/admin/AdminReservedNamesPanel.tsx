@@ -3,6 +3,7 @@ import { Ban, Plus, Trash2, AlertCircle, RefreshCw } from 'lucide-react'
 import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
 import type { ReservedNameRow } from '@dhcb/core-contracts/adminViews'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function AdminReservedNamesPanel() {
   const [items, setItems] = useState<ReservedNameRow[]>([])
@@ -125,7 +126,7 @@ export default function AdminReservedNamesPanel() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 shadow"
+            className={buttonClass({ variant: 'primary' })}
           >
             <Plus className="w-4 h-4" />
             Thêm từ cấm

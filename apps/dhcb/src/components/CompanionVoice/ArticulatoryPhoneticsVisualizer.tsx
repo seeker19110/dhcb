@@ -5,6 +5,7 @@ import type {
   ArticulatoryGuide,
   PhoneticAnalysisReport,
 } from '@dhcb/core-contracts/articulatoryPhonetics'
+import { buttonClass } from '@core/buttonStyles'
 
 const PHONEME_OPTIONS: { target: L1PhonemeTarget; label: string; sample: string }[] = [
   { target: 'TH_VOICELESS', label: '/θ/ (th- vô thanh)', sample: 'think, thought, path' },
@@ -109,7 +110,10 @@ export default function ArticulatoryPhoneticsVisualizer() {
         <button
           onClick={handleTestPhonetics}
           disabled={isAnalyzing}
-          className="self-start sm:self-auto shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-[#fff] text-xs font-semibold shadow-lg flex items-center gap-1.5 transition disabled:opacity-50"
+          className={buttonClass({
+            variant: 'primary',
+            className: 'self-start sm:self-auto shrink-0',
+          })}
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>{isAnalyzing ? 'Đang phân tích...' : 'Kiểm tra Phát âm'}</span>

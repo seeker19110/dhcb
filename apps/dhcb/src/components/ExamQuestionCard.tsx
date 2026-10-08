@@ -12,6 +12,7 @@ import type { ExamQuestion } from '../lib/cefrExam'
 import type { AccentClasses } from '../lib/cefrAccent'
 import { speak } from '../lib/tts'
 import { PART_META } from '../lib/examParts'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function ExamQuestionCard({
   q,
@@ -217,7 +218,12 @@ export default function ExamQuestionCard({
         <button
           type="button"
           onClick={next}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white font-semibold transition-colors animate-fade-in motion-reduce:animate-none motion-reduce:transition-none"
+          className={buttonClass({
+            variant: 'primary',
+            size: 'lg',
+            fullWidth: true,
+            className: 'animate-fade-in motion-reduce:animate-none',
+          })}
         >
           {isLast ? label.last : label.more}
           <ChevronRight aria-hidden="true" className="w-4 h-4" />

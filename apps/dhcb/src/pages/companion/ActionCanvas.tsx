@@ -26,6 +26,7 @@ import {
   Save,
   Loader2,
 } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function ActionCanvas() {
   usePageTitle('Kế hoạch hành động | Đồng Hành Cùng Bạn')
@@ -302,7 +303,7 @@ export default function ActionCanvas() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="tap-44 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition"
+              className={buttonClass({ variant: 'primary' })}
             >
               {saving ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

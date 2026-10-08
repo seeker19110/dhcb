@@ -1,5 +1,6 @@
 import { NavigateFunction } from 'react-router-dom'
 import { LayoutGrid, ChevronRight } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 interface ActionCanvasBannerProps {
   navigate: NavigateFunction
@@ -36,7 +37,7 @@ export default function ActionCanvasBanner({ navigate }: ActionCanvasBannerProps
       <button
         type="button"
         onClick={() => navigate('/action-canvas')}
-        className="tap-44-y w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 text-black hover:bg-cyan-400 transition shadow-md flex-shrink-0"
+        className={buttonClass({ variant: 'primary', className: 'w-full sm:w-auto shrink-0' })}
       >
         <span>Mở Workspace</span>
         <ChevronRight className="w-4 h-4" />
