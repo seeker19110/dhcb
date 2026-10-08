@@ -1,6 +1,6 @@
 # 0516 — M17 đợt 5: bề rộng nội dung — đo lại, đã nhất quán, thêm cổng (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền khi tạo) · **Loại:** `test(e2e)` · **Nhánh:**
+- **Ngày:** 2026-10-08 · **PR:** #1267 · **Loại:** `test(e2e)` · **Nhánh:**
   `claude/peaceful-newton-czolhg` (dựng lại từ `main` sau khi #1266 merge).
 - **Nguồn:** nợ "bề rộng nội dung" của `0515`, audit `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md`
   **M17** ("11 bề rộng nội dung khác nhau ở 1440px: 448 → 1152px; `PageShell` ở 49/95 file trang").
