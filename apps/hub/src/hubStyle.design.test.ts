@@ -47,7 +47,7 @@ describe('hub — token ngữ nghĩa khớp app (changelog 0520)', () => {
   const block = (src: string, key: string): string => {
     const m = new RegExp(`\\n\\s*${key}: \\{([^}]*)\\}`).exec(src)
     if (!m) throw new Error(`không thấy khối "${key}"`)
-    return m[1].replace(/\/\/[^\n]*/g, '').replace(/\s+/g, '')
+    return (m[1] ?? '').replace(/\/\/[^\n]*/g, '').replace(/\s+/g, '')
   }
   const hub = readFileSync(join(__dirname, '..', 'tailwind.config.js'), 'utf8')
   const app = readFileSync(join(__dirname, '..', '..', 'dhcb', 'tailwind.config.js'), 'utf8')
