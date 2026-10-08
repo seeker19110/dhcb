@@ -1174,8 +1174,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `main#noi-dung-chinh` + một `<h1>`. **Còn mở (không phải lỗi WCAG / cần quyết định):** rail mục
   lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn
   hoá nút/bề rộng (`transition-all` ĐÃ gỡ hết — `0513` #1264, `0514` #1265, cổng tuyệt đối; nút CTA đặc
-  màu lệch accent ĐÃ chuyển sang `buttonClass` ở `0515` #1266; còn ~145 nút accent tự ghép khác hình
-  nhưng cùng màu + 31/95 trang chưa dùng `PageShell` — đợt riêng có ảnh từng trang); việc tay mục A (`plan_marketing_bullets`, hub
+  màu lệch accent ĐÃ chuyển sang `buttonClass` ở `0515` #1266; bề rộng nội dung ĐÃ nhất quán — 4 giá trị có chủ đích, khoá bằng `e2e/page-width.spec.ts`, `0516` #1267;
+  còn ~145 nút accent tự ghép khác cỡ/bo góc nhưng cùng màu — đợt riêng có ảnh từng trang); việc tay mục A (`plan_marketing_bullets`, hub
   trong `ALLOWED_ORIGINS`, `cwv:prod`). Giới hạn: đo trên mock, không có trình đọc màn hình thật.
 
 - 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt
