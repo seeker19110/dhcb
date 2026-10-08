@@ -19,6 +19,13 @@ import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { readJsonBody } from '@dhcb/core-http/validation'
 
+// Phiên chỉ thuộc về người đã tạo nó. Phiên không tồn tại và phiên của người khác trả CÙNG
+// kết quả (undefined → 404) — không để lộ id nào có thật (audit kiểm soát truy cập 2026-10-08).
+function getOwnedSession(sessionId: string, personId: string) {
+  const session = getHolodeckSession(sessionId)
+  return session && session.personId === personId ? session : undefined
+}
+
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
 
@@ -44,7 +51,7 @@ export default async function handler(req: Request): Promise<Response> {
       const sessionId = url.searchParams.get('sessionId')
 
       if (sessionId) {
-        const session = getHolodeckSession(sessionId)
+        const session = getOwnedSession(sessionId, person.id)
         if (!session) {
           return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
         }
@@ -79,6 +86,9 @@ export default async function handler(req: Request): Promise<Response> {
         if (!body.sessionId || !body.utterance) {
           return jsonResponse({ error: 'Thiếu sessionId hoặc utterance' }, 400, headers)
         }
+        if (!getOwnedSession(body.sessionId, person.id)) {
+          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
+        }
         const result = processHolodeckTurn(body.sessionId, body.utterance)
         return jsonResponse(result, 200, headers)
       }
@@ -86,6 +96,9 @@ export default async function handler(req: Request): Promise<Response> {
       if (body.action === 'finalize') {
         if (!body.sessionId) {
           return jsonResponse({ error: 'Thiếu sessionId' }, 400, headers)
+        }
+        if (!getOwnedSession(body.sessionId, person.id)) {
+          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
         }
         const session = finalizeHolodeckSession(body.sessionId)
         return jsonResponse({ session }, 200, headers)

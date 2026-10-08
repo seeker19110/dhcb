@@ -12,6 +12,7 @@ import {
   listMisconceptions,
   startSocraticSession,
   submitSocraticReflection,
+  getSocraticSession,
 } from '@dhcb/core-personal/socraticDiagnosticsService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
@@ -66,6 +67,12 @@ export default async function handler(req: Request): Promise<Response> {
       if (body.action === 'reflect') {
         if (!body.sessionId || !body.answer) {
           return jsonResponse({ error: 'Thiếu sessionId hoặc answer' }, 400, headers)
+        }
+        // Chỉ chủ phiên mới trả lời được. Phiên không tồn tại và phiên của người khác trả CÙNG
+        // 404 — không để lộ id nào có thật, không để user B đọc/ghi câu trả lời của user A.
+        const owned = getSocraticSession(body.sessionId)
+        if (!owned || owned.personId !== person.id) {
+          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
         }
         const result = submitSocraticReflection(body.sessionId, body.answer)
         return jsonResponse(result, 200, headers)
