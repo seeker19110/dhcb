@@ -3,7 +3,6 @@
 // và các phép kết hợp chúng (tích có trần, gắn khoá, lọc theo lựa chọn). Thuần, không I/O.
 
 import type ts from 'typescript'
-import type { ModuleAnalyzer } from './sqlAnalyzer.js'
 
 // Giới hạn độ sâu khi lần theo chuỗi hằng `const A = B; const B = ...` — chặn đệ quy vô hạn nếu
 // mã có tham chiếu vòng (TS báo lỗi trước, nhưng script không được treo vì thế).
@@ -23,11 +22,20 @@ export type Unknown = typeof UNKNOWN
 export type Scalar = string | number
 export type Choices = ReadonlyMap<string, string>
 
+/**
+ * Phần tối thiểu của `ModuleAnalyzer` (sqlAnalyzer.ts) mà giá trị cần để tính thuộc tính object.
+ * Khai ở đây thay vì `import type` từ sqlAnalyzer để không tạo chu trình import
+ * sqlAnalyzer → sqlAst → sqlValues → sqlAnalyzer (cổng CI `codemap -- cycles`).
+ */
+export interface Evaluator {
+  evaluate(node: ts.Expression, env: Env, depth?: number): Alts
+}
+
 /** Object literal trong mã + môi trường để tính các thuộc tính của nó. */
 export interface ObjRef {
   readonly kind: 'object'
   readonly node: ts.ObjectLiteralExpression
-  readonly mod: ModuleAnalyzer
+  readonly mod: Evaluator
   readonly env: Env
 }
 export type Cell = Scalar | ObjRef | Unknown
