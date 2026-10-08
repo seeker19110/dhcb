@@ -1149,6 +1149,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-08 — `docs/changelog/0523-*.md`] `/api/persons?action=export|full_erase` HỎNG HOÀN
+  TOÀN — người dùng KHÔNG xuất/xoá được dữ liệu của mình.** `packages/core-personal/personErasureService.ts`
+  tham chiếu 5 cột không tồn tại (`node_type`, `source_node_id`, `executed_at`, `title`/`decided_at`):
+  export luôn 500, full_erase luôn rollback rồi 500; thêm `.catch(() => rows: [])` có thể làm bản xuất
+  thiếu bản ghi quyết định mà không báo. Giao diện hiện chưa gọi endpoint này. Phát hiện bằng cách
+  `PREPARE` 387 câu SQL tĩnh trên Postgres 16 đã migrate (unit test giả lập `pg` không bắt được).
+  **Chưa sửa vì đụng xoá dữ liệu không hoàn tác (CLAUDE.md §12) + đổi tên trường JSON xuất — chờ chủ
+  dự án duyệt.** Cùng đợt, hai đề xuất chờ quyết: (a) `process.on('unhandledRejection')` (log +
+  Sentry) ở `server.ts` làm lưới an toàn cuối; (b) job CI chạy `PREPARE` SQL trên Postgres đã migrate
+  (đợt 0523 bắt được 9 câu sai cột theo cách này).
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
   từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
   (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —
