@@ -140,4 +140,45 @@ describe('api/scenario-holodeck', () => {
     const resDel = await handler(req('DELETE'))
     expect(resDel.status).toBe(405)
   })
+
+  // ── Kiểm soát truy cập (audit 2026-10-08): phiên chỉ thuộc về người đã tạo nó ──
+  describe('user B không đọc/ghi/kết thúc được phiên của user A', () => {
+    const PERSON_B = '22222222-2222-4222-8222-222222222222'
+
+    async function startAsA(): Promise<string> {
+      const res = await handler(req('POST', { action: 'start', scenarioId: 'silicon_vc_pitch' }))
+      return ((await res.json()) as { session: { sessionId: string } }).session.sessionId
+    }
+
+    it('GET sessionId của A bằng tài khoản B → 404, không lộ hội thoại', async () => {
+      const sessionId = await startAsA()
+      getOrCreatePerson.mockResolvedValueOnce({ id: PERSON_B })
+      const res = await handler(req('GET', undefined, `sessionId=${sessionId}`))
+      expect(res.status).toBe(404)
+      const body = (await res.json()) as Record<string, unknown>
+      expect(body.session).toBeUndefined()
+    })
+
+    it('POST turn vào phiên của A bằng tài khoản B → 404, phiên A không đổi', async () => {
+      const sessionId = await startAsA()
+      getOrCreatePerson.mockResolvedValueOnce({ id: PERSON_B })
+      const res = await handler(
+        req('POST', { action: 'turn', sessionId, utterance: 'Chen ngang phiên người khác' }),
+      )
+      expect(res.status).toBe(404)
+      const own = await handler(req('GET', undefined, `sessionId=${sessionId}`))
+      const data = (await own.json()) as { session: { turns: unknown[] } }
+      expect(data.session.turns).toHaveLength(1)
+    })
+
+    it('POST finalize phiên của A bằng tài khoản B → 404, phiên A vẫn active', async () => {
+      const sessionId = await startAsA()
+      getOrCreatePerson.mockResolvedValueOnce({ id: PERSON_B })
+      const res = await handler(req('POST', { action: 'finalize', sessionId }))
+      expect(res.status).toBe(404)
+      const own = await handler(req('GET', undefined, `sessionId=${sessionId}`))
+      const data = (await own.json()) as { session: { status: string } }
+      expect(data.session.status).toBe('active')
+    })
+  })
 })

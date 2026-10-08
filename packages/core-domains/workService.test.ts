@@ -12,6 +12,7 @@ import {
   createWorkDocument,
   listWorkDocuments,
 } from './workService.js'
+import { NotFoundError } from '@dhcb/core-errors/appError'
 
 const PERSON_ID = '11111111-1111-4111-8111-111111111111'
 const PROJECT_ID = '22222222-2222-4222-8222-222222222222'
@@ -794,5 +795,42 @@ describe('WorkService — nhánh biên', () => {
     const [sql, params] = mockQuery.mock.calls[0]! as [string, unknown[]]
     expect(sql).not.toContain('and project_id')
     expect(params).toEqual([PERSON_ID])
+  })
+
+  // ── Kiểm soát truy cập (audit 2026-10-08): không gắn task/tài liệu vào dự án của người khác ──
+  describe('projectId phải thuộc chính người tạo', () => {
+    const OTHER_PERSON_PROJECT = '66666666-6666-4666-8666-666666666666'
+
+    it('createWorkTask với projectId không thuộc person → NotFoundError, câu SQL ràng buộc chủ dự án', async () => {
+      // Câu insert có điều kiện chủ sở hữu: dự án của người khác → không chèn dòng nào.
+      mockQuery.mockResolvedValueOnce({ rows: [] })
+      await expect(
+        createWorkTask(pool, PERSON_ID, {
+          projectId: OTHER_PERSON_PROJECT,
+          title: 'Gắn vào dự án người khác',
+          priority: 'low',
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError)
+      const [sql, params] = mockQuery.mock.calls[0]! as [string, unknown[]]
+      expect(sql).toMatch(/from worklife\.projects\s+where id = \$3 and person_id = \$2/)
+      expect(params[1]).toBe(PERSON_ID)
+      expect(params[2]).toBe(OTHER_PERSON_PROJECT)
+    })
+
+    it('createWorkDocument với projectId không thuộc person → NotFoundError, câu SQL ràng buộc chủ dự án', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] })
+      await expect(
+        createWorkDocument(pool, PERSON_ID, {
+          projectId: OTHER_PERSON_PROJECT,
+          title: 'Tài liệu lạc chủ',
+          documentType: 'note',
+          summary: 'x',
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError)
+      const [sql, params] = mockQuery.mock.calls[0]! as [string, unknown[]]
+      expect(sql).toMatch(/from worklife\.projects\s+where id = \$3 and person_id = \$2/)
+      expect(params[1]).toBe(PERSON_ID)
+      expect(params[2]).toBe(OTHER_PERSON_PROJECT)
+    })
   })
 })

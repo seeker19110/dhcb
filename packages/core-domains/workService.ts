@@ -263,14 +263,21 @@ export async function createWorkTask(
   input: CreateTaskInput,
 ): Promise<WorkTask> {
   const id = randomUUID()
+  // projectId (nếu có) PHẢI là dự án của chính person — kiểm ngay trong câu insert (một câu, không
+  // race). Thiếu điều kiện này thì gắn được task vào dự án của người khác chỉ cần biết UUID.
   const res = await pool.query<TaskRow>(
     `insert into worklife.tasks
       (id, person_id, project_id, title, priority, status, due_at, version)
-     values ($1, $2, $3, $4, $5, 'todo', $6, 1)
+     select $1, $2, $3::uuid, $4, $5, 'todo', $6, 1
+      where $3::uuid is null or exists (
+        select 1 from worklife.projects
+         where id = $3 and person_id = $2)
      returning *`,
     [id, personId, input.projectId ?? null, input.title, input.priority, input.dueAt ?? null],
   )
-  return toWorkTask(res.rows[0]!)
+  const row = res.rows[0]
+  if (!row) throw new NotFoundError('Không tìm thấy WorkProject')
+  return toWorkTask(row)
 }
 
 /**
@@ -384,10 +391,14 @@ export async function createWorkDocument(
   input: CreateDocumentInput,
 ): Promise<WorkDocument> {
   const id = randomUUID()
+  // Cùng luật với createWorkTask: projectId chỉ được trỏ tới dự án của chính person.
   const res = await pool.query<DocumentRow>(
     `insert into worklife.documents
       (id, person_id, project_id, title, document_type, summary, content_uri, version)
-     values ($1, $2, $3, $4, $5, $6, $7, 1)
+     select $1, $2, $3::uuid, $4, $5, $6, $7, 1
+      where $3::uuid is null or exists (
+        select 1 from worklife.projects
+         where id = $3 and person_id = $2)
      returning *`,
     [
       id,
@@ -399,7 +410,9 @@ export async function createWorkDocument(
       input.contentUri ?? null,
     ],
   )
-  return toWorkDocument(res.rows[0]!)
+  const row = res.rows[0]
+  if (!row) throw new NotFoundError('Không tìm thấy WorkProject')
+  return toWorkDocument(row)
 }
 
 /**

@@ -119,13 +119,48 @@ describe('api/socratic-diagnostics', () => {
     expect(res.status).toBe(400)
   })
 
-  it('POST reflect với sessionId không tồn tại → lỗi hạ tầng bất kỳ trả 500', async () => {
+  it('lỗi hạ tầng bất kỳ (không phải AppError) trả 500 với thông báo chung', async () => {
+    getOrCreatePerson.mockRejectedValueOnce(new Error('db down'))
     const res = await handler(
-      req('POST', { action: 'reflect', sessionId: 'phien-khong-ton-tai', answer: 'abc' }),
+      req('POST', { action: 'reflect', sessionId: 'phien-bat-ky', answer: 'abc' }),
     )
     expect(res.status).toBe(500)
     const data = await res.json()
     expect(data.error).toBe('Lỗi xử lý chẩn đoán nhận thức Socratic')
+  })
+
+  it('POST reflect với sessionId không tồn tại → 404', async () => {
+    const res = await handler(
+      req('POST', { action: 'reflect', sessionId: 'phien-khong-ton-tai', answer: 'abc' }),
+    )
+    expect(res.status).toBe(404)
+  })
+
+  // ── Kiểm soát truy cập (audit 2026-10-08): phiên Socratic chỉ thuộc về người tạo ──
+  it('user B gửi reflect vào phiên của user A → 404, không lộ câu trả lời của A', async () => {
+    const PERSON_B = '22222222-2222-4222-8222-222222222222'
+    const startRes = await handler(
+      req('POST', { action: 'start', misconceptionId: 'present_perfect_past_confusion' }),
+    )
+    const sessionId = ((await startRes.json()) as { session: { id: string } }).session.id
+
+    getOrCreatePerson.mockResolvedValueOnce({ id: PERSON_B })
+    const res = await handler(
+      req('POST', { action: 'reflect', sessionId, answer: 'Chen vào phiên người khác' }),
+    )
+    expect(res.status).toBe(404)
+    const body = (await res.json()) as Record<string, unknown>
+    expect(body.updatedRecord).toBeUndefined()
+
+    // Chủ phiên vẫn trả lời tiếp được — phiên không bị B làm bẩn.
+    const own = await handler(
+      req('POST', { action: 'reflect', sessionId, answer: 'Khoảng thời gian đã kết thúc.' }),
+    )
+    expect(own.status).toBe(200)
+    const ownData = (await own.json()) as { updatedRecord: { turns: { learnerAnswer: string }[] } }
+    expect(ownData.updatedRecord.turns.map((t) => t.learnerAnswer)).not.toContain(
+      'Chen vào phiên người khác',
+    )
   })
 
   it('GET: getOrCreatePerson ném AppError → trả đúng status/body của AppError', async () => {

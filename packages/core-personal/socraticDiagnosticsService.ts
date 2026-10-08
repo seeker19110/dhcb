@@ -104,6 +104,14 @@ export function getMisconceptionById(id: string): MentalModelMisconception | und
   return PREDEFINED_MISCONCEPTIONS.find((m) => m.id === id)
 }
 
+/**
+ * Đọc một phiên Socratic theo id (không kiểm chủ). Handler PHẢI so `personId` của phiên với
+ * người đang đăng nhập trước khi dùng — Map này chứa phiên của MỌI người dùng.
+ */
+export function getSocraticSession(sessionId: string): CognitiveBreakthroughRecord | undefined {
+  return socraticSessions.get(sessionId)
+}
+
 export function startSocraticSession(
   personId: string,
   misconceptionId: string,
