@@ -4,7 +4,6 @@
 //        action="unsubscribe" → xóa subscription
 //        action="send-daily"  → gửi push cho tất cả users (gọi từ cron, cần CRON_SECRET)
 
-import { createHash, timingSafeEqual } from 'node:crypto'
 import webpush from 'web-push'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import {
@@ -18,6 +17,7 @@ import {
   logSecurityEvent,
   validateAuth,
 } from '@dhcb/core-auth/security'
+import { secretMatches } from '@dhcb/core-auth/secretCompare'
 import { getClientIp } from '@dhcb/core-http/http'
 import { validateBody } from '@dhcb/core-http/validation'
 import { vnDateStr, addDays } from '@dhcb/core-db/date'
@@ -294,14 +294,11 @@ export async function sendReminders(
 }
 
 /**
- * So `secret` client gửi với CRON_SECRET theo thời gian HẰNG (băm SHA-256 trước để hai buffer
- * luôn cùng độ dài như timingSafeEqual yêu cầu). Thiếu CRON_SECRET → luôn từ chối.
+ * So `secret` client gửi với CRON_SECRET theo thời gian HẰNG (logic ở core-auth/secretCompare).
+ * Thiếu CRON_SECRET → luôn từ chối.
  */
 export function cronSecretMatches(provided: unknown): boolean {
-  const secret = process.env.CRON_SECRET
-  if (!secret || typeof provided !== 'string' || !provided) return false
-  const digest = (value: string) => createHash('sha256').update(value).digest()
-  return timingSafeEqual(digest(provided), digest(secret))
+  return secretMatches(provided, process.env.CRON_SECRET)
 }
 
 export default async function handler(req: Request): Promise<Response> {

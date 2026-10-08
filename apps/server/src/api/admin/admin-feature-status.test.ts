@@ -160,6 +160,27 @@ describe('/api/admin-feature-status', () => {
     expect(res.status).toBe(401)
   })
 
+  it('POST: cron key khác độ dài / thiếu header / server chưa cấu hình khoá → rơi về đăng nhập (401)', async () => {
+    process.env.FEATURE_STATUS_CRON_KEY = 'secret-key'
+    for (const headers of [{ 'x-cron-key': 'secret-key-longer' }, {}] as Record<string, string>[]) {
+      vi.mocked(validateAuth).mockResolvedValueOnce(null)
+      const res = await handler(
+        new Request('http://localhost/api/admin-feature-status', { method: 'POST', headers }),
+      )
+      expect(res.status).toBe(401)
+    }
+    delete process.env.FEATURE_STATUS_CRON_KEY
+    vi.mocked(validateAuth).mockResolvedValueOnce(null)
+    const res = await handler(
+      new Request('http://localhost/api/admin-feature-status', {
+        method: 'POST',
+        headers: { 'x-cron-key': '' },
+      }),
+    )
+    expect(res.status).toBe(401)
+    expect(runAllFeatureChecks).not.toHaveBeenCalled()
+  })
+
   it('POST từ chối người đăng nhập nhưng không phải admin (403)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'u1' })
     vi.mocked(getUserById).mockResolvedValueOnce({
