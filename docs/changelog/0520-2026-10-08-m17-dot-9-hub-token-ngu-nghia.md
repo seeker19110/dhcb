@@ -42,6 +42,12 @@ items-center justify-center` → vùng chạm 44px, biểu tượng vẫn ở gi
   - Trang dài hơn/ngắn hơn 2–4px do hai nút `py-3` (46px) về 44px.
   - `/login`: giống hệt từng điểm ảnh (nút đổi chỉ hiện khi đã đăng nhập).
 
+- Cổng local (nhánh dựng từ `main` `6f56dfb`): typecheck (xoá `dist` trước) · lint 0 cảnh báo · prettier ·
+  build · `test:coverage` **18.858 test** xanh. E2E `hub-reflow` · `admin` · `a11y-admin-intake` · `a11y`
+  (15 trang × 3 theme): **336/336 xanh**.
+- Cổng zinc mở rộng sang hub: trên hub cũ khớp `HubLogin.tsx` (nút "Đăng xuất…"), nay xanh. Test token
+  ngữ nghĩa hub/app: 3 khối trùng nhau.
+
 ## M17 sau đợt này
 
 Phần nút + bề rộng của M17 đã xong: `0513`–`0520`, các PR #1264–#1271 và PR của đợt này. Các cổng
