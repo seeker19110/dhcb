@@ -113,6 +113,19 @@ describe('handleConnection', () => {
     expect(getSessionStateMock).not.toHaveBeenCalled()
   })
 
+  it('CHẶN HỒI QUY 2026-10-08: CSDL lỗi khi xử lý sự kiện → báo lỗi cho client + log, không rejection trôi nổi', async () => {
+    // Bản cũ `void handleClientEvent(...)`: rejection không ai bắt → Vitest đánh đỏ cả lượt
+    // chạy (production: Node sập worker vì không có handler unhandledRejection).
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getActiveMembershipMock.mockRejectedValue(new Error('db down'))
+    const s = fakeSocket()
+    handleConnection(s.ws as never, 'u1')
+    await s.message({ type: 'subscribe', sessionId: SESSION_ID })
+    expect(s.sent.at(-1)).toMatchObject({ type: 'error' })
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('[location-ws]'), 'db down')
+    errorLog.mockRestore()
+  })
+
   it('subscribe hợp lệ → gửi toàn cảnh chuyến', async () => {
     getActiveMembershipMock.mockResolvedValue({ sharingEnabled: true, precisionMode: 'exact' })
     getSessionStateMock.mockResolvedValue({ sessionId: SESSION_ID, members: [] })

@@ -61,8 +61,11 @@ export async function isRoomMember(roomId: string, userId: string): Promise<bool
  * biết chắc `userId` là thành viên hợp lệ của `roomId`. */
 export async function getRoomMemberIds(roomId: string, excludeUserId?: string): Promise<string[]> {
   const pool = getPgPool()
+  // `$2::uuid` ép kiểu TƯỜNG MINH (sửa 2026-10-08): bản cũ `user_id <> coalesce($2, '')` làm
+  // Postgres suy $2 là text → "operator does not exist: uuid <> text" ở MỌI lần gọi, kể cả khi
+  // $2 null. Lỗi bị nuốt vì nơi gọi (wsHandler) bắn-rồi-quên, nên chat real-time hỏng im lặng.
   const { rows } = await pool.query<{ user_id: string }>(
-    "select user_id from chat.room_members where room_id = $1 and user_id <> coalesce($2, '')",
+    'select user_id from chat.room_members where room_id = $1 and ($2::uuid is null or user_id <> $2::uuid)',
     [roomId, excludeUserId ?? null],
   )
   return rows.map((r) => r.user_id)
