@@ -1,6 +1,6 @@
 # 0517 — M17 đợt 6: nút accent đặc tự ghép class → `buttonClass` (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền khi tạo) · **Loại:** `style(ui)` · **Nhánh:**
+- **Ngày:** 2026-10-08 · **PR:** #1268 · **Loại:** `style(ui)` · **Nhánh:**
   `claude/peaceful-newton-czolhg` (dựng lại từ `main` sau khi #1267 merge).
 - **Nguồn:** nợ còn lại của `0515`/`0516` ("~145 nút accent tự ghép, cùng màu nhưng khác cỡ/bo góc"),
   audit `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` **M17**. Chủ dự án: "tiếp tục đợt nút
@@ -42,7 +42,7 @@ Vì sao cùng màu mà vẫn đổi: 76 nút có **4 kiểu bo góc** (`lg`/`xl`
   khách giống hệt từng điểm ảnh; Xếp lớp, Ôn tập: chỉ khác bo góc `2xl` → `xl`, cùng chiều cao; Onboarding
   khác ở hình minh hoạ đang chạy hiệu ứng (không phải nút); Bạn Đồng Hành khác ở avatar chớp mắt + đồng
   hồ; hub: nút hero 52 → 48px, nút đầu trang 32 → 36px, trang thấp đi 4px (1440) / 12px (390).
-- Cổng local: typecheck (xoá `dist` trước) · lint · prettier · `test:coverage` — xem mục báo cáo PR.
+- Cổng local: typecheck (xoá `dist` trước) · lint · prettier · build · `test:coverage` 808 file / 18.825 test xanh.
 - E2E: `a11y` + `a11y-aaa` (AA + AAA, 3 theme) · `hub-reflow` · `page-width` · `mobile-layout-guards` ·
   `a11y-intake` — xem mục báo cáo PR.
 
