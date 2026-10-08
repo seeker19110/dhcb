@@ -63,20 +63,23 @@ export function computeTodayPlan(
   const scopeWords = getExamScopeWords()
   const learned = getLearnedWords(uid)
   const masteredItems = scopeWords.filter((w) => learned.has(w)).length
+  // Ưu tiên số đo TẠI CHỖ (từ điển hiện tại) hơn con số đã lưu lúc tạo kế hoạch: dữ liệu từ
+  // vựng có thể được bổ sung giữa chừng, và người học quan tâm phạm vi THẬT hôm nay. Từ điển
+  // rỗng (chưa nạp được) thì lùi về số đã lưu — và trả về CHÍNH số đó cho UI: trước 2026-10-08
+  // lịch tính theo số đã lưu nhưng UI lại nhận 0 → hiện "Đã nắm 0/0" lệch với khối lượng/ngày.
+  const scopeItems = scopeWords.length || plan.scopeItems
 
   const out = buildExamPlan({
     today,
     examDate: plan.examDate,
-    // Ưu tiên số đo TẠI CHỖ (từ điển hiện tại) hơn con số đã lưu lúc tạo kế hoạch: dữ liệu từ
-    // vựng có thể được bổ sung giữa chừng, và người học quan tâm phạm vi THẬT hôm nay.
-    scopeItems: scopeWords.length || plan.scopeItems,
+    scopeItems,
     masteredItems,
     dueToday: getSRSStats(uid).due,
     dailyCapItems: plan.dailyCapItems,
     restDays: plan.restDays,
   })
 
-  return { ...out, examDate: plan.examDate, scopeItems: scopeWords.length, masteredItems }
+  return { ...out, examDate: plan.examDate, scopeItems, masteredItems }
 }
 
 /** Trần mặc định gợi ý khi tạo kế hoạch = tốc độ học người dùng đã chọn ở Hồ sơ (5/10/20). */

@@ -4,11 +4,13 @@ vi.mock('@core/authHeader', () => ({ getAuthHeader: () => ({}) }))
 
 import {
   fetchProgress,
+  fetchProgressWithState,
+  fetchProgressWithStatus,
   saveLessonProgress,
   isLessonCompleted,
   type ProgrammingLessonProgress,
 } from './programmingProgress'
-import { flush as flushSync, pending } from './syncOutbox'
+import { enqueue, flush as flushSync, pending } from './syncOutbox'
 
 const UID = 'u1'
 const CACHE_KEY = `dhcb_prog_progress_${UID}`
@@ -161,5 +163,143 @@ describe('programmingProgress — mục còn chờ gửi được phủ lên b�
     expect(pending(UID)).toBe(0)
     mockFetch(() => okJson({ lessons: [] }))
     expect(await fetchProgress(UID)).toEqual([])
+  })
+})
+
+describe('programmingProgress — khách vãng lai (localStorage LÀ nguồn sự thật)', () => {
+  const GUEST = 'guest_abc'
+  const GUEST_KEY = `dhcb_prog_progress_${GUEST}`
+
+  it('đọc: KHÔNG gọi server, KHÔNG gắn cờ "từ cache" (không phải lỗi)', async () => {
+    localStorage.setItem(
+      GUEST_KEY,
+      JSON.stringify([{ lessonId: 'p1-u1-l1', status: 'completed', completedAt: 5 }]),
+    )
+    const fetchFn = mockFetch(() => okJson({ lessons: [] }))
+    expect(await fetchProgressWithStatus(GUEST)).toEqual({
+      lessons: [{ lessonId: 'p1-u1-l1', status: 'completed', completedAt: 5 }],
+      fromCache: false,
+    })
+    expect((await fetchProgressWithState(GUEST)).state).toBe('ready')
+    expect(fetchFn).not.toHaveBeenCalled()
+  })
+
+  it('ghi: lưu localStorage nhưng KHÔNG xếp hàng gửi server', async () => {
+    await saveLessonProgress(GUEST, 'p1-u1-l2', 'completed')
+    expect(isLessonCompleted(JSON.parse(localStorage.getItem(GUEST_KEY)!), 'p1-u1-l2')).toBe(true)
+    expect(pending(GUEST)).toBe(0)
+  })
+})
+
+describe('fetchProgressWithStatus / fetchProgressWithState — "chưa học" khác "chưa đo được"', () => {
+  const cached = [{ lessonId: 'p1-u1-l1', status: 'in_progress', completedAt: null }]
+
+  it('server lỗi HTTP → trả cache kèm cờ lỗi', async () => {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cached))
+    mockFetch(() => ({ ok: false, json: async () => ({}) }))
+    expect(await fetchProgressWithStatus(UID)).toEqual({ lessons: cached, fromCache: true })
+    expect(await fetchProgressWithState(UID)).toEqual({ lessons: cached, state: 'error' })
+  })
+
+  it('mất mạng → trả cache kèm cờ lỗi, không ném', async () => {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cached))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))) as unknown as typeof fetch,
+    )
+    expect(await fetchProgressWithStatus(UID)).toEqual({ lessons: cached, fromCache: true })
+    expect(await fetchProgressWithState(UID)).toEqual({ lessons: cached, state: 'error' })
+  })
+
+  it('server trả thân thiếu `lessons` → coi là rỗng (không ném) và GHI ĐÈ cache cũ', async () => {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cached))
+    mockFetch(() => okJson({}))
+    expect(await fetchProgressWithState(UID)).toEqual({ lessons: [], state: 'ready' })
+    expect(JSON.parse(localStorage.getItem(CACHE_KEY)!)).toEqual([])
+  })
+
+  it('fetchProgressWithState cũng phủ mục còn chờ gửi lên bản server', async () => {
+    const at = '2026-10-01T00:00:00.000Z'
+    enqueue(UID, 'programming', [
+      { lessonId: 'p1-u2-l1', status: 'completed', clientUpdatedAt: at },
+    ])
+    mockFetch(() => okJson({ lessons: [] }))
+    expect(await fetchProgressWithState(UID)).toEqual({
+      lessons: [{ lessonId: 'p1-u2-l1', status: 'completed', completedAt: Date.parse(at) }],
+      state: 'ready',
+    })
+  })
+})
+
+describe('overlayPending — luật phủ giống server: completed không bao giờ bị kéo lùi', () => {
+  it('server "đang học" + mục chờ "hoàn thành" → hoàn thành, completedAt theo mốc client', async () => {
+    const at = '2026-10-02T00:00:00.000Z'
+    enqueue(UID, 'programming', [
+      { lessonId: 'p1-u3-l1', status: 'completed', clientUpdatedAt: at },
+    ])
+    mockFetch(() =>
+      okJson({ lessons: [{ lessonId: 'p1-u3-l1', status: 'in_progress', completedAt: null }] }),
+    )
+    expect(await fetchProgress(UID)).toEqual([
+      { lessonId: 'p1-u3-l1', status: 'completed', completedAt: Date.parse(at) },
+    ])
+  })
+
+  it('server "hoàn thành" + mục chờ "đang học" → GIỮ hoàn thành và mốc của server', async () => {
+    enqueue(UID, 'programming', [
+      { lessonId: 'p1-u3-l2', status: 'in_progress', clientUpdatedAt: '2026-10-03T00:00:00.000Z' },
+    ])
+    const server = [{ lessonId: 'p1-u3-l2', status: 'completed', completedAt: 7 }]
+    mockFetch(() => okJson({ lessons: server }))
+    expect(await fetchProgress(UID)).toEqual(server)
+  })
+
+  it('mục chờ "đang học" cho bài server chưa có → thêm với completedAt null', async () => {
+    enqueue(UID, 'programming', [
+      { lessonId: 'p1-u3-l3', status: 'in_progress', clientUpdatedAt: '2026-10-03T00:00:00.000Z' },
+    ])
+    mockFetch(() => okJson({ lessons: [] }))
+    expect(await fetchProgress(UID)).toEqual([
+      { lessonId: 'p1-u3-l3', status: 'in_progress', completedAt: null },
+    ])
+  })
+
+  it('mốc client hỏng: bài mới → completedAt null (KHÔNG NaN); bài đã có → "bây giờ"', async () => {
+    enqueue(UID, 'programming', [
+      { lessonId: 'moi', status: 'completed', clientUpdatedAt: 'không-phải-ngày' },
+      { lessonId: 'cu', status: 'completed', clientUpdatedAt: 'không-phải-ngày' },
+    ])
+    mockFetch(() =>
+      okJson({ lessons: [{ lessonId: 'cu', status: 'in_progress', completedAt: null }] }),
+    )
+    const now = vi.spyOn(Date, 'now').mockReturnValue(999)
+    let lessons: ProgrammingLessonProgress[]
+    try {
+      lessons = await fetchProgress(UID)
+    } finally {
+      now.mockRestore()
+    }
+    expect(lessons).toEqual([
+      { lessonId: 'cu', status: 'completed', completedAt: 999 },
+      { lessonId: 'moi', status: 'completed', completedAt: null },
+    ])
+  })
+})
+
+describe('saveLessonProgress — localStorage đầy/bị chặn', () => {
+  it('ghi cache ném lỗi → không ném ra ngoài, vẫn xếp hàng gửi server', async () => {
+    const original = localStorage.setItem.bind(localStorage)
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation((key, value) => {
+      if (key === CACHE_KEY) throw new DOMException('đầy', 'QuotaExceededError')
+      // Mọi khoá khác (hàng đợi gửi) ghi bình thường qua bản gốc.
+      original(key, value)
+    })
+    try {
+      await expect(saveLessonProgress(UID, 'p1-u5-l1', 'completed')).resolves.toBeUndefined()
+    } finally {
+      setItem.mockRestore()
+    }
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull()
+    expect(pending(UID)).toBeGreaterThan(0)
   })
 })

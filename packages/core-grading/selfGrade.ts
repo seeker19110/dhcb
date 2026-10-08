@@ -75,14 +75,18 @@ export function cacSoTrongLoiGiai(text: string): number[] {
   const chuan = text
     .replace(/(\d)\s*,\s*(\d)/g, '$1.$2') // dấu phẩy thập phân
     .replace(/[−–]/g, '-') // dấu trừ Unicode
-    // luỹ thừa mũ trên: 10⁻⁷ / 10⁸
-    .replace(/10\s*[⁻-]\s*([⁰-⁹]+)/g, (_m, d: string) => '1e-' + soMuTren(d))
-    .replace(/10\s*([⁰-⁹]+)/g, (_m, d: string) => '1e' + soMuTren(d))
+    // luỹ thừa mũ trên: 10⁻⁷ / 10⁸ / 10²³. KHÔNG viết dải `[⁰-⁹]`: ¹ ² ³ nằm ở khối Latin-1
+    // (U+00B9/B2/B3), ngoài dải U+2070–2079, nên dải đó bỏ sót mọi số mũ chứa 1/2/3 (10⁻¹⁹,
+    // 6,02·10²³ bị đọc thành [6.02, 10]) — bug tìm ra 2026-10-08, changelog 0522.
+    .replace(/10\s*[⁻-]\s*([⁰¹²³⁴-⁹]+)/g, (_m, d: string) => '1e-' + soMuTren(d))
+    .replace(/10\s*([⁰¹²³⁴-⁹]+)/g, (_m, d: string) => '1e' + soMuTren(d))
     // "a * 10^b" viết liền thành một số
     .replace(/([\d.]+)\s*[*×·]\s*1e(-?\d+)/g, (_m, a: string, b: string) =>
       String(Number(a) * Math.pow(10, Number(b))),
     )
-  return [...chuan.matchAll(/-?\d+(?:\.\d+)?(?:e-?\d+)?/gi)]
+  // `e[+-]?`: tích ở bước trên ≥ 1e21 được String() viết thành "6.02e+23" — thiếu `+` ở đây
+  // thì con số bị cắt đôi thành [6.02, 23] (bug tìm ra cùng đợt, changelog 0522).
+  return [...chuan.matchAll(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)]
     .map((m) => Number(m[0]))
     .filter((n) => Number.isFinite(n))
 }

@@ -20,7 +20,10 @@ describe('kiemTraTypeScript — không đọc file nào của server ngoài lib 
     const khong = kiemTraTypeScript(`/// <reference path="${fileKhongCo}" />\nconst a = 1`, ts)
     expect(co.loi).toEqual(khong.loi)
     expect(co.loi.join('\n')).not.toMatch(/TS6053|not found/)
-  })
+    // Ca đầu tiên trả chi phí "nguội": dựng 2 chương trình TS + parse lib chuẩn lần đầu. Chạy
+    // riêng ~3 s, nhưng trong `test:coverage` toàn bộ (4 lõi, đo V8) mất 5,7–6,5 s → vượt
+    // timeout mặc định 5 s và đỏ giả (đo 2026-10-08, changelog 0522). Nới riêng ca này.
+  }, 30_000)
 
   it('không nạp được khai báo từ file khác trên đĩa', () => {
     // node_modules/typescript/lib/typescript.d.ts khai `declare namespace ts` — nếu host còn đọc
