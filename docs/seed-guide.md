@@ -248,3 +248,35 @@ npm run seed:all -- --verify-r2 --delete-verified --yes       # 7c. xoá thật 
 
 Nếu seed bị lỗi giữa chừng: danh sách lỗi được ghi ra `scripts/seed-errors.json`
 (phát âm) và `scripts/prefetch-tts-errors.json` (câu TTS) để retry sau.
+
+---
+
+## 8. Seed giọng ElevenLabs (`--eleven`) — TÍNH TIỀN theo ký tự
+
+6 giọng: **nữ** Rachel · Alice · Matilda, **nam** Eric · Daniel · Chris (bảng `ELEVEN_VOICES` ở
+`packages/core-ai/elevenLabsTts.ts`; chỉ VIP). Mặc định `seed:all` **không** đụng ElevenLabs —
+phải thêm cờ `--eleven`, và cần `ELEVENLABS_API_KEY` trong `.env`.
+
+**Quy mô (đo 2026-10-08, chưa có gì trong DB):** ~421.000 audio · ~15,9 triệu ký tự (1 ký tự =
+1 credit). Giáo trình ~6,4M · Cụm từ ~7,7M · hội thoại ~1,6M · CEFR ~0,12M · Challenge ~0,05M.
+Gói ElevenLabs tính theo credit/tháng (Creator ~100k, Pro ~500k, Scale ~2M — xem giá hiện hành
+trên elevenlabs.io) nên **không nên chạy một lần không trần**. Cách làm:
+
+```bash
+npm run seed:all -- --eleven --check                       # 1. CHỈ in ước tính, không gọi API
+npm run seed:all -- --eleven --eleven-budget=400000        # 2. Seed tối đa 400k ký tự rồi dừng
+#   (in ước tính, hỏi gõ "yes"; chạy không bàn phím thì thêm --yes)
+# 3. Tháng sau chạy lại ĐÚNG lệnh trên — câu đã có tự bỏ qua, làm tiếp phần còn thiếu.
+```
+
+- **Thứ tự dùng ngân sách:** CEFR → Challenge → hội thoại (50 bài đầu, rồi còn lại) → giáo trình →
+  Cụm từ. Nhóm nhỏ/quan trọng trước, hai nhóm khổng lồ sau cùng.
+- **Khoá cache:** hash ElevenLabs **bỏ `lang`** (đúng như `/api/tts`), nên một câu chỉ seed 1 lần
+  cho cả hai ngôn ngữ.
+- **Hội thoại:** mỗi nhân vật dùng giọng ElevenLabs đúng giới tính, xoay vòng 3 giọng/giới.
+- **Không seed:** từ điển (`/api/pronunciation` không hỗ trợ ElevenLabs) và truyện (dùng Gemini).
+- **Song song:** `ELEVENLABS_SEED_CONCURRENCY` (mặc định 3). Bị 429 thì giảm xuống 1–2.
+- **Khẩu hình:** seed cũng lưu `viseme_timeline` thật (cần eSpeak-ng; không có thì để trống, client
+  tự ước lượng như cũ).
+- Muốn thêm giọng: thêm 1 dòng vào `ELEVEN_VOICES`, rồi thêm cùng tên vào
+  `apps/dhcb/src/lib/voiceTiers.ts`; `scripts/eleven-voices-parity.test.ts` đỏ nếu quên.

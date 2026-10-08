@@ -9,19 +9,39 @@
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 
 const TTS_TIMEOUT_MS = 30_000
-
-// voice_id thật của ElevenLabs — giọng premade "Rachel" (nữ, tiếng Anh), gọi qua model
-// eleven_multilingual_v2 nên đọc được cả tiếng Việt (chất lượng tiếng Việt chưa kiểm định
-// kỹ, coi là thử nghiệm). Đổi id tại đây nếu muốn dùng giọng khác trong thư viện ElevenLabs.
-const ELEVENLABS_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'
 const ELEVENLABS_MODEL = 'eleven_multilingual_v2'
 
-// Chỉ 1 giọng VIP thử nghiệm — mở rộng thêm sau khi đánh giá chất lượng/chi phí thật.
-export type ElevenVoiceId = 'Rachel'
-export const ELEVEN_VOICE_IDS: ElevenVoiceId[] = ['Rachel']
+// Bảng giọng ElevenLabs: tên hiển thị trong app → voice_id THẬT của ElevenLabs + giới tính.
+// Gọi qua model eleven_multilingual_v2 nên đọc được cả tiếng Việt (chất lượng tiếng Việt chưa
+// kiểm định kỹ, coi là thử nghiệm).
+//
+// voice_id của 5 giọng mới lấy từ danh sách giọng "premade" công khai của ElevenLabs
+// (GET https://api.elevenlabs.io/v1/voices, kiểm lúc thêm 2026-10-08) — mọi tài khoản đều dùng
+// được, kể cả gói miễn phí. Muốn thêm giọng: thêm 1 dòng ở đây, rồi thêm CÙNG tên vào
+// apps/dhcb/src/lib/voiceTiers.ts (VoiceId + VOICE_OPTIONS + ELEVEN_VOICE_IDS).
+// ⚠️ Rachel là giọng đầu tiên (không còn trong danh sách premade hiện hành) — GIỮ NGUYÊN để
+// không mất audio đã cache; nghe thử/đổi nếu ElevenLabs báo lỗi voice không tồn tại.
+// ⚠️ Khoá cache audio gồm TÊN giọng — KHÔNG đổi voice_id của một tên đã có audio cache (nghe sai
+// giọng); muốn đổi giọng thì đặt tên mới.
+export const ELEVEN_VOICES = {
+  Rachel: { voiceId: '21m00Tcm4TlvDq8ikWAM', gender: 'female' },
+  Alice: { voiceId: 'Xb7hH8MSUJpSbSDYk0k2', gender: 'female' },
+  Matilda: { voiceId: 'XrExE9yKIg1WjnnlVkGX', gender: 'female' },
+  Eric: { voiceId: 'cjVigY5qzO86Huf0OWal', gender: 'male' },
+  Daniel: { voiceId: 'onwK4e9ZLuTAKqWW03F9', gender: 'male' },
+  Chris: { voiceId: 'iP95p4xoKVk53GoZ742B', gender: 'male' },
+} as const satisfies Record<string, { voiceId: string; gender: 'female' | 'male' }>
+
+export type ElevenVoiceId = keyof typeof ELEVEN_VOICES
+// Thứ tự cố định: nữ trước, nam sau (khớp ELEVEN_VOICE_IDS ở apps/dhcb/src/lib/voiceTiers.ts).
+export const ELEVEN_VOICE_IDS = Object.keys(ELEVEN_VOICES) as ElevenVoiceId[]
 
 export function isValidElevenVoice(value: string): value is ElevenVoiceId {
-  return (ELEVEN_VOICE_IDS as string[]).includes(value)
+  return Object.hasOwn(ELEVEN_VOICES, value)
+}
+
+export function elevenVoiceGender(voice: ElevenVoiceId): 'female' | 'male' {
+  return ELEVEN_VOICES[voice].gender
 }
 
 export function hasElevenLabsKey(): boolean {
@@ -67,14 +87,17 @@ function isAlignment(value: unknown): value is ElevenAlignment {
 
 // Gọi endpoint /with-timestamps: trả audio (base64 trong JSON) KÈM alignment từng ký tự.
 // Cùng một lần synthesize như endpoint thường nên KHÔNG tốn thêm ký tự tính phí.
-export async function generateAudioFromElevenLabs(text: string): Promise<ElevenAudioResult> {
+export async function generateAudioFromElevenLabs(
+  text: string,
+  voice: ElevenVoiceId = 'Rachel',
+): Promise<ElevenAudioResult> {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim()
   if (!apiKey) {
     throw new Error('Server chưa cấu hình ELEVENLABS_API_KEY')
   }
 
   const response = await fetchWithTimeout(
-    `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/with-timestamps`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICES[voice].voiceId}/with-timestamps`,
     {
       method: 'POST',
       headers: {

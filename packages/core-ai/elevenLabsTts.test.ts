@@ -4,6 +4,9 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
+  ELEVEN_VOICES,
+  ELEVEN_VOICE_IDS,
+  elevenVoiceGender,
   generateAudioFromElevenLabs,
   isValidElevenVoice,
   hasElevenLabsKey,
@@ -18,9 +21,27 @@ afterEach(() => {
 })
 
 describe('isValidElevenVoice / hasElevenLabsKey', () => {
-  it('Rachel là giọng hợp lệ duy nhất', () => {
-    expect(isValidElevenVoice('Rachel')).toBe(true)
+  it('mọi giọng trong bảng đều hợp lệ, tên lạ thì không', () => {
+    for (const v of ELEVEN_VOICE_IDS) expect(isValidElevenVoice(v)).toBe(true)
     expect(isValidElevenVoice('Khong-Ton-Tai')).toBe(false)
+  })
+
+  it('không bị lọt tên thuộc tính của Object.prototype', () => {
+    expect(isValidElevenVoice('toString')).toBe(false)
+    expect(isValidElevenVoice('constructor')).toBe(false)
+    expect(isValidElevenVoice('__proto__')).toBe(false)
+  })
+
+  it('6 giọng: voice_id không trùng, nữ đứng trước nam, 3 nữ + 3 nam', () => {
+    const ids = ELEVEN_VOICE_IDS.map((v) => ELEVEN_VOICES[v].voiceId)
+    expect(new Set(ids).size).toBe(ELEVEN_VOICE_IDS.length)
+    expect(ELEVEN_VOICE_IDS).toHaveLength(6)
+    const genders = ELEVEN_VOICE_IDS.map(elevenVoiceGender)
+    expect(genders).toEqual(['female', 'female', 'female', 'male', 'male', 'male'])
+  })
+
+  it('giữ nguyên voice_id của Rachel — đổi là nghe sai giọng với audio đã cache', () => {
+    expect(ELEVEN_VOICES.Rachel.voiceId).toBe('21m00Tcm4TlvDq8ikWAM')
   })
 
   it('hasElevenLabsKey phản ánh đúng biến môi trường', () => {
@@ -42,6 +63,29 @@ describe('generateAudioFromElevenLabs', () => {
       /chưa cấu hình ELEVENLABS_API_KEY/,
     )
     expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('gọi đúng voice_id của từng giọng; không truyền giọng thì dùng Rachel', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-key'
+    const urls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) => {
+        urls.push(String(input))
+        return new Response(JSON.stringify({ audio_base64: Buffer.from('a').toString('base64') }), {
+          status: 200,
+        })
+      }),
+    )
+    for (const voice of ELEVEN_VOICE_IDS) {
+      await generateAudioFromElevenLabs('hi', voice)
+      expect(urls.at(-1)).toContain(
+        `/v1/text-to-speech/${ELEVEN_VOICES[voice].voiceId}/with-timestamps`,
+      )
+    }
+    await generateAudioFromElevenLabs('hi')
+    expect(urls.at(-1)).toContain(ELEVEN_VOICES.Rachel.voiceId)
+    expect(urls).toHaveLength(ELEVEN_VOICE_IDS.length + 1)
   })
 
   it('thành công kèm alignment hợp lệ → trả audio + alignment', async () => {
