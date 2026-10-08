@@ -1,6 +1,6 @@
 # 0518 — M17 đợt 7: nút trung tính `zinc` tự ghép → `buttonClass` (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền khi tạo) · **Loại:** `style(ui)` · **Nhánh:**
+- **Ngày:** 2026-10-08 · **PR:** #1269 · **Loại:** `style(ui)` · **Nhánh:**
   `claude/peaceful-newton-czolhg` (dựng lại từ `main` `2048ace` sau khi #1268 merge).
 - **Nguồn:** phần còn mở của `0517` ("nút trung tính `zinc` tự ghép — chuyển dần khi chạm tới"), audit
   `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` **M17**. Chủ dự án: "tiếp tục đợt nút trung tính
