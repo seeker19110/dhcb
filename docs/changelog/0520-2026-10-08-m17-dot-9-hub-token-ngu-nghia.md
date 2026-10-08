@@ -1,6 +1,6 @@
 # 0520 — M17 đợt 9: hub có token ngữ nghĩa, nút zinc của hub → `buttonClass`; nút biểu tượng admin 44px (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền khi tạo) · **Loại:** `style(ui)` · **Nhánh:**
+- **Ngày:** 2026-10-08 · **PR:** #1272 · **Loại:** `style(ui)` · **Nhánh:**
   `claude/peaceful-newton-czolhg`.
 - **Nguồn:** phần còn mở của `0518`/`0519` ("hub vẫn tự ghép nút zinc vì chưa có token ngữ nghĩa";
   "nút biểu tượng admin `p-1.5` dưới 44px"). Chủ dự án: "tiếp tục tất cả các đợt còn lại".
@@ -50,7 +50,7 @@ items-center justify-center` → vùng chạm 44px, biểu tượng vẫn ở gi
 
 ## M17 sau đợt này
 
-Phần nút + bề rộng của M17 đã xong: `0513`–`0520`, các PR #1264–#1271 và PR của đợt này. Các cổng
+Phần nút + bề rộng của M17 đã xong: `0513`–`0520`, các PR #1264–#1272. Các cổng
 chặn tái phát: `transition-all`, CTA lệch accent, accent tự ghép, zinc tự ghép, chữ trắng trên accent,
 gradient tự ghép, bề rộng theo `PageShell`. Còn lại của audit 2026-09-30 là quyết định thiết kế (rail
 mục lục đứng trước `<h1>` ở 1440px) và việc tay mục A — không phải việc AI tự làm.

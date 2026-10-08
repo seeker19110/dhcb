@@ -1182,7 +1182,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `e2e/a11y-u10-recheck.spec.ts`. Sau sửa: 0 vi phạm axe A/AA, 0 tràn ngang, mọi route một
   `main#noi-dung-chinh` + một `<h1>`. **Còn mở (không phải lỗi WCAG / cần quyết định):** rail mục
   lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn hoá nút/bề rộng ĐÃ XONG (`0513`–`0520`,
-  #1264–#1271 + PR đợt `0520`): gỡ hết `transition-all`; mọi nút CTA/accent/zinc tự ghép → `buttonClass`;
+  #1264–#1272): gỡ hết `transition-all`; mọi nút CTA/accent/zinc tự ghép → `buttonClass`;
   sửa chữ trắng trên nền accent (bong bóng tin nhắn, nút Đăng nhập — trượt AA ở Xanh đêm); hub có token
   ngữ nghĩa; bề rộng nội dung 4 giá trị có chủ đích (`e2e/page-width.spec.ts`); mỗi loại có cổng chặn tái
   phát trong `DesignSystem.design.test.ts`; việc tay mục A (`plan_marketing_bullets`, hub
