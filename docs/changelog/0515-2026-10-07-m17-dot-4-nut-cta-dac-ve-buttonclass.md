@@ -1,6 +1,6 @@
 # 0515 — M17 đợt 4: nút CTA đặc tự ghép màu lệch accent → `buttonClass` (2026-10-07)
 
-- **Ngày:** 2026-10-07 · **PR:** (điền khi tạo) · **Loại:** `style(ui)` · **Nhánh:**
+- **Ngày:** 2026-10-07 · **PR:** #1266 · **Loại:** `style(ui)` · **Nhánh:**
   `claude/peaceful-newton-czolhg` (dựng lại từ `main` sau khi #1265 merge).
 - **Nguồn:** nợ còn lại của `0514` ("nút tự ghép class" + M18), audit
   `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` **M17**. Chủ dự án: "hoàn thiện nốt các việc
