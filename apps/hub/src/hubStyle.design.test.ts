@@ -36,3 +36,26 @@ describe('hub — font và cuộn mượt (audit minor 10)', () => {
     }
   })
 })
+
+// Changelog 0520: hub dùng `buttonClass` biến thể `outline`/`ghost` — các biến thể này cần token
+// ngữ nghĩa (`border-line-strong`, `text-content`, `bg-surface-raised`). Thiếu ánh xạ trong cấu hình
+// Tailwind của hub thì class sinh ra rỗng, nút mất viền/màu chữ mà không cổng nào báo. Ánh xạ phải
+// TRÙNG với app để một nút trông giống nhau ở hai nơi.
+describe('hub — token ngữ nghĩa khớp app (changelog 0520)', () => {
+  // So VĂN BẢN của từng khối thay vì import cấu hình: cấu hình app dựng đường dẫn từ
+  // `import.meta.url`, không nạp được trong môi trường test. Bỏ chú thích + khoảng trắng rồi so.
+  const block = (src: string, key: string): string => {
+    const m = new RegExp(`\\n\\s*${key}: \\{([^}]*)\\}`).exec(src)
+    if (!m) throw new Error(`không thấy khối "${key}"`)
+    return m[1].replace(/\/\/[^\n]*/g, '').replace(/\s+/g, '')
+  }
+  const hub = readFileSync(join(__dirname, '..', 'tailwind.config.js'), 'utf8')
+  const app = readFileSync(join(__dirname, '..', '..', 'dhcb', 'tailwind.config.js'), 'utf8')
+
+  for (const key of ['surface', 'line', 'content']) {
+    it(`khối \`${key}\` trong apps/hub/tailwind.config.js trùng apps/dhcb`, () => {
+      expect(block(hub, key)).toBe(block(app, key))
+      expect(block(hub, key)).toContain('rgb(var(--')
+    })
+  }
+})

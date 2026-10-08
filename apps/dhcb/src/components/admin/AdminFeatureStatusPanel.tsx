@@ -129,7 +129,7 @@ export default function AdminFeatureStatusPanel() {
               type="button"
               onClick={fetchStatus}
               aria-label="Tải lại trạng thái tính năng"
-              className={`${buttonVariantClass('outline')} p-1.5 rounded-lg`}
+              className={`${buttonVariantClass('outline')} tap-44 inline-flex items-center justify-center p-1.5 rounded-lg`}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>

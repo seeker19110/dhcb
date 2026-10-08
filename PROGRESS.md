@@ -1181,12 +1181,11 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   thoại trùng — đã sửa ở `0512` (nhánh `claude/wcag-no-conlai-u10`, chưa PR) + cổng
   `e2e/a11y-u10-recheck.spec.ts`. Sau sửa: 0 vi phạm axe A/AA, 0 tràn ngang, mọi route một
   `main#noi-dung-chinh` + một `<h1>`. **Còn mở (không phải lỗi WCAG / cần quyết định):** rail mục
-  lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn
-  hoá nút/bề rộng (`transition-all` ĐÃ gỡ hết — `0513` #1264, `0514` #1265, cổng tuyệt đối; nút CTA đặc
-  màu lệch accent ĐÃ chuyển sang `buttonClass` ở `0515` #1266; bề rộng nội dung ĐÃ nhất quán — 4 giá trị có chủ đích, khoá bằng `e2e/page-width.spec.ts`, `0516` #1267;
-  nút accent đặc tự ghép ĐÃ chuyển hết sang `buttonClass` ở `0517` #1268; nút trung tính `zinc` tự ghép
-  ĐÃ chuyển sang `outline` ở `0518` #1269, cổng chặn tái phát; chữ `text-white` trên nền accent (bong bóng tin nhắn, nút
-  Đăng nhập — trượt AA ở Xanh đêm) ĐÃ sửa ở `0519` #1271, cổng chặn tái phát); việc tay mục A (`plan_marketing_bullets`, hub
+  lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn hoá nút/bề rộng ĐÃ XONG (`0513`–`0520`,
+  #1264–#1271 + PR đợt `0520`): gỡ hết `transition-all`; mọi nút CTA/accent/zinc tự ghép → `buttonClass`;
+  sửa chữ trắng trên nền accent (bong bóng tin nhắn, nút Đăng nhập — trượt AA ở Xanh đêm); hub có token
+  ngữ nghĩa; bề rộng nội dung 4 giá trị có chủ đích (`e2e/page-width.spec.ts`); mỗi loại có cổng chặn tái
+  phát trong `DesignSystem.design.test.ts`; việc tay mục A (`plan_marketing_bullets`, hub
   trong `ALLOWED_ORIGINS`, `cwv:prod`). Giới hạn: đo trên mock, không có trình đọc màn hình thật.
 
 - 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt

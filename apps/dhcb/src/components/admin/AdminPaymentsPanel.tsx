@@ -204,7 +204,7 @@ export default function AdminPaymentsPanel() {
           <button
             type="button"
             onClick={fetchPayments}
-            className={`${buttonVariantClass('outline')} p-2 rounded-lg`}
+            className={`${buttonVariantClass('outline')} tap-44 inline-flex items-center justify-center p-2 rounded-lg`}
             title="Tải lại"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

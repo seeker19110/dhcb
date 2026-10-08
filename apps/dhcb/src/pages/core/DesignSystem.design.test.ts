@@ -186,15 +186,17 @@ describe('Nút trung tính không còn tự ghép nền zinc đặc (M17 đợt 
   // Trước đợt này: ~50 nút "Thử lại / Đóng / Làm lại / Dừng" tự ghép `bg-zinc-800 hover:bg-zinc-700`
   // (hoặc `bg-zinc-900 hover:bg-zinc-800`), mỗi nơi một cỡ chữ, bo góc, đệm, và có nơi chữ `text-white`.
   // Nút trung tính chuẩn là `outline` (viền `line-strong` đã đo ở cả 3 theme) — nay đều qua
-  // `buttonClass`/`buttonVariantClass`. Chỉ dò app + packages: hub không có token ngữ nghĩa
-  // (`line-strong`, `content`) nên chưa dùng được `outline`.
+  // `buttonClass`/`buttonVariantClass`. Hub được thêm vào ở đợt 9 (changelog 0520) sau khi
+  // `apps/hub/tailwind.config.js` có token ngữ nghĩa (`line-strong`, `content`, `surface-raised`).
   //
   // Ngoại lệ có lý do — KHÔNG phải nút hành động:
   //   • SentenceScramble: ô chữ của trò xếp câu (bấm để chuyển từ xuống câu) — là quân cờ của trò
   //     chơi, cần nền đặc để trông như một mảnh ghép, không phải nút có viền.
   const ALLOWED = ['apps/dhcb/src/pages/learning/practice/SentenceScramble.tsx']
-  it('app + packages: 0 chuỗi className tự ghép nền zinc đặc kèm hover zinc', () => {
-    const files = ['apps/dhcb/src', 'packages'].flatMap((d) => listSource(join(REPO, d)))
+  it('app + hub + packages: 0 chuỗi className tự ghép nền zinc đặc kèm hover zinc', () => {
+    const files = ['apps/dhcb/src', 'apps/hub/src', 'packages'].flatMap((d) =>
+      listSource(join(REPO, d)),
+    )
     expect(files.length).toBeGreaterThan(300)
     // Hai lookahead: bắt cả khi `hover:` viết trước nền. Nền phải đứng sau dấu cách/nháy — `\b`
     // thì khớp nhầm cả đuôi `hover:bg-zinc-800` của nút chỉ có biểu tượng. `(?![/\w-])` loại nền
