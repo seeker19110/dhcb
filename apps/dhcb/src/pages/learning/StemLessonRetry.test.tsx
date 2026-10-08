@@ -3,7 +3,7 @@
 // Lỗi canh: mở câu sai từ Sổ lỗi trên cùng máy thì đáp án cũ + lời giải hiện NGAY, người học
 // không có lượt tự thử sạch. Dựng cả trang thật (nháp, router state, nút nộp) vì lỗi nằm ở khe
 // giữa Sổ lỗi → history state → nháp của trang bài.
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
 import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import {
@@ -44,17 +44,27 @@ function DieuHuong() {
   return null
 }
 
-describe('[S11b] tự thử lại câu STEM sai', () => {
+describe('[S11b] tự thử lại câu STEM sai', { timeout: 20_000 }, () => {
+  // Mỗi ca DỰNG CẢ TRANG THẬT 2–3 lần (mở → làm sai → mở lại kèm cờ), React bản dev +
+  // happy-dom: đó là cách duy nhất bắt lỗi ở khe Sổ lỗi → history state → nháp, nên không cắt
+  // bớt được. Đo 2026-10-08 (changelog 0532), ca nặng nhất: 0,64 s chạy riêng · 1,27 s dưới đo
+  // coverage V8 · 2,18 s coverage + máy tải ~25. Trong `test:coverage` toàn bộ trên máy tải
+  // 14–23 các ca này chạm ngưỡng 5 s mặc định (mỗi lần một ca khác) → nới 20 s cho riêng
+  // describe này. Bài học nạp MỘT lần ở `beforeAll` (loader vốn cache theo chương — đặt trong
+  // `beforeEach` chỉ là chờ thừa mỗi ca).
   let container: HTMLDivElement
   let root: Root
   let bai: StemLessonLike
   let baiKhac: StemLessonLike
 
-  beforeEach(async () => {
-    localStorage.clear()
-    __resetSessionMemory()
+  beforeAll(async () => {
     bai = (await PHYSICS_LOADER.loadLesson(BAI_ID))!
     baiKhac = (await PHYSICS_LOADER.loadLesson(BAI_KHAC_ID))!
+  })
+
+  beforeEach(() => {
+    localStorage.clear()
+    __resetSessionMemory()
     vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {})
     vi.stubGlobal(
       'fetch',

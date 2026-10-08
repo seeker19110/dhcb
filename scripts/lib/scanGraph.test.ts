@@ -22,8 +22,23 @@ function write(relativePath: string, content: string): void {
   writeFileSync(absolute, content, 'utf8')
 }
 
+/**
+ * tsconfig của repo giả: CHỈ nạp `lib.es5.d.ts`.
+ *
+ * Vì sao: thiếu tsconfig thì TypeScript tự nạp lib mặc định `lib.d.ts` — kéo theo cả
+ * `lib.dom.d.ts` (~1,5 MB) — và PHÂN TÍCH LẠI nó ở MỖI lần `scanGraph` dựng chương trình.
+ * Repo giả không dùng kiểu nào của DOM, nên đó là việc thừa thuần tuý — mà lại là việc nặng
+ * nhất của cả file: đo 2026-10-08 (changelog 0532) một lượt `scanGraph` trên repo 2 file mất
+ * 4,2 s khi chạy riêng, 15,7–16,3 s dưới đo coverage V8 + máy tải ~20; với lib es5 còn
+ * 0,06 s / 1,0 s. Hook `beforeAll` 30 s từng đỏ đúng vì chuyện này. Cạnh import/lời gọi hàm
+ * mà file này kiểm không phụ thuộc lib nào. Thêm nữa, nhờ vậy test cũng đi qua nhánh ĐỌC
+ * tsconfig của `scanGraph` (repo thật luôn có tsconfig).
+ */
+const TSCONFIG_GON = JSON.stringify({ compilerOptions: { lib: ['es5'], types: [] } })
+
 beforeAll(() => {
   root = mkdtempSync(path.join(tmpdir(), 'codemap-test-'))
+  write('tsconfig.json', TSCONFIG_GON)
 
   write('src/target.ts', 'export function target(): number {\n  return 1\n}\n')
   // 1. import tĩnh + có lời gọi hàm xuyên file
@@ -51,6 +66,7 @@ beforeAll(() => {
   write('server.ts', "import { target } from './src/target'\n\nexport const boot = target\n")
 
   graph = scanGraph({ rootDir: root, scanRoots: ['src'], entryPoints: ['server.ts'] })
+  // 30 s: dựng chương trình TS thật (parse lib es5 + type checker) — xem TSCONFIG_GON.
 }, 30000)
 
 afterAll(() => {
@@ -161,7 +177,9 @@ describe('resolveDhcbAlias — alias workspace @dhcb/*', () => {
   })
 
   // Timeout 30s: scanGraph khởi tạo TS program thật — máy CI lạnh cache có thể vượt 5s mặc
-  // định (đã đỏ CI #625 đúng vì vậy dù local chạy ~1s).
+  // định (đã đỏ CI #625 đúng vì vậy dù local chạy ~1s). Đo 2026-10-08 (changelog 0532): trước
+  // khi dùng TSCONFIG_GON ca này 7,3 s dưới coverage, 10,1 s coverage + máy tải ~18; sau còn
+  // 0,6 s coverage + máy tải ~16.
   it('scanGraph tạo được cạnh import xuyên qua @dhcb/*', { timeout: 30_000 }, () => {
     const scanRoot = mkdtempSync(path.join(tmpdir(), 'codemap-dhcb-scan-'))
     try {
@@ -170,6 +188,7 @@ describe('resolveDhcbAlias — alias workspace @dhcb/*', () => {
         mkdirSync(path.dirname(absolute), { recursive: true })
         writeFileSync(absolute, content, 'utf8')
       }
+      write2('tsconfig.json', TSCONFIG_GON)
       write2('packages/core-db/pgPool.ts', 'export const pool = {}\n')
       write2(
         'api/handler.ts',

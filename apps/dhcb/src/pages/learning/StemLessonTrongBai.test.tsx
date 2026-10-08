@@ -4,7 +4,7 @@
 // Dựng CẢ trang thật (router + loader thật) vì các lỗi cần canh nằm ở khe giữa panel và trang:
 // panel đóng xong trả focus về nút mở đè lên đích vừa chọn, bấm lại cùng đích sinh history thừa,
 // nhảy mục làm mất nháp hoặc bắn request nộp bài.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import {
@@ -60,19 +60,29 @@ function datManHinh(desktop: boolean) {
   )
 }
 
-describe('[S09b] Trong bài — trang bài STEM', () => {
+describe('[S09b] Trong bài — trang bài STEM', { timeout: 20_000 }, () => {
+  // Mỗi ca DỰNG CẢ TRANG THẬT (router + loader thật) rồi thao tác nhiều bước, React bản dev +
+  // happy-dom: lỗi cần canh nằm ở khe panel ↔ trang, nên không cắt bớt được. Đo 2026-10-08
+  // (changelog 0532), ca nặng nhất: 0,71 s chạy riêng · 0,74 s dưới đo coverage V8 · 1,80 s
+  // coverage + máy tải ~25. Trong `test:coverage` toàn bộ trên máy tải 14–23 các ca này chạm
+  // ngưỡng 5 s mặc định (mỗi lần một ca khác) → nới 20 s cho riêng describe này. Bài học nạp
+  // MỘT lần ở `beforeAll` (loader vốn cache theo chương — đặt trong `beforeEach` chỉ là chờ
+  // thừa mỗi ca).
   let container: HTMLDivElement
   let root: Root
   let posts: number
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    await PHYSICS_LOADER.loadLesson('ly10-c2-b10')
+    await PHYSICS_LOADER.loadLesson('ly10-c1-b1')
+  })
+
+  beforeEach(() => {
     localStorage.clear()
     __resetSessionMemory()
     container = document.createElement('div')
     document.body.append(container)
     root = createRoot(container)
-    await PHYSICS_LOADER.loadLesson('ly10-c2-b10')
-    await PHYSICS_LOADER.loadLesson('ly10-c1-b1')
     vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {})
     posts = 0
     vi.stubGlobal(
