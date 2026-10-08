@@ -152,7 +152,7 @@ export default function StudioDialogue({
             onClick={() => setViewMode('voice')}
             className={`tap-44-touch-y flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
               viewMode === 'voice'
-                ? 'bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-md shadow-accent-500/20'
+                ? 'bg-accent-500 text-black shadow-md shadow-accent-500/20'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -255,7 +255,7 @@ export default function StudioDialogue({
               <button
                 onClick={voice.start}
                 disabled={!voice.supported}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 disabled:opacity-50 text-white font-bold text-sm shadow-xl transition transform hover:scale-105"
+                className={buttonClass({ size: 'lg' })}
               >
                 <Mic className="w-5 h-5" />
                 Nhấn để nói
@@ -341,7 +341,7 @@ export default function StudioDialogue({
                     className={`max-w-[88%] sm:max-w-[78%] rounded-3xl p-5 shadow-sm transition ${
                       isBot
                         ? 'bg-zinc-900/90 border border-zinc-800/80 text-zinc-200'
-                        : 'bg-gradient-to-r from-accent-600 to-accent-500 text-white shadow-md'
+                        : 'bg-accent-500 text-[#09090b] shadow-md'
                     }`}
                   >
                     {isBot && (msg.domain || msg.intent) && (
@@ -490,7 +490,11 @@ export default function StudioDialogue({
                       </div>
                     )}
 
-                    <div className="text-[0.6875rem] text-zinc-400 text-right mt-2">
+                    <div
+                      className={`text-[0.6875rem] text-right mt-2 ${
+                        isBot ? 'text-zinc-400' : 'text-[#09090b]/80'
+                      }`}
+                    >
                       {msg.timestamp}
                     </div>
                   </div>

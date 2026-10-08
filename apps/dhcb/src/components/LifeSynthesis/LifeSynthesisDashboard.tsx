@@ -50,7 +50,7 @@ export default function LifeSynthesisDashboard() {
       <div className="rounded-3xl bg-zinc-950 border border-zinc-800 p-5 shadow-xl space-y-4 transition duration-300 hover:border-accent-500/40">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-accent-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-lg">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-accent-600 via-indigo-600 to-sky-500 flex items-center justify-center text-[#fff] shadow-lg">
               <Compass className="w-5 h-5" />
             </div>
             <div>

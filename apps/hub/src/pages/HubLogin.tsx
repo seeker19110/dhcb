@@ -434,7 +434,7 @@ export default function HubLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-50 text-[#09090b] font-bold py-3 rounded-xl text-sm transition active:scale-[0.98] mt-1 shadow-lg shadow-accent-500/20"
+                className={buttonClass({ fullWidth: true, className: 'mt-1' })}
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

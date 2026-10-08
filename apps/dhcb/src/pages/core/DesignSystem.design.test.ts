@@ -208,6 +208,36 @@ describe('Nút trung tính không còn tự ghép nền zinc đặc (M17 đợt 
   })
 })
 
+describe('Không còn chữ `text-white` trên nền accent (M17 đợt 8, changelog 0519)', () => {
+  // `text-white` map sang `--c-white`: ở Xanh đêm là trắng thật → trên accent-500 chỉ 2,43:1,
+  // accent-600 3,68:1 (trượt AA); ở Blue sky/Nhi đồng bị đảo thành chữ tối → trên accent-600 4,36:1.
+  // Trước đợt này dính: bong bóng tin nhắn của người dùng (chữ NỘI DUNG, cần 7:1), nút Đăng nhập,
+  // nút gửi chat, "Nhấn để nói", tab đang chọn, avatar chữ cái. Nền accent đặc + chữ `#09090b`
+  // đạt ≥ 7,10:1 ở cả 3 theme. axe không bắt được vì nền là gradient (axe báo "incomplete").
+  const files = () =>
+    ['apps/dhcb/src', 'apps/hub/src', 'packages'].flatMap((d) => listSource(join(REPO, d)))
+
+  it('0 chuỗi class ghép nền accent đặc/gradient (400–600) với `text-white`', () => {
+    const list = files()
+    expect(list.length).toBeGreaterThan(300)
+    const q = `['"\`]`
+    const whiteOnAccent = new RegExp(
+      `${q}(?=[^'"\`]*\\b(bg|from)-accent-(400|500|600)(?![/\\w-]))(?=[^'"\`]*\\btext-white\\b)`,
+    )
+    const offenders = list
+      .filter((f) => whiteOnAccent.test(stripComments(readFileSync(f, 'utf8'))))
+      .map((f) => f.slice(REPO.length + 1))
+    expect(offenders).toEqual([])
+  })
+
+  it('0 nút gradient accent tự ghép (`hover:from-accent-*`) — dùng `buttonClass`', () => {
+    const offenders = files()
+      .filter((f) => /\bhover:from-accent-/.test(stripComments(readFileSync(f, 'utf8'))))
+      .map((f) => f.slice(REPO.length + 1))
+    expect(offenders).toEqual([])
+  })
+})
+
 describe('Trang dài Lập trình không lặp/không trải hết (audit M22)', () => {
   it('lộ trình: bài kiểm dạng gọn, không lặp dòng "chưa có bài kiểm" mỗi chặng', () => {
     const src = read('apps/dhcb/src/pages/subjects/programming/ProgrammingPathPage.tsx')

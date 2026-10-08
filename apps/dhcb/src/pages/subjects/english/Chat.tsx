@@ -1,4 +1,4 @@
-import { buttonClass } from '@core/buttonStyles'
+import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import { duongDanMonTiengAnh } from '../../../lib/subjectsHost'
@@ -253,7 +253,7 @@ function Bubble({
   if (msg.role === 'user') {
     return (
       <div className={`flex justify-end ${isNew ? 'animate-fade-in' : ''}`}>
-        <div className="max-w-[82%] sm:max-w-[75%] bg-gradient-to-r from-accent-600 to-accent-500 text-white rounded-3xl rounded-tr-xs px-5 py-3.5 text-sm leading-relaxed shadow-md break-words">
+        <div className="max-w-[82%] sm:max-w-[75%] bg-accent-500 text-[#09090b] rounded-3xl rounded-tr-xs px-5 py-3.5 text-sm leading-relaxed shadow-md break-words">
           {msg.content}
         </div>
       </div>
@@ -964,12 +964,12 @@ export default function Chat() {
                 <button
                   onClick={() => sendMessage()}
                   disabled={!input.trim() || loading || limitHit || isThrottled}
-                  className="tap-44 flex items-center justify-center p-2.5 bg-gradient-to-br from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-40 text-white rounded-xl transition shrink-0 shadow-md active:scale-95 relative"
+                  className={`${buttonVariantClass('primary')} tap-44 flex items-center justify-center p-2.5 rounded-xl shrink-0 relative disabled:opacity-40`}
                   aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
                 >
                   <Send className="w-4 h-4" />
                   {isThrottled && throttleCountdown > 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[0.6875rem] font-bold text-white">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl text-[0.6875rem] font-bold text-[#fff]">
                       {throttleCountdown}s
                     </div>
                   )}
