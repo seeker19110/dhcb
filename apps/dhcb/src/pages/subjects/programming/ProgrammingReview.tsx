@@ -24,6 +24,7 @@ import {
 import { SRS_SESSION_CAP, type Rating } from '../../../lib/srs'
 import { PROGRAMMING_PREFIX, duongDanBaiHoc } from '../../../lib/programmingRoutes'
 import FlashcardReview, { type FlashcardItem } from '../../../components/FlashcardReview'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function ProgrammingReview() {
   usePageTitle('Ôn tập | Môn Lập trình · Đồng Hành Cùng Bạn')
@@ -100,7 +101,7 @@ export default function ProgrammingReview() {
                 setHangDoi(null)
                 setLanThu((n) => n + 1)
               }}
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+              className={buttonClass()}
             >
               Tải lại thẻ
             </button>
@@ -117,10 +118,7 @@ export default function ProgrammingReview() {
               Nghỉ ngơi là một phần của việc nhớ lâu — ôn dồn không giúp bạn nhớ hơn. Học thêm một
               bài mới đi, thẻ của bài đó sẽ tự vào vòng ôn khi bạn đạt phần tự viết.
             </p>
-            <button
-              onClick={() => nav(PROGRAMMING_PREFIX)}
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-            >
+            <button onClick={() => nav(PROGRAMMING_PREFIX)} className={buttonClass()}>
               <BookOpen className="w-4 h-4" />
               <span>Về trang môn học</span>
             </button>

@@ -2,6 +2,7 @@
 // LƯU Ý: vẫn là bản GIẢ LẬP (setTimeout 400 ms + câu trả lời cứng) — thay bằng AI thật là việc khác.
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 export function AiExplainer() {
   const [explainerQuery, setExplainerQuery] = useState('')
@@ -61,7 +62,7 @@ export function AiExplainer() {
         <button
           onClick={() => handleAskExplainer(explainerQuery)}
           disabled={isExplaining || !explainerQuery.trim()}
-          className="px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-50 text-black font-bold text-sm transition"
+          className={buttonClass({ size: 'lg' })}
         >
           {isExplaining ? 'Đang suy nghĩ...' : 'Hỏi AI'}
         </button>

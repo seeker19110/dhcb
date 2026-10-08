@@ -23,6 +23,7 @@ import { getSpecStage } from '@dhcb/subject-programming/specializations/registry
 import { idFromSlugSegment } from '@core/slug'
 import { PROGRAMMING_PREFIX, duongDanLoTrinh } from '../../../lib/programmingRoutes'
 import { usePageTitle } from '../../../lib/usePageTitle'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function ProgrammingPathDiagnostic() {
   const nav = useNavigate()
@@ -128,7 +129,7 @@ export default function ProgrammingPathDiagnostic() {
             <button
               onClick={() => void handleSave()}
               disabled={saving || saved || !user}
-              className="tap-44 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition active:scale-[0.98]"
+              className={buttonClass({ size: 'lg', fullWidth: true })}
             >
               <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
               <span>{saved ? 'Đã lưu' : saving ? 'Đang lưu…' : 'Lưu và bắt đầu'}</span>
@@ -187,7 +188,7 @@ export default function ProgrammingPathDiagnostic() {
         <button
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="tap-44 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition active:scale-[0.98]"
+          className={buttonClass({ size: 'lg', fullWidth: true })}
         >
           <span>
             Xem gợi ý điểm bắt đầu ({answered}/{questions.length})

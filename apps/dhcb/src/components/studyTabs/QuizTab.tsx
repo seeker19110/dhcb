@@ -245,7 +245,7 @@ export function QuizTab({
           </button>
           <button
             onClick={() => nav('/')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+            className={buttonClass({ size: 'lg', className: 'flex-1' })}
           >
             <Home className="w-4 h-4" /> {isA ? 'Trang chủ' : 'Home'}
           </button>

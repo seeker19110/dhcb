@@ -48,6 +48,7 @@ import { saveOnboarding } from '../../../lib/cloud'
 import { cacheOnboarding, getCachedOnboarding } from '../../../lib/onboarding'
 import { setDailySpeed } from '../../../lib/curriculum'
 import { minutesToSpeed } from '../../../lib/onboarding'
+import { buttonClass } from '@core/buttonStyles'
 
 // Màu nhấn trung tính cho bài test (không gắn với 1 cấp CEFR cụ thể như CefrExam).
 const accent = ACCENT.emerald
@@ -303,7 +304,7 @@ function PlacementSession() {
               </p>
               <button
                 onClick={() => continueAfterResultFromSaved()}
-                className="w-full bg-accent-500 hover:bg-accent-400 text-black font-semibold py-3 rounded-2xl transition"
+                className={buttonClass({ size: 'lg', fullWidth: true })}
               >
                 {isA ? 'Dùng kết quả này' : 'Use this result'}
               </button>
@@ -322,10 +323,7 @@ function PlacementSession() {
                   ? `Tối đa ${PLACEMENT_MAX_ROUNDS} vòng, mỗi vòng ${Object.values(PLACEMENT_ROUND_PLAN).reduce((a, b) => a + b, 0)} câu (từ vựng · ngữ pháp · nghe · đọc hiểu). Câu hỏi tự điều chỉnh độ khó theo bạn.`
                   : `Up to ${PLACEMENT_MAX_ROUNDS} rounds, ${Object.values(PLACEMENT_ROUND_PLAN).reduce((a, b) => a + b, 0)} questions each (vocabulary · grammar · listening · reading). Difficulty adapts to you.`}
               </p>
-              <button
-                onClick={startTest}
-                className="w-full bg-accent-500 hover:bg-accent-400 text-black font-semibold py-3 rounded-2xl transition"
-              >
+              <button onClick={startTest} className={buttonClass({ size: 'lg', fullWidth: true })}>
                 {isA ? 'Bắt đầu' : 'Start'}
               </button>
               <button
@@ -378,7 +376,7 @@ function PlacementSession() {
             <button
               disabled={saving}
               onClick={continueAfterResult}
-              className="w-full mt-4 bg-accent-500 hover:bg-accent-400 text-black font-semibold py-3 rounded-2xl transition"
+              className={buttonClass({ size: 'lg', fullWidth: true, className: 'mt-4' })}
             >
               {saving
                 ? isA
@@ -419,7 +417,7 @@ function PlacementSession() {
             <button
               type="button"
               onClick={() => void loadRound(roundToLoad)}
-              className="tap-44 w-full rounded-xl bg-accent-500 px-4 py-3 font-semibold text-black hover:bg-accent-400 transition-colors"
+              className={buttonClass({ size: 'lg', fullWidth: true })}
             >
               {isA ? 'Thử lại' : 'Try again'}
             </button>

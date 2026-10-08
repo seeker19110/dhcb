@@ -518,7 +518,7 @@ export function VocabFlash({
           )}
           <button
             onClick={() => (passed ? onBack() : setTestOutMode(null))}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+            className={buttonClass({ size: 'lg', className: 'flex-1' })}
           >
             {passed ? (isA ? 'Quay lại' : 'Back') : isA ? 'Học bình thường' : 'Learn normally'}
           </button>

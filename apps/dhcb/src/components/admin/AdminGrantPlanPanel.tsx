@@ -9,6 +9,7 @@ import { useToast } from '@core/ToastProvider'
 import { getAuthHeader } from '@core/authHeader'
 import type { Plan } from '@dhcb/core-billing/plan'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
+import { buttonClass } from '@core/buttonStyles'
 
 const PLAN_OPTIONS: { key: Plan; label: string }[] = [
   { key: 'free', label: 'Free' },
@@ -200,7 +201,7 @@ export default function AdminGrantPlanPanel({
             type="button"
             onClick={handleGrant}
             disabled={granting}
-            className="tap-44 flex-1 flex items-center justify-center gap-2 rounded-xl bg-accent-500 text-[#09090b] font-semibold py-3 disabled:opacity-60"
+            className={buttonClass({ size: 'lg', className: 'flex-1' })}
           >
             {granting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

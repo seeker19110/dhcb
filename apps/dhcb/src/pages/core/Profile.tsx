@@ -57,6 +57,7 @@ import { PageShell } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
 import { useIsDesktopViewport } from '../../lib/useIsDesktopViewport'
 import { STUDIOS } from '../../lib/studios'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function Profile() {
   const nav = useNavigate()
@@ -629,7 +630,7 @@ export default function Profile() {
                               type="button"
                               onClick={() => void handleClaimReward(r.id)}
                               disabled={claimingId === r.id}
-                              className="tap-44 inline-flex items-center gap-1.5 bg-accent-500 hover:bg-accent-400 disabled:opacity-60 text-[#09090b] text-xs font-medium px-3 py-2 rounded-lg transition active:scale-[0.97] shrink-0"
+                              className={buttonClass({ size: 'sm', className: 'shrink-0 tap-44' })}
                             >
                               {claimingId === r.id && (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

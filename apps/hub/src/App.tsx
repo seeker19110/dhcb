@@ -24,6 +24,7 @@ import {
 import { ThemeToggle } from '@core/ThemeToggle'
 import HubLogin from './pages/HubLogin'
 import { SUBJECT_CATALOG } from './subjectsCatalog.generated'
+import { buttonClass } from '@core/buttonStyles'
 
 // Trang chủ hub — nền tảng "Đồng Hành Cùng Bạn" (https://www.donghanhcungban.org)
 //
@@ -329,7 +330,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               </a>
               <a
                 href={APP_URL}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 sm:px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 transition hover:scale-[1.02]"
+                className={buttonClass({ size: 'sm', className: 'sm:h-11 sm:px-4 sm:text-sm' })}
               >
                 <span>Vào nền tảng</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -345,7 +346,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               </a>
               <a
                 href={START_URL}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] shadow-md shadow-accent-500/20 hover:shadow-accent-500/30 transition hover:scale-[1.02]"
+                className={buttonClass({ size: 'sm', className: 'sm:h-11 sm:px-4 sm:text-sm' })}
               >
                 <span>Bắt đầu</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -411,7 +412,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10">
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 hover:shadow-accent-500/35 transition hover:scale-[1.02]"
+            className={buttonClass({ size: 'lg', fullWidth: true, className: 'sm:w-auto sm:px-7' })}
           >
             <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu học miễn phí'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -419,7 +420,7 @@ function Hero({ stats }: { stats: HubStats | null }) {
 
           <a
             href="#tru-cot"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-100 font-semibold text-base transition"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 h-12 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-100 font-semibold text-base transition"
           >
             <Layers className="w-4 h-4 text-accent-300 theme-light:text-accent-800" />
             <span>Nền tảng gồm những gì?</span>
@@ -837,10 +838,7 @@ function SubjectsSection() {
 
         {current.status === 'live' && current.ctaUrl ? (
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href={current.ctaUrl}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition shadow-md shadow-accent-500/20 hover:scale-[1.02]"
-            >
+            <a href={current.ctaUrl} className={buttonClass({ size: 'lg' })}>
               <span>{current.ctaLabel}</span>
               <ArrowRight className="w-4 h-4" />
             </a>
@@ -859,10 +857,7 @@ function SubjectsSection() {
           </div>
         ) : current.startWithUrl ? (
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href={current.startWithUrl}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-sm sm:text-base transition shadow-md shadow-accent-500/20 hover:scale-[1.02]"
-            >
+            <a href={current.startWithUrl} className={buttonClass({ size: 'lg' })}>
               <span>Bắt đầu với {current.name}</span>
               <ArrowRight className="w-4 h-4" />
             </a>
@@ -947,10 +942,7 @@ function HowItWorksSection() {
         </ol>
 
         <div className="mt-10 text-center">
-          <a
-            href={START_URL}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition hover:scale-[1.02]"
-          >
+          <a href={START_URL} className={buttonClass({ size: 'lg', className: 'sm:px-7' })}>
             <span>Bắt đầu ngay</span>
             <ArrowRight className="w-4 h-4" />
           </a>
@@ -1058,7 +1050,7 @@ function PricingSection({ stats }: { stats: HubStats | null }) {
           </div>
           <a
             href={isLoggedIn ? PROFILE_URL : `${APP_URL}/login`}
-            className="w-full py-3.5 px-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-center font-bold text-sm text-[#09090b] shadow-md shadow-accent-500/25 transition block hover:scale-[1.02]"
+            className={buttonClass({ size: 'lg', fullWidth: true })}
           >
             {isLoggedIn ? 'Xem giá & nâng cấp trong hồ sơ →' : 'Đăng nhập để xem bảng giá →'}
           </a>
@@ -1176,7 +1168,7 @@ function CtaBanner({ stats }: { stats: HubStats | null }) {
           </p>
           <a
             href={isLoggedIn ? APP_URL : START_URL}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold text-base shadow-lg shadow-accent-500/25 transition hover:scale-105"
+            className={buttonClass({ size: 'lg', className: 'sm:h-14 sm:px-8' })}
           >
             <span>{isLoggedIn ? 'Tiếp tục việc đang làm' : 'Bắt đầu miễn phí'}</span>
             <ArrowRight className="w-4 h-4" />

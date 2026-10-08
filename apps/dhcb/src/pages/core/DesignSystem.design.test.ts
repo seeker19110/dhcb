@@ -163,6 +163,25 @@ describe('Nút CTA đặc không còn tự ghép màu lệch accent (M17 đợt 
   })
 })
 
+describe('Nút accent đặc không còn tự ghép class (M17 đợt 6, changelog 0517)', () => {
+  // Trước đợt này: 76 chuỗi `className="…bg-accent-500 … hover:bg-accent-400…"` tự ghép ở app + hub —
+  // cùng màu với `primary` nhưng mỗi nơi một cỡ (`py-2`…`py-4`), bo góc (`xl`/`2xl`/`full`), mờ khi vô
+  // hiệu (40/50/60) và có nơi chữ trắng `#fff` trên nền accent (~2,3:1, trượt AA). Nay đều qua
+  // `buttonClass`. Chỉ dò chuỗi `className="…"` viết liền: chuỗi điều kiện (`? 'bg-accent-500…' : …`)
+  // là TRẠNG THÁI của nút gửi (bật/tắt theo nội dung ô nhập), không phải nút tự ghép.
+  it('app + hub + packages: 0 chuỗi className tự ghép nền accent đặc kèm hover accent', () => {
+    const files = ['apps/dhcb/src', 'apps/hub/src', 'packages'].flatMap((d) =>
+      listSource(join(REPO, d)),
+    )
+    expect(files.length).toBeGreaterThan(300)
+    const handRolled = /className="[^"]*\bbg-accent-(500|600)(?![/\w-])[^"]*\bhover:bg-accent/
+    const offenders = files
+      .filter((f) => handRolled.test(stripComments(readFileSync(f, 'utf8'))))
+      .map((f) => f.slice(REPO.length + 1))
+    expect(offenders).toEqual([])
+  })
+})
+
 describe('Trang dài Lập trình không lặp/không trải hết (audit M22)', () => {
   it('lộ trình: bài kiểm dạng gọn, không lặp dòng "chưa có bài kiểm" mỗi chặng', () => {
     const src = read('apps/dhcb/src/pages/subjects/programming/ProgrammingPathPage.tsx')

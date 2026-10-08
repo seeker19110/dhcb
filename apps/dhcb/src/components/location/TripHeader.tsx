@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { Check, Clock, Share2, Wifi, WifiOff } from 'lucide-react'
 import { formatRemaining } from '../../lib/locationFormat'
 import { buildInviteUrl } from '../../lib/locationShare'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   name: string
@@ -79,7 +80,7 @@ export default function TripHeader({ name, inviteCode, expiresAt, transport }: P
         <button
           type="button"
           onClick={() => void shareInvite()}
-          className="tap-44 flex shrink-0 items-center gap-2 rounded-xl bg-accent-500 px-4 font-bold text-[#09090b]"
+          className={buttonClass({ className: 'shrink-0' })}
         >
           {copied ? (
             <Check className="h-5 w-5" aria-hidden="true" />

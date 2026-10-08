@@ -8,6 +8,7 @@ import { useToast } from '@core/ToastProvider'
 import { getAuthHeader } from '@core/authHeader'
 import type { Plan } from '@dhcb/core-billing/plan'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
+import { buttonClass } from '@core/buttonStyles'
 
 interface FeatureCatalogItem {
   key: string
@@ -248,12 +249,7 @@ export default function AdminPlanFeaturesPanel() {
             placeholder="Tên hiển thị"
             className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white"
           />
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={adding}
-            className="tap-44 flex items-center justify-center gap-2 rounded-xl bg-accent-500 text-[#09090b] font-semibold px-4 py-2.5 disabled:opacity-60 whitespace-nowrap"
-          >
+          <button type="button" onClick={handleAdd} disabled={adding} className={buttonClass()}>
             {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             Thêm
           </button>

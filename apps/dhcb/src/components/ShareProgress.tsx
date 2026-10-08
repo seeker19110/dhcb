@@ -4,6 +4,7 @@ import QRCode from 'qrcode'
 import { getStreak } from '../lib/storage'
 import { getLearnedCount } from '../lib/vocab'
 import { useDialogBehavior } from './useDialogBehavior'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   userId: string
@@ -170,10 +171,7 @@ export default function ShareProgress({ userId, isA, onClose }: Props) {
             {copied ? (isA ? 'Đã sao chép!' : 'Copied!') : isA ? 'Sao chép' : 'Copy'}
           </button>
           {'share' in navigator && (
-            <button
-              onClick={doShare}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-black text-sm font-semibold transition"
-            >
+            <button onClick={doShare} className={buttonClass({ size: 'lg', className: 'flex-1' })}>
               <Share2 className="w-4 h-4" />
               {isA ? 'Chia sẻ' : 'Share'}
             </button>

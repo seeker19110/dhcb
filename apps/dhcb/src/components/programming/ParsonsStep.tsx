@@ -5,6 +5,7 @@
 // mở lại bài không bị đảo khác đi.
 import { CheckCircle2 } from 'lucide-react'
 import { PARSONS_COPY } from '../../lib/feedbackCopy'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   prompt: string
@@ -73,11 +74,7 @@ export default function ParsonsStep({
         </div>
       </div>
 
-      <button
-        onClick={onCheck}
-        disabled={arranged.length === 0}
-        className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition"
-      >
+      <button onClick={onCheck} disabled={arranged.length === 0} className={buttonClass()}>
         <CheckCircle2 className="w-4 h-4" />
         <span>Kiểm tra thứ tự</span>
       </button>

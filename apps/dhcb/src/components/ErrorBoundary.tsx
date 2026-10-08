@@ -3,6 +3,7 @@
 // rất nhiều chunk: chỉ cần 1 chunk lỗi mạng là cả trang có thể sập nếu không bắt.
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 import { captureException } from '../lib/errorTracking'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   children: ReactNode
@@ -42,10 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
             Trang gặp sự cố khi tải. Hãy thử tải lại — thường là do mất mạng tạm thời hoặc app vừa
             được cập nhật.
           </p>
-          <button
-            onClick={this.handleReload}
-            className="inline-flex items-center justify-center rounded-xl bg-accent-500 px-5 py-2.5 text-sm font-semibold text-[#09090b] hover:bg-accent-400 transition"
-          >
+          <button onClick={this.handleReload} className={buttonClass()}>
             Tải lại trang
           </button>
         </div>

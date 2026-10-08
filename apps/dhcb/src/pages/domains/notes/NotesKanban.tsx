@@ -16,6 +16,7 @@ import {
   listWorkProjects,
 } from '../../../lib/workApi'
 import type { WorkTask, WorkProject } from '@dhcb/core-contracts/work'
+import { buttonClass } from '@core/buttonStyles'
 
 // Nền cố định trang này LUÔN tối (bg-zinc-950, không đổi theo theme — xem thẻ gốc bên
 // dưới), nên `theme-light:` ở đây KHÔNG được chỉ đổi màu chữ sang sắc tối (chữ tối trên
@@ -199,7 +200,7 @@ export default function NotesKanban() {
                     </button>
                     <button
                       onClick={handleQuickAdd}
-                      className="px-3 py-1 bg-accent-500 text-[#09090b] font-semibold rounded-lg text-xs"
+                      className={buttonClass({ size: 'sm', className: 'tap-44' })}
                     >
                       Lưu
                     </button>

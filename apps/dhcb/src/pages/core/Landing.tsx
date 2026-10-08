@@ -4,6 +4,7 @@ import { MessageCircle, Mic, PenLine, Volume2, Sparkles } from 'lucide-react'
 import { track } from '../../lib/analytics'
 import ThemeToggle from '../../components/ThemeToggle'
 import { MAIN_CONTENT_ID } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 
 // Trang landing công khai, KHÔNG bọc RequireAuth — dùng làm điểm đến cho link quảng cáo
 // (TikTok/Facebook/SEO). Khác với "/" (đã gắn RequireAuth, đẩy người chưa đăng nhập sang
@@ -137,7 +138,7 @@ export default function Landing() {
             <button
               type="button"
               onClick={handleCtaClick}
-              className="tap-44 mt-6 w-full rounded-xl bg-accent-500 px-6 py-3.5 text-base font-semibold text-black transition hover:bg-accent-400 sm:w-auto sm:px-10"
+              className={buttonClass({ size: 'lg', fullWidth: true, className: 'mt-6 sm:w-auto' })}
             >
               Bắt đầu học miễn phí
             </button>
@@ -212,7 +213,11 @@ export default function Landing() {
           <button
             type="button"
             onClick={handleCtaClick}
-            className="tap-44 w-full rounded-xl bg-accent-500 px-6 py-3.5 text-base font-semibold text-black transition hover:bg-accent-400 sm:w-auto sm:px-10 lg:px-14 lg:py-4 lg:text-lg"
+            className={buttonClass({
+              size: 'lg',
+              fullWidth: true,
+              className: 'sm:w-auto sm:px-10 lg:h-14 lg:px-14 lg:text-lg',
+            })}
           >
             Đăng ký ngay — miễn phí
           </button>

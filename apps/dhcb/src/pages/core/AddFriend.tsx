@@ -75,7 +75,7 @@ export default function AddFriend() {
               type="button"
               onClick={handleAdd}
               disabled={adding}
-              className="inline-flex items-center gap-2 rounded-full bg-accent-500 px-5 py-3 text-sm font-semibold text-[#fff] min-h-[44px] disabled:opacity-60"
+              className={buttonClass({ size: 'lg' })}
             >
               <UserPlus size={18} />
               {adding ? 'Đang kết bạn…' : 'Kết bạn'}

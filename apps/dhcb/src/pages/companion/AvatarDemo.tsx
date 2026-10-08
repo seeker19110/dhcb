@@ -17,6 +17,7 @@ import {
 } from '../../lib/viseme'
 import { getStoredToken, getAuthHeader } from '@core/authHeader'
 import { useToast } from '@core/ToastProvider'
+import { buttonClass } from '@core/buttonStyles'
 
 const DEMO_SENTENCE = 'Hello, how are you today? I am your English tutor.'
 
@@ -124,7 +125,7 @@ export default function AvatarDemo() {
             type="button"
             onClick={handlePlay}
             disabled={loading || isPlaying}
-            className="min-h-11 px-6 rounded-full bg-accent-500 text-[#09090b] font-medium disabled:opacity-50"
+            className={buttonClass()}
           >
             {loading ? 'Đang tạo audio…' : isPlaying ? 'Đang nói…' : 'Phát demo'}
           </button>

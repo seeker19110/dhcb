@@ -14,6 +14,7 @@ import { shuffle } from '@dhcb/core-contracts/shuffle'
 import { Button } from '@core/Button'
 import { INTERVIEW_ROUNDS } from './shared'
 import { GameResult } from './GameChrome'
+import { buttonClass } from '@core/buttonStyles'
 
 interface InterviewFeedback {
   score: number
@@ -219,7 +220,7 @@ export function ReverseInterview({
           <button
             onClick={() => void grade()}
             disabled={grading}
-            className="flex items-center gap-1.5 mx-auto px-4 py-2.5 min-h-11 rounded-xl bg-accent-500 text-black text-sm font-semibold hover:bg-accent-400 transition disabled:opacity-50"
+            className={buttonClass({ className: 'mx-auto' })}
           >
             <Sparkles className="w-4 h-4" />
             {grading

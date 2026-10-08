@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { GoalAutoPilotPlan, GoalAutoPilotStep } from '@dhcb/core-contracts/proactiveAgent'
 import ProactiveAgentSettingsModal from './ProactiveAgentSettingsModal'
+import { buttonClass } from '@core/buttonStyles'
 
 interface GoalAutoPilotCardProps {
   plan: GoalAutoPilotPlan
@@ -69,7 +70,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
           <button
             type="button"
             onClick={() => onActionClick?.(currentStep.actionRoute)}
-            className="px-3 py-1.5 rounded-xl bg-accent-500 hover:bg-accent-400 active:scale-95 text-zinc-950 text-xs font-bold shadow-md transition flex-shrink-0"
+            className={buttonClass({ size: 'sm', className: 'flex-shrink-0 tap-44' })}
           >
             Thực hiện ➔
           </button>

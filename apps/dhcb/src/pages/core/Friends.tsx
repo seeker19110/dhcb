@@ -14,6 +14,7 @@ import {
   type FriendUserSummary,
 } from '../../lib/friends'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function Friends() {
   const toast = useToast()
@@ -93,11 +94,7 @@ export default function Friends() {
             {/* Chữ TỐI cố định trên nền accent-500: chữ trắng chỉ 2,4–2,8:1 ở cả 3 theme (audit
                 UI/UX 2026-09-30 C4); `#09090b` đạt ≥ 7:1 trên accent-500 của mọi theme. Không
                 dùng `text-zinc-950`/`text-black` vì thang zinc tự đảo màu ở theme nền sáng. */}
-            <button
-              type="button"
-              onClick={copyLink}
-              className="inline-flex items-center gap-2 rounded-full bg-accent-500 px-4 py-2.5 text-sm font-semibold text-[#09090b] min-h-[44px]"
-            >
+            <button type="button" onClick={copyLink} className={buttonClass()}>
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? 'Đã chép liên kết' : 'Chép liên kết kết bạn'}
             </button>

@@ -301,7 +301,7 @@ export default function ProgrammingSpecializationPage() {
           </h1>
           <button
             onClick={() => nav(`${PROGRAMMING_PREFIX}/huong`)}
-            className="tap-44 w-full py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+            className={buttonClass({ size: 'lg', fullWidth: true })}
           >
             Xem 14 hướng chuyên sâu
           </button>
