@@ -9,11 +9,14 @@ vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 vi.mock('@dhcb/core-db/settings', () => ({
   getAppSettings: async () => ({ limits: { free: 30, vip: 300 } }),
 }))
-const authState: { user: { userId: string } | null } = { user: { userId: 'user-1' } }
+const authState: { user: { userId: string } | null; rateLimitOk: boolean } = {
+  user: { userId: 'user-1' },
+  rateLimitOk: true,
+}
 vi.mock('@dhcb/core-auth/security', () => ({
   getCorsHeaders: () => ({}),
   SECURITY_HEADERS: {},
-  checkRateLimit: async () => true,
+  checkRateLimit: async () => authState.rateLimitOk,
   validateAuth: async () => authState.user,
   logSecurityEvent: () => {},
 }))
@@ -28,7 +31,7 @@ import { getUnitCostsUsd, getUsdVndRate } from '@dhcb/core-ai/aiCost'
 const mockedGetPool = vi.mocked(getPgPool)
 const query = vi.fn()
 
-// Trả kết quả theo THỨ TỰ Promise.all trong handler (11 truy vấn).
+// Trả kết quả theo THỨ TỰ Promise.all trong handler (12 truy vấn; ⑫ token thật mặc định rỗng).
 function seedQueries(overrides: Record<number, unknown[]> = {}) {
   const defaults: unknown[][] = [
     [{ total: 100, new_in_range: 10 }], // ① users
@@ -57,6 +60,7 @@ beforeEach(() => {
   query.mockReset()
   mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
   authState.user = { userId: 'user-1' }
+  authState.rateLimitOk = true
   seedQueries()
 })
 
@@ -183,5 +187,118 @@ describe('GET /api/admin-usage-stats', () => {
     query.mockRejectedValue(new Error('db down'))
     const res = await handler(makeRequest())
     expect(res.status).toBe(500)
+  })
+
+  it('OPTIONS (preflight) → 204 rỗng, không chạm DB', async () => {
+    const res = await handler(
+      new Request('http://localhost/api/admin-usage-stats', { method: 'OPTIONS' }),
+    )
+    expect(res.status).toBe(204)
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('vượt rate limit → 429 TRƯỚC khi xác thực/chạm DB', async () => {
+    authState.rateLimitOk = false
+    expect((await handler(makeRequest())).status).toBe(429)
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('DB trả về KHÔNG dòng nào ở mọi truy vấn → 200 với số 0 (không ném vì đọc rows[0])', async () => {
+    query.mockReset()
+    query.mockResolvedValue({ rows: [] })
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as Body & {
+      users: { total: number; newInRange: number; dau: number; returningInRange: number }
+      usage: { reach: Record<string, number> }
+      freeCredit: { cap: number; users: number; total: number; exhausted: number }
+    }
+    expect(body.users).toMatchObject({
+      total: 0,
+      newInRange: 0,
+      byPlan: { free: 0, vip: 0 },
+      dau: 0,
+      returningInRange: 0,
+    })
+    expect(body.usage.reach).toEqual({})
+    expect(body.freeCredit).toEqual({ cap: 30, users: 0, total: 0, exhausted: 0 })
+  })
+
+  it('trạng thái đơn lạ (không thuộc 4 trạng thái biết) bị bỏ qua, không làm sai tỉ lệ', async () => {
+    seedQueries({
+      6: [
+        { status: 'paid', count: 1, vnd: 40_000 },
+        { status: 'refunded', count: 99, vnd: 0 },
+      ],
+    })
+    const body = (await (await handler(makeRequest())).json()) as Body & {
+      revenue: { payments: Record<string, number> }
+    }
+    expect(body.revenue.payments).toEqual({ pending: 0, paid: 1, failed: 0, expired: 0 })
+    expect(body.revenue.createdOrders).toBe(1)
+    expect(body.revenue.payRate).toBe(1)
+  })
+
+  it('lượt dùng theo gói: chi phí từng gói = lượt × đơn giá của gói đó', async () => {
+    const unit = getUnitCostsUsd()
+    const counts = { chat: 4, writing: 0, speaking: 1, stt: 0, pronounce: 0, code_feedback: 2 }
+    seedQueries({ 3: [{ plan: 'free', users: 3, ...counts }] })
+    const body = (await (await handler(makeRequest())).json()) as {
+      usage: { byPlan: Array<{ plan: string; users: number; counts: unknown; costUsd: number }> }
+    }
+    expect(body.usage.byPlan).toHaveLength(1)
+    expect(body.usage.byPlan[0]).toMatchObject({ plan: 'free', users: 3, counts })
+    expect(body.usage.byPlan[0]!.costUsd).toBeCloseTo(
+      4 * unit.chat + 1 * unit.speaking + 2 * unit.code_feedback,
+      10,
+    )
+  })
+
+  it('token THẬT (⑫): chuỗi numeric của Postgres đổi sang số, NULL/rác → 0, cộng tổng đúng', async () => {
+    seedQueries({
+      11: [
+        {
+          provider: 'gemini',
+          model: 'm1',
+          mode: 'chat',
+          calls: 3,
+          prompt_tokens: '1000',
+          completion_tokens: '200',
+          cache_read_tokens: '50',
+          cost_usd: '0.0125',
+        },
+        {
+          provider: 'groq',
+          model: 'm2',
+          mode: 'stt',
+          calls: 2,
+          // sum() trên nhóm toàn NULL trả NULL → ::text vẫn là null.
+          prompt_tokens: null as unknown as string,
+          completion_tokens: 'không-phải-số',
+          cache_read_tokens: '0',
+          cost_usd: '0.5',
+        },
+      ],
+    })
+    const body = (await (await handler(makeRequest())).json()) as {
+      tokenCost: {
+        totals: Record<string, number>
+        totalVnd: number
+        byProviderModel: Array<Record<string, unknown>>
+      }
+    }
+    expect(body.tokenCost.byProviderModel[1]).toMatchObject({
+      promptTokens: 0,
+      completionTokens: 0,
+      costUsd: 0.5,
+    })
+    expect(body.tokenCost.totals).toEqual({
+      calls: 5,
+      promptTokens: 1000,
+      completionTokens: 200,
+      cacheReadTokens: 50,
+      costUsd: 0.5125,
+    })
+    expect(body.tokenCost.totalVnd).toBeCloseTo(0.5125 * getUsdVndRate(), 6)
   })
 })

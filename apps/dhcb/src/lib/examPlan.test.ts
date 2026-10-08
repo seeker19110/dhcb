@@ -22,6 +22,7 @@ const {
   fetchExamPlan,
   createExamPlan,
   endExamPlan,
+  examKindForDirection,
 } = await import('./examPlan')
 
 const PLAN = {
@@ -128,5 +129,82 @@ describe('gọi API', () => {
     fetchMock.mockResolvedValue(res({ ok: true }))
     await endExamPlan('a b&c')
     expect(String(fetchMock.mock.calls[0]![0])).toContain('planId=a%20b%26c')
+  })
+})
+
+describe('examKindForDirection', () => {
+  it('chiều A → thi vào 10 môn Anh; chiều B → chứng chỉ tiếng Việt bậc 3', () => {
+    expect(examKindForDirection(true)).toBe('vao10-english')
+    expect(examKindForDirection(false)).toBe('vsl-b1')
+  })
+})
+
+describe('computeTodayPlan — từ điển rỗng (dữ liệu chưa nạp)', () => {
+  it('lùi về phạm vi đã lưu VÀ trả đúng số đó cho UI (không hiện "0/0" lệch với lịch)', () => {
+    getLevelWordsMock.mockReset()
+    getLevelWordsMock.mockReturnValue([])
+    const out = computeTodayPlan(PLAN, 'u1', '2026-10-01')
+    expect(out.scopeItems).toBe(PLAN.scopeItems)
+    expect(out.masteredItems).toBe(0)
+  })
+})
+
+describe('gọi API — các nhánh còn lại', () => {
+  it('fetchExamPlan: 200 → trả plan; 200 với plan null → null; lỗi HTTP → ném lỗi (0525)', async () => {
+    const plan = { id: 'p1', examDate: '2026-12-26' }
+    fetchMock.mockResolvedValueOnce(res({ plan }))
+    await expect(fetchExamPlan()).resolves.toEqual(plan)
+    fetchMock.mockResolvedValueOnce(res({ plan: null }))
+    await expect(fetchExamPlan()).resolves.toBeNull()
+    fetchMock.mockResolvedValueOnce(res({ error: 'x' }, false, 500))
+    await expect(fetchExamPlan()).rejects.toThrow('HTTP 500')
+    // Gửi kèm header xác thực.
+    expect(fetchMock.mock.calls[0]![1]).toEqual({ headers: { Authorization: 'Bearer t' } })
+  })
+
+  const INPUT = { examKind: 'vao10-english', examDate: '2030-01-01', scopeItems: 1 } as const
+
+  it('createExamPlan: thành công → ok kèm plan; gửi POST JSON có header xác thực', async () => {
+    const plan = { id: 'p1' }
+    fetchMock.mockResolvedValue(res({ plan }))
+    expect(await createExamPlan(INPUT)).toEqual({ ok: true, plan })
+    const init = fetchMock.mock.calls[0]![1] as RequestInit
+    expect(init.method).toBe('POST')
+    expect(init.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer t' })
+    expect(JSON.parse(String(init.body))).toEqual(INPUT)
+  })
+
+  it('createExamPlan: server không nói lỗi gì → câu dự phòng theo ngôn ngữ người học', async () => {
+    fetchMock.mockResolvedValue(res({}, false, 500))
+    expect(await createExamPlan(INPUT)).toEqual({ ok: false, message: 'Không tạo được kế hoạch' })
+    expect(await createExamPlan(INPUT, false)).toEqual({
+      ok: false,
+      message: 'Could not create a plan',
+    })
+  })
+
+  it('createExamPlan: lỗi mạng hoặc phản hồi không phải JSON → báo lỗi mạng, không ném', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('offline'))
+    expect(await createExamPlan(INPUT)).toEqual({ ok: false, message: 'Lỗi mạng — thử lại sau' })
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 502,
+      json: async () => {
+        throw new SyntaxError('Unexpected token <')
+      },
+    })
+    expect(await createExamPlan(INPUT, false)).toEqual({
+      ok: false,
+      message: 'Network error — please try again',
+    })
+  })
+
+  it('endExamPlan: trả đúng res.ok; lỗi mạng → false, không ném', async () => {
+    fetchMock.mockResolvedValueOnce(res({}, false, 404))
+    await expect(endExamPlan('p1')).resolves.toBe(false)
+    fetchMock.mockResolvedValueOnce(res({ ok: true }))
+    await expect(endExamPlan('p1')).resolves.toBe(true)
+    fetchMock.mockRejectedValueOnce(new Error('offline'))
+    await expect(endExamPlan('p1')).resolves.toBe(false)
   })
 })

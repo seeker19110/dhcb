@@ -240,6 +240,13 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules/qrcode') || id.includes('node_modules/dijkstrajs')) {
               return 'vendor-qrcode'
             }
+            // Nhóm riêng: ts-fsrs (thuật toán ôn tập ngắt quãng) — chỉ `lib/srs.ts` import, và
+            // srs.ts nằm ở chunk lười (Home/ôn tập/CEFR…), KHÔNG nằm trong entry. Để rơi vào
+            // vendor-misc thì nó bị tải eager lúc khởi động cho mọi khách (cả trang Landing) dù
+            // chưa ai mở ôn tập. Tách ra để chỉ tải cùng chunk srs (đo 2026-10-08, changelog 0522).
+            if (id.includes('node_modules/ts-fsrs')) {
+              return 'vendor-fsrs'
+            }
             // Nhóm 1: React + Router (core framework) — kèm dependency RUNTIME của chúng
             // (scheduler của react-dom; cookie/set-cookie-parser của react-router). Phải so
             // khớp ĐÚNG TÊN GÓI: bản cũ dùng `includes('node_modules/react')` bắt cả mọi gói
