@@ -73,6 +73,14 @@ import {
   getLearningPath,
 } from '../../../lib/curriculum'
 import { preloadLearnData } from '../../../lib/preloader'
+import { useAsyncLoad } from '../../../lib/useAsyncLoad'
+import LoadError from '../../../components/LoadError'
+import {
+  LOI_TU_VUNG_VI,
+  LOI_TU_VUNG_EN,
+  GOI_Y_TU_VUNG_VI,
+  GOI_Y_TU_VUNG_EN,
+} from '../../../lib/curriculumMessages'
 import {
   getDoneGrammar,
   getViewedDialogues,
@@ -243,10 +251,13 @@ export default function CefrLevelPage() {
   const sessionCap = useMemo(() => docCapTuQueryTuyChon(searchParams), [searchParams])
   // Các tab học cần TOÀN BỘ từ điển (nạp động, nặng hơn cefr+foundation) —
   // gate riêng để tab "Bài học" vẫn hiện ngay không phải chờ.
-  const [dictReady, setDictReady] = useState(isCurriculumReady())
-  useEffect(() => {
-    loadCurriculum().then(() => setDictReady(true))
-  }, [])
+  // [changelog 0525] Bản cũ `loadCurriculum().then(() => setDictReady(true))` không có nhánh lỗi:
+  // tải từ điển hỏng là 4 tab học (Hôm nay/Ôn/Từ khó/Quiz) kẹt "Đang tải từ vựng…" vĩnh viễn.
+  const { state: curriculumState, retry: retryCurriculum } = useAsyncLoad(loadCurriculum, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_TU_VUNG_VI : LOI_TU_VUNG_EN,
+  })
+  const dictReady = isCurriculumReady() || curriculumState.status === 'ready'
 
   // Màn con đang mở (giữ nguyên mẫu của RoadmapTab cũ: hội thoại đè lên flashcard
   // để xem xong hội thoại quay lại đúng màn flashcard).
@@ -925,7 +936,14 @@ export default function CefrLevelPage() {
 
       {/* 5 tab học theo cấp — cần từ điển nạp xong mới render */}
       {activeTab !== 'lessons' &&
-        (!dictReady ? (
+        (!dictReady && curriculumState.status === 'error' ? (
+          <LoadError
+            message={curriculumState.message}
+            onRetry={retryCurriculum}
+            lang={isA ? 'vi' : 'en'}
+            hint={isA ? GOI_Y_TU_VUNG_VI : GOI_Y_TU_VUNG_EN}
+          />
+        ) : !dictReady ? (
           <div className="glass rounded-xl p-8 text-center animate-fade-in">
             <p className="text-zinc-400 text-sm">
               {isA ? 'Đang tải từ vựng…' : 'Loading vocabulary…'}

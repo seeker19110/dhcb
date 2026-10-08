@@ -1159,6 +1159,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   dự án duyệt.** Cùng đợt, hai đề xuất chờ quyết: (a) `process.on('unhandledRejection')` (log +
   Sentry) ở `server.ts` làm lưới an toàn cuối; (b) job CI chạy `PREPARE` SQL trên Postgres đã migrate
   (đợt 0523 bắt được 9 câu sai cột theo cách này).
+- 🟡 **[2026-10-08 — `docs/changelog/0525-*.md`] Lỗi im lặng phía giao diện còn sót sau đợt sửa 13
+  điểm.** (1) `getDialogues()` không có nhánh lỗi (`CefrLevelPage.tsx`, `CefrLessonViews.tsx`,
+  `TodayLesson.tsx`) — mất phần hội thoại + unhandled rejection, không kẹt màn; (2) hai loader ví dụ phụ
+  `extraExamplesLoader.ts`/`formExamplesLoader.ts` cùng bệnh `patterns/loader.ts` (không kiểm `res.ok`,
+  cache lỗi); (3) lịch sử hội thoại Companion cố ý im lặng khi lỗi — cần chủ dự án quyết có báo nhẹ không;
+  (4) `LifeSynthesisDashboard` (chưa gắn) còn số bịa `|| 88`/`|| 92`, phải sửa trước khi bật lại.
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
   từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
   (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —

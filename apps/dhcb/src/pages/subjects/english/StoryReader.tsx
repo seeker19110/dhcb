@@ -27,6 +27,8 @@ import {
 } from '../../../lib/tts'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import { buttonClass } from '@core/buttonStyles'
+import LoadError from '../../../components/LoadError'
+import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 
 // [U9a, WCAG 1.4.12] Mục lục đoạn hiện câu ĐẦU của đoạn làm nhãn. Trước đây cắt bằng CSS
 // `line-clamp-2` — khi người dùng giãn chữ, dòng thứ 2 bị cắt mất giữa chừng. Nay rút gọn ngay
@@ -51,6 +53,10 @@ export default function StoryReader() {
   usePageTitle(story ? (isA ? story.titleEn : story.titleVi) : 'Truyện song ngữ')
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  // [changelog 0525] Lỗi TẢI (mạng/5xx) tách khỏi "không có truyện": bản cũ gộp làm một nên mất
+  // mạng là người đọc thấy "không tìm thấy truyện" và không có cách thử lại.
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
   const [showTranslation, setShowTranslation] = useState(false) // mặc định ẨN — trang luyện nghe
   // "Đọc tiếp" (docs/specs/2026-09-24-truyen-doc-tiep.md): đoạn đã đọc dở lần trước, đọc ra
   // NGAY lúc tải xong truyện (trong callback async, không setState đồng bộ trong effect).
@@ -64,30 +70,53 @@ export default function StoryReader() {
     setPrevId(id)
     setLoading(true)
     setNotFound(false)
+    setLoadError(null)
     setResumeFrom(null)
   }
 
   useEffect(() => {
     if (!id) return
     let alive = true
-    loadStory(id).then((s) => {
-      if (!alive) return
-      setLoading(false)
-      if (!s) {
-        setNotFound(true)
-        return
-      }
-      setStory(s)
-      const saved = getStoryProgress(id)
-      // Bản ghi trỏ quá số đoạn hiện có (truyện đã bị sửa ngắn đi) → bỏ, mở từ đầu.
-      const total = groupLinesByParagraph(s.lines).length
-      if (saved && saved.para < total) setResumeFrom(saved.para)
-      else if (saved) clearStoryProgress(id)
-    })
+    loadStory(id).then(
+      (s) => {
+        if (!alive) return
+        setLoading(false)
+        if (!s) {
+          setNotFound(true)
+          return
+        }
+        setStory(s)
+        const saved = getStoryProgress(id)
+        // Bản ghi trỏ quá số đoạn hiện có (truyện đã bị sửa ngắn đi) → bỏ, mở từ đầu.
+        const total = groupLinesByParagraph(s.lines).length
+        if (saved && saved.para < total) setResumeFrom(saved.para)
+        else if (saved) clearStoryProgress(id)
+      },
+      (err: unknown) => {
+        if (!alive) return
+        setLoading(false)
+        setLoadError(
+          thongDiepLoiThanThien(
+            err,
+            isA
+              ? 'Chưa tải được truyện. Kiểm tra kết nối rồi thử lại.'
+              : 'Could not load the story. Check your connection and try again.',
+            isA ? 'vi' : 'en',
+          ),
+        )
+      },
+    )
     return () => {
       alive = false
     }
-  }, [id])
+  }, [id, attempt, isA])
+
+  // Thử lại sau lỗi tải: đặt lại trạng thái NGAY trong handler rồi tăng lượt để effect tải lại.
+  function retryLoad() {
+    setLoadError(null)
+    setLoading(true)
+    setAttempt((n) => n + 1)
+  }
 
   // URL cũ chỉ có id hoặc slug mô tả không khớp tiêu đề hiện tại → chuyển hướng về URL chuẩn
   // (tránh Google coi 2 URL cùng nội dung là 2 trang khác nhau).
@@ -249,6 +278,22 @@ export default function StoryReader() {
       <div className="min-h-dvh bg-zinc-950">
         <Layout back onBack={() => nav(-1)} />
         <CardListSkeleton rows={4} />
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-dvh bg-zinc-950">
+        <Layout back onBack={() => nav(-1)} />
+        <PageShell width="reading" baseWidth="max-w-3xl">
+          <LoadError
+            message={loadError}
+            onRetry={retryLoad}
+            lang={isA ? 'vi' : 'en'}
+            hint={isA ? 'Vị trí đọc dở của bạn vẫn được giữ.' : 'Your reading position is kept.'}
+          />
+        </PageShell>
       </div>
     )
   }

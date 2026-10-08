@@ -3,7 +3,7 @@
 // vào 2 tab Câu thông dụng/Hội thoại của /listening. Trước đây là tab "Truyện" trong Listening.tsx.
 // Gom 6 thể loại, lọc bằng chip (thay vì 8 tab — không đủ chỗ trên điện thoại).
 import { ENGLISH_PREFIX, duongDanTruyen } from '../../../lib/englishRoutes'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
@@ -13,6 +13,8 @@ import StoryCard from '../../../components/StoryCard'
 import { useLang } from '../../../context/useLang'
 import { getDirection } from '../../../lib/storage'
 import { loadStoryIndex } from '../../../data/stories/loader'
+import LoadError from '../../../components/LoadError'
+import { useAsyncLoad } from '../../../lib/useAsyncLoad'
 import { STORY_KINDS } from '../../../data/stories/index'
 import type { StoryMeta, StoryKind } from '../../../data/stories/index'
 import { buildSlugSegment } from '@core/slug'
@@ -76,7 +78,14 @@ export default function Stories() {
   const { T } = useLang()
   const isA = getDirection() === 'A'
 
-  const [all, setAll] = useState<StoryMeta[] | null>(null)
+  // [changelog 0525] Bản cũ: loader nuốt lỗi thành `[]` → mất mạng là trang hiện "chưa có truyện".
+  const { state: indexState, retry } = useAsyncLoad(loadStoryIndex, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA
+      ? 'Chưa tải được danh sách truyện. Kiểm tra kết nối rồi thử lại.'
+      : 'Could not load the story list. Check your connection and try again.',
+  })
+  const all = indexState.status === 'ready' ? indexState.data : null
   const [kind, setKind] = useState<StoryKind | null>(null)
   const [level, setLevel] = useState<StoryMeta['level'] | null>(null)
   const [country, setCountry] = useState<string | null>(null)
@@ -84,10 +93,6 @@ export default function Stories() {
   // Truyện đang đọc dở — đọc một lần khi mở trang (quay lại từ StoryReader là mount lại nên
   // luôn thấy vị trí mới nhất). Chỉ localStorage, xem lib/storyProgress.ts.
   const [progressById] = useState(getAllStoryProgress)
-
-  useEffect(() => {
-    loadStoryIndex().then(setAll)
-  }, [])
 
   const stories = useMemo(() => all ?? [], [all])
   const labels = kindLabels(T)
@@ -152,7 +157,14 @@ export default function Stories() {
           {isA ? 'Nghe - đọc - kể truyện' : 'Listen - Read - Tell Stories'}
         </h1>
 
-        {all === null ? (
+        {indexState.status === 'error' ? (
+          <LoadError
+            message={indexState.message}
+            onRetry={retry}
+            lang={isA ? 'vi' : 'en'}
+            hint={isA ? 'Vị trí đọc dở của bạn vẫn được giữ.' : 'Your reading position is kept.'}
+          />
+        ) : all === null ? (
           <CardListSkeleton rows={4} />
         ) : stories.length === 0 ? (
           <EmptyState isA={isA} />

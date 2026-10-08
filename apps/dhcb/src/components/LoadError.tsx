@@ -22,11 +22,31 @@ export type LoadErrorProps = {
    * dữ liệu CHUNG (danh mục môn học…) thì truyền câu khác, vì "dữ liệu của bạn" ở đó vô nghĩa.
    */
   hint?: string
+  /** Ngôn ngữ phần chữ cố định (tiêu đề, câu trấn an, nút) — chiều B truyền 'en'. Mặc định 'vi'. */
+  lang?: 'vi' | 'en'
 }
 
-const DEFAULT_HINT = 'Dữ liệu của bạn vẫn còn nguyên — đây chỉ là lỗi kết nối.'
+const TEXT = {
+  vi: {
+    title: 'Không tải được dữ liệu',
+    hint: 'Dữ liệu của bạn vẫn còn nguyên — đây chỉ là lỗi kết nối.',
+    retry: 'Thử lại',
+  },
+  en: {
+    title: 'Could not load data',
+    hint: 'Your data is safe — this is only a connection problem.',
+    retry: 'Try again',
+  },
+} as const
 
-export default function LoadError({ message, onRetry, retrying, hint }: LoadErrorProps) {
+export default function LoadError({
+  message,
+  onRetry,
+  retrying,
+  hint,
+  lang = 'vi',
+}: LoadErrorProps) {
+  const t = TEXT[lang]
   return (
     <div
       role="alert"
@@ -34,9 +54,9 @@ export default function LoadError({ message, onRetry, retrying, hint }: LoadErro
     >
       <AlertTriangle className="w-8 h-8 mx-auto text-red-400 theme-light:text-red-800" />
       <div>
-        <p className="text-sm font-semibold text-zinc-100">Không tải được dữ liệu</p>
+        <p className="text-sm font-semibold text-zinc-100">{t.title}</p>
         <p className="text-xs text-zinc-300 mt-1">{message}</p>
-        <p className="text-xs text-zinc-400 mt-1">{hint ?? DEFAULT_HINT}</p>
+        <p className="text-xs text-zinc-400 mt-1">{hint ?? t.hint}</p>
       </div>
       {onRetry && (
         <button
@@ -46,7 +66,7 @@ export default function LoadError({ message, onRetry, retrying, hint }: LoadErro
           className={buttonClass({ variant: 'outline' })}
         >
           <RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />
-          Thử lại
+          {t.retry}
         </button>
       )}
     </div>

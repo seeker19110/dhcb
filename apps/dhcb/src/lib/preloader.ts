@@ -80,8 +80,16 @@ export async function preloadLearnData(userId: string): Promise<void> {
   if (preloadFlags.learn) return
   preloadFlags.learn = true
 
-  // Tải toàn bộ từ điển (data, không audio) — cần cho lộ trình học.
-  await loadCurriculum()
+  // Tải toàn bộ từ điển (data, không audio) — cần cho lộ trình học. Nạp trước chỉ là "cố gắng":
+  // lỗi thì để màn đang hiện tự báo lỗi + Thử lại (useAsyncLoad), ở đây chỉ mở khoá để lần sau
+  // nạp lại. [changelog 0525] Bản cũ để lỗi lọt ra thành unhandled rejection (caller gọi `void`)
+  // và giữ cờ `learn = true` — mạng chập một lần là cả phiên không nạp trước nữa.
+  try {
+    await loadCurriculum()
+  } catch {
+    preloadFlags.learn = false
+    return
+  }
 
   // Chỉ nạp trước audio khi giao diện đã xác nhận phiên cookie.
   const token = getStoredToken()

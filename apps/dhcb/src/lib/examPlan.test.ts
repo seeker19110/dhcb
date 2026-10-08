@@ -85,8 +85,25 @@ describe('suggestedDailyCap', () => {
 })
 
 describe('gọi API', () => {
-  it('fetchExamPlan: lỗi mạng → null, không ném', async () => {
+  // [changelog 0525] Lỗi phải NÉM, không được trả `null` — `null` nghĩa là "chưa có kế hoạch" và
+  // trang sẽ mời tạo kế hoạch mới + đặt lại mức nhớ FSRS.
+  it('fetchExamPlan: lỗi mạng → ném lỗi (không giả làm "chưa có kế hoạch")', async () => {
     fetchMock.mockRejectedValue(new Error('offline'))
+    await expect(fetchExamPlan()).rejects.toThrow('offline')
+  })
+
+  it('fetchExamPlan: HTTP 500 → ném lỗi', async () => {
+    fetchMock.mockResolvedValue(res({ error: 'boom' }, false, 500))
+    await expect(fetchExamPlan()).rejects.toThrow('HTTP 500')
+  })
+
+  it('fetchExamPlan: body thiếu khoá plan → ném lỗi', async () => {
+    fetchMock.mockResolvedValue(res({}, true, 200))
+    await expect(fetchExamPlan()).rejects.toThrow('không đúng định dạng')
+  })
+
+  it('fetchExamPlan: { plan: null } → null (thật sự chưa có kế hoạch)', async () => {
+    fetchMock.mockResolvedValue(res({ plan: null }, true, 200))
     await expect(fetchExamPlan()).resolves.toBeNull()
   })
 

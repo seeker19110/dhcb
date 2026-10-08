@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { BookOpen, Volume2, ArrowLeft } from 'lucide-react'
 import { loadDictionary } from '../../../data/dictionary/loader'
@@ -6,6 +6,8 @@ import type { DictEntry } from '../../../types'
 import { PageShell } from '@core/PageShell'
 import { duongDanTuDien } from '../../../lib/englishRoutes'
 import { buttonClass } from '@core/buttonStyles'
+import LoadError from '../../../components/LoadError'
+import { useAsyncLoad } from '../../../lib/useAsyncLoad'
 
 // Trang CÔNG KHAI cho 1 từ trong từ điển — /tu-vung/:word — KHÔNG bọc RequireAuth. Đây là phần
 // SEO thật: /dictionary (trang tra cứu chính) đang nằm sau RequireAuth nên Google không index
@@ -20,19 +22,16 @@ import { buttonClass } from '@core/buttonStyles'
 export default function WordDetail() {
   const { word } = useParams<{ word: string }>()
   const nav = useNavigate()
-  const [entry, setEntry] = useState<DictEntry | null | undefined>(undefined) // undefined = đang tải, null = không tìm thấy
-
-  useEffect(() => {
-    let alive = true
-    loadDictionary().then((dict) => {
-      if (!alive) return
-      const found = dict.find((e) => e.word.toLowerCase() === word?.toLowerCase()) ?? null
-      setEntry(found)
-    })
-    return () => {
-      alive = false
-    }
-  }, [word])
+  // [changelog 0525] Bản cũ `loadDictionary().then(...)` không có nhánh lỗi: tải từ điển hỏng là
+  // vòng xoay quay mãi trên một trang công khai (người từ Google vào thấy trang "treo").
+  const { state: dictState, retry } = useAsyncLoad(loadDictionary, {
+    errorMessage: 'Chưa tải được từ điển. Kiểm tra kết nối rồi thử lại.',
+  })
+  // undefined = đang tải (hoặc lỗi), null = không tìm thấy
+  const entry = useMemo<DictEntry | null | undefined>(() => {
+    if (dictState.status !== 'ready') return undefined
+    return dictState.data.find((e) => e.word.toLowerCase() === word?.toLowerCase()) ?? null
+  }, [dictState, word])
 
   // SEO: title/description theo đúng từ, cùng cách các landing page khác trong dự án đang làm
   // (set qua document API, trả lại thẻ gốc lúc rời trang — không dùng react-helmet).
@@ -54,9 +53,27 @@ export default function WordDetail() {
     }
   }, [entry])
 
+  if (dictState.status === 'error') {
+    return (
+      <div className="min-h-dvh bg-zinc-950 flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <LoadError
+            message={dictState.message}
+            onRetry={retry}
+            hint="Thường chỉ là lỗi kết nối tạm thời."
+          />
+        </div>
+      </div>
+    )
+  }
+
   if (entry === undefined) {
     return (
-      <div className="min-h-dvh bg-zinc-950 flex items-center justify-center">
+      <div
+        className="min-h-dvh bg-zinc-950 flex items-center justify-center"
+        role="status"
+        aria-label="Đang tải từ điển"
+      >
         <div className="w-6 h-6 border-2 border-zinc-700 border-t-accent-500 rounded-full animate-spin" />
       </div>
     )

@@ -87,14 +87,20 @@ export function suggestedDailyCap(uid: string): number {
 // ── Gọi API ─────────────────────────────────────────────────────────────────
 const ENDPOINT = '/api/exam-plan'
 
+/**
+ * Kế hoạch đang chạy, `null` = THẬT SỰ chưa có kế hoạch. Lỗi mạng/HTTP/body lệch hợp đồng thì
+ * NÉM — [changelog 0525] bản cũ trả `null` cho cả lỗi, nên mạng chập một nhịp là trang Ôn thi
+ * hiện form "tạo kế hoạch mới" như thể kế hoạch đã mất, đồng thời đặt lại mức nhớ mục tiêu FSRS
+ * về mặc định (lịch ôn thưa ra ngay trước ngày thi).
+ */
 export async function fetchExamPlan(): Promise<ExamPlan | null> {
-  try {
-    const res = await fetch(ENDPOINT, { headers: { ...getAuthHeader() } })
-    if (!res.ok) return null
-    return ((await res.json()) as { plan: ExamPlan | null }).plan
-  } catch {
-    return null
+  const res = await fetch(ENDPOINT, { headers: { ...getAuthHeader() } })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const body: unknown = await res.json()
+  if (typeof body !== 'object' || body === null || !('plan' in body)) {
+    throw new Error('Dữ liệu kế hoạch ôn thi không đúng định dạng.')
   }
+  return (body as { plan: ExamPlan | null }).plan
 }
 
 export type CreateOutcome = { ok: true; plan: ExamPlan } | { ok: false; message: string }

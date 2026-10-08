@@ -29,6 +29,9 @@ import type { SubjectMeta, Subject } from '../../../data/patterns/loader'
 import { getAllDialogues } from '../../../data/dialoguesLoader'
 import type { Dialogue } from '../../../data/dialogues'
 import { buttonClass } from '@core/buttonStyles'
+import LoadError from '../../../components/LoadError'
+import { useAsyncLoad } from '../../../lib/useAsyncLoad'
+import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 
 type Tab = 'phrases' | 'dialogues'
 const TABS: Tab[] = ['phrases', 'dialogues']
@@ -106,12 +109,27 @@ type Lang = ReturnType<typeof useLang>['T']
 // cao trang ở 390px ≤ 4 màn hình.
 const PHRASE_PAGE = 24
 
+// Câu lỗi tải dữ liệu nghe (mẫu câu + hội thoại) — dữ liệu CHUNG, không phải dữ liệu riêng của
+// người học, nên câu trấn an mặc định của LoadError ("Dữ liệu của bạn vẫn còn nguyên") không hợp.
+const LOI_TAI_VI = 'Chưa tải được nội dung nghe. Kiểm tra kết nối rồi thử lại.'
+const LOI_TAI_EN = 'Could not load the listening content. Check your connection and try again.'
+const GOI_Y_VI = 'Tiến độ nghe của bạn vẫn được giữ nguyên.'
+const GOI_Y_EN = 'Your listening progress is kept.'
+
 function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
   const { user } = useAuth()
   const uid = user?.id ?? ''
-  const [index, setIndex] = useState<SubjectMeta[] | null>(null)
+  // [changelog 0525] Tải chỉ mục có nhánh LỖI + Thử lại — bản cũ `loadIndex().then(setIndex)`
+  // không có nhánh lỗi nên mạng chập là skeleton quay mãi.
+  const { state: indexState, retry: retryIndex } = useAsyncLoad(loadIndex, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_TAI_VI : LOI_TAI_EN,
+  })
+  const index = indexState.status === 'ready' ? indexState.data : null
   const [selected, setSelected] = useState<Subject | null>(null)
   const [opening, setOpening] = useState(false)
+  // Lỗi khi MỞ một mẫu (tải chunk hỏng) — hiện ngay trên danh sách, danh sách vẫn dùng được.
+  const [openError, setOpenError] = useState<{ meta: SubjectMeta; message: string } | null>(null)
   const [showTranslation, setShowTranslation] = useState(false)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
@@ -120,10 +138,6 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
   const [shownByGroup, setShownByGroup] = useState<Record<string, number>>({})
   // Bump sau khi mở một mẫu để thẻ "Tiếp tục" tính lại khi quay về danh sách.
   const [viewedRefresh, setViewedRefresh] = useState(0)
-
-  useEffect(() => {
-    loadIndex().then(setIndex)
-  }, [])
 
   // Luật "Tiếp tục" chung (`suggestContinue`): mẫu đang nghe dở trước, rồi mới mẫu chưa xem.
   const goiY = useMemo(
@@ -149,16 +163,34 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
     return [...byCat.entries()].map(([category, items]) => ({ category, items }))
   }, [index, deferredSearch])
 
+  // [changelog 0525] Bản cũ không bắt lỗi: `loadSubject` reject thì `opening` kẹt `true` → cả tab
+  // thành skeleton vĩnh viễn. Nay lỗi trả người học về danh sách kèm câu báo + có thể bấm lại.
   async function open(meta: SubjectMeta) {
     setOpening(true)
-    const s = await loadSubject(meta)
-    if (uid) {
-      markViewed('listening', uid, meta.starter)
-      markLastOpened('listening', uid, meta.starter)
+    setOpenError(null)
+    try {
+      const s = await loadSubject(meta)
+      if (!s) {
+        setOpenError({
+          meta,
+          message: isA ? 'Không tìm thấy mẫu câu này.' : 'This pattern could not be found.',
+        })
+        return
+      }
+      if (uid) {
+        markViewed('listening', uid, meta.starter)
+        markLastOpened('listening', uid, meta.starter)
+      }
+      setViewedRefresh((v) => v + 1)
+      setSelected(s)
+    } catch (err) {
+      setOpenError({
+        meta,
+        message: thongDiepLoiThanThien(err, isA ? LOI_TAI_VI : LOI_TAI_EN, isA ? 'vi' : 'en'),
+      })
+    } finally {
+      setOpening(false)
     }
-    setViewedRefresh((v) => v + 1)
-    setSelected(s)
-    setOpening(false)
   }
 
   if (selected) {
@@ -176,6 +208,16 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
   }
 
   if (opening) return <CardListSkeleton rows={3} />
+  if (indexState.status === 'error') {
+    return (
+      <LoadError
+        message={indexState.message}
+        onRetry={retryIndex}
+        lang={isA ? 'vi' : 'en'}
+        hint={isA ? GOI_Y_VI : GOI_Y_EN}
+      />
+    )
+  }
   if (index === null) return <CardListSkeleton rows={5} />
   if (index.length === 0) {
     return <EmptyState isA={isA} />
@@ -195,6 +237,14 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
 
   return (
     <div className="space-y-4">
+      {openError && (
+        <LoadError
+          message={openError.message}
+          onRetry={() => void open(openError.meta)}
+          lang={isA ? 'vi' : 'en'}
+          hint={isA ? GOI_Y_VI : GOI_Y_EN}
+        />
+      )}
       {goiY && !searching && (
         <ContinueRow
           label={goiY.kind === 'start' ? T.phrasesStart : T.phrasesContinue}
@@ -298,24 +348,28 @@ interface DialogueEntry {
 }
 
 function DialoguesTab({ isA, T, plan }: { isA: boolean; T: Lang; plan: Plan }) {
-  const [groups, setGroups] = useState<Record<string, DialogueEntry[]> | null>(null)
   const [selected, setSelected] = useState<DialogueEntry | null>(null)
   const [showTranslation, setShowTranslation] = useState(false)
 
-  useEffect(() => {
-    getAllDialogues().then((data) => {
-      const byLevel: Record<string, DialogueEntry[]> = {}
-      for (const [id, dialogues] of Object.entries(data)) {
-        const m = CEFR_PREFIX.exec(id)
-        const level = m ? m[1]!.toUpperCase() : T.otherGroupLabel
-        for (const dialogue of dialogues) {
-          ;(byLevel[level] ??= []).push({ id, dialogue })
-        }
+  // [changelog 0525] Bản cũ `getAllDialogues().then(...)` không có nhánh lỗi: tải hỏng (mạng,
+  // HTTP, quá 15s) là skeleton quay mãi. Nay có trạng thái lỗi + Thử lại.
+  const { state: dialoguesState, retry } = useAsyncLoad(getAllDialogues, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_TAI_VI : LOI_TAI_EN,
+  })
+  const otherLabel = T.otherGroupLabel
+  const groups = useMemo(() => {
+    if (dialoguesState.status !== 'ready') return null
+    const byLevel: Record<string, DialogueEntry[]> = {}
+    for (const [id, dialogues] of Object.entries(dialoguesState.data)) {
+      const m = CEFR_PREFIX.exec(id)
+      const level = m ? m[1]!.toUpperCase() : otherLabel
+      for (const dialogue of dialogues) {
+        ;(byLevel[level] ??= []).push({ id, dialogue })
       }
-      setGroups(byLevel)
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    }
+    return byLevel
+  }, [dialoguesState, otherLabel])
 
   if (selected) {
     return (
@@ -331,6 +385,16 @@ function DialoguesTab({ isA, T, plan }: { isA: boolean; T: Lang; plan: Plan }) {
     )
   }
 
+  if (dialoguesState.status === 'error') {
+    return (
+      <LoadError
+        message={dialoguesState.message}
+        onRetry={retry}
+        lang={isA ? 'vi' : 'en'}
+        hint={isA ? GOI_Y_VI : GOI_Y_EN}
+      />
+    )
+  }
   if (groups === null) return <CardListSkeleton rows={5} />
   const levelKeys = Object.keys(groups)
   if (levelKeys.length === 0) return <EmptyState isA={isA} />
