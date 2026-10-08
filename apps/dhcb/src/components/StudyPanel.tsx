@@ -20,6 +20,14 @@ import type { DictEntry, AgeGroup } from '../types'
 import { getDifficultWords } from '../lib/vocab'
 import { getDueWords } from '../lib/srs'
 import { loadCurriculum, isCurriculumReady, getLearningPath } from '../lib/curriculum'
+import { useAsyncLoad } from '../lib/useAsyncLoad'
+import LoadError from './LoadError'
+import {
+  LOI_TU_VUNG_VI,
+  LOI_TU_VUNG_EN,
+  GOI_Y_TU_VUNG_VI,
+  GOI_Y_TU_VUNG_EN,
+} from '../lib/curriculumMessages'
 
 export type StudyTab = 'today' | 'srs' | 'hard' | 'quiz'
 
@@ -41,17 +49,19 @@ export default function StudyPanel({
   ageGroup?: AgeGroup
 }) {
   // Các tab học cần TOÀN BỘ từ điển (nạp động) — gate riêng để hiện trạng thái tải.
-  const [ready, setReady] = useState(isCurriculumReady())
+  // [changelog 0525] Bản cũ `loadCurriculum().then(() => setReady(true))` không có nhánh lỗi:
+  // tải từ điển hỏng là dòng "Đang tải từ vựng…" hiện mãi, không có cách thử lại.
+  const { state: curriculumState, retry: retryCurriculum } = useAsyncLoad(loadCurriculum, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_TU_VUNG_VI : LOI_TU_VUNG_EN,
+  })
+  const ready = isCurriculumReady() || curriculumState.status === 'ready'
   // Khóa invalidation thủ công: bump() để tính lại badge sau khi học/đánh dấu.
   const [refresh, setRefresh] = useState(0)
   const bump = () => {
     setRefresh((k) => k + 1)
     onProgress?.()
   }
-
-  useEffect(() => {
-    loadCurriculum().then(() => setReady(true))
-  }, [])
 
   // Pool = toàn bộ từ trong lộ trình học (mọi cấp + phần mở rộng).
   const pool = useMemo<DictEntry[]>(
@@ -79,6 +89,16 @@ export default function StudyPanel({
   }, [srsDue, hardCount])
 
   // Chờ từ điển nạp xong mới render (dữ liệu nặng)
+  if (!ready && curriculumState.status === 'error') {
+    return (
+      <LoadError
+        message={curriculumState.message}
+        onRetry={retryCurriculum}
+        lang={isA ? 'vi' : 'en'}
+        hint={isA ? GOI_Y_TU_VUNG_VI : GOI_Y_TU_VUNG_EN}
+      />
+    )
+  }
   if (!ready) {
     return (
       <div className="glass rounded-xl p-8 text-center animate-fade-in">

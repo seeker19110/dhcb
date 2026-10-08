@@ -12,7 +12,9 @@ let _loadPromise: Promise<DictEntry[]> | null = null
 
 async function fetchChunk(name: string): Promise<DictEntry[]> {
   const response = await fetch(`/data/dictionary/${name}`)
-  if (!response.ok) throw new Error(`Không tải được dữ liệu từ điển: ${name}`)
+  // Có mã HTTP trong câu để `thongDiepLoiThanThien` dịch đúng loại lỗi (changelog 0525) — câu cũ
+  // "Không tải được dữ liệu từ điển: chunk-000.json" có dấu nên bị hiện NGUYÊN VĂN cả tên file.
+  if (!response.ok) throw new Error(`Tải từ điển ${name} lỗi HTTP ${response.status}`)
   return response.json() as Promise<DictEntry[]>
 }
 

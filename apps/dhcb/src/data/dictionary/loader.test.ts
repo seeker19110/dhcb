@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 
 function response(ok: boolean, data: unknown = []): Response {
   return { ok, json: async () => data } as Response
@@ -80,5 +81,14 @@ describe('loadDictionary — cache promise có thể phục hồi', () => {
     } finally {
       catchSpy.mockRestore()
     }
+  })
+
+  // [changelog 0525] Câu lỗi cũ "Không tải được dữ liệu từ điển: chunk-000.json" có dấu tiếng Việt
+  // nên `thongDiepLoiThanThien` giữ NGUYÊN VĂN — người học thấy cả tên file kỹ thuật.
+  it('HTTP 503 → câu lỗi mang mã HTTP, dịch được sang câu thân thiện (không lộ tên file)', async () => {
+    vi.mocked(fetch).mockImplementation(async () => ({ ok: false, status: 503 }) as Response)
+    const { loadDictionary } = await import('./loader')
+    const err: unknown = await loadDictionary().catch((e: unknown) => e)
+    expect(thongDiepLoiThanThien(err)).toBe('Máy chủ đang gặp sự cố — thử lại sau ít phút.')
   })
 })

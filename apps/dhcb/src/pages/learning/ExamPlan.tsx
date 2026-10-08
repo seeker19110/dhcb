@@ -38,6 +38,9 @@ import {
   type TodayPlan,
 } from '../../lib/examPlan'
 import { buttonClass } from '@core/buttonStyles'
+import { useToast } from '@core/ToastProvider'
+import LoadError from '../../components/LoadError'
+import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 
 const WEEKDAY_LABELS_A = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 const WEEKDAY_LABELS_B = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -278,6 +281,10 @@ export default function ExamPlanPage() {
   const [record, setRecord] = useState<ExamPlanRecord | null>(null)
   const [plan, setPlan] = useState<TodayPlan | null>(null)
   const [loading, setLoading] = useState(true)
+  // [changelog 0525] Lỗi TẢI tách khỏi "chưa có kế hoạch" — xem chú thích ở `fetchExamPlan`.
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
+  const toast = useToast()
 
   const apply = useCallback(
     (rec: ExamPlanRecord | null) => {
@@ -293,25 +300,64 @@ export default function ExamPlanPage() {
   )
 
   // Cờ `alive` để không setState sau khi component đã rời màn hình (cùng khuôn ReferralSection).
+  // Lỗi tải: KHÔNG gọi `apply` — giữ nguyên mức nhớ FSRS đang có, chỉ hiện lỗi + Thử lại.
+  const loiTai = useCallback(
+    (err: unknown) => {
+      setLoading(false)
+      setLoadError(
+        thongDiepLoiThanThien(
+          err,
+          isA
+            ? 'Chưa tải được kế hoạch ôn thi. Kiểm tra kết nối rồi thử lại.'
+            : 'Could not load your exam plan. Check your connection and try again.',
+          isA ? 'vi' : 'en',
+        ),
+      )
+    },
+    [isA],
+  )
+
   useEffect(() => {
     let alive = true
-    fetchExamPlan().then((rec) => {
-      if (alive) apply(rec)
-    })
+    fetchExamPlan().then(
+      (rec) => {
+        if (alive) apply(rec)
+      },
+      (err: unknown) => {
+        if (alive) loiTai(err)
+      },
+    )
     return () => {
       alive = false
     }
-  }, [apply])
+  }, [apply, loiTai, attempt])
 
-  async function reload() {
-    apply(await fetchExamPlan())
+  function retryLoad() {
+    setLoadError(null)
+    setLoading(true)
+    setAttempt((n) => n + 1)
   }
 
+  async function reload() {
+    try {
+      apply(await fetchExamPlan())
+    } catch (err) {
+      loiTai(err)
+    }
+  }
+
+  // Bản cũ: kết thúc thất bại thì im lặng — người học bấm mà không thấy gì xảy ra.
   async function handleEnd() {
     if (!record) return
     if (await endExamPlan(record.id)) {
       setRecord(null)
       setPlan(null)
+    } else {
+      toast.error(
+        isA
+          ? 'Chưa kết thúc được kế hoạch — kiểm tra kết nối rồi thử lại.'
+          : 'Could not end the plan — check your connection and try again.',
+      )
     }
   }
 
@@ -335,6 +381,17 @@ export default function ExamPlanPage() {
             <Skeleton className="h-24 rounded-2xl" />
             <Skeleton className="h-24 rounded-2xl" />
           </div>
+        ) : loadError ? (
+          <LoadError
+            message={loadError}
+            onRetry={retryLoad}
+            lang={isA ? 'vi' : 'en'}
+            hint={
+              isA
+                ? 'Kế hoạch ôn thi của bạn vẫn còn nguyên — đây chỉ là lỗi kết nối.'
+                : 'Your exam plan is safe — this is only a connection problem.'
+            }
+          />
         ) : !record || !plan ? (
           <CreateForm uid={uid} isA={isA} onCreated={() => void reload()} />
         ) : (

@@ -17,6 +17,8 @@ import {
 } from '../../../lib/workApi'
 import type { WorkTask, WorkProject } from '@dhcb/core-contracts/work'
 import { buttonClass } from '@core/buttonStyles'
+import LoadError from '../../../components/LoadError'
+import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 
 // Nền cố định trang này LUÔN tối (bg-zinc-950, không đổi theo theme — xem thẻ gốc bên
 // dưới), nên `theme-light:` ở đây KHÔNG được chỉ đổi màu chữ sang sắc tối (chữ tối trên
@@ -50,6 +52,8 @@ export default function NotesKanban() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  // Lỗi TẢI — tách khỏi trạng thái rỗng (cùng khuôn Notes.tsx, xem components/LoadError.tsx).
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Quick add state
   const [quickTitle, setQuickTitle] = useState('')
@@ -58,18 +62,22 @@ export default function NotesKanban() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
+      // [changelog 0525] Bản cũ bọc từng lời gọi bằng `.catch(() => [])` → `catch` bên dưới KHÔNG
+      // BAO GIỜ chạy: mất mạng / API 500 là bảng hiện 0 việc ở cả hai cột, như thể việc của người
+      // dùng đã biến mất (đúng ca components/LoadError.tsx sinh ra để chặn).
       const [tData, pData] = await Promise.all([
-        listWorkTasks(selectedProjectId === 'all' ? undefined : selectedProjectId).catch(() => []),
-        listWorkProjects().catch(() => []),
+        listWorkTasks(selectedProjectId === 'all' ? undefined : selectedProjectId),
+        listWorkProjects(),
       ])
       setTasks(tData)
       setProjects(pData)
-    } catch {
-      toast.error('Không thể tải danh sách công việc')
+      setLoadError(null)
+    } catch (err: unknown) {
+      setLoadError(thongDiepLoiThanThien(err, 'Không thể tải danh sách công việc'))
     } finally {
       setLoading(false)
     }
-  }, [selectedProjectId, toast])
+  }, [selectedProjectId])
 
   useEffect(() => {
     // Gọi qua then() để mọi setState chạy trong callback bất đồng bộ
@@ -155,7 +163,11 @@ export default function NotesKanban() {
 
         {/* Bảng Kanban 2 cột lớn: Cần làm & Hoàn thành */}
         {loading ? (
-          <div className="text-center py-12 text-zinc-500 text-sm">Đang tải bảng công việc…</div>
+          <div role="status" className="text-center py-12 text-zinc-500 text-sm">
+            Đang tải bảng công việc…
+          </div>
+        ) : loadError ? (
+          <LoadError message={loadError} onRetry={() => void loadData()} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Cột 1: Cần làm (Todo) */}

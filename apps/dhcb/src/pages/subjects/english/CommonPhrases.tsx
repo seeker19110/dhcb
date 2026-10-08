@@ -9,6 +9,10 @@ import { useLang } from '../../../context/useLang'
 import { useAuth } from '../../../context/useAuth'
 import KaraokeText from '../../../components/KaraokeText'
 import { loadIndex, loadSubject } from '../../../data/patterns/loader'
+import LoadError from '../../../components/LoadError'
+import { CardListSkeleton } from '../../../components/Skeleton'
+import { useAsyncLoad } from '../../../lib/useAsyncLoad'
+import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import type { SubjectMeta, Subject } from '../../../data/patterns/loader'
 import { markViewed, markLastOpened, suggestContinue } from '../../../lib/viewedTracking'
 
@@ -194,13 +198,30 @@ function interleave(items: SubjectMeta[]): SubjectMeta[] {
   return result
 }
 
+// Câu lỗi tải — dữ liệu chủ đề là dữ liệu CHUNG nên câu trấn an nói về tiến độ người học.
+const LOI_TAI_VI = 'Chưa tải được danh sách câu thông dụng. Kiểm tra kết nối rồi thử lại.'
+const LOI_TAI_EN = 'Could not load the common phrases. Check your connection and try again.'
+const GOI_Y_VI = 'Tiến độ học của bạn vẫn được giữ nguyên.'
+const GOI_Y_EN = 'Your learning progress is kept.'
+
 export default function CommonPhrases() {
   usePageTitle('Câu thông dụng | Môn tiếng Anh · Đồng Hành Cùng Bạn')
-  const { T } = useLang()
+  const { T, lang } = useLang()
   const { user } = useAuth()
   const uid = user?.id ?? ''
 
-  const [indexData, setIndexData] = useState<SubjectMeta[]>([])
+  // [changelog 0525] Bản cũ `loadIndex().then(setIndexData)` không có nhánh lỗi: tải hỏng thì
+  // danh sách rỗng + dòng "Không tìm thấy kết quả phù hợp" — như thể trang không có chủ đề nào.
+  const { state: indexState, retry: retryIndex } = useAsyncLoad(loadIndex, {
+    lang,
+    errorMessage: lang === 'vi' ? LOI_TAI_VI : LOI_TAI_EN,
+  })
+  const indexData = useMemo(
+    () => (indexState.status === 'ready' ? indexState.data : []),
+    [indexState],
+  )
+  // Lỗi khi MỞ một chủ đề (chunk hỏng) — kèm chủ đề để nút Thử lại mở lại đúng chủ đề đó.
+  const [openError, setOpenError] = useState<{ meta: SubjectMeta; message: string } | null>(null)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search) // filter lazy, input không lag
   const [activeStruct, setActiveStruct] = useState<StructType | null>(null)
@@ -211,10 +232,6 @@ export default function CommonPhrases() {
   // Khóa invalidation thủ công cho Set "đã xem" — bump() sau khi mở 1 chủ đề để
   // CTA "Tiếp tục" tính lại đúng khi quay lại danh sách.
   const [viewedRefresh, setViewedRefresh] = useState(0)
-
-  useEffect(() => {
-    loadIndex().then(setIndexData)
-  }, [])
 
   // Gợi ý đầu danh sách — luật chung `suggestContinue` (chủ đề đang học trước, rồi mới tới chủ đề
   // đầu tiên chưa xem). Trước đây là "đầu tiên chưa xem": vừa mở chủ đề 1 đã bị mời sang chủ đề 2.
@@ -266,11 +283,31 @@ export default function CommonPhrases() {
     return () => observer.disconnect()
   }, [visible, sorted.length])
 
+  // [changelog 0525] Bản cũ không bắt lỗi: `loadSubject` reject thì `loading` kẹt `true` → mọi
+  // thẻ chủ đề bị `disabled` vĩnh viễn, bấm gì cũng không phản hồi, không một chữ báo lỗi.
   async function openSubject(meta: SubjectMeta) {
     setLoading(true)
-    const subj = await loadSubject(meta)
+    setOpenError(null)
+    let subj: Subject | null
+    try {
+      subj = await loadSubject(meta)
+    } catch (err) {
+      setOpenError({
+        meta,
+        message: thongDiepLoiThanThien(err, lang === 'vi' ? LOI_TAI_VI : LOI_TAI_EN, lang),
+      })
+      return
+    } finally {
+      setLoading(false)
+    }
+    if (!subj) {
+      setOpenError({
+        meta,
+        message: lang === 'vi' ? 'Không tìm thấy chủ đề này.' : 'This topic could not be found.',
+      })
+      return
+    }
     setSelected(subj)
-    setLoading(false)
     window.scrollTo({ top: 0 })
     if (uid) {
       markViewed('phrases', uid, meta.starter)
@@ -345,6 +382,15 @@ export default function CommonPhrases() {
             {T.phrasesPageTitle}
           </h1>
 
+          {openError && (
+            <LoadError
+              message={openError.message}
+              onRetry={() => void openSubject(openError.meta)}
+              lang={lang}
+              hint={lang === 'vi' ? GOI_Y_VI : GOI_Y_EN}
+            />
+          )}
+
           {/* Gợi ý "Tiếp tục"/"Bắt đầu" — ẩn khi đang tìm kiếm */}
           {goiY && !search.trim() && (
             <ContinueRow
@@ -408,6 +454,16 @@ export default function CommonPhrases() {
             ))}
           </div>
 
+          {indexState.status === 'error' && (
+            <LoadError
+              message={indexState.message}
+              onRetry={retryIndex}
+              lang={lang}
+              hint={lang === 'vi' ? GOI_Y_VI : GOI_Y_EN}
+            />
+          )}
+          {indexState.status === 'loading' && <CardListSkeleton rows={4} />}
+
           {/* Grid cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {shown.map((subj) => {
@@ -442,7 +498,7 @@ export default function CommonPhrases() {
             </div>
           )}
 
-          {filtered.length === 0 && (
+          {indexState.status === 'ready' && filtered.length === 0 && (
             <div className="text-center py-16 text-zinc-400 text-sm">{T.phrasesNoResult}</div>
           )}
         </PageShell>

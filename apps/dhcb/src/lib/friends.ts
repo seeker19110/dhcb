@@ -1,5 +1,6 @@
 // src/lib/friends.ts — Client cho tính năng kết bạn qua mã/URL/QR (xem api/friends.ts).
 
+import { z } from 'zod'
 import { getAuthHeader } from '@core/authHeader'
 
 export interface FriendUserSummary {
@@ -17,27 +18,32 @@ export function buildFriendInviteUrl(code: string): string {
   return `${window.location.origin}/ket-ban/${code}`
 }
 
-export async function fetchFriendsState(): Promise<FriendsState | null> {
-  try {
-    const res = await fetch('/api/friends', { headers: getAuthHeader() })
-    if (!res.ok) return null
-    return (await res.json()) as FriendsState
-  } catch {
-    return null
-  }
+const FriendUserSchema = z.object({ id: z.string(), name: z.string() })
+const FriendsStateSchema = z.object({ code: z.string(), friends: z.array(FriendUserSchema) })
+const LookupSchema = z.object({ user: FriendUserSchema.nullable() })
+
+// [changelog 0525] Hai hàm đọc dưới đây từng trả `null` cho MỌI lỗi (mạng, 5xx, body hỏng). Trang
+// Bạn bè vì thế hiện "Chưa có bạn bè nào", trang Kết bạn hiện "Mã kết bạn không tồn tại" khi chỉ
+// là mất mạng — người dùng tưởng mất bạn bè / mã sai. Nay lỗi thì NÉM để UI hiện lỗi + Thử lại.
+
+/** Mã kết bạn + danh sách bạn bè. Ném lỗi khi mạng/HTTP lỗi hoặc body lệch hợp đồng. */
+export async function fetchFriendsState(): Promise<FriendsState> {
+  const res = await fetch('/api/friends', { headers: getAuthHeader() })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const parsed = FriendsStateSchema.safeParse(await res.json())
+  if (!parsed.success) throw new Error('Dữ liệu bạn bè không đúng định dạng.')
+  return parsed.data
 }
 
+/** Tra người dùng theo mã. `null` = mã không tồn tại (server trả `user: null`); lỗi thì ném. */
 export async function lookupFriendByCode(code: string): Promise<FriendUserSummary | null> {
-  try {
-    const res = await fetch(`/api/friends?lookup=${encodeURIComponent(code)}`, {
-      headers: getAuthHeader(),
-    })
-    if (!res.ok) return null
-    const data = (await res.json()) as { user: FriendUserSummary | null }
-    return data.user
-  } catch {
-    return null
-  }
+  const res = await fetch(`/api/friends?lookup=${encodeURIComponent(code)}`, {
+    headers: getAuthHeader(),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const parsed = LookupSchema.safeParse(await res.json())
+  if (!parsed.success) throw new Error('Dữ liệu tra mã kết bạn không đúng định dạng.')
+  return parsed.data.user
 }
 
 export type AddFriendResult =

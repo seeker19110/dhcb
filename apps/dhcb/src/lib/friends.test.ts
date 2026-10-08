@@ -32,14 +32,20 @@ describe('fetchFriendsState', () => {
     expect(await fetchFriendsState()).toEqual(state)
   })
 
-  it('HTTP lỗi → null', async () => {
+  // [changelog 0525] Lỗi phải NÉM — trả null từng làm trang Bạn bè hiện "Chưa có bạn bè nào".
+  it('HTTP lỗi → ném lỗi', async () => {
     mockFetch(null, false)
-    expect(await fetchFriendsState()).toBeNull()
+    await expect(fetchFriendsState()).rejects.toThrow('HTTP')
   })
 
-  it('fetch ném lỗi mạng → null, không throw', async () => {
+  it('fetch ném lỗi mạng → ném lỗi (để UI hiện lỗi + Thử lại)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('down')))
-    expect(await fetchFriendsState()).toBeNull()
+    await expect(fetchFriendsState()).rejects.toThrow('down')
+  })
+
+  it('body lệch hợp đồng → ném lỗi, không coi là danh sách rỗng', async () => {
+    mockFetch({ code: 'ABC' })
+    await expect(fetchFriendsState()).rejects.toThrow('không đúng định dạng')
   })
 })
 
@@ -55,14 +61,15 @@ describe('lookupFriendByCode', () => {
     expect(await lookupFriendByCode('XYZ')).toBeNull()
   })
 
-  it('HTTP lỗi → null', async () => {
+  // [changelog 0525] Lỗi phải NÉM — trả null từng làm trang Kết bạn báo "mã không tồn tại".
+  it('HTTP lỗi → ném lỗi', async () => {
     mockFetch(null, false)
-    expect(await lookupFriendByCode('XYZ')).toBeNull()
+    await expect(lookupFriendByCode('XYZ')).rejects.toThrow('HTTP')
   })
 
-  it('fetch ném lỗi mạng → null, không throw', async () => {
+  it('fetch ném lỗi mạng → ném lỗi', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('down')))
-    expect(await lookupFriendByCode('XYZ')).toBeNull()
+    await expect(lookupFriendByCode('XYZ')).rejects.toThrow('down')
   })
 })
 

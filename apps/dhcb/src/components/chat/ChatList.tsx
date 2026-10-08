@@ -6,6 +6,7 @@ import { fetchFriendsState, type FriendUserSummary } from '../../lib/friends'
 import { formatChatPreviewTime, getAvatarColor } from '../../lib/chatFormatters'
 import PresenceDot from './PresenceDot'
 import { Skeleton, CardListSkeleton } from '../Skeleton'
+import { buttonClass } from '@core/buttonStyles'
 
 export interface ChatListProps {
   rooms: RoomSummary[]
@@ -28,6 +29,9 @@ export default function ChatList({
   const [showFriendsPicker, setShowFriendsPicker] = useState(false)
   const [friends, setFriends] = useState<FriendUserSummary[]>([])
   const [loadingFriends, setLoadingFriends] = useState(false)
+  // [changelog 0525] Lỗi tải bạn bè tách khỏi "chưa có bạn bè" — bản cũ mất mạng là hiện
+  // "Chưa có bạn bè nào. Thêm bạn bè ngay" như thể danh sách trống thật.
+  const [friendsError, setFriendsError] = useState(false)
 
   // Lọc phòng theo từ khoá tìm kiếm
   const filteredRooms = useMemo(() => {
@@ -42,13 +46,22 @@ export default function ChatList({
   function toggleFriendsPicker() {
     const next = !showFriendsPicker
     setShowFriendsPicker(next)
-    if (next && friends.length === 0) {
-      setLoadingFriends(true)
-      fetchFriendsState().then((state) => {
-        if (state) setFriends(state.friends)
+    if (next && friends.length === 0) loadFriends()
+  }
+
+  function loadFriends() {
+    setLoadingFriends(true)
+    setFriendsError(false)
+    fetchFriendsState().then(
+      (state) => {
+        setFriends(state.friends)
         setLoadingFriends(false)
-      })
-    }
+      },
+      () => {
+        setFriendsError(true)
+        setLoadingFriends(false)
+      },
+    )
   }
 
   return (
@@ -102,7 +115,22 @@ export default function ChatList({
             </div>
           )}
 
-          {!loadingFriends && friends.length === 0 && (
+          {!loadingFriends && friendsError && (
+            <div role="alert" className="text-center py-3">
+              <p className="text-xs text-zinc-300 mb-2">
+                Chưa tải được danh sách bạn bè. Kiểm tra kết nối rồi thử lại.
+              </p>
+              <button
+                type="button"
+                onClick={loadFriends}
+                className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
+              >
+                Thử lại
+              </button>
+            </div>
+          )}
+
+          {!loadingFriends && !friendsError && friends.length === 0 && (
             <div className="text-center py-3">
               <p className="text-xs text-zinc-400 mb-2">Chưa có bạn bè nào.</p>
               <Link

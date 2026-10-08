@@ -1,7 +1,7 @@
 // apps/dhcb/src/pages/AddFriend.tsx — Trang mở khi bấm link/quét QR kết bạn của người khác
 // (/ket-ban/:code). Yêu cầu đăng nhập (bọc RequireAuth ở App.tsx) — chưa đăng nhập sẽ được
 // RequireAuth chuyển sang /login rồi quay lại đúng link này sau khi đăng nhập xong.
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { UserPlus, CheckCircle2 } from 'lucide-react'
 import Layout from '../../components/Layout'
@@ -9,25 +9,28 @@ import { useToast } from '@core/ToastProvider'
 import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { lookupFriendByCode, addFriendByCode, type FriendUserSummary } from '../../lib/friends'
 import { buttonClass } from '@core/buttonStyles'
+import LoadError from '../../components/LoadError'
+import { useAsyncLoad } from '../../lib/useAsyncLoad'
 
 export default function AddFriend() {
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const toast = useToast()
-  const [target, setTarget] = useState<FriendUserSummary | null | undefined>(undefined)
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
 
-  useEffect(() => {
-    if (!code) return
-    let cancelled = false
-    lookupFriendByCode(code).then((user) => {
-      if (!cancelled) setTarget(user)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [code])
+  // [changelog 0525] Bản cũ: lỗi mạng/5xx khi tra mã → `null` → "Mã kết bạn không tồn tại hoặc
+  // đã hết hiệu lực". Người được mời tưởng mã hỏng và bỏ cuộc. Nay lỗi tải có nhánh riêng + Thử lại.
+  const lookup = useCallback(
+    () => (code ? lookupFriendByCode(code) : Promise.resolve(null)),
+    [code],
+  )
+  const { state: lookupState, retry } = useAsyncLoad(lookup, {
+    errorMessage: 'Chưa kiểm tra được mã kết bạn. Kiểm tra kết nối rồi thử lại.',
+  })
+  // undefined = đang kiểm tra, null = mã không tồn tại
+  const target: FriendUserSummary | null | undefined =
+    lookupState.status === 'ready' ? lookupState.data : undefined
 
   async function handleAdd() {
     if (!code) return
@@ -58,7 +61,19 @@ export default function AddFriend() {
           Kết bạn
         </h1>
 
-        {target === undefined && <p className="text-sm text-zinc-400">Đang kiểm tra mã…</p>}
+        {lookupState.status === 'loading' && (
+          <p role="status" className="text-sm text-zinc-400">
+            Đang kiểm tra mã…
+          </p>
+        )}
+
+        {lookupState.status === 'error' && (
+          <LoadError
+            message={lookupState.message}
+            onRetry={retry}
+            hint="Mã kết bạn vẫn dùng được — đây chỉ là lỗi kết nối."
+          />
+        )}
 
         {target === null && (
           <p className="text-sm text-red-400 theme-light:text-red-900">
