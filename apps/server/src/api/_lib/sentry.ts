@@ -19,6 +19,10 @@ export function initSentryServer(): void {
     dsn,
     environment: process.env.NODE_ENV ?? 'development',
     tracesSampleRate: 0,
+    // unhandledRejection/uncaughtException do processSafetyNet.ts lo (chạy cả khi KHÔNG có
+    // DSN, và tránh gửi trùng): bỏ hai integration mặc định của SDK (tên theo @sentry/node 11).
+    integrations: (defaults) =>
+      defaults.filter((i) => i.name !== 'OnUncaughtException' && i.name !== 'OnUnhandledRejection'),
   })
   initialized = true
 }
@@ -27,4 +31,10 @@ export function initSentryServer(): void {
 export function captureServerException(error: unknown, extra?: Record<string, unknown>): void {
   if (!initialized) return
   Sentry.captureException(error, extra ? { extra } : undefined)
+}
+
+// Chờ Sentry gửi nốt sự kiện đang đợi (dùng trước khi thoát tiến trình). Chưa bật Sentry → true ngay.
+export async function flushServerSentry(timeoutMs: number): Promise<boolean> {
+  if (!initialized) return true
+  return Sentry.flush(timeoutMs)
 }

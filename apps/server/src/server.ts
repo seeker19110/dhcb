@@ -16,13 +16,22 @@ import * as dotenv from 'dotenv'
 // dòng đó chỉ làm bẩn log PM2 nên tắt ở server (script vận hành vẫn để in cho dễ soát).
 dotenv.config({ quiet: true })
 
-import { initSentryServer, captureServerException } from './api/_lib/sentry.js'
+import { initSentryServer, captureServerException, flushServerSentry } from './api/_lib/sentry.js'
+import { installProcessSafetyNet } from './processSafetyNet.js'
 import { registerApiRoutes, applyCommonSecurityHeaders } from './routes.js'
 import { parseHubHostnames, resolveDistDir } from './staticApps.js'
 import { warnIfClusterWithoutRedis, reportRedisStatusAtStartup } from '@dhcb/core-auth/security'
 
 // Bật Sentry (error tracking) — no-op nếu chưa cấu hình SENTRY_DSN (xem api/_lib/sentry.ts).
 initSentryServer()
+
+// Lưới an toàn cuối cho promise trôi nổi / lỗi không bắt được (changelog 0528).
+installProcessSafetyNet({
+  logger: (message, error) => console.error(message, error),
+  captureException: captureServerException,
+  flush: flushServerSentry,
+  exit: (code) => process.exit(code),
+})
 
 // Cảnh báo ngay ở log khởi động nếu thiếu REDIS_URL khi chạy dưới PM2 — xem chi tiết
 // lý do trong warnIfClusterWithoutRedis() (api/_lib/security.ts).
