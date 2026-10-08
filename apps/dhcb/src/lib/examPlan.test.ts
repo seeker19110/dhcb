@@ -150,14 +150,14 @@ describe('computeTodayPlan — từ điển rỗng (dữ liệu chưa nạp)', (
 })
 
 describe('gọi API — các nhánh còn lại', () => {
-  it('fetchExamPlan: 200 → trả plan; 200 với plan null → null; lỗi HTTP → null', async () => {
+  it('fetchExamPlan: 200 → trả plan; 200 với plan null → null; lỗi HTTP → ném lỗi (0525)', async () => {
     const plan = { id: 'p1', examDate: '2026-12-26' }
     fetchMock.mockResolvedValueOnce(res({ plan }))
     await expect(fetchExamPlan()).resolves.toEqual(plan)
     fetchMock.mockResolvedValueOnce(res({ plan: null }))
     await expect(fetchExamPlan()).resolves.toBeNull()
     fetchMock.mockResolvedValueOnce(res({ error: 'x' }, false, 500))
-    await expect(fetchExamPlan()).resolves.toBeNull()
+    await expect(fetchExamPlan()).rejects.toThrow('HTTP 500')
     // Gửi kèm header xác thực.
     expect(fetchMock.mock.calls[0]![1]).toEqual({ headers: { Authorization: 'Bearer t' } })
   })
