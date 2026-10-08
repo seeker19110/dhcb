@@ -4,8 +4,11 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
+  ELEVEN_TONES,
+  ELEVEN_TONE_TAGS,
   ELEVEN_VOICES,
   ELEVEN_VOICE_IDS,
+  elevenBilledChars,
   elevenVoiceGender,
   generateAudioFromElevenLabs,
   isValidElevenVoice,
@@ -182,5 +185,92 @@ describe('generateAudioFromElevenLabs', () => {
       }),
     )
     await expect(generateAudioFromElevenLabs('hi')).rejects.toThrow(/network down/)
+  })
+})
+
+describe('giọng điệu (thẻ cảm xúc)', () => {
+  const OLD_TONE_MODEL = process.env.ELEVENLABS_TONE_MODEL
+  afterEach(() => {
+    if (OLD_TONE_MODEL === undefined) delete process.env.ELEVENLABS_TONE_MODEL
+    else process.env.ELEVENLABS_TONE_MODEL = OLD_TONE_MODEL
+  })
+
+  // fetch giả: ghi lại body gửi đi, trả audio + alignment tuỳ ca.
+  function stubFetch(alignment: unknown) {
+    const bodies: Array<{ text: string; model_id: string }> = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)))
+        return new Response(
+          JSON.stringify({ audio_base64: Buffer.from('a').toString('base64'), alignment }),
+          { status: 200 },
+        )
+      }),
+    )
+    return bodies
+  }
+  const align = (chars: string) => ({
+    characters: [...chars],
+    character_start_times_seconds: [...chars].map((_, i) => i * 0.1),
+    character_end_times_seconds: [...chars].map((_, i) => i * 0.1 + 0.1),
+  })
+
+  it('có thẻ → gắn đầu câu và dùng model eleven_v4; không thẻ → giữ nguyên câu + model cũ', async () => {
+    process.env.ELEVENLABS_API_KEY = 'k'
+    delete process.env.ELEVENLABS_TONE_MODEL
+    const bodies = stubFetch(null)
+    await generateAudioFromElevenLabs('Hello', 'Alice', 'cheerful')
+    await generateAudioFromElevenLabs('Hello', 'Alice', 'neutral')
+    await generateAudioFromElevenLabs('Hello', 'Alice')
+    expect(bodies[0]).toEqual({ text: '[cheerful] Hello', model_id: 'eleven_v4' })
+    expect(bodies[1]).toEqual({ text: 'Hello', model_id: 'eleven_multilingual_v2' })
+    expect(bodies[2]).toEqual({ text: 'Hello', model_id: 'eleven_multilingual_v2' })
+  })
+
+  it('ELEVENLABS_TONE_MODEL đổi model của câu có giọng điệu, không đụng câu thường', async () => {
+    process.env.ELEVENLABS_API_KEY = 'k'
+    process.env.ELEVENLABS_TONE_MODEL = 'eleven_v3'
+    const bodies = stubFetch(null)
+    await generateAudioFromElevenLabs('Hi', 'Eric', 'calm')
+    await generateAudioFromElevenLabs('Hi', 'Eric')
+    expect(bodies.map((b) => b.model_id)).toEqual(['eleven_v3', 'eleven_multilingual_v2'])
+  })
+
+  it('alignment có cả thẻ → cắt thẻ, chỉ còn câu gốc (mốc thời gian giữ nguyên)', async () => {
+    process.env.ELEVENLABS_API_KEY = 'k'
+    stubFetch(align('[calm] Hi'))
+    const r = await generateAudioFromElevenLabs('Hi', 'Alice', 'calm')
+    expect(r.alignment?.characters.join('')).toBe('Hi')
+    // 'H' là ký tự thứ 7 trong "[calm] Hi" → mốc bắt đầu 0.6s, KHÔNG dồn về 0.
+    expect(r.alignment?.character_start_times_seconds[0]).toBeCloseTo(0.7)
+  })
+
+  it('provider tự bỏ thẻ khỏi alignment → giữ nguyên', async () => {
+    process.env.ELEVENLABS_API_KEY = 'k'
+    stubFetch(align('Hi'))
+    const r = await generateAudioFromElevenLabs('Hi', 'Alice', 'calm')
+    expect(r.alignment?.characters.join('')).toBe('Hi')
+  })
+
+  it('alignment không khớp cả hai dạng → null (không đưa mốc lệch vào khẩu hình)', async () => {
+    process.env.ELEVENLABS_API_KEY = 'k'
+    stubFetch(align('Something else'))
+    const r = await generateAudioFromElevenLabs('Hi', 'Alice', 'calm')
+    expect(r.alignment).toBeNull()
+  })
+
+  it('elevenBilledChars cộng cả thẻ; neutral/không thẻ chỉ tính câu', () => {
+    expect(elevenBilledChars('Hello')).toBe(5)
+    expect(elevenBilledChars('Hello', 'neutral')).toBe(5)
+    expect(elevenBilledChars('Hello', 'calm')).toBe('[calm] '.length + 5)
+  })
+
+  it('mọi giọng điệu đều có thẻ dạng [từ-khoá] hoặc rỗng (neutral)', () => {
+    for (const t of ELEVEN_TONES) {
+      const tag = ELEVEN_TONE_TAGS[t]
+      expect(tag === '' || /^\[[a-z ]+\]$/.test(tag)).toBe(true)
+    }
+    expect(ELEVEN_TONE_TAGS.neutral).toBe('')
   })
 })

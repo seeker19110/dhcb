@@ -271,6 +271,13 @@ npm run seed:all -- --eleven --eleven-budget=400000        # 2. Seed tối đa 4
 
 - **Thứ tự dùng ngân sách:** CEFR → Challenge → hội thoại (50 bài đầu, rồi còn lại) → giáo trình →
   Cụm từ. Nhóm nhỏ/quan trọng trước, hai nhóm khổng lồ sau cùng.
+- **Giọng điệu (cố định theo nhóm câu):** giáo trình + CEFR `[calm]` · hội thoại `[cheerful]` ·
+  Challenge `[excited]` · Cụm từ trung tính (không thẻ). Thẻ gắn vào ĐẦU câu gửi ElevenLabs, chạy
+  trên model `eleven_v4` (đổi bằng `ELEVENLABS_TONE_MODEL`); phát lúc người dùng bấm nghe vẫn dùng
+  `eleven_multilingual_v2`, không thẻ. Thẻ **tính phí như ký tự thường**: tổng toàn bộ nay
+  ~17,3 triệu credit (+8,9%); ước tính và `--eleven-budget` đã cộng sẵn. Tắt bằng `--no-tone`.
+  **Nghe thử trước khi seed lớn:** `npm run eleven:tone-sample` (~400 credit, 8 file mp3). Nếu
+  model đọc thẳng chữ "calm"/"cheerful" thành tiếng thì DỪNG, đừng seed.
 - **Khoá cache:** hash ElevenLabs **bỏ `lang`** (đúng như `/api/tts`), nên một câu chỉ seed 1 lần
   cho cả hai ngôn ngữ.
 - **Hội thoại:** mỗi nhân vật dùng giọng ElevenLabs đúng giới tính, xoay vòng 3 giọng/giới.

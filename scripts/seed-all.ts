@@ -59,6 +59,12 @@
 //                             hội thoại → giáo trình → Cụm từ (nhóm nhỏ/quan trọng trước, nhóm
 //                             khổng lồ sau cùng). Không đặt = không trần. Tổng toàn bộ nội dung
 //                             ~16 triệu ký tự (đo 2026-10-08) — đừng chạy không trần nếu chưa tính.
+//   --no-tone                 (kèm --eleven) TẮT giọng điệu: đọc trung tính, không gắn thẻ cảm xúc.
+//                             Mặc định mỗi nhóm câu có giọng điệu riêng (ELEVEN_TONE_BY_CAT: giáo
+//                             trình/CEFR bình tĩnh, hội thoại vui vẻ, challenge hào hứng, Cụm từ
+//                             trung tính) qua thẻ [calm]/[cheerful]/[excited] trên model eleven_v4.
+//                             Thẻ TÍNH PHÍ như ký tự thường nên ước tính + trần đã cộng thêm.
+//                             Nghe thử trước: `npm run eleven:tone-sample`.
 //   ELEVENLABS_SEED_CONCURRENCY=3  Số request ElevenLabs chạy song song (mặc định 3 — gói thấp
 //                             của ElevenLabs chỉ cho 2–5 request đồng thời, vượt là bị 429).
 //   VERIFY_DECRYPT=20        (kèm --verify) Tải + giải mã thử 20 file để chắc dùng được.
@@ -117,10 +123,12 @@ import { type VoiceId as AppVoiceId } from '../apps/dhcb/src/lib/voiceTiers.ts'
 import type { StoryKind } from '../apps/dhcb/src/data/stories/index.ts'
 import {
   ELEVEN_VOICE_IDS,
+  elevenBilledChars,
   elevenVoiceGender,
   generateAudioFromElevenLabs,
   hasElevenLabsKey,
   isValidElevenVoice,
+  type ElevenTone,
   type ElevenVoiceId,
 } from '@dhcb/core-ai/elevenLabsTts'
 import { visemeTimelineFromAlignment } from '@dhcb/core-ai/visemeTimeline'
@@ -202,6 +210,19 @@ const ELEVEN_SEED = process.argv.includes('--eleven') || process.env.SEED_ELEVEN
 // Trần ký tự ElevenLabs cho mỗi lượt chạy (Infinity = không trần), xem ghi chú ở đầu file.
 const ELEVEN_BUDGET_ARG = process.argv.find((a) => a.startsWith('--eleven-budget='))?.split('=')[1]
 const ELEVEN_BUDGET = Number(ELEVEN_BUDGET_ARG ?? process.env.ELEVEN_BUDGET_CHARS) || Infinity
+// Giọng điệu theo nhóm câu (chốt với chủ dự án 2026-10-08: CỐ ĐỊNH theo nhóm, không cho người dùng
+// chọn). Nhóm không có trong bảng = trung tính. Từ điển không dùng ElevenLabs nên không có ở đây.
+const ELEVEN_TONE_BY_CAT: Partial<Record<CatId, ElevenTone>> = {
+  curriculum: 'calm',
+  cefr: 'calm',
+  'lessons-early': 'cheerful',
+  'lessons-rest': 'cheerful',
+  challenge: 'excited',
+  patterns: 'neutral',
+}
+const ELEVEN_TONES_ON = !process.argv.includes('--no-tone')
+const toneOf = (cat: CatId): ElevenTone | undefined =>
+  ELEVEN_TONES_ON ? ELEVEN_TONE_BY_CAT[cat] : undefined
 const ELEVEN_CONCURRENCY = Math.max(1, Number(process.env.ELEVENLABS_SEED_CONCURRENCY) || 3)
 const CHECK_ONLY = process.argv.includes('--check') || process.env.CHECK === '1'
 const VERIFY_ONLY = process.argv.includes('--verify') || process.env.VERIFY === '1'
@@ -1558,7 +1579,9 @@ async function processTask(task: AnyTask, remapOnly = false): Promise<TaskResult
     // client tự ước lượng như cũ (giống nhánh /api/tts), KHÔNG làm hỏng việc seed.
     let visemeTimeline: unknown[] | null = null
     if (isValidElevenVoice(voice)) {
-      const result = await limitEleven(() => generateAudioFromElevenLabs(text, voice))
+      const result = await limitEleven(() =>
+        generateAudioFromElevenLabs(text, voice, toneOf(task.cat)),
+      )
       audioBuffer = result.audio
       if (result.alignment) {
         visemeTimeline = await visemeTimelineFromAlignment(result.alignment, lang).catch(() => null)
@@ -2322,8 +2345,9 @@ function applyElevenBudget(tasks: AnyTask[]): AnyTask[] {
   const kept: AnyTask[] = []
   let spent = 0
   for (const t of eleven) {
-    if (spent + t.text.length > ELEVEN_BUDGET) break
-    spent += t.text.length
+    const cost = elevenBilledChars(t.text, toneOf(t.cat))
+    if (spent + cost > ELEVEN_BUDGET) break
+    spent += cost
     kept.push(t)
   }
   return [...tasks.filter((t) => !isElevenTask(t)), ...kept]
@@ -2335,7 +2359,8 @@ function summarizeElevenSpend(stats: CatStat[]): {
   allChars: number
 } {
   const remaining = stats.flatMap((s) => s.remaining)
-  const allChars = remaining.filter(isElevenTask).reduce((n, t) => n + t.text.length, 0)
+  const billed = (t: PatternTask) => elevenBilledChars(t.text, toneOf(t.cat))
+  const allChars = remaining.filter(isElevenTask).reduce((n, t) => n + billed(t), 0)
   const planned = applyElevenBudget(remaining).filter(isElevenTask)
   const rows: Array<{ label: string; sentences: number; chars: number }> = []
   for (const s of stats) {
@@ -2344,7 +2369,7 @@ function summarizeElevenSpend(stats: CatStat[]): {
     rows.push({
       label: s.label,
       sentences: mine.length,
-      chars: mine.reduce((n, t) => n + t.text.length, 0),
+      chars: mine.reduce((n, t) => n + billed(t), 0),
     })
   }
   return { rows, chars: rows.reduce((n, r) => n + r.chars, 0), allChars }
@@ -2646,6 +2671,7 @@ export {
   loadPatternTasks,
   hashText,
   applyElevenBudget,
+  ELEVEN_TONE_BY_CAT,
   CATEGORIES,
   parsePronunciationKey,
   pronKey,

@@ -6,7 +6,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 // khi CI chạy song song nhiều file.
 vi.setConfig({ testTimeout: 60_000 })
 import {
+  ELEVEN_TONE_TAGS,
   ELEVEN_VOICE_IDS,
+  elevenBilledChars,
   elevenVoiceGender,
   isValidElevenVoice,
 } from '@dhcb/core-ai/elevenLabsTts'
@@ -126,5 +128,35 @@ describe('applyElevenBudget — trần ký tự mỗi lượt', () => {
     // Trần 400k chưa đủ cho 2 nhóm khổng lồ (6,4M + 7,7M ký tự) nên chúng không được lọt vào.
     expect(ranks.includes(order.indexOf('patterns'))).toBe(false)
     expect(ranks[0]).toBe(0)
+  })
+})
+
+describe('giọng điệu theo nhóm câu', () => {
+  it('mọi nhóm có tác vụ ElevenLabs đều có giọng điệu khai báo; từ điển/truyện thì không', async () => {
+    const { loadPatternTasks, ELEVEN_TONE_BY_CAT } = await loadSeed(true)
+    const cats = new Set(
+      loadPatternTasks()
+        .filter((t) => isValidElevenVoice(t.voice))
+        .map((t) => (t.type === 'pattern' ? t.cat : '')),
+    )
+    for (const c of cats) expect(ELEVEN_TONE_BY_CAT[c as never]).toBeDefined()
+    expect(ELEVEN_TONE_BY_CAT).not.toHaveProperty('pron')
+    expect(ELEVEN_TONE_BY_CAT).not.toHaveProperty('stories')
+    for (const tone of Object.values(ELEVEN_TONE_BY_CAT))
+      expect(tone! in ELEVEN_TONE_TAGS).toBe(true)
+  })
+
+  it('trần ngân sách tính CẢ thẻ giọng điệu (tổng tính phí không vượt trần)', async () => {
+    const budget = 200_000
+    const { loadPatternTasks, applyElevenBudget, ELEVEN_TONE_BY_CAT } = await loadSeed(true, budget)
+    const billed = applyElevenBudget(loadPatternTasks())
+      .filter((t) => isValidElevenVoice(t.voice))
+      .reduce(
+        (n, t) =>
+          t.type === 'pattern' ? n + elevenBilledChars(t.text, ELEVEN_TONE_BY_CAT[t.cat]) : n,
+        0,
+      )
+    expect(billed).toBeGreaterThan(0)
+    expect(billed).toBeLessThanOrEqual(budget)
   })
 })

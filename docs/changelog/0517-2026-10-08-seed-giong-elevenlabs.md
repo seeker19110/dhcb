@@ -23,6 +23,22 @@
   **`--eleven-budget=N`** cắt mỗi lượt ở N ký tự theo thứ tự ưu tiên để chia việc theo hạn mức tháng.
 - `.env.example`, `docs/seed-guide.md` mục 8 mô tả cách dùng.
 
+## Bổ sung cùng đợt: giọng điệu cho câu (từ điển không có)
+
+- Chủ dự án chốt: giọng điệu **cố định theo nhóm câu**, cơ chế **thẻ cảm xúc**; ban đầu chọn `eleven_v3`, sau đó chủ dự án yêu cầu **đổi sang `eleven_v4`**
+  (tài liệu xác nhận model_id `eleven_v4`, có tiếng Việt, giới hạn 10.000 ký tự/yêu cầu).
+- `elevenLabsTts.ts`: `ELEVEN_TONE_TAGS` (`neutral` · `calm` · `cheerful` · `excited`); tham số `tone` của
+  `generateAudioFromElevenLabs`; có thẻ → gắn đầu câu + dùng `ELEVENLABS_TONE_MODEL` (mặc định
+  `eleven_v4`), không thẻ → vẫn `eleven_multilingual_v2` nên phát lúc bấm nghe KHÔNG đổi.
+  Thẻ không nằm trong hash cache và không hiện ra giao diện.
+- Alignment của provider tính cả thẻ → cắt tiền tố trước khi dựng khẩu hình; không khớp thì để `null`
+  (client tự ước lượng), không đưa mốc lệch vào.
+- `seed-all.ts`: `ELEVEN_TONE_BY_CAT` (giáo trình/CEFR `calm`, hội thoại `cheerful`, Challenge `excited`,
+  Cụm từ trung tính); `--no-tone` tắt; ước tính + trần ngân sách tính cả ký tự thẻ.
+- `npm run eleven:tone-sample` (`scripts/eleven-tone-sample.ts`): 4 giọng điệu × 1 câu Anh + 1 câu Việt
+  ra mp3 để nghe thử (~400 credit).
+- **Chi phí đo lại:** thẻ tính phí như ký tự thường → tổng ~17,33 triệu credit (+1,41 triệu, +8,9%).
+
 ## Quyết định / phát hiện
 
 - **Quy mô thật (đo bằng `loadPatternTasks`): ~421.071 audio · ~15,9 triệu ký tự.** Rất lớn so với hạn
@@ -38,6 +54,9 @@
 - **Chưa chạy seed thật** — phiên không có `ELEVENLABS_API_KEY` và chạy sẽ tốn tiền thật. Chủ dự án
   điền key vào `.env` trên VPS rồi chạy `npm run seed:all -- --eleven --check` để xem ước tính.
 - Chất lượng tiếng Việt của `eleven_multilingual_v2` vẫn chưa kiểm định — nghe thử trước khi seed lớn.
+- **Chưa kiểm được bằng API thật:** (1) `eleven_v4` có hiểu thẻ `[calm]`… trên tiếng Việt không hay đọc
+  thẳng thành tiếng (tài liệu chỉ liệt kê `[whispers]` `[sighs]` `[laughs]`); (2) `/with-timestamps` có
+  chạy với `eleven_v4` không (tài liệu không nói); (3) mức giá credit của v4 (tài liệu không nêu). Chạy `npm run eleven:tone-sample` TRƯỚC khi seed.
 
 ## Bằng chứng
 
