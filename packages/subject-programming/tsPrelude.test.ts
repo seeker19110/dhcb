@@ -7,7 +7,7 @@
 // viễn trong bộ nhớ đệm (~10 MB heap/file .d.ts lớn) → worker bị PM2 giết vì quá RAM.
 import { join } from 'node:path'
 import ts from 'typescript'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { kiemTraTypeScript } from './tsPrelude.js'
 
 const cwd = process.cwd()
@@ -15,15 +15,24 @@ const fileCoThat = join(cwd, 'packages', 'core-auth', 'security.ts').replace(/\\
 const fileKhongCo = join(cwd, 'khong-ton-tai-that-su.ts').replace(/\\/g, '/')
 
 describe('kiemTraTypeScript — không đọc file nào của server ngoài lib chuẩn', () => {
+  // Chi phí "nguội" dồn về MỘT hook có ngưỡng riêng: lượt `kiemTraTypeScript` đầu tiên phân
+  // tích lib chuẩn es2020 (gồm cả lib DOM, vài MB) rồi giữ trong bộ nhớ lib của module — đây
+  // là chi phí THẬT của production (lượt "Chấm bài" đầu tiên sau khi server khởi động), không
+  // phải việc thừa của test. Trước đây chi phí này rơi vào ca đầu tiên trong file nên ca nào
+  // đứng đầu (hay được chạy lẻ bằng `-t`) cũng có thể đỏ giả. Đo 2026-10-08 (changelog 0532):
+  // chạy riêng ~1,4 s; đo coverage V8 3,4 s; coverage + máy tải ~18 lên 6,0 s; trong
+  // `test:coverage` toàn bộ (4 lõi) 5,7–6,5 s (changelog 0522). Phân tích lib DOM cùng cỡ ở
+  // scanGraph.test.ts đo được tới 16 s dưới tải ~20 → ngưỡng 60 s, gấp ~4 lần số đo xấu nhất.
+  beforeAll(() => {
+    expect(kiemTraTypeScript('const a: number = 1', ts).loi).toEqual([])
+  }, 60_000)
+
   it('/// <reference path> tới file CÓ và KHÔNG có cho kết quả GIỐNG HỆT (không dò được đĩa)', () => {
     const co = kiemTraTypeScript(`/// <reference path="${fileCoThat}" />\nconst a = 1`, ts)
     const khong = kiemTraTypeScript(`/// <reference path="${fileKhongCo}" />\nconst a = 1`, ts)
     expect(co.loi).toEqual(khong.loi)
     expect(co.loi.join('\n')).not.toMatch(/TS6053|not found/)
-    // Ca đầu tiên trả chi phí "nguội": dựng 2 chương trình TS + parse lib chuẩn lần đầu. Chạy
-    // riêng ~3 s, nhưng trong `test:coverage` toàn bộ (4 lõi, đo V8) mất 5,7–6,5 s → vượt
-    // timeout mặc định 5 s và đỏ giả (đo 2026-10-08, changelog 0522). Nới riêng ca này.
-  }, 30_000)
+  })
 
   it('không nạp được khai báo từ file khác trên đĩa', () => {
     // node_modules/typescript/lib/typescript.d.ts khai `declare namespace ts` — nếu host còn đọc

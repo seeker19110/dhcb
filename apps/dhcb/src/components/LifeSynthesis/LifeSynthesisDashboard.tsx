@@ -1,6 +1,6 @@
 // CHƯA GẮN vào giao diện từ 2026-10-02 (changelog 0475): API nguồn trả 501 vì chưa có dữ liệu
 // hoạt động thật (trước đó trả điểm bịa giống nhau cho mọi người dùng). Giữ mã để bật lại sau.
-import { useState, useEffect } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Sparkles,
   TrendingUp,
@@ -14,18 +14,68 @@ import { fetchLifeSynthesisReport } from '../../lib/lifeSynthesisApi'
 import type { LifeSynthesisReport } from '@dhcb/core-contracts/lifeSynthesis'
 import LifeSynthesisDetailModal from './LifeSynthesisDetailModal'
 import { buttonClass } from '@core/buttonStyles'
+import LoadError from '../LoadError'
+import { useAsyncLoad } from '../../lib/useAsyncLoad'
+import { diemHopLe } from '../../lib/lifeSynthesisFormat'
+
+// Hàm cấp module để `useAsyncLoad` giữ nguyên tham chiếu giữa các lần render.
+const taiBaoCaoTuan = () => fetchLifeSynthesisReport('weekly')
+
+/** Một ô chỉ số 0–100. `value === null` (thiếu dữ liệu) → "Chưa đủ dữ liệu", không số, thanh rỗng. */
+function ScoreCard({
+  icon,
+  label,
+  tag,
+  tagClass,
+  barClass,
+  loading,
+  value,
+}: {
+  icon: ReactNode
+  label: string
+  tag: string
+  tagClass: string
+  barClass: string
+  loading: boolean
+  value: number | null
+}) {
+  return (
+    <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 flex flex-col justify-between">
+      <div className="flex items-center justify-between text-xs text-zinc-400">
+        <span className="font-semibold flex items-center gap-1.5">
+          {icon}
+          {label}
+        </span>
+        <span className={`text-[0.6875rem] font-bold ${tagClass}`}>{tag}</span>
+      </div>
+      <div className="mt-2 flex items-baseline gap-2">
+        {value === null ? (
+          <span className="text-xs text-zinc-400">{loading ? '--' : 'Chưa đủ dữ liệu'}</span>
+        ) : (
+          <>
+            <span className="text-2xl font-black text-zinc-100">{value}</span>
+            <span className="text-xs text-zinc-400">/ 100</span>
+          </>
+        )}
+      </div>
+      <div className="mt-2 w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+        <div
+          className={`${barClass} h-full rounded-full transition-[width] duration-700`}
+          style={{ width: `${value ?? 0}%` }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function LifeSynthesisDashboard() {
-  const [report, setReport] = useState<LifeSynthesisReport | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { state, retry } = useAsyncLoad(taiBaoCaoTuan)
+  // Báo cáo do modal "Phân tích sâu" sinh lại (đổi khung thời gian) ghi đè bản tải ban đầu.
+  const [refreshed, setRefreshed] = useState<LifeSynthesisReport | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  useEffect(() => {
-    fetchLifeSynthesisReport('weekly')
-      .then((data) => setReport(data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const report = refreshed ?? (state.status === 'ready' ? state.data : null)
+  const loading = state.status === 'loading' && !refreshed
 
   const domainIconColorMap: Record<string, string> = {
     learning: 'text-sky-400 theme-light:text-sky-900 bg-sky-400/10 border-sky-400/20',
@@ -78,79 +128,42 @@ export default function LifeSynthesisDashboard() {
           </button>
         </div>
 
+        {/* Trạng thái tải: lỗi → LoadError + Thử lại; thiếu số liệu → "Chưa đủ dữ liệu", KHÔNG bịa số. */}
+        {state.status === 'error' && !report && (
+          <LoadError message={state.message} onRetry={retry} />
+        )}
+
         {/* 3 Core Indices Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-accent-400" />
-                Đồng bộ toàn diện
-              </span>
-              <span className="text-[0.6875rem] font-bold text-accent-300 theme-light:text-accent-900">
-                Holistic
-              </span>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-zinc-100">
-                {loading ? '--' : `${report?.holisticAlignmentScore || 88}`}
-              </span>
-              <span className="text-xs text-zinc-400">/ 100</span>
-            </div>
-            <div className="mt-2 w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-accent-500 h-full rounded-full transition-[width] duration-700"
-                style={{ width: `${report?.holisticAlignmentScore || 88}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400 theme-light:text-indigo-800" />
-                Cộng hưởng đa miền
-              </span>
-              <span className="text-[0.6875rem] font-bold text-indigo-400 theme-light:text-indigo-800">
-                Synergy
-              </span>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-zinc-100">
-                {loading ? '--' : `${report?.lifeSynergyIndex || 92}`}
-              </span>
-              <span className="text-xs text-zinc-400">/ 100</span>
-            </div>
-            <div className="mt-2 w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-indigo-500 h-full rounded-full transition-[width] duration-700"
-                style={{ width: `${report?.lifeSynergyIndex || 92}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-xs text-zinc-400">
-              <span className="font-semibold flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900" />
-                Bền bỉ nhận thức
-              </span>
-              <span className="text-[0.6875rem] font-bold text-emerald-400 theme-light:text-emerald-900">
-                Resilience
-              </span>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-zinc-100">
-                {loading ? '--' : `${report?.cognitiveResilienceScore || 85}`}
-              </span>
-              <span className="text-xs text-zinc-400">/ 100</span>
-            </div>
-            <div className="mt-2 w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-[width] duration-700"
-                style={{ width: `${report?.cognitiveResilienceScore || 85}%` }}
-              />
-            </div>
-          </div>
+          <ScoreCard
+            icon={<Target className="w-3.5 h-3.5 text-accent-400" />}
+            label="Đồng bộ toàn diện"
+            tag="Holistic"
+            tagClass="text-accent-300 theme-light:text-accent-900"
+            barClass="bg-accent-500"
+            loading={loading}
+            value={diemHopLe(report?.holisticAlignmentScore)}
+          />
+          <ScoreCard
+            icon={<Sparkles className="w-3.5 h-3.5 text-indigo-400 theme-light:text-indigo-800" />}
+            label="Cộng hưởng đa miền"
+            tag="Synergy"
+            tagClass="text-indigo-400 theme-light:text-indigo-800"
+            barClass="bg-indigo-500"
+            loading={loading}
+            value={diemHopLe(report?.lifeSynergyIndex)}
+          />
+          <ScoreCard
+            icon={
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900" />
+            }
+            label="Bền bỉ nhận thức"
+            tag="Resilience"
+            tagClass="text-emerald-400 theme-light:text-emerald-900"
+            barClass="bg-emerald-500"
+            loading={loading}
+            value={diemHopLe(report?.cognitiveResilienceScore)}
+          />
         </div>
 
         {/* 5 Domains Momentum Bar */}
@@ -163,8 +176,11 @@ export default function LifeSynthesisDashboard() {
             <span className="text-[0.6875rem] text-zinc-400">Cập nhật theo tuần</span>
           </div>
 
+          {(report?.domainBreakdown ?? []).length === 0 && (
+            <p className="text-xs text-zinc-400">{loading ? '--' : 'Chưa đủ dữ liệu'}</p>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {(report?.domainBreakdown || []).map((dom) => (
+            {(report?.domainBreakdown ?? []).map((dom) => (
               <div
                 key={dom.domain}
                 className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800/80 flex flex-col gap-1.5"
@@ -188,7 +204,9 @@ export default function LifeSynthesisDashboard() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-sm font-black text-zinc-100">{dom.score}</span>
+                  <span className="text-sm font-black text-zinc-100">
+                    {diemHopLe(dom.score) ?? '--'}
+                  </span>
                   <span className="text-[0.6875rem] text-zinc-400">/ 100</span>
                 </div>
               </div>
@@ -235,7 +253,7 @@ export default function LifeSynthesisDashboard() {
         <LifeSynthesisDetailModal
           report={report}
           onClose={() => setIsModalOpen(false)}
-          onRefresh={(newReport) => setReport(newReport)}
+          onRefresh={(newReport) => setRefreshed(newReport)}
         />
       )}
     </>

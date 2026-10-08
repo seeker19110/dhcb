@@ -24,12 +24,37 @@ const SOURCE_EXT =
 /**
  * Byte bị cấm: mọi ký tự điều khiển C0 trừ tab (0x09) · LF (0x0a) · CR (0x0d), cộng DEL (0x7f).
  * Đây là đúng tập byte khiến `git diff` chuyển một file sang chế độ nhị phân.
+ * MỘT nguồn cho cả bộ lọc nhanh (`BYTE_CAM_RE`) lẫn phần báo chi tiết (`laByteCam`).
  */
+const BYTE_CAM: ReadonlyArray<readonly [number, number]> = [
+  [0x00, 0x08],
+  [0x0b, 0x0c],
+  [0x0e, 0x1f],
+  [0x7f, 0x7f],
+]
+
+function laByteCam(b: number): boolean {
+  return BYTE_CAM.some(([lo, hi]) => b >= lo && b <= hi)
+}
+
+// LỌC NHANH bằng regex (chạy trong mã máy của V8) trên chuỗi latin1 — latin1 ánh xạ đúng 1 byte
+// thành 1 ký tự 0–255, nên khớp regex ⇔ file có byte cấm. Trước đây MỌI file đi qua vòng lặp
+// JS TỪNG BYTE (~4.300 file, ~71 MB): chạy riêng 0,5 s, nhưng dưới đo coverage V8 (đếm từng
+// khối lệnh) lên 9,2 s, máy tải cao 11,3 s, và đỏ vì quá 30 s trong `test:coverage` toàn bộ
+// (đo 2026-10-08, changelog 0532). Vòng lặp từng byte giờ CHỈ chạy trên file đã bị bắt, để in
+// chi tiết. Dựng từ mã điểm số — không gõ ký tự điều khiển vào mã nguồn (đúng luật file này canh).
+const BYTE_CAM_RE = new RegExp(
+  `[${BYTE_CAM.map(([lo, hi]) => `${String.fromCharCode(lo)}-${String.fromCharCode(hi)}`).join('')}]`,
+)
+
+function coByteCam(buf: Buffer): boolean {
+  return BYTE_CAM_RE.test(buf.toString('latin1'))
+}
+
 function bytesCam(buf: Buffer): Map<number, number> {
   const out = new Map<number, number>()
   for (const b of buf) {
-    const cam = b < 0x09 || b === 0x0b || b === 0x0c || (b >= 0x0e && b <= 0x1f) || b === 0x7f
-    if (cam) out.set(b, (out.get(b) ?? 0) + 1)
+    if (laByteCam(b)) out.set(b, (out.get(b) ?? 0) + 1)
   }
   return out
 }
@@ -61,13 +86,30 @@ function dongVoHinh(text: string): number {
   return text.slice(0, m.index).split(String.fromCodePoint(0x0a)).length
 }
 
+// LỌC NHANH trên BYTE thô, cùng lý do với `BYTE_CAM_RE`: giải mã UTF-8 cả ~71 MB mới là phần
+// đắt nhất của ca quét (đo 2026-10-08 máy tải ~20: giải mã utf8 + regex 0,89 s, so với latin1
+// + regex 0,23 s). Mỗi ký tự trong `VO_HINH` được mã hoá UTF-8 thành đúng một dãy byte, viết
+// lại dưới dạng chuỗi latin1 rồi ghép thành phép "hoặc". UTF-8 tự đồng bộ nên văn bản giải mã
+// chứa ký tự đó ⇔ byte thô chứa đúng dãy đó — bộ lọc không bỏ sót; quyết định cuối vẫn do
+// `dongVoHinh` trên văn bản đã giải mã.
+const VO_HINH_BYTE_RE = new RegExp(
+  VO_HINH.flatMap(([lo, hi]) =>
+    Array.from({ length: hi - lo + 1 }, (_, i) =>
+      Buffer.from(String.fromCodePoint(lo + i), 'utf8').toString('latin1'),
+    ),
+  ).join('|'),
+)
+
+function coTheCoVoHinh(buf: Buffer): boolean {
+  return VO_HINH_BYTE_RE.test(buf.toString('latin1'))
+}
+
 /** Dòng đầu tiên dính byte cấm — báo đủ để người sửa nhảy thẳng tới chỗ đó. */
 function dongDauTien(buf: Buffer): number {
   let line = 1
   for (const b of buf) {
     if (b === 0x0a) line += 1
-    const cam = b < 0x09 || b === 0x0b || b === 0x0c || (b >= 0x0e && b <= 0x1f) || b === 0x7f
-    if (cam) return line
+    if (laByteCam(b)) return line
   }
   return 0
 }
@@ -82,7 +124,26 @@ describe('file nguồn không chứa ký tự điều khiển', () => {
     expect(files.length).toBeGreaterThan(1000)
   })
 
-  // Quét toàn bộ source có thể vượt default 5s khi suite coverage chạy song song trên CI.
+  // Bộ lọc nhanh và bộ đếm chi tiết phải cùng một tập byte — lệch là ca thật bị bỏ sót im lặng.
+  it('bộ lọc nhanh bắt đúng 30 byte cấm trên cả 256 giá trị byte, tha tab/LF/CR', () => {
+    const cam: number[] = []
+    for (let b = 0; b < 256; b += 1) {
+      const loc = coByteCam(Buffer.from([0x61, b, 0x62]))
+      expect(loc, `byte 0x${b.toString(16)}`).toBe(laByteCam(b))
+      if (loc) cam.push(b)
+    }
+    expect(cam).toHaveLength(30)
+    expect(cam).not.toContain(0x09)
+    expect(cam).not.toContain(0x0a)
+    expect(cam).not.toContain(0x0d)
+    expect(cam).toContain(0x00)
+    expect(cam).toContain(0x7f)
+    // Byte cao (UTF-8 của chữ Việt) không bị nhầm là byte cấm.
+    expect(coByteCam(Buffer.from('Tiếng Việt — đầy đủ dấu', 'utf8'))).toBe(false)
+  })
+
+  // Đọc ~71 MB từ đĩa là chi phí thật (đã bỏ phần quét JS từng byte, xem `BYTE_CAM_RE`) — giữ
+  // ngưỡng 30 s riêng cho ca này.
   it('không file nào có NUL hay ký tự điều khiển khác', () => {
     const viPham: string[] = []
     for (const f of files) {
@@ -92,8 +153,8 @@ describe('file nguồn không chứa ký tự điều khiển', () => {
       } catch {
         continue // file đã xoá trong thư mục làm việc — không phải việc của test này
       }
+      if (!coByteCam(buf)) continue
       const bad = bytesCam(buf)
-      if (bad.size === 0) continue
       const mo = [...bad.entries()]
         .map(([b, n]) => `0x${b.toString(16).padStart(2, '0')}×${n}`)
         .join(' ')
@@ -110,16 +171,30 @@ describe('file nguồn không chứa ký tự điều khiển', () => {
     expect(dongVoHinh('Tiếng Việt có dấu — bình thường')).toBe(0)
   })
 
+  it('bộ lọc byte của ký tự vô hình bắt MỌI mã điểm trong VO_HINH, tha chữ Việt và ZWJ', () => {
+    for (const [lo, hi] of VO_HINH) {
+      for (let cp = lo; cp <= hi; cp += 1) {
+        const buf = Buffer.from(`Việt${String.fromCodePoint(cp)}—x`, 'utf8')
+        expect(coTheCoVoHinh(buf), `U+${cp.toString(16)}`).toBe(true)
+        // Bộ lọc và bộ dò chính phải cùng kết luận trên cùng dữ liệu.
+        expect(dongVoHinh(buf.toString('utf8'))).toBe(1)
+      }
+    }
+    expect(coTheCoVoHinh(Buffer.from('Tiếng Việt — “ngoặc” … đủ dấu', 'utf8'))).toBe(false)
+    expect(coTheCoVoHinh(Buffer.from(`👩${String.fromCodePoint(0x200d)}💼`, 'utf8'))).toBe(false)
+  })
+
   it('không file nào có ký tự định dạng vô hình (zero-width, BOM, bidi)', () => {
     const viPham: string[] = []
     for (const f of files) {
-      let text: string
+      let buf: Buffer
       try {
-        text = readFileSync(f, 'utf8')
+        buf = readFileSync(f)
       } catch {
         continue // file đã xoá trong thư mục làm việc — không phải việc của test này
       }
-      const dong = dongVoHinh(text)
+      if (!coTheCoVoHinh(buf)) continue
+      const dong = dongVoHinh(buf.toString('utf8'))
       if (dong > 0) viPham.push(`${f}:${dong}`)
     }
     expect(viPham).toEqual([])

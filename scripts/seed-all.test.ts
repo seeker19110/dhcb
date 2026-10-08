@@ -3,6 +3,7 @@
 // sẽ khiến verifyDb coi hàng vạn dòng là "orphan" và `--clean-orphans --yes` xoá thật.
 import { describe, it, expect } from 'vitest'
 import {
+  loadPatternTasks,
   loadPronTasks,
   parsePronunciationKey,
   pronKey,
@@ -42,10 +43,18 @@ describe('loadPronTasks — tiếng Việt (mới)', () => {
     expect(viTasks.every((t) => t.word.length <= 100)).toBe(true)
   })
 
-  it('không trùng lặp và không lẫn với tác vụ tiếng Anh (khoá gồm cả lang)', () => {
-    const keys = tasks.map((t) => pronKey(t.word, t.voice, t.lang))
-    expect(new Set(keys).size).toBe(keys.length)
-  })
+  // Dựng khoá cho TOÀN BỘ tác vụ phát âm (Anh + Việt) rồi khử trùng — chính là phép kiểm,
+  // không rút gọn được. Đo 2026-10-08 (changelog 0532): 0,55–0,60 s chạy riêng và dưới đo
+  // coverage, 0,81 s coverage + máy tải ~25 — ca nặng thứ hai của file; trong `test:coverage`
+  // toàn bộ trên máy tải 14–23 hệ số chậm ×6–10 là chạm ngưỡng 5 s mặc định. Nới riêng ca này.
+  it(
+    'không trùng lặp và không lẫn với tác vụ tiếng Anh (khoá gồm cả lang)',
+    { timeout: 20_000 },
+    () => {
+      const keys = tasks.map((t) => pronKey(t.word, t.voice, t.lang))
+      expect(new Set(keys).size).toBe(keys.length)
+    },
+  )
 
   // Ngoài nhóm ưu tiên curriculum, tiếng Anh (chiều A — đường dùng chính) phải seed xong
   // trước tiếng Việt, để dừng giữa chừng vẫn xong phần quan trọng hơn.
@@ -108,11 +117,14 @@ describe('parsePronunciationKey', () => {
   })
 })
 
-// Đo thời gian thật: file test tổng chạy ~4.92s ở máy rảnh, sắp tới ngưỡng mặc định 5s
-// Dưới tải CI (nhiều file test song song) dễ vượt quá. Nới thành 10s để an toàn.
-describe('loadPatternTasks — truyện cổ tích/ngụ ngôn (stories)', { timeout: 10000 }, () => {
-  it('tạo đủ tác vụ truyện cổ tích/ngụ ngôn với giọng Gemini tương ứng', async () => {
-    const { loadPatternTasks } = await import('./seed-all')
+// `loadPatternTasks()` là hàm production dựng TOÀN BỘ tác vụ TTS (đọc mọi chunk bài hội thoại,
+// mẫu câu Cụm từ, truyện trong apps/dhcb/public/data/) — chi phí thật, không phải việc thừa
+// của test. Đo 2026-10-08 (changelog 0532): ca này 1,76 s chạy riêng · 1,95 s dưới đo coverage
+// V8 · 2,88–3,80 s coverage + máy tải 16–25. Ngưỡng 10 s cũ (đặt 2026-09 khi cả file đo
+// ~4,9 s) chỉ còn biên ~2,6 lần so với số đo dưới tải, và file này nằm trong nhóm đỏ giả của
+// `test:coverage` toàn bộ trên máy tải 14–23 → nới 30 s cho riêng describe này.
+describe('loadPatternTasks — truyện cổ tích/ngụ ngôn (stories)', { timeout: 30_000 }, () => {
+  it('tạo đủ tác vụ truyện cổ tích/ngụ ngôn với giọng Gemini tương ứng', () => {
     const patternTasks = loadPatternTasks()
     const storyTasks = patternTasks.filter((t) => t.cat === 'stories')
     expect(storyTasks.length).toBeGreaterThan(0)

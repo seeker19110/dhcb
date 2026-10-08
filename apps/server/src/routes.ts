@@ -106,7 +106,6 @@ import workplaceInsightsHandler from './api/learning/workplace-insights.js'
 import socraticDiagnosticsHandler from './api/learning/socratic-diagnostics.js'
 import echoShadowingHandler from './api/subjects/english/echo-shadowing.js'
 import wearablesSyncHandler from './api/platform/wearables-sync.js'
-import realtimeMultimodalHandler from './api/platform/realtime-multimodal.js'
 import acousticPhoneticsHandler from './api/subjects/english/acoustic-phonetics.js'
 import avatarEmbodimentHandler from './api/platform/avatar-embodiment.js'
 import actionCanvasHandler from './api/platform/action-canvas.js'
@@ -348,8 +347,9 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/echo-shadowing', wrapEdge(echoShadowingHandler))
   // Wearables & Circadian Bio-Adaptive MCP (V3 Flagship Wave 2) — Biometric stream to circadian learning window.
   app.all('/api/wearables-sync', wrapEdge(wearablesSyncHandler))
-  // Real-Time Multimodal Duplex Gateway (Platform V4 Phase 1) — Sub-250ms voice streaming & barge-in.
-  app.all('/api/realtime-multimodal', wrapEdge(realtimeMultimodalHandler))
+  // `/api/realtime-multimodal` đã GỠ (changelog 0534): không client nào gọi, không rate limit, Map
+  // phiên trong bộ nhớ không bao giờ dọn → rủi ro cạn RAM. Đàm thoại thời gian thực thật đi qua
+  // Gemini Live (`/api/gemini-live`). Gọi lại đường này nhận 404 như mọi route không tồn tại.
   // Acoustic Phonetics & GOP Engine (Platform V4 Phase 1) — Phoneme-level acoustic assessment & alignment.
   app.all('/api/acoustic-phonetics', wrapEdge(acousticPhoneticsHandler))
   // 3D Embodied Cyber-Tutor & Viseme Morphing (Platform V4 Phase 2) — 3D Embodiment & Real-time Visemes.

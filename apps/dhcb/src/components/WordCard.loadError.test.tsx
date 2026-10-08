@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { ToastProvider } from '@core/ToastProvider'
 import type { DictEntry } from '../types'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
@@ -42,7 +43,14 @@ describe('WordCard — ví dụ bổ sung tải hỏng', () => {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
-    await act(async () => root.render(<WordCard card={CARD} isA uid="u" />))
+    await act(async () =>
+      root.render(
+        // App bọc mọi trang trong ToastProvider; nút phát âm (WordVoiceCycleButton) báo hết lượt qua toast.
+        <ToastProvider>
+          <WordCard card={CARD} isA uid="u" />
+        </ToastProvider>,
+      ),
+    )
     await act(async () => {
       for (let i = 0; i < 5; i++) await Promise.resolve()
     })

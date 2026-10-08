@@ -6,7 +6,8 @@
 //   1. Tìm từ + giọng trong bảng `pronunciations` (Postgres tự host) — có rồi thì trả luôn
 //      audio_url (cache HIT, không tốn tiền gọi Google TTS). Mỗi (word, voice) là 1 dòng
 //      riêng, vì cùng 1 từ có thể có nhiều file audio khác nhau theo giọng.
-//   2. Chưa có (cache MISS) → gọi Google Cloud TTS để tạo file mp3 đúng giọng được chọn.
+//   2. Chưa có (cache MISS) → TRỪ 1 LƯỢT AI (Free/VIP, cùng ngân sách với /api/tts) rồi mới gọi
+//      Google Cloud TTS để tạo file mp3 đúng giọng được chọn. Hết lượt → 429, KHÔNG gọi Google.
 //   3. Upload file mp3 qua saveAudio() (local VPS hoặc Cloudflare R2 tùy STORAGE_DRIVER).
 //   4. Lưu audio_url vào bảng `pronunciations` để lần sau khỏi tạo lại.
 //
@@ -42,6 +43,7 @@ import {
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { jsonResponse, getClientIp, internalErrorResponse } from '@dhcb/core-http/http'
+import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
 
 // Regex cho phép chữ (mọi ngôn ngữ, gồm chữ CÓ DẤU như sauté/café/naïve và tiếng Việt),
 // dấu phụ tổ hợp, số, dấu cách, gạch nối, dấu nháy (don't), dấu chấm (Mr.), và dấu câu
@@ -214,12 +216,30 @@ export default async function handler(req: Request): Promise<Response> {
     )
   }
 
+  // Trừ lượt AI cho đường TẠO audio mới (tốn tiền Google TTS) — đề xuất (b) của audit 0526,
+  // chủ dự án duyệt 2026-10-08. Trước đây chỉ có rate limit IP: mỗi chuỗi ≤ 100 ký tự khác nhau là
+  // một lần trả tiền mới, một tài khoản Free đốt được hàng chục nghìn lượt TTS/ngày.
+  // Cùng khuôn với /api/tts (packages/core-ai/tts.ts): cache HIT đã thoát ở BƯỚC 1 nên KHÔNG bị
+  // trừ; MISS tính vào cột 'speaking' — cùng ngân sách AI/ngày, cùng cột thống kê với audio câu.
+  // checkAndConsumeUsage() đếm nguyên tử + FAIL-CLOSED (lỗi DB/cầu dao AI → từ chối) và trả đúng
+  // thông điệp hết lượt dùng chung của mọi endpoint AI. Endpoint này chỉ mở cho tài khoản đã đăng
+  // nhập (401 ở trên) nên không có nhánh khách.
+  const gate = await checkAndConsumeUsage(authResult.userId, 'speaking')
+  if (!gate.ok) {
+    logSecurityEvent('USAGE_LIMIT', clientIp, { path: '/api/pronunciation', stage: 'generate' })
+    return jsonResponse({ error: gate.message }, 429, allHeaders)
+  }
+
   let audioData: ArrayBuffer
   try {
     audioData = isValidStudioVoice(voice)
       ? await generateStudioAudioFromGoogle(word, voice)
       : await generateAudioFromGoogle(word, voice, lang)
   } catch (err) {
+    // Google lỗi → người dùng không nhận được audio: hoàn lượt vừa trừ, ĐÚNG ngày đã trừ
+    // (gate.day — xem refundUsage()). refundUsage tự nuốt lỗi hạ tầng (fail-open).
+    // Lỗi SAU khi Google đã trả audio (lưu file) thì KHÔNG hoàn — tiền API đã tốn, giống /api/tts.
+    await refundUsage(authResult.userId, 'speaking', gate.day)
     return jsonResponse(
       { error: `Không thể tạo audio: ${(err as Error).message}` },
       500,
