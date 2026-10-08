@@ -155,7 +155,7 @@ export default function LeagueSection({ isA }: { isA: boolean }) {
               <button
                 onClick={() => void leave()}
                 disabled={busy}
-                className="tap-44 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-zinc-400 border border-zinc-700/60 hover:border-zinc-600 disabled:opacity-40 transition"
+                className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
               >
                 <LogOut className="w-3.5 h-3.5" />
                 {isA ? 'Rời giải' : 'Leave'}

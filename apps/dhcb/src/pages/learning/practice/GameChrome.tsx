@@ -2,6 +2,7 @@
 // Hai khung dùng chung của mọi mini-game: màn kết quả + thanh tiêu đề.
 
 import { RotateCcw } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 // ── Kết quả cuối phiên (dùng chung cho mọi mini-game) ─────────────────────
 export function GameResult({
@@ -41,14 +42,11 @@ export function GameResult({
       <div className="flex items-center justify-center gap-3 pt-2">
         <button
           onClick={onRetry}
-          className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 min-h-11 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm font-semibold hover:bg-zinc-800 hover:border-zinc-700 transition duration-200 active:scale-95 shadow-sm"
+          className={buttonClass({ variant: 'outline', size: 'lg', className: 'flex-1' })}
         >
           <RotateCcw className="w-4 h-4" /> {isUiVi ? 'Làm lại' : 'Retry'}
         </button>
-        <button
-          onClick={onExit}
-          className="flex-1 px-5 py-3.5 min-h-11 rounded-2xl bg-gradient-to-r from-accent-500 to-accent-600 text-white text-sm font-bold hover:from-accent-400 hover:to-accent-500 transition duration-200 shadow-md active:scale-95"
-        >
+        <button onClick={onExit} className={buttonClass({ size: 'lg', className: 'flex-1' })}>
           {isUiVi ? 'Về Luyện tập' : 'Back to Practice'}
         </button>
       </div>
@@ -76,7 +74,7 @@ export function MiniHeader({
       <button
         onClick={onBack}
         aria-label={uiLang === 'vi' ? 'Về Luyện tập' : 'Back to Practice'}
-        className="min-h-11 min-w-11 text-xs text-zinc-400 hover:text-white px-3 py-2 rounded-lg hover:bg-zinc-800/60 transition"
+        className={buttonClass({ variant: 'ghost', size: 'sm', className: 'tap-44' })}
       >
         ✕
       </button>

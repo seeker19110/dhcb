@@ -424,7 +424,7 @@ function PlacementSession() {
             <button
               type="button"
               onClick={skipTest}
-              className="tap-44 w-full rounded-xl bg-zinc-800 px-4 py-3 text-content transition-colors hover:bg-zinc-700"
+              className={buttonClass({ variant: 'outline', size: 'lg', fullWidth: true })}
             >
               {isA ? 'Thoát bài kiểm tra' : 'Exit test'}
             </button>

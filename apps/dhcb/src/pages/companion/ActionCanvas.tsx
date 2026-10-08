@@ -244,7 +244,7 @@ export default function ActionCanvas() {
             <button
               type="button"
               onClick={handleAddNode}
-              className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+              className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
             >
               <Plus className="w-3.5 h-3.5" />
               Thêm Thẻ
@@ -252,7 +252,7 @@ export default function ActionCanvas() {
             <button
               type="button"
               onClick={handleAutoLayout}
-              className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+              className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
             >
               <LayoutGrid className="w-3.5 h-3.5 text-cyan-400 theme-light:text-cyan-800" />
               Tự động bố cục
@@ -363,7 +363,7 @@ export default function ActionCanvas() {
               <button
                 type="button"
                 onClick={handleAddNode}
-                className="tap-44 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+                className={buttonClass({ variant: 'outline' })}
               >
                 <Plus className="w-4 h-4" />
                 Thêm thẻ

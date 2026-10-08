@@ -636,7 +636,11 @@ export default function SubjectDetail() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="tap-44 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-300 hover:text-white transition"
+                      className={buttonClass({
+                        variant: 'outline',
+                        size: 'sm',
+                        className: 'tap-44',
+                      })}
                     >
                       <Camera className="w-4 h-4 text-indigo-400 theme-light:text-indigo-800" />
                       <span>{imagePreview ? 'Đổi ảnh đề bài' : 'Chụp / Tải ảnh đề'}</span>
@@ -645,7 +649,11 @@ export default function SubjectDetail() {
                     <button
                       type="button"
                       onClick={() => setIsCalendarModalOpen(true)}
-                      className="tap-44 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-300 hover:text-white transition"
+                      className={buttonClass({
+                        variant: 'outline',
+                        size: 'sm',
+                        className: 'tap-44',
+                      })}
                     >
                       <Calendar className="w-4 h-4 text-blue-400 theme-light:text-blue-800" />
                       <span>Lên lịch học Google</span>
@@ -716,7 +724,7 @@ export default function SubjectDetail() {
                     }}
                     aria-label="Nghe đọc lời giải"
                     title="Nghe giọng đọc AI"
-                    className="tap-44 p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-accent-300 transition flex items-center gap-1.5 text-xs font-semibold"
+                    className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
                   >
                     <Volume2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Đọc lời giải</span>

@@ -8,6 +8,7 @@ import { shuffle } from '@dhcb/core-contracts/shuffle'
 import { Button } from '@core/Button'
 import { SESSION_SIZE, pickExampleSentences } from './shared'
 import { GameResult } from './GameChrome'
+import { buttonClass } from '@core/buttonStyles'
 
 // ── 2) Sắp xếp câu — ghép các từ theo đúng thứ tự ──────────────────────────
 function normalizeForCompare(s: string): string {
@@ -101,12 +102,14 @@ export function SentenceScramble({
       <p className="text-xs text-zinc-500 text-center">
         {idx + 1}/{sentences.length}
       </p>
-      <button
-        onClick={() => void speak(target, isA ? 'en-US' : 'vi-VN')}
-        className="mx-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 text-zinc-300 text-xs hover:bg-zinc-700 transition"
-      >
-        <Volume2 className="w-4 h-4" /> {isUiVi ? 'Nghe câu' : 'Listen'}
-      </button>
+      <div className="flex justify-center">
+        <button
+          onClick={() => void speak(target, isA ? 'en-US' : 'vi-VN')}
+          className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
+        >
+          <Volume2 className="w-4 h-4" /> {isUiVi ? 'Nghe câu' : 'Listen'}
+        </button>
+      </div>
 
       <div className="min-h-14 flex flex-wrap gap-2 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/50">
         {built.length === 0 && (

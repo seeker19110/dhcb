@@ -76,7 +76,7 @@ import { hasReachedDailyLimit } from '../lib/appSettings'
 import { useApiThrottle } from '../lib/useApiThrottle'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
 import MixedLangText from './MixedLangText'
-import { buttonClass } from '@core/buttonStyles'
+import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
 
 // ── Chi tiết 1 bài ngữ pháp ───────────────────────────────────────────────────
 export function GrammarDetail({
@@ -511,7 +511,7 @@ export function VocabFlash({
           {!passed && (
             <button
               onClick={startTestOut}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium transition"
+              className={buttonClass({ variant: 'outline', size: 'lg', className: 'flex-1' })}
             >
               <RotateCcw className="w-4 h-4" /> {isA ? 'Thử lại' : 'Retry'}
             </button>
@@ -642,15 +642,12 @@ export function VocabFlash({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setIdx((i) => i + 1)}
-              className="flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition py-3 rounded-xl text-sm font-medium"
+              className={buttonClass({ variant: 'outline' })}
             >
               <QuizOptionKey index={0} />
               <X className="w-4 h-4" /> {isA ? 'Để sau' : 'Later'}
             </button>
-            <button
-              onClick={learn}
-              className="flex items-center justify-center gap-2 bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 transition py-3 rounded-xl text-sm font-medium"
-            >
+            <button onClick={learn} className={buttonClass({ variant: 'secondary' })}>
               <QuizOptionKey index={1} />
               <Check className="w-4 h-4" /> {isA ? 'Đã thuộc' : 'Got it'}
             </button>
@@ -1175,7 +1172,7 @@ export function DialogueView({
             {!isIdle && (
               <button
                 onClick={handleStop}
-                className="tap-44-touch w-6 h-6 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+                className={`${buttonVariantClass('outline')} tap-44-touch w-6 h-6 flex items-center justify-center rounded-lg`}
               >
                 <Square className="w-3 h-3 fill-current" />
               </button>

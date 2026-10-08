@@ -285,7 +285,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
                   type="button"
                   onClick={onClose}
                   disabled={submitting}
-                  className="tap-44 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold transition"
+                  className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
                 >
                   {isA ? 'Huỷ' : 'Cancel'}
                 </button>

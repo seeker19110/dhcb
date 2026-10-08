@@ -520,7 +520,7 @@ export default function Companion() {
               <button
                 type="button"
                 onClick={dismissDraftOffer}
-                className="tap-44 rounded-xl px-3 py-2 font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Giữ chữ đang viết
               </button>
@@ -657,7 +657,7 @@ export default function Companion() {
             <div className="pt-3 border-t border-zinc-800 text-right">
               <button
                 onClick={() => setActiveContext(null)}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs transition"
+                className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
               >
                 Đóng
               </button>

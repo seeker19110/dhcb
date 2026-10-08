@@ -155,7 +155,7 @@ export default function ProgrammingPlayground() {
           {(runState === 'running' || runState === 'loading-env') && (
             <button
               onClick={handleStop}
-              className="tap-44 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-sm transition"
+              className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
               <Square className="w-4 h-4" />
               <span>Dừng</span>

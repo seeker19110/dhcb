@@ -13,6 +13,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { KeyboardEvent, MouseEvent } from 'react'
 import { ListOrdered } from 'lucide-react'
 import { NEO_BAI_ANH, neoLuot } from '../../../../lib/englishLessonAnchors'
+import { buttonClass } from '@core/buttonStyles'
 
 export interface LuotTrongBai {
   /** Số thứ tự lượt theo nguồn, bắt đầu 1. */
@@ -74,8 +75,11 @@ export function TrongBaiHoiThoai({
     { id: NEO_BAI_ANH.hoiThoai, nhan: isA ? 'Hội thoại' : 'Dialogue' },
     { id: NEO_BAI_ANH.ketQua, nhan: isA ? 'Kết quả' : 'Result' },
   ]
-  const lopLink =
-    'tap-44 inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800 underline-offset-4 hover:underline'
+  const lopLink = buttonClass({
+    variant: 'outline',
+    size: 'sm',
+    className: 'tap-44 underline-offset-4 hover:underline',
+  })
 
   // Trả về fragment: nút là một mục của hàng flex-wrap trên thanh điều khiển (không chiếm cả
   // một dòng riêng), còn danh sách khi mở là `basis-full order-last` → xuống dòng riêng ở CUỐI
@@ -89,7 +93,7 @@ export function TrongBaiHoiThoai({
         aria-controls={idDanhSach}
         onClick={() => setMo((v) => !v)}
         onKeyDown={phim}
-        className="tap-44 flex items-center justify-center gap-1.5 rounded-lg bg-zinc-800 px-2.5 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition"
+        className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
       >
         <ListOrdered className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         {/* Màn hẹp hơn 390px (2026-10-02): chỉ còn biểu tượng để cả thanh điều khiển vừa MỘT hàng;

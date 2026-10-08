@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Monitor, Eye, EyeOff, Sparkles, Lightbulb, Tag, Loader2, CheckCircle2 } from 'lucide-react'
 import type { AmbientContextInsight } from '@dhcb/core-contracts/ambientContext'
+import { buttonClass } from '@core/buttonStyles'
 
 export const AmbientScreenCopilot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -164,7 +165,7 @@ export const AmbientScreenCopilot: React.FC = () => {
                 <button
                   onClick={captureAndAnalyze}
                   disabled={analyzing}
-                  className="tap-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-xs transition disabled:opacity-50"
+                  className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
                 >
                   {analyzing ? (
                     <>

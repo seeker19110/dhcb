@@ -17,6 +17,7 @@ import {
   type UserFeedbackRecord,
   type UserFeedbackStatus,
 } from '@dhcb/core-contracts/feedback'
+import { buttonVariantClass } from '@core/buttonStyles'
 
 export default function AdminFeedbackPanel() {
   const toast = useToast()
@@ -198,7 +199,7 @@ export default function AdminFeedbackPanel() {
               type="button"
               onClick={fetchFeedback}
               aria-label="Tải lại danh sách phản hồi"
-              className="p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 rounded-lg"
+              className={`${buttonVariantClass('outline')} p-1.5 rounded-lg`}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>

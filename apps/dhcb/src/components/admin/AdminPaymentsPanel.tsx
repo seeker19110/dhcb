@@ -13,7 +13,7 @@ import {
 import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
 import type { AdminPaymentRow } from '@dhcb/core-contracts/adminViews'
-import { buttonClass } from '@core/buttonStyles'
+import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
 
 export default function AdminPaymentsPanel() {
   const [payments, setPayments] = useState<AdminPaymentRow[]>([])
@@ -149,7 +149,7 @@ export default function AdminPaymentsPanel() {
           type="button"
           onClick={exportToCSV}
           disabled={!payments.length}
-          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white text-xs rounded-lg font-medium transition"
+          className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
         >
           <Download className="w-4 h-4 text-emerald-400 theme-light:text-emerald-900" />
           Xuất CSV
@@ -204,7 +204,7 @@ export default function AdminPaymentsPanel() {
           <button
             type="button"
             onClick={fetchPayments}
-            className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition"
+            className={`${buttonVariantClass('outline')} p-2 rounded-lg`}
             title="Tải lại"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

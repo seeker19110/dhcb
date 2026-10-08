@@ -3,6 +3,7 @@ import { RealtimeSessionTelemetry } from '@dhcb/core-contracts/meshTelemetry'
 import { MeshStatusSummary, resetSessionBudget } from '../../lib/meshTelemetryApi.js'
 import { useToast } from '@core/ToastProvider'
 import { ShieldCheck, X, Radio } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 interface MeshHealthMonitorModalProps {
   isOpen: boolean
@@ -153,7 +154,12 @@ export default function MeshHealthMonitorModal({
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+          className={buttonClass({
+            variant: 'outline',
+            size: 'sm',
+            fullWidth: true,
+            className: 'tap-44',
+          })}
         >
           Đóng
         </button>

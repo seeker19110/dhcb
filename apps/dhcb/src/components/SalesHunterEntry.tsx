@@ -1,4 +1,5 @@
 import { salesHunterLaunchUrl, showSalesHunterEntry } from '../lib/salesHunter'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   hostname?: string
@@ -35,7 +36,7 @@ export default function SalesHunterEntry({
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"
-              className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+              className={buttonClass({ variant: 'outline', className: 'mt-3' })}
             >
               Mở Sales-Hunter — tab mới
             </a>
