@@ -1,6 +1,6 @@
 # 0521 — Ghim `appleboy/ssh-action` theo commit SHA + cổng chặn action bên thứ ba ghim tag (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền khi tạo) · **Loại:** `ci` · **Nhánh:** `claude/peaceful-newton-czolhg`.
+- **Ngày:** 2026-10-08 · **PR:** #1273 · **Loại:** `ci` · **Nhánh:** `claude/peaceful-newton-czolhg`.
 - **Nguồn:** nợ (3) của audit bảo mật lần hai (`docs/changelog/0465-*.md`), mục "Nợ kỹ thuật còn
   mở" trong `PROGRESS.md`. Chủ dự án: "tiếp tục các việc kế tiếp trong PROGRESS.md".
 
