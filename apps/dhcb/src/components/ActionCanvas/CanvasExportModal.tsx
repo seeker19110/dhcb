@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDialogBehavior } from '../useDialogBehavior'
 import { FileText, Copy, Check, X, Download } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 interface CanvasExportModalProps {
   isOpen: boolean
@@ -84,7 +85,7 @@ export default function CanvasExportModal({
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 text-zinc-200 hover:bg-zinc-700 transition"
+              className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
             >
               {copied ? (
                 <>

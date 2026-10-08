@@ -25,6 +25,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import type { LevelProgress } from '../lib/stats'
+import { buttonClass } from '@core/buttonStyles'
 
 // Màu theo band IELTS (đồng bộ với trang Luyện viết) — chuyển từ Dashboard.tsx, chỉ dùng ở đây.
 function bandBar(v: number): string {
@@ -392,7 +393,7 @@ export default function DashboardEnglishDetails({
         aria-expanded={expanded}
         aria-controls={PANEL_ID}
         onClick={handleToggle}
-        className="min-h-11 w-full rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring mt-4"
+        className={buttonClass({ variant: 'outline', fullWidth: true, className: 'mt-4' })}
       >
         {expanded
           ? vi

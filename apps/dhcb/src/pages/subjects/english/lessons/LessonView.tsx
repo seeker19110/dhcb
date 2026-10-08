@@ -52,6 +52,7 @@ import {
   neoLuot,
   nhanLuot,
 } from '../../../../lib/englishLessonAnchors'
+import { buttonVariantClass } from '@core/buttonStyles'
 
 // Khoảng thở giữa mép trên vùng nhìn thấy và đích sau khi nhảy.
 const KHOANG_THO_PX = 12
@@ -662,7 +663,7 @@ export function LessonView({
                   onClick={handleStop}
                   aria-label={isA ? 'Dừng hẳn' : 'Stop'}
                   title={isA ? 'Dừng hẳn' : 'Stop'}
-                  className="tap-44 w-6 h-6 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+                  className={`${buttonVariantClass('outline')} tap-44 w-6 h-6 flex items-center justify-center rounded-lg`}
                 >
                   <Square className="w-3 h-3 fill-current" />
                 </button>

@@ -8,6 +8,7 @@
 // CLAUDE.md mục 4.3: mọi thao tác có thể fail đều phải có nhánh lỗi trên UI, tách bạch
 // với trạng thái rỗng.
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { buttonClass } from '@core/buttonStyles'
 
 export type LoadErrorProps = {
   /** Nội dung lỗi hiển thị cho người dùng. */
@@ -42,7 +43,7 @@ export default function LoadError({ message, onRetry, retrying, hint }: LoadErro
           type="button"
           onClick={onRetry}
           disabled={retrying}
-          className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 disabled:opacity-60 border border-zinc-700 text-sm font-semibold text-zinc-100 transition"
+          className={buttonClass({ variant: 'outline' })}
         >
           <RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />
           Thử lại

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Calendar, FileText, ExternalLink, Check, AlertCircle, X } from 'lucide-react'
 import { executeIntegrationSync } from '../lib/integrationsApi'
 import { useDialogBehavior } from './useDialogBehavior'
+import { buttonClass } from '@core/buttonStyles'
 
 interface IntegrationsModalProps {
   isOpen: boolean
@@ -195,7 +196,7 @@ export default function IntegrationsModal({ isOpen, onClose, itemData }: Integra
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 transition-colors"
+            className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
           >
             Đóng
           </button>

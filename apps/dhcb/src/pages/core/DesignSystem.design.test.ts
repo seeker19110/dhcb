@@ -182,6 +182,32 @@ describe('Nút accent đặc không còn tự ghép class (M17 đợt 6, changel
   })
 })
 
+describe('Nút trung tính không còn tự ghép nền zinc đặc (M17 đợt 7, changelog 0518)', () => {
+  // Trước đợt này: ~50 nút "Thử lại / Đóng / Làm lại / Dừng" tự ghép `bg-zinc-800 hover:bg-zinc-700`
+  // (hoặc `bg-zinc-900 hover:bg-zinc-800`), mỗi nơi một cỡ chữ, bo góc, đệm, và có nơi chữ `text-white`.
+  // Nút trung tính chuẩn là `outline` (viền `line-strong` đã đo ở cả 3 theme) — nay đều qua
+  // `buttonClass`/`buttonVariantClass`. Chỉ dò app + packages: hub không có token ngữ nghĩa
+  // (`line-strong`, `content`) nên chưa dùng được `outline`.
+  //
+  // Ngoại lệ có lý do — KHÔNG phải nút hành động:
+  //   • SentenceScramble: ô chữ của trò xếp câu (bấm để chuyển từ xuống câu) — là quân cờ của trò
+  //     chơi, cần nền đặc để trông như một mảnh ghép, không phải nút có viền.
+  const ALLOWED = ['apps/dhcb/src/pages/learning/practice/SentenceScramble.tsx']
+  it('app + packages: 0 chuỗi className tự ghép nền zinc đặc kèm hover zinc', () => {
+    const files = ['apps/dhcb/src', 'packages'].flatMap((d) => listSource(join(REPO, d)))
+    expect(files.length).toBeGreaterThan(300)
+    // Hai lookahead: bắt cả khi `hover:` viết trước nền. Nền phải đứng sau dấu cách/nháy — `\b`
+    // thì khớp nhầm cả đuôi `hover:bg-zinc-800` của nút chỉ có biểu tượng. `(?![/\w-])` loại nền
+    // trong suốt (`bg-zinc-900/60` của hàng lựa chọn, thẻ) — đó là bề mặt, không phải nút đặc.
+    const handRolled =
+      /className="(?=[^"]*[\s"]bg-zinc-(800|900|950)(?![/\w-]))(?=[^"]*\bhover:bg-zinc-(700|800)(?![/\w-]))/
+    const offenders = files
+      .filter((f) => handRolled.test(stripComments(readFileSync(f, 'utf8'))))
+      .map((f) => f.slice(REPO.length + 1))
+    expect(offenders).toEqual(ALLOWED)
+  })
+})
+
 describe('Trang dài Lập trình không lặp/không trải hết (audit M22)', () => {
   it('lộ trình: bài kiểm dạng gọn, không lặp dòng "chưa có bài kiểm" mỗi chặng', () => {
     const src = read('apps/dhcb/src/pages/subjects/programming/ProgrammingPathPage.tsx')

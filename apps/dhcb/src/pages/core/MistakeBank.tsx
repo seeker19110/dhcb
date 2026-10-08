@@ -489,7 +489,7 @@ export default function MistakeBank() {
                 </button>
                 <button
                   onClick={() => nav(duongDanLuyenViet())}
-                  className="tap-44 text-sm border border-zinc-700/70 text-zinc-300 px-4 py-2.5 rounded-xl transition hover:bg-zinc-800/50"
+                  className={buttonClass({ variant: 'outline' })}
                 >
                   {isA ? 'Luyện Viết' : 'Writing'}
                 </button>
@@ -563,7 +563,7 @@ export default function MistakeBank() {
                       {totalDue > 0 && (
                         <button
                           onClick={restartDeck}
-                          className="text-sm border border-zinc-700/70 text-zinc-300 px-4 py-2.5 rounded-xl transition hover:bg-zinc-800/50 flex items-center gap-1.5"
+                          className={buttonClass({ variant: 'outline' })}
                         >
                           <RotateCcw className="w-4 h-4" />
                           {isA ? 'Ôn lại' : 'Review again'}
@@ -635,7 +635,7 @@ export default function MistakeBank() {
                 <button
                   type="button"
                   onClick={() => setLanThu((n) => n + 1)}
-                  className="tap-44 inline-flex items-center gap-1.5 rounded-xl border border-zinc-700/70 px-3 py-2 text-sm font-semibold text-content transition hover:bg-zinc-800/50"
+                  className={buttonClass({ variant: 'outline' })}
                 >
                   <RotateCcw className="w-4 h-4" aria-hidden="true" />
                   Thử lại

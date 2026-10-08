@@ -264,7 +264,7 @@ export default function StudioDialogue({
               <>
                 <button
                   onClick={voice.cancel}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition"
+                  className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
                 >
                   Huỷ
                 </button>
@@ -282,7 +282,7 @@ export default function StudioDialogue({
             ) : (
               <button
                 onClick={voice.stopSession}
-                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition"
+                className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
               >
                 <Volume2 className="w-4 h-4 text-amber-400 theme-light:text-amber-800" />
                 Dừng

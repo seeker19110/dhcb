@@ -26,6 +26,7 @@ import {
   unlockAudio,
 } from '../../../lib/tts'
 import { usePageTitle } from '../../../lib/usePageTitle'
+import { buttonClass } from '@core/buttonStyles'
 
 // [U9a, WCAG 1.4.12] Mục lục đoạn hiện câu ĐẦU của đoạn làm nhãn. Trước đây cắt bằng CSS
 // `line-clamp-2` — khi người dùng giãn chữ, dòng thứ 2 bị cắt mất giữa chừng. Nay rút gọn ngay
@@ -308,7 +309,7 @@ export default function StoryReader() {
           <button
             onClick={paused ? handleResume : handlePause}
             aria-label={paused ? (isA ? 'Tiếp tục' : 'Resume') : isA ? 'Tạm dừng' : 'Pause'}
-            className="tap-44 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition"
+            className={buttonClass({ variant: 'outline' })}
           >
             {paused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4" />}
             {paused ? (isA ? 'Tiếp tục' : 'Resume') : isA ? 'Tạm dừng' : 'Pause'}
@@ -316,7 +317,7 @@ export default function StoryReader() {
           <button
             onClick={handleStop}
             aria-label={isA ? 'Dừng' : 'Stop'}
-            className="tap-44 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition"
+            className={buttonClass({ variant: 'outline' })}
           >
             <Square className="w-4 h-4 fill-current" />
             {isA ? 'Dừng' : 'Stop'}
@@ -327,7 +328,7 @@ export default function StoryReader() {
       <button
         onClick={() => setShowTranslation((v) => !v)}
         aria-pressed={showTranslation}
-        className="tap-44 ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-300 text-xs font-medium transition"
+        className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44 ml-auto' })}
       >
         {showTranslation ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         {showTranslation ? T.hideTranslation : T.showTranslation}
@@ -477,7 +478,11 @@ export default function StoryReader() {
                     </p>
                     <button
                       onClick={restartFromBeginning}
-                      className="tap-44 ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-300 text-xs font-medium transition"
+                      className={buttonClass({
+                        variant: 'outline',
+                        size: 'sm',
+                        className: 'tap-44 ml-auto',
+                      })}
                     >
                       <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                       {isA ? 'Đọc lại từ đầu' : 'Start over'}

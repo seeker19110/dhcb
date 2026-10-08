@@ -3,7 +3,7 @@ import { Ban, Plus, Trash2, AlertCircle, RefreshCw } from 'lucide-react'
 import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
 import type { ReservedNameRow } from '@dhcb/core-contracts/adminViews'
-import { buttonClass } from '@core/buttonStyles'
+import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
 
 export default function AdminReservedNamesPanel() {
   const [items, setItems] = useState<ReservedNameRow[]>([])
@@ -101,7 +101,7 @@ export default function AdminReservedNamesPanel() {
             type="button"
             onClick={fetchReserved}
             aria-label="Tải lại danh sách"
-            className="p-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 rounded-lg"
+            className={`${buttonVariantClass('outline')} p-1.5 rounded-lg`}
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>

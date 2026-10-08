@@ -122,7 +122,7 @@ function HintChip({ text, lang }: { text: string; lang: 'en-US' | 'vi-VN' }) {
   return (
     <button
       onClick={() => void speak(text, lang)}
-      className="tap-44 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-zinc-800/70 border border-zinc-700/60 text-xs text-zinc-200 hover:border-accent-500/50 transition"
+      className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
     >
       <Volume2 className="w-3 h-3 text-zinc-400 shrink-0" />
       {text}

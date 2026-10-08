@@ -146,7 +146,7 @@ export default function ProgrammingPathPage() {
           {user && (
             <button
               onClick={() => nav(duongDanChanDoan(path))}
-              className="tap-44 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-accent-500/60 text-zinc-200 font-semibold text-xs transition active:scale-[0.98]"
+              className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
             >
               <Compass className="w-3.5 h-3.5 text-accent-400" aria-hidden="true" />
               <span>Chưa biết bắt đầu từ đâu? Làm chẩn đoán chọn điểm vào</span>

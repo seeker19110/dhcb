@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Zap, Cloud, Cpu, ShieldCheck, X, Info } from 'lucide-react'
 import { useEdgeAi } from '../../lib/edgeAi/useEdgeAi.js'
+import { buttonClass } from '@core/buttonStyles'
 
 interface EdgeAiIndicatorProps {
   className?: string
@@ -115,7 +116,7 @@ export const EdgeAiIndicator: React.FC<EdgeAiIndicatorProps> = ({ className = ''
             <div className="pt-2 border-t border-zinc-800 text-right">
               <button
                 onClick={() => setShowDetails(false)}
-                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold transition"
+                className={buttonClass({ variant: 'outline' })}
               >
                 Đã hiểu
               </button>

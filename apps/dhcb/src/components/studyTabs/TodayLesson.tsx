@@ -637,7 +637,7 @@ export function TodayLesson({
           </button>
           <button
             onClick={() => setPhase('batch-done')}
-            className="w-full py-2 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm transition"
+            className={buttonClass({ variant: 'outline', fullWidth: true })}
           >
             {isA ? 'Ôn lại từ vừa học trước' : 'Review words first'}
           </button>
@@ -856,16 +856,10 @@ export function TodayLesson({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={skip}
-          className="flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition py-3 rounded-xl text-sm font-medium"
-        >
+        <button onClick={skip} className={buttonClass({ variant: 'outline' })}>
           <X className="w-4 h-4" /> {isA ? 'Để sau' : 'Later'}
         </button>
-        <button
-          onClick={learn}
-          className="flex items-center justify-center gap-2 bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 theme-light:text-accent-800 transition py-3 rounded-xl text-sm font-medium"
-        >
+        <button onClick={learn} className={buttonClass({ variant: 'secondary' })}>
           <Check className="w-4 h-4" /> {isA ? 'Đã thuộc' : 'Got it'}
         </button>
       </div>

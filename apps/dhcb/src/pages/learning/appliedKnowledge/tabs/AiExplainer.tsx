@@ -2,7 +2,7 @@
 // LƯU Ý: vẫn là bản GIẢ LẬP (setTimeout 400 ms + câu trả lời cứng) — thay bằng AI thật là việc khác.
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
-import { buttonClass } from '@core/buttonStyles'
+import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
 
 export function AiExplainer() {
   const [explainerQuery, setExplainerQuery] = useState('')
@@ -80,7 +80,7 @@ export function AiExplainer() {
           <button
             key={prompt}
             onClick={() => handleAskExplainer(prompt)}
-            className="px-3 py-1 rounded-full bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 transition"
+            className={`${buttonVariantClass('outline')} px-3 py-1 rounded-full text-xs`}
           >
             {prompt}
           </button>

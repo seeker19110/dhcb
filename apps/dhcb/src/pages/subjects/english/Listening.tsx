@@ -28,6 +28,7 @@ import { loadIndex, loadSubject } from '../../../data/patterns/loader'
 import type { SubjectMeta, Subject } from '../../../data/patterns/loader'
 import { getAllDialogues } from '../../../data/dialoguesLoader'
 import type { Dialogue } from '../../../data/dialogues'
+import { buttonClass } from '@core/buttonStyles'
 
 type Tab = 'phrases' | 'dialogues'
 const TABS: Tab[] = ['phrases', 'dialogues']
@@ -267,7 +268,11 @@ function PhrasesTab({ isA, T }: { isA: boolean; T: Lang }) {
                       onClick={() =>
                         setShownByGroup((prev) => ({ ...prev, [category]: shown + PHRASE_PAGE }))
                       }
-                      className="tap-44 mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800/60 transition"
+                      className={buttonClass({
+                        variant: 'outline',
+                        fullWidth: true,
+                        className: 'mt-2',
+                      })}
                     >
                       {isA
                         ? `Xem thêm (còn ${items.length - shown})`
@@ -498,10 +503,7 @@ function SentenceListPlayer({
             {T.playAllLabel}
           </button>
         ) : (
-          <button
-            onClick={stopAll}
-            className="tap-44 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition"
-          >
+          <button onClick={stopAll} className={buttonClass({ variant: 'outline' })}>
             <Square className="w-4 h-4 fill-current" />
             {isA ? 'Dừng' : 'Stop'}
           </button>
@@ -509,7 +511,7 @@ function SentenceListPlayer({
         <button
           onClick={onToggleTranslation}
           aria-pressed={showTranslation}
-          className="tap-44 ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-300 text-xs font-medium transition"
+          className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44 ml-auto' })}
         >
           {showTranslation ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           {showTranslation ? T.hideTranslation : T.showTranslation}
@@ -641,10 +643,7 @@ function DialoguePlayer({
             {T.playWholeDialogue}
           </button>
         ) : (
-          <button
-            onClick={stopAll}
-            className="tap-44 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition"
-          >
+          <button onClick={stopAll} className={buttonClass({ variant: 'outline' })}>
             <Square className="w-4 h-4 fill-current" />
             {isA ? 'Dừng' : 'Stop'}
           </button>
@@ -652,7 +651,7 @@ function DialoguePlayer({
         <button
           onClick={onToggleTranslation}
           aria-pressed={showTranslation}
-          className="tap-44 ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-300 text-xs font-medium transition"
+          className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44 ml-auto' })}
         >
           {showTranslation ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           {showTranslation ? T.hideTranslation : T.showTranslation}

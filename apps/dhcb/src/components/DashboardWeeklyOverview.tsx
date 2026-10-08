@@ -10,6 +10,7 @@ import { useRef, useState } from 'react'
 import { CalendarCheck } from 'lucide-react'
 import ActivityCalendarCard, { type ActivityCalendarCardProps } from './ActivityCalendarCard'
 import type { WeeklyProgress } from '../lib/weeklyGoal'
+import { buttonClass } from '@core/buttonStyles'
 
 // Dòng động viên theo trạng thái mục tiêu tuần — giữ nguyên logic cũ từ Dashboard.tsx.
 function weeklyLine(p: WeeklyProgress, vi: boolean): string {
@@ -123,7 +124,7 @@ export default function DashboardWeeklyOverview({
           aria-expanded={calendarExpanded}
           aria-controls="dashboard-calendar-panel"
           onClick={toggleCalendar}
-          className="min-h-11 w-full rounded-xl border border-zinc-800/80 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+          className={buttonClass({ variant: 'outline', fullWidth: true })}
         >
           {calendarExpanded
             ? vi

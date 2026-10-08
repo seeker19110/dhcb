@@ -239,7 +239,7 @@ export function QuizTab({
         <div className="flex gap-3">
           <button
             onClick={restart}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium transition"
+            className={buttonClass({ variant: 'outline', size: 'lg', className: 'flex-1' })}
           >
             <RotateCcw className="w-4 h-4" /> {isA ? 'Làm lại' : 'Retry'}
           </button>

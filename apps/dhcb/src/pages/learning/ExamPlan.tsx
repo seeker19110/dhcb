@@ -37,6 +37,7 @@ import {
   examKindForDirection,
   type TodayPlan,
 } from '../../lib/examPlan'
+import { buttonClass } from '@core/buttonStyles'
 
 const WEEKDAY_LABELS_A = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 const WEEKDAY_LABELS_B = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -411,7 +412,12 @@ export default function ExamPlanPage() {
             <button
               type="button"
               onClick={handleEnd}
-              className="tap-44 w-full rounded-xl border border-zinc-700 px-3 py-2.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800/60 transition"
+              className={buttonClass({
+                variant: 'outline',
+                size: 'sm',
+                fullWidth: true,
+                className: 'tap-44',
+              })}
             >
               {isA ? 'Kết thúc kế hoạch này' : 'End this plan'}
             </button>

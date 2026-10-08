@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, Compass, RefreshCw, TrendingUp, Zap, CheckCircle2 } from 'lucide-react'
 import type { LifeSynthesisReport, LifeDomainType } from '@dhcb/core-contracts/lifeSynthesis'
 import { generateCustomLifeSynthesisReport } from '../../lib/lifeSynthesisApi'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   report: LifeSynthesisReport
@@ -218,7 +219,7 @@ export default function LifeSynthesisDetailModal({ report, onClose, onRefresh }:
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+            className={buttonClass({ variant: 'outline', size: 'sm', className: 'tap-44' })}
           >
             Đóng
           </button>

@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import { getStreak } from '../lib/storage'
 import { getLearnedCount } from '../lib/vocab'
 import { useDialogBehavior } from './useDialogBehavior'
-import { buttonClass } from '@core/buttonStyles'
+import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
 
 interface Props {
   userId: string
@@ -84,7 +84,7 @@ export default function ShareProgress({ userId, isA, onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label={isA ? 'Đóng' : 'Close'}
-            className="tap-44 shrink-0 w-11 h-11 flex items-center justify-center rounded-lg bg-zinc-800 hover:bg-zinc-700 transition"
+            className={`${buttonVariantClass('outline')} tap-44 shrink-0 w-11 h-11 flex items-center justify-center rounded-lg`}
           >
             <X className="w-4 h-4 text-zinc-400" />
           </button>
@@ -165,7 +165,7 @@ export default function ShareProgress({ userId, isA, onClose }: Props) {
         <div className="flex gap-3">
           <button
             onClick={copyText}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition"
+            className={buttonClass({ variant: 'outline', size: 'lg', className: 'flex-1' })}
           >
             {copied ? <Check className="w-4 h-4 text-accent-400" /> : <Copy className="w-4 h-4" />}
             {copied ? (isA ? 'Đã sao chép!' : 'Copied!') : isA ? 'Sao chép' : 'Copy'}
