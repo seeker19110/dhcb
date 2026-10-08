@@ -241,6 +241,8 @@ Lý do thiết kế từng hook: `docs/claude-md-chi-tiet.md` §8.
 
 **Chống đặc tả "nói suông" (thêm 2026-09-19):** `npm run check:specs` (chạy trong CI job `audit`, chặn merge) kiểm mọi đường dẫn ở cột "Đường dẫn file" của đặc tả ĐÃ "Approved for implementation" (`docs/specs/*.md`) có tồn tại thật — xem `scripts/check-spec-paths.ts`.
 
+**SQL phải chạy được trên schema thật (thêm 2026-10-08):** `npm run check:sql` (CI job `sql-prepare`, Postgres 16 đã áp mọi migration) `PREPARE` mọi câu SQL tĩnh của server — bắt sai cột/kiểu mà unit test giả lập `pg` không thấy. Câu cố ý không PREPARE được → `scripts/sql-prepare-allowlist.json` kèm lý do.
+
 **Rà câu chữ nội dung học:** `npm run audit:prose` (`-- --ci` chạy trong CI job `audit`) chỉ bắt
 lỗi máy nhìn được — phần dễ hiểu/đúng sư phạm vẫn phải đọc tay (khuôn 5 tiêu chuẩn, changelog
 0406). **Sửa từ điển (`apps/dhcb/public/data/dictionary/chunk-*.json`) PHẢI theo đúng quy trình

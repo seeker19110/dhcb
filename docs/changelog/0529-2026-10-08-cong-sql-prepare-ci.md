@@ -95,3 +95,13 @@ phân tích + lập kế hoạch câu lệnh (bắt sai cột/bảng/kiểu/toá
   (`packages/subject-programming/tsPrelude.test.ts`, khuôn `TRAPS.md` §7, máy 4 CPU chạy song song
   agent khác) — 18889/18890 test khác xanh, không ngưỡng coverage nào báo hụt; chạy lại riêng file
   đó: 4/4 xanh.
+
+## Tích hợp (phiên điều phối, cùng PR với 0527 + 0528)
+
+- Allowlist 10 → 1 mục: 4 mục của 0523 đã merge (#1276), 5 mục của 0527 sửa trong cùng PR này; còn
+  đúng lệnh `set transaction …` cố ý của 0527.
+- Sửa lỗi THẬT cổng này tìm ra: `admin-usage-stats.ts` câu ⑩ so `daily_usage.day` (text) với
+  `$1::date` → bỏ `::date`, so text `YYYY-MM-DD` như các câu khác trong file (trang thống kê admin hết 500).
+- Chạy lại trên `main` + 0527/0528 (Postgres 16 tạm, 90 migration): `npm run check:sql` exit 0,
+  PREPARE 485 câu, 1 câu miễn; `personErasureService.integration.test.ts` 2/2 trên DB thật.
+- CLAUDE.md mục 8 ghi lệnh `npm run check:sql`.

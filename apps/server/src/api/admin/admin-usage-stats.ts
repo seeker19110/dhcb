@@ -294,7 +294,7 @@ export default async function handler(req: Request): Promise<Response> {
            select d.user_id, d.day, ${AI_SUM_D_SQL} as used
            from public.daily_usage d
            join public.profiles p on p.id = d.user_id
-           where d.day >= $1::date and d.day <= $2::date
+           where d.day >= $1 and d.day <= $2
              and (${EFFECTIVE_PLAN_SQL}) = 'free'
          ) t`,
         [from, today, freeDailyLimit],

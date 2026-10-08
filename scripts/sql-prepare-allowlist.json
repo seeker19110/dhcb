@@ -2,53 +2,8 @@
   "entries": [
     {
       "file": "packages/core-personal/personErasureService.ts",
-      "sqlIncludes": "select id, node_type, label, status",
-      "reason": "Sai cột (life_graph_nodes.node_type → type). Đang sửa ở changelog 0527 — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "packages/core-personal/personErasureService.ts",
-      "sqlIncludes": "select e.id, e.source_node_id, e.target_node_id, e.edge_type",
-      "reason": "Sai cột (life_graph_edges.source_node_id/target_node_id/edge_type → from_node_id/to_node_id/relation). Đang sửa ở changelog 0527 — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "packages/core-personal/personErasureService.ts",
-      "sqlIncludes": "status, executed_at::text from personal.action_receipts",
-      "reason": "Sai cột (action_receipts.executed_at → created_at). Đang sửa ở changelog 0527 — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "packages/core-personal/personErasureService.ts",
-      "sqlIncludes": "select id, title, status, decided_at::text",
-      "reason": "Sai cột (decision_records.title/decided_at không tồn tại). Đang sửa ở changelog 0527 — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "packages/core-personal/personErasureService.ts",
-      "sqlIncludes": "DELETE FROM personal.life_graph_edges e USING personal.life_graph_nodes n WHERE e.source_node_id",
-      "reason": "Sai cột (life_graph_edges.source_node_id → from_node_id). Đang sửa ở changelog 0527 — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "packages/core-chat/chatService.ts",
-      "sqlIncludes": "user_id <> coalesce($2, '')",
-      "reason": "Lệch kiểu uuid <> text. Đang sửa ở changelog 0523 (PR chưa merge) — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "packages/core-chat/chatPush.ts",
-      "sqlIncludes": "coalesce(display_name, 'Bạn học')",
-      "reason": "Sai cột (profiles.display_name không tồn tại). Đang sửa ở changelog 0523 (PR chưa merge) — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "apps/server/src/api/platform/pvp-arena.ts",
-      "sqlIncludes": "coalesce(p.nickname, u.name) as display_name",
-      "reason": "Sai cột (profiles.user_id, users.name không tồn tại). Đang sửa ở changelog 0523 (PR chưa merge) — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "apps/server/src/api/platform/pvp-arena.ts",
-      "sqlIncludes": "left join public.profiles p on p.user_id = fs.user_id",
-      "reason": "Sai cột (profiles.user_id không tồn tại). Đang sửa ở changelog 0523 (PR chưa merge) — gỡ khỏi allowlist khi PR đó merge."
-    },
-    {
-      "file": "apps/server/src/api/admin/admin-usage-stats.ts",
-      "sqlIncludes": "where d.day >= $1::date and d.day <= $2::date",
-      "reason": "Lỗi THẬT do chính cổng này phát hiện (changelog 0529): daily_usage.day là text, so với $1::date → 'operator does not exist: text >= date'; câu nằm trong Promise.all nên cả trang thống kê admin lỗi 500. Chưa sửa vì ngoài phạm vi đợt thêm cổng — đã báo coordinator; gỡ khỏi allowlist khi sửa."
+      "sqlIncludes": "set transaction isolation level repeatable read, read only",
+      "reason": "Lệnh điều khiển giao dịch, cố ý (changelog 0527): export đọc trong một ảnh chụp nhất quán. PREPARE chỉ nhận SELECT/INSERT/UPDATE/DELETE…; lệnh này đã chạy thật trong personErasureService.integration.test.ts."
     }
   ]
 }
