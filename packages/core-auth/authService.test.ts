@@ -27,6 +27,7 @@ import {
   ensureProfileRow,
   verifyGoogleIdToken,
   verifyGoogleAccessToken,
+  inspectGoogleAccessToken,
   verifyFacebookAccessToken,
   verifyAppleIdToken,
   verifyMicrosoftIdToken,
@@ -954,5 +955,54 @@ describe('Microsoft — không dùng email/UPN làm bằng chứng sở hữu t�
       isNew: false,
     })
     expect(query).toHaveBeenCalledTimes(1)
+  })
+})
+
+// ── inspectGoogleAccessToken — độ "tươi" của token cho xác minh lại (changelog 0533) ──
+describe('inspectGoogleAccessToken', () => {
+  const OLD = process.env.GOOGLE_CLIENT_ID
+  beforeEach(() => {
+    process.env.GOOGLE_CLIENT_ID = 'gclient'
+    vi.stubGlobal('fetch', vi.fn())
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    if (OLD === undefined) delete process.env.GOOGLE_CLIENT_ID
+    else process.env.GOOGLE_CLIENT_ID = OLD
+  })
+
+  function mockGoogle(tokenInfo: Record<string, unknown>) {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => tokenInfo } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ sub: 'g9', email: 'x@y.com', email_verified: true, name: 'X' }),
+      } as Response)
+  }
+
+  it('đọc expires_in (chuỗi, như Google trả) thành số giây', async () => {
+    mockGoogle({ aud: 'gclient', expires_in: '3590' })
+    expect(await inspectGoogleAccessToken('atok')).toEqual({
+      googleId: 'g9',
+      email: 'x@y.com',
+      name: 'X',
+      expiresInSec: 3590,
+    })
+  })
+
+  it('thiếu hoặc sai định dạng expires_in ⇒ expiresInSec = null (nơi gọi coi là KHÔNG tươi)', async () => {
+    mockGoogle({ aud: 'gclient' })
+    expect((await inspectGoogleAccessToken('atok'))?.expiresInSec).toBeNull()
+    mockGoogle({ aud: 'gclient', expires_in: 'abc' })
+    expect((await inspectGoogleAccessToken('atok'))?.expiresInSec).toBeNull()
+  })
+
+  it('verifyGoogleAccessToken giữ nguyên hình dạng cũ (không lộ expiresInSec)', async () => {
+    mockGoogle({ aud: 'gclient', expires_in: '3590' })
+    expect(await verifyGoogleAccessToken('atok')).toEqual({
+      googleId: 'g9',
+      email: 'x@y.com',
+      name: 'X',
+    })
   })
 })

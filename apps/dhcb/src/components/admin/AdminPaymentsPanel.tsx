@@ -244,7 +244,9 @@ export default function AdminPaymentsPanel() {
                   <td className="p-3 font-mono font-bold text-white">{p.paymentCode}</td>
                   <td className="p-3">
                     <div className="font-medium text-white">{p.userName || 'Chưa cập nhật'}</div>
-                    <div className="text-zinc-400 text-[0.6875rem]">{p.userEmail || p.userId}</div>
+                    <div className="text-zinc-400 text-[0.6875rem]">
+                      {p.userEmail || p.userId || 'Tài khoản đã xoá'}
+                    </div>
                   </td>
                   <td className="p-3">
                     <span

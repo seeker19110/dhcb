@@ -23,7 +23,8 @@ export interface TutorFeedbackRow {
 
 export interface AdminPaymentRow {
   id: string
-  userId: string
+  // null = đơn của tài khoản đã xoá (ẩn danh hoá — migration 0088, changelog 0533).
+  userId: string | null
   userEmail: string | null
   userName: string | null
   plan: 'pro' | 'vip'

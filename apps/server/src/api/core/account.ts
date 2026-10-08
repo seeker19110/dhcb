@@ -1,0 +1,279 @@
+// api/core/account.ts — Xoá tài khoản + Xuất toàn bộ dữ liệu của tôi.
+// Đặc tả: docs/specs/2026-10-08-xoa-tai-khoan-va-xuat-du-lieu.md (changelog 0533).
+//
+// GET  /api/account?action=options  → cách xác minh lại khả dụng, có cần mã 2FA không, VIP còn hạn?
+// POST /api/account { action: 'export', reauth, twoFactorCode? }                → tệp JSON
+// POST /api/account { action: 'delete', reauth, twoFactorCode?, confirmation,
+//                     acknowledgeNoRefund? }                                    → { ok, erasedAt }
+//
+// Kiểm quyền: `userId` CHỈ lấy từ phiên (`validateAuth`); mọi trường `userId`/`personId` client gửi
+// đều bị Zod bỏ qua (schema không có trường đó). POST đi qua `isTrustedMutation` ở `wrapEdge`.
+//
+// Thứ tự kiểm có chủ ý: lỗi do người dùng gõ (câu xác nhận, chưa đánh dấu không hoàn tiền) trả về
+// TRƯỚC khi trừ lượt xác minh — gõ sai câu xác nhận không được làm người dùng bị khoá 15 phút.
+
+import { getPgPool } from '@dhcb/core-db/pgPool'
+import {
+  getCorsHeaders,
+  SECURITY_HEADERS,
+  checkRateLimit,
+  consumeWindowCounter,
+  resetCounter,
+  validateAuth,
+  logSecurityEvent,
+} from '@dhcb/core-auth/security'
+import { buildClearSessionCookie, readSessionCookie } from '@dhcb/core-auth/sessionCookie'
+import { getTwoFactorStatus, hasStepUp, verifyTwoFactor } from '@dhcb/core-auth/twoFactor'
+import { getReauthMethods, verifyAccountReauth } from '@dhcb/core-auth/accountReauth'
+import { resolvePlan } from '@dhcb/core-billing/plan'
+import { NotFoundError } from '@dhcb/core-errors/appError'
+import {
+  AccountBodySchema,
+  isDeleteConfirmationValid,
+  type AccountErrorCode,
+  type AccountOptions,
+} from '@dhcb/core-contracts/account'
+import { deleteAccount, exportAccountData } from '@dhcb/core-personal/accountErasureService'
+import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
+import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import {
+  TWO_FACTOR_USER_MAX_ATTEMPTS,
+  TWO_FACTOR_USER_WINDOW_MS,
+  twoFactorUserKey,
+} from './two-factor.js'
+
+/** Theo IP — mọi request vào route (kể cả GET options). */
+export const ACCOUNT_IP_LIMIT_PER_MIN = 10
+/** Theo NGƯỜI DÙNG — số lần thử xác minh lại (mật khẩu/Google) trong cửa sổ. */
+export const ACCOUNT_REAUTH_MAX_ATTEMPTS = 5
+export const ACCOUNT_REAUTH_WINDOW_MS = 15 * 60_000
+
+export function accountReauthKey(userId: string): string {
+  return `account-reauth:${userId}`
+}
+
+function errorBody(
+  error: string,
+  code: AccountErrorCode,
+): { error: string; code: AccountErrorCode } {
+  return { error, code }
+}
+
+/** VIP đang có hiệu lực (kể cả VIP vĩnh viễn). */
+async function readVipStatus(
+  userId: string,
+): Promise<{ vipActive: boolean; planExpiresAt: string | null }> {
+  const { rows } = await getPgPool().query<{ plan: string | null; plan_expires_at: Date | null }>(
+    'select plan, plan_expires_at from public.profiles where id = $1',
+    [userId],
+  )
+  const row = rows[0]
+  const vipActive = resolvePlan(row?.plan, row?.plan_expires_at) === 'vip'
+  return {
+    vipActive,
+    planExpiresAt:
+      vipActive && row?.plan_expires_at ? new Date(row.plan_expires_at).toISOString() : null,
+  }
+}
+
+function exportFilename(now: Date): string {
+  return `dhcb-du-lieu-cua-toi-${now.toISOString().slice(0, 10)}.json`
+}
+
+export default async function handler(req: Request): Promise<Response> {
+  const allHeaders = { ...getCorsHeaders(req), ...SECURITY_HEADERS, 'Cache-Control': 'no-store' }
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: allHeaders })
+
+  const clientIp = getClientIp(req)
+  if (!(await checkRateLimit(clientIp, ACCOUNT_IP_LIMIT_PER_MIN, 'account'))) {
+    logSecurityEvent('RATE_LIMIT_EXCEEDED', clientIp, { path: '/api/account' })
+    return jsonResponse(errorBody('Quá nhiều yêu cầu — thử lại sau 1 phút', 'RATE_LIMITED'), 429, {
+      ...allHeaders,
+      'Retry-After': '60',
+    })
+  }
+
+  const auth = await validateAuth(req)
+  if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
+  const userId = auth.userId
+  const pool = getPgPool()
+
+  // ── GET options ───────────────────────────────────────────────────────────
+  if (req.method === 'GET') {
+    if (new URL(req.url).searchParams.get('action') !== 'options') {
+      return jsonResponse({ error: 'Thiếu action=options' }, 400, allHeaders)
+    }
+    const [methods, twoFactor, vip] = await Promise.all([
+      getReauthMethods(pool, userId),
+      getTwoFactorStatus(pool, userId),
+      readVipStatus(userId),
+    ])
+    const twoFactorRequired =
+      twoFactor.enabled && !(await hasStepUp(pool, userId, readSessionCookie(req)))
+    const body: AccountOptions = { methods, twoFactorRequired, ...vip }
+    return jsonResponse(body, 200, allHeaders)
+  }
+
+  if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405, allHeaders)
+
+  const parsedBody = await readJsonBody(req)
+  if (!parsedBody.ok)
+    return jsonResponse({ error: parsedBody.error.message }, parsedBody.error.status, allHeaders)
+  const parsed = validateBody(AccountBodySchema, parsedBody.raw)
+  if (!parsed.ok)
+    return jsonResponse({ error: parsed.error.message }, parsed.error.status, allHeaders)
+  const body = parsed.data
+
+  // ── Lỗi do gõ/chưa xác nhận: trả TRƯỚC khi trừ lượt xác minh ────────────────
+  if (body.action === 'delete') {
+    if (!isDeleteConfirmationValid(body.confirmation)) {
+      return jsonResponse(
+        errorBody(
+          'Câu xác nhận chưa đúng — gõ lại đúng câu được yêu cầu.',
+          'CONFIRMATION_MISMATCH',
+        ),
+        400,
+        allHeaders,
+      )
+    }
+    const vip = await readVipStatus(userId)
+    if (vip.vipActive && body.acknowledgeNoRefund !== true) {
+      return jsonResponse(
+        errorBody(
+          'Gói VIP của bạn còn hạn và sẽ mất khi xoá tài khoản, không hoàn tiền. Hãy đánh dấu xác nhận trước.',
+          'VIP_ACK_REQUIRED',
+        ),
+        409,
+        allHeaders,
+      )
+    }
+  }
+
+  // ── Xác minh lại danh tính ─────────────────────────────────────────────────
+  if (
+    !(await consumeWindowCounter(
+      accountReauthKey(userId),
+      ACCOUNT_REAUTH_MAX_ATTEMPTS,
+      ACCOUNT_REAUTH_WINDOW_MS,
+    ))
+  ) {
+    logSecurityEvent('ACCOUNT_REAUTH_THROTTLED', clientIp, { userId, action: body.action })
+    return jsonResponse(
+      errorBody('Thử xác minh quá nhiều lần — chờ 15 phút rồi thử lại.', 'RATE_LIMITED'),
+      429,
+      { ...allHeaders, 'Retry-After': String(ACCOUNT_REAUTH_WINDOW_MS / 1000) },
+    )
+  }
+
+  const reauth = await verifyAccountReauth(pool, userId, body.reauth)
+  if (!reauth.ok) {
+    logSecurityEvent('ACCOUNT_REAUTH_FAILED', clientIp, {
+      userId,
+      action: body.action,
+      method: body.reauth.method,
+      reason: reauth.reason,
+    })
+    if (reauth.reason === 'unavailable') {
+      return jsonResponse(
+        errorBody(
+          'Tài khoản của bạn không dùng được cách xác minh này. Hãy chọn cách khác hoặc liên hệ hỗ trợ.',
+          'REAUTH_UNAVAILABLE',
+        ),
+        409,
+        allHeaders,
+      )
+    }
+    return jsonResponse(
+      errorBody(
+        reauth.reason === 'stale'
+          ? 'Phiên Google đã cũ — bấm "Xác minh bằng Google" lại rồi thử ngay.'
+          : body.reauth.method === 'password'
+            ? 'Mật khẩu không đúng.'
+            : 'Không xác minh được tài khoản Google này.',
+        'REAUTH_FAILED',
+      ),
+      401,
+      allHeaders,
+    )
+  }
+
+  // ── Lớp 2FA (nếu bật): TÁI DÙNG cửa sổ nâng quyền + bộ đếm sai mã của /api/two-factor ───
+  const twoFactor = await getTwoFactorStatus(pool, userId)
+  if (twoFactor.enabled && !(await hasStepUp(pool, userId, readSessionCookie(req)))) {
+    if (!body.twoFactorCode) {
+      return jsonResponse(
+        errorBody('Nhập mã xác thực hai bước để tiếp tục.', 'STEP_UP_REQUIRED'),
+        403,
+        allHeaders,
+      )
+    }
+    const attemptKey = twoFactorUserKey(userId)
+    if (
+      !(await consumeWindowCounter(
+        attemptKey,
+        TWO_FACTOR_USER_MAX_ATTEMPTS,
+        TWO_FACTOR_USER_WINDOW_MS,
+      ))
+    ) {
+      logSecurityEvent('TWO_FACTOR_USER_THROTTLED', clientIp, { userId })
+      return jsonResponse(
+        errorBody('Nhập sai mã quá nhiều lần — chờ 15 phút rồi thử lại.', 'RATE_LIMITED'),
+        429,
+        { ...allHeaders, 'Retry-After': String(TWO_FACTOR_USER_WINDOW_MS / 1000) },
+      )
+    }
+    const verified = await verifyTwoFactor(pool, userId, body.twoFactorCode)
+    if (!verified.ok) {
+      logSecurityEvent('AUTH_FAILURE', clientIp, { path: '/api/account', action: body.action })
+      return jsonResponse(
+        errorBody('Mã xác thực hai bước không đúng.', 'TWO_FACTOR_INVALID'),
+        401,
+        allHeaders,
+      )
+    }
+    await resetCounter(attemptKey)
+  }
+
+  // ── Xuất ───────────────────────────────────────────────────────────────────
+  if (body.action === 'export') {
+    // Lỗi CSDL ⇒ ném ⇒ wrapEdge trả 500 + Sentry; KHÔNG trả bản xuất thiếu.
+    const data = await exportAccountData(pool, userId)
+    logSecurityEvent('ACCOUNT_EXPORTED', clientIp, { userId })
+    return new Response(JSON.stringify(data, null, 2), {
+      status: 200,
+      headers: {
+        ...allHeaders,
+        'content-type': 'application/json; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${exportFilename(new Date())}"`,
+      },
+    })
+  }
+
+  // ── Xoá ────────────────────────────────────────────────────────────────────
+  let result: Awaited<ReturnType<typeof deleteAccount>>
+  try {
+    result = await deleteAccount(pool, userId)
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      // Request song song đã xoá xong trước — không phải lỗi hệ thống.
+      return jsonResponse({ error: 'Tài khoản không còn tồn tại' }, 404, {
+        ...allHeaders,
+        'Set-Cookie': buildClearSessionCookie(req.headers.get('host') ?? ''),
+      })
+    }
+    // Ghi dấu vết thất bại (đã rollback toàn bộ) rồi NÉM tiếp: wrapEdge trả 500 + Sentry.
+    logSecurityEvent('ACCOUNT_DELETE_FAILED', clientIp, {
+      userId,
+      message: err instanceof Error ? err.message : String(err),
+    })
+    throw err
+  }
+
+  // Không ghi userId vào log thành công: nhật ký xoá đã có mã băm; log ứng dụng chỉ cần id nhật ký.
+  logSecurityEvent('ACCOUNT_DELETED', clientIp, { erasureLogId: result.erasureLogId })
+  return jsonResponse({ ok: true, erasedAt: result.erasedAt }, 200, {
+    ...allHeaders,
+    // Phiên trong CSDL đã bị xoá cùng transaction; xoá luôn cookie trên trình duyệt.
+    'Set-Cookie': buildClearSessionCookie(req.headers.get('host') ?? ''),
+  })
+}

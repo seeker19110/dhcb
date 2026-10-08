@@ -389,21 +389,22 @@ export interface ErasePersonResult {
 
 // ─── An toàn định danh SQL ────────────────────────────────────────────────────
 
-const QUALIFIED_IDENT = /^[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*$/
-const IDENT = /^[a-z_][a-z0-9_]*$/
+// Xuất ra để `accountErasureService.ts` (cùng gói) dùng CHUNG đúng bộ kiểm này — không chép lại.
+export const QUALIFIED_IDENT = /^[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*$/
+export const IDENT = /^[a-z_][a-z0-9_]*$/
 
 /**
  * Tên bảng/cột KHÔNG tham số hoá được bằng $1 (Postgres chỉ nhận tham số ở vị trí GIÁ TRỊ) nên
  * phải nối chuỗi. Mọi giá trị hiện là hằng trong code; chặn ngay đây để một lần sửa sau này lỡ
  * nối biến từ người dùng vào là NỔ NGAY thay vì thành lỗ SQL injection im lặng (audit 2026-08-24, F9).
  */
-function assertIdent(value: string, pattern: RegExp): string {
+export function assertIdent(value: string, pattern: RegExp): string {
   if (!pattern.test(value)) throw new Error(`Định danh SQL không hợp lệ: ${JSON.stringify(value)}`)
   return value
 }
 
 /** `created_at, id` → kiểm từng cột. */
-function assertOrderBy(value: string): string {
+export function assertOrderBy(value: string): string {
   for (const col of value.split(',')) assertIdent(col.trim(), IDENT)
   return value
 }
@@ -411,12 +412,16 @@ function assertOrderBy(value: string): string {
 // ─── Export ───────────────────────────────────────────────────────────────────
 
 /**
- * Chạy mọi câu đọc trong MỘT transaction `repeatable read, read only` ⇒ bản xuất là một ảnh chụp
- * nhất quán (không lẫn trạng thái trước/sau một lần ghi xen giữa), và không thể vô tình ghi.
+ * Đọc toàn bộ dữ liệu của personId bằng `client` ĐANG Ở TRONG một transaction do nơi gọi mở.
+ *
+ * Tách riêng (2026-10-08, changelog 0533) để xuất dữ liệu TÀI KHOẢN (`accountErasureService`)
+ * đọc Personal OS trong CÙNG ảnh chụp với các bảng theo `user_id`. Hàm này KHÔNG tự đặt mức cô
+ * lập — nơi gọi phải `set transaction isolation level repeatable read, read only` ngay câu đầu.
  */
-async function readAll(client: PoolClient, personId: string): Promise<PersonExportData> {
-  await client.query('set transaction isolation level repeatable read, read only')
-
+export async function readPersonDataWith(
+  client: PoolClient,
+  personId: string,
+): Promise<PersonExportData> {
   const personRes = await client.query<PersonRow>(
     `select id, user_id, display_name, created_at, updated_at
        from ${PERSONS_TABLE} where id = $1`,
@@ -447,7 +452,21 @@ async function readAll(client: PoolClient, personId: string): Promise<PersonExpo
  * thiếu). Nơi gọi phải xác thực và suy personId từ token trước.
  */
 export async function exportPersonData(pool: Pool, personId: string): Promise<PersonExportData> {
-  return withTransaction(pool, (client) => readAll(client, personId))
+  // MỘT transaction `repeatable read, read only` ⇒ bản xuất là một ảnh chụp nhất quán (không lẫn
+  // trạng thái trước/sau một lần ghi xen giữa), và không thể vô tình ghi.
+  return withTransaction(pool, async (client) => {
+    await beginReadOnlySnapshot(client)
+    return readPersonDataWith(client, personId)
+  })
+}
+
+/**
+ * Câu ĐẦU của một transaction xuất dữ liệu: `repeatable read, read only` ⇒ ảnh chụp nhất quán và
+ * không thể vô tình ghi. Dùng chung cho xuất Person (0527) và xuất tài khoản (0533) — một chỗ
+ * duy nhất, cũng là chỗ duy nhất được miễn trong `scripts/sql-prepare-allowlist.json`.
+ */
+export async function beginReadOnlySnapshot(client: PoolClient): Promise<void> {
+  await client.query('set transaction isolation level repeatable read, read only')
 }
 
 // ─── Erase ────────────────────────────────────────────────────────────────────
@@ -467,39 +486,50 @@ export async function erasePersonData(
   personId: string,
   erasedBy: string,
 ): Promise<ErasePersonResult> {
-  return withTransaction(pool, async (client) => {
-    const personCheck = await client.query<{ id: string }>(
-      `select id from ${PERSONS_TABLE} where id = $1 for update`,
-      [personId],
-    )
-    if (!personCheck.rows[0]) {
-      throw new NotFoundError('Person not found')
-    }
+  return withTransaction(pool, (client) => erasePersonDataWith(client, personId, erasedBy))
+}
 
-    const schemasCleared: string[] = []
-    let totalDeleted = 0
+/**
+ * Như `erasePersonData` nhưng chạy trên `client` ĐANG Ở TRONG transaction của nơi gọi — để xoá
+ * tài khoản (`accountErasureService.deleteAccount`) gộp Personal OS vào CÙNG một transaction với
+ * mọi bảng theo `user_id`: lỗi ở bất kỳ đâu ⇒ rollback cả hai phần (changelog 0533).
+ */
+export async function erasePersonDataWith(
+  client: PoolClient,
+  personId: string,
+  erasedBy: string,
+): Promise<ErasePersonResult> {
+  const personCheck = await client.query<{ id: string }>(
+    `select id from ${PERSONS_TABLE} where id = $1 for update`,
+    [personId],
+  )
+  if (!personCheck.rows[0]) {
+    throw new NotFoundError('Person not found')
+  }
 
-    async function deleteFrom(table: string, column: 'person_id' | 'id'): Promise<void> {
-      const safeTable = assertIdent(table, QUALIFIED_IDENT)
-      const res = await client.query(`delete from ${safeTable} where ${column} = $1`, [personId])
-      totalDeleted += res.rowCount ?? 0
-      schemasCleared.push(table)
-    }
+  const schemasCleared: string[] = []
+  let totalDeleted = 0
 
-    for (const spec of PERSON_TABLES) await deleteFrom(spec.table, 'person_id')
-    // Bảng gốc cuối cùng.
-    await deleteFrom(PERSONS_TABLE, 'id')
+  async function deleteFrom(table: string, column: 'person_id' | 'id'): Promise<void> {
+    const safeTable = assertIdent(table, QUALIFIED_IDENT)
+    const res = await client.query(`delete from ${safeTable} where ${column} = $1`, [personId])
+    totalDeleted += res.rowCount ?? 0
+    schemasCleared.push(table)
+  }
 
-    const logRes = await client.query<{ id: string }>(
-      `insert into platform.person_erasure_log
-         (person_id, erased_at, erased_by, schemas_cleared, records_deleted_count)
-       values ($1, now(), $2, $3, $4)
-       returning id`,
-      [personId, erasedBy, schemasCleared, totalDeleted],
-    )
-    const erasureLogId = logRes.rows[0]?.id
-    if (!erasureLogId) throw new Error('Không ghi được nhật ký xoá dữ liệu (person_erasure_log)')
+  for (const spec of PERSON_TABLES) await deleteFrom(spec.table, 'person_id')
+  // Bảng gốc cuối cùng.
+  await deleteFrom(PERSONS_TABLE, 'id')
 
-    return { personId, schemasCleared, recordsDeletedCount: totalDeleted, erasureLogId }
-  })
+  const logRes = await client.query<{ id: string }>(
+    `insert into platform.person_erasure_log
+       (person_id, erased_at, erased_by, schemas_cleared, records_deleted_count)
+     values ($1, now(), $2, $3, $4)
+     returning id`,
+    [personId, erasedBy, schemasCleared, totalDeleted],
+  )
+  const erasureLogId = logRes.rows[0]?.id
+  if (!erasureLogId) throw new Error('Không ghi được nhật ký xoá dữ liệu (person_erasure_log)')
+
+  return { personId, schemasCleared, recordsDeletedCount: totalDeleted, erasureLogId }
 }

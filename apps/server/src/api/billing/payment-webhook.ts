@@ -62,7 +62,7 @@ export default async function handler(req: Request): Promise<Response> {
   const pool = getPgPool()
   const { rows } = await pool.query<{
     id: string
-    user_id: string
+    user_id: string | null
     plan: PayablePlan
     cycle: PayableCycle
     amount_vnd: number
@@ -79,6 +79,17 @@ export default async function handler(req: Request): Promise<Response> {
     return ok(headers)
   }
   if (payment.status === 'paid') return ok(headers) // đã xử lý — idempotent, không log lỗi
+
+  // Đơn của tài khoản ĐÃ XOÁ (ẩn danh hoá — migration 0088, changelog 0533): không còn ai để cấp
+  // gói. Ghi log để admin đối chiếu tay/hoàn tiền theo quy trình ngoài hệ thống, không cấp gì.
+  if (payment.user_id === null) {
+    logSecurityEvent('SEPAY_PAYMENT_ORPHANED', 'sepay', {
+      paymentId: payment.id,
+      txnId,
+      transferAmount,
+    })
+    return ok(headers)
+  }
 
   // Đơn quá hạn: UI hết hạn sau 30 phút nhưng trước đây server không kiểm — người dùng có thể
   // chuyển khoản NHIỀU THÁNG sau và vẫn được cấp gói với giá đã chốt lúc khuyến mãi (audit
@@ -126,7 +137,7 @@ export default async function handler(req: Request): Promise<Response> {
         years: number
       }>(
         `update public.payments set status = 'paid', paid_at = now(), provider_txn_id = $2
-         where id = $1 and status = 'pending'
+         where id = $1 and status = 'pending' and user_id is not null
          returning user_id, plan, cycle, years`,
         [payment.id, txnId],
       )

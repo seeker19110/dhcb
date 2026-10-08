@@ -158,6 +158,21 @@ describe('/api/payment-webhook', () => {
     expect(query).toHaveBeenCalledTimes(1)
   })
 
+  it('đơn của tài khoản ĐÃ XOÁ (user_id null, changelog 0533) → log ORPHANED, không cấp gói, không update', async () => {
+    query.mockResolvedValueOnce({ rows: [{ ...PENDING_PAYMENT, user_id: null }] })
+    const resp = await handler(
+      makeRequest({ id: 1, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }),
+    )
+    expect(resp.status).toBe(200)
+    expect(granted.calls).toEqual([])
+    expect(query).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(logSecurityEvent)).toHaveBeenCalledWith(
+      'SEPAY_PAYMENT_ORPHANED',
+      'sepay',
+      expect.objectContaining({ paymentId: PENDING_PAYMENT.id }),
+    )
+  })
+
   it('đủ tiền, đơn pending → cấp đúng gói/số ngày, ghi provider_txn_id', async () => {
     query.mockResolvedValueOnce({ rows: [PENDING_PAYMENT] }).mockResolvedValueOnce({
       rowCount: 1,

@@ -29,6 +29,7 @@ import QuestsPanel from '../../components/QuestsPanel'
 import EmailVerifySection from '../../components/EmailVerifySection'
 import TwoFactorSection from '../../components/TwoFactorSection'
 import PasswordChangeSection from '../../components/PasswordChangeSection'
+import AccountDataSection from '../../components/AccountDataSection'
 import { clearStoredToken } from '@core/authHeader'
 import UpgradeSection from '../../components/UpgradeSection'
 import PricePromoBanner from '../../components/PricePromoBanner'
@@ -158,6 +159,23 @@ export default function Profile() {
       // Mật khẩu đã đổi và phiên đã thu hồi: tải lại trang đăng nhập nếu refresh lỗi,
       // không để UI giữ hồ sơ đã đăng xuất hoặc báo nhầm đổi mật khẩu thất bại.
       window.location.replace('/login')
+    }
+  }
+
+  // Tài khoản đã bị xoá ở server (phiên đã huỷ cùng transaction): dọn trạng thái đăng nhập ở
+  // client rồi về trang chủ. refresh() lỗi cũng không sao — chuyển trang cứng để không giữ hồ sơ cũ.
+  async function accountDeleted() {
+    clearStoredToken()
+    toast.success(
+      isA
+        ? 'Đã xoá tài khoản và toàn bộ dữ liệu của bạn.'
+        : 'Your account and all data were deleted.',
+    )
+    try {
+      await refresh()
+      nav('/', { replace: true })
+    } catch {
+      window.location.replace('/')
     }
   }
 
@@ -536,6 +554,8 @@ export default function Profile() {
             {/* Xác thực hai bước (tuỳ chọn) */}
             <PasswordChangeSection key={user.id} isA={isA} onChanged={passwordChanged} />
             <TwoFactorSection isA={isA} />
+            {/* Tải dữ liệu của tôi + Xoá tài khoản (changelog 0533) */}
+            <AccountDataSection isA={isA} onDeleted={() => void accountDeleted()} />
 
             {/* Mời bạn cùng học */}
             <ReferralSection isA={isA} />

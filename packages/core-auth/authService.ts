@@ -154,6 +154,22 @@ export async function verifyGoogleIdToken(
 export async function verifyGoogleAccessToken(
   accessToken: string,
 ): Promise<{ googleId: string; email: string; name: string } | null> {
+  const info = await inspectGoogleAccessToken(accessToken)
+  if (!info) return null
+  return { googleId: info.googleId, email: info.email, name: info.name }
+}
+
+/**
+ * Như `verifyGoogleAccessToken` nhưng trả thêm `expiresInSec` — số giây token còn sống theo
+ * tokeninfo (`expires_in`; `null` nếu Google không trả/không đọc được).
+ *
+ * Dùng cho XÁC MINH LẠI trước thao tác không hoàn tác (xoá tài khoản — changelog 0533): token
+ * Google sống ~3600 giây kể từ lúc cấp, nên `expiresInSec` gần 3600 nghĩa là người dùng VỪA đăng
+ * nhập Google lại. Token cũ (cấp từ lâu, bị lấy trộm…) có `expiresInSec` nhỏ ⇒ nơi gọi từ chối.
+ */
+export async function inspectGoogleAccessToken(
+  accessToken: string,
+): Promise<{ googleId: string; email: string; name: string; expiresInSec: number | null } | null> {
   try {
     const { clientId } = getGoogleClient()
 
@@ -161,8 +177,11 @@ export async function verifyGoogleAccessToken(
       `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
     )
     if (!tokenInfoRes.ok) return null
-    const tokenInfo = (await tokenInfoRes.json()) as { aud?: string }
+    const tokenInfo = (await tokenInfoRes.json()) as { aud?: string; expires_in?: string | number }
     if (tokenInfo.aud !== clientId) return null
+    const expiresIn = Number(tokenInfo.expires_in)
+    const expiresInSec =
+      tokenInfo.expires_in != null && Number.isFinite(expiresIn) ? expiresIn : null
 
     const userInfoRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -181,6 +200,7 @@ export async function verifyGoogleAccessToken(
       googleId: userInfo.sub,
       email: userInfo.email,
       name: userInfo.name ?? userInfo.email.split('@')[0] ?? userInfo.email,
+      expiresInSec,
     }
   } catch (err) {
     console.warn(
