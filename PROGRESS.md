@@ -651,8 +651,8 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
   vòng từ vựng sinh tự động thiếu câu mẫu (báo cáo ghi "610/699" là SAI — đã đính chính tại chỗ
   2026-09-14); cờ `notForKids` không phủ vòng sinh tự động; 23 vòng dưới 5 từ; 6 bài Hoá trùng
   tiêu đề; 20 giải thích câu hỏi dưới 40 ký tự; 14 bài Lập trình chỉ 1 test-case.
-  **Cập nhật 2026-10-08:** F1/F4/F5/F8/F9/F10 đã trả ở `0300` + `0304`; còn F11 (câu ví dụ tiếng Anh
-  dùng lại cho nhiều mục từ).
+  **Cập nhật 2026-10-08:** F1/F4/F5/F8/F9/F10 đã trả ở `0300` + `0304`; F11 (câu ví dụ tiếng Anh
+  dùng lại cho nhiều mục từ, đo lại: 39 câu/79 mục → 0) trả ở `0524`, cổng `CAU_VI_DU_KHONG_DUNG_CHUNG`.
 - **BA ĐẶC TẢ NỘI DUNG MỚI ĐÃ SOẠN XONG, CHỜ NGƯỜI DÙNG DUYỆT** (2026-09-14, xem
   `docs/changelog/0307-*.md`). Chưa file nào mang cụm "Approved for implementation", nên **chưa
   được phép thi hành**: `docs/specs/2026-09-14-cau-mau-cho-vong-tu-vung-cefr.md` (F3) ·
