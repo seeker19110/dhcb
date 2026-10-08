@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import LiveDebateModal from './LiveDebateModal.js'
+import { buttonClass } from '@core/buttonStyles'
 
 interface DebateArenaCardProps {
   onOpenTopic?: (topicId: string) => void
@@ -41,7 +42,10 @@ export default function DebateArenaCard({ onOpenTopic }: DebateArenaCardProps) {
               setIsOpenModal(true)
               onOpenTopic?.('ai-ethics')
             }}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-[#fff] font-bold text-xs sm:text-sm shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
+            className={buttonClass({
+              variant: 'secondary',
+              className: 'w-full sm:w-auto shrink-0',
+            })}
           >
             <span>Bắt đầu Tranh biện</span>
             <span>⚡</span>

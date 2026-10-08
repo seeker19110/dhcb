@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import StemScratchpadModal from './StemScratchpadModal.js'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function StemScratchpadCard() {
   const [isOpenModal, setIsOpenModal] = useState(false)
@@ -34,7 +35,10 @@ export default function StemScratchpadCard() {
           <button
             type="button"
             onClick={() => setIsOpenModal(true)}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-teal-700 hover:bg-teal-800 text-[#fff] font-bold text-xs sm:text-sm shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
+            className={buttonClass({
+              variant: 'secondary',
+              className: 'w-full sm:w-auto shrink-0',
+            })}
           >
             <span>Mở bảng nháp</span>
             <span>✨</span>

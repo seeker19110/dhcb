@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Activity, Play, Square } from 'lucide-react'
 import { findPronunciationHints } from '@dhcb/core-ai/pronunciationHints'
 import { speak, stopSpeaking } from '../../lib/tts'
+import { buttonClass } from '@core/buttonStyles'
 
 // Thay "Acoustic Phonetics & GOP Lab" (changelog 0484). Bản cũ hiện "Điểm GOP", lưu loát, ngữ điệu
 // dạng % gán bằng công thức cứng — không nghe giọng ai. Thẻ này chỉ GỢI Ý: trong câu mẫu có âm nào
@@ -54,10 +55,7 @@ export default function PronunciationHintsCard() {
           </div>
         </div>
 
-        <button
-          onClick={handlePlay}
-          className="tap-44-y flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-[#fff] shadow-lg hover:bg-indigo-500 transition"
-        >
+        <button onClick={handlePlay} className={buttonClass({ variant: 'primary' })}>
           {isPlaying ? (
             <>
               <Square className="h-4 w-4 fill-current" aria-hidden /> Dừng giọng mẫu

@@ -72,6 +72,7 @@ import {
 import { getDialogues } from '../../data/dialoguesLoader'
 import type { Dialogue } from '../../data/dialogues'
 import { MiniQuizQ, buildMiniQuiz } from './quizBuilders'
+import { buttonClass } from '@core/buttonStyles'
 
 type TodayPhase = 'learning' | 'batch-done' | 'mini-quiz' | 'mini-quiz-review' | 'daily-max'
 
@@ -711,7 +712,12 @@ export function TodayLesson({
         {quizSel !== null && (
           <button
             onClick={quizNext}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white font-semibold transition animate-fade-in"
+            className={buttonClass({
+              variant: 'primary',
+              size: 'lg',
+              fullWidth: true,
+              className: 'animate-fade-in',
+            })}
           >
             {quizIdx + 1 >= quizQs.length
               ? isA

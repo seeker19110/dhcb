@@ -21,6 +21,7 @@ import {
   verifyTwoFactor,
   type TwoFactorStatus,
 } from '../lib/twoFactorApi'
+import { buttonClass } from '@core/buttonStyles'
 
 type Step = 'idle' | 'scanning' | 'codes'
 
@@ -314,7 +315,7 @@ export default function TwoFactorSection({ isA }: { isA: boolean }) {
                     setRecoveryCodes([])
                     setStep('idle')
                   }}
-                  className="tap-44 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 transition-colors text-[#09090b] text-xs font-semibold"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   {isA ? 'Tôi đã lưu xong' : 'I saved them'}
                 </button>
@@ -419,14 +420,14 @@ export default function TwoFactorSection({ isA }: { isA: boolean }) {
                       // 4,5:1 (cổng e2e/a11y-2fa.spec.ts bắt được). text-[#fff] cố định vì nền
                       // này KHÔNG đổi theo theme — dùng `text-white` sẽ bị đảo thành màu tối ở
                       // các theme nền sáng (CLAUDE.md mục 4.5).
-                      className="tap-44 flex-1 px-3 rounded-xl bg-rose-700 text-[#fff] text-sm font-semibold disabled:opacity-60"
+                      className={buttonClass({ variant: 'danger', className: 'flex-1' })}
                     >
                       {isA ? 'Tắt' : 'Turn off'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowDisable(false)}
-                      className="tap-44 px-3 rounded-xl border border-zinc-700 hover:bg-zinc-800/60 hover:border-zinc-600 transition-colors text-sm text-zinc-200"
+                      className={buttonClass({ variant: 'outline', className: 'flex-1' })}
                     >
                       {isA ? 'Huỷ' : 'Cancel'}
                     </button>

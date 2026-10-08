@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
+import { buttonClass } from '@core/buttonStyles'
 
 interface FeatureCheckResult {
   key: string
@@ -136,7 +137,7 @@ export default function AdminFeatureStatusPanel() {
               type="button"
               disabled={checking}
               onClick={runCheckNow}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white disabled:opacity-50"
+              className={buttonClass({ variant: 'primary' })}
             >
               {checking ? 'Đang kiểm tra...' : 'Kiểm tra thủ công'}
             </button>

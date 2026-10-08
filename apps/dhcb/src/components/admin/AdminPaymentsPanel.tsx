@@ -13,6 +13,7 @@ import {
 import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
 import type { AdminPaymentRow } from '@dhcb/core-contracts/adminViews'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function AdminPaymentsPanel() {
   const [payments, setPayments] = useState<AdminPaymentRow[]>([])
@@ -290,7 +291,7 @@ export default function AdminPaymentsPanel() {
                       <button
                         type="button"
                         onClick={() => handleOpenMatchModal(p)}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium text-[0.6875rem] transition shadow"
+                        className={buttonClass({ variant: 'secondary', size: 'sm' })}
                       >
                         Khớp đơn tay
                       </button>
@@ -381,14 +382,14 @@ export default function AdminPaymentsPanel() {
                 <button
                   type="button"
                   onClick={() => setMatchingPayment(null)}
-                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs"
+                  className={buttonClass({ variant: 'outline' })}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submittingMatch}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 shadow-lg"
+                  className={buttonClass({ variant: 'primary' })}
                 >
                   {submittingMatch ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />

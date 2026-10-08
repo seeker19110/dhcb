@@ -8,6 +8,7 @@ import Layout from '../../components/Layout'
 import { useToast } from '@core/ToastProvider'
 import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { lookupFriendByCode, addFriendByCode, type FriendUserSummary } from '../../lib/friends'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function AddFriend() {
   const { code } = useParams<{ code: string }>()
@@ -92,14 +93,14 @@ export default function AddFriend() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 to={`/tin-nhan?peerId=${encodeURIComponent(target.id)}`}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white min-h-[44px] hover:bg-blue-500 transition-colors"
+                className={buttonClass({ variant: 'primary', className: 'w-full sm:w-auto' })}
               >
                 Nhắn tin ngay
               </Link>
               <button
                 type="button"
                 onClick={() => navigate('/ban-be')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-white/10 hover:bg-white/15 px-5 py-3 text-sm font-semibold text-white min-h-[44px] transition-colors"
+                className={buttonClass({ variant: 'outline', className: 'w-full sm:w-auto' })}
               >
                 Xem danh sách bạn bè
               </button>

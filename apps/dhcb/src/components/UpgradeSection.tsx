@@ -26,6 +26,7 @@ import { getPlanMarketing } from '../lib/planMarketing'
 import { getDailyLimit, hasUnlimitedAi } from '../lib/appSettings'
 import { useAppSettings } from '../lib/useAppSettings'
 import type { Plan } from '../types'
+import { buttonClass } from '@core/buttonStyles'
 
 const CYCLE_LABEL: Record<PayableCycle, { vi: string; en: string }> = {
   '10day': { vi: '10 ngày', en: '10 days' },
@@ -251,10 +252,7 @@ export default function UpgradeSection({
             ? 'So sánh đầy đủ Free · VIP và chọn chu kỳ 10 ngày / tháng / năm ở trang bảng giá.'
             : 'Compare Free · VIP and pick a 10-day / monthly / yearly cycle on the pricing page.'}
         </p>
-        <Link
-          to="/nang-cap"
-          className="tap-44 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-semibold text-sm transition"
-        >
+        <Link to="/nang-cap" className={buttonClass({ variant: 'primary', fullWidth: true })}>
           {isA ? 'Xem bảng giá đầy đủ' : 'View full pricing'}
           <ArrowRight className="w-4 h-4" aria-hidden />
         </Link>
@@ -496,7 +494,7 @@ export default function UpgradeSection({
             type="button"
             onClick={handleCreateCheckout}
             disabled={creating || !prices}
-            className="tap-44-y w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#09090b] font-semibold text-sm disabled:opacity-60"
+            className={buttonClass({ variant: 'primary', fullWidth: true })}
           >
             {creating
               ? isA

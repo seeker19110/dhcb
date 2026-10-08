@@ -12,6 +12,7 @@ import type {
   MentalModelMisconception,
   CognitiveBreakthroughRecord,
 } from '@dhcb/core-contracts/socraticDiagnostics'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function SocraticDiagnosticsCard() {
   const [misconceptions, setMisconceptions] = useState<MentalModelMisconception[]>([])
@@ -264,7 +265,7 @@ export default function SocraticDiagnosticsCard() {
               <button
                 type="submit"
                 disabled={!learnerAnswer.trim() || isSubmitting}
-                className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-[#fff] font-semibold text-xs flex items-center gap-1.5 shadow-lg transition disabled:opacity-50"
+                className={buttonClass({ variant: 'primary' })}
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Gửi phản tư</span>

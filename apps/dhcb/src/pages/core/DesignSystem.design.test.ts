@@ -111,6 +111,58 @@ describe('Không còn hàng nút chính giống hệt nhau (đợt 0501)', () =>
   })
 })
 
+describe('Nút CTA đặc không còn tự ghép màu lệch accent (M17 đợt 4, changelog 0515)', () => {
+  // Các file này từng tự ghép nút đặc cyan / violet / indigo / teal / amber / blue / emerald /
+  // rose — mỗi nơi một màu cho cùng một vai "hành động chính". Nay dùng `buttonClass`.
+  // Nút CÓ nghĩa trạng thái (bật/tắt, đang chọn, ghi âm, ngành A/B…) nằm ngoài danh sách này
+  // và được giữ nguyên có chủ đích.
+  const CONVERTED = [
+    'components/CompanionStudios/ActionCanvasBanner.tsx',
+    'components/CompanionStudios/StudioDialogue.tsx',
+    'components/admin/AdminReservedNamesPanel.tsx',
+    'components/admin/AdminFeatureStatusPanel.tsx',
+    'components/admin/AdminTtsCachePanel.tsx',
+    'components/admin/AdminPaymentsPanel.tsx',
+    'components/CefrExam.tsx',
+    'components/studyTabs/QuizTab.tsx',
+    'components/studyTabs/TodayLesson.tsx',
+    'components/CefrLessonViews.tsx',
+    'components/ExamQuestionCard.tsx',
+    'components/CompanionVoice/ArticulatoryPhoneticsVisualizer.tsx',
+    'components/CompanionVoice/ScenarioHolodeckCard.tsx',
+    'components/CompanionVoice/PronunciationHintsCard.tsx',
+    'components/CompanionVoice/A2ANegotiatorCard.tsx',
+    'components/CompanionVoice/SocraticDiagnosticsCard.tsx',
+    'components/DebateArena/LiveDebateModal.tsx',
+    'components/DebateArena/DebateArenaCard.tsx',
+    'components/MetacognitiveReflection/MetacognitiveJournalCard.tsx',
+    'components/StemScratchpad/StemScratchpadCard.tsx',
+    'components/MemoryPalace/MemoryPalaceCard.tsx',
+    'components/location/TripActions.tsx',
+    'components/chat/MessageInput.tsx',
+    'components/TwoFactorSection.tsx',
+    'components/UpgradeSection.tsx',
+    'pages/companion/ActionCanvas.tsx',
+    'pages/core/AddFriend.tsx',
+  ].map((p) => `apps/dhcb/src/${p}`)
+
+  it('không còn nền đặc màu bậc 400–700 + chữ tự khai trên cùng một chuỗi class', () => {
+    const solid =
+      /bg-(cyan|violet|indigo|teal|amber|blue|emerald|sky|rose)-[4-7]00(?![\w/])[^"`]*\btext-(white|black|\[#)/
+    const offenders = CONVERTED.filter((f) => solid.test(stripComments(read(f))))
+    expect(offenders).toEqual([])
+  })
+
+  it('mỗi file đều lấy nút từ @core/buttonStyles', () => {
+    const missing = CONVERTED.filter(
+      (f) =>
+        !/from '@core\/buttonStyles'/.test(read(f)) ||
+        !/buttonClass|buttonVariantClass/.test(read(f)),
+    )
+    expect(missing).toEqual([])
+  })
+})
+
 describe('Trang dài Lập trình không lặp/không trải hết (audit M22)', () => {
   it('lộ trình: bài kiểm dạng gọn, không lặp dòng "chưa có bài kiểm" mỗi chặng', () => {
     const src = read('apps/dhcb/src/pages/subjects/programming/ProgrammingPathPage.tsx')
