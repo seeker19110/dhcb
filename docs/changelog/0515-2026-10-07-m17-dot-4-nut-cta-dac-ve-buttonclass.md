@@ -68,5 +68,5 @@ Hệ quả có chủ ý: chữ nút nay là `#09090b` (accent) hoặc `#fff` (da
 - **~145 nút accent đặc tự ghép** (`bg-accent-500 … text-black`): ĐÃ cùng màu với `primary` nên
   không còn lệch màu như audit mô tả; chỉ khác hình (cỡ, bo góc, bóng). Đổi hàng loạt chạm chiều
   cao nút ở ~60 file — cần đợt riêng có ảnh từng trang.
-- **Bề rộng nội dung:** `PageShell` nay ở 64/95 file trang (audit ghi 49/95). 31 trang còn tự đặt
-  `max-w-*`. Mỗi trang là một thay đổi bố cục ở 1440px → đợt riêng có ảnh.
+- **Bề rộng nội dung:** ~~`PageShell` ở 64/95 file trang, 31 trang tự đặt `max-w-*`~~ — SAI, đã
+  đo lại và đính chính ở `0516` (31 file đó là thành phần con, không phải trang; bề rộng đã nhất quán).
