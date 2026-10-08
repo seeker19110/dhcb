@@ -129,7 +129,10 @@ export default function Dictionary() {
   const [extraExamples, setExtraExamples] = useState<Record<string, [ExPair, ExPair]>>({})
 
   useEffect(() => {
-    loadExtraExamples().then(setExtraExamples)
+    // Ví dụ bổ sung là dữ liệu PHỤ: lỗi tải thì thôi không có ví dụ thêm (changelog 0530).
+    loadExtraExamples()
+      .then(setExtraExamples)
+      .catch(() => undefined)
   }, [])
 
   // Khi từ khóa/bộ lọc đổi: reset trang + bật spinner (hoặc xoá kết quả nếu ô trống)

@@ -75,7 +75,11 @@ import {
 import { preloadLearnData } from '../../../lib/preloader'
 import { useAsyncLoad } from '../../../lib/useAsyncLoad'
 import LoadError from '../../../components/LoadError'
+import DialogueLoadError from '../../../components/DialogueLoadError'
+import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import {
+  LOI_HOI_THOAI_VI,
+  LOI_HOI_THOAI_EN,
   LOI_TU_VUNG_VI,
   LOI_TU_VUNG_EN,
   GOI_Y_TU_VUNG_VI,
@@ -126,6 +130,8 @@ type StudyTab = (typeof STUDY_TABS)[number]
 // Nháp ở đây KHÔNG phải nội dung bài: chỉ là VỊ TRÍ đang học (tab nào, đang mở hoạt động nào)
 // để reload/đóng tab xong quay lại đúng chỗ. Không chạm tiến độ, không gọi API.
 const MON = 'english'
+// Mảng rỗng DÙNG CHUNG (tham chiếu ổn định) khi hội thoại chưa tải xong / tải lỗi.
+const NO_DIALOGUES: Dialogue[] = []
 // Nội dung của trang không "hết hạn" theo cách nháp code hết hạn: thứ khôi phục là MÃ hoạt
 // động, và mã nào không còn trong dữ liệu cấp thì bị bỏ qua (xem `coHoatDong`). Vì vậy phiên
 // bản nội dung ở đây là hằng — đổi nó chỉ khi khuôn nháp bên dưới đổi.
@@ -286,17 +292,27 @@ export default function CefrLevelPage() {
   // Hội thoại của TOÀN CẤP (mọi unit) — dùng cho tab "Nghe" (③ N3, dictation lấy
   // câu từ hội thoại). Tải riêng theo cấp (giống CefrExam.tsx) — chỉ chạy khi có
   // `level`, không chặn các tab khác.
-  const [levelDialogues, setLevelDialogues] = useState<Dialogue[]>([])
-  useEffect(() => {
-    if (!level) return
-    let alive = true
-    Promise.all(level.units.map((u) => getDialogues(u.id))).then((lists) => {
-      if (alive) setLevelDialogues(lists.flat())
-    })
-    return () => {
-      alive = false
-    }
+  // [changelog 0530] Bản cũ `Promise.all(...).then(set)` không có nhánh lỗi: tải hỏng là mất hội
+  // thoại im lặng + unhandled rejection. Nay MỘT lần tải cho cả cấp (hội thoại là một file chung),
+  // theo từng unit: tab Bài học đưa cho từng `UnitSection`, tab Nghe làm câu chép chính tả. Lỗi →
+  // MỘT khối lỗi + Thử lại ở mỗi tab (không lặp 10+ khối, mỗi khối một nút).
+  const loadLevelDialogues = useCallback(async (): Promise<Record<string, Dialogue[]>> => {
+    if (!level) return {}
+    const lists = await Promise.all(level.units.map((u) => getDialogues(u.id)))
+    return Object.fromEntries(level.units.map((u, i) => [u.id, lists[i] ?? []]))
   }, [level])
+  const { state: levelDialoguesState, retry: retryLevelDialogues } = useAsyncLoad(
+    loadLevelDialogues,
+    {
+      lang: isA ? 'vi' : 'en',
+      errorMessage: isA ? LOI_HOI_THOAI_VI : LOI_HOI_THOAI_EN,
+    },
+  )
+  const dialoguesByUnit = levelDialoguesState.status === 'ready' ? levelDialoguesState.data : null
+  const levelDialogues = useMemo(
+    () => (dialoguesByUnit ? Object.values(dialoguesByUnit).flat() : NO_DIALOGUES),
+    [dialoguesByUnit],
+  )
 
   // U-3: trình độ khai lúc onboarding — nếu ≥ Trung cấp thì gợi ý test-out ở A1
   // ("Tôi đã biết vòng này" trong vòng từ vựng) thay vì học lại từng thẻ.
@@ -510,22 +526,50 @@ export default function CefrLevelPage() {
 
   // Hội thoại: danh sách nạp bất đồng bộ; mở bài đầu của unit (cây chỉ có MỘT nút hội thoại
   // cho cả unit — xem `cefrOutline.ts`).
+  // [changelog 0530] Bản cũ `void getDialogues().then(...)` không có nhánh lỗi: mở hội thoại từ
+  // mục lục mà tải hỏng thì không có gì xảy ra + unhandled rejection. Nay lưu lỗi theo KHOÁ màn
+  // con (`khoaManCon`) — đổi màn thì lỗi cũ tự hết hiệu lực — và hiện khối lỗi + Thử lại.
+  const [loiHoiThoaiUrl, setLoiHoiThoaiUrl] = useState<{ khoa: string; message: string } | null>(
+    null,
+  )
+  const [lanThuHoiThoaiUrl, setLanThuHoiThoaiUrl] = useState(0)
+  // Một nút Thử lại cho mọi khối lỗi hội thoại của trang: tải lại hội thoại cả cấp VÀ mở lại bài
+  // đang trỏ trên URL (nếu có).
+  const thuLaiHoiThoai = () => {
+    retryLevelDialogues()
+    setLoiHoiThoaiUrl(null)
+    setLanThuHoiThoaiUrl((n) => n + 1)
+  }
   useEffect(() => {
     if (!level || hoatDongUrl?.kind !== 'dialogue') return
     const unit = level.units.find((u) => u.id === hoatDongUrl.unitId)
     if (!unit) return // unit lạ → bỏ qua, trang hiện như bình thường
     let conHieuLuc = true
-    void getDialogues(unit.id).then((ds) => {
-      const d = ds[0]
-      if (!conHieuLuc || !d) return
-      if (uid) markDialogueViewed(uid, unit.id, d.titleEn)
-      setRefresh((k) => k + 1)
-      setDialogue(d)
-    })
+    getDialogues(unit.id).then(
+      (ds) => {
+        const d = ds[0]
+        if (!conHieuLuc || !d) return
+        if (uid) markDialogueViewed(uid, unit.id, d.titleEn)
+        setLoiHoiThoaiUrl(null)
+        setRefresh((k) => k + 1)
+        setDialogue(d)
+      },
+      (err: unknown) => {
+        if (!conHieuLuc) return
+        setLoiHoiThoaiUrl({
+          khoa: khoaManCon,
+          message: thongDiepLoiThanThien(
+            err,
+            isA ? LOI_HOI_THOAI_VI : LOI_HOI_THOAI_EN,
+            isA ? 'vi' : 'en',
+          ),
+        })
+      },
+    )
     return () => {
       conHieuLuc = false
     }
-  }, [level, hoatDongUrl, uid])
+  }, [level, hoatDongUrl, uid, lanThuHoiThoaiUrl, khoaManCon, isA])
 
   // Đóng màn con: xoá luôn `?unit=&hd=` khỏi URL, nếu không lần render sau lại mở đúng màn vừa
   // đóng (URL là nguồn sự thật). `replace` để nút Back không phải bấm hai lần.
@@ -896,6 +940,18 @@ export default function CefrLevelPage() {
     <div className="animate-fade-in">
       {/* [audit 2026-09-30 minor 3] Header đã có nút quay lại Lộ trình CEFR cùng đích. */}
 
+      {/* Mở hội thoại từ mục lục mà tải hỏng → báo lỗi + Thử lại (changelog 0530). */}
+      {loiHoiThoaiUrl?.khoa === khoaManCon &&
+        !(activeTab === 'lessons' && levelDialoguesState.status === 'error') && (
+          <div className="mb-4">
+            <DialogueLoadError
+              isA={isA}
+              message={loiHoiThoaiUrl.message}
+              onRetry={thuLaiHoiThoai}
+            />
+          </div>
+        )}
+
       {/* Thanh tab học của cấp — ẩn khi cấp còn khóa */}
       {!locked && (
         <div className="grid grid-cols-3 min-[340px]:grid-cols-6 gap-1.5 mb-4">
@@ -987,6 +1043,15 @@ export default function CefrLevelPage() {
                 onOpenLesson={openLessonById}
                 sessionScope={level.id}
               />
+            )}
+            {activeTab === 'listening' && levelDialoguesState.status === 'error' && (
+              <div className="mb-4">
+                <DialogueLoadError
+                  isA={isA}
+                  message={levelDialoguesState.message}
+                  onRetry={thuLaiHoiThoai}
+                />
+              </div>
             )}
             {activeTab === 'listening' && (
               <ListeningTab
@@ -1286,6 +1351,18 @@ export default function CefrLevelPage() {
                 </details>
               )}
 
+              {/* Hội thoại cả cấp tải lỗi → MỘT khối lỗi + Thử lại (changelog 0530); từ vựng và
+                  ngữ pháp bên dưới vẫn dùng được. */}
+              {levelDialoguesState.status === 'error' && (
+                <div className="mb-3">
+                  <DialogueLoadError
+                    isA={isA}
+                    message={levelDialoguesState.message}
+                    onRetry={thuLaiHoiThoai}
+                  />
+                </div>
+              )}
+
               {/* Danh sách unit — "Phần 1..n", trình tự: từ vựng → ngữ pháp → hội thoại */}
               <div className="space-y-3">
                 {level.units.map((unit, ui) => {
@@ -1301,6 +1378,7 @@ export default function CefrLevelPage() {
                       learned={learned}
                       doneGrammar={doneGrammar}
                       viewedDialogues={viewedDialogues}
+                      dialogues={dialoguesByUnit?.[unit.id]}
                       lessonStartIndex={start}
                       onOpenLesson={setLesson}
                       onOpenCircle={setCircle}
@@ -1321,7 +1399,7 @@ export default function CefrLevelPage() {
 }
 
 // ── 1 unit — "Phần i" với 3 bước; ẩn mục đã hoàn thành 100% ──────────────────
-function UnitSection({
+export function UnitSection({
   unit,
   index,
   isA,
@@ -1330,6 +1408,7 @@ function UnitSection({
   learned,
   doneGrammar,
   viewedDialogues,
+  dialogues: unitDialogues,
   lessonStartIndex,
   onOpenLesson,
   onOpenCircle,
@@ -1343,19 +1422,17 @@ function UnitSection({
   learned: Set<string>
   doneGrammar: Set<string>
   viewedDialogues: Set<string>
+  /** Hội thoại của unit; `undefined` = chưa tải xong hoặc tải lỗi (cấp trang báo lỗi một lần). */
+  dialogues: Dialogue[] | undefined
   lessonStartIndex: number
   onOpenLesson: (g: GrammarLesson) => void
   onOpenCircle: (c: Circle) => void
   onOpenDialogue: (ownerId: string, d: Dialogue) => void
 }) {
-  const [dialogues, setDialogues] = useState<Dialogue[]>([])
-  const [dlgLoaded, setDlgLoaded] = useState(false)
-  useEffect(() => {
-    getDialogues(unit.id).then((ds) => {
-      setDialogues(ds)
-      setDlgLoaded(true)
-    })
-  }, [unit.id])
+  // [changelog 0530] Hội thoại do trang cấp tải MỘT lần cho mọi unit (xem `loadLevelDialogues`) —
+  // trước đây mỗi unit tự `getDialogues().then(...)` không có nhánh lỗi.
+  const dialogues = unitDialogues ?? NO_DIALOGUES
+  const dlgLoaded = unitDialogues !== undefined
 
   // Hiện lại các mục đã hoàn thành (mặc định ẩn).
   const [showDone, setShowDone] = useState(false)

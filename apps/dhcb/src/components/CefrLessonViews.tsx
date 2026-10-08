@@ -11,7 +11,7 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import { thongDiepLoiThanThien } from '../lib/friendlyError'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuizKeyboard } from '@dhcb/core-ui/useQuizKeyboard'
 import QuizOptionKey from './QuizOptionKey'
@@ -59,6 +59,9 @@ import type { GrammarLesson, QuizItem } from '../data/cefr'
 import type { Circle } from '../data/curriculum'
 import type { Dialogue } from '../data/dialogues'
 import { getDialogues } from '../data/dialoguesLoader'
+import { useAsyncLoad } from '../lib/useAsyncLoad'
+import { LOI_HOI_THOAI_EN, LOI_HOI_THOAI_VI } from '../lib/curriculumMessages'
+import DialogueLoadError from './DialogueLoadError'
 import type { DictEntry } from '../types'
 import { getLearnedWords, markLearned } from '../lib/vocab'
 import { addToSRS, addToSRSKnown } from '../lib/srs'
@@ -298,6 +301,8 @@ export function QuizCard({ item, isA }: { item: QuizItem; isA: boolean }) {
 const TESTOUT_QUIZ_SIZE = 10
 const TESTOUT_CHOICES = 4
 const TESTOUT_PASS_RATIO = 0.9
+// Mảng rỗng DÙNG CHUNG (tham chiếu ổn định) khi hội thoại chưa tải xong / tải lỗi.
+const NO_DIALOGUES: Dialogue[] = []
 
 interface TestOutQ {
   word: string
@@ -347,10 +352,14 @@ export function VocabFlash({
   const [idx, setIdx] = useState(0)
   const card = cards[idx]
   const done = idx >= cards.length
-  const [dialogues, setDialogues] = useState<Dialogue[]>([])
-  useEffect(() => {
-    getDialogues(circle.id).then(setDialogues)
-  }, [circle.id])
+  // [changelog 0530] Bản cũ `getDialogues().then(setDialogues)` không có nhánh lỗi: tải hỏng là mất
+  // mục "Hội thoại mẫu" im lặng + unhandled rejection. Nay hiện khối lỗi + Thử lại.
+  const loadDialogues = useCallback(() => getDialogues(circle.id), [circle.id])
+  const { state: dialoguesState, retry: retryDialogues } = useAsyncLoad(loadDialogues, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_HOI_THOAI_VI : LOI_HOI_THOAI_EN,
+  })
+  const dialogues = dialoguesState.status === 'ready' ? dialoguesState.data : NO_DIALOGUES
 
   // Test-out ("Tôi đã biết vòng này")
   const [testOutMode, setTestOutMode] = useState<'quiz' | 'passed' | 'failed' | null>(null)
@@ -576,6 +585,13 @@ export function VocabFlash({
                 </div>
               ))}
             </div>
+          )}
+          {dialoguesState.status === 'error' && (
+            <DialogueLoadError
+              isA={isA}
+              message={dialoguesState.message}
+              onRetry={retryDialogues}
+            />
           )}
           {dialogues.length > 0 && (
             <div className="text-left pt-3 border-t border-zinc-800 space-y-1.5">
