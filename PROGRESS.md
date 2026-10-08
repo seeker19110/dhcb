@@ -1198,6 +1198,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   SSH key VPS) nay ghim commit SHA; cổng `scripts/ci-workflow-policy.test.ts` chặn mọi action ngoài `actions/` ghim theo tag. (4) Chưa quét
   được trang production từ phiên AI (proxy chặn domain) — bài thử "gọi thẳng IP gốc với
   `CF-Connecting-IP` giả" nên chạy tay sau khi deploy, cách làm ở `docs/cloudflare-setup.md`.
+  **[2026-10-08 — audit kiểm soát truy cập 113 route, `docs/changelog/0526-*.md`]** Đã vá 4 lỗ IDOR
+  (realtime-multimodal, scenario-holodeck, socratic-diagnostics, gắn task/tài liệu vào dự án người
+  khác ở `/api/work`). **Chờ chủ dự án quyết:** (a) `/api/realtime-multimodal` không rate limit/trần
+  phiên, Map phiên holodeck/socratic không dọn — không client nào gọi ba endpoint này, cân nhắc gỡ
+  hẳn; (b) `/api/pronunciation` nhánh cache MISS gọi Google TTS không trừ lượt Free/VIP (chỉ 60/phút/IP);
+  (c) `/api/admin-feature-status` so `x-cron-key` bằng `===` — nên dùng `cronSecretMatches()`.
 
 - 🟡 **[2026-09-22 — đợt React 19 + Tailwind 4, `docs/changelog/0415-*.md`] Sáu nợ sau đợt nâng
   framework.** (1) ✅ **ẢNH TẦNG 8B ĐÃ CHỤP VÀ ĐỐI CHIẾU — tìm ra một hồi quy CSS THẬT, đã vá
