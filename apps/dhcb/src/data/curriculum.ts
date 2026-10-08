@@ -342,7 +342,13 @@ const FOUNDATION_BASE: Circle[] = [
       w('know', 'v', 'biết', 'I know the answer.', 'Tôi biết câu trả lời.'),
       w('want', 'v', 'muốn', 'I want some water.', 'Tôi muốn chút nước.'),
       w('like', 'v', 'thích', 'I like this song.', 'Tôi thích bài hát này.'),
-      w('love', 'v', 'yêu', 'I love my family.', 'Tôi yêu gia đình.'),
+      w(
+        'love',
+        'v',
+        'yêu',
+        'We love going to the beach in summer.',
+        'Chúng tôi rất thích đi biển vào mùa hè.',
+      ),
       w('make', 'v', 'làm, tạo ra', 'I make coffee.', 'Tôi pha cà phê.'),
       w('say', 'v', 'nói', 'What did you say?', 'Bạn nói gì cơ?'),
       w('think', 'v', 'nghĩ', 'I think so.', 'Tôi nghĩ vậy.'),
@@ -682,7 +688,7 @@ const FOUNDATION_BASE: Circle[] = [
     titleEn: 'Friends & Society',
     emoji: '🤝',
     words: [
-      w('friend', 'n', 'bạn bè', 'She is my best friend.', 'Cô ấy là bạn thân nhất của tôi.'),
+      w('friend', 'n', 'bạn bè', 'My friend lives in Da Nang.', 'Bạn tôi sống ở Đà Nẵng.'),
       w(
         'buddy',
         'n',
@@ -1357,7 +1363,7 @@ const FOUNDATION_BASE: Circle[] = [
     titleEn: 'Question Words & Prepositions',
     emoji: '❓',
     words: [
-      w('what', 'pron', 'cái gì, điều gì', 'What is your name?', 'Tên bạn là gì?'),
+      w('what', 'pron', 'cái gì, điều gì', 'What are you doing?', 'Bạn đang làm gì vậy?'),
       w('who', 'pron', 'ai', 'Who is calling?', 'Ai đang gọi vậy?'),
       w('where', 'adv', 'ở đâu', 'Where do you live?', 'Bạn sống ở đâu?'),
       w('when', 'adv', 'khi nào', 'When does the class start?', 'Lớp học bắt đầu lúc nào?'),
@@ -1371,7 +1377,7 @@ const FOUNDATION_BASE: Circle[] = [
       ),
       w('which', 'pron', 'cái nào', 'Which color do you prefer?', 'Bạn thích màu nào hơn?'),
       w('in', 'prep', 'trong, ở trong', 'The keys are in the bag.', 'Chìa khóa ở trong túi.'),
-      w('on', 'prep', 'trên, lên', 'The book is on the table.', 'Cuốn sách trên bàn.'),
+      w('on', 'prep', 'trên, lên', 'Your phone is on the chair.', 'Điện thoại của bạn ở trên ghế.'),
       w('at', 'prep', 'tại, ở, lúc', "I arrive at seven o'clock.", 'Tôi đến lúc bảy giờ.'),
       w('under', 'prep', 'dưới', 'The cat is under the bed.', 'Con mèo ở dưới giường.'),
       w(
@@ -3907,7 +3913,7 @@ const FOUNDATION_BASE: Circle[] = [
     titleEn: 'More Basic Verbs',
     emoji: '🙌',
     words: [
-      w('drink', 'v', 'uống', 'I drink water every day.', 'Tôi uống nước mỗi ngày.'),
+      w('drink', 'v', 'uống', 'Do you drink tea or coffee?', 'Bạn uống trà hay cà phê?'),
       w('sit', 'v', 'ngồi', 'Please sit down.', 'Mời ngồi.'),
       w('stand', 'v', 'đứng', 'Stand up straight.', 'Đứng thẳng lên.'),
       w('put', 'v', 'đặt, để', 'Put your bag here.', 'Để túi của bạn ở đây.'),
@@ -4295,8 +4301,8 @@ const FOUNDATION_BASE: Circle[] = [
         'reading',
         'n',
         'việc đọc sách',
-        'Reading is my favorite hobby.',
-        'Đọc sách là sở thích lớn nhất của tôi.',
+        'Reading before bed helps me relax.',
+        'Đọc sách trước khi ngủ giúp tôi thư giãn.',
       ),
       w('drawing', 'n', 'việc vẽ', 'She spends hours drawing.', 'Cô ấy dành hàng giờ để vẽ.'),
       w(

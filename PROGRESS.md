@@ -211,7 +211,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   tắt; cổng chặn kiểu viết HOA cũ quay lại) — M15 xong. **Đợt 3 (`docs/changelog/0471-*.md`)**:
   thanh công cụ bài hội thoại mobile 167px → 57px một hàng (tuỳ chỉnh vào bảng "Tuỳ chọn nghe",
   nút Back header về danh sách); khối "Học tiếp" dùng chung `ContinueCard`/`ContinueRow` cho trang
-  môn Tiếng Anh + Lập trình và ba danh sách (PR #1205). **Việc kế tiếp (đã làm ở `0505`, chưa có PR):** "Học tiếp" cho bốn môn STEM (cần
+  môn Tiếng Anh + Lập trình và ba danh sách (PR #1205). **Việc kế tiếp (đã làm ở `0505`, ĐÃ MERGE #1257):** "Học tiếp" cho bốn môn STEM (cần
   hàm "lá kế tiếp chưa xong" + chốt lớp mặc định); thống nhất tên "Bài học hôm nay" ↔ "Các bài hội
   thoại mẫu thông dụng" và "Vật lý"/"Vật lí" trong đợt câu chữ.
 
@@ -553,7 +553,7 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
     (`status/draft/comingSoon`) nào trong code để giao diện báo trước, chỉ suy ra được gián tiếp
     qua mảng rỗng.
   - ~~**mobile chỉ có S1**~~ — **ĐÃ TRẢ 2026-09-21** (`p6-u214…u225`, 24 bài, `docs/changelog/0397-2026-09-21-bai-hoc-mobile-s2-s4.md`).
-  - **systems, algo chỉ có S1–S2** (thiếu S3–S4).
+  - ~~**systems, algo chỉ có S1–S2** (thiếu S3–S4).~~ — **ĐÃ TRẢ 2026-09-21** (`0397` algo, `0404` systems).
   - ~~**security thiếu S3–S4**~~ — **S4 ĐÃ TRẢ 2026-09-21** (`docs/changelog/0398-*.md`):
     `security-s4` = `p6-u206…u209`, 8 bài, cổng `securityS4Lessons.test.ts` (chặng PHÒNG THỦ, có
     danh sách từ vựng tấn công bị cấm); nối vào `principal-ai-p5` trước `principal-s3` kèm quiz
@@ -581,9 +581,8 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
   F1 huy hiệu "chưa duyệt chuyên môn" · F4 cờ `notForKids` cho vòng sinh tự động (12 → 42
   vòng) · F5 gộp vòng dưới 5 từ (699 → 677 vòng, không mất từ nào) · F8 tiêu đề bài Hoá hết
   trùng · F9 viết lại 20 lời giải cụt · F10 bổ ca kiểm cho 7 bài Vibe.
-  **NỢ MỚI ghi nhận trong lúc làm:** (a) 25 câu Lí + 5 câu Hoá có `explain` dài 41–59 ký tự
-  (cổng đặt ở ngưỡng 40 đã audit, chưa nới lên 60); (b) 4 bài SQL muốn kiểm chặt hơn cần hạ
-  tầng "mỗi test-case một bộ dữ liệu" — việc kiến trúc, chưa làm.
+  **Hai nợ phát sinh (a) 30 lời giải Lí/Hoá 41–59 ký tự và (b) hạ tầng "mỗi test-case một bộ
+  dữ liệu" cho bài SQL — ĐÃ TRẢ ở `docs/changelog/0304-*.md`** (`datasetSql`, áp thử `p5u5.ts`).
 - ✅/🟡 **Audit tính chính xác (2026-09-14) — ĐÃ SỬA phần máy làm được, xem `docs/changelog/0299-*.md`.** Báo cáo:
   `docs/audit/2026-09-14-tinh-chinh-xac-cong-thuc-va-ket-qua.md`. **9 câu Vật lí chấm SAI học
   sinh trả lời ĐÚNG** vì lưu `value` ở đơn vị hiển thị thay vì SI (`core-grading/types.ts:41`
@@ -652,6 +651,8 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
   vòng từ vựng sinh tự động thiếu câu mẫu (báo cáo ghi "610/699" là SAI — đã đính chính tại chỗ
   2026-09-14); cờ `notForKids` không phủ vòng sinh tự động; 23 vòng dưới 5 từ; 6 bài Hoá trùng
   tiêu đề; 20 giải thích câu hỏi dưới 40 ký tự; 14 bài Lập trình chỉ 1 test-case.
+  **Cập nhật 2026-10-08:** F1/F4/F5/F8/F9/F10 đã trả ở `0300` + `0304`; F11 (câu ví dụ tiếng Anh
+  dùng lại cho nhiều mục từ, đo lại: 39 câu/79 mục → 0) trả ở `0524`, cổng `CAU_VI_DU_KHONG_DUNG_CHUNG`.
 - **BA ĐẶC TẢ NỘI DUNG MỚI ĐÃ SOẠN XONG, CHỜ NGƯỜI DÙNG DUYỆT** (2026-09-14, xem
   `docs/changelog/0307-*.md`). Chưa file nào mang cụm "Approved for implementation", nên **chưa
   được phép thi hành**: `docs/specs/2026-09-14-cau-mau-cho-vong-tu-vung-cefr.md` (F3) ·
@@ -1178,7 +1179,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   (56 route × 320/390/1440 × 3 theme, mock E2E) còn sót 8 lỗi — đặt lại mật khẩu trượt
   `target-size`, 10 `<main>` không `id` (Luyện viết mobile, `/bat-dau/doi-song`, Kết bạn…), 3 màn
   không `<h1>`, h2→h4 ở chi tiết hướng, `/action-canvas` tràn 76px ở 320px, tiêu đề tab bài hội
-  thoại trùng — đã sửa ở `0512` (nhánh `claude/wcag-no-conlai-u10`, chưa PR) + cổng
+  thoại trùng — đã sửa ở `0512` (ĐÃ MERGE #1262) + cổng
   `e2e/a11y-u10-recheck.spec.ts`. Sau sửa: 0 vi phạm axe A/AA, 0 tràn ngang, mọi route một
   `main#noi-dung-chinh` + một `<h1>`. **Còn mở (không phải lỗi WCAG / cần quyết định):** rail mục
   lục đứng trước `<h1>` ở 1440px (đổi thứ tự DOM của `TwoPane` — quyết định thiết kế); M17 chuẩn hoá nút/bề rộng ĐÃ XONG (`0513`–`0520`,
