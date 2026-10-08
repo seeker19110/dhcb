@@ -1537,9 +1537,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   BUNDLE nay đều mỏng.**
   **Cập nhật 2026-10-08 (`docs/changelog/0522-*.md`):** Initial JS 96,6% → **93,1%** (148,93/160 kB, tách
   `ts-fsrs` ra chunk `vendor-fsrs` không preload); CSS không đổi 23,95/26 kB (92,1%, toàn class đang
-  dùng). Coverage 95,74/91,79/96,41/96,36 (sàn 93/89/93/93) sau test ca biên 6 file — lộ và sửa 3 bug
-  thật (`selfGrade.ts` đọc sai số mũ `¹²³` và số ≥1e21; Ôn thi "Đã nắm 0/0"). **Chờ chủ dự án quyết:**
-  nâng sàn branches 89 → 90 (dư 2,79 điểm).
+  dùng). Coverage 95,74/91,79/96,41/96,36 sau test ca biên 6 file — lộ và sửa 3 bug
+  thật (`selfGrade.ts` đọc sai số mũ `¹²³` và số ≥1e21; Ôn thi "Đã nắm 0/0"). **Sàn đã nâng
+  93/89/93/93 → 94/90/94/94** (chủ dự án duyệt, `docs/changelog/0537-*.md`; số CI sau #1281
+  95,75/91,79/96,46/96,36 — biên độ còn 1,75/1,79/2,46/2,36).
 
   **[2026-09-22 — nới đệm, `docs/changelog/0411-*.md`]** JS **136,73 → 131,99 / 150 kB (88,0%)**
   nhờ sửa phép đo: chunk lười `src/prompts` mang tên `index-*.js` bị glob `.size-limit.json` đếm

@@ -142,11 +142,15 @@ export default defineConfig({
       // module bảo đảm không bao giờ kích hoạt, (b) vỏ bọc WebSocket/mạng sống
       // (wsGeminiLiveHandler, clientAuth…) thuộc phạm vi E2E. Ép 100
       // chỉ đẻ ra test giả kiểm chính cái mock vừa dựng.
+      //
+      // Nâng sàn 2026-10-08 (chủ dự án duyệt "theo hướng chất lượng cao nhất", changelog 0537):
+      // số đo CI trên `main` sau PR #1281 là 95,75 / 91,79 / 96,46 / 96,36 → sàn 94 / 90 / 94 / 94,
+      // vẫn theo nguyên tắc chừa khoảng 1,5 điểm (branches chừa 1,79).
       thresholds: {
-        statements: 93,
-        branches: 89,
-        functions: 93,
-        lines: 93,
+        statements: 94,
+        branches: 90,
+        functions: 94,
+        lines: 94,
       },
     },
   },
