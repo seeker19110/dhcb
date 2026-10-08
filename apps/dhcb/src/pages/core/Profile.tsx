@@ -194,7 +194,7 @@ export default function Profile() {
   const rail = (
     <div className="space-y-4">
       <section className="rounded-2xl border border-line-subtle bg-surface-card p-4 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-400 text-2xl font-bold text-white">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-400 text-2xl font-bold text-[#09090b]">
           {user.name[0]?.toUpperCase()}
         </div>
         <p className="t-body mt-3 break-words font-semibold text-content">{user.name}</p>
@@ -265,7 +265,7 @@ export default function Profile() {
             trùng: trình đọc màn hình sẽ đọc tên/email hai lần. */}
             {!isDesktop && (
               <section className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-5 flex items-center gap-4 animate-fade-in">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent-500 to-accent-400 flex items-center justify-center text-2xl font-bold text-white shadow-md shrink-0">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent-500 to-accent-400 flex items-center justify-center text-2xl font-bold text-[#09090b] shadow-md shrink-0">
                   {user.name[0]?.toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">

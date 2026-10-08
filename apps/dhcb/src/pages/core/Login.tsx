@@ -19,6 +19,7 @@ import { useLang } from '../../context/useLang'
 import { useToast } from '@core/ToastProvider'
 import ThemeToggle from '../../components/ThemeToggle'
 import type { UiLang } from '../../lib/uiLang'
+import { buttonClass } from '@core/buttonStyles'
 
 // Nhãn tính năng lấy từ i18n theo `key` (icon + màu cố định, chữ dịch theo ngôn ngữ)
 const FEATURES = [
@@ -396,7 +397,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-teal-400 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-sm transition active:scale-[0.98] mt-1 shadow-lg"
+            className={buttonClass({ fullWidth: true, className: 'mt-1' })}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
