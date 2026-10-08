@@ -9,7 +9,12 @@ import {
   type VoiceId,
   type StudioVoiceId,
 } from './googleTts.js'
-import { ELEVEN_VOICE_IDS, type ElevenVoiceId } from './elevenLabsTts.js'
+import {
+  ELEVEN_VOICE_IDS,
+  elevenVoiceGender,
+  isValidElevenVoice,
+  type ElevenVoiceId,
+} from './elevenLabsTts.js'
 import { GEMINI_VOICE_IDS, type GeminiVoiceId } from './geminiTts.js'
 import type { Plan } from '@dhcb/core-billing/plan'
 import { effectivePlan } from '@dhcb/core-billing/promo'
@@ -66,6 +71,7 @@ const MALE_VOICE_IDS: ReadonlySet<string> = new Set([
 
 // Giới tính của MỌI giọng, kể cả giọng Gemini ("Gemini-Orus" → "Orus" → nam).
 function voiceGender(voice: AnyVoiceId): 'female' | 'male' {
+  if (isValidElevenVoice(voice)) return elevenVoiceGender(voice)
   const base = voice.startsWith('Gemini-') ? voice.slice('Gemini-'.length) : voice
   return MALE_VOICE_IDS.has(base) ? 'male' : 'female'
 }

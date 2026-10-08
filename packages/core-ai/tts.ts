@@ -431,7 +431,9 @@ export default async function handler(req: Request): Promise<Response> {
     let visemeTimeline: VisemeFrame[] | null = null
     try {
       if (isValidElevenVoice(voice)) {
-        const result = await runProvider('elevenlabs', () => generateAudioFromElevenLabs(text))
+        const result = await runProvider('elevenlabs', () =>
+          generateAudioFromElevenLabs(text, voice),
+        )
         audioData = result.audio
         if (result.alignment) {
           // Dựng timeline KHÔNG được phép làm hỏng việc tạo audio: eSpeak-ng có thể chưa cài trên

@@ -19,9 +19,14 @@ export type VoiceId =
   | 'Algieba'
   | 'Iapetus'
   | 'Umbriel'
-  // Giọng ElevenLabs riêng, chỉ VIP — khác hẳn 14 giọng Chirp3-HD (Google) ở trên,
-  // xem api/_lib/elevenLabsTts.ts.
+  // Giọng ElevenLabs riêng, chỉ VIP — khác hẳn 14 giọng Chirp3-HD (Google) ở trên. PHẢI khớp
+  // tay với ELEVEN_VOICES trong packages/core-ai/elevenLabsTts.ts (nữ trước, nam sau).
   | 'Rachel'
+  | 'Alice'
+  | 'Matilda'
+  | 'Eric'
+  | 'Daniel'
+  | 'Chris'
   // Giọng "Studio" cao cấp (Pro/VIP) — vẫn là Google Cloud TTS như Chirp3-HD, nhưng
   // CHỈ có cho tiếng Anh (en-US) — Google không có Studio cho tiếng Việt. Xem
   // STUDIO_VOICE_IDS bên dưới + STUDIO_TO_CHIRP_FALLBACK trong lib/tts.ts (đổi về
@@ -62,6 +67,11 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   // Giọng ElevenLabs riêng — chỉ mở cho VIP (xem VOICE_TIERS bên dưới), không nằm trong
   // DEFAULT_SEED_VOICE_IDS nên luôn tạo động ở lần phát đầu tiên (chậm hơn 1 chút).
   { id: 'Rachel', gender: 'female' },
+  { id: 'Alice', gender: 'female' },
+  { id: 'Matilda', gender: 'female' },
+  { id: 'Eric', gender: 'male' },
+  { id: 'Daniel', gender: 'male' },
+  { id: 'Chris', gender: 'male' },
   // Giọng Studio cao cấp (Pro/VIP) — CHỈ tiếng Anh, xem ghi chú ở VoiceId union phía trên.
   // Không nằm trong DEFAULT_SEED_VOICE_IDS → tạo động ở lần phát đầu tiên (chậm hơn 1 chút).
   { id: 'Studio-O', gender: 'female' },
@@ -69,8 +79,8 @@ export const VOICE_OPTIONS: VoiceOption[] = [
 ]
 
 // Giọng riêng ElevenLabs (khác nhóm Chirp3-HD/Google phía trên) — dùng để UI có thể gắn
-// nhãn/badge riêng nếu cần (hiện tại chỉ 1 giọng thử nghiệm).
-export const ELEVEN_VOICE_IDS: VoiceId[] = ['Rachel']
+// nhãn/badge riêng nếu cần. PHẢI khớp ELEVEN_VOICE_IDS ở packages/core-ai/elevenLabsTts.ts.
+export const ELEVEN_VOICE_IDS: VoiceId[] = ['Rachel', 'Alice', 'Matilda', 'Eric', 'Daniel', 'Chris']
 
 // Giọng Studio (Google Cloud TTS cao cấp, CHỈ tiếng Anh) — dùng để UI gắn badge riêng +
 // lib/tts.ts biết đường fallback về Chirp3-HD khi phát nội dung tiếng Việt.

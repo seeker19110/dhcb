@@ -67,6 +67,20 @@ describe('clampVoiceToPlan', () => {
     expect(await clampVoiceToPlan('Rachel', 'vip')).toBe('Rachel')
   })
 
+  it('giọng ElevenLabs bị hạ theo ĐÚNG GIỚI TÍNH: nữ → Kore, nam → Puck', async () => {
+    mockedEffectivePlan.mockResolvedValue('free')
+    for (const v of ['Alice', 'Matilda'] as const)
+      expect(await clampVoiceToPlan(v, 'free')).toBe('Kore')
+    for (const v of ['Eric', 'Daniel', 'Chris'] as const)
+      expect(await clampVoiceToPlan(v, 'free')).toBe('Puck')
+  })
+
+  it('vip dùng được cả 6 giọng ElevenLabs, không giọng nào bị hạ', async () => {
+    mockedEffectivePlan.mockResolvedValue('vip')
+    for (const v of ['Rachel', 'Alice', 'Matilda', 'Eric', 'Daniel', 'Chris'] as const)
+      expect(await clampVoiceToPlan(v, 'vip')).toBe(v)
+  })
+
   // Quyết định 2026-07-27: Studio đắt gấp 12 lần Chirp3-HD ($24 vs $2 mỗi triệu ký tự, và
   // KHÔNG có hạn mức miễn phí) → chỉ VIP THẬT, kể cả trong lúc khuyến mãi.
   it('giọng Studio CHỈ VIP — Free bị hạ về mặc định cùng giới tính, cả khi khuyến mãi bật', async () => {

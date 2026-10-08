@@ -766,6 +766,15 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-10-08 · seed giọng ElevenLabs, PR #1270, changelog `0517`] Nghe thử giọng điệu rồi mới seed
+  lớn** (phiên AI không có key và seed tốn tiền thật): (1) điền `ELEVENLABS_API_KEY` vào `.env` trên
+  VPS; (2) `npm run eleven:tone-sample` (~400 credit) rồi nghe 8 file mp3 — nếu model ĐỌC THẲNG chữ
+  "calm"/"cheerful"/"excited" thì dừng, đổi `ELEVENLABS_TONE_MODEL` hoặc seed với `--no-tone`;
+  (3) `npm run seed:all -- --eleven --check` xem ước tính (toàn bộ ~17,3 triệu credit); (4) seed theo
+  hạn mức gói, vd `npm run seed:all -- --eleven --eleven-budget=400000`, chạy lại hàng tháng để làm
+  tiếp. Chưa kiểm được bằng API thật: v4 hiểu thẻ trên tiếng Việt, `/with-timestamps` với v4, giá v4,
+  và `Rachel` còn gọi được không. Hướng dẫn: `docs/seed-guide.md` mục 8.
+
 - **[2026-09-30 · audit UI/UX, changelog `0466`] Ba việc kiểm tay trên production** (phiên AI
   không tới được production vì chính sách mạng của môi trường chặn `*.donghanhcungban.org`):
   1. **Hub có trong `ALLOWED_ORIGINS` không.** `DEFAULT_ALLOWED_ORIGINS`

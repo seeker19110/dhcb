@@ -44,6 +44,29 @@
 //                             ngoài lượt chạy sẽ KHÔNG bị --clean-orphans đụng tới (chạy hẹp
 //                             không bao giờ xoá nhầm dữ liệu ngôn ngữ khác).
 //   LIMIT=20                 Giới hạn số tác vụ mỗi nhóm (debug).
+//   --eleven (SEED_ELEVEN=1) THÊM tác vụ giọng ElevenLabs (6 giọng, xem ELEVEN_VOICES) vào các
+//                             nhóm câu: curriculum · cefr · hội thoại · cụm từ · challenge. MẶC
+//                             ĐỊNH TẮT vì ElevenLabs tính tiền theo ký tự — không có cờ này thì
+//                             `seed:all` y như cũ, báo cáo % cũng không đổi. Cần ELEVENLABS_API_KEY.
+//                             Trước khi gọi API script in ƯỚC TÍNH số câu/ký tự rồi hỏi xác nhận
+//                             (gõ "yes"); chạy không bàn phím thì phải thêm --yes. Kèm --check để
+//                             CHỈ xem ước tính, không tốn đồng nào. Từ điển (pronunciations) KHÔNG
+//                             seed ElevenLabs vì /api/pronunciation không hỗ trợ giọng này.
+//   --eleven-budget=N (ELEVEN_BUDGET_CHARS=N)  Trần N KÝ TỰ (= credit) cho MỖI lượt chạy — chỉ seed
+//                             tới khi chạm trần rồi dừng, lần sau chạy lại sẽ làm tiếp phần còn
+//                             thiếu (script tự bỏ qua câu đã có). Để chia việc theo hạn mức credit
+//                             hàng tháng của gói ElevenLabs. Thứ tự ưu tiên: CEFR → Challenge →
+//                             hội thoại → giáo trình → Cụm từ (nhóm nhỏ/quan trọng trước, nhóm
+//                             khổng lồ sau cùng). Không đặt = không trần. Tổng toàn bộ nội dung
+//                             ~16 triệu ký tự (đo 2026-10-08) — đừng chạy không trần nếu chưa tính.
+//   --no-tone                 (kèm --eleven) TẮT giọng điệu: đọc trung tính, không gắn thẻ cảm xúc.
+//                             Mặc định mỗi nhóm câu có giọng điệu riêng (ELEVEN_TONE_BY_CAT: giáo
+//                             trình/CEFR bình tĩnh, hội thoại vui vẻ, challenge hào hứng, Cụm từ
+//                             trung tính) qua thẻ [calm]/[cheerful]/[excited] trên model eleven_v4.
+//                             Thẻ TÍNH PHÍ như ký tự thường nên ước tính + trần đã cộng thêm.
+//                             Nghe thử trước: `npm run eleven:tone-sample`.
+//   ELEVENLABS_SEED_CONCURRENCY=3  Số request ElevenLabs chạy song song (mặc định 3 — gói thấp
+//                             của ElevenLabs chỉ cho 2–5 request đồng thời, vượt là bị 429).
 //   VERIFY_DECRYPT=20        (kèm --verify) Tải + giải mã thử 20 file để chắc dùng được.
 //   WORDS_FILE=...           Đọc danh sách từ cần phát âm từ file (retry lỗi).
 //
@@ -98,7 +121,17 @@ import {
 import { STORY_KIND_VOICE } from '../apps/dhcb/src/lib/stories.ts'
 import { type VoiceId as AppVoiceId } from '../apps/dhcb/src/lib/voiceTiers.ts'
 import type { StoryKind } from '../apps/dhcb/src/data/stories/index.ts'
-import { isValidElevenVoice } from '@dhcb/core-ai/elevenLabsTts'
+import {
+  ELEVEN_VOICE_IDS,
+  elevenBilledChars,
+  elevenVoiceGender,
+  generateAudioFromElevenLabs,
+  hasElevenLabsKey,
+  isValidElevenVoice,
+  type ElevenTone,
+  type ElevenVoiceId,
+} from '@dhcb/core-ai/elevenLabsTts'
+import { visemeTimelineFromAlignment } from '@dhcb/core-ai/visemeTimeline'
 import { CEFR_LEVELS } from '../apps/dhcb/src/data/cefr.ts'
 import { encryptAudio, decryptAudio } from '@dhcb/core-ai/ttsCrypto'
 import { saveAudio } from '@dhcb/core-ai/fileStorage'
@@ -172,6 +205,25 @@ const MAX_ROUNDS = 100
 const RATE_LIMIT_DEFAULT = 180 // limit mặc định khi bắt đầu
 const BASE_URL = process.env.BASE_URL || ''
 const FORCE = process.argv.includes('--force') || process.env.FORCE === '1'
+// Seed thêm giọng ElevenLabs (tốn tiền theo ký tự) — mặc định TẮT, xem ghi chú ở đầu file.
+const ELEVEN_SEED = process.argv.includes('--eleven') || process.env.SEED_ELEVEN === '1'
+// Trần ký tự ElevenLabs cho mỗi lượt chạy (Infinity = không trần), xem ghi chú ở đầu file.
+const ELEVEN_BUDGET_ARG = process.argv.find((a) => a.startsWith('--eleven-budget='))?.split('=')[1]
+const ELEVEN_BUDGET = Number(ELEVEN_BUDGET_ARG ?? process.env.ELEVEN_BUDGET_CHARS) || Infinity
+// Giọng điệu theo nhóm câu (chốt với chủ dự án 2026-10-08: CỐ ĐỊNH theo nhóm, không cho người dùng
+// chọn). Nhóm không có trong bảng = trung tính. Từ điển không dùng ElevenLabs nên không có ở đây.
+const ELEVEN_TONE_BY_CAT: Partial<Record<CatId, ElevenTone>> = {
+  curriculum: 'calm',
+  cefr: 'calm',
+  'lessons-early': 'cheerful',
+  'lessons-rest': 'cheerful',
+  challenge: 'excited',
+  patterns: 'neutral',
+}
+const ELEVEN_TONES_ON = !process.argv.includes('--no-tone')
+const toneOf = (cat: CatId): ElevenTone | undefined =>
+  ELEVEN_TONES_ON ? ELEVEN_TONE_BY_CAT[cat] : undefined
+const ELEVEN_CONCURRENCY = Math.max(1, Number(process.env.ELEVENLABS_SEED_CONCURRENCY) || 3)
 const CHECK_ONLY = process.argv.includes('--check') || process.env.CHECK === '1'
 const VERIFY_ONLY = process.argv.includes('--verify') || process.env.VERIFY === '1'
 const CHECK_VERSIONS_ONLY = process.argv.includes('--check-versions')
@@ -320,9 +372,12 @@ type TaskResult =
 // Hash đúng (mới): có VOICE_VERSION — dùng cho mọi entry mới (kể cả giọng Studio — hash chỉ
 // nối chuỗi, không quan tâm giọng thuộc Chirp3-HD hay Studio).
 function hashText(text: string, lang: Lang, voice: AnyVoiceId): string {
+  // Giọng ElevenLabs KHÔNG đưa `lang` vào hash — PHẢI khớp packages/core-ai/tts.ts (hashLangPart),
+  // sai là seed ra hàng nghìn dòng không bao giờ khớp request thật.
+  const langPart = isValidElevenVoice(voice) ? '' : lang
   return crypto
     .createHash('sha256')
-    .update(text + lang + voice + VOICE_VERSION)
+    .update(text + langPart + voice + VOICE_VERSION)
     .digest('hex')
     .slice(0, 32)
 }
@@ -377,6 +432,28 @@ function loadPatternTasks(): PatternTask[] {
   const tasks: PatternTask[] = []
   const seen = new Set<string>()
 
+  // ── ElevenLabs (chỉ khi --eleven): đủ 6 giọng cho mọi câu của 5 nhóm câu. Gom riêng rồi nối
+  // SAU CÙNG để 14 giọng Google luôn seed trước. Audio ElevenLabs không phụ thuộc `lang` (hash
+  // bỏ lang) nên khoá khử trùng cũng bỏ lang.
+  const elevenTasks: PatternTask[] = []
+  const elevenSeen = new Set<string>()
+  const addEleven = (
+    rawText: string,
+    lang: Lang,
+    cat: CatId,
+    voices: readonly ElevenVoiceId[] = ELEVEN_VOICE_IDS,
+  ) => {
+    if (!ELEVEN_SEED) return
+    const text = rawText.trim()
+    if (!text) return
+    for (const voice of voices) {
+      const key = `${text}|${voice}`
+      if (elevenSeen.has(key)) continue
+      elevenSeen.add(key)
+      elevenTasks.push({ type: 'pattern', cat, text, lang, voice })
+    }
+  }
+
   // voices: cho phép giới hạn giọng theo nhóm (vd. patterns chỉ cần female/male).
   const add = (
     rawText: string,
@@ -409,10 +486,19 @@ function loadPatternTasks(): PatternTask[] {
   // Phát qua KaraokeText/getVoicePref → seed đủ 14 giọng Chirp3-HD (8 mặc định trước, 6 còn
   // lại sau) + tiếng Anh seed thêm 2 giọng Studio (Pro/VIP mặc định mới, xem lib/tts.ts).
   for (const circle of FOUNDATION) {
-    for (const { en } of circle.sentences) add(en, 'en-US', 'curriculum', PREF_VOICE_IDS_EN)
+    for (const { en } of circle.sentences) {
+      add(en, 'en-US', 'curriculum', PREF_VOICE_IDS_EN)
+      addEleven(en, 'en-US', 'curriculum')
+    }
     for (const entry of circle.words) {
-      if (entry.ex_en) add(entry.ex_en, 'en-US', 'curriculum', PREF_VOICE_IDS_EN)
-      if (entry.ex_vi) add(entry.ex_vi, 'vi-VN', 'curriculum', PREF_VOICE_IDS_FULL)
+      if (entry.ex_en) {
+        add(entry.ex_en, 'en-US', 'curriculum', PREF_VOICE_IDS_EN)
+        addEleven(entry.ex_en, 'en-US', 'curriculum')
+      }
+      if (entry.ex_vi) {
+        add(entry.ex_vi, 'vi-VN', 'curriculum', PREF_VOICE_IDS_FULL)
+        addEleven(entry.ex_vi, 'vi-VN', 'curriculum')
+      }
     }
   }
 
@@ -424,6 +510,8 @@ function loadPatternTasks(): PatternTask[] {
         for (const { en, vi } of lesson.examples) {
           add(en, 'en-US', 'cefr', PREF_VOICE_IDS_EN)
           add(vi, 'vi-VN', 'cefr', PREF_VOICE_IDS_FULL)
+          addEleven(en, 'en-US', 'cefr')
+          addEleven(vi, 'vi-VN', 'cefr')
         }
       }
     }
@@ -461,6 +549,10 @@ function loadPatternTasks(): PatternTask[] {
   const voicesOfGender = (g: 'female' | 'male') =>
     g === 'female' ? FEMALE_VOICES_ALL : MALE_VOICES_ALL
   const LESSON_VOICE_VARIANTS = FEMALE_VOICES_ALL.length // = 7, khớp cả 2 giới
+  // Giọng ElevenLabs theo giới (3 nữ + 3 nam). Ghép xoay vòng y như Chirp3-HD: voiceA = giọng thứ
+  // i, voiceB = giọng thứ i+1 nếu cùng giới (để 2 nhân vật không trùng giọng).
+  const elevenOf = (g: 'female' | 'male'): ElevenVoiceId[] =>
+    ELEVEN_VOICE_IDS.filter((v) => elevenVoiceGender(v) === g)
 
   for (const file of lessonFiles) {
     const chunks = JSON.parse(fs.readFileSync(path.join(lessonDir, file), 'utf8')) as LessonRaw[]
@@ -517,6 +609,20 @@ function loadPatternTasks(): PatternTask[] {
           }
         }
       }
+      if (ELEVEN_SEED) {
+        const eA = elevenOf(gA)
+        const eB = elevenOf(gB)
+        for (let variant = 0; variant < eA.length; variant++) {
+          const vA = eA[variant]!
+          const vB = gB === gA ? eB[(variant + 1) % eB.length]! : eB[variant % eB.length]!
+          for (const turn of lesson.turns ?? []) {
+            const v = turn.speaker === 'A' ? vA : vB
+            // elevenTasks chỉ nối vào CUỐI toàn bộ; nhóm (early/rest) quyết bởi `cat`.
+            if (turn.en) addEleven(turn.en, 'en-US', cat, [v])
+            if (turn.vi) addEleven(turn.vi, 'vi-VN', cat, [v])
+          }
+        }
+      }
       lessonCount++
     }
   }
@@ -551,6 +657,8 @@ function loadPatternTasks(): PatternTask[] {
       if (seedSet && !seedSet.has(idx)) return // câu không thông dụng — để cache-on-demand
       add(en, 'en-US', 'patterns', PREF_VOICE_IDS)
       add(vi, 'vi-VN', 'patterns', PREF_VOICE_IDS)
+      addEleven(en, 'en-US', 'patterns')
+      addEleven(vi, 'vi-VN', 'patterns')
     })
   }
 
@@ -560,8 +668,14 @@ function loadPatternTasks(): PatternTask[] {
   // ── Ưu tiên 6: câu mẫu Challenge 30 ngày (trang /challenge) ─────────────────
   // Seed đủ 14 giọng Chirp3-HD + Studio cho tiếng Anh (như curriculum/CEFR).
   for (const t of CHALLENGE_TOPICS) {
-    for (const s of t.sampleEn) add(s, 'en-US', 'challenge', PREF_VOICE_IDS_EN)
-    for (const s of t.sampleVi) add(s, 'vi-VN', 'challenge', PREF_VOICE_IDS_FULL)
+    for (const s of t.sampleEn) {
+      add(s, 'en-US', 'challenge', PREF_VOICE_IDS_EN)
+      addEleven(s, 'en-US', 'challenge')
+    }
+    for (const s of t.sampleVi) {
+      add(s, 'vi-VN', 'challenge', PREF_VOICE_IDS_FULL)
+      addEleven(s, 'vi-VN', 'challenge')
+    }
   }
 
   // ── Ưu tiên 7: Truyện cổ tích/ngụ ngôn (trang /stories, /stories/:id) ─────────
@@ -595,6 +709,9 @@ function loadPatternTasks(): PatternTask[] {
     }
   }
 
+  // Nối cuối: 14 giọng Google (và Gemini truyện) luôn đứng trước ElevenLabs trong mỗi nhóm.
+  // Vòng lặp thay cho push(...spread): spread mảng hàng trăm nghìn phần tử tràn stack.
+  for (const t of elevenTasks) tasks.push(t)
   return tasks
 }
 
@@ -1298,6 +1415,24 @@ async function runVerifyR2(): Promise<void> {
   console.log('ℹ️  Chạy `du -sh uploads/` để xem dung lượng đã giải phóng.')
 }
 
+// Giới hạn số request ElevenLabs chạy ĐỒNG THỜI. runBatch bắn 50 tác vụ song song — hợp với Google
+// nhưng ElevenLabs chỉ cho vài request đồng thời tuỳ gói (vượt → 429 `too_many_concurrent_requests`),
+// nên mọi lời gọi ElevenLabs phải xếp hàng qua đây.
+let elevenActive = 0
+const elevenWaiters: Array<() => void> = []
+async function limitEleven<T>(fn: () => Promise<T>): Promise<T> {
+  if (elevenActive >= ELEVEN_CONCURRENCY) {
+    await new Promise<void>((resolve) => elevenWaiters.push(resolve))
+  }
+  elevenActive++
+  try {
+    return await fn()
+  } finally {
+    elevenActive--
+    elevenWaiters.shift()?.()
+  }
+}
+
 // ── Xử lý 1 tác vụ ──────────────────────────────────────────────────────────
 // remapOnly=true: KHÔNG được gọi Google TTS trong bất kỳ trường hợp nào — dùng cho lựa
 // chọn menu "Remap TOÀN BỘ" / cờ --remap-only, chỉ tái dùng audio cache đã có sẵn (đổi
@@ -1390,7 +1525,12 @@ async function processTask(task: AnyTask, remapOnly = false): Promise<TaskResult
     // Nếu có → tải về → giải mã bằng hash cũ → re-encrypt bằng hash mới → upload.
     // Không tốn API quota, chỉ tốn băng thông Storage. Giọng Studio/Gemini không có tiền thân
     // (voice mới hoàn toàn, chưa từng đổi tên) nên bỏ qua nhánh này.
-    if (!FORCE && !isValidStudioVoice(voice) && !isValidGeminiVoice(voice)) {
+    if (
+      !FORCE &&
+      !isValidStudioVoice(voice) &&
+      !isValidGeminiVoice(voice) &&
+      !isValidElevenVoice(voice)
+    ) {
       const legacyHashes = [
         oldHashText(text, lang, voice as VoiceId),
         legacyVoiceNameHash(text, lang, voice as VoiceId),
@@ -1435,7 +1575,18 @@ async function processTask(task: AnyTask, remapOnly = false): Promise<TaskResult
     }
 
     let audioBuffer: ArrayBuffer
-    if (isValidGeminiVoice(voice)) {
+    // Mốc khẩu hình thật — chỉ ElevenLabs có (endpoint /with-timestamps). Dựng lỗi thì để null,
+    // client tự ước lượng như cũ (giống nhánh /api/tts), KHÔNG làm hỏng việc seed.
+    let visemeTimeline: unknown[] | null = null
+    if (isValidElevenVoice(voice)) {
+      const result = await limitEleven(() =>
+        generateAudioFromElevenLabs(text, voice, toneOf(task.cat)),
+      )
+      audioBuffer = result.audio
+      if (result.alignment) {
+        visemeTimeline = await visemeTimelineFromAlignment(result.alignment, lang).catch(() => null)
+      }
+    } else if (isValidGeminiVoice(voice)) {
       audioBuffer = await generateAudioFromGemini(text, voice)
     } else if (isValidStudioVoice(voice)) {
       audioBuffer = await generateStudioAudioFromGoogle(text, voice)
@@ -1448,11 +1599,13 @@ async function processTask(task: AnyTask, remapOnly = false): Promise<TaskResult
     const fileName = `${lang}/${voice}/${hash}.${ext}`
     const audioUrl = await saveAudio('tts-cache', fileName, encrypted, BASE_URL)
     await pool.query(
-      `insert into public.tts_cache (hash, lang, voice, audio_url, iv, last_accessed_at)
-       values ($1, $2, $3, $4, $5, now())
+      `insert into public.tts_cache (hash, lang, voice, audio_url, iv, viseme_timeline, last_accessed_at)
+       values ($1, $2, $3, $4, $5, $6, now())
        on conflict (hash) do update set
-         audio_url = excluded.audio_url, iv = excluded.iv, last_accessed_at = now()`,
-      [hash, lang, voice, audioUrl, ivB64],
+         audio_url = excluded.audio_url, iv = excluded.iv,
+         viseme_timeline = coalesce(excluded.viseme_timeline, public.tts_cache.viseme_timeline),
+         last_accessed_at = now()`,
+      [hash, lang, voice, audioUrl, ivB64, visemeTimeline ? JSON.stringify(visemeTimeline) : null],
     )
     return { status: 'ok' }
   } catch (err) {
@@ -2139,7 +2292,9 @@ async function seedCategories(
   picked: CatId[],
   remapOnly = false,
 ): Promise<AnyTask[]> {
-  const tasks = picked.flatMap((id) => stats.find((s) => s.id === id)?.remaining ?? [])
+  const tasks = applyElevenBudget(
+    picked.flatMap((id) => stats.find((s) => s.id === id)?.remaining ?? []),
+  )
   if (tasks.length === 0) {
     console.log('\n✅ Các nhóm đã chọn không còn gì để seed.')
     return []
@@ -2162,6 +2317,103 @@ async function seedCategories(
     )
   else console.log(`\n⚠️  Còn ${remaining.length} tác vụ chưa xong (xem file lỗi ở trên).`)
   return remaining
+}
+
+// ── Ước tính chi phí ElevenLabs + xác nhận (chỉ khi --eleven) ─────────────────
+// ElevenLabs tính tiền theo KÝ TỰ gửi đi (mỗi ký tự = 1 credit; gói Creator ~100k credit/tháng,
+// Pro ~500k) nên không để script âm thầm tiêu hết. Đếm trên các tác vụ CHƯA có trong DB.
+const isElevenTask = (t: AnyTask): t is PatternTask =>
+  t.type === 'pattern' && isValidElevenVoice(t.voice)
+
+// Thứ tự dùng ngân sách: nhóm nhỏ/quan trọng trước, hai nhóm khổng lồ (giáo trình, Cụm từ) sau.
+const ELEVEN_PRIORITY: CatId[] = [
+  'cefr',
+  'challenge',
+  'lessons-early',
+  'lessons-rest',
+  'curriculum',
+  'patterns',
+]
+
+// Áp trần ngân sách: tác vụ Google/Gemini giữ nguyên; tác vụ ElevenLabs sắp theo ELEVEN_PRIORITY
+// (sort ổn định nên thứ tự trong nhóm giữ nguyên) rồi cắt ngay khi lố trần. Dùng CHUNG cho ước
+// tính và seed thật nên số hiển thị luôn bằng số sẽ tiêu.
+function applyElevenBudget(tasks: AnyTask[]): AnyTask[] {
+  if (!Number.isFinite(ELEVEN_BUDGET)) return tasks
+  const rank = (t: PatternTask) => ELEVEN_PRIORITY.indexOf(t.cat)
+  const eleven = tasks.filter(isElevenTask).sort((a, b) => rank(a) - rank(b))
+  const kept: AnyTask[] = []
+  let spent = 0
+  for (const t of eleven) {
+    const cost = elevenBilledChars(t.text, toneOf(t.cat))
+    if (spent + cost > ELEVEN_BUDGET) break
+    spent += cost
+    kept.push(t)
+  }
+  return [...tasks.filter((t) => !isElevenTask(t)), ...kept]
+}
+
+function summarizeElevenSpend(stats: CatStat[]): {
+  rows: Array<{ label: string; sentences: number; chars: number }>
+  chars: number
+  allChars: number
+} {
+  const remaining = stats.flatMap((s) => s.remaining)
+  const billed = (t: PatternTask) => elevenBilledChars(t.text, toneOf(t.cat))
+  const allChars = remaining.filter(isElevenTask).reduce((n, t) => n + billed(t), 0)
+  const planned = applyElevenBudget(remaining).filter(isElevenTask)
+  const rows: Array<{ label: string; sentences: number; chars: number }> = []
+  for (const s of stats) {
+    const mine = planned.filter((t) => t.cat === s.id)
+    if (mine.length === 0) continue
+    rows.push({
+      label: s.label,
+      sentences: mine.length,
+      chars: mine.reduce((n, t) => n + billed(t), 0),
+    })
+  }
+  return { rows, chars: rows.reduce((n, r) => n + r.chars, 0), allChars }
+}
+
+function printElevenEstimate(stats: CatStat[]): number {
+  const { rows, chars, allChars } = summarizeElevenSpend(stats)
+  console.log('\n💸 ƯỚC TÍNH ELEVENLABS (chỉ tính câu CHƯA có trong DB, mỗi ký tự = 1 credit)')
+  if (rows.length === 0) {
+    console.log('   Không còn tác vụ ElevenLabs nào cần seed.')
+    return 0
+  }
+  for (const r of rows) {
+    console.log(
+      `   • ${r.label}: ${r.sentences.toLocaleString('vi-VN')} audio · ${r.chars.toLocaleString('vi-VN')} ký tự`,
+    )
+  }
+  console.log(`   ⇒ LƯỢT NÀY ~${chars.toLocaleString('vi-VN')} credit ElevenLabs`)
+  if (chars < allChars) {
+    console.log(
+      `   (trần --eleven-budget=${ELEVEN_BUDGET.toLocaleString('vi-VN')}; còn lại ~${(allChars - chars).toLocaleString('vi-VN')} credit cho các lượt sau)`,
+    )
+  }
+  return chars
+}
+
+// Chặn trước khi tiêu tiền: có TTY → hỏi gõ "yes"; không TTY → bắt buộc có --yes.
+async function confirmElevenSpend(stats: CatStat[]): Promise<boolean> {
+  const chars = printElevenEstimate(stats)
+  if (chars === 0) return true
+  if (VERIFY_CONFIRM_YES) return true
+  if (!process.stdin.isTTY) {
+    console.error('❌ Chạy không bàn phím: thêm --yes để xác nhận chi tiêu ElevenLabs ở trên.')
+    return false
+  }
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+  try {
+    const ans = await rl.question(
+      '\nTiếp tục gọi ElevenLabs và TRẢ PHÍ số credit trên? (gõ "yes" để tiếp tục): ',
+    )
+    return ans.trim().toLowerCase() === 'yes'
+  } finally {
+    rl.close()
+  }
 }
 
 // ── Menu tương tác ──────────────────────────────────────────────────────────
@@ -2323,6 +2575,22 @@ async function main(): Promise<void> {
 
   const allByCat = buildAllByCat(wordsFile, limit)
 
+  // ── --eleven: cần key; --check chỉ in ước tính, các chế độ seed phải được xác nhận chi tiêu ──
+  if (ELEVEN_SEED) {
+    if (!CHECK_ONLY && !VERIFY_ONLY && !hasElevenLabsKey()) {
+      console.error(
+        '❌ --eleven cần ELEVENLABS_API_KEY trong .env (lấy ở elevenlabs.io → Profile).',
+      )
+      process.exit(1)
+    }
+    if (CHECK_ONLY) {
+      printElevenEstimate(await audit(allByCat))
+    } else if (!VERIFY_ONLY && !(await confirmElevenSpend(await audit(allByCat)))) {
+      console.log('👋 Đã huỷ — chưa gọi ElevenLabs lần nào.')
+      return
+    }
+  }
+
   // ── Chế độ chỉ xem báo cáo ────────────────────────────────────────────────
   if (CHECK_ONLY) {
     printReport(await audit(allByCat))
@@ -2401,6 +2669,9 @@ if (isDirectRun) {
 export {
   loadPronTasks,
   loadPatternTasks,
+  hashText,
+  applyElevenBudget,
+  ELEVEN_TONE_BY_CAT,
   CATEGORIES,
   parsePronunciationKey,
   pronKey,
