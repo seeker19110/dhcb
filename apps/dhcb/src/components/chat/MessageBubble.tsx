@@ -75,12 +75,14 @@ export default function MessageBubble({ message, isMine, onDelete }: MessageBubb
 
           <div
             className={`flex items-center gap-1.5 justify-end mt-1 text-[0.6875rem] ${
-              isMine ? 'text-accent-100/80' : 'text-zinc-400'
+              isMine ? 'text-[#09090b]/80' : 'text-zinc-400'
             }`}
           >
             {isFiltered && (
               <span
-                className="inline-flex items-center gap-0.5 text-amber-300 theme-light:text-amber-900 text-[0.6875rem]"
+                className={`inline-flex items-center gap-0.5 text-[0.6875rem] ${
+                  isMine ? '' : 'text-amber-300 theme-light:text-amber-900'
+                }`}
                 title="Một số từ ngữ đã được lọc theo tiêu chuẩn cộng đồng"
               >
                 <ShieldAlert size={11} />

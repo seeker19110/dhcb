@@ -490,7 +490,11 @@ export default function StudioDialogue({
                       </div>
                     )}
 
-                    <div className="text-[0.6875rem] text-zinc-400 text-right mt-2">
+                    <div
+                      className={`text-[0.6875rem] text-right mt-2 ${
+                        isBot ? 'text-zinc-400' : 'text-[#09090b]/80'
+                      }`}
+                    >
                       {msg.timestamp}
                     </div>
                   </div>

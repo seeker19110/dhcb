@@ -45,3 +45,16 @@ text-black`, khớp tab "Hội thoại văn bản" đứng cạnh.
 - Tầng 8b (1440 + 390px, `blue-sky` + `dark-blue`, trước/sau, so điểm ảnh): `/login` nút "Đăng nhập"
   từ chữ trắng trên gradient cyan (Xanh đêm, mờ) → chữ tối trên cyan đặc, cùng chiều cao; `/trang-ca-nhan`
   avatar đổi màu chữ; `/ban-dong-hanh` chỉ khác giờ hiển thị + quầng sáng động (không do đợt này).
+
+## Sửa sau CI (lượt 2)
+
+CI đỏ ở `e2e/learning-ux-states.spec.ts` (màn tutor, 12 ca: loading/error/feedback × 2 theme × 2 bề rộng):
+`color-contrast` **1,2:1** ở dòng giờ `text-zinc-400` NẰM TRONG bong bóng người dùng. Lỗi này có sẵn từ
+trước nhưng bị che: trên nền gradient axe không tính được tương phản nên không báo. Nền đặc làm nó lộ ra,
+và đây cũng là bằng chứng cho đúng điều đợt này nêu (gradient làm cổng a11y bị mù).
+
+- `StudioDialogue`: dòng giờ đổi màu theo người gửi: bot `text-zinc-400`, người dùng `text-[#09090b]/80`.
+- `MessageBubble`: dòng giờ của mình `text-accent-100/80` (chữ nhạt trên nền accent) → `text-[#09090b]/80`;
+  nhãn "Đã lọc" hổ phách trong bong bóng của mình → kế thừa màu dòng.
+- `#09090b` ở độ mờ 80% trên accent-500: Xanh đêm 6,12 · Blue sky 5,51 · Nhi đồng 5,48 (≥ AA 4,5 cho chữ
+  phụ). Chạy lại ở máy: 16/16 ca tutor của `learning-ux-states` xanh.
