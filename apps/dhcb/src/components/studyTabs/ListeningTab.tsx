@@ -17,6 +17,7 @@ import ExamQuestionCard from '../ExamQuestionCard'
 import { scorePronunciation, scoreWords, type WordScore } from '../../lib/pronounceScore'
 import { buildDictationItems, listeningRateForLevel, type DictationItem } from '../../lib/listening'
 import type { CefrId } from '../../lib/placement'
+import { buttonClass } from '@core/buttonStyles'
 
 // ── Luyện nghe (tab "Nghe", ③ N3, docs/research/dac-ta-nang-cap-su-pham-2026-07-15.md) ──
 // 2 dạng: "Chọn nghĩa" (tái dùng buildListeningQuestions của cefrExam.ts — cùng engine
@@ -169,7 +170,7 @@ function MeaningPractice({
           </button>
           <button
             onClick={() => nav('/')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+            className={buttonClass({ size: 'lg', className: 'flex-1' })}
           >
             <Home className="w-4 h-4" /> {isA ? 'Trang chủ' : 'Home'}
           </button>
@@ -318,7 +319,7 @@ function DictationPractice({
           </button>
           <button
             onClick={() => nav('/')}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+            className={buttonClass({ size: 'lg', className: 'flex-1' })}
           >
             <Home className="w-4 h-4" /> {isA ? 'Trang chủ' : 'Home'}
           </button>
@@ -390,7 +391,7 @@ function DictationPractice({
       <button
         onClick={checked ? next : check}
         disabled={!typed.trim()}
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-40 text-black font-semibold transition"
+        className={buttonClass({ size: 'lg', fullWidth: true })}
       >
         {checked ? (
           <>

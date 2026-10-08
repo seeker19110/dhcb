@@ -13,6 +13,7 @@ import { useState } from 'react'
 import { Clock, EyeOff, MapPinOff, Users } from 'lucide-react'
 import { formatRemaining } from '../../lib/locationFormat'
 import type { SessionSummary } from '../../lib/locationShare'
+import { buttonClass } from '@core/buttonStyles'
 
 const DURATIONS: { value: 60 | 240 | 480; label: string }[] = [
   { value: 60, label: '1 giờ' },
@@ -129,7 +130,7 @@ export default function TripSetup({ sessions, onOpen, onCreate, onJoin, busy = f
           <button
             type="submit"
             disabled={busy || name.trim().length === 0}
-            className="tap-44 w-full rounded-xl bg-accent-500 hover:bg-accent-400 transition-colors px-5 font-bold text-[#09090b] disabled:opacity-50"
+            className={buttonClass({ fullWidth: true })}
           >
             Tạo chuyến
           </button>

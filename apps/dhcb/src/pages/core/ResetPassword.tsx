@@ -8,6 +8,7 @@ import { Eye, EyeOff, KeyRound } from 'lucide-react'
 import { usePageTitle } from '../../lib/usePageTitle'
 import { useLang } from '../../context/useLang'
 import { Button } from '@core/Button'
+import { buttonClass } from '@core/buttonStyles'
 
 async function postAuth(body: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
   try {
@@ -100,11 +101,7 @@ export default function ResetPassword() {
             ? 'Vì lý do an toàn, bạn cần đăng nhập lại trên mọi thiết bị bằng mật khẩu mới.'
             : 'For security, please sign in again on all devices with your new password.'}
         </p>
-        <button
-          type="button"
-          onClick={() => nav('/login')}
-          className="tap-44 rounded-xl bg-accent-500 px-6 py-3 text-sm font-semibold text-[#09090b]"
-        >
+        <button type="button" onClick={() => nav('/login')} className={buttonClass({ size: 'lg' })}>
           {isA ? 'Đăng nhập ngay' : 'Sign in now'}
         </button>
       </main>

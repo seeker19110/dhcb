@@ -68,6 +68,7 @@ import {
   cloudChallengeToLocal,
 } from '../../../lib/challengeCloud'
 import { checkNewAchievements, achievementMessage } from '../../../lib/achievements'
+import { buttonClass } from '@core/buttonStyles'
 
 type Stage = 'idle' | 'countdown' | 'recording' | 'reviewing' | 'typed' | 'submitting'
 
@@ -645,7 +646,7 @@ export default function Challenge() {
             </ul>
             <button
               onClick={() => setChallenge(startChallenge(uid))}
-              className="w-full mt-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition active:scale-[0.98]"
+              className={buttonClass({ size: 'lg', fullWidth: true, className: 'mt-2' })}
             >
               {isA ? '🎬 Bắt đầu thử thách' : '🎬 Start the challenge'}
             </button>
@@ -894,7 +895,7 @@ export default function Challenge() {
                   </button>
                   <button
                     onClick={() => void submitEntry()}
-                    className="tap-44 flex-1 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-black font-semibold flex items-center justify-center gap-1.5 transition"
+                    className={buttonClass({ size: 'lg', className: 'flex-1' })}
                   >
                     <Send className="w-4 h-4" />
                     {isA ? 'Nộp challenge' : 'Submit'}
@@ -929,7 +930,7 @@ export default function Challenge() {
                   <button
                     onClick={() => void submitEntry()}
                     disabled={!typedText.trim()}
-                    className="tap-44 flex-1 py-3 rounded-xl bg-accent-500 hover:bg-accent-400 disabled:opacity-40 text-black font-semibold flex items-center justify-center gap-1.5 transition"
+                    className={buttonClass({ size: 'lg', className: 'flex-1' })}
                   >
                     <Send className="w-4 h-4" />
                     {isA ? 'Nộp challenge' : 'Submit'}

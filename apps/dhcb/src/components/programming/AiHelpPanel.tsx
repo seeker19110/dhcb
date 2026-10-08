@@ -20,6 +20,7 @@ import {
 } from '../../lib/programmingFeedback'
 import { MAX_HINT_LEVEL } from '@dhcb/subject-programming/feedbackPrompt'
 import type { TestCaseResult } from '@dhcb/subject-programming/grading'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   lessonId: string
@@ -103,7 +104,7 @@ export default function AiHelpPanel({ lessonId, code, results, passed }: Props) 
         <button
           onClick={() => void ask('socratic_hint')}
           disabled={busy !== null || !code.trim() || level >= MAX_HINT_LEVEL}
-          className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition"
+          className={buttonClass()}
         >
           {busy === 'socratic_hint' ? (
             <Loader2 className="w-4 h-4 animate-spin" />

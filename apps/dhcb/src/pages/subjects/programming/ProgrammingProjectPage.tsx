@@ -53,6 +53,7 @@ import {
   allTestsPassed,
   type TestCaseResult,
 } from '@dhcb/subject-programming/grading'
+import { buttonClass } from '@core/buttonStyles'
 
 /** Chặng nào cũng phải xong TOÀN BỘ chặng trước mới mở (dự án tiến hoá, không nhảy cóc). */
 function isStageUnlocked(index: number, done: Set<string>): boolean {
@@ -372,7 +373,7 @@ export default function ProgrammingProjectPage() {
           <button
             onClick={() => void runChecks()}
             disabled={checking || files === null}
-            className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition"
+            className={buttonClass()}
           >
             {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             <span>{checking ? 'Đang kiểm tra…' : 'Kiểm tra bước'}</span>
@@ -462,7 +463,7 @@ export default function ProgrammingProjectPage() {
                   setPreviewScript(null)
                 }
               }}
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+              className={buttonClass()}
             >
               Sang bước {activeIndex + 2}
             </button>

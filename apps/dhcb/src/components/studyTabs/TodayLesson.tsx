@@ -263,7 +263,7 @@ function BatchDoneView({
             `${duongDanTroTruyen()}?words=${encodeURIComponent(batch.map((w) => w.word).join(','))}`,
           )
         }
-        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+        className={buttonClass({ size: 'lg', fullWidth: true })}
       >
         <MessageCircle className="w-4 h-4" />
         {isA
@@ -604,7 +604,7 @@ export function TodayLesson({
             </p>
             <button
               onClick={unlockNextBatch}
-              className="mt-2 w-full py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+              className={buttonClass({ size: 'lg', fullWidth: true, className: 'mt-2' })}
             >
               {isA ? `Học ${speed} từ tiếp theo →` : `Learn next ${speed} words →`}
             </button>

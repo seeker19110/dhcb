@@ -34,6 +34,7 @@ import { isAppHostSubject, subjectHomePath } from '@dhcb/core-learner/subjectHom
 import { duongDanDanhSachBai, getStemSubject } from '../../lib/stemLessonRoutes'
 import { usePageTitle } from '../../lib/usePageTitle'
 import StemContinueBlock from '../../components/learning/StemContinueBlock'
+import { buttonClass } from '@core/buttonStyles'
 
 interface SolvedStep {
   title: string
@@ -675,7 +676,7 @@ export default function SubjectDetail() {
                       <button
                         type="submit"
                         disabled={solving || !problemInput.trim()}
-                        className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-[#09090b] font-semibold text-sm transition shadow-md active:scale-[0.98]"
+                        className={buttonClass()}
                       >
                         {solving ? (
                           <>
@@ -876,7 +877,7 @@ export default function SubjectDetail() {
                     </div>
                     <button
                       onClick={() => loadSampleProblem(prob.prompt, prob.solutionSteps)}
-                      className="tap-44 px-3.5 py-1.5 rounded-xl bg-accent-500 text-[#09090b] font-semibold text-xs transition shadow-sm hover:bg-accent-400 shrink-0 flex items-center gap-1"
+                      className={buttonClass({ size: 'sm', className: 'shrink-0 tap-44' })}
                     >
                       <span>Xem lời giải AI</span>
                       <ArrowRight className="w-3.5 h-3.5" />

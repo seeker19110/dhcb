@@ -5,6 +5,7 @@ import { loadDictionary } from '../../../data/dictionary/loader'
 import type { DictEntry } from '../../../types'
 import { PageShell } from '@core/PageShell'
 import { duongDanTuDien } from '../../../lib/englishRoutes'
+import { buttonClass } from '@core/buttonStyles'
 
 // Trang CÔNG KHAI cho 1 từ trong từ điển — /tu-vung/:word — KHÔNG bọc RequireAuth. Đây là phần
 // SEO thật: /dictionary (trang tra cứu chính) đang nằm sau RequireAuth nên Google không index
@@ -145,7 +146,7 @@ export default function WordDetail() {
           <button
             type="button"
             onClick={() => nav('/welcome')}
-            className="tap-44 rounded-xl bg-accent-500 px-6 py-3 text-sm font-semibold text-black hover:bg-accent-400 transition"
+            className={buttonClass({ size: 'lg' })}
           >
             Học miễn phí ngay
           </button>

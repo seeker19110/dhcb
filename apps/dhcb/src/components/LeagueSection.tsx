@@ -11,6 +11,7 @@ import {
   type LeaderboardResponse,
 } from '../lib/leaderboardApi'
 import { useToast } from '@core/ToastProvider'
+import { buttonClass } from '@core/buttonStyles'
 
 const NICKNAME_MIN = 3
 const NICKNAME_MAX = 20
@@ -173,7 +174,7 @@ export default function LeagueSection({ isA }: { isA: boolean }) {
               <button
                 onClick={() => void join()}
                 disabled={busy || nickname.trim().length < NICKNAME_MIN}
-                className="tap-44 w-full py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 disabled:opacity-40 text-black font-semibold text-sm transition"
+                className={buttonClass({ fullWidth: true })}
               >
                 {isA ? 'Tham gia giải đấu tuần' : 'Join the weekly league'}
               </button>

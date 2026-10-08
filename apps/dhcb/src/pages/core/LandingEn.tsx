@@ -6,6 +6,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import { setDirection } from '../../lib/storage'
 import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { useDocumentLangOverride } from '../../lib/documentLang'
+import { buttonClass } from '@core/buttonStyles'
 
 // Landing page TIẾNG ANH cho chiều B (người nước ngoài học tiếng Việt) — ngách gần như trống
 // (xem docs/research/chien-luoc-marketing-2026-07-25.md §2.1). Song song với src/pages/Landing.tsx
@@ -135,7 +136,7 @@ export default function LandingEn() {
             <button
               type="button"
               onClick={handleCtaClick}
-              className="tap-44 mt-6 w-full rounded-xl bg-accent-500 px-6 py-3.5 text-base font-semibold text-black transition hover:bg-accent-400 sm:w-auto sm:px-10"
+              className={buttonClass({ size: 'lg', fullWidth: true, className: 'mt-6 sm:w-auto' })}
             >
               Start learning free
             </button>
@@ -189,7 +190,11 @@ export default function LandingEn() {
           <button
             type="button"
             onClick={handleCtaClick}
-            className="tap-44 w-full rounded-xl bg-accent-500 px-6 py-3.5 text-base font-semibold text-black transition hover:bg-accent-400 sm:w-auto sm:px-10 lg:px-14 lg:py-4 lg:text-lg"
+            className={buttonClass({
+              size: 'lg',
+              fullWidth: true,
+              className: 'sm:w-auto sm:px-10 lg:h-14 lg:px-14 lg:text-lg',
+            })}
           >
             Sign up free
           </button>

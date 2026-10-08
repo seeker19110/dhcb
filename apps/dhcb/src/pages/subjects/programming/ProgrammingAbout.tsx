@@ -28,6 +28,7 @@ import { PROGRAMMING_LEVELS } from '@dhcb/subject-programming/curriculum'
 import { LESSON_INDEX, getLessonSummary } from '@dhcb/subject-programming/lessonsLoader'
 import { PROGRAMMING_PREFIX, duongDanBaiHoc } from '../../../lib/programmingRoutes'
 import { PROJECT_STAGES } from '@dhcb/subject-programming/projectSteps'
+import { buttonClass } from '@core/buttonStyles'
 
 /** Sản phẩm của học viên lớn lên thế nào qua từng chặng (khối 2 của đặc tả §6). */
 const SAN_PHAM_TUNG_CHANG: { level: string; mo_ta: string }[] = [
@@ -300,7 +301,7 @@ export default function ProgrammingAbout() {
                   : '/login',
               )
             }
-            className="tap-44 w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition shadow-md active:scale-[0.98]"
+            className={buttonClass({ size: 'lg', fullWidth: true })}
           >
             <Rocket className="w-4 h-4" />
             <span>Bắt đầu bài đầu tiên</span>

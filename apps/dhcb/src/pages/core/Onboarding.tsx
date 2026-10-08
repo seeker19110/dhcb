@@ -20,6 +20,7 @@ import type { AgeGroup } from '../../types'
 import { listSupportedSubjects } from '@dhcb/core-learner/subjectRegistry'
 import { subjectHomePath } from '@dhcb/core-learner/subjectHome'
 import SubjectIllustration from '../../components/SubjectIllustration'
+import { buttonClass } from '@core/buttonStyles'
 
 type OnboardLevel = 'beginner' | 'intermediate' | 'advanced'
 type OnboardGoal = 'daily' | 'travel' | 'work' | 'ielts'
@@ -182,8 +183,7 @@ function OnboardingForm() {
   }
 
   const busy = saving || saved
-  const primaryClass =
-    'tap-44 w-full bg-accent-500 hover:bg-accent-400 disabled:opacity-60 text-black font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 transition'
+  const primaryClass = buttonClass({ size: 'lg', fullWidth: true })
   const secondaryClass = 'tap-44 w-full text-sm text-zinc-400 hover:text-white py-2'
   const choiceClass = (active: boolean) =>
     `w-full flex items-center gap-4 p-4 rounded-2xl border transition ${
@@ -473,7 +473,7 @@ function OnboardingForm() {
                 type="button"
                 disabled={saving}
                 onClick={() => void finish()}
-                className="tap-44 w-full rounded-2xl bg-accent-500 px-4 py-3 font-semibold text-black hover:bg-accent-400 disabled:opacity-60 transition-colors"
+                className={buttonClass({ size: 'lg', fullWidth: true })}
               >
                 {saving ? 'Đang xác nhận…' : saved ? 'Thử đọc lại phiên' : 'Thử lưu lại'}
               </button>

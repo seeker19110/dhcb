@@ -13,6 +13,7 @@ import {
 import { fetchLifeSynthesisReport } from '../../lib/lifeSynthesisApi'
 import type { LifeSynthesisReport } from '@dhcb/core-contracts/lifeSynthesis'
 import LifeSynthesisDetailModal from './LifeSynthesisDetailModal'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function LifeSynthesisDashboard() {
   const [report, setReport] = useState<LifeSynthesisReport | null>(null)
@@ -70,7 +71,7 @@ export default function LifeSynthesisDashboard() {
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-accent-500 hover:bg-accent-400 text-[#09090b] transition active:scale-98 shadow-md"
+            className={buttonClass({ size: 'sm', className: 'tap-44' })}
           >
             <span>Phân tích sâu</span>
             <ArrowUpRight className="w-4 h-4" />

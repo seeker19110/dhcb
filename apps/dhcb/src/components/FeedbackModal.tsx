@@ -8,6 +8,7 @@ import { submitFeedback } from '../lib/feedbackApi'
 import { thongDiepLoiThanThien } from '../lib/friendlyError'
 import { CATEGORY_METADATA, type UserFeedbackCategory } from '@dhcb/core-contracts/feedback'
 import { useDialogBehavior } from './useDialogBehavior'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   isOpen: boolean
@@ -144,11 +145,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
                   : 'Every contribution from you helps make Dong Hanh AI more helpful every day.'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="tap-44 px-6 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-zinc-950 font-semibold text-sm transition"
-            >
+            <button type="button" onClick={onClose} className={buttonClass()}>
               {isA ? 'Hoàn tất' : 'Done'}
             </button>
           </div>
@@ -295,7 +292,7 @@ export default function FeedbackModal({ isOpen, onClose, initialCategory = 'feat
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="tap-44 px-5 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-zinc-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition"
+                  className={buttonClass({ size: 'sm', className: 'tap-44' })}
                 >
                   {submitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

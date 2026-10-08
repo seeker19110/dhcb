@@ -9,6 +9,7 @@ import { useAuth } from '../context/useAuth'
 import { useLang } from '../context/useLang'
 import { isFeatureEnabled } from '../lib/planFeatures'
 import { effectivePlan } from '../lib/promo'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function FeatureGate({
   featureKey,
@@ -43,7 +44,7 @@ export default function FeatureGate({
         <button
           type="button"
           onClick={() => nav('/cai-dat')}
-          className="tap-44 inline-flex items-center gap-2 rounded-xl bg-accent-500 text-[#09090b] font-semibold px-5 py-3"
+          className={buttonClass({ size: 'lg' })}
         >
           <Sparkles className="w-4 h-4" />
           {isVi ? 'Nâng cấp gói' : 'Upgrade plan'}

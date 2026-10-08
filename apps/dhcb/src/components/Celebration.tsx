@@ -9,6 +9,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { haptics } from '../lib/haptics'
 import { sound } from '../lib/sound'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function Celebration({
   icon,
@@ -63,7 +64,7 @@ export default function Celebration({
         {children}
         <button
           onClick={onDone}
-          className="mt-6 w-full py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+          className={buttonClass({ size: 'lg', fullWidth: true, className: 'mt-6' })}
         >
           {ctaLabel}
         </button>

@@ -24,6 +24,7 @@ import {
 import { docCapTuQuery } from '../../lib/reviewRoutes'
 import { getStemSubject, duongDanDanhSachBai, type StemSubject } from '../../lib/stemLessonRoutes'
 import { type Rating } from '../../lib/srs'
+import { buttonClass } from '@core/buttonStyles'
 
 export default function StemReview() {
   const { subjectId } = useParams<{ subjectId: string }>()
@@ -129,7 +130,7 @@ function StemReviewSession({
                 setHangDoi(null)
                 setLanThu((n) => n + 1)
               }}
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+              className={buttonClass()}
             >
               Tải lại thẻ
             </button>
@@ -152,7 +153,7 @@ function StemReviewSession({
             <button
               type="button"
               onClick={() => nav(duongDanDanhSachBai(subject.id))}
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+              className={buttonClass()}
             >
               <BookOpen className="w-4 h-4" aria-hidden="true" />
               <span>Xem bài học môn {subject.label}</span>

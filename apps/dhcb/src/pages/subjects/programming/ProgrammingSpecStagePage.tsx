@@ -45,6 +45,7 @@ import {
   type SpecModuleDetail,
 } from '@dhcb/subject-programming/specializations/stageDetails'
 import { usePageTitle } from '../../../lib/usePageTitle'
+import { buttonClass } from '@core/buttonStyles'
 
 /** Ô đánh dấu xong một mục tiến độ. Đã xong thì KHÔNG bỏ được — cùng bất biến với server. */
 function DoneToggle({ done, label, onDone }: { done: boolean; label: string; onDone: () => void }) {
@@ -283,7 +284,7 @@ export default function ProgrammingSpecStagePage() {
           </h1>
           <button
             onClick={() => nav(`${PROGRAMMING_PREFIX}/huong`)}
-            className="tap-44 w-full py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+            className={buttonClass({ size: 'lg', fullWidth: true })}
           >
             Xem các hướng chuyên sâu
           </button>

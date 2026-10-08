@@ -42,6 +42,7 @@ import {
 import { STEM_SUBJECTS } from '../../lib/stemLessonRoutes'
 import { docCapTuQuery } from '../../lib/reviewRoutes'
 import type { ReviewQueue } from '@dhcb/core-contracts/reviewItem'
+import { buttonClass } from '@core/buttonStyles'
 
 /** Mã cấp CEFR — mã bài ngữ pháp luôn mở đầu bằng cấp (`a1-be`), đó là manh mối rẻ nhất. */
 const CAP_CEFR = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2']
@@ -223,10 +224,7 @@ export default function ReviewHub() {
               Học xong bài đầu tiên, những từ và câu bạn vừa gặp sẽ tự vào lịch ôn ở đây, đúng lúc
               trí nhớ sắp quên.
             </p>
-            <Link
-              to={loiBatDau}
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-            >
+            <Link to={loiBatDau} className={buttonClass()}>
               <span>Bắt đầu học bài đầu tiên</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
@@ -249,10 +247,7 @@ export default function ReviewHub() {
               Khoảng nghỉ chính là lúc trí nhớ được củng cố, nên không có gì để ôn là dấu hiệu tốt.
               Muốn học tiếp thì chọn một môn ở Góc học tập.
             </p>
-            <Link
-              to="/goc-hoc-tap"
-              className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-            >
+            <Link to="/goc-hoc-tap" className={buttonClass()}>
               <span>Học tiếp</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>

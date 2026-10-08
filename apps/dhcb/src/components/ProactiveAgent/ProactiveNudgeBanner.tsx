@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ProactiveNudge } from '@dhcb/core-contracts/proactiveAgent'
 import { dismissProactiveNudge, executeProactiveAction } from '../../lib/proactiveAgentApi.js'
+import { buttonClass } from '@core/buttonStyles'
 
 interface ProactiveNudgeBannerProps {
   nudge: ProactiveNudge
@@ -94,7 +95,7 @@ export default function ProactiveNudgeBanner({
             type="button"
             onClick={handleAction}
             disabled={isExecuting}
-            className="px-3.5 py-1.5 rounded-xl bg-accent-500 hover:bg-accent-400 active:scale-95 text-zinc-950 font-bold text-xs shadow-md transition flex items-center gap-1.5 disabled:opacity-50"
+            className={buttonClass({ size: 'sm', className: 'tap-44' })}
           >
             {isExecuting ? 'Đang kích hoạt...' : nudge.suggestedAction.label}
           </button>

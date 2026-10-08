@@ -14,6 +14,7 @@
 import { useState, type ReactNode } from 'react'
 import { Eye, Trophy } from 'lucide-react'
 import type { Rating } from '../lib/srs'
+import { buttonClass } from '@core/buttonStyles'
 
 /** Một thẻ đủ để hiện: khoá để chấm, hai mặt, và tên bài để học viên biết thẻ từ đâu ra. */
 export interface FlashcardItem {
@@ -111,7 +112,7 @@ export default function FlashcardReview({
         <button
           type="button"
           onClick={() => setHienDap(true)}
-          className="tap-44 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
+          className={buttonClass({ size: 'lg', fullWidth: true })}
         >
           <Eye className="w-4 h-4" aria-hidden="true" />
           <span>Xem đáp án</span>

@@ -23,6 +23,7 @@ import { buildSessionFact, type SessionOutcome } from '../lib/session/sessionFac
 import { haptics } from '../lib/haptics'
 import { sound } from '../lib/sound'
 import { track } from '../lib/analytics'
+import { buttonClass } from '@core/buttonStyles'
 
 export interface SessionDoneProps {
   outcome: SessionOutcome
@@ -124,7 +125,7 @@ export default function SessionDone({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold transition"
+            className={buttonClass({ size: 'lg', fullWidth: true })}
           >
             {isA ? 'Về trang chủ' : 'Home'}
           </button>

@@ -111,7 +111,7 @@ export default function PathStageQuiz({
         <button
           onClick={() => void handleSubmit()}
           disabled={submitting || Object.keys(choices).length < questions.length}
-          className="tap-44 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-xs transition active:scale-[0.98]"
+          className={buttonClass({ fullWidth: true })}
         >
           {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
           <span>{submitting ? 'Đang chấm…' : 'Nộp bài'}</span>
@@ -296,7 +296,7 @@ function CompanionCheckIn({ stageName, topics }: { stageName: string; topics: st
           <button
             onClick={() => void respond()}
             disabled={loading || answer.trim().length === 0}
-            className="tap-44 w-full py-2 rounded-lg bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-xs transition active:scale-[0.98]"
+            className={buttonClass({ size: 'sm', fullWidth: true, className: 'tap-44' })}
           >
             {loading ? 'Đang gửi…' : 'Gửi'}
           </button>

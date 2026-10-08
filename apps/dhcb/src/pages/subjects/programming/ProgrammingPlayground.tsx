@@ -12,6 +12,7 @@ import { PROGRAMMING_PREFIX } from '../../../lib/programmingRoutes'
 import CodeEditor from '../../../components/CodeEditor'
 import { runPython, resetPythonWorker } from '../../../lib/pythonRunner'
 import { P1_SAMPLES } from '@dhcb/subject-programming/samplesP1'
+import { buttonClass } from '@core/buttonStyles'
 
 // 'done' tách khỏi 'idle' để giữ luật N4: sau khi chạy phải nói được "đã chạy xong", kể cả
 // khi chương trình không in ra gì. Gộp hai trạng thái này là cách cũ khiến màn hình quay về
@@ -137,7 +138,7 @@ export default function ProgrammingPlayground() {
           <button
             onClick={() => void handleRun()}
             disabled={runState === 'running' || runState === 'loading-env' || !code.trim()}
-            className="tap-44 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition shadow-md active:scale-[0.98]"
+            className={buttonClass({ size: 'lg' })}
           >
             {runState === 'idle' || runState === 'done' ? (
               <>

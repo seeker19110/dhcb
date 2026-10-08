@@ -90,6 +90,7 @@ import {
   type TestCaseResult,
 } from '@dhcb/subject-programming/grading'
 import { usePageTitle } from '../../../lib/usePageTitle'
+import { buttonClass } from '@core/buttonStyles'
 
 // 6 màn hình phủ 8 bước sư phạm (①② gộp một màn; ⑧ SRS chạy ngầm khi đạt bài Make).
 // `graded` = bước có chấm (pha TRẢ) · `startsPhase` = vẽ vạch ngăn phía trước (luật N3).
@@ -185,11 +186,7 @@ export default function ProgrammingLessonPage() {
           <p className="text-sm text-zinc-200" role="alert">
             Không tải được nội dung bài học (mất mạng?). Thử lại nhé.
           </p>
-          <button
-            type="button"
-            onClick={trangThai.retry}
-            className="tap-44 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-          >
+          <button type="button" onClick={trangThai.retry} className={buttonClass()}>
             Tải lại bài học
           </button>
         </main>
@@ -678,7 +675,7 @@ function LessonBody({
                   <button
                     onClick={() => void runExample()}
                     disabled={exampleState === 'running'}
-                    className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition"
+                    className={buttonClass()}
                   >
                     {exampleState === 'running' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -757,7 +754,7 @@ function LessonBody({
                     <button
                       onClick={() => void gradeMake()}
                       disabled={grading || !code.trim()}
-                      className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-sm transition"
+                      className={buttonClass()}
                     >
                       {grading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -893,10 +890,7 @@ function LessonBody({
                         ? 'Chưa có kết quả chấm trong lần mở bài này — quay lại bước "Tự viết" và bấm "Chấm bài" để hoàn thành bài học.'
                         : 'Bạn chưa đạt hết test ở bước "Tự viết" — quay lại chấm bài để hoàn thành bài học.'}
                   </div>
-                  <button
-                    onClick={() => nav(backTo)}
-                    className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-                  >
+                  <button onClick={() => nav(backTo)} className={buttonClass()}>
                     <span>
                       {levelId ? `Về trang bậc ${levelId.toUpperCase()}` : 'Về trang môn'}
                     </span>
@@ -952,11 +946,7 @@ function LessonBody({
             Nội dung bài đã đổi kể từ lần bạn học dở. Dùng lại code bạn đã gõ hay bắt đầu mới?
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={phien.adoptStale}
-              className="tap-44 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-accent-500 hover:bg-accent-400 text-black font-semibold text-sm transition"
-            >
+            <button type="button" onClick={phien.adoptStale} className={buttonClass()}>
               Dùng lại code đã gõ
             </button>
             <button

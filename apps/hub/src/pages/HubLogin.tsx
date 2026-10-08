@@ -28,6 +28,7 @@ import {
   type AppUser,
 } from '@core/clientAuth'
 import { ThemeToggle } from '@core/ThemeToggle'
+import { buttonClass } from '@core/buttonStyles'
 
 // Đích mặc định sau đăng nhập = app nền tảng (không phải riêng môn tiếng Anh).
 // Tên biến mới VITE_APP_URL; vẫn đọc VITE_ENGLISH_APP_URL để không phải sửa .env trên VPS.
@@ -276,10 +277,7 @@ export default function HubLogin() {
             </div>
 
             <div className="space-y-2 pt-2">
-              <a
-                href={targetRedirectUrl}
-                className="w-full inline-flex items-center justify-center gap-2 bg-accent-500 hover:bg-accent-400 text-[#09090b] font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-accent-500/20 active:scale-[0.98]"
-              >
+              <a href={targetRedirectUrl} className={buttonClass({ size: 'lg', fullWidth: true })}>
                 <span>Tiếp tục vào nền tảng</span>
                 <ArrowRight className="w-4 h-4" />
               </a>

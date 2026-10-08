@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ProactiveAgentConfig } from '@dhcb/core-contracts/proactiveAgent'
 import { updateProactiveConfigApi } from '../../lib/proactiveAgentApi.js'
+import { buttonClass } from '@core/buttonStyles'
 
 interface ProactiveAgentSettingsModalProps {
   isOpen: boolean
@@ -157,7 +158,7 @@ export default function ProactiveAgentSettingsModal({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-400 text-zinc-950 text-xs font-bold shadow-md transition disabled:opacity-50"
+            className={buttonClass({ size: 'sm', className: 'tap-44' })}
           >
             {saving ? 'Đang lưu...' : 'Lưu cấu hình'}
           </button>

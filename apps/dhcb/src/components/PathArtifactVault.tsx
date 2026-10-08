@@ -8,6 +8,7 @@ import {
   deletePathArtifact,
   type PathArtifact,
 } from '../lib/programmingPathArtifacts'
+import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
   pathId: string
@@ -113,7 +114,7 @@ export default function PathArtifactVault({ pathId, phases }: Props) {
         <button
           onClick={() => void handleSubmit()}
           disabled={submitting || url.trim().length === 0}
-          className="tap-44 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-black font-semibold text-xs transition active:scale-[0.98]"
+          className={buttonClass({ fullWidth: true })}
         >
           {submitting ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />

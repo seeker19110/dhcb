@@ -41,6 +41,7 @@ import {
   clearDraft,
   type DraftOwner,
 } from '../../lib/learningQuestionDraft'
+import { buttonClass } from '@core/buttonStyles'
 
 interface PromptChip {
   id: string
@@ -243,7 +244,7 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
           <button
             type="button"
             onClick={askAgain}
-            className="tap-44 rounded-xl bg-accent-500 px-3 py-1.5 text-xs font-semibold text-[#09090b] transition-colors hover:bg-accent-400"
+            className={buttonClass({ size: 'sm', className: 'tap-44' })}
           >
             Dùng lại câu hỏi
           </button>
@@ -445,17 +446,13 @@ export default function HomeUniversalAiBar({ isDesktop }: HomeUniversalAiBarProp
                   setSuggestion(null)
                   nav('/login')
                 }}
-                className="tap-44 flex items-center gap-1.5 rounded-xl bg-accent-500 px-5 py-2.5 text-xs font-semibold text-[#09090b] shadow-md transition-colors hover:bg-accent-400 active:scale-95 motion-reduce:transform-none"
+                className={buttonClass()}
               >
                 <LogIn className="h-4 w-4" aria-hidden="true" />
                 <span>Đăng nhập để hỏi Bạn Đồng Hành</span>
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={openDestination}
-                className="tap-44 flex items-center gap-1.5 rounded-xl bg-accent-500 px-5 py-2.5 text-xs font-semibold text-[#09090b] shadow-md transition-colors hover:bg-accent-400 active:scale-95 motion-reduce:transform-none"
-              >
+              <button type="button" onClick={openDestination} className={buttonClass()}>
                 <span>Mở {suggestion.destination.label}</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>

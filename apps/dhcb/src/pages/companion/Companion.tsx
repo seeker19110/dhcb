@@ -31,6 +31,7 @@ import { DOMAIN_OPTIONS, STUDIO_TABS_CONFIG } from '../../components/CompanionSt
 import { useDialogBehavior } from '../../components/useDialogBehavior'
 import { readDraft, clearDraft } from '../../lib/learningQuestionDraft'
 import { PageShell } from '@core/PageShell'
+import { buttonClass } from '@core/buttonStyles'
 
 // Nạp lười (Lazy-loading) từng Studio để giảm mạnh Initial Bundle Size
 const StudioDialogue = lazyWithRetry(
@@ -523,11 +524,7 @@ export default function Companion() {
               >
                 Giữ chữ đang viết
               </button>
-              <button
-                type="button"
-                onClick={acceptDraftOffer}
-                className="tap-44 rounded-xl bg-accent-500 px-4 py-2 font-semibold text-[#09090b] transition hover:bg-accent-400"
-              >
+              <button type="button" onClick={acceptDraftOffer} className={buttonClass()}>
                 Thay bằng câu hỏi này
               </button>
             </div>
