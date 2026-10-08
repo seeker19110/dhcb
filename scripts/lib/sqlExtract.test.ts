@@ -63,18 +63,26 @@ describe('extractSqlFromSource — tính hằng', () => {
     expect(res.queries).toEqual([])
     expect(res.skipped.map((s) => s.reason)).toEqual([
       'template có nội suy không tính được hằng',
-      'biến `sqlRuntime` không phải hằng chuỗi cùng file',
+      'biến `sqlRuntime` không suy ra được chuỗi SQL',
       'đối số là object cấu hình truy vấn',
     ])
   })
 
-  it('mảng `const` bị sửa tại chỗ (push) KHÔNG coi là hằng', () => {
+  it('mảng `const` bị sửa tại chỗ (push) KHÔNG coi là hằng — chỉ mô phỏng theo đường chạy', () => {
+    // Cùng chỗ gọi: mô phỏng ra CẢ đường không push (câu `where ` rỗng — PREPARE sẽ bắt).
     const src = `
       const dieuKien = []
       if (x) dieuKien.push('a = 1')
       pool.query(\`select * from t where \${dieuKien.join(' and ')}\`)
     `
-    expect(extractSqlFromSource('f.ts', src).skipped).toHaveLength(1)
+    expect(sqlsOf(src)).toEqual(['select * from t where a = 1', 'select * from t where '])
+    // Từ hàm khác (không mô phỏng được thứ tự chạy) → hằng bị push KHÔNG được dùng.
+    const fromFn = `
+      const DIEU_KIEN = ['a = 1']
+      DIEU_KIEN.push('b = 2')
+      export function f(pool) { return pool.query(\`select 1 where \${DIEU_KIEN.join(' and ')}\`) }
+    `
+    expect(extractSqlFromSource('f.ts', fromFn).skipped).toHaveLength(1)
   })
 
   it('object `const` bị gán thuộc tính KHÔNG coi là hằng', () => {
@@ -86,12 +94,15 @@ describe('extractSqlFromSource — tính hằng', () => {
     expect(extractSqlFromSource('f.ts', src).skipped).toHaveLength(1)
   })
 
-  it('tên khai báo `const` ở hai scope → mơ hồ → bỏ qua', () => {
+  it('tên khai báo `const` ở hai scope: biến cục bộ của chính hàm thắng; từ hàm khác → mơ hồ', () => {
     const src = `
       function a() { const col = 'x'; return col }
       function b() { const col = 'y'; pool.query(\`select \${col} from t\`) }
+      function c() { pool.query(\`select \${col} from u\`) }
     `
-    expect(extractSqlFromSource('f.ts', src).skipped).toHaveLength(1)
+    const res = extractSqlFromSource('f.ts', src)
+    expect(res.queries.map((q) => q.sql)).toEqual(['select y from t'])
+    expect(res.skipped).toHaveLength(1)
   })
 })
 
@@ -141,12 +152,240 @@ describe('extractSqlFromSource — nhiều biến thể', () => {
   })
 
   it(`vượt trần ${MAX_VARIANTS} biến thể → coi là động`, () => {
-    // 5 ternary độc lập = 32 tổ hợp > trần.
-    const parts = Array.from({ length: 5 }, (_, i) => `\${c${i} ? 'a${i}' : 'b${i}'}`).join(', ')
+    // 7 ternary độc lập = 128 tổ hợp > trần 64.
+    const parts = Array.from({ length: 7 }, (_, i) => `\${c${i} ? 'a${i}' : 'b${i}'}`).join(', ')
     const src = `pool.query(\`select ${parts} from t\`)`
     const res = extractSqlFromSource('f.ts', src)
     expect(res.queries).toEqual([])
     expect(res.skipped).toHaveLength(1)
+  })
+})
+
+describe('extractSqlFromSource — hằng import (loadModule)', () => {
+  const files: Record<string, string> = {
+    'pkg/usage.ts': `
+      const COLUMN: Record<Mode, string> = { chat: 'chat_count', stt: 'stt_count' }
+      export const COLUMNS: readonly string[] = Object.values(COLUMN)
+      export const SUBJECT = 'english'
+      const BI_SUA = { a: 'x' }
+      BI_SUA.a = 'y'
+      export { BI_SUA }
+    `,
+    'pkg/index.ts': `export { SUBJECT as MON } from './usage.js'`,
+  }
+  const loadModule = (from: string, spec: string) => {
+    const dir = from.slice(0, from.lastIndexOf('/') + 1)
+    const file = (spec.startsWith('./') ? dir + spec.slice(2) : spec.replace('@dhcb/', '')).replace(
+      /\.js$/,
+      '.ts',
+    )
+    const text = files[file]
+    return text === undefined ? undefined : { file, text }
+  }
+
+  it('hằng export (kể cả `Object.values`, re-export đổi tên) được thay vào câu', () => {
+    const src = `
+      import { COLUMNS } from '@dhcb/pkg/usage.js'
+      import { MON } from '@dhcb/pkg/index.js'
+      pool.query(\`select \${COLUMNS.join(' + ')} as used from u where subject = '\${MON}'\`)
+    `
+    const res = extractSqlFromSource('f.ts', src, { loadModule })
+    expect(res.queries.map((q) => q.sql)).toEqual([
+      "select chat_count + stt_count as used from u where subject = 'english'",
+    ])
+  })
+
+  it('hằng bị sửa tại chỗ ở file nguồn / import kiểu / không nạp được → động', () => {
+    const src = `
+      import { BI_SUA } from '@dhcb/pkg/usage.js'
+      import type { SUBJECT } from '@dhcb/pkg/usage.js'
+      import { KHONG_CO } from '@dhcb/khac/x.js'
+      pool.query(\`select \${BI_SUA.a}\`)
+      pool.query(\`select \${SUBJECT}\`)
+      pool.query(\`select \${KHONG_CO}\`)
+    `
+    const res = extractSqlFromSource('f.ts', src, { loadModule })
+    expect(res.queries).toEqual([])
+    expect(res.skipped).toHaveLength(3)
+  })
+})
+
+describe('extractSqlFromSource — mô phỏng đường chạy', () => {
+  it('`let sql` + `if (…) sql +=` → mọi tổ hợp bộ lọc, số `$n` theo `params.length`', () => {
+    const src = `
+      export async function list(pool, status, q) {
+        let sql = 'select * from p where 1=1'
+        const params = []
+        if (status) {
+          params.push(status)
+          sql += \` and status = $\${params.length}\`
+        }
+        if (q) {
+          params.push(\`%\${q}%\`)
+          sql += \` and code like $\${params.length}\`
+        }
+        sql += ' order by id'
+        return pool.query(sql, params)
+      }
+    `
+    expect(sqlsOf(src).sort()).toEqual([
+      'select * from p where 1=1 and code like $1 order by id',
+      'select * from p where 1=1 and status = $1 and code like $2 order by id',
+      'select * from p where 1=1 and status = $1 order by id',
+      'select * from p where 1=1 order by id',
+    ])
+  })
+
+  it('`$${i++}` đánh số tuần tự đúng theo từng đường', () => {
+    const src = `
+      export function f(pool, a, b) {
+        let sql = 'select 1 from t where true'
+        let i = 1
+        if (a) sql += \` and a = $\${i++}\`
+        if (b) sql += \` and b = $\${i++}\`
+        return pool.query(sql)
+      }
+    `
+    expect(sqlsOf(src)).toContain('select 1 from t where true and a = $1 and b = $2')
+    expect(sqlsOf(src)).toContain('select 1 from t where true and b = $1')
+  })
+
+  it('mảng điều kiện + `join` + ternary trên `.length` tính đúng theo từng đường', () => {
+    const src = `
+      export function f(pool, mon) {
+        const dieuKien: string[] = []
+        const thamSo: unknown[] = []
+        if (mon) {
+          thamSo.push(mon)
+          dieuKien.push(\`mon = $\${thamSo.length}\`)
+        }
+        const where = dieuKien.length > 0 ? \`where \${dieuKien.join(' and ')}\` : ''
+        return pool.query(\`select * from t \${where} order by id\`, thamSo)
+      }
+    `
+    expect(sqlsOf(src).map(normalizeSql).sort()).toEqual([
+      'select * from t order by id',
+      'select * from t where mon = $1 order by id',
+    ])
+  })
+
+  it('`if` không ghi biến đang theo dõi KHÔNG nhân đôi biến thể; `return` sớm cắt đường', () => {
+    const ifs = Array.from({ length: 10 }, (_, i) => `if (c${i}) log(${i})`).join('; ')
+    const src = `
+      export function f(pool, x) {
+        const sql = 'select 1'
+        ${ifs}
+        if (!x) return null
+        return pool.query(sql)
+      }
+    `
+    expect(extractSqlFromSource('f.ts', src).queries).toEqual([
+      { file: 'f.ts', line: 6, sql: 'select 1' },
+    ])
+  })
+
+  it('for-of trên bảng hằng + hàm trả lại đối số + `.map` → mỗi phần tử một biến thể', () => {
+    const src = `
+      const TABLES = [
+        { table: 'a.t1', columns: ['id', 'x'] },
+        { table: 'a.t2', columns: ['id'] },
+      ] as const
+      function assertIdent(value: string, re: RegExp): string {
+        if (!re.test(value)) throw new Error('bad')
+        return value
+      }
+      export async function readAll(client) {
+        for (const spec of TABLES) {
+          const cols = spec.columns.map((c) => assertIdent(c, /x/)).join(', ')
+          await client.query(\`select \${cols} from \${assertIdent(spec.table, /x/)}\`)
+        }
+      }
+    `
+    expect(sqlsOf(src)).toEqual(['select id, x from a.t1', 'select id from a.t2'])
+  })
+
+  it('tham số hàm KHÔNG export lấy đối số từ mọi nơi gọi (các tham số đi cùng nhau)', () => {
+    const src = `
+      const ROOT = 'p.persons'
+      const TABLES = [{ table: 'p.a' }, { table: 'p.b' }]
+      async function deleteFrom(table: string, column: string) {
+        await client.query(\`delete from \${table} where \${column} = $1\`)
+      }
+      export async function erase() {
+        for (const spec of TABLES) await deleteFrom(spec.table, 'person_id')
+        await deleteFrom(ROOT, 'id')
+      }
+    `
+    expect(sqlsOf(src)).toEqual([
+      'delete from p.a where person_id = $1',
+      'delete from p.b where person_id = $1',
+      'delete from p.persons where id = $1',
+    ])
+  })
+
+  it('hàm export / hàm được truyền đi như giá trị → tham số KHÔNG suy từ nơi gọi', () => {
+    const src = `
+      export function run(sql: string) { return pool.query(sql) }
+      run('select 1')
+      function run2(sql: string) { return pool.query(sql) }
+      run2('select 2')
+      setTimeout(run2)
+    `
+    expect(extractSqlFromSource('f.ts', src).skipped).toHaveLength(2)
+  })
+
+  it('biến bị ghi ở chỗ không mô phỏng được (vòng lặp, closure, truyền mảng đi) → động', () => {
+    const src = `
+      export function a(pool, items) {
+        let sql = 'select 1'
+        for (const it of items) sql += ' union select 2'
+        return pool.query(sql)
+      }
+      export function b(pool) {
+        let sql = 'select 1'
+        const add = () => { sql += ' x' }
+        add()
+        sql = 'select 3'
+        return pool.query(sql)
+      }
+      export function c(pool) {
+        const where = ['a = 1']
+        addMore(where)
+        return pool.query(\`select 1 from t where \${where.join(' and ')}\`)
+      }
+      export function d(pool, other) {
+        let sql = 'select 1'
+        ;[sql] = [other]
+        return pool.query(sql)
+      }
+      export function e(pool, list) {
+        let sql = 'select 1'
+        for (sql of list) log(sql)
+        return pool.query(sql)
+      }
+    `
+    const res = extractSqlFromSource('f.ts', src)
+    expect(res.queries).toEqual([])
+    expect(res.skipped).toHaveLength(5)
+  })
+
+  it('hàm "trả lại đối số" phải chắc chắn trả đối số: async / thân rơi ra cuối → không nhận', () => {
+    const src = `
+      async function a(v: string) { return v }
+      function b(v: string) { if (ok(v)) return v }
+      pool.query(\`select \${a('x')}\`)
+      pool.query(\`select \${b('y')}\`)
+    `
+    expect(extractSqlFromSource('f.ts', src).skipped).toHaveLength(2)
+  })
+
+  it('hằng trùng tên với tham số/biến ở chỗ khác trong file → mơ hồ → bỏ qua', () => {
+    const src = `
+      const col = 'x'
+      function g(col: string) { return col }
+      export function h(pool) { return pool.query(\`select \${col} from t\`) }
+    `
+    expect(extractSqlFromSource('f.ts', src).skipped).toHaveLength(1)
   })
 })
 

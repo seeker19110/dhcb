@@ -8,7 +8,8 @@
 //
 // CÁCH LÀM:
 //   1. Trích câu SQL bằng AST từ mọi lời gọi `.query(` trong apps/server/src + packages (bỏ test,
-//      dist) — xem scripts/lib/sqlExtract.ts. Câu dựng động không suy ra được thì BỎ QUA + đếm.
+//      dist) — xem scripts/lib/sqlExtract.ts (kể cả câu dựng theo bộ lọc `if (…) sql += …`: mọi
+//      tổ hợp nhánh đều được trích). Câu không suy ra được thì BỎ QUA + đếm + in lý do.
 //   2. Mỗi câu: `BEGIN; PREPARE dhcb_chk_N AS <sql>; DEALLOCATE; ROLLBACK`. PREPARE chỉ phân
 //      tích + lập kế hoạch, KHÔNG chạy câu lệnh → không đổi dữ liệu; ROLLBACK cho chắc.
 //   3. Câu lỗi mà không nằm trong scripts/sql-prepare-allowlist.json → in file:dòng + thông điệp
@@ -22,7 +23,7 @@
 
 import * as dotenv from 'dotenv'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
+import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Client } from 'pg'
 import { findAllowlistEntry, parseAllowlist, type AllowlistEntry } from './lib/sqlAllowlist.js'
@@ -33,6 +34,7 @@ import {
   PREPARABLE_KEYWORDS,
   TRANSACTION_KEYWORDS,
   type ExtractedSql,
+  type LoadedModule,
   type SkippedSql,
 } from './lib/sqlExtract.js'
 
@@ -43,12 +45,34 @@ const SCAN_ROOTS = ['apps/server/src', 'packages']
 const SKIP_DIRS: ReadonlySet<string> = new Set(['node_modules', 'dist', '__tests__', '__mocks__'])
 const ALLOWLIST_FILE = join(ROOT, 'scripts', 'sql-prepare-allowlist.json')
 const MIGRATIONS_DIR = join(ROOT, 'postgres', 'migrations')
-// Tự bảo vệ khỏi "xanh rỗng": lúc thêm cổng (2026-10-08) trích được ~500 câu. Nếu một ngày số
-// câu tụt dưới sàn này, gần như chắc chắn bộ trích hỏng (đổi cấu trúc thư mục, đổi tên hàm gọi
-// CSDL…) chứ không phải mã server đột nhiên hết SQL — báo đỏ để người sửa nhìn lại.
-const MIN_EXPECTED_QUERIES = 300
+// Tự bảo vệ khỏi "xanh rỗng": lúc thêm cổng (2026-10-08) trích được ~490 câu; changelog 0536 (mô
+// phỏng đường chạy + hằng import) nâng lên 591 câu. Nếu một ngày số câu tụt dưới sàn này, gần như
+// chắc chắn bộ trích hỏng (đổi cấu trúc thư mục, đổi tên hàm gọi CSDL, phần mô phỏng đường chạy
+// gãy — riêng nó đóng góp ~100 câu…) chứ không phải mã server đột nhiên hết SQL — báo đỏ để người
+// sửa nhìn lại. Sàn chừa ~7% cho việc gỡ tính năng hợp lệ.
+const MIN_EXPECTED_QUERIES = 550
 // Cắt câu SQL khi in báo lỗi — đủ để nhận ra câu, không làm ngập log CI.
 const SQL_PREVIEW_CHARS = 220
+
+const toRepoPath = (full: string): string => relative(ROOT, full).split(sep).join('/')
+
+/**
+ * Phân giải import cho bộ trích (hằng import từ file khác): `./x.js` → `x.ts`, và
+ * `@dhcb/<gói>/<file>` → `packages/<gói>/<file>.ts` (khớp `paths` của tsconfig.base.json).
+ */
+function loadModule(fromFile: string, specifier: string): LoadedModule | undefined {
+  let base: string | undefined
+  if (specifier.startsWith('.')) base = join(ROOT, dirname(fromFile), specifier)
+  else if (specifier.startsWith('@dhcb/')) base = join(ROOT, 'packages', specifier.slice(6))
+  // Chỉ đọc file TRONG repo.
+  if (!base || toRepoPath(base).startsWith('..')) return undefined
+  const stem = base.replace(/\.js$/, '')
+  for (const candidate of [`${stem}.ts`, `${stem}.tsx`, join(stem, 'index.ts')]) {
+    if (existsSync(candidate))
+      return { file: toRepoPath(candidate), text: readFileSync(candidate, 'utf8') }
+  }
+  return undefined
+}
 
 function isSourceFile(name: string): boolean {
   return /\.tsx?$/.test(name) && !/\.(test|spec)\.tsx?$/.test(name) && !name.endsWith('.d.ts')
@@ -131,8 +155,8 @@ async function main(): Promise<number> {
   for (const scanRoot of SCAN_ROOTS) {
     for (const full of listSourceFiles(join(ROOT, scanRoot))) {
       fileCount++
-      const rel = relative(ROOT, full).split(sep).join('/')
-      const res = extractSqlFromSource(rel, readFileSync(full, 'utf8'))
+      const rel = toRepoPath(full)
+      const res = extractSqlFromSource(rel, readFileSync(full, 'utf8'), { loadModule })
       queries.push(...res.queries)
       skipped.push(...res.skipped)
     }
