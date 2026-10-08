@@ -172,7 +172,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
-- **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Engine Git (#1243) và B1 nội dung/rubric `p3-u11-l1` (#1258) đã merge; B2 hoạt họa Git chờ chuyên gia chốt storyboard. Hai lỗi nội dung cũ FR-3a (convolution "bất biến" → tương đương tịnh tiến ở `cv1-u2-l1`/`cv2-u1-l4`/`mlds-u3-l1`; `llmagent-u1-l1` bỏ hứa "BPE") đã sửa ở changelog `0511`, nhánh `claude/ai-engineering-tiep`, chờ PR. Ba hoạt họa thí điểm còn lại (convolution, RAG, agent) chờ reviewer nội dung; bài mới cần lát contract chốt ID. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
+- **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Engine Git (#1243) và B1 nội dung/rubric `p3-u11-l1` (#1258) đã merge; B2 hoạt họa Git chờ chuyên gia chốt storyboard. Hai lỗi nội dung cũ FR-3a (convolution "bất biến" → tương đương tịnh tiến ở `cv1-u2-l1`/`cv2-u1-l4`/`mlds-u3-l1`; `llmagent-u1-l1` bỏ hứa "BPE") đã sửa ở changelog `0511`, đã merge (#1261). Ba hoạt họa thí điểm còn lại (convolution, RAG, agent) chờ reviewer nội dung; bài mới cần lát contract chốt ID. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
 
 - **[2026-10-06 — cập nhật hiện trạng] `main` ở #1257.** Đã merge sau mục dưới:
   U5 #1244 · U9a #1248 · U9b #1245 · minor 1–14 #1246 · Git ignore + chấm trạng thái #1243 ·
@@ -530,7 +530,7 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
   2. Ba hướng đang RỖNG HOÀN TOÀN, ưu tiên cao nhất vì học viên chọn vào gặp mảng trắng: `game`
      → `embedded` → `desktop`, mỗi hướng 2 PR (S1+S2 rồi S3+S4). (`embedded-s1`/`s2` đã trả,
      `docs/changelog/0397-2026-09-21-bai-hoc-embedded-s1-s2.md`; còn `embedded-s3`/`s4`.)
-  3. `mobile` S2–S4, ~~`algo` S3–S4~~ (XONG 2026-09-21, `p6-u226…u233`, PR #1094 —
+  3. ~~`mobile` S2–S4~~ (XONG 2026-09-21, `docs/changelog/0397-2026-09-21-bai-hoc-mobile-s2-s4.md`), ~~`algo` S3–S4~~ (XONG 2026-09-21, `p6-u226…u233`, PR #1094 —
      `docs/changelog/0397-2026-09-21-bai-hoc-that-algo-s3-s4.md`; hướng `algo` nay đủ S1–S4),
      ~~`systems` S3–S4~~ — mỗi hướng 1 PR.
      **`systems` S3–S4 ĐÃ XONG 2026-09-21** (`p6-u234…u241`, 8 unit / 16 bài — hướng Hệ thống
@@ -552,7 +552,7 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
     tả. Trước đây không có cờ trạng thái
     (`status/draft/comingSoon`) nào trong code để giao diện báo trước, chỉ suy ra được gián tiếp
     qua mảng rỗng.
-  - **mobile chỉ có S1** (S2–S4 = 0 unit).
+  - ~~**mobile chỉ có S1**~~ — **ĐÃ TRẢ 2026-09-21** (`p6-u214…u225`, 24 bài, `docs/changelog/0397-2026-09-21-bai-hoc-mobile-s2-s4.md`).
   - **systems, algo chỉ có S1–S2** (thiếu S3–S4).
   - ~~**security thiếu S3–S4**~~ — **S4 ĐÃ TRẢ 2026-09-21** (`docs/changelog/0398-*.md`):
     `security-s4` = `p6-u206…u209`, 8 bài, cổng `securityS4Lessons.test.ts` (chặng PHÒNG THỦ, có
@@ -1193,8 +1193,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   nhận vị trí của thành viên còn lại tới khi socket gửi sự kiện kế tiếp (fan-out ở
   `packages/core-location/wsLocation.ts` không kiểm lại quyền) — cần đẩy sự kiện thu hồi khi rời
   chuyến. (2) ✅ **ĐÃ GỠ ở changelog `0513`** — mô tả cũ: **`/ws/voice-companion` và `/ws/co-learning-room` không có client nào gọi** — đã
-  siết Origin/kích thước, chủ dự án quyết gỡ hay giữ. (3) **`appleboy/ssh-action@v1.2.5`** (cầm
-  SSH key VPS) ghim theo tag, không theo commit SHA như mọi action khác trong repo. (4) Chưa quét
+  siết Origin/kích thước, chủ dự án quyết gỡ hay giữ. (3) ✅ **ĐÃ GHIM SHA ở changelog `0521`** — `appleboy/ssh-action` (cầm
+  SSH key VPS) nay ghim commit SHA; cổng `scripts/ci-workflow-policy.test.ts` chặn mọi action ngoài `actions/` ghim theo tag. (4) Chưa quét
   được trang production từ phiên AI (proxy chặn domain) — bài thử "gọi thẳng IP gốc với
   `CF-Connecting-IP` giả" nên chạy tay sau khi deploy, cách làm ở `docs/cloudflare-setup.md`.
 
