@@ -14,7 +14,7 @@
 // từng bước: ép nội dung sẽ biến test thành vật cản mỗi lần thêm một bước kiểm mới.
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const CI_YML = readFileSync(join(process.cwd(), '.github', 'workflows', 'ci.yml'), 'utf-8')
@@ -101,5 +101,36 @@ describe('.github/workflows/ci.yml — quy ước CI', () => {
   // trên đường tới hạn (đo ở run PR #713).
   it('chỉ upload báo cáo Playwright khi mảnh đó ĐỎ', () => {
     expect(jobs.get('e2e-shard') ?? '').toContain('if: failure()')
+  })
+})
+
+// Luật 4 (changelog 0521) — action của bên thứ ba (ngoài tổ chức `actions/` của GitHub) phải ghim
+// theo commit SHA 40 ký tự, không theo tag. Tag là con trỏ dời được: chủ action (hoặc kẻ chiếm
+// tài khoản họ) dời tag sang commit độc là mọi workflow ghim tag chạy mã đó, kèm secret đang cấp
+// — `appleboy/ssh-action` cầm cả SSH key VPS. Dependabot (`github-actions`) vẫn cập nhật SHA và
+// chú thích `# vX.Y.Z` đi kèm, nên ghim SHA không làm mất cập nhật.
+describe('.github/workflows/*.yml — action bên thứ ba ghim theo SHA', () => {
+  const dir = join(process.cwd(), '.github', 'workflows')
+  const uses = readdirSync(dir)
+    .filter((f) => /\.ya?ml$/.test(f))
+    .flatMap((f) =>
+      readFileSync(join(dir, f), 'utf-8')
+        .split('\n')
+        .map((line) => /^\s*(?:-\s*)?uses:\s*([^\s#]+)/.exec(line)?.[1])
+        .filter((ref): ref is string => !!ref)
+        .map((ref) => ({ file: f, ref })),
+    )
+
+  it('quét được `uses:` (tự bảo vệ khỏi test rỗng luôn xanh)', () => {
+    expect(uses.length).toBeGreaterThan(5)
+    expect(uses.some((u) => !u.ref.startsWith('actions/'))).toBe(true)
+  })
+
+  it('mọi action ngoài `actions/` dùng `@<SHA 40 ký tự>`', () => {
+    const unpinned = uses
+      .filter((u) => !u.ref.startsWith('actions/') && !u.ref.startsWith('./'))
+      .filter((u) => !/@[0-9a-f]{40}$/.test(u.ref))
+      .map((u) => `${u.file}: ${u.ref}`)
+    expect(unpinned).toEqual([])
   })
 })
