@@ -7,7 +7,11 @@
 // Exit 0: all drills pass
 // Exit 1: any drill fails
 
-import { exportPersonData, erasePersonData } from '@dhcb/core-personal/personErasureService'
+import {
+  exportPersonData,
+  erasePersonData,
+  PERSON_TABLES,
+} from '@dhcb/core-personal/personErasureService'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 
 const PERSON_ID = '00000000-0000-0000-0000-000000000042'
@@ -32,8 +36,23 @@ function fail(name: string, detail: string) {
 
 // ─── Mock pool helpers ────────────────────────────────────────────────────────
 
-function makeFullDataPool(personId: string) {
+type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }>
+
+/**
+ * Từ 2026-10-08 (changelog 0527) cả export lẫn erase chạy trong MỘT transaction qua
+ * `pool.connect()` — gắn `connect` dùng chung hàm query giả cho mọi pool giả bên dưới.
+ */
+function withConnect<T extends { query: QueryFn }>(
+  pool: T,
+): T & { connect: () => Promise<unknown> } {
   return {
+    ...pool,
+    connect: () => Promise.resolve({ query: pool.query, release: () => {} }),
+  }
+}
+
+function makeFullDataPool(personId: string) {
+  return withConnect({
     query: (sql: string, params?: unknown[]) => {
       const s = sql.toLowerCase()
       if (s.includes('personal.persons') && s.includes('select') && !s.includes('personal_facts')) {
@@ -122,9 +141,8 @@ function makeFullDataPool(personId: string) {
           rows: [
             {
               id: 'n1',
-              node_type: 'Goal',
+              type: 'Goal',
               label: 'Learn English',
-              status: 'active',
               created_at: '2024-01-01T00:00:00Z',
             },
           ],
@@ -135,7 +153,7 @@ function makeFullDataPool(personId: string) {
       if (s.includes('action_receipts')) return Promise.resolve({ rows: [], rowCount: 0 })
       return Promise.resolve({ rows: [], rowCount: 0 })
     },
-  }
+  })
 }
 
 function makeErasePool(personId: string) {
@@ -145,6 +163,9 @@ function makeErasePool(personId: string) {
       const s = sql.toLowerCase()
       if (s.includes('begin') || s.includes('commit'))
         return Promise.resolve({ rows: [], rowCount: 0 })
+      // Kiểm Person tồn tại giờ nằm TRONG transaction (`for update`).
+      if (s.includes('for update'))
+        return Promise.resolve({ rows: [{ id: personId }], rowCount: 1 })
       if (s.includes('person_erasure_log')) {
         return Promise.resolve({ rows: [{ id: 'erasure-log-id-1' }], rowCount: 1 })
       }
@@ -177,9 +198,9 @@ function makeErasePool(personId: string) {
 }
 
 function makeEmptyPool() {
-  return {
+  return withConnect({
     query: () => Promise.resolve({ rows: [], rowCount: 0 }),
-  }
+  })
 }
 
 function makeNotFoundPool() {
@@ -205,18 +226,7 @@ async function drill_exportCompleteness() {
   const pool = makeFullDataPool(PERSON_ID)
   const data = await exportPersonData(pool as never, PERSON_ID)
 
-  const schemas = [
-    'personalFacts',
-    'memories',
-    'consentGrants',
-    'personalPolicies',
-    'lifeGraphNodes',
-    'lifeGraphEdges',
-    'automationGrants',
-    'actionReceipts',
-    'decisionRecords',
-    'workRecords',
-  ] as const
+  const schemas = PERSON_TABLES.map((s) => s.exportKey)
 
   const missing = schemas.filter((s) => !Array.isArray(data[s]))
   if (missing.length > 0) {
@@ -254,29 +264,24 @@ async function drill_exportHasData() {
   )
 }
 
-// ─── Drill 3: Export tolerates missing domain schemas ────────────────────────
+// ─── Drill 3: Export fails loudly instead of returning a partial export ──────
+// Trước 2026-10-08 drill này đòi điều NGƯỢC LẠI ("lỗi miền bị bỏ qua, mảng rỗng") — chính là
+// lỗi im lặng làm bản xuất thiếu dữ liệu mà không ai biết (changelog 0527).
 
-async function drill_exportBestEffortDomains() {
-  const pool = {
+async function drill_exportFailsLoudly() {
+  const pool = withConnect({
     query: (sql: string) => {
       if (sql.toLowerCase().includes('worklife.')) {
         return Promise.reject(new Error('schema does not exist'))
       }
       return Promise.resolve({ rows: [], rowCount: 0 })
     },
-  }
+  })
   try {
-    const data = await exportPersonData(pool as never, PERSON_ID)
-    if (!Array.isArray(data.workRecords)) {
-      fail('Export Best-Effort Domains', 'workRecords should default to [] on schema error')
-      return
-    }
-    pass(
-      'Export Best-Effort Domains',
-      'Domain schema errors gracefully ignored, arrays default to []',
-    )
-  } catch (err) {
-    fail('Export Best-Effort Domains', `Should not throw on domain schema errors: ${String(err)}`)
+    await exportPersonData(pool as never, PERSON_ID)
+    fail('Export Fails Loudly', 'A failing table must make the export throw, not return []')
+  } catch {
+    pass('Export Fails Loudly', 'Table error surfaces as an error — no silent partial export')
   }
 }
 
@@ -341,7 +346,7 @@ async function main() {
 
   await drill_exportCompleteness()
   await drill_exportHasData()
-  await drill_exportBestEffortDomains()
+  await drill_exportFailsLoudly()
   await drill_eraseReturnsLogId()
   await drill_eraseNotFoundPerson()
   await drill_exportEmptyPool()

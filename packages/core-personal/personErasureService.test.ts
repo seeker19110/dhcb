@@ -1,373 +1,205 @@
-// packages/core-personal/personErasureService.test.ts — V2-19 Privacy Drills.
-// Tests for exportPersonData and erasePersonData.
+// packages/core-personal/personErasureService.test.ts — V2-19 Privacy Drills (unit, mock pg).
+//
+// Mock `pg` KHÔNG bắt được lỗi sai tên cột (lỗi gốc của changelog 0527) — phần đó do
+// `personErasureService.integration.test.ts` canh trên Postgres thật. Ở đây canh LOGIC:
+// transaction, thứ tự xoá, không nuốt lỗi, đếm bản ghi, nhật ký xoá.
 
 import { describe, it, expect, vi } from 'vitest'
-import { exportPersonData, erasePersonData } from './personErasureService.js'
+import { exportPersonData, erasePersonData, PERSON_TABLES } from './personErasureService.js'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 
-// ─── Mock pool builder ────────────────────────────────────────────────────────
+const PERSON_ID = '00000000-0000-0000-0000-000000000001'
 
-// Pool that simulates full database with a person + some records
-function makeFullPool(personId: string) {
-  return {
-    query: vi.fn((sql: string, params?: unknown[]) => {
-      const s = sql.toLowerCase()
+type QueryResult = { rows: unknown[]; rowCount: number | null }
+type Responder = (sql: string, params?: unknown[]) => Promise<QueryResult> | QueryResult
 
-      // Person check
-      if (s.includes('personal.persons') && s.includes('select')) {
-        if (s.includes('personal_facts')) {
-          return Promise.resolve({
-            rows: [
-              {
-                id: 'f1',
-                namespace: 'preferences',
-                key: 'lang',
-                value: 'vi',
-                origin: 'user_declared',
-                confidence: '0.95',
-                sensitivity: 'personal',
-                is_current: true,
-                created_at: '2024-01-01T00:00:00Z',
-              },
-            ],
-            rowCount: 1,
-          })
-        }
-        if (params?.[0] === personId) {
-          return Promise.resolve({
-            rows: [
-              {
-                id: personId,
-                user_id: 'u1',
-                display_name: 'Test',
-                created_at: '2024-01-01T00:00:00Z',
-                updated_at: '2024-01-01T00:00:00Z',
-              },
-            ],
-            rowCount: 1,
-          })
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      }
-
-      // Specific selects for export
-      if (s.includes('personal_facts'))
-        return Promise.resolve({
-          rows: [
-            {
-              id: 'f1',
-              namespace: 'pref',
-              key: 'lang',
-              value: 'vi',
-              origin: 'user_declared',
-              confidence: '0.9',
-              sensitivity: 'personal',
-              is_current: true,
-              created_at: '2024-01-01T00:00:00Z',
-            },
-          ],
-          rowCount: 1,
-        })
-      if (s.includes('memory_records'))
-        return Promise.resolve({
-          rows: [
-            {
-              id: 'm1',
-              namespace: 'semantic',
-              content: 'test',
-              provenance: 'user_declared',
-              sensitivity: 'personal',
-              status: 'active',
-              created_at: '2024-01-01T00:00:00Z',
-            },
-          ],
-          rowCount: 1,
-        })
-      if (s.includes('consent_grants'))
-        return Promise.resolve({
-          rows: [
-            {
-              id: 'cg1',
-              scope: 'life_graph',
-              purpose: 'companion',
-              version: 1,
-              status: 'active',
-              granted_at: '2024-01-01T00:00:00Z',
-              expires_at: null,
-              revoked_at: null,
-            },
-          ],
-          rowCount: 1,
-        })
-      if (s.includes('personal_policies'))
-        return Promise.resolve({
-          rows: [
-            {
-              id: 'pp1',
-              subject: 'companion',
-              action: 'read',
-              resource_scope: '*',
-              authority: 'READ',
-              purpose: 'tutor',
-              created_at: '2024-01-01T00:00:00Z',
-              revoked_at: null,
-            },
-          ],
-          rowCount: 1,
-        })
-      if (s.includes('life_graph_nodes'))
-        return Promise.resolve({
-          rows: [
-            {
-              id: 'n1',
-              node_type: 'Goal',
-              label: 'Learn English',
-              status: 'active',
-              created_at: '2024-01-01T00:00:00Z',
-            },
-          ],
-          rowCount: 1,
-        })
-      if (s.includes('life_graph_edges')) return Promise.resolve({ rows: [], rowCount: 0 })
-      if (s.includes('automation_grants')) return Promise.resolve({ rows: [], rowCount: 0 })
-      if (s.includes('action_receipts')) return Promise.resolve({ rows: [], rowCount: 0 })
-      if (s.includes('decision_records')) return Promise.resolve({ rows: [], rowCount: 0 })
-      if (s.includes('worklife.projects')) return Promise.resolve({ rows: [], rowCount: 0 })
-
-      return Promise.resolve({ rows: [], rowCount: 0 })
-    }),
-  }
-}
-
-// ─── Erase pool mock ──────────────────────────────────────────────────────────
-
-function makeErasePool(personId: string, opts: { personExists?: boolean; txFail?: boolean } = {}) {
-  const { personExists = true, txFail = false } = opts
-
-  const mockClient = {
-    query: vi.fn((sql: string) => {
-      const s = sql.toLowerCase()
-      if (txFail && s.includes('delete') && !s.includes('person_erasure_log'))
-        return Promise.reject(new Error('DB error'))
-      if (s.includes('person_erasure_log'))
-        return Promise.resolve({ rows: [{ id: 'erasure-log-1' }], rowCount: 1 })
-      if (s.includes('begin') || s.includes('commit') || s.includes('rollback'))
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      if (s.includes('delete')) return Promise.resolve({ rows: [], rowCount: 1 })
-      return Promise.resolve({ rows: [], rowCount: 0 })
+/** Pool giả: mọi câu đi qua client trong transaction; ghi lại thứ tự câu lệnh. */
+function makePool(respond: Responder) {
+  const calls: { sql: string; params?: unknown[] }[] = []
+  const client = {
+    query: vi.fn(async (sql: string, params?: unknown[]) => {
+      calls.push({ sql: sql.replace(/\s+/g, ' ').trim().toLowerCase(), params })
+      return respond(sql.toLowerCase(), params)
     }),
     release: vi.fn(),
   }
+  const pool = {
+    query: vi.fn(() => Promise.reject(new Error('không được gọi pool.query ngoài transaction'))),
+    connect: vi.fn().mockResolvedValue(client),
+  }
+  return { pool, client, calls }
+}
 
+const empty: QueryResult = { rows: [], rowCount: 0 }
+
+function personRow() {
   return {
-    query: vi.fn((sql: string, params?: unknown[]) => {
-      const s = sql.toLowerCase()
-      if (s.includes('select') && s.includes('personal.persons')) {
-        if (personExists && params?.[0] === personId) {
-          return Promise.resolve({ rows: [{ id: personId }], rowCount: 1 })
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      }
-      return Promise.resolve({ rows: [], rowCount: 0 })
-    }),
-    connect: vi.fn().mockResolvedValue(mockClient),
+    id: PERSON_ID,
+    user_id: 'u1',
+    display_name: 'Test',
+    created_at: new Date('2024-01-01T00:00:00Z'),
+    updated_at: new Date('2024-01-01T00:00:00Z'),
   }
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
-describe('exportPersonData', () => {
-  const personId = '00000000-0000-0000-0000-000000000001'
-
-  it('returns structured export with all schema keys', async () => {
-    const pool = makeFullPool(personId)
-    const result = await exportPersonData(pool as never, personId)
-
-    expect(result.personId).toBe(personId)
-    expect(result.exportedAt).toBeDefined()
-    expect(Array.isArray(result.personalFacts)).toBe(true)
-    expect(Array.isArray(result.memories)).toBe(true)
-    expect(Array.isArray(result.consentGrants)).toBe(true)
-    expect(Array.isArray(result.personalPolicies)).toBe(true)
-    expect(Array.isArray(result.lifeGraphNodes)).toBe(true)
-    expect(Array.isArray(result.lifeGraphEdges)).toBe(true)
-    expect(Array.isArray(result.automationGrants)).toBe(true)
-    expect(Array.isArray(result.actionReceipts)).toBe(true)
-    expect(Array.isArray(result.decisionRecords)).toBe(true)
-    expect(Array.isArray(result.workRecords)).toBe(true)
+describe('PERSON_TABLES', () => {
+  it('mỗi bảng và mỗi khoá xuất là duy nhất', () => {
+    const tables = PERSON_TABLES.map((s) => s.table)
+    const keys = PERSON_TABLES.map((s) => s.exportKey)
+    expect(new Set(tables).size).toBe(tables.length)
+    expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('returns exportedAt as ISO 8601 string', async () => {
-    const pool = makeFullPool(personId)
-    const result = await exportPersonData(pool as never, personId)
-    expect(() => new Date(result.exportedAt)).not.toThrow()
+  it('không còn tham chiếu 5 cột không tồn tại (lỗi gốc 0527)', () => {
+    const cols = PERSON_TABLES.flatMap((s) => [...s.columns, s.orderBy])
+    for (const bad of ['node_type', 'source_node_id', 'target_node_id', 'edge_type', 'decided_at'])
+      expect(cols.join(' ')).not.toContain(bad)
+    const receipts = PERSON_TABLES.find((s) => s.table === 'personal.action_receipts')
+    expect(receipts?.columns).not.toContain('executed_at')
+    const decisions = PERSON_TABLES.find((s) => s.table === 'personal.decision_records')
+    expect(decisions?.columns).not.toContain('title')
+  })
+
+  it('thứ tự xoá: bảng con đứng trước bảng cha (khoá ngoại không cascade)', () => {
+    const idx = (t: string) => PERSON_TABLES.findIndex((s) => s.table === t)
+    expect(idx('personal.life_graph_edges')).toBeLessThan(idx('personal.life_graph_nodes'))
+    expect(idx('personal.life_goals')).toBeLessThan(idx('personal.life_graph_nodes'))
+    expect(idx('personal.tool_execution_audit_log')).toBeLessThan(idx('personal.proposed_actions'))
+    expect(idx('personal.action_receipts')).toBeLessThan(idx('personal.automation_grants'))
+    expect(idx('worklife.tasks')).toBeLessThan(idx('worklife.projects'))
+    expect(idx('worklife.documents')).toBeLessThan(idx('worklife.projects'))
+  })
+})
+
+describe('exportPersonData', () => {
+  it('đọc trong MỘT transaction repeatable read + read only, rồi commit', async () => {
+    const { pool, client, calls } = makePool(() => empty)
+    await exportPersonData(pool as never, PERSON_ID)
+    expect(calls[0]?.sql).toBe('begin')
+    expect(calls[1]?.sql).toBe('set transaction isolation level repeatable read, read only')
+    expect(calls.at(-1)?.sql).toBe('commit')
+    expect(client.release).toHaveBeenCalledOnce()
+    expect(pool.query).not.toHaveBeenCalled()
+  })
+
+  it('trả đủ mọi khoá xuất, mỗi câu lọc theo đúng personId', async () => {
+    const { pool, calls } = makePool((sql) => {
+      if (sql.includes('from personal.persons')) return { rows: [personRow()], rowCount: 1 }
+      if (sql.includes('from personal.memory_records '))
+        return { rows: [{ id: 'm1', content: 'test' }], rowCount: 1 }
+      return empty
+    })
+    const result = await exportPersonData(pool as never, PERSON_ID)
+
+    expect(result.personId).toBe(PERSON_ID)
+    expect(result.person?.id).toBe(PERSON_ID)
+    for (const spec of PERSON_TABLES) expect(Array.isArray(result[spec.exportKey])).toBe(true)
+    expect(result.memories).toEqual([{ id: 'm1', content: 'test' }])
+    // Mọi câu select (trừ SET/BEGIN/COMMIT) nhận đúng personId làm $1.
+    const selects = calls.filter((c) => c.sql.startsWith('select'))
+    expect(selects).toHaveLength(PERSON_TABLES.length + 1)
+    for (const c of selects) expect(c.params).toEqual([PERSON_ID])
     expect(new Date(result.exportedAt).toISOString()).toBe(result.exportedAt)
   })
 
-  it('handles person not found gracefully (person = null)', async () => {
-    const pool = {
-      query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    }
-    const result = await exportPersonData(pool as never, personId)
+  it('không có Person → person = null, các mảng rỗng', async () => {
+    const { pool } = makePool(() => empty)
+    const result = await exportPersonData(pool as never, PERSON_ID)
     expect(result.person).toBeNull()
     expect(result.personalFacts).toEqual([])
   })
 
-  it('continues export even if domain schemas throw (best-effort)', async () => {
-    const pool = {
-      query: vi.fn((sql: string) => {
-        if (sql.includes('worklife.')) {
-          return Promise.reject(new Error('schema does not exist'))
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      }),
-    }
-    const result = await exportPersonData(pool as never, personId)
-    // Should not throw; domain arrays default to empty
-    expect(Array.isArray(result.workRecords)).toBe(true)
+  it('một bảng lỗi → NÉM lỗi + rollback (không trả bản xuất thiếu dữ liệu)', async () => {
+    const { pool, calls } = makePool((sql) => {
+      if (sql.includes('from personal.decision_records'))
+        throw new Error('column "title" does not exist')
+      return empty
+    })
+    await expect(exportPersonData(pool as never, PERSON_ID)).rejects.toThrow('does not exist')
+    expect(calls.at(-1)?.sql).toBe('rollback')
+  })
+
+  it('bảng miền worklife lỗi cũng NÉM lỗi (đã bỏ nhánh best-effort nuốt lỗi)', async () => {
+    const { pool } = makePool((sql) => {
+      if (sql.includes('worklife.')) throw new Error('relation does not exist')
+      return empty
+    })
+    await expect(exportPersonData(pool as never, PERSON_ID)).rejects.toThrow()
   })
 })
 
 describe('erasePersonData', () => {
-  const personId = '00000000-0000-0000-0000-000000000001'
+  function erasePool(opts: { exists?: boolean; failOn?: string; logRow?: boolean } = {}) {
+    const { exists = true, failOn, logRow = true } = opts
+    return makePool((sql) => {
+      if (sql.includes('for update'))
+        return exists ? { rows: [{ id: PERSON_ID }], rowCount: 1 } : empty
+      if (failOn && sql.includes(failOn)) throw new Error('DB error')
+      if (sql.includes('person_erasure_log'))
+        return logRow ? { rows: [{ id: 'erasure-log-1' }], rowCount: 1 } : empty
+      if (sql.startsWith('delete')) return { rows: [], rowCount: 2 }
+      return empty
+    })
+  }
 
-  it('throws NotFoundError if person does not exist', async () => {
-    const pool = makeErasePool(personId, { personExists: false })
-    await expect(erasePersonData(pool as never, personId, 'self')).rejects.toThrow(NotFoundError)
+  it('Person không tồn tại → NotFoundError, rollback, không xoá gì', async () => {
+    const { pool, calls } = erasePool({ exists: false })
+    await expect(erasePersonData(pool as never, PERSON_ID, 'self')).rejects.toThrow(NotFoundError)
+    expect(calls.some((c) => c.sql.startsWith('delete'))).toBe(false)
+    expect(calls.at(-1)?.sql).toBe('rollback')
   })
 
-  it('returns erasure result with log ID and schema list', async () => {
-    const pool = makeErasePool(personId, { personExists: true })
-    const result = await erasePersonData(pool as never, personId, 'self')
+  it('khoá dòng Person, xoá mọi bảng theo đúng thứ tự, persons cuối cùng, rồi ghi nhật ký', async () => {
+    const { pool, calls } = erasePool()
+    const result = await erasePersonData(pool as never, PERSON_ID, 'self')
 
-    expect(result.personId).toBe(personId)
-    expect(result.erasureLogId).toBeDefined()
-    expect(Array.isArray(result.schemasCleared)).toBe(true)
-    expect(typeof result.recordsDeletedCount).toBe('number')
+    expect(calls[1]?.sql).toContain('for update')
+    const deletes = calls.filter((c) => c.sql.startsWith('delete'))
+    expect(deletes.map((c) => c.sql)).toEqual([
+      ...PERSON_TABLES.map((s) => `delete from ${s.table} where person_id = $1`),
+      'delete from personal.persons where id = $1',
+    ])
+    for (const d of deletes) expect(d.params).toEqual([PERSON_ID])
+
+    const expectedTables = [...PERSON_TABLES.map((s) => s.table), 'personal.persons']
+    expect(result.schemasCleared).toEqual(expectedTables)
+    expect(result.recordsDeletedCount).toBe(expectedTables.length * 2)
+    expect(result.erasureLogId).toBe('erasure-log-1')
+
+    const log = calls.find((c) => c.sql.includes('person_erasure_log'))
+    expect(log?.params).toEqual([PERSON_ID, 'self', expectedTables, expectedTables.length * 2])
+    expect(calls.at(-1)?.sql).toBe('commit')
   })
 
-  it('returns schemasCleared as non-empty array after erase', async () => {
-    const pool = makeErasePool(personId, { personExists: true })
-    const result = await erasePersonData(pool as never, personId, 'self')
-    // At least the person record itself should be cleared
-    expect(result.schemasCleared.length).toBeGreaterThanOrEqual(0)
+  it('ghi đúng erasedBy = "admin:<id>"', async () => {
+    const { pool, calls } = erasePool()
+    await erasePersonData(pool as never, PERSON_ID, 'admin:admin-123')
+    const log = calls.find((c) => c.sql.includes('person_erasure_log'))
+    expect(log?.params?.[1]).toBe('admin:admin-123')
   })
 
-  it('rolls back if a delete fails (atomic erase)', async () => {
-    const pool = makeErasePool(personId, { personExists: true, txFail: true })
-    await expect(erasePersonData(pool as never, personId, 'self')).rejects.toThrow()
-  })
-
-  it('records erasedBy = "self" in erasure log', async () => {
-    const pool = makeErasePool(personId, { personExists: true })
-    // Should not throw and erasedBy is passed correctly (tested via integration)
-    const result = await erasePersonData(pool as never, personId, 'self')
-    expect(result.erasureLogId).toBeDefined()
-  })
-
-  it('records erasedBy = "admin:<id>" in erasure log', async () => {
-    const pool = makeErasePool(personId, { personExists: true })
-    const result = await erasePersonData(pool as never, personId, 'admin:admin-123')
-    expect(result.erasureLogId).toBeDefined()
-  })
-
-  it('handles domain schema deletes that throw (catch() => 0 paths)', async () => {
-    // Domain schema tables (chỉ còn trụ work) throw — should still succeed
-    // This covers the .catch(() => 0) branches in erasePersonData
-    const mockClient = {
-      query: vi.fn((sql: string) => {
-        const s = sql.toLowerCase()
-        if (s.includes('person_erasure_log'))
-          return Promise.resolve({ rows: [{ id: 'erasure-log-2' }], rowCount: 1 })
-        if (s.includes('begin') || s.includes('commit') || s.includes('rollback'))
-          return Promise.resolve({ rows: [], rowCount: 0 })
-        if (s.includes('worklife.')) return Promise.reject(new Error('schema does not exist'))
-        return Promise.resolve({ rows: [], rowCount: 1 })
-      }),
-      release: vi.fn(),
+  it('một câu xoá lỗi (kể cả bảng worklife) → NÉM lỗi, rollback, không ghi nhật ký', async () => {
+    for (const failOn of ['personal.life_graph_edges', 'worklife.projects']) {
+      const { pool, calls } = erasePool({ failOn })
+      await expect(erasePersonData(pool as never, PERSON_ID, 'self')).rejects.toThrow('DB error')
+      expect(calls.some((c) => c.sql.includes('person_erasure_log'))).toBe(false)
+      expect(calls.at(-1)?.sql).toBe('rollback')
     }
-    const pool = {
-      query: vi.fn((sql: string, params?: unknown[]) => {
-        const s = sql.toLowerCase()
-        if (s.includes('select') && s.includes('personal.persons')) {
-          if (params?.[0] === personId)
-            return Promise.resolve({ rows: [{ id: personId }], rowCount: 1 })
-          return Promise.resolve({ rows: [], rowCount: 0 })
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      }),
-      connect: vi.fn().mockResolvedValue(mockClient),
-    }
-    const result = await erasePersonData(pool as never, personId, 'self')
-    expect(result.erasureLogId).toBe('erasure-log-2')
-    // Domain deletes threw → count = 0 from catch, not added to schemasCleared
-    const hasDomainSchema = result.schemasCleared.some((s) => s.startsWith('worklife.'))
-    expect(hasDomainSchema).toBe(false)
   })
 
-  it('handles deleteScoped with rowCount = 0 (count === 0 branch, indexOf === -1)', async () => {
-    // Some personal tables return rowCount: 0 — tests count === 0 path in deleteScoped
-    const mockClient = {
-      query: vi.fn((sql: string) => {
-        const s = sql.toLowerCase()
-        if (s.includes('person_erasure_log'))
-          return Promise.resolve({ rows: [{ id: 'erasure-log-3' }], rowCount: 1 })
-        if (s.includes('begin') || s.includes('commit') || s.includes('rollback'))
-          return Promise.resolve({ rows: [], rowCount: 0 })
-        // action_receipts returns 0 — tests count === 0 && indexOf === -1 → still pushed
-        if (s.includes('action_receipts')) return Promise.resolve({ rows: [], rowCount: 0 })
-        // Domain throws → catch path
-        if (s.includes('worklife.')) return Promise.reject(new Error('schema does not exist'))
-        return Promise.resolve({ rows: [], rowCount: 1 })
-      }),
-      release: vi.fn(),
-    }
-    const pool = {
-      query: vi.fn((sql: string, params?: unknown[]) => {
-        const s = sql.toLowerCase()
-        if (s.includes('select') && s.includes('personal.persons')) {
-          if (params?.[0] === personId)
-            return Promise.resolve({ rows: [{ id: personId }], rowCount: 1 })
-          return Promise.resolve({ rows: [], rowCount: 0 })
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      }),
-      connect: vi.fn().mockResolvedValue(mockClient),
-    }
-    const result = await erasePersonData(pool as never, personId, 'self')
-    expect(result.erasureLogId).toBe('erasure-log-3')
-    expect(typeof result.recordsDeletedCount).toBe('number')
+  it('rowCount = null được tính là 0', async () => {
+    const { pool } = makePool((sql) => {
+      if (sql.includes('for update')) return { rows: [{ id: PERSON_ID }], rowCount: 1 }
+      if (sql.includes('person_erasure_log')) return { rows: [{ id: 'log' }], rowCount: 1 }
+      return { rows: [], rowCount: null }
+    })
+    const result = await erasePersonData(pool as never, PERSON_ID, 'self')
+    expect(result.recordsDeletedCount).toBe(0)
   })
 
-  it('handles rowCount = null from DB (null-coalescing ?? 0 branch)', async () => {
-    // rowCount = null tests the `res.rowCount ?? 0` branch
-    const mockClient = {
-      query: vi.fn((sql: string) => {
-        const s = sql.toLowerCase()
-        if (s.includes('person_erasure_log'))
-          return Promise.resolve({ rows: [{ id: 'erasure-log-4' }], rowCount: 1 })
-        if (s.includes('begin') || s.includes('commit') || s.includes('rollback'))
-          return Promise.resolve({ rows: [], rowCount: 0 })
-        if (s.includes('worklife.')) return Promise.resolve({ rows: [], rowCount: null })
-        return Promise.resolve({ rows: [], rowCount: 1 })
-      }),
-      release: vi.fn(),
-    }
-    const pool = {
-      query: vi.fn((sql: string, params?: unknown[]) => {
-        const s = sql.toLowerCase()
-        if (s.includes('select') && s.includes('personal.persons')) {
-          if (params?.[0] === personId)
-            return Promise.resolve({ rows: [{ id: personId }], rowCount: 1 })
-          return Promise.resolve({ rows: [], rowCount: 0 })
-        }
-        return Promise.resolve({ rows: [], rowCount: 0 })
-      }),
-      connect: vi.fn().mockResolvedValue(mockClient),
-    }
-    const result = await erasePersonData(pool as never, personId, 'self')
-    expect(result.erasureLogId).toBe('erasure-log-4')
-    // rowCount null → coalesced to 0 → not counted toward total
-    expect(result.recordsDeletedCount).toBeGreaterThanOrEqual(0)
+  it('không ghi được nhật ký xoá → NÉM lỗi + rollback (không báo xoá thành công khi thiếu vết)', async () => {
+    const { pool, calls } = erasePool({ logRow: false })
+    await expect(erasePersonData(pool as never, PERSON_ID, 'self')).rejects.toThrow('nhật ký')
+    expect(calls.at(-1)?.sql).toBe('rollback')
   })
 })
