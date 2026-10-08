@@ -1,382 +1,505 @@
 // packages/core-personal/personErasureService.ts — V2-19 Privacy Export & Full Erasure.
 //
-// Implements two capabilities required by architecture Section 18 (Privacy Controls):
+// Hai năng lực theo kiến trúc mục 18 (Privacy Controls):
 //
-//   1. exportPersonData(pool, personId) — aggregates ALL personal data across all 12+ schemas
-//      into a structured export with provenance + sensitivity labels.
-//      Used for "What does Đồng Hành know about me?" and GDPR-style data portability.
+//   1. exportPersonData(pool, personId) — gom MỌI dữ liệu gắn với Person (mọi bảng có cột
+//      `person_id`) thành một bản xuất có cấu trúc: "Đồng Hành biết gì về tôi?" + mang dữ liệu đi.
 //
-//   2. erasePersonData(pool, personId, erasedBy) — atomic cascade delete across all schemas
-//      in a single transaction. Writes an erasure log entry. Returns counts per schema.
+//   2. erasePersonData(pool, personId, erasedBy) — xoá sạch mọi bảng đó trong MỘT transaction,
+//      ghi một dòng nhật ký xoá (append-only), trả số bản ghi đã xoá.
 //
-// INVARIANTS:
-//   - erasure is atomic: if any schema delete fails, the whole transaction rolls back.
-//   - erasure log is APPEND-ONLY: never deleted; is the audit trail for the action itself.
-//   - export is read-only and scoped to personId from the service call (not from client).
-//   - no AI output can trigger erasure — the endpoint requires auth + ownership verification.
+// BẤT BIẾN:
+//   - Danh sách bảng là MỘT nguồn duy nhất (`PERSON_TABLES`): xuất và xoá luôn phủ cùng một tập
+//     bảng, không thể "xuất có mà xoá sót" hay ngược lại.
+//   - Xoá là nguyên tử: một câu lỗi ⇒ rollback toàn bộ, không xoá dở dang.
+//   - KHÔNG nuốt lỗi: trước 2026-10-08 có `.catch(() => ({ rows: [] }))` ⇒ bản xuất có thể im lặng
+//     thiếu dữ liệu; lỗi thật giờ nổi lên thành 500 (changelog 0527).
+//   - Nhật ký xoá (`platform.person_erasure_log`) KHÔNG bao giờ bị xoá — nó là vết kiểm toán.
+//   - personId do nơi gọi suy từ token (`/api/persons`), không bao giờ nhận từ client.
+//
+// Phạm vi: dữ liệu Personal OS gắn với `personal.persons.id`. Dữ liệu tài khoản gắn thẳng với
+// `user_id` (tiến độ học, thanh toán, `personal.intake`, `personal.learner_intent`…) KHÔNG thuộc
+// thao tác này — xem changelog 0527 mục "Ngoài phạm vi".
 
-import type { Pool } from 'pg'
+import type { Pool, PoolClient } from 'pg'
 import { withTransaction } from '@dhcb/core-db/transaction'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 
-// ─── Export Types ─────────────────────────────────────────────────────────────
+// ─── Danh sách bảng (nguồn sự thật duy nhất) ─────────────────────────────────
 
-export interface PersonExportData {
+interface PersonTableSpec {
+  /** Tên trường trong JSON xuất. */
+  readonly exportKey: string
+  /** `schema.bảng` — hằng trong code, không bao giờ từ người dùng. */
+  readonly table: string
+  /** Cột xuất ra — liệt kê tường minh để một cột mới (vd bí mật mã hoá) không tự lọt ra ngoài. */
+  readonly columns: readonly string[]
+  readonly orderBy: string
+}
+
+/**
+ * Mọi bảng chứa dữ liệu theo `person_id` (đối chiếu schema thật sau migration 0087).
+ *
+ * THỨ TỰ = THỨ TỰ XOÁ: bảng con trước bảng cha, vì vài khoá ngoại KHÔNG cascade:
+ *   - life_graph_edges / life_goals → life_graph_nodes (khoá kép (id, person_id), không cascade)
+ *   - tool_execution_audit_log → proposed_actions (set null — xoá trước cho gọn)
+ *   - worklife.tasks / documents → worklife.projects (set null)
+ * `personal.memory_records_audit_log` KHÔNG có khoá ngoại nào ⇒ chỉ xoá được bằng câu tường minh.
+ */
+export const PERSON_TABLES = [
+  {
+    exportKey: 'actionReceipts',
+    table: 'personal.action_receipts',
+    columns: [
+      'id',
+      'grant_id',
+      'capability_id',
+      'action',
+      'idempotency_key',
+      'trigger_source',
+      'input_payload',
+      'execution_result',
+      'status',
+      'retry_count',
+      'duration_ms',
+      'error_message',
+      'compensation_result',
+      'created_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'automationGrants',
+    table: 'personal.automation_grants',
+    columns: [
+      'id',
+      'name',
+      'description',
+      'capability_id',
+      'action',
+      'target_domain',
+      'trigger_config',
+      'budget_config',
+      'compensation_config',
+      'status',
+      'version',
+      'review_at',
+      'expires_at',
+      'created_at',
+      'updated_at',
+      'revoked_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'toolExecutionAuditLog',
+    table: 'personal.tool_execution_audit_log',
+    columns: [
+      'id',
+      'tool_id',
+      'proposed_action_id',
+      'input_payload',
+      'output_payload',
+      'status',
+      'duration_ms',
+      'error_message',
+      'executed_at',
+    ],
+    orderBy: 'executed_at, id',
+  },
+  {
+    exportKey: 'proposedActions',
+    table: 'personal.proposed_actions',
+    columns: [
+      'id',
+      'capability_id',
+      'action',
+      'target_domain',
+      'payload',
+      'risk_level',
+      'status',
+      'version',
+      'created_at',
+      'resolved_at',
+      'resolved_by',
+      'execution_result',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'lifeGoalSources',
+    table: 'personal.life_goal_sources',
+    columns: ['goal_id', 'source_domain', 'source_type', 'source_id', 'created_at'],
+    orderBy: 'created_at, goal_id',
+  },
+  {
+    exportKey: 'lifeGoals',
+    table: 'personal.life_goals',
+    columns: [
+      'id',
+      'node_id',
+      'label',
+      'status',
+      'target_date',
+      'version',
+      'created_at',
+      'updated_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'lifeGraphEdges',
+    table: 'personal.life_graph_edges',
+    columns: [
+      'id',
+      'from_node_id',
+      'to_node_id',
+      'relation',
+      'provenance',
+      'version',
+      'created_at',
+      'archived_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'lifeGraphAuditLog',
+    table: 'personal.life_graph_audit_log',
+    columns: [
+      'id',
+      'entity_type',
+      'entity_id',
+      'action',
+      'before_data',
+      'after_data',
+      'created_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'lifeGraphNodes',
+    table: 'personal.life_graph_nodes',
+    columns: ['id', 'type', 'label', 'version', 'created_at', 'updated_at', 'archived_at'],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'memoryAuditLog',
+    table: 'personal.memory_records_audit_log',
+    columns: ['id', 'record_id', 'action', 'changes', 'changed_by', 'audited_at'],
+    orderBy: 'audited_at, id',
+  },
+  {
+    exportKey: 'memories',
+    table: 'personal.memory_records',
+    columns: [
+      'id',
+      'namespace',
+      'content',
+      'provenance',
+      'sensitivity',
+      'status',
+      'merged_from_id',
+      'version',
+      'created_at',
+      'updated_at',
+      'retain_until',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'personalFacts',
+    table: 'personal.personal_facts',
+    columns: [
+      'id',
+      'namespace',
+      'key',
+      'value',
+      'origin',
+      'confidence',
+      'source',
+      'sensitivity',
+      'created_at',
+      'updated_at',
+      'last_confirmed_at',
+      'expires_at',
+      'supersedes',
+      'is_current',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'decisionReviewsAuditLog',
+    table: 'personal.decision_reviews_audit_log',
+    columns: ['id', 'decision_id', 'actor', 'action', 'details', 'created_at'],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'decisionRecords',
+    table: 'personal.decision_records',
+    columns: [
+      'id',
+      'problem',
+      'domain',
+      'options',
+      'assumptions',
+      'evidence',
+      'tradeoffs',
+      'selected_option_id',
+      'rationale',
+      'expected_outcomes',
+      'actual_outcomes',
+      'status',
+      'review_at',
+      'version',
+      'created_at',
+      'updated_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'companionMessages',
+    table: 'personal.companion_messages',
+    columns: ['id', 'role', 'content', 'domain', 'intent', 'sensitivity', 'created_at'],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'personalPolicies',
+    table: 'personal.personal_policies',
+    columns: [
+      'id',
+      'subject',
+      'action',
+      'resource_scope',
+      'authority',
+      'purpose',
+      'created_at',
+      'review_at',
+      'revoked_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'consentGrants',
+    table: 'personal.consent_grants',
+    columns: [
+      'id',
+      'scope',
+      'purpose',
+      'version',
+      'status',
+      'granted_at',
+      'expires_at',
+      'revoked_at',
+    ],
+    orderBy: 'granted_at, id',
+  },
+  {
+    exportKey: 'workTasks',
+    table: 'worklife.tasks',
+    columns: [
+      'id',
+      'project_id',
+      'title',
+      'priority',
+      'status',
+      'due_at',
+      'created_at',
+      'updated_at',
+      'version',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'workDocuments',
+    table: 'worklife.documents',
+    columns: [
+      'id',
+      'project_id',
+      'title',
+      'document_type',
+      'summary',
+      'content_uri',
+      'created_at',
+      'updated_at',
+      'version',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'workMeetings',
+    table: 'worklife.meetings',
+    columns: [
+      'id',
+      'title',
+      'scheduled_at',
+      'duration_minutes',
+      'summary',
+      'action_items',
+      'created_at',
+    ],
+    orderBy: 'created_at, id',
+  },
+  {
+    exportKey: 'workProjects',
+    table: 'worklife.projects',
+    columns: [
+      'id',
+      'name',
+      'description',
+      'status',
+      'deadline',
+      'created_at',
+      'updated_at',
+      'version',
+    ],
+    orderBy: 'created_at, id',
+  },
+] as const satisfies readonly PersonTableSpec[]
+
+/** Bảng gốc — xoá CUỐI CÙNG (mọi bảng trên tham chiếu nó). */
+const PERSONS_TABLE = 'personal.persons'
+
+type PersonTable = (typeof PERSON_TABLES)[number]
+export type PersonExportKey = PersonTable['exportKey']
+
+/** Một dòng xuất: tên cột thật ⇒ giá trị (timestamp là `Date`, ra JSON thành chuỗi ISO 8601). */
+export type ExportRow = Record<string, unknown>
+
+export interface PersonRow {
+  id: string
+  user_id: string
+  display_name: string
+  created_at: Date
+  updated_at: Date
+}
+
+export type PersonExportData = {
   exportedAt: string
   personId: string
   person: PersonRow | null
-  personalFacts: FactRow[]
-  memories: MemoryRow[]
-  consentGrants: ConsentRow[]
-  personalPolicies: PolicyRow[]
-  lifeGraphNodes: LifeGraphNodeRow[]
-  lifeGraphEdges: LifeGraphEdgeRow[]
-  workRecords: WorkRow[]
-  automationGrants: AutomationGrantRow[]
-  actionReceipts: ActionReceiptRow[]
-  decisionRecords: DecisionRow[]
-}
+} & { [K in PersonExportKey]: ExportRow[] }
 
 export interface ErasePersonResult {
   personId: string
+  /** Mọi bảng đã được dọn (kể cả bảng vốn không có dòng nào của người này). */
   schemasCleared: string[]
   recordsDeletedCount: number
   erasureLogId: string
 }
 
-// ─── Internal row type stubs (just id + person_id for counting) ──────────────
+// ─── An toàn định danh SQL ────────────────────────────────────────────────────
 
-interface PersonRow {
-  id: string
-  user_id: string
-  display_name: string
-  created_at: string
-  updated_at: string
+const QUALIFIED_IDENT = /^[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*$/
+const IDENT = /^[a-z_][a-z0-9_]*$/
+
+/**
+ * Tên bảng/cột KHÔNG tham số hoá được bằng $1 (Postgres chỉ nhận tham số ở vị trí GIÁ TRỊ) nên
+ * phải nối chuỗi. Mọi giá trị hiện là hằng trong code; chặn ngay đây để một lần sửa sau này lỡ
+ * nối biến từ người dùng vào là NỔ NGAY thay vì thành lỗ SQL injection im lặng (audit 2026-08-24, F9).
+ */
+function assertIdent(value: string, pattern: RegExp): string {
+  if (!pattern.test(value)) throw new Error(`Định danh SQL không hợp lệ: ${JSON.stringify(value)}`)
+  return value
 }
-interface FactRow {
-  id: string
-  namespace: string
-  key: string
-  value: unknown
-  origin: string
-  confidence: string
-  sensitivity: string
-  provenance?: unknown
-  is_current: boolean
-  created_at: string
-}
-interface MemoryRow {
-  id: string
-  namespace: string
-  content: string
-  provenance: string
-  sensitivity: string
-  status: string
-  confidence?: number
-  created_at: string
-}
-interface ConsentRow {
-  id: string
-  scope: string
-  purpose: string
-  version: number
-  status: string
-  granted_at: string
-  expires_at: string | null
-  revoked_at: string | null
-}
-interface PolicyRow {
-  id: string
-  subject: string
-  action: string
-  resource_scope: string
-  authority: string
-  purpose: string
-  created_at: string
-  revoked_at: string | null
-}
-interface LifeGraphNodeRow {
-  id: string
-  node_type: string
-  label: string
-  status: string
-  created_at: string
-}
-interface LifeGraphEdgeRow {
-  id: string
-  source_node_id: string
-  target_node_id: string
-  edge_type: string
-  created_at: string
-}
-interface WorkRow {
-  id: string
-  record_type: string
-  created_at: string
-}
-interface AutomationGrantRow {
-  id: string
-  name: string
-  capability_id: string
-  status: string
-  created_at: string
-}
-interface ActionReceiptRow {
-  id: string
-  grant_id: string
-  idempotency_key: string
-  status: string
-  executed_at: string
-}
-interface DecisionRow {
-  id: string
-  title: string
-  status: string
-  decided_at: string | null
-  created_at: string
+
+/** `created_at, id` → kiểm từng cột. */
+function assertOrderBy(value: string): string {
+  for (const col of value.split(',')) assertIdent(col.trim(), IDENT)
+  return value
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 
 /**
- * Aggregates all personal data across all schemas for a given personId.
- * Scoped strictly to personId — caller must authenticate before calling.
+ * Chạy mọi câu đọc trong MỘT transaction `repeatable read, read only` ⇒ bản xuất là một ảnh chụp
+ * nhất quán (không lẫn trạng thái trước/sau một lần ghi xen giữa), và không thể vô tình ghi.
  */
-export async function exportPersonData(pool: Pool, personId: string): Promise<PersonExportData> {
-  const [
-    personRes,
-    factsRes,
-    memoriesRes,
-    consentsRes,
-    policiesRes,
-    lifeNodesRes,
-    lifeEdgesRes,
-    automationRes,
-    receiptsRes,
-    decisionRes,
-    workRes,
-  ] = await Promise.all([
-    // Personal identity
-    pool.query<PersonRow>(
-      `select id, user_id, display_name,
-              created_at::text, updated_at::text
-         from personal.persons where id = $1`,
+async function readAll(client: PoolClient, personId: string): Promise<PersonExportData> {
+  await client.query('set transaction isolation level repeatable read, read only')
+
+  const personRes = await client.query<PersonRow>(
+    `select id, user_id, display_name, created_at, updated_at
+       from ${PERSONS_TABLE} where id = $1`,
+    [personId],
+  )
+
+  const sections: Partial<Record<PersonExportKey, ExportRow[]>> = {}
+  for (const spec of PERSON_TABLES) {
+    const table = assertIdent(spec.table, QUALIFIED_IDENT)
+    const cols = spec.columns.map((c) => assertIdent(c, IDENT)).join(', ')
+    const res = await client.query<ExportRow>(
+      `select ${cols} from ${table} where person_id = $1 order by ${assertOrderBy(spec.orderBy)}`,
       [personId],
-    ),
-    // Personal facts (all, including history)
-    pool.query<FactRow>(
-      `select id, namespace, key, value, origin, confidence::text, sensitivity, is_current,
-              created_at::text
-         from personal.personal_facts where person_id = $1 order by created_at`,
-      [personId],
-    ),
-    // Memory records (all statuses)
-    pool.query<MemoryRow>(
-      `select id, namespace, content, provenance, sensitivity, status,
-              created_at::text
-         from personal.memory_records where person_id = $1 order by created_at`,
-      [personId],
-    ),
-    // Consent grants (all versions)
-    pool.query<ConsentRow>(
-      `select id, scope, purpose, version, status,
-              granted_at::text, expires_at::text, revoked_at::text
-         from personal.consent_grants where person_id = $1 order by granted_at`,
-      [personId],
-    ),
-    // Personal policies (all, including revoked)
-    pool.query<PolicyRow>(
-      `select id, subject, action, resource_scope, authority, purpose,
-              created_at::text, revoked_at::text
-         from personal.personal_policies where person_id = $1 order by created_at`,
-      [personId],
-    ),
-    // Life graph nodes
-    pool.query<LifeGraphNodeRow>(
-      `select id, node_type, label, status, created_at::text
-         from personal.life_graph_nodes where person_id = $1 order by created_at`,
-      [personId],
-    ),
-    // Life graph edges (source or target owned by person)
-    pool.query<LifeGraphEdgeRow>(
-      `select e.id, e.source_node_id, e.target_node_id, e.edge_type, e.created_at::text
-         from personal.life_graph_edges e
-         join personal.life_graph_nodes n on n.id = e.source_node_id
-         where n.person_id = $1 order by e.created_at`,
-      [personId],
-    ),
-    // Automation grants
-    pool.query<AutomationGrantRow>(
-      `select id, name, capability_id, status, created_at::text
-         from personal.automation_grants where person_id = $1 order by created_at`,
-      [personId],
-    ),
-    // Action receipts
-    pool.query<ActionReceiptRow>(
-      `select id, grant_id, idempotency_key, status, executed_at::text
-         from personal.action_receipts where person_id = $1 order by executed_at`,
-      [personId],
-    ),
-    // Decision ledger
-    pool
-      .query<DecisionRow>(
-        `select id, title, status, decided_at::text, created_at::text
-         from personal.decision_records where person_id = $1 order by created_at`,
-        [personId],
-      )
-      .catch(() => ({ rows: [] as DecisionRow[] })),
-    // Work records
-    pool
-      .query<WorkRow>(
-        `select id, 'project' as record_type, created_at::text
-         from worklife.projects where person_id = $1`,
-        [personId],
-      )
-      .catch(() => ({ rows: [] as WorkRow[] })),
-  ])
+    )
+    sections[spec.exportKey] = res.rows
+  }
 
   return {
     exportedAt: new Date().toISOString(),
     personId,
     person: personRes.rows[0] ?? null,
-    personalFacts: factsRes.rows,
-    memories: memoriesRes.rows,
-    consentGrants: consentsRes.rows,
-    personalPolicies: policiesRes.rows,
-    lifeGraphNodes: lifeNodesRes.rows,
-    lifeGraphEdges: lifeEdgesRes.rows,
-    automationGrants: automationRes.rows,
-    actionReceipts: receiptsRes.rows,
-    decisionRecords: decisionRes.rows,
-    workRecords: workRes.rows,
+    ...(sections as Record<PersonExportKey, ExportRow[]>),
   }
+}
+
+/**
+ * Gom toàn bộ dữ liệu cá nhân của personId. Bất kỳ câu nào lỗi ⇒ NÉM lỗi (không trả bản xuất
+ * thiếu). Nơi gọi phải xác thực và suy personId từ token trước.
+ */
+export async function exportPersonData(pool: Pool, personId: string): Promise<PersonExportData> {
+  return withTransaction(pool, (client) => readAll(client, personId))
 }
 
 // ─── Erase ────────────────────────────────────────────────────────────────────
 
 /**
- * Atomically erases all personal data for personId across all schemas.
- * Writes an erasure log entry (append-only) and returns a summary.
+ * Xoá nguyên tử mọi dữ liệu của personId, ghi nhật ký xoá (append-only), trả tóm tắt.
  *
- * SAFETY RULES:
- *   - Must be called only after ownership verification (caller is person or admin).
- *   - The erasure log itself is never deleted — it is the audit trail.
- *   - If any delete fails, the entire transaction rolls back (no partial erasure).
+ *   - Nơi gọi phải xác minh quyền sở hữu (chính chủ hoặc admin).
+ *   - Khoá dòng Person (`for update`) NGAY đầu transaction: mọi lệnh insert vào bảng con phải
+ *     lấy khoá `key share` trên dòng này để kiểm khoá ngoại ⇒ bị chặn tới khi xoá xong, nên
+ *     không có bản ghi mới lọt vào giữa chừng rồi sống sót.
+ *   - Một câu lỗi ⇒ rollback toàn bộ, lỗi được ném lên (không có `.catch` nuốt lỗi — trong
+ *     Postgres, sau một câu lỗi transaction đã bị huỷ, nuốt lỗi chỉ làm câu sau lỗi khó hiểu hơn).
  */
 export async function erasePersonData(
   pool: Pool,
   personId: string,
   erasedBy: string,
 ): Promise<ErasePersonResult> {
-  // Verify person exists before erasing
-  const personCheck = await pool.query<{ id: string }>(
-    'select id from personal.persons where id = $1',
-    [personId],
-  )
-  if (!personCheck.rows[0]) {
-    throw new NotFoundError('Person not found')
-  }
-
   return withTransaction(pool, async (client) => {
+    const personCheck = await client.query<{ id: string }>(
+      `select id from ${PERSONS_TABLE} where id = $1 for update`,
+      [personId],
+    )
+    if (!personCheck.rows[0]) {
+      throw new NotFoundError('Person not found')
+    }
+
     const schemasCleared: string[] = []
     let totalDeleted = 0
 
-    // Helper: delete from a table scoped to personId, count rows
-    async function deleteScoped(
-      schema: string,
-      table: string,
-      column = 'person_id',
-    ): Promise<number> {
-      // Tên schema/bảng/cột KHÔNG thể tham số hoá bằng $1 (Postgres chỉ nhận tham số ở vị trí
-      // GIÁ TRỊ), nên phải nối chuỗi. Mọi lời gọi hiện tại đều truyền hằng số trong code, nhưng
-      // chặn ngay tại đây để một lần sửa sau này vô tình nối biến từ người dùng vào là NỔ NGAY
-      // thay vì thành lỗ SQL injection im lặng (audit 2026-08-24, F9). `personId` vẫn đi qua $1.
-      for (const ident of [schema, table, column]) {
-        if (!/^[a-z_][a-z0-9_]*$/.test(ident)) {
-          throw new Error(`Định danh SQL không hợp lệ: ${JSON.stringify(ident)}`)
-        }
-      }
-      const res = await client.query(`DELETE FROM ${schema}.${table} WHERE ${column} = $1`, [
-        personId,
-      ])
-      const count = res.rowCount ?? 0
-      if (count > 0 || schemasCleared.indexOf(`${schema}.${table}`) === -1) {
-        schemasCleared.push(`${schema}.${table}`)
-      }
-      return count
+    async function deleteFrom(table: string, column: 'person_id' | 'id'): Promise<void> {
+      const safeTable = assertIdent(table, QUALIFIED_IDENT)
+      const res = await client.query(`delete from ${safeTable} where ${column} = $1`, [personId])
+      totalDeleted += res.rowCount ?? 0
+      schemasCleared.push(table)
     }
 
-    // --- personal schema (delete order: children before parents) ---
+    for (const spec of PERSON_TABLES) await deleteFrom(spec.table, 'person_id')
+    // Bảng gốc cuối cùng.
+    await deleteFrom(PERSONS_TABLE, 'id')
 
-    // Action receipts (reference automation_grants)
-    totalDeleted += await deleteScoped('personal', 'action_receipts')
-
-    // Automation grants
-    totalDeleted += await deleteScoped('personal', 'automation_grants')
-
-    // Life graph edges (edges reference nodes; delete edges first)
-    const edgeRes = await client.query(
-      `DELETE FROM personal.life_graph_edges e
-         USING personal.life_graph_nodes n
-         WHERE e.source_node_id = n.id AND n.person_id = $1`,
-      [personId],
-    )
-    const edgeCount = edgeRes.rowCount ?? 0
-    if (edgeCount > 0) schemasCleared.push('personal.life_graph_edges')
-    totalDeleted += edgeCount
-
-    // Life graph nodes
-    totalDeleted += await deleteScoped('personal', 'life_graph_nodes')
-
-    // Memory records
-    totalDeleted += await deleteScoped('personal', 'memory_records')
-
-    // Personal policies
-    totalDeleted += await deleteScoped('personal', 'personal_policies')
-
-    // Consent grants
-    totalDeleted += await deleteScoped('personal', 'consent_grants')
-
-    // Proposed actions
-    totalDeleted += await deleteScoped('personal', 'proposed_actions').catch(() => 0)
-
-    // Decision records
-    totalDeleted += await deleteScoped('personal', 'decision_records').catch(() => 0)
-
-    // Personal facts
-    totalDeleted += await deleteScoped('personal', 'personal_facts')
-
-    // --- domain schemas (best-effort: tables may not exist in local dev) ---
-    // [2026-09-20] Ba trụ career/startup/life đã bị xoá hẳn (service, API và bảng CSDL —
-    // migration `0085_drop_career_startup_life.sql`), nên ở đây không còn gì để xoá cho chúng.
-
-    // Work
-    totalDeleted += await client
-      .query('DELETE FROM worklife.projects WHERE person_id = $1', [personId])
-      .then((r) => {
-        if ((r.rowCount ?? 0) > 0) schemasCleared.push('worklife.projects')
-        return r.rowCount ?? 0
-      })
-      .catch(() => 0)
-
-    // --- person record last (FK source) ---
-    totalDeleted += await deleteScoped('personal', 'persons', 'id')
-
-    // --- Write erasure log (after all deletes succeed) ---
     const logRes = await client.query<{ id: string }>(
-      `INSERT INTO platform.person_erasure_log
+      `insert into platform.person_erasure_log
          (person_id, erased_at, erased_by, schemas_cleared, records_deleted_count)
-       VALUES ($1, now(), $2, $3, $4)
-       RETURNING id`,
+       values ($1, now(), $2, $3, $4)
+       returning id`,
       [personId, erasedBy, schemasCleared, totalDeleted],
     )
-    const erasureLogId = logRes.rows[0]!.id
+    const erasureLogId = logRes.rows[0]?.id
+    if (!erasureLogId) throw new Error('Không ghi được nhật ký xoá dữ liệu (person_erasure_log)')
 
-    return {
-      personId,
-      schemasCleared,
-      recordsDeletedCount: totalDeleted,
-      erasureLogId,
-    }
+    return { personId, schemasCleared, recordsDeletedCount: totalDeleted, erasureLogId }
   })
 }

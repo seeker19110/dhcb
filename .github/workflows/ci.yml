@@ -190,23 +190,67 @@ jobs:
         if: github.event_name == 'push'
         run: bash scripts/check-progress-freshness.sh
 
+  # ── Nhánh 5: câu SQL tĩnh PREPARE được trên Postgres THẬT ─────────────────
+  # Thêm 2026-10-08 (chủ dự án duyệt, changelog 0529). Unit test giả lập `pg` nên câu SQL sai
+  # tên cột/bảng hay lệch kiểu vẫn xanh — changelog 0523 bắt tay 9 câu như vậy. Job này dựng
+  # Postgres 16 rỗng, áp schema + migration bằng ĐÚNG lệnh deploy dùng (`npm run migrate:pg`,
+  # scripts/deploy.sh) rồi PREPARE mọi câu SQL tĩnh trích từ `.query(` trong apps/server/src +
+  # packages. Ngoại lệ có lý do: scripts/sql-prepare-allowlist.json. Chạy riêng một job vì cần
+  # service container; nhẹ (~vài giây sau npm ci), không kéo dài đường tới hạn.
+  sql-prepare:
+    name: SQL PREPARE trên Postgres thật
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dhcb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dhcb"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      # Mật khẩu chỉ của container dùng một lần trong job — không phải bí mật.
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/dhcb
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Áp schema + migration (migrate:pg — cùng đường với deploy)
+        run: npm run migrate:pg
+
+      - name: PREPARE mọi câu SQL tĩnh (check:sql)
+        run: npm run check:sql
+
   # ── Job TỔNG HỢP: đây là required status check `quality` ───────────────────
   quality:
     name: quality
     runs-on: ubuntu-latest
-    needs: [static, unit, build, audit]
+    needs: [static, unit, build, audit, sql-prepare]
     if: ${{ !cancelled() }}
     steps:
-      - name: Gom kết quả 4 nhánh
+      - name: Gom kết quả 5 nhánh
         run: |
           echo "static=${{ needs.static.result }}"
           echo "unit=${{ needs.unit.result }}"
           echo "build=${{ needs.build.result }}"
           echo "audit=${{ needs.audit.result }}"
+          echo "sql-prepare=${{ needs.sql-prepare.result }}"
           if [ "${{ needs.static.result }}" != "success" ] \
             || [ "${{ needs.unit.result }}" != "success" ] \
             || [ "${{ needs.build.result }}" != "success" ] \
-            || [ "${{ needs.audit.result }}" != "success" ]; then
+            || [ "${{ needs.audit.result }}" != "success" ] \
+            || [ "${{ needs.sql-prepare.result }}" != "success" ]; then
             echo "❌ Có nhánh chất lượng KHÔNG xanh"; exit 1
           fi
           echo "✅ Toàn bộ cổng chất lượng xanh"

@@ -154,6 +154,10 @@ export async function runFinalArchitectureAudit(): Promise<FinalAuditSummary> {
           }
           return Promise.resolve({ rows: [], rowCount: 0 })
         },
+        // Export chạy trong MỘT transaction qua pool.connect() (changelog 0527).
+        connect(): Promise<unknown> {
+          return Promise.resolve({ query: this.query, release: () => {} })
+        },
       }
 
       const mockEraseClient = {
@@ -161,6 +165,10 @@ export async function runFinalArchitectureAudit(): Promise<FinalAuditSummary> {
           const s = sql.toLowerCase()
           if (s.includes('begin') || s.includes('commit')) {
             return Promise.resolve({ rows: [], rowCount: 0 })
+          }
+          // Kiểm Person tồn tại nằm TRONG transaction (`for update`, changelog 0527).
+          if (s.includes('for update')) {
+            return Promise.resolve({ rows: [{ id: mockPersonId }], rowCount: 1 })
           }
           if (s.includes('person_erasure_log')) {
             return Promise.resolve({ rows: [{ id: 'log-1' }], rowCount: 1 })
@@ -191,7 +199,7 @@ export async function runFinalArchitectureAudit(): Promise<FinalAuditSummary> {
         mockPersonId,
       )
       details.push(
-        `Verified exportPersonData traverses all 13 schemas (exportedAt: ${exportData.exportedAt})`,
+        `Verified exportPersonData traverses every person_id table (exportedAt: ${exportData.exportedAt})`,
       )
 
       const eraseResult = await erasePersonData(

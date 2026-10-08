@@ -1149,16 +1149,15 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🔴 **[2026-10-08 — `docs/changelog/0523-*.md`] `/api/persons?action=export|full_erase` HỎNG HOÀN
-  TOÀN — người dùng KHÔNG xuất/xoá được dữ liệu của mình.** `packages/core-personal/personErasureService.ts`
-  tham chiếu 5 cột không tồn tại (`node_type`, `source_node_id`, `executed_at`, `title`/`decided_at`):
-  export luôn 500, full_erase luôn rollback rồi 500; thêm `.catch(() => rows: [])` có thể làm bản xuất
-  thiếu bản ghi quyết định mà không báo. Giao diện hiện chưa gọi endpoint này. Phát hiện bằng cách
-  `PREPARE` 387 câu SQL tĩnh trên Postgres 16 đã migrate (unit test giả lập `pg` không bắt được).
-  **Chưa sửa vì đụng xoá dữ liệu không hoàn tác (CLAUDE.md §12) + đổi tên trường JSON xuất — chờ chủ
-  dự án duyệt.** Cùng đợt, hai đề xuất chờ quyết: (a) `process.on('unhandledRejection')` (log +
-  Sentry) ở `server.ts` làm lưới an toàn cuối; (b) job CI chạy `PREPARE` SQL trên Postgres đã migrate
-  (đợt 0523 bắt được 9 câu sai cột theo cách này).
+- 🟡 **[2026-10-08 — HẠ MỨC từ 🔴 sau `0527`] Xuất/xoá dữ liệu cá nhân `/api/persons` ĐÃ SỬA** (5 cột
+  sai, bỏ nuốt lỗi, 21 bảng `person_id` trong một danh sách duy nhất — trước sót 11 bảng; test tích hợp
+  Postgres thật canh danh sách khớp `information_schema`). Lưới `unhandledRejection`/`uncaughtException`
+  (`0528`) và cổng CI `sql-prepare` (`0529`) cũng đã làm. **Còn chờ chủ dự án quyết:** (1) full_erase
+  chỉ xoá dữ liệu Personal OS gắn `personal.persons.id`; dữ liệu gắn thẳng `user_id` (`personal.intake`
+  hồ sơ ẩn, `learner_intent`, `platform.completion_*`, `public.*` tiến độ/thanh toán/phiên, schema
+  `english`/`programming`/`chat`/`location`) KHÔNG được xuất/xoá — gộp vào là tính năng "xoá tài khoản",
+  đụng chứng từ thanh toán + Luật số 1, cần đặc tả riêng; (2) full_erase không đòi xác minh lại (step-up)
+  dù không hoàn tác được; (3) 20 câu SQL động chưa được `check:sql` kiểm.
 - 🟡 **[2026-10-08 — `docs/changelog/0525-*.md`] Lỗi im lặng phía giao diện còn sót sau đợt sửa 13
   điểm.** (1) `getDialogues()` không có nhánh lỗi (`CefrLevelPage.tsx`, `CefrLessonViews.tsx`,
   `TodayLesson.tsx`) — mất phần hội thoại + unhandled rejection, không kẹt màn; (2) hai loader ví dụ phụ

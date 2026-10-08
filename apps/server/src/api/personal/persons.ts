@@ -90,7 +90,15 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'DELETE' && action === 'full_erase') {
     const person = await getOrCreatePerson(pool, auth.userId)
     logSecurityEvent('PERSON_FULL_ERASE_INITIATED', clientIp, { personId: person.id })
-    const result = await erasePersonData(pool, person.id, 'self')
+    let result: Awaited<ReturnType<typeof erasePersonData>>
+    try {
+      result = await erasePersonData(pool, person.id, 'self')
+    } catch (err) {
+      // Xoá đã rollback toàn bộ (một transaction). Ghi vết rồi ném tiếp để routes.ts trả 500 +
+      // báo Sentry — KHÔNG trả "thành công" khi dữ liệu còn nguyên (changelog 0527).
+      logSecurityEvent('PERSON_FULL_ERASE_FAILED', clientIp, { personId: person.id })
+      throw err
+    }
     logSecurityEvent('PERSON_FULL_ERASE_COMPLETED', clientIp, {
       personId: person.id,
       schemasCleared: result.schemasCleared.length,

@@ -1,0 +1,9 @@
+{
+  "entries": [
+    {
+      "file": "packages/core-personal/personErasureService.ts",
+      "sqlIncludes": "set transaction isolation level repeatable read, read only",
+      "reason": "Lệnh điều khiển giao dịch, cố ý (changelog 0527): export đọc trong một ảnh chụp nhất quán. PREPARE chỉ nhận SELECT/INSERT/UPDATE/DELETE…; lệnh này đã chạy thật trong personErasureService.integration.test.ts."
+    }
+  ]
+}

@@ -52,10 +52,10 @@ const EXPORT_DATA = {
   automationGrants: [],
   actionReceipts: [],
   decisionRecords: [],
-  careerRecords: [],
-  workRecords: [],
-  startupRecords: [],
-  lifeRecords: [],
+  workProjects: [],
+  workTasks: [],
+  workMeetings: [],
+  workDocuments: [],
 }
 
 const ERASE_RESULT = {
@@ -121,6 +121,24 @@ describe('GET /api/persons?action=export', () => {
     expect(exportPersonDataMock).toHaveBeenCalledWith(expect.anything(), PERSON.id)
   })
 
+  it('chỉ xuất dữ liệu của chính chủ: bỏ qua personId client gửi lên', async () => {
+    await handler(
+      makeReq(
+        'GET',
+        'http://localhost/api/persons?action=export&personId=99999999-9999-4999-8999-999999999999',
+      ),
+    )
+    expect(getOrCreatePersonMock.mock.calls[0]?.[1]).toBe('user-1')
+    expect(exportPersonDataMock).toHaveBeenCalledWith(expect.anything(), PERSON.id)
+  })
+
+  it('xuất lỗi → ném lên (500), không trả bản xuất thiếu', async () => {
+    exportPersonDataMock.mockRejectedValue(new Error('db down'))
+    await expect(
+      handler(makeReq('GET', 'http://localhost/api/persons?action=export')),
+    ).rejects.toThrow('db down')
+  })
+
   it('chưa đăng nhập → 401', async () => {
     authState.user = null
     expect(
@@ -144,6 +162,26 @@ describe('DELETE /api/persons?action=full_erase', () => {
     expect(
       (await handler(makeReq('DELETE', 'http://localhost/api/persons?action=full_erase'))).status,
     ).toBe(401)
+    expect(erasePersonDataMock).not.toHaveBeenCalled()
+  })
+
+  it('chỉ xoá Person của chính chủ: bỏ qua personId/userId client gửi lên', async () => {
+    const res = await handler(
+      makeReq(
+        'DELETE',
+        'http://localhost/api/persons?action=full_erase&personId=99999999-9999-4999-8999-999999999999&userId=user-2',
+      ),
+    )
+    expect(res.status).toBe(200)
+    expect(getOrCreatePersonMock.mock.calls[0]?.[1]).toBe('user-1')
+    expect(erasePersonDataMock).toHaveBeenCalledWith(expect.anything(), PERSON.id, 'self')
+  })
+
+  it('xoá lỗi (đã rollback) → ném lên cho routes.ts trả 500, không báo thành công', async () => {
+    erasePersonDataMock.mockRejectedValue(new Error('column does not exist'))
+    await expect(
+      handler(makeReq('DELETE', 'http://localhost/api/persons?action=full_erase')),
+    ).rejects.toThrow('column does not exist')
   })
 })
 
