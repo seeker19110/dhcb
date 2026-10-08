@@ -1213,9 +1213,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `CF-Connecting-IP` giả" nên chạy tay sau khi deploy, cách làm ở `docs/cloudflare-setup.md`.
   **[2026-10-08 — audit kiểm soát truy cập 113 route, `docs/changelog/0526-*.md`]** Đã vá 4 lỗ IDOR
   (realtime-multimodal, scenario-holodeck, socratic-diagnostics, gắn task/tài liệu vào dự án người
-  khác ở `/api/work`). (a) ✅ `/api/realtime-multimodal` ĐÃ GỠ ở `0534` (không client nào gọi); **còn chờ chủ dự án
-  quyết:** Map phiên `/api/scenario-holodeck` + `/api/socratic-diagnostics` không dọn (hai endpoint
-  này CÓ client thật trong Companion nên giữ — cần trần phiên/người + TTL); (b) ✅ `/api/pronunciation`
+  khác ở `/api/work`). (a) ✅ `/api/realtime-multimodal` ĐÃ GỠ ở `0534` (không client nào gọi); ✅ Map
+  phiên `/api/scenario-holodeck` + `/api/socratic-diagnostics` (CÓ client thật trong Companion nên
+  giữ) ĐÃ XỬ LÝ ở `0538`: TTL trượt 30 phút, trần 5 phiên/người (đóng phiên cũ nhất), trần 2 000
+  phiên/tiến trình (503), client hiện "Bắt đầu lại"; (b) ✅ `/api/pronunciation`
   cache MISS nay trừ lượt Free/VIP (`0534`);
   ~~(c) `/api/admin-feature-status` so `x-cron-key` bằng `===`~~ — ✅ ĐÃ SỬA ở `0531` (`packages/core-auth/secretCompare.ts`).
 

@@ -1,4 +1,9 @@
 // api/scenario-holodeck.ts — V3 Scenario Holodeck & Multi-Persona Simulation Endpoint.
+//
+// Phiên giữ trong RAM có hạn (TTL trượt 30 phút, trần 5 phiên/người, trần toàn tiến trình) —
+// xem `packages/core-personal/ttlSessionStore.ts`, changelog 0538. Phiên hết hạn / không còn /
+// của người khác → 404 `{error:{code:'session_not_found'}}`; client hiện lỗi + "Bắt đầu lại".
+import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import {
   getCorsHeaders,
@@ -17,14 +22,41 @@ import {
 } from '@dhcb/core-personal/scenarioHolodeckService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
-import { readJsonBody } from '@dhcb/core-http/validation'
+import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
+import { SessionGoneError } from '@dhcb/core-personal/ttlSessionStore'
 
-// Phiên chỉ thuộc về người đã tạo nó. Phiên không tồn tại và phiên của người khác trả CÙNG
-// kết quả (undefined → 404) — không để lộ id nào có thật (audit kiểm soát truy cập 2026-10-08).
-function getOwnedSession(sessionId: string, personId: string) {
-  const session = getHolodeckSession(sessionId)
-  return session && session.personId === personId ? session : undefined
-}
+/** Trần độ dài một câu trả lời — chặn một lượt nhét hàng MB vào phiên trong RAM. */
+const MAX_UTTERANCE_CHARS = 2000
+const MAX_ID_CHARS = 100
+
+const id = (field: string) =>
+  z
+    .string({ error: `Thiếu ${field}` })
+    .min(1, { error: `Thiếu ${field}` })
+    .max(MAX_ID_CHARS, { error: `${field} không hợp lệ` })
+
+// Body POST — kiểm bằng Zod thay vì ép kiểu tay (dữ liệu ngoài, CLAUDE.md mục 4.1).
+const HolodeckBodySchema = z.discriminatedUnion(
+  'action',
+  [
+    z.object({ action: z.literal('start'), scenarioId: id('scenarioId') }),
+    z.object({
+      action: z.literal('turn'),
+      sessionId: id('sessionId'),
+      utterance: z
+        .string({ error: 'Thiếu utterance' })
+        .trim()
+        .min(1, { error: 'Thiếu utterance' })
+        // `refine` (không phải `.max`) để `params.status` tới được `validateBody` → 413.
+        .refine((v) => v.length <= MAX_UTTERANCE_CHARS, {
+          error: `Câu trả lời quá dài (tối đa ${MAX_UTTERANCE_CHARS} ký tự)`,
+          params: { status: 413 },
+        }),
+    }),
+    z.object({ action: z.literal('finalize'), sessionId: id('sessionId') }),
+  ],
+  { error: 'Action không hợp lệ' },
+)
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -51,10 +83,10 @@ export default async function handler(req: Request): Promise<Response> {
       const sessionId = url.searchParams.get('sessionId')
 
       if (sessionId) {
-        const session = getOwnedSession(sessionId, person.id)
-        if (!session) {
-          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
-        }
+        // Phiên chỉ thuộc về người đã tạo nó (service kiểm chủ) — không có/hết hạn/của người
+        // khác đều 404 giống hệt nhau, không lộ id nào có thật (audit 0526).
+        const session = getHolodeckSession(sessionId, person.id)
+        if (!session) throw new SessionGoneError()
         return jsonResponse({ session }, 200, headers)
       }
 
@@ -67,44 +99,23 @@ export default async function handler(req: Request): Promise<Response> {
       if (!bodyResult.ok) {
         return jsonResponse({ error: bodyResult.error.message }, bodyResult.error.status, headers)
       }
-      const body = bodyResult.raw as {
-        action: 'start' | 'turn' | 'finalize'
-        scenarioId?: string
-        sessionId?: string
-        utterance?: string
+      const parsed = validateBody(HolodeckBodySchema, bodyResult.raw)
+      if (!parsed.ok) {
+        return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
       }
+      const body = parsed.data
 
       if (body.action === 'start') {
-        if (!body.scenarioId) {
-          return jsonResponse({ error: 'Thiếu scenarioId' }, 400, headers)
-        }
         const session = startHolodeckSession(person.id, body.scenarioId)
         return jsonResponse({ session }, 201, headers)
       }
-
       if (body.action === 'turn') {
-        if (!body.sessionId || !body.utterance) {
-          return jsonResponse({ error: 'Thiếu sessionId hoặc utterance' }, 400, headers)
-        }
-        if (!getOwnedSession(body.sessionId, person.id)) {
-          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
-        }
-        const result = processHolodeckTurn(body.sessionId, body.utterance)
+        // Service tự kiểm chủ phiên + hạn: không có/hết hạn/của người khác → 404.
+        const result = processHolodeckTurn(body.sessionId, person.id, body.utterance)
         return jsonResponse(result, 200, headers)
       }
-
-      if (body.action === 'finalize') {
-        if (!body.sessionId) {
-          return jsonResponse({ error: 'Thiếu sessionId' }, 400, headers)
-        }
-        if (!getOwnedSession(body.sessionId, person.id)) {
-          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
-        }
-        const session = finalizeHolodeckSession(body.sessionId)
-        return jsonResponse({ session }, 200, headers)
-      }
-
-      return jsonResponse({ error: 'Action không hợp lệ' }, 400, headers)
+      const session = finalizeHolodeckSession(body.sessionId, person.id)
+      return jsonResponse({ session }, 200, headers)
     }
 
     return jsonResponse({ error: 'Method not allowed' }, 405, headers)

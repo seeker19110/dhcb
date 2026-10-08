@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const authState: { user: { userId: string } | null } = {
   user: { userId: 'user-1' },
@@ -21,6 +21,8 @@ vi.mock('@dhcb/core-personal/personService', () => ({
 }))
 
 import handler from './scenario-holodeck.js'
+import { resetHolodeckSessionsForTest } from '@dhcb/core-personal/scenarioHolodeckService'
+import { PRACTICE_SESSION_IDLE_TTL_MS } from '@dhcb/core-personal/ttlSessionStore'
 
 const PERSON = '11111111-1111-4111-8111-111111111111'
 
@@ -42,6 +44,11 @@ describe('api/scenario-holodeck', () => {
     authState.user = { userId: 'user-1' }
     rateLimitOk = true
     getOrCreatePerson.mockResolvedValue({ id: PERSON })
+  })
+
+  afterEach(() => {
+    resetHolodeckSessionsForTest()
+    vi.useRealTimers()
   })
 
   it('handles GET list of scenarios', async () => {
@@ -179,6 +186,58 @@ describe('api/scenario-holodeck', () => {
       const own = await handler(req('GET', undefined, `sessionId=${sessionId}`))
       const data = (await own.json()) as { session: { status: string } }
       expect(data.session.status).toBe('active')
+    })
+  })
+
+  // ── Phiên có hạn (changelog 0538) ──
+  describe('phiên hết hạn / không còn', () => {
+    async function start(): Promise<string> {
+      const res = await handler(req('POST', { action: 'start', scenarioId: 'silicon_vc_pitch' }))
+      return ((await res.json()) as { session: { sessionId: string } }).session.sessionId
+    }
+
+    it('30 phút không hoạt động → turn/finalize/GET đều 404 mã session_not_found', async () => {
+      vi.useFakeTimers()
+      const sessionId = await start()
+      vi.advanceTimersByTime(PRACTICE_SESSION_IDLE_TTL_MS)
+      const responses = [
+        await handler(req('POST', { action: 'turn', sessionId, utterance: 'still there?' })),
+        await handler(req('POST', { action: 'finalize', sessionId })),
+        await handler(req('GET', undefined, `sessionId=${sessionId}`)),
+      ]
+      for (const res of responses) {
+        expect(res.status).toBe(404)
+        const body = (await res.json()) as { error: { code: string; message: string } }
+        expect(body.error.code).toBe('session_not_found')
+        expect(body.error.message).toMatch(/Bắt đầu lại/)
+      }
+    })
+
+    it('trước mốc hết hạn, một lượt gửi giữ phiên sống thêm 30 phút (TTL trượt)', async () => {
+      vi.useFakeTimers()
+      const sessionId = await start()
+      vi.advanceTimersByTime(PRACTICE_SESSION_IDLE_TTL_MS - 1)
+      const turn = await handler(
+        req('POST', { action: 'turn', sessionId, utterance: 'Our moat is the data flywheel.' }),
+      )
+      expect(turn.status).toBe(200)
+      vi.advanceTimersByTime(PRACTICE_SESSION_IDLE_TTL_MS - 1)
+      const fin = await handler(req('POST', { action: 'finalize', sessionId }))
+      expect(fin.status).toBe(200)
+    })
+
+    it('gửi lượt vào phiên đã tổng kết → 409 kèm thông điệp, không phải 500', async () => {
+      const sessionId = await start()
+      await handler(req('POST', { action: 'finalize', sessionId }))
+      const res = await handler(req('POST', { action: 'turn', sessionId, utterance: 'late' }))
+      expect(res.status).toBe(409)
+    })
+
+    it('câu trả lời quá dài → 413', async () => {
+      const res = await handler(
+        req('POST', { action: 'turn', sessionId: 's1', utterance: 'a'.repeat(2001) }),
+      )
+      expect(res.status).toBe(413)
     })
   })
 })

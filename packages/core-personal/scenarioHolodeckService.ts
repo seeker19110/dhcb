@@ -7,6 +7,8 @@ import {
   type HolodeckRubricScore,
   HOLODECK_SCHEMA_VERSION,
 } from '@dhcb/core-contracts/scenarioHolodeck'
+import { ConflictError } from '@dhcb/core-errors/appError'
+import { createPracticeSessionStore } from './ttlSessionStore.js'
 
 export const PREDEFINED_SCENARIOS: HolodeckScenario[] = [
   {
@@ -86,8 +88,22 @@ export const PREDEFINED_SCENARIOS: HolodeckScenario[] = [
   },
 ]
 
-// Lưu trữ session trong bộ nhớ đệm
-const activeSessions = new Map<string, HolodeckSession>()
+// Phiên giữ trong RAM có TTL trượt + trần mỗi người + trần toàn tiến trình (changelog 0538 —
+// trước đây là `Map` không bao giờ dọn). Mọi lối đọc/ghi đều đi kèm `personId`: phiên của
+// người khác và phiên không còn đều là "không còn" (SessionGoneError → 404).
+const activeSessions = createPracticeSessionStore<HolodeckSession>()
+
+/**
+ * Trần số lượt người học trong MỘT phiên: TTL trượt cho phép một phiên sống mãi nếu cứ gửi lượt,
+ * mỗi lượt thêm 2 bản ghi — không chặn thì một phiên tự phình RAM. 40 lượt dư cho một buổi phỏng
+ * vấn/thuyết trình thật (thường 8–15 lượt).
+ */
+export const MAX_HOLODECK_USER_TURNS = 40
+
+/** Dừng bộ dọn nền và xoá mọi phiên — CHỈ dùng trong test. */
+export function resetHolodeckSessionsForTest(): void {
+  activeSessions.dispose()
+}
 
 export function listPredefinedScenarios(): HolodeckScenario[] {
   return [...PREDEFINED_SCENARIOS]
@@ -130,12 +146,16 @@ export function startHolodeckSession(personId: string, scenarioId: string): Holo
     schemaVersion: HOLODECK_SCHEMA_VERSION,
   }
 
-  activeSessions.set(session.sessionId, session)
+  activeSessions.create(session.sessionId, personId, session)
   return session
 }
 
-export function getHolodeckSession(sessionId: string): HolodeckSession | undefined {
-  return activeSessions.get(sessionId)
+/** Phiên của đúng `personId` (gia hạn TTL); không có/hết hạn/của người khác → `undefined`. */
+export function getHolodeckSession(
+  sessionId: string,
+  personId: string,
+): HolodeckSession | undefined {
+  return activeSessions.get(sessionId, personId)
 }
 
 export interface ProcessTurnResult {
@@ -148,10 +168,21 @@ export interface ProcessTurnResult {
   }
 }
 
-export function processHolodeckTurn(sessionId: string, userUtterance: string): ProcessTurnResult {
-  const session = activeSessions.get(sessionId)
-  if (!session || session.status !== 'active') {
-    throw new Error(`Phiên giả lập ${sessionId} không hoạt động`)
+export function processHolodeckTurn(
+  sessionId: string,
+  personId: string,
+  userUtterance: string,
+): ProcessTurnResult {
+  // Không có / hết hạn / của người khác → SessionGoneError (404).
+  const session = activeSessions.require(sessionId, personId)
+  if (session.status !== 'active') {
+    throw new ConflictError('Phiên giả lập đã kết thúc — hãy bắt đầu phiên mới.')
+  }
+  const userTurnCount = session.turns.filter((t) => t.speakerType === 'user').length
+  if (userTurnCount >= MAX_HOLODECK_USER_TURNS) {
+    throw new ConflictError(
+      `Phiên đã đủ ${MAX_HOLODECK_USER_TURNS} lượt — hãy bấm "Kết thúc & chấm điểm" để tổng kết.`,
+    )
   }
 
   const scenario = getScenarioById(session.scenarioId)
@@ -236,8 +267,6 @@ export function processHolodeckTurn(sessionId: string, userUtterance: string): P
   session.currentPressure = newPressure
   session.updatedAt = now
 
-  activeSessions.set(sessionId, session)
-
   return {
     updatedSession: session,
     personaReplyTurn: personaTurn,
@@ -245,11 +274,8 @@ export function processHolodeckTurn(sessionId: string, userUtterance: string): P
   }
 }
 
-export function finalizeHolodeckSession(sessionId: string): HolodeckSession {
-  const session = activeSessions.get(sessionId)
-  if (!session) {
-    throw new Error(`Phiên giả lập ${sessionId} không tồn tại`)
-  }
+export function finalizeHolodeckSession(sessionId: string, personId: string): HolodeckSession {
+  const session = activeSessions.require(sessionId, personId)
 
   const userTurns = session.turns.filter((t) => t.speakerType === 'user')
   const averagePressure =
@@ -280,7 +306,5 @@ export function finalizeHolodeckSession(sessionId: string): HolodeckSession {
   session.status = 'completed'
   session.finalRubric = finalRubric
   session.updatedAt = new Date().toISOString()
-
-  activeSessions.set(sessionId, session)
   return session
 }

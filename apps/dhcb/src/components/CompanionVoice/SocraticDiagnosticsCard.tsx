@@ -13,6 +13,9 @@ import type {
   CognitiveBreakthroughRecord,
 } from '@dhcb/core-contracts/socraticDiagnostics'
 import { buttonClass } from '@core/buttonStyles'
+import { thongDiepLoiThanThien } from '../../lib/friendlyError'
+import { isSessionGone, practiceErrorFromResponse } from '../../lib/practiceSessionError'
+import PracticeSessionAlert from './PracticeSessionAlert'
 
 export default function SocraticDiagnosticsCard() {
   const [misconceptions, setMisconceptions] = useState<MentalModelMisconception[]>([])
@@ -20,6 +23,15 @@ export default function SocraticDiagnosticsCard() {
   const [activeSession, setActiveSession] = useState<CognitiveBreakthroughRecord | null>(null)
   const [learnerAnswer, setLearnerAnswer] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  // Trước changelog 0538 lỗi bắt đầu/gửi phản tư chỉ `console.error` — người học bấm "Gửi" mà
+  // không thấy gì. Nay lỗi hiện lên thẻ; phiên hết hạn/không còn thì khoá ô nhập + "Bắt đầu lại".
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [sessionGone, setSessionGone] = useState<boolean>(false)
+
+  const showError = (err: unknown, fallback: string) => {
+    if (isSessionGone(err)) setSessionGone(true)
+    setErrorMsg(thongDiepLoiThanThien(err, fallback))
+  }
 
   useEffect(() => {
     async function loadMisconceptions() {
@@ -44,18 +56,19 @@ export default function SocraticDiagnosticsCard() {
 
   const handleStartSession = async (misconceptionId: string) => {
     setIsSubmitting(true)
+    setErrorMsg(null)
     try {
       const res = await fetch('/api/socratic-diagnostics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'start', misconceptionId }),
       })
-      if (res.ok) {
-        const data = await res.json()
-        setActiveSession(data.session)
-      }
+      if (!res.ok) throw await practiceErrorFromResponse(res, 'Không thể bắt đầu chủ đề')
+      const data = await res.json()
+      setActiveSession(data.session)
+      setSessionGone(false)
     } catch (err) {
-      console.error('Failed to start socratic session', err)
+      showError(err, 'Lỗi bắt đầu phiên Socratic')
     } finally {
       setIsSubmitting(false)
     }
@@ -68,6 +81,7 @@ export default function SocraticDiagnosticsCard() {
     const answer = learnerAnswer.trim()
     setLearnerAnswer('')
     setIsSubmitting(true)
+    setErrorMsg(null)
 
     try {
       const res = await fetch('/api/socratic-diagnostics', {
@@ -79,12 +93,13 @@ export default function SocraticDiagnosticsCard() {
           answer,
         }),
       })
-      if (res.ok) {
-        const data = await res.json()
-        setActiveSession(data.updatedRecord)
-      }
+      if (!res.ok) throw await practiceErrorFromResponse(res, 'Lỗi gửi phản tư')
+      const data = await res.json()
+      setActiveSession(data.updatedRecord)
     } catch (err) {
-      console.error('Failed to submit reflection', err)
+      // Trả lại câu vừa gõ để người học không mất bài.
+      setLearnerAnswer(answer)
+      showError(err, 'Lỗi gửi phản tư')
     } finally {
       setIsSubmitting(false)
     }
@@ -115,7 +130,11 @@ export default function SocraticDiagnosticsCard() {
 
         {activeSession && (
           <button
-            onClick={() => setActiveSession(null)}
+            onClick={() => {
+              setActiveSession(null)
+              setSessionGone(false)
+              setErrorMsg(null)
+            }}
             className="p-1.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
             title="Đổi chủ đề"
           >
@@ -123,6 +142,18 @@ export default function SocraticDiagnosticsCard() {
           </button>
         )}
       </div>
+
+      {errorMsg && (
+        <PracticeSessionAlert
+          message={errorMsg}
+          restarting={isSubmitting}
+          onRestart={
+            sessionGone && activeSession
+              ? () => void handleStartSession(activeSession.misconceptionId)
+              : undefined
+          }
+        />
+      )}
 
       {/* State 1: Select Diagnostic Topic */}
       {!activeSession && (
@@ -252,7 +283,7 @@ export default function SocraticDiagnosticsCard() {
           )}
 
           {/* Answer Input Form */}
-          {activeSession.status === 'in_progress' && (
+          {activeSession.status === 'in_progress' && !sessionGone && (
             <form onSubmit={handleSubmitAnswer} className="flex gap-2">
               <input
                 type="text"
