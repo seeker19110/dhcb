@@ -1,6 +1,6 @@
 # 0517 — Cấu hình seed giọng ElevenLabs: 6 giọng nam/nữ + cờ `--eleven` có ước tính chi phí (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền số PR khi tạo) · **Loại:** `refactor(tts)` · **Nhánh:**
+- **Ngày:** 2026-10-08 · **PR:** #1270 · **Loại:** `refactor(tts)` · **Nhánh:**
   `claude/happy-babbage-cqddtx`.
 - **Nguồn:** yêu cầu của chủ dự án trong phiên: "cấu hình để dùng API của ElevenLabs seed giọng cho
   dự án". Chủ dự án chốt: seed **toàn bộ nội dung có TTS câu**, **nhiều giọng nam + nữ**.
