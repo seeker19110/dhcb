@@ -1158,12 +1158,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `english`/`programming`/`chat`/`location`) KHÔNG được xuất/xoá — gộp vào là tính năng "xoá tài khoản",
   đụng chứng từ thanh toán + Luật số 1, cần đặc tả riêng; (2) full_erase không đòi xác minh lại (step-up)
   dù không hoàn tác được; (3) 20 câu SQL động chưa được `check:sql` kiểm.
-- 🟡 **[2026-10-08 — `docs/changelog/0525-*.md`] Lỗi im lặng phía giao diện còn sót sau đợt sửa 13
-  điểm.** (1) `getDialogues()` không có nhánh lỗi (`CefrLevelPage.tsx`, `CefrLessonViews.tsx`,
-  `TodayLesson.tsx`) — mất phần hội thoại + unhandled rejection, không kẹt màn; (2) hai loader ví dụ phụ
-  `extraExamplesLoader.ts`/`formExamplesLoader.ts` cùng bệnh `patterns/loader.ts` (không kiểm `res.ok`,
-  cache lỗi); (3) lịch sử hội thoại Companion cố ý im lặng khi lỗi — cần chủ dự án quyết có báo nhẹ không;
-  (4) `LifeSynthesisDashboard` (chưa gắn) còn số bịa `|| 88`/`|| 92`, phải sửa trước khi bật lại.
+- 🟡 **[2026-10-08 — `docs/changelog/0525-*.md` + `0530-*.md`] Lỗi im lặng phía giao diện — còn 3 điểm.**
+  ✅ Đã trả ở `0530`: `getDialogues()` có khối lỗi + Thử lại ở cả 5 nơi gọi (trang cấp CEFR tải một lần
+  cho cả cấp); `extraExamplesLoader`/`formExamplesLoader` dùng khuôn `examplesLoaderFactory.ts`. **Còn:**
+  (1) lịch sử hội thoại Companion cố ý im lặng khi lỗi — cần chủ dự án quyết có báo nhẹ không;
+  (2) `LifeSynthesisDashboard` (chưa gắn) còn số bịa `|| 88`/`|| 92`, phải sửa trước khi bật lại;
+  (3) `DictationPractice` chốt danh sách câu lúc mount — hội thoại về muộn/Thử lại thành công chưa
+  vào chính tả tới lần vào kế (có từ trước, không phải hồi quy).
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
   từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
   (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —

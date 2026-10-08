@@ -13,7 +13,7 @@
 // Yêu cầu: đã await loadCurriculum() trước khi render (trang cấp lo việc này).
 // ──────────────────────────────────────────────────────────────────────
 
-import { useMemo, useState, useEffect } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Check,
   X,
@@ -70,6 +70,9 @@ import {
   QUIZ_PASS_THRESHOLD_PCT,
 } from '../../lib/curriculum'
 import { getDialogues } from '../../data/dialoguesLoader'
+import { useAsyncLoad } from '../../lib/useAsyncLoad'
+import { LOI_HOI_THOAI_EN, LOI_HOI_THOAI_VI } from '../../lib/curriculumMessages'
+import DialogueLoadError from '../DialogueLoadError'
 import type { Dialogue } from '../../data/dialogues'
 import { MiniQuizQ, buildMiniQuiz } from './quizBuilders'
 import { buttonClass } from '@core/buttonStyles'
@@ -79,7 +82,7 @@ type TodayPhase = 'learning' | 'batch-done' | 'mini-quiz' | 'mini-quiz-review' |
 // ── Màn "Xong batch": câu + hội thoại dựng TỪ CHÍNH 20 từ vừa học ─────────────
 // "Câu thông dụng" lấy thẳng ví dụ của CHÍNH 20 từ trong batch (ex_en/ex_vi),
 // kèm 1 HỘI THOẠI của vòng có nhiều từ nhất trong batch.
-function BatchDoneView({
+export function BatchDoneView({
   batch,
   uid,
   isA,
@@ -126,19 +129,21 @@ function BatchDoneView({
     return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
   }, [batch])
 
-  const [loadedDialogue, setLoadedDialogue] = useState<Dialogue | null>(null)
-  useEffect(() => {
-    if (!topCircleId) return
-    let alive = true
-    getDialogues(topCircleId).then((ds) => {
-      if (alive) setLoadedDialogue(ds[ds.length - 1] ?? null)
-    })
-    return () => {
-      alive = false
-    }
-  }, [topCircleId])
-  // Không có circle → không hiện hội thoại (thay cho setDialogue(null) đồng bộ cũ).
-  const dialogue = topCircleId ? loadedDialogue : null
+  // [changelog 0530] Bản cũ `getDialogues().then(set)` không có nhánh lỗi: tải hỏng là mất hội
+  // thoại im lặng + unhandled rejection. Nay hiện khối lỗi + Thử lại.
+  const loadDialogue = useCallback(
+    () => (topCircleId ? getDialogues(topCircleId) : Promise.resolve<Dialogue[]>([])),
+    [topCircleId],
+  )
+  const { state: dialogueState, retry: retryDialogue } = useAsyncLoad(loadDialogue, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_HOI_THOAI_VI : LOI_HOI_THOAI_EN,
+  })
+  // Không có circle → không hiện hội thoại.
+  const dialogue =
+    topCircleId && dialogueState.status === 'ready'
+      ? (dialogueState.data[dialogueState.data.length - 1] ?? null)
+      : null
 
   return (
     <div className="animate-fade-in space-y-4">
@@ -203,6 +208,10 @@ function BatchDoneView({
             ))}
           </div>
         </div>
+      )}
+
+      {dialogueState.status === 'error' && (
+        <DialogueLoadError isA={isA} message={dialogueState.message} onRetry={retryDialogue} />
       )}
 
       {dialogue && (

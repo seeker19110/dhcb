@@ -9,9 +9,13 @@ import { loadExtraExamples } from '../data/extraExamplesLoader'
 
 // Cache module-level để không fetch lại mỗi lần component mount
 let _extraCache: Record<string, [ExPair, ExPair]> | null = null
-loadExtraExamples().then((d) => {
-  _extraCache = d
-})
+// Ví dụ bổ sung là dữ liệu PHỤ: lỗi tải thì không có ví dụ thêm (thẻ vẫn dùng bình thường); loader
+// không cache lỗi nên lần mount sau tự tải lại (changelog 0530).
+loadExtraExamples()
+  .then((d) => {
+    _extraCache = d
+  })
+  .catch(() => undefined)
 import type { DictEntry } from '../types'
 import { isDifficult, toggleDifficult } from '../lib/vocab'
 import { haptics } from '../lib/haptics'
@@ -40,10 +44,14 @@ export default function WordCard({
     // Cache đã có → state đã nhận sẵn qua initializer ở trên, không cần setState
     // đồng bộ trong effect. Chỉ nạp lười khi chưa có cache (setState trong .then là async).
     if (_extraCache) return
-    loadExtraExamples().then((d) => {
-      _extraCache = d
-      setExtraExamples(d)
-    })
+    loadExtraExamples()
+      .then((d) => {
+        _extraCache = d
+        setExtraExamples(d)
+      })
+      .catch(() => {
+        // Dữ liệu phụ → ẩn phần ví dụ thêm, không báo lỗi to (changelog 0530).
+      })
   }, [])
 
   function handleStar(e: React.MouseEvent) {

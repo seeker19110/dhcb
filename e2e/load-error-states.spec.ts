@@ -88,3 +88,50 @@ test('Bạn bè: API lỗi → khối lỗi, KHÔNG hiện "Chưa có bạn bè 
   await expect(alert).toHaveCount(0, { timeout: 60_000 })
   await expect(page.getByText('ABCD1234')).toBeVisible()
 })
+
+// ── Hội thoại mẫu (changelog 0530) — `getDialogues()` hỏng phải hiện lỗi, không mất im lặng ──────
+
+const CAP_A1 = '/goc-hoc-tap/english/lo-trinh/a1'
+
+test('trang cấp CEFR, tab Bài học: hội thoại lỗi → MỘT khối lỗi + Thử lại, từ vựng/ngữ pháp còn dùng', async ({
+  page,
+}) => {
+  await mockLogin(page, 'vi', 'dark-blue')
+  const restore = await failUntilRestored(page, '**/data/dialogues.json')
+  await page.goto(CAP_A1, { waitUntil: 'domcontentloaded' })
+
+  const { alert, retry } = await expectAccessibleError(page)
+  await expect(page.getByRole('alert')).toHaveCount(1) // không lặp một khối cho mỗi unit
+  await expect(page.getByText('Phần 1').first()).toBeVisible()
+
+  await restore()
+  await retry.click()
+  await expect(alert).toHaveCount(0, { timeout: 60_000 })
+  await expect(page.getByText(/· Hội thoại$/).first()).toBeVisible()
+})
+
+test('trang cấp CEFR, tab Nghe: hội thoại lỗi → khối lỗi + Thử lại', async ({ page }) => {
+  await mockLogin(page, 'vi', 'blue-sky')
+  const restore = await failUntilRestored(page, '**/data/dialogues.json')
+  await page.goto(`${CAP_A1}?tab=listening`, { waitUntil: 'domcontentloaded' })
+
+  const { alert, retry } = await expectAccessibleError(page)
+  await restore()
+  await retry.click()
+  await expect(alert).toHaveCount(0, { timeout: 60_000 })
+})
+
+test('mở hội thoại từ mục lục khi tải lỗi → khối lỗi; Thử lại → hết lỗi', async ({ page }) => {
+  await mockLogin(page, 'vi', 'dark-blue')
+  const restore = await failUntilRestored(page, '**/data/dialogues.json')
+  await page.goto(`${CAP_A1}?unit=a1-greetings&hd=dialogue:a1-greetings`, {
+    waitUntil: 'domcontentloaded',
+  })
+
+  const { alert, retry } = await expectAccessibleError(page)
+  await expect(page.getByRole('alert')).toHaveCount(1)
+
+  await restore()
+  await retry.click()
+  await expect(alert).toHaveCount(0, { timeout: 60_000 })
+})
