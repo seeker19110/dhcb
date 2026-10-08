@@ -1,6 +1,6 @@
 # 0519 — M17 đợt 8: chữ `text-white` trên nền accent → nền accent đặc + chữ `#09090b` (2026-10-08)
 
-- **Ngày:** 2026-10-08 · **PR:** (điền khi tạo) · **Loại:** `fix(ui)` · **Nhánh:**
+- **Ngày:** 2026-10-08 · **PR:** #1271 · **Loại:** `fix(ui)` · **Nhánh:**
   `claude/peaceful-newton-czolhg`.
 - **Nguồn:** phần còn mở của `0518` ("6 nút gradient `from-accent-500 … text-white` tự ghép"). Chủ dự
   án: "tiếp tục tất cả các đợt còn lại".

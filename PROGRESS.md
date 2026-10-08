@@ -1177,7 +1177,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   màu lệch accent ĐÃ chuyển sang `buttonClass` ở `0515` #1266; bề rộng nội dung ĐÃ nhất quán — 4 giá trị có chủ đích, khoá bằng `e2e/page-width.spec.ts`, `0516` #1267;
   nút accent đặc tự ghép ĐÃ chuyển hết sang `buttonClass` ở `0517` #1268; nút trung tính `zinc` tự ghép
   ĐÃ chuyển sang `outline` ở `0518` #1269, cổng chặn tái phát; chữ `text-white` trên nền accent (bong bóng tin nhắn, nút
-  Đăng nhập — trượt AA ở Xanh đêm) ĐÃ sửa ở `0519`, cổng chặn tái phát); việc tay mục A (`plan_marketing_bullets`, hub
+  Đăng nhập — trượt AA ở Xanh đêm) ĐÃ sửa ở `0519` #1271, cổng chặn tái phát); việc tay mục A (`plan_marketing_bullets`, hub
   trong `ALLOWED_ORIGINS`, `cwv:prod`). Giới hạn: đo trên mock, không có trình đọc màn hình thật.
 
 - 🟡 **[2026-09-27 — audit bảo mật lần hai, `docs/changelog/0465-*.md`] Bốn nợ còn lại sau đợt
