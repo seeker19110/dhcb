@@ -1,5 +1,5 @@
 // api/mesh-telemetry.ts — REST handler cho WebSocket Mesh & Realtime Telemetry V4.4.
-import { jsonResponse } from '@dhcb/core-http/http'
+import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import {
   RealtimeSessionTelemetry,
@@ -108,7 +108,7 @@ export default async function handler(req: Request): Promise<Response> {
       await setFeatureState(personId, FEATURE, parseResult.data)
       return jsonResponse({ success: true, telemetry: parseResult.data }, 200)
     } catch (err) {
-      return jsonResponse({ error: 'Invalid payload', details: String(err) }, 400)
+      return badJsonOrInternalError(err, 'mesh-telemetry', 'Invalid payload')
     }
   }
 

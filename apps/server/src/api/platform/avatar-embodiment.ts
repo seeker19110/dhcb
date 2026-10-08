@@ -1,7 +1,7 @@
 // api/avatar-embodiment.ts — REST handler cho Hien than 3D & Cau hinh Cyber-Tutor V4.
 // State da chuyen sang bang platform.feature_state (migration 0058, packages/core-db/featureState.ts)
 // — thay cho Map in-memory cap module, tranh vo trong PM2 cluster.
-import { jsonResponse } from '@dhcb/core-http/http'
+import { badJsonOrInternalError, jsonResponse } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import {
   AvatarEmbodimentConfig,
@@ -84,7 +84,7 @@ export default async function handler(req: Request): Promise<Response> {
         200,
       )
     } catch (err) {
-      return jsonResponse({ error: 'Invalid payload', details: String(err) }, 400)
+      return badJsonOrInternalError(err, 'avatar-embodiment', 'Invalid payload')
     }
   }
 

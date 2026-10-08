@@ -5,7 +5,7 @@
 // thuộc về đúng 1 người chơi). Elo cập nhật THẬT sau mỗi trận (K=32, `calculateEloDelta`
 // trong finalizePvPMatch). Leaderboard là truy vấn thật top Elo từ feature_state (trước đây
 // hardcode "Nguyen Hoang Long, Elena Vu…" cho mọi user).
-import { jsonResponse } from '@dhcb/core-http/http'
+import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
 import { getPgPool } from '@dhcb/core-db/pgPool'
@@ -53,19 +53,26 @@ async function loadProfile(userId: string): Promise<StoredPvPProfile> {
   return DEFAULT_PROFILE
 }
 
-// Tên hiển thị: ưu tiên nickname (profiles), rồi tên tài khoản (users), rồi nhãn chung.
+// Tên hiển thị: ưu tiên biệt danh, rồi tên tài khoản, rồi nhãn chung — cả hai đều nằm trên
+// public.profiles (khoá `id` = users.id; bảng users KHÔNG có cột tên).
+// [2026-10-08] Bản cũ join `profiles.user_id` và đọc `users.name` — hai cột KHÔNG tồn tại (đo
+// bằng PREPARE trên CSDL đã migrate) nên câu lệnh lỗi ở MỌI lần gọi, catch rỗng nuốt mất → ai
+// cũng là "Học viên". Giữ fallback (thiếu tên không đáng chặn trận đấu) nhưng phải ghi log.
 async function displayName(userId: string): Promise<string> {
   try {
     const pool = getPgPool()
     const { rows } = await pool.query<{ display_name: string | null }>(
-      `select coalesce(p.nickname, u.name) as display_name
-         from public.users u
-         left join public.profiles p on p.user_id = u.id
-        where u.id = $1`,
+      `select coalesce(p.nickname, p.name) as display_name
+         from public.profiles p
+        where p.id = $1`,
       [userId],
     )
     return rows[0]?.display_name || 'Học viên'
-  } catch {
+  } catch (err) {
+    console.warn(
+      '[pvp-arena] không đọc được tên hiển thị → dùng nhãn chung:',
+      err instanceof Error ? err.message : err,
+    )
     return 'Học viên'
   }
 }
@@ -103,7 +110,7 @@ async function realLeaderboard(): Promise<PvPLeaderboardEntry[]> {
     `select fs.user_id, fs.state, p.nickname
        from platform.feature_state fs
        join public.users u on u.id = fs.user_id
-       left join public.profiles p on p.user_id = fs.user_id
+       left join public.profiles p on p.id = fs.user_id
       where fs.feature = $1
       order by (fs.state->>'eloRating')::int desc, fs.updated_at asc
       limit 10`,
@@ -267,7 +274,7 @@ export default async function handler(req: Request): Promise<Response> {
 
       return jsonResponse({ error: 'Invalid action parameter' }, 400)
     } catch (err) {
-      return jsonResponse({ error: 'Invalid JSON payload', details: String(err) }, 400)
+      return badJsonOrInternalError(err, 'pvp-arena')
     }
   }
 

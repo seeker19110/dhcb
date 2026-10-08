@@ -1,8 +1,8 @@
 // Cổng cho getClientIp — chặn hồi quy LỖ HỔNG THẬT đã xác minh trên production 2026-08-26:
 // bản cũ đọc phần tử ĐẦU của X-Forwarded-For, tức giá trị client tự khai, nên đổi header mỗi
 // request là né sạch rate limit (40 request vào route giới hạn 30/phút → 40 lần 200, 0 lần 429).
-import { describe, it, expect } from 'vitest'
-import { getClientIp } from './http.js'
+import { describe, it, expect, vi } from 'vitest'
+import { badJsonOrInternalError, getClientIp } from './http.js'
 
 const req = (headers: Record<string, string>) => new Request('https://x.test/', { headers })
 
@@ -64,5 +64,31 @@ describe('getClientIp', () => {
     const a = getClientIp(req({ 'x-forwarded-for': '10.0.1.1, 198.51.100.5' }))
     const b = getClientIp(req({ 'x-forwarded-for': '10.0.9.9, 198.51.100.5' }))
     expect(a).toBe(b)
+  })
+})
+
+describe('badJsonOrInternalError (2026-10-08)', () => {
+  it('body không phải JSON (SyntaxError thật từ req.json) → 400, giữ hình dạng phản hồi cũ', async () => {
+    const err = await new Request('https://x.test/', { method: 'POST', body: '{hỏng' })
+      .json()
+      .catch((e: unknown) => e)
+    const res = badJsonOrInternalError(err, 'test')
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as { error: string; details: string }
+    expect(body.error).toBe('Invalid JSON payload')
+    expect(body.details).toContain('SyntaxError')
+  })
+
+  it('lỗi hạ tầng (CSDL) → 500 có log, KHÔNG lộ thông điệp nội bộ cho client', async () => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const res = badJsonOrInternalError(
+      new Error('connect ECONNREFUSED 10.0.0.5:5432'),
+      'pvp-arena',
+      'Invalid payload',
+    )
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('10.0.0.5')
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('pvp-arena'))
+    errorLog.mockRestore()
   })
 })

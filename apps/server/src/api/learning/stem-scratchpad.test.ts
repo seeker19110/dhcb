@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from './stem-scratchpad.js'
 import * as security from '@dhcb/core-auth/security'
+import { getFeatureState } from '@dhcb/core-db/featureState'
 
 // Handler đã chuyển state sang platform.feature_state — mock bằng Map in-memory (hành vi giống
 // hệt Map cấp module cũ: state sống suốt file test), theo đúng khuôn pvp-arena.test.ts.
@@ -504,5 +505,25 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toBe('Invalid JSON payload')
+  })
+
+  it('CHẶN HỒI QUY 2026-10-08: CSDL lỗi → 500 có log, KHÔNG phải 400 "Invalid JSON payload" lộ lỗi pg', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(getFeatureState).mockRejectedValueOnce(
+      new Error('connect ECONNREFUSED 10.0.0.5:5432'),
+    )
+    const res = await handler(
+      new Request('http://localhost/api/stem-scratchpad?action=get_hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemId: 'p-1' }),
+      }),
+    )
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('ECONNREFUSED')
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('stem-scratchpad'))
   })
 })
