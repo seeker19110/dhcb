@@ -1157,14 +1157,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   hồ sơ ẩn, `learner_intent`, `platform.completion_*`, `public.*` tiến độ/thanh toán/phiên, schema
   `english`/`programming`/`chat`/`location`) KHÔNG được xuất/xoá — gộp vào là tính năng "xoá tài khoản",
   đụng chứng từ thanh toán + Luật số 1, cần đặc tả riêng; (2) full_erase không đòi xác minh lại (step-up)
-  dù không hoàn tác được; (3) 20 câu SQL động chưa được `check:sql` kiểm.
-- 🟡 **[2026-10-08 — `docs/changelog/0525-*.md` + `0530-*.md`] Lỗi im lặng phía giao diện — còn 3 điểm.**
-  ✅ Đã trả ở `0530`: `getDialogues()` có khối lỗi + Thử lại ở cả 5 nơi gọi (trang cấp CEFR tải một lần
-  cho cả cấp); `extraExamplesLoader`/`formExamplesLoader` dùng khuôn `examplesLoaderFactory.ts`. **Còn:**
-  (1) lịch sử hội thoại Companion cố ý im lặng khi lỗi — cần chủ dự án quyết có báo nhẹ không;
-  (2) `LifeSynthesisDashboard` (chưa gắn) còn số bịa `|| 88`/`|| 92`, phải sửa trước khi bật lại;
-  (3) `DictationPractice` chốt danh sách câu lúc mount — hội thoại về muộn/Thử lại thành công chưa
-  vào chính tả tới lần vào kế (có từ trước, không phải hồi quy).
+  dù không hoàn tác được; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
   từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
   (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —
@@ -1216,9 +1209,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `CF-Connecting-IP` giả" nên chạy tay sau khi deploy, cách làm ở `docs/cloudflare-setup.md`.
   **[2026-10-08 — audit kiểm soát truy cập 113 route, `docs/changelog/0526-*.md`]** Đã vá 4 lỗ IDOR
   (realtime-multimodal, scenario-holodeck, socratic-diagnostics, gắn task/tài liệu vào dự án người
-  khác ở `/api/work`). **Chờ chủ dự án quyết:** (a) `/api/realtime-multimodal` không rate limit/trần
-  phiên, Map phiên holodeck/socratic không dọn — không client nào gọi ba endpoint này, cân nhắc gỡ
-  hẳn; (b) `/api/pronunciation` nhánh cache MISS gọi Google TTS không trừ lượt Free/VIP (chỉ 60/phút/IP);
+  khác ở `/api/work`). (a) ✅ `/api/realtime-multimodal` ĐÃ GỠ ở `0534` (không client nào gọi); **còn chờ chủ dự án
+  quyết:** Map phiên `/api/scenario-holodeck` + `/api/socratic-diagnostics` không dọn (hai endpoint
+  này CÓ client thật trong Companion nên giữ — cần trần phiên/người + TTL); (b) ✅ `/api/pronunciation`
+  cache MISS nay trừ lượt Free/VIP (`0534`);
   ~~(c) `/api/admin-feature-status` so `x-cron-key` bằng `===`~~ — ✅ ĐÃ SỬA ở `0531` (`packages/core-auth/secretCompare.ts`).
 
 - 🟡 **[2026-09-22 — đợt React 19 + Tailwind 4, `docs/changelog/0415-*.md`] Sáu nợ sau đợt nâng
