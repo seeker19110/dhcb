@@ -85,25 +85,67 @@ export default function ActionCanvas() {
     }
   }
 
-  // Trả `false` khi người dùng huỷ; NÉM lỗi khi tạo thất bại để hộp thoại giữ nguyên câu mục
-  // tiêu vừa gõ (trước đây hộp thoại vẫn đóng như thể đã thành công).
-  const handleSynthesize = async (prompt: string) => {
-    // Tạo sơ đồ GHI ĐÈ sơ đồ đã lưu ở server — hỏi trước khi đang có thẻ (đợt U5).
-    if (
-      canvas &&
-      canvas.nodes.length > 0 &&
-      !window.confirm('Tạo sơ đồ mới sẽ thay thế sơ đồ hiện tại. Tiếp tục?')
-    ) {
-      return
-    }
+  // [changelog 0549] Đề xuất AI KHÔNG được lưu ở server — hộp thoại hiển thị cho người dùng xem/sửa.
+  const handleRequestProposal = (goal: string) => synthesizeGoalCanvas(goal, canvas?.canvasId)
+
+  // Thay sơ đồ đang có (đã có thẻ) phải hỏi trước — cả khi lưu đề xuất AI lẫn khi tự bắt đầu.
+  const confirmReplace = () =>
+    !canvas ||
+    canvas.nodes.length === 0 ||
+    window.confirm('Sơ đồ mới sẽ thay thế sơ đồ hiện tại. Tiếp tục?')
+
+  // Người dùng đã xem/sửa đề xuất và bấm "Lưu vào sơ đồ": lưu qua nhánh lưu THƯỜNG (hợp đồng Zod
+  // ở server). Trả `false` khi người dùng huỷ; NÉM lỗi khi lưu thất bại để hộp thoại giữ bản đã sửa.
+  const handleAcceptProposal = async (proposal: ActionCanvasState): Promise<boolean> => {
+    if (!confirmReplace()) return false
     try {
-      const newCanvas = await synthesizeGoalCanvas(prompt)
-      setCanvas(newCanvas)
-      toast.success('Đã tạo bản nháp sơ đồ — sửa các nút cho khớp mục tiêu của bạn.')
+      const saved = await saveActionCanvas(proposal)
+      setCanvas(saved)
+      setSelectedNodeId(null)
+      toast.success('Đã lưu sơ đồ. Bạn vẫn sửa, thêm, xoá thẻ được bất cứ lúc nào.')
+      return true
     } catch (err) {
-      toast.error('Chưa tạo được sơ đồ. Thử lại nhé.')
+      toast.error('Chưa lưu được sơ đồ. Thử lại nhé.')
       throw err
     }
+  }
+
+  // Lối không dùng AI (hết lượt hoặc tự chọn): canvas chỉ có thẻ mục tiêu, chưa lưu — giống
+  // "Thêm thẻ", người dùng tự thêm bước rồi bấm Lưu.
+  const handleStartManual = (goal: string): boolean => {
+    // Chưa tải xong canvas (đang tải/lỗi tải) thì chưa có canvasId/personId để dựng.
+    if (!canvas || !confirmReplace()) return false
+    const now = new Date().toISOString()
+    const goalNode: CanvasNode = {
+      id: crypto.randomUUID(),
+      type: 'goal',
+      title: goal.slice(0, 200),
+      content: '',
+      domain: 'general',
+      // Góc trên-trái: nhìn thấy ngay cả ở màn 390px (x=350 nằm ngoài khung nhìn mobile).
+      x: 40,
+      y: 40,
+      width: 260,
+      height: 120,
+      color: '#00f0ff',
+      status: 'draft',
+      tags: ['muc-tieu'],
+      assignedTo: 'user',
+      createdAt: now,
+      updatedAt: now,
+    }
+    setCanvas({
+      ...canvas,
+      title: goal.slice(0, 200),
+      nodes: [goalNode],
+      edges: [],
+      viewport: { zoom: 1.0, panX: 0, panY: 0 },
+      lastEditedBy: 'user',
+      updatedAt: now,
+    })
+    setSelectedNodeId(goalNode.id)
+    toast.success('Đã tạo thẻ mục tiêu. Bấm "Thêm thẻ" cho từng bước, rồi bấm Lưu.')
+    return true
   }
 
   const handleAutoLayout = async () => {
@@ -344,8 +386,9 @@ export default function ActionCanvas() {
             </p>
             <ul className="max-w-md text-left text-sm text-zinc-300 leading-relaxed list-disc pl-5 space-y-1">
               <li>
-                <strong className="text-white">Tạo sơ đồ từ mục tiêu</strong> — nhập mục tiêu, ứng
-                dụng dựng một khung mẫu có các thẻ &ldquo;Ví dụ&rdquo; để bạn sửa lại.
+                <strong className="text-white">Tạo sơ đồ từ mục tiêu</strong> — nhập mục tiêu, AI đề
+                xuất các bước (dùng 1 lượt AI); bạn xem, sửa rồi mới lưu. Hết lượt hoặc không muốn
+                dùng AI thì tự bắt đầu với thẻ mục tiêu.
               </li>
               <li>
                 <strong className="text-white">Thêm thẻ</strong> — tự vẽ từng bước từ đầu.
@@ -387,7 +430,9 @@ export default function ActionCanvas() {
       <CanvasAiOrchestratorModal
         isOpen={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
-        onSynthesize={handleSynthesize}
+        onRequestProposal={handleRequestProposal}
+        onAcceptProposal={handleAcceptProposal}
+        onStartManual={handleStartManual}
       />
 
       <CanvasExportModal

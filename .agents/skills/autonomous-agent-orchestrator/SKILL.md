@@ -61,6 +61,28 @@ Mọi hành động 1-chạm dẫn tới trang/tính năng có thật — không
 
 ---
 
+## 3b. ACTION CANVAS — AI ĐỀ XUẤT PHÂN RÃ MỤC TIÊU (ĐANG CHẠY THẬT, changelog 0549)
+
+Mẫu tham chiếu khi làm một tính năng "AI đề xuất, người xác nhận" (đặc tả
+`docs/specs/2026-10-09-action-canvas-phan-ra-muc-tieu-ai.md`):
+
+- `POST /api/action-canvas?action=synthesize` — **1 lời gọi** `generateChatText`/lần, trần token
+  `GOAL_DECOMPOSITION_MAX_TOKENS`, không tự thử lại; prompt tách file
+  `packages/core-personal/actionCanvasPrompt.ts` (mục tiêu bọc rào `<muc_tieu>`, là DỮ LIỆU).
+- Lượt: `checkAndConsumeUsage(userId, 'chat')`; **hoàn** khi provider không trả lời, đầu ra hỏng
+  hoặc lỗi sau khi trừ. Chống đua: `tryAcquireFeatureLock` (`packages/core-db/featureState.ts`,
+  khoá có hạn ở `platform.feature_state`, có token chủ — chỉ request giữ khoá mới nhả được) —
+  request thứ hai 409, không trừ lượt. Rate limit hai tầng: IP + người dùng.
+- Đầu ra qua `parseGoalDecomposition` (`packages/core-personal/goalDecomposition.ts`): Zod strict,
+  2–8 bước, DAG, sâu ≤ 4, không link, miền chỉ `learning`/`work`/`general`. Hỏng ⇒ 502 + hoàn
+  lượt, **không** rơi về khung mẫu.
+- Đề xuất **không lưu** ở server; người dùng bỏ/sửa bước trong hộp thoại rồi tự bấm Lưu (nhánh lưu
+  thường). Không bước nào được thực thi.
+- Eval: CI chạy snapshot + test bộ kiểm/bộ chấm (miễn phí); `npm run eval:action-canvas` tốn phí,
+  chạy tay khi sửa prompt/bộ kiểm.
+
+---
+
 ## 4. RÀO CHẮN BẮT BUỘC CHO BẤT KỲ VÒNG LẶP TỰ CHẠY NÀO (KHI LÀM THẬT)
 
 1. **Giới hạn bước cứng** (vd tối đa 5–10 bước/phiên); cấm đệ quy vô hạn.
