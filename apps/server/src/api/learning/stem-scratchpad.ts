@@ -224,11 +224,13 @@ export default async function handler(req: Request): Promise<Response> {
         prob.isSolved = prob.isSolved || isCorrect
         prob.updatedAt = new Date().toISOString()
         await saveProblem(personId, book, prob)
+        // Chỉ hé lời giải khi bài ĐÃ giải đúng — trước đây nộp đại một đáp số sai cũng nhận về
+        // 100 ký tự đầu lời giải, biến nút "nộp" thành nút "xem đáp án".
         return jsonResponse(
           {
             success: true,
             isSolved: prob.isSolved,
-            solutionPreview: question?.solutionLatex?.slice(0, 100),
+            ...(prob.isSolved ? { solutionPreview: question?.solutionLatex?.slice(0, 100) } : {}),
           },
           200,
         )

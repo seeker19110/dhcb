@@ -479,6 +479,8 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.isSolved).toBe(false)
+    // Nộp sai KHÔNG được nhận lời giải — nếu không, nộp bừa là cách xem đáp án.
+    expect(data).not.toHaveProperty('solutionPreview')
   })
 
   it('cắt bớt bài cũ nhất khi vượt trần MAX_PROBLEMS (30 bài/người)', async () => {

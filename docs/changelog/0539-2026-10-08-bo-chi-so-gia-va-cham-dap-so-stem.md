@@ -70,6 +70,9 @@ Trước: `finalAnswer?.includes(question.solutionLatex?.slice(0, 10))`. Hệ qu
 - `apps/server/src/api/learning/stem-scratchpad.ts` gọi `gradeFinalAnswer`.
   - `finalAnswer` không phải chuỗi thì trả 400.
   - Bài đã giải xong thì vẫn giữ trạng thái xong.
+  - `solutionPreview` (100 ký tự đầu lời giải) chỉ trả về khi bài ĐÃ giải đúng. Trước đây nộp
+    một đáp số sai bất kỳ cũng nhận được, nên nút nộp bài thành nút xem đáp án. Giao diện không
+    đọc trường này; test ca sai khẳng định không có trường.
 
 ### 3. Skill khớp lại với mã
 
