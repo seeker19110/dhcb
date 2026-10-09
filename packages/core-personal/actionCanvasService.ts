@@ -6,9 +6,12 @@
 // từng thấy ngay 4 thẻ dựng sẵn ("Luyện phản xạ IELTS Speaking…", "Full-Duplex 3D", "Holodeck
 // Panel Mock", "Điểm số IELTS"…) trông như kế hoạch của CHÍNH MÌNH, kèm thẻ giao cho "AI". Nay:
 //   - chưa lưu canvas nào → `createEmptyCanvas` (không thẻ nào), giao diện hiện hướng dẫn;
-//   - "Tạo sơ đồ từ mục tiêu" (người dùng tự bấm, tự nhập mục tiêu) dựng KHUNG MẪU mà mọi thẻ
-//     ngoài mục tiêu đều ghi rõ "Ví dụ:" + "Gợi ý mẫu", trạng thái Bản nháp, người làm là Bạn —
-//     không giả vờ AI đã phân tích hay sẽ làm hộ (skill life-career-strategic-advisor §2).
+//   - "Tạo sơ đồ từ mục tiêu" từng dựng KHUNG MẪU 4 thẻ "Ví dụ:" giống hệt nhau cho mọi mục tiêu.
+//
+// [2026-10-09, changelog 0549] Khung mẫu `synthesizeCrossDomainGoalCanvas` ĐÃ GỠ: "Tạo sơ đồ từ
+// mục tiêu" nay là AI ĐỀ XUẤT phân rã thật (goalDecomposition.ts + actionCanvasPrompt.ts), người
+// dùng xem/sửa rồi mới lưu. Lối không dùng AI là canvas trống/thẻ mục tiêu tự dựng ở giao diện —
+// không còn thẻ "Ví dụ" cố định nào trông như kết quả phân tích.
 import {
   ActionCanvasState,
   CanvasNode,
@@ -21,13 +24,7 @@ import {
 
 // Giới hạn `title` trong hợp đồng (CanvasNodeSchema/ActionCanvasStateSchema) — tiền tố + câu mục
 // tiêu 200 ký tự từng vượt giới hạn, canvas không lưu lại được.
-const TITLE_MAX = 200
 export const EMPTY_CANVAS_TITLE = 'Kế hoạch hành động của bạn'
-const EXAMPLE_HINT = 'Gợi ý mẫu — sửa lại cho đúng việc của bạn, hoặc xoá thẻ này.'
-
-function clampTitle(text: string): string {
-  return text.length > TITLE_MAX ? text.slice(0, TITLE_MAX) : text
-}
 
 export class ActionCanvasService {
   /** Canvas chưa có thẻ nào — trạng thái đầu của người chưa từng lưu sơ đồ. */
@@ -39,131 +36,6 @@ export class ActionCanvasService {
       title: EMPTY_CANVAS_TITLE,
       nodes: [],
       edges: [],
-      viewport: { zoom: 1.0, panX: 0, panY: 0 },
-      lastEditedBy: 'user',
-      schemaVersion: ACTION_CANVAS_VERSION,
-      createdAt: now,
-      updatedAt: now,
-    }
-  }
-
-  /**
-   * Khung mẫu từ câu mục tiêu người dùng nhập: mục tiêu → (ví dụ) bài học + (ví dụ) việc Ghi chú →
-   * (ví dụ) mốc tự đánh giá. KHÔNG phải phân tích AI — mọi thẻ ví dụ đều ghi rõ là ví dụ.
-   */
-  static synthesizeCrossDomainGoalCanvas(params: {
-    canvasId: string
-    personId: string
-    goalPrompt: string
-  }): ActionCanvasState {
-    const now = new Date().toISOString()
-    const { canvasId, personId } = params
-    const goalTitle = clampTitle(params.goalPrompt.trim() || 'Mục tiêu của bạn')
-
-    const baseNode = {
-      status: 'draft' as const,
-      assignedTo: 'user' as const,
-      createdAt: now,
-      updatedAt: now,
-    }
-
-    const rootNode: CanvasNode = {
-      ...baseNode,
-      id: '10000000-0000-4000-8000-000000000001',
-      type: 'goal',
-      title: goalTitle,
-      content: 'Mục tiêu bạn vừa nhập. Các thẻ "Ví dụ" bên dưới chỉ là khung gợi ý.',
-      domain: 'general',
-      x: 400,
-      y: 50,
-      width: 260,
-      height: 120,
-      color: '#00f0ff',
-      tags: ['muc-tieu'],
-    }
-
-    const learningNode: CanvasNode = {
-      ...baseNode,
-      id: '10000000-0000-4000-8000-000000000002',
-      type: 'task',
-      title: 'Ví dụ: bài học phục vụ mục tiêu',
-      content: `Ghi bài học hoặc kỹ năng cần luyện. ${EXAMPLE_HINT}`,
-      domain: 'learning',
-      x: 100,
-      y: 250,
-      width: 240,
-      height: 130,
-      color: '#38bdf8',
-      tags: ['vi-du'],
-    }
-
-    const workNode: CanvasNode = {
-      ...baseNode,
-      id: '10000000-0000-4000-8000-000000000003',
-      type: 'task',
-      title: 'Ví dụ: việc cần làm trong Ghi chú',
-      content: `Ghi một việc cụ thể bạn sẽ làm rồi theo dõi ở Ghi chú. ${EXAMPLE_HINT}`,
-      domain: 'work',
-      x: 400,
-      y: 250,
-      width: 240,
-      height: 130,
-      color: '#22c55e',
-      tags: ['vi-du'],
-    }
-
-    const reviewNode: CanvasNode = {
-      ...baseNode,
-      id: '10000000-0000-4000-8000-000000000005',
-      type: 'decision_bridge',
-      title: 'Ví dụ: mốc tự đánh giá',
-      content: `Chọn ngày nhìn lại xem bạn đã tiến tới mục tiêu đến đâu. ${EXAMPLE_HINT}`,
-      domain: 'general',
-      x: 400,
-      y: 450,
-      width: 260,
-      height: 120,
-      color: '#a855f7',
-      tags: ['vi-du'],
-    }
-
-    const edges: CanvasEdge[] = [
-      {
-        id: '20000000-0000-4000-8000-000000000001',
-        sourceNodeId: rootNode.id,
-        targetNodeId: learningNode.id,
-        relationship: 'requires',
-        label: 'Cần học',
-      },
-      {
-        id: '20000000-0000-4000-8000-000000000002',
-        sourceNodeId: rootNode.id,
-        targetNodeId: workNode.id,
-        relationship: 'contributes_to',
-        label: 'Cần làm',
-      },
-      {
-        id: '20000000-0000-4000-8000-000000000004',
-        sourceNodeId: learningNode.id,
-        targetNodeId: reviewNode.id,
-        relationship: 'contributes_to',
-        label: 'Góp vào',
-      },
-      {
-        id: '20000000-0000-4000-8000-000000000005',
-        sourceNodeId: workNode.id,
-        targetNodeId: reviewNode.id,
-        relationship: 'contributes_to',
-        label: 'Góp vào',
-      },
-    ]
-
-    return {
-      canvasId,
-      personId,
-      title: clampTitle(`Bản nháp: ${goalTitle}`),
-      nodes: [rootNode, learningNode, workNode, reviewNode],
-      edges,
       viewport: { zoom: 1.0, panX: 0, panY: 0 },
       lastEditedBy: 'user',
       schemaVersion: ACTION_CANVAS_VERSION,

@@ -26,3 +26,37 @@ export async function setFeatureState<T>(userId: string, feature: string, state:
     [userId, feature, JSON.stringify(state)],
   )
 }
+
+// ── Khoá "đang chạy" theo (user, tên khoá) — chống hai request ĐUA nhau làm cùng một việc tốn
+// tiền (vd bấm "Tạo" hai lần → hai lời gọi AI, trừ hai lượt). Dùng lại bảng feature_state, KHÔNG
+// thêm bảng: một dòng với `feature = <tên khoá>` là "đang giữ khoá". Upsert có điều kiện là
+// NGUYÊN TỬ ở Postgres nên đúng cả khi chạy nhiều tiến trình PM2 (Map in-memory thì không).
+// Khoá tự hết hạn sau `ttlSeconds` — tiến trình chết giữa chừng không khoá người dùng mãi mãi.
+// Changelog 0549 (Action Canvas phân rã mục tiêu bằng AI).
+
+/** Thử giữ khoá. `true` = giữ được; `false` = đang có request khác giữ (chưa hết hạn). */
+export async function tryAcquireFeatureLock(
+  userId: string,
+  lockName: string,
+  ttlSeconds: number,
+): Promise<boolean> {
+  const pool = getPgPool()
+  const { rows } = await pool.query<{ acquired: boolean }>(
+    `insert into platform.feature_state (user_id, feature, state, updated_at)
+     values ($1, $2, '{}'::jsonb, now())
+     on conflict (user_id, feature) do update set updated_at = now()
+       where platform.feature_state.updated_at < now() - make_interval(secs => $3::int)
+     returning true as acquired`,
+    [userId, lockName, ttlSeconds],
+  )
+  return rows[0]?.acquired === true
+}
+
+/** Nhả khoá. Gọi trong `finally`; lỗi nhả khoá để nơi gọi tự quyết (khoá vẫn tự hết hạn). */
+export async function releaseFeatureLock(userId: string, lockName: string): Promise<void> {
+  const pool = getPgPool()
+  await pool.query('delete from platform.feature_state where user_id = $1 and feature = $2', [
+    userId,
+    lockName,
+  ])
+}

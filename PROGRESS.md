@@ -1176,12 +1176,14 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   chiều). (2) ✅ `/api/persons?action=full_erase` nay đòi xác minh lại
   (mật khẩu/Google + 2FA) qua cổng dùng chung với `/api/account` (`api/_lib/reauthGate.ts`, cùng
   hạn mức lượt thử), `0541` — chưa có giao diện nào gọi endpoint này; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
-- 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
-  từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
-  (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —
-  chỉ thay tiêu đề nút gốc. Câu chữ giao diện đã sửa thành "bản nháp sơ đồ từ khung mẫu" (không
-  còn hứa "AI phân rã"). **Muốn phân rã thật:** cần đặc tả (gọi AI có đếm lượt, rào chắn skill
-  `autonomous-agent-orchestrator`), hoặc chủ dự án chọn đổi khung mẫu thành canvas trống.
+- ✅ **[2026-10-02 — phát hiện ở changelog `0485`, ĐÃ XỬ LÝ ở `0549`] Action Canvas "tạo sơ đồ
+  từ mục tiêu" từng chỉ là KHUNG MẪU cố định.** Nay AI ĐỀ XUẤT phân rã thật (đặc tả
+  `docs/specs/2026-10-09-action-canvas-phan-ra-muc-tieu-ai.md`): 1 lời gọi/lần, đếm chung lượt AI/ngày,
+  hoàn lượt khi AI lỗi/đầu ra hỏng, khoá chống hai request đua, đầu ra kiểm Zod + DAG; đề xuất KHÔNG
+  tự lưu — người dùng bỏ/sửa bước rồi bấm Lưu; hết lượt thì tự bắt đầu với thẻ mục tiêu. Khung mẫu
+  `synthesizeCrossDomainGoalCanvas` đã gỡ. **Việc tay còn lại:** chủ dự án chạy
+  `npm run eval:action-canvas` (cần key AI trong `.env`, tốn phí) và ghi kết quả vào PR — chưa
+  chạy lần nào trên model thật.
 - ✅ **[2026-10-02 — changelog `0479`, ĐÃ XỬ LÝ ở `0539`] "Chỉ số tự nhận thức" giả của nhật ký
   phản tỉnh đã BỎ HẲN** (cùng "Growth Mindset" và "xu hướng tư duy"): service không còn tính, hợp
   đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến

@@ -42,9 +42,17 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
 - Chưa lưu canvas nào → `GET /api/action-canvas` trả `createEmptyCanvas` (không thẻ); trang hiện
   màn hướng dẫn với hai lối "Tạo sơ đồ từ mục tiêu" / "Thêm thẻ" (changelog 0495, audit M11).
   **Đừng** quay lại tự dựng thẻ mẫu cho người chưa yêu cầu.
-- `synthesizeCrossDomainGoalCanvas` dựng đồ thị nút **từ mẫu** theo câu mục tiêu người dùng nhập:
-  `goal` → `task` → `decision_bridge`. Đây không phải phân tích AI — mọi thẻ ngoài mục tiêu có tiêu
-  đề "Ví dụ: …" + "Gợi ý mẫu", trạng thái Bản nháp, người làm là Bạn (changelog 0485, 0495).
+- "Tạo sơ đồ từ mục tiêu" là **AI ĐỀ XUẤT phân rã thật** (changelog 0549, đặc tả
+  `docs/specs/2026-10-09-action-canvas-phan-ra-muc-tieu-ai.md`): server gọi AI có đếm lượt, kiểm
+  đầu ra (DAG, trần bước/độ sâu/độ dài), trả đề xuất **chưa lưu**; người dùng bỏ/sửa bước rồi tự
+  bấm Lưu. Thẻ AI: Bản nháp · người làm Bạn · tag `ai-de-xuat`; giao diện ghi rõ "đề xuất của AI".
+  Hết lượt/không muốn dùng AI ⇒ tự bắt đầu với thẻ mục tiêu. Khung mẫu cố định
+  `synthesizeCrossDomainGoalCanvas` (4 thẻ "Ví dụ") **đã gỡ** — đừng dựng lại, và đừng rơi về
+  khuôn cố định khi AI lỗi (báo lỗi thật + hoàn lượt).
+- Prompt (`packages/core-personal/actionCanvasPrompt.ts`) chỉ giới thiệu hai khu vực còn thật (Học
+  tập, Ghi chú); mục tiêu về việc làm/kinh doanh/sức khoẻ vẫn chia bước với miền `general`, KHÔNG
+  giới thiệu trụ đã xoá. Miền `career`/`startup`/`life` trong đầu ra AI bị TỪ CHỐI (khác với canvas
+  cũ đã lưu — cái đó vẫn được đổi về `general` khi đọc).
 - Nhãn hiển thị (miền/trạng thái/người làm) lấy từ `CANVAS_*_LABELS` trong hợp đồng — không in mã
   enum thô ra giao diện hay bản xuất Markdown.
 - Miền của nút (`CanvasDomainSchema`): chỉ `learning` · `work` (Ghi chú) · `general`. Canvas lưu từ
@@ -52,8 +60,8 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
   này (lưu lại canvas cũ sẽ lỗi 400).
 - `autoLayoutCanvasNodes` xếp bố cục cây chống chồng lấn.
 - `exportCanvasToMarkdown` xuất Markdown.
-- Sửa canvas thì giữ nhãn trung thực: đồ thị là **khung gợi ý**, không phải kế hoạch được AI
-  "phân tích".
+- Sửa canvas thì giữ nhãn trung thực: thẻ AI là **đề xuất** người dùng đã duyệt, không phải
+  kế hoạch AI "đã phân tích" hay "sẽ làm hộ".
 
 ---
 

@@ -52,21 +52,57 @@ describe('Action Canvas API Handler (/api/action-canvas)', () => {
     expect(data.canvas.schemaVersion).toBe('v4.2.0')
   })
 
-  it('synthesizes new cross-domain goal canvas on POST with action=synthesize', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
-      userId: '11111111-1111-4111-8111-111111111111',
-    })
-
-    const req = new Request('http://localhost/api/action-canvas?action=synthesize', {
+  // Nhánh synthesize (AI đề xuất) có file test riêng: action-canvas.synthesize.test.ts. Ở đây
+  // lưu một canvas đầy đủ qua nhánh lưu thường để các test export/auto_layout phía sau có dữ liệu.
+  it('POST canvas đầy đủ hợp lệ → lưu (đề xuất AI chỉ được lưu qua đúng nhánh này)', async () => {
+    const userId = '11111111-1111-4111-8111-111111111111'
+    vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({ userId })
+    const now = new Date().toISOString()
+    const goalId = '66666666-6666-4666-8666-666666666661'
+    const stepId = '66666666-6666-4666-8666-666666666662'
+    const nodeBase = {
+      content: '',
+      domain: 'learning',
+      x: 0,
+      y: 0,
+      width: 220,
+      height: 120,
+      color: '#00f0ff',
+      status: 'draft',
+      tags: [],
+      assignedTo: 'user',
+      createdAt: now,
+      updatedAt: now,
+    }
+    const req = new Request('http://localhost/api/action-canvas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ goalPrompt: 'Du học Thạc sĩ AI' }),
+      body: JSON.stringify({
+        canvasId: '44444444-4444-4444-8444-444444444441',
+        title: 'Du học Thạc sĩ AI',
+        nodes: [
+          { ...nodeBase, id: goalId, type: 'goal', title: 'Du học Thạc sĩ AI' },
+          { ...nodeBase, id: stepId, type: 'task', title: 'Luyện IELTS 30 phút/ngày' },
+        ],
+        edges: [
+          {
+            id: '77777777-7777-4777-8777-777777777771',
+            sourceNodeId: goalId,
+            targetNodeId: stepId,
+            relationship: 'requires',
+          },
+        ],
+        viewport: { zoom: 1, panX: 0, panY: 0 },
+        lastEditedBy: 'user',
+        createdAt: now,
+        updatedAt: now,
+      }),
     })
-
     const res = await handler(req)
     expect(res.status).toBe(200)
     const data = await res.json()
-    expect(data.canvas.title).toContain('Du học Thạc sĩ AI')
+    expect(data.canvas.title).toBe('Du học Thạc sĩ AI')
+    expect(data.canvas.personId).toBe(userId)
   })
 
   it('exports canvas to markdown format on POST with action=export', async () => {

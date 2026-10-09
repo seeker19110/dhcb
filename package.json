@@ -51,6 +51,7 @@
     "changelog": "tsx scripts/changelog.ts",
     "eval:tutor": "npx tsx scripts/eval-tutor.ts",
     "eval:code-feedback": "npx tsx scripts/eval-code-feedback.ts",
+    "eval:action-canvas": "npx tsx scripts/eval-action-canvas.ts",
     "eval:v2:routing": "npx tsx scripts/eval-v2-routing.ts",
     "eval:v2:memory": "npx tsx scripts/eval-v2-memory.ts",
     "eval:v2:permissions": "npx tsx scripts/eval-v2-permissions.ts",

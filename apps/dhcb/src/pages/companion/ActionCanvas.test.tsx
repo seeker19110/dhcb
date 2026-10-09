@@ -30,7 +30,19 @@ vi.mock('../../components/ActionCanvas/InteractiveCanvasViewport', () => ({
     <div data-testid="viewport">{nodes.map((n) => n.title).join('|')}</div>
   ),
 }))
-vi.mock('../../components/ActionCanvas/CanvasAiOrchestratorModal', () => ({ default: () => null }))
+// Giữ lại props mới nhất của hộp thoại để test gọi thẳng các callback của trang (changelog 0549).
+const modalProps = vi.hoisted(() => ({
+  current: null as null | {
+    onAcceptProposal: (c: ActionCanvasState) => Promise<boolean>
+    onStartManual: (goal: string) => boolean
+  },
+}))
+vi.mock('../../components/ActionCanvas/CanvasAiOrchestratorModal', () => ({
+  default: (props: NonNullable<typeof modalProps.current>) => {
+    modalProps.current = props
+    return null
+  },
+}))
 vi.mock('../../components/ActionCanvas/CanvasExportModal', () => ({ default: () => null }))
 
 import ActionCanvas from './ActionCanvas'
@@ -126,5 +138,77 @@ describe('ActionCanvas page', () => {
     await act(async () => retry.click())
     expect(mocks.fetchActionCanvas).toHaveBeenCalledTimes(2)
     expect(container.textContent).toContain('Chưa có sơ đồ nào')
+  })
+
+  // [changelog 0549] Đề xuất AI chỉ được lưu khi người dùng bấm Lưu trong hộp thoại — qua đúng
+  // nhánh lưu thường; lối không dùng AI dựng thẻ mục tiêu và CHƯA lưu.
+  it('chấp nhận đề xuất → lưu qua saveActionCanvas rồi vẽ sơ đồ đã lưu', async () => {
+    mocks.fetchActionCanvas.mockResolvedValue(canvas([]))
+    await render()
+    const proposal = canvas([
+      {
+        id: '30000000-0000-4000-8000-000000000001',
+        type: 'goal',
+        title: 'Đạt IELTS 6.5',
+        content: '',
+        domain: 'general',
+        x: 0,
+        y: 0,
+        width: 260,
+        height: 120,
+        color: '#00f0ff',
+        status: 'draft',
+        tags: ['muc-tieu'],
+        assignedTo: 'user',
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+    ])
+    let accepted = false
+    await act(async () => {
+      accepted = await modalProps.current!.onAcceptProposal(proposal)
+    })
+    expect(accepted).toBe(true)
+    expect(mocks.saveActionCanvas).toHaveBeenCalledWith(proposal)
+    expect(container.querySelector('[data-testid="viewport"]')?.textContent).toBe('Đạt IELTS 6.5')
+  })
+
+  it('tự bắt đầu không dùng AI → chỉ thẻ mục tiêu, hợp lệ theo hợp đồng, chưa lưu', async () => {
+    mocks.fetchActionCanvas.mockResolvedValue(canvas([]))
+    await render()
+    await act(async () => {
+      modalProps.current!.onStartManual('Học Python mỗi ngày')
+    })
+    expect(container.querySelector('[data-testid="viewport"]')?.textContent).toBe(
+      'Học Python mỗi ngày',
+    )
+    expect(mocks.saveActionCanvas).not.toHaveBeenCalled()
+    const save = [...container.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Lưu',
+    ) as HTMLButtonElement
+    await act(async () => save.click())
+    expect(
+      ActionCanvasStateSchema.safeParse(mocks.saveActionCanvas.mock.calls[0]![0]).success,
+    ).toBe(true)
+  })
+
+  it('đang có sơ đồ mà người dùng huỷ hộp xác nhận thay thế → không lưu, giữ sơ đồ cũ', async () => {
+    const existing = canvas([])
+    mocks.fetchActionCanvas.mockResolvedValue(existing)
+    await render()
+    await act(async () => {
+      modalProps.current!.onStartManual('Mục tiêu A')
+    })
+    const confirm = vi.fn(() => false)
+    vi.stubGlobal('confirm', confirm)
+    let accepted = true
+    await act(async () => {
+      accepted = await modalProps.current!.onAcceptProposal(existing)
+    })
+    expect(confirm).toHaveBeenCalled()
+    expect(accepted).toBe(false)
+    expect(mocks.saveActionCanvas).not.toHaveBeenCalled()
+    expect(container.querySelector('[data-testid="viewport"]')?.textContent).toBe('Mục tiêu A')
+    vi.unstubAllGlobals()
   })
 })
