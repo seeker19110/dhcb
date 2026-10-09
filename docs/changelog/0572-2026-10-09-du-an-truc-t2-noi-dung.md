@@ -1,6 +1,6 @@
 # 0572 — Nội dung dự án trục T2 "Quỹ lớp / Chi tiêu nhà mình" đủ P1→P5
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau) · **Loại:** `feat(programming)`
+- **Ngày:** 2026-10-09 · **PR:** (xem mô tả PR) · **Loại:** `feat(programming)`
 - **Đặc tả:** `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md` (Approved for implementation —
   hợp đồng nội dung T2/T3: mã `t2-p<n>-s<k>`, unit theo chặng, `files`, bước milestone).
 - **Số changelog:** dùng 0572 vì `main` đã có tới 0571 lúc soạn; trùng số với PR song song cũng
@@ -77,6 +77,8 @@ apps/dhcb/src/components/programming apps/dhcb/src/lib`: exit 0, 295 file xanh, 
 
 ## Không làm
 
-- Tầng 8b (chụp trang 1440px + 390px): đợt này không đổi giao diện ngoài việc nối dữ liệu; trang
-  dự án T2 sẽ cần chụp khi PR mở.
+- Tầng 8b ĐÃ LÀM ở phiên chính trước khi mở PR: chụp `/lap-trinh/du-an` chọn T2 ở 1440px +
+  390px, theme Blue sky + Xanh đêm. Bộ chọn: T2 mở, T3 còn "Sắp mở" (disabled thật); 5 chặng, bước
+  1 mở, không tràn/đè. Chữ có dấu trong ô code hiện vỡ dấu ở Chromium headless — nguồn là NFC
+  (đã kiểm), câu comment giống hệt T1, nên là do font monospace của container, không phải lỗi T2.
 - `projectStepsT2*.ts` không nằm trong phạm vi mặc định của `audit-prose`; đã chạy riêng.
