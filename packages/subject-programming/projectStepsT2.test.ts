@@ -21,6 +21,7 @@ import { ProjectStepSchema, getProjectStages, getStepLanguage } from './projectS
 import { T2_P1_PROJECT_STEPS, T2_P2_PROJECT_STEPS, T2_PROJECT_STAGES } from './projectStepsT2.js'
 import { T2_P3_PROJECT_STEPS, T2_SQL_SO_QUY } from './projectStepsT2P3.js'
 import { T2_P4_PROJECT_STEPS } from './projectStepsT2P4.js'
+import { T2_P5_PROJECT_STEPS } from './projectStepsT2P5.js'
 import { getProjectTrack } from './projectTracks.js'
 import { moTaCayDom, type ElementLike } from './htmlPrelude.js'
 import { chayBaiDom } from './domPrelude.js'
@@ -504,6 +505,78 @@ describe.skipIf(!hasPython)('T2 chặng P4 — check thật sự BẮT LỖI (ch
     rot('t2-p4-s5', '    if cur.rowcount == 0:', '    if False:'))
   it('s6: tin số dư người gọi gửi lên thì rớt', () =>
     rot('t2-p4-s6', 'con = so_du_hien_tai()', 'con = du_lieu.get("so_du", so_du_hien_tai())'))
+})
+
+// ── Chặng P5 ─────────────────────────────────────────────────────────────────────────────
+describe('T2 chặng P5 — Quỹ lên Internet', () => {
+  it('đủ 5 bước, bốn bước đầu Python thuần, milestone chạy làn apisim', () => {
+    expect(T2_P5_PROJECT_STEPS.map((s) => `${s.id}:${getStepLanguage(s)}`)).toEqual([
+      't2-p5-s1:python',
+      't2-p5-s2:python',
+      't2-p5-s3:python',
+      't2-p5-s4:python',
+      't2-p5-s5:apisim',
+    ])
+  })
+
+  it('kiểm số học bước hiệu năng: chậm = m × n, nhanh = n + m, danh sách chưa đóng đúng', () => {
+    for (const c of buoc(T2_P5_PROJECT_STEPS, 't2-p5-s3').checks) {
+      const [m, n] = c.stdinLines.map(Number) as [number, number]
+      const daDong = new Set(Array.from({ length: n }, (_, i) => i % (m - 3)))
+      const chua = Array.from({ length: m }, (_, i) => i).filter((i) => !daDong.has(i))
+      const ten = (i: number) => `tv${String(i).padStart(3, '0')}`
+      if (c.expected.startsWith('Cham')) expect(c.expected).toBe(`Cham: ${m * n} thao tac`)
+      if (c.expected.startsWith('Nhanh')) expect(c.expected).toBe(`Nhanh: ${n + m} thao tac`)
+      if (c.expected.startsWith('Chua dong')) {
+        expect(c.expected).toBe(`Chua dong: ${chua.length} ban, dau tien ${ten(chua[0]!)}`)
+      }
+    }
+  })
+
+  it('khối kiểm thử của milestone nằm NGUYÊN VĂN trong đề; đề nói rõ phần làn C', () => {
+    const s5 = buoc(T2_P5_PROJECT_STEPS, 't2-p5-s5')
+    const khoi = s5.referenceCode.slice(s5.referenceCode.indexOf('client = TestClient(app)'))
+    expect(s5.requirement).toContain(khoi)
+    expect(s5.requirement).toContain('LÀN C')
+  })
+})
+
+describe.skipIf(!hasPython)('T2 chặng P5 — check thật sự BẮT LỖI (chống test dễ dãi)', () => {
+  const rot = (id: string, tu: string, thanh: string) => {
+    const step = buoc(T2_P5_PROJECT_STEPS, id)
+    expect(allTestsPassed(chamPython(step, dotBien(step.referenceCode, tu, thanh)))).toBe(false)
+  }
+
+  it('s1: commit thay vì rollback khi một bạn hỏng thì rớt (mất tính nguyên tử)', () =>
+    rot(
+      't2-p5-s1',
+      '    db.rollback()                                # mot ban hong',
+      '    db.commit()  #',
+    ))
+  it('s1: bỏ ràng buộc CHECK số tiền dương thì rớt', () =>
+    rot('t2-p5-s1', 'so_tien INTEGER NOT NULL CHECK (so_tien > 0),', 'so_tien INTEGER NOT NULL,'))
+  it('s2: ghép chuỗi vào câu SQL thì rớt (tấn công thật lọt vào)', () =>
+    rot(
+      't2-p5-s2',
+      '"SELECT vai_tro FROM nguoi_dung WHERE ten = ? AND bam = ?",\n        (ten, bam(mat_khau)),',
+      "f\"SELECT vai_tro FROM nguoi_dung WHERE ten = '{ten}' AND bam = '{bam(mat_khau)}'\",",
+    ))
+  it('s2: in thẳng nội dung không thoát HTML thì rớt', () =>
+    rot('t2-p5-s2', 'html.escape(noi_dung)', 'noi_dung'))
+  it('s2: ai đăng nhập được cũng cho ghi sổ thì rớt (thiếu phân quyền)', () =>
+    rot('t2-p5-s2', 'if vai_tro == "thu_quy":', 'if True:'))
+  it('s3: cách nhanh quên đếm lượt hỏi set thì rớt', () =>
+    rot(
+      't2-p5-s3',
+      '    for ten in thanh_vien:                       # moi ban hoi set mot lan\n        dem += 1\n',
+      '    for ten in thanh_vien:\n',
+    ))
+  it('s4: không kiểm khoảng cổng thì rớt', () =>
+    rot('t2-p5-s4', '    if cong > 65535:', '    if False:'))
+  it('s4: in nguyên khoá bí mật thì rớt', () =>
+    rot('t2-p5-s4', 'return khoa[:4] + "****"', 'return khoa'))
+  it('s5: để True lọt qua như số 1 thì rớt', () =>
+    rot('t2-p5-s5', 'isinstance(so_tien, bool) or ', ''))
 })
 
 // Mọi bước Python của T2 đi qua cổng chung lessonsPython.test.ts; ở đây chỉ chặn trường hợp
