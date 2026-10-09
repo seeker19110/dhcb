@@ -1,6 +1,6 @@
 # 0570 — Structured outputs (JSON Schema) cho Action Canvas phân rã mục tiêu
 
-- **Ngày:** 2026-10-09 · **PR:** (điền khi tạo) · **Loại:** `feat(ai)`
+- **Ngày:** 2026-10-09 · **PR:** #1318 · **Loại:** `feat(ai)`
 - **Nguồn:** yêu cầu chủ dự án: "áp schema cho góp ý code và Action Canvas luôn". Nối tiếp
   changelog `0569` (structured outputs cho chấm điểm, PR #1316).
 - **Đặc tả:** `docs/specs/2026-10-09-structured-outputs-action-canvas.md`.
