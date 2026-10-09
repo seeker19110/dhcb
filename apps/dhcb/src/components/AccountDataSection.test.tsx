@@ -27,6 +27,7 @@ const BASE_OPTIONS: AccountOptions = {
   twoFactorRequired: false,
   vipActive: false,
   planExpiresAt: null,
+  pendingPayments: [],
 }
 
 let container: HTMLDivElement

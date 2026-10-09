@@ -293,7 +293,11 @@ export default function UpgradeSection({
         setPaid(true)
         if (pollRef.current) clearInterval(pollRef.current)
         if (tickRef.current) clearInterval(tickRef.current)
-      } else if (status?.status === 'expired' || status?.status === 'failed') {
+      } else if (
+        status?.status === 'expired' ||
+        status?.status === 'failed' ||
+        status?.status === 'cancelled'
+      ) {
         if (pollRef.current) clearInterval(pollRef.current)
       }
     }, POLL_INTERVAL_MS)

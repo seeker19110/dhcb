@@ -10,7 +10,7 @@ là vùng **dừng và hỏi** (CLAUDE.md mục 12): thanh toán, dữ liệu ng
 Rà diff bằng subagent `security-reviewer` + `silent-failure-hunter` (rào an ninh/tiền FAIL-OPEN) +
 `database-reviewer` (SQL/migration).
 
-> **Đối chiếu mã ngày 2026-10-02.** Bản trước của skill này mô tả webhook ký HMAC, trạng thái
+> **Đối chiếu mã ngày 2026-10-02 (luồng hoàn tiền/huỷ đơn cập nhật 2026-10-09, changelog 0546).** Bản trước của skill này mô tả webhook ký HMAC, trạng thái
 > `processing/completed`, mốc thưởng referral 1/3/5/10, "rương" streak freeze, trần chi phí USD tự
 > hạ model — đều KHÔNG khớp mã. Mục dưới ghi đúng thực tế. Khi skill và mã lệch nhau, **MÃ thắng**.
 
@@ -36,13 +36,17 @@ dòng cũ trong DB được đọc thành `vip` tới hết `plan_expires_at`. G
    ▼
 [Đơn đã 'paid'?] ──(rồi)──► 200 (idempotent)
    ▼
+[Đơn 'cancelled' (người dùng tự huỷ) hoặc user_id null (tài khoản đã xoá)?]
+   ──(có)──► INSERT payment_refunds … ON CONFLICT DO NOTHING ──► 200, KHÔNG cấp gói
+   ▼                          (lỗi CSDL ⇒ ném 500 để SePay gửi lại)
 [Quá hạn đơn + ân hạn 24h?] ──(quá)──► 200 + log LATE, giữ 'pending' cho admin đối chiếu
    ▼
 [Chuyển THIẾU tiền?] ──(thiếu)──► 200 + log INSUFFICIENT, giữ 'pending'
    ▼
 [withTransaction]
    ├── UPDATE payments SET status='paid', provider_txn_id=… WHERE id=… AND status='pending'
-   │     (rowCount=0 → request khác vừa xử lý xong → dừng)
+   │     (rowCount=0 → đọc lại user_id, status: vừa bị huỷ/ẩn danh → ghi payment_refunds
+   │      trong CÙNG transaction; còn lại = request khác vừa xử lý xong → dừng)
    └── grantPlanDays(user, plan, days, now, client)   ← cùng transaction
    ▼
 [200 OK] (lỗi 23505 trùng provider_txn_id → coi như đã xử lý)
@@ -60,6 +64,18 @@ dòng cũ trong DB được đọc thành `vip` tới hết `plan_expires_at`. G
    không có gói, và retry bị chặn ở nhánh `'paid'` nên không tự phục hồi.
 4. **Không tự cấp gói khi lệch:** chuyển thiếu, đơn quá hạn quá ân hạn → giữ `pending`, ghi log
    để admin đối chiếu tay.
+5. **Tiền về đơn người dùng đã từ chối/không còn chủ ⇒ hàng chờ hoàn tiền, không chỉ log**
+   (changelog 0546, migration `0090`). Đơn `cancelled` (người dùng tự huỷ qua
+   `POST /api/payment-cancel` — UPDATE có điều kiện `user_id = <phiên> and status = 'pending'`,
+   đua với webhook thì đúng một bên thắng) hoặc `user_id null` (xoá tài khoản, 0533) ⇒ dòng
+   `public.payment_refunds` (UNIQUE `(provider, provider_txn_id)`; chỉ lưu mã giao dịch, mã tham
+   chiếu, ngân hàng, TK nhận, thời điểm — KHÔNG lưu nội dung CK). Admin hoàn tay rồi
+   `mark-refunded` (ghi chú bắt buộc); trigger chỉ cho `needed → refunded`, cấm sửa/xoá ⇒ dòng là
+   bản ghi kiểm toán. Khớp tay (`manual-match`) đơn `cancelled` bị chặn.
+6. **Xoá tài khoản chặn khi còn đơn `pending` "sống"** (`LIVE_PENDING_CONDITION_SQL` trong
+   `packages/core-billing/paymentCancel.ts` — MỘT điều kiện dùng chung cho chốt trong transaction
+   của `deleteAccount`, danh sách đơn ở giao diện, và khớp với ân hạn của webhook). Người dùng tự
+   gỡ chặn bằng nút "Huỷ đơn — tôi CHƯA chuyển khoản" (bắt tick xác nhận).
 
 ---
 

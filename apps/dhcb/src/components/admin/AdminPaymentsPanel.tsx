@@ -14,6 +14,7 @@ import { getAuthHeader } from '@core/authHeader'
 import { thongDiepLoiQuanTri } from '../../lib/friendlyError'
 import type { AdminPaymentRow } from '@dhcb/core-contracts/adminViews'
 import { buttonClass, buttonVariantClass } from '@core/buttonStyles'
+import AdminRefundQueue from './AdminRefundQueue'
 
 export default function AdminPaymentsPanel() {
   const [payments, setPayments] = useState<AdminPaymentRow[]>([])
@@ -175,6 +176,9 @@ export default function AdminPaymentsPanel() {
         </div>
       )}
 
+      {/* Tiền về cho đơn đã huỷ / tài khoản đã xoá — cần hoàn tay (changelog 0546) */}
+      <AdminRefundQueue />
+
       {/* Lọc & Tìm kiếm */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
@@ -199,6 +203,7 @@ export default function AdminPaymentsPanel() {
             <option value="paid">Đã thanh toán (Paid)</option>
             <option value="expired">Quá hạn (Expired)</option>
             <option value="failed">Thất bại (Failed)</option>
+            <option value="cancelled">Người dùng huỷ (Cancelled)</option>
           </select>
 
           <button
@@ -279,9 +284,17 @@ export default function AdminPaymentsPanel() {
                         Quá hạn
                       </span>
                     )}
+                    {p.status === 'cancelled' && (
+                      <span className="inline-flex items-center gap-1 text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full text-[0.6875rem]">
+                        Người dùng huỷ
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-zinc-400 text-[0.6875rem]">
                     <div>Tạo: {new Date(p.createdAt).toLocaleString('vi-VN')}</div>
+                    {p.cancelledAt && (
+                      <div>Huỷ: {new Date(p.cancelledAt).toLocaleString('vi-VN')}</div>
+                    )}
                     {p.paidAt && (
                       <div className="text-emerald-400 theme-light:text-emerald-900">
                         Trả: {new Date(p.paidAt).toLocaleString('vi-VN')}

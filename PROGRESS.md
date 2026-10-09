@@ -1169,8 +1169,11 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `platform.erased_benefit_ledger` (migration `0089`) giữ 12 tháng mã băm HMAC email/thiết bị +
   quyền lợi đã hưởng, không user_id/plaintext; người mời xoá thì `referrals.referrer_id` → null.
   **Việc tay trước khi deploy:** đặt `ERASED_BENEFIT_LEDGER_KEY` trên VPS (thiếu ⇒ sổ tắt, log lỗi
-  lúc khởi động, xoá vẫn chạy). **Còn chờ chủ dự án quyết (ghi ở `0533`):** (b) một đơn chờ trả có thể chặn xoá tới ~24,5 giờ
-  (hạn đơn + ân hạn webhook). (2) ✅ `/api/persons?action=full_erase` nay đòi xác minh lại
+  lúc khởi động, xoá vẫn chạy). (b) ✅ `0546` — vẫn chặn mặc định (không mất
+  tiền) nhưng người dùng tự gỡ được: khối xoá tài khoản hiện rõ đơn chờ + nút "Huỷ đơn — tôi CHƯA
+  chuyển khoản" (`/api/payment-cancel`, trạng thái `cancelled`, migration `0090`); tiền về sau khi
+  huỷ/xoá vào hàng chờ "Cần hoàn tiền" ở /admin (`public.payment_refunds`, đánh dấu đã hoàn một
+  chiều). (2) ✅ `/api/persons?action=full_erase` nay đòi xác minh lại
   (mật khẩu/Google + 2FA) qua cổng dùng chung với `/api/account` (`api/_lib/reauthGate.ts`, cùng
   hạn mức lượt thử), `0541` — chưa có giao diện nào gọi endpoint này; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ

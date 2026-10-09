@@ -22,7 +22,10 @@ import type { Pool, PoolClient } from 'pg'
 import { withTransaction } from '@dhcb/core-db/transaction'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 import { decryptUserField } from '@dhcb/core-config/userDataCrypto'
-import { SEPAY_LATE_GRACE_MS } from '@dhcb/core-billing/sepay'
+import {
+  LIVE_PENDING_CONDITION_SQL,
+  LIVE_PENDING_GRACE_SECONDS,
+} from '@dhcb/core-billing/paymentCancel'
 import { accountSubjectHash, PendingPaymentError } from './accountErasureShared.js'
 import { recordErasedBenefitsForAccount } from './accountErasureLedger.js'
 import {
@@ -1020,10 +1023,11 @@ export async function exportAccountData(pool: Pool, userId: string): Promise<Acc
 /**
  * Đơn `pending` còn có thể được webhook SePay tự cấp gói: chưa quá `expires_at` + ân hạn
  * `SEPAY_LATE_GRACE_MS` — ĐÚNG điều kiện webhook dùng (payment-webhook.ts). So bằng giờ của CSDL.
+ * Điều kiện dùng chung với danh sách đơn chặn xoá ở giao diện (core-billing/paymentCancel.ts, 0546).
+ * Đơn người dùng đã tự huỷ (`cancelled`) KHÔNG còn chặn.
  */
 const LIVE_PENDING_PAYMENT_SQL = `select 1 from public.payments
-   where user_id = $1 and status = 'pending'
-     and expires_at > now() - make_interval(secs => $2::double precision)
+   where user_id = $1 and ${LIVE_PENDING_CONDITION_SQL}
    limit 1`
 
 /**
@@ -1034,7 +1038,7 @@ export async function hasLivePendingPayment(
   db: Pool | PoolClient,
   userId: string,
 ): Promise<boolean> {
-  const res = await db.query(LIVE_PENDING_PAYMENT_SQL, [userId, SEPAY_LATE_GRACE_MS / 1000])
+  const res = await db.query(LIVE_PENDING_PAYMENT_SQL, [userId, LIVE_PENDING_GRACE_SECONDS])
   return res.rows.length > 0
 }
 

@@ -70,7 +70,7 @@ export async function createCheckout(
 }
 
 export interface PaymentStatus {
-  status: 'pending' | 'paid' | 'failed' | 'expired'
+  status: 'pending' | 'paid' | 'failed' | 'expired' | 'cancelled'
   plan: PayablePlan
   cycle: PayableCycle
   amountVnd: number
@@ -93,7 +93,7 @@ export interface PaymentHistoryEntry {
   plan: PayablePlan
   cycle: PayableCycle
   amountVnd: number
-  status: 'pending' | 'paid' | 'failed' | 'expired'
+  status: 'pending' | 'paid' | 'failed' | 'expired' | 'cancelled'
   createdAt: string
   paidAt: string | null
 }

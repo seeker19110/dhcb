@@ -76,6 +76,7 @@ import checkoutHandler from './api/billing/checkout.js'
 import paymentWebhookHandler from './api/billing/payment-webhook.js'
 import paymentStatusHandler from './api/billing/payment-status.js'
 import paymentHistoryHandler from './api/billing/payment-history.js'
+import paymentCancelHandler from './api/billing/payment-cancel.js'
 import avatarVisemesHandler from './api/subjects/english/avatar-visemes.js'
 import hubStatsHandler from './api/platform/hub-stats.js'
 import personsHandler from './api/personal/persons.js'
@@ -293,6 +294,7 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/payment-webhook', wrapEdge(paymentWebhookHandler))
   app.all('/api/payment-status', wrapEdge(paymentStatusHandler))
   app.all('/api/payment-history', wrapEdge(paymentHistoryHandler))
+  app.all('/api/payment-cancel', wrapEdge(paymentCancelHandler))
   app.all('/api/avatar-visemes', wrapEdge(avatarVisemesHandler))
   app.all('/api/hub-stats', wrapEdge(hubStatsHandler))
   // Personal World Model (V2-03) — danh tính + fact cá nhân, đều bắt buộc đăng nhập.

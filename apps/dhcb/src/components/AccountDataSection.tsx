@@ -24,6 +24,7 @@ import {
   fetchAccountOptions,
 } from '../lib/accountApi'
 import { useMountedRef } from '../lib/useMountedRef'
+import PendingPaymentsBlock from './PendingPaymentsBlock'
 
 const INPUT_CLASS =
   'w-full rounded-xl border border-line-strong bg-surface-raised px-3 py-3 text-base text-content'
@@ -41,7 +42,7 @@ function errorMessage(err: unknown, isA: boolean): string {
   // Còn đơn thanh toán chờ trả: server từ chối xoá (rà soát 0533). Có bản tiếng Anh riêng vì
   // người học chiều B cần hiểu VÌ SAO chưa xoá được và phải làm gì tiếp.
   if (err instanceof AccountApiError && err.code === 'PAYMENT_PENDING' && !isA) {
-    return 'You still have a payment in progress. Please wait until it completes or expires (up to 24 hours after the payment deadline), then try deleting your account again.'
+    return 'You still have a payment in progress. If you have NOT paid, cancel the order under "Pending payment orders" and try again; if you have paid, wait until it completes (up to 24 hours after the payment deadline).'
   }
   if (err instanceof Error && err.message) return err.message
   return isA ? 'Có lỗi xảy ra — thử lại sau.' : 'Something went wrong — please retry.'
@@ -202,6 +203,40 @@ export default function AccountDataSection({
     }
   }
 
+  /**
+   * Cập nhật RIÊNG danh sách đơn chờ (không đặt lại ô đã nhập như `loadOptions`): sau khi server
+   * từ chối xoá vì còn đơn chờ (đơn tạo ở tab khác) — changelog 0546.
+   */
+  async function refreshPendingPayments() {
+    try {
+      const fresh = await fetchAccountOptions()
+      if (!mounted.current) return
+      setLoad((prev) =>
+        prev.kind === 'ready'
+          ? { kind: 'ready', options: { ...prev.options, pendingPayments: fresh.pendingPayments } }
+          : prev,
+      )
+    } catch {
+      // Giữ nguyên: thông điệp lỗi của server đã nói rõ phải làm gì.
+    }
+  }
+
+  /** Một đơn không còn chặn (người dùng vừa huỷ / đơn tự kết thúc) ⇒ gỡ khỏi danh sách. */
+  function removePendingPayment(paymentId: string) {
+    setLoad((prev) =>
+      prev.kind === 'ready'
+        ? {
+            kind: 'ready',
+            options: {
+              ...prev.options,
+              pendingPayments: prev.options.pendingPayments.filter((p) => p.id !== paymentId),
+            },
+          }
+        : prev,
+    )
+    setDeleteError('')
+  }
+
   function twoFactorMissing(draft: ReauthDraft, options: AccountOptions): boolean {
     return options.twoFactorRequired && draft.twoFactorCode.trim().length < 6
   }
@@ -285,6 +320,9 @@ export default function AccountDataSection({
       onDeleted()
     } catch (err) {
       requireTwoFactor(err)
+      if (err instanceof AccountApiError && err.code === 'PAYMENT_PENDING') {
+        void refreshPendingPayments()
+      }
       if (mounted.current) setDeleteError(errorMessage(err, isA))
     } finally {
       if (mounted.current) setDeleting(false)
@@ -434,6 +472,12 @@ export default function AccountDataSection({
                   </li>
                 </ul>
 
+                <PendingPaymentsBlock
+                  payments={load.options.pendingPayments}
+                  isA={isA}
+                  onCancelled={removePendingPayment}
+                />
+
                 {load.options.vipActive && (
                   <div className="space-y-2 rounded-xl border border-line-strong p-3">
                     <p className="text-sm font-semibold text-content">
@@ -502,6 +546,7 @@ export default function AccountDataSection({
                   type="submit"
                   disabled={
                     deleting ||
+                    load.options.pendingPayments.length > 0 ||
                     !isDeleteConfirmationValid(confirmation) ||
                     (load.options.vipActive && !ackNoRefund)
                   }
