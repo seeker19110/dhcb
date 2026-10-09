@@ -49,7 +49,7 @@ describe('AccountBodySchema', () => {
     expect(
       AccountBodySchema.safeParse({
         action: 'export',
-        reauth: { method: 'google', accessToken: 'ya29.abcdefgh' },
+        reauth: { method: 'google', accessToken: 'token-token-token' },
         twoFactorCode: '123456',
       }).success,
     ).toBe(true)
