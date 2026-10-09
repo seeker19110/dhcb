@@ -116,8 +116,13 @@ export const SPEC_STAGE_UNITS: Record<string, string[]> = {
   // đội · an toàn chức năng. Hướng `embedded` từ đây đủ cả bốn chặng.
   'embedded-s3': ['p6-u266', 'p6-u267', 'p6-u268', 'p6-u269'],
   'embedded-s4': ['p6-u270', 'p6-u271', 'p6-u272', 'p6-u273'],
-  'mathforcode-s3': ['p6-u158', 'p6-u159'],
-  'mathforcode-s4': ['p6-u160', 'p6-u161'],
+  // Hướng Toán học cho Lập trình, chặng S3 và S4 — 4 unit mỗi chặng, mỗi unit gộp m1+m2 hoặc
+  // m3+m4 nên mỗi module có đúng 2 bài. p6-u158…u161 soạn 2026-09-16
+  // (`docs/specs/2026-09-16-mathforcode-s3-s4-bai-hoc-that.md`); p6-u290…u293 bổ sung 2026-10-09
+  // các topic còn thiếu của cùng module (`docs/specs/2026-10-09-mathforcode-s3-s4-bo-sung-unit.md`).
+  // Id cũ giữ nguyên vì tiến độ học viên gắn với chúng.
+  'mathforcode-s3': ['p6-u158', 'p6-u159', 'p6-u290', 'p6-u291'],
+  'mathforcode-s4': ['p6-u160', 'p6-u161', 'p6-u292', 'p6-u293'],
   'ai-s2': ['p6-u166', 'p6-u167', 'p6-u168', 'p6-u169'],
   'ai-s3': ['p6-u170', 'p6-u171', 'p6-u172', 'p6-u173'],
   'ai-s4': ['p6-u174', 'p6-u175', 'p6-u176', 'p6-u177'],

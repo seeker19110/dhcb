@@ -899,6 +899,33 @@ export const PROGRAMMING_LEVELS: ProgrammingLevel[] = [
         title: 'Toán cho Lập trình S4 — quy tắc chuỗi và tối ưu có ràng buộc',
         topics: 'Kiểm gradient bằng sai phân; miền khả thi; điều kiện dừng',
       },
+      // Bổ sung 2026-10-09 cho đủ 2 bài mỗi module của mathforcode S3/S4 (đặc tả
+      // docs/specs/2026-10-09-mathforcode-s3-s4-bo-sung-unit.md). Đặt ngay sau p6-u161 để bốn
+      // chặng S3/S4 đứng liền nhau trong danh sách bậc P6; id lấy dải trống p6-u290…u293.
+      {
+        id: 'p6-u290',
+        title: 'Toán cho Lập trình S3 — va chạm, phản xạ và nhân ma trận',
+        topics:
+          'Phản xạ vận tốc qua pháp tuyến; va chạm hai hình tròn; quy ước hàng-cột; xoay, co giãn, phản chiếu; shape không khớp',
+      },
+      {
+        id: 'p6-u291',
+        title: 'Toán cho Lập trình S3 — định thức, cân bằng luồng và chuỗi Markov',
+        topics:
+          'Ma trận suy biến; quy tắc Cramer; bảo toàn luồng nhiều nút; ma trận chuyển trạng thái; trạng thái dừng',
+      },
+      {
+        id: 'p6-u292',
+        title: 'Toán cho Lập trình S4 — descent nhiều biến và hàm không lồi',
+        topics:
+          'So sánh learning rate bằng bảng loss; cực tiểu địa phương; điểm yên ngựa; cao nguyên',
+      },
+      {
+        id: 'p6-u293',
+        title: 'Toán cho Lập trình S4 — lan truyền ngược và tìm kiếm cục bộ',
+        topics:
+          'Backprop mạng 2 tầng; kiểm gradient từng tham số; hill climbing lập lịch; điều kiện dừng theo ngân sách và ngưỡng',
+      },
       {
         id: 'p6-u162',
         title: 'Thuật toán S2 — đệ quy, chứng minh dừng và quay lui',

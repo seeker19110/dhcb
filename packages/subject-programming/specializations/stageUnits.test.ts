@@ -110,9 +110,9 @@ describe('cầu nối chặng chuyên sâu → unit bài học', () => {
     expect(unitsOfStage('security-s2')).toEqual(['p6-u186', 'p6-u187', 'p6-u188', 'p6-u189'])
   })
 
-  it('mathforcode-s3 và s4 ánh xạ đúng bốn unit thật', () => {
-    expect(unitsOfStage('mathforcode-s3')).toEqual(['p6-u158', 'p6-u159'])
-    expect(unitsOfStage('mathforcode-s4')).toEqual(['p6-u160', 'p6-u161'])
+  it('mathforcode-s3 và s4 mỗi chặng đủ bốn unit, unit cũ giữ nguyên vị trí đầu', () => {
+    expect(unitsOfStage('mathforcode-s3')).toEqual(['p6-u158', 'p6-u159', 'p6-u290', 'p6-u291'])
+    expect(unitsOfStage('mathforcode-s4')).toEqual(['p6-u160', 'p6-u161', 'p6-u292', 'p6-u293'])
   })
 
   it('ai-s2 đến ai-s4 phủ đủ mười hai unit simulator thật', () => {
