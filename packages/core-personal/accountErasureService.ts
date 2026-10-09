@@ -705,7 +705,7 @@ export const ACCOUNT_TABLES = [
     match: 'user_id',
     erase: DELETE,
     exportKey: 'referralsReceived',
-    columns: ['id', 'rewarded_at', 'created_at'],
+    columns: ['id', 'rewarded_at', 'reward_blocked_at', 'created_at'],
     orderBy: 'created_at, id',
   },
   {

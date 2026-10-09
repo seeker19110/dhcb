@@ -91,7 +91,56 @@
   thiếu thì sổ tắt — hành vi giống trước đợt này, không hỏng gì khác.
 - Người dùng đổi sang email khác hẳn + thiết bị khác vẫn nhận lại dùng thử — giới hạn vốn có của mọi
   cơ chế không thu định danh mạnh; xác minh email đã làm việc này tốn công.
-- Xoay khoá làm sổ cũ hết khớp (chấp nhận: hạn giữ chỉ 12 tháng).
+- Xoay khoá làm sổ cũ hết khớp (chấp nhận: hạn giữ chỉ 12 tháng). Tiền tố miền có `v1` nhưng bảng
+  chưa có cột phiên bản khoá ⇒ chưa giữ song song khoá cũ/mới được.
+- **Đổi email rồi xoá** (nợ chấp nhận): app CÓ luồng đổi email (`packages/core-auth/changeEmail.ts`);
+  sổ chỉ ghi email hiện tại lúc xoá, không ghi email cũ (ghi mọi email từng dùng là thu quá rộng) ⇒
+  nhận dùng thử bằng A → đổi sang B → xoá ⇒ đăng ký lại bằng A vẫn nhận. Lạm dụng phải xác thực lại
+  A bằng mã 6 số nên chi phí vẫn cao.
+- `startPlanExpiryScheduler` (hạ gói hết hạn) cùng khuôn "chỉ chạy khi sang ngày" với lỗi đã sửa ở
+  hai job dọn, nhưng chưa đổi (chạm billing) — đề xuất đợt riêng.
 - Repo chưa có trang chính sách quyền riêng tư; khi có phải thêm mục sổ này.
 - `isBenefitBlocked` ở luồng thưởng cũng bị chặn khi người được mời chỉ trùng THIẾT BỊ với một tài
   khoản đã xoá (máy dùng chung) — cùng đánh đổi đã chấp nhận ở `0008_referral_device.sql`.
+
+## Sau rà soát (bảo mật + CSDL độc lập trên `31656535`, không có mục Cao)
+
+1. **[Trung — bảo mật] Người được mời xoá tài khoản làm tụt trần thưởng của người mời.** Dòng
+   `referrals` theo `referee_id` bị xoá ⇒ mời → thưởng → bảo người kia xoá → mời tiếp vượt trần 10.
+   Sửa: lúc xoá, ghi thêm `referral_referrer` units=1 cho mọi email của NGƯỜI MỜI đã được thưởng nhờ
+   tài khoản này; `erasedBenefitUnits` cộng dồn theo mã băm nên trần (lượt sống + sổ) giữ nguyên.
+   `getReferralStats.rewardedCount` cũng cộng phần sổ. **Vì sao không cho `referee_id` nullable +
+   ẩn danh:** dòng chưa thưởng phải xoá còn dòng đã thưởng phải giữ — `ACCOUNT_TABLES` chỉ có một
+   hành động mỗi cột, đổi thành hành động có điều kiện là đụng bất biến của 0533; thêm nữa phải đổi
+   khoá ngoại/unique của cột. Cách sổ không đổi schema, đi đúng đường cộng trần đã có. Đánh đổi: sổ
+   giữ mã băm email của người mời (không xoá tài khoản) — ghi rõ trong đặc tả. Test tích hợp: trần
+   của người mời = 1 trước và SAU khi người được mời xoá.
+2. **[Trung — CSDL] ROLLBACK**: đầu `0089` và dòng README ghi rõ "lùi mã (PR này) TRƯỚC rồi mới
+   chạy lệnh rollback" — lùi bảng/cột trước thì xoá tài khoản và thưởng giới thiệu lỗi 500.
+3. **[Thấp — CSDL] Lượt mời bị sổ chặn nằm "chờ" vĩnh viễn.** Thêm cột
+   `referrals.reward_blocked_at` (gộp vào `0089`, chưa deploy): bị chặn ⇒ đánh dấu, `pendingCount`
+   loại dòng này, lần chấm bài sau thoát sớm không tra sổ lại. Cột được xuất trong
+   `referralsReceived`.
+4. **[Thấp — CSDL] Job dọn không chạy nếu không tiến trình nào sống qua nửa đêm.** Tách
+   `apps/server/src/dailyJob.ts` (`startDailyJob`): chạy một lần ~60 giây sau khởi động rồi mỗi lần
+   sang ngày UTC (so `YYYY-MM-DD`, không chỉ ngày trong tháng), không chạy chồng, lỗi chuyển cho
+   `onError`. Áp cho CẢ `startErasedBenefitLedgerCleanup` lẫn `startSyncReceiptCleanup` (cùng lỗi).
+   `startPlanExpiryScheduler` cùng khuôn nhưng để đợt riêng (chạm billing).
+5. **[Thấp — bảo mật] Sổ tắt là fail-open, vận hành khó thấy.** `/api/health/deep` có
+   `checks.erasedBenefitLedger: { status: 'enabled' | 'disabled', reason? }`, không đổi trạng thái
+   tổng. **Đặt ở `/api/health/deep` (phần chi tiết chỉ admin) chứ không ở `/api/health` công khai**:
+   công bố "chống lạm dụng đang tắt" là mời lạm dụng, và dự án đã gỡ chi tiết nội bộ khỏi endpoint
+   công khai từ đợt N1 B2 (`pm2-reload.sh` chỉ cần `/api/health` trả ok). `scripts/deploy.sh` cảnh
+   báo (không dừng) khi `.env` thiếu `ERASED_BENEFIT_LEDGER_KEY`, cùng khuôn kiểm VAPID.
+6. **[Thấp — bảo mật] Đổi email.** Có luồng đổi email (`packages/core-auth/changeEmail.ts`). Không
+   ghi email cũ vào sổ; giới hạn ghi thành nợ chấp nhận trong đặc tả + mục "Rủi ro còn lại".
+7. **[Nhỏ]** `emptyFacts` đưa lên trước hàm dùng nó; đặc tả ghi "xoay khoá làm sổ cũ hết khớp, tiền
+   tố v1 chưa có cột phiên bản".
+8. **TRAPS.md mục 19**: Playwright `reuseExistingServer` dùng nhầm dev server của worktree khác.
+
+**Bằng chứng sau rà soát:** Postgres 16 thật (cụm `a45` dựng lại, cổng 5511): `migrate:pg` áp 92
+migration tới `0089` exit 0; chạy lại `0089` ba lần bằng `psql -v ON_ERROR_STOP=1` đều exit 0, OID
+`referrals_referrer_id_fkey` giữ 18589 (`n`), `referrer_id` và `reward_blocked_at` nullable.
+`check:sql`: exit 0, PREPARE 603 câu (thêm câu đánh dấu bị chặn), 1 câu miễn sẵn có. Test tích hợp
+`accountErasureService` + `personErasureService`: 18/18 pass. Các cổng còn lại: xem báo cáo commit
+`fix(account)` của đợt.

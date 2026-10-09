@@ -44,6 +44,7 @@ import { attachGeminiLiveWebSocketServer } from '@dhcb/core-ai/wsGeminiLiveHandl
 import { sendReminders, isLeakedVapidPublicKey } from './api/core/push.js'
 import { downgradeExpiredPlans } from './api/_lib/planExpiry.js'
 import { purgeOldSyncReceipts } from './api/_lib/syncReceipt.js'
+import { startDailyJob } from './dailyJob.js'
 import {
   ledgerConfigProblem,
   purgeExpiredErasedBenefits,
@@ -299,21 +300,19 @@ function startPlanExpiryScheduler() {
 // Mỗi lần gửi tiến độ có `attemptId` ghi 1 dòng `public.sync_receipts`. Biên nhận chỉ cần sống
 // đủ lâu để một thiết bị offline vài ngày gửi lại mà không bị tính hai lần — giữ lâu hơn chỉ
 // làm bảng phình. Xem apps/server/src/api/_lib/syncReceipt.ts (slice S09-1).
+// Lịch: `startDailyJob` — chạy một lần lúc khởi động rồi mỗi ngày UTC (0545: khuôn cũ bỏ lỡ job khi
+// không tiến trình nào sống qua nửa đêm).
 function startSyncReceiptCleanup() {
-  let lastDayRun = new Date().getUTCDate()
-  setInterval(() => {
-    const day = new Date().getUTCDate()
-    if (day === lastDayRun) return
-    lastDayRun = day
-    void purgeOldSyncReceipts(getPgPool())
-      .then((r) => {
-        if (r.deleted > 0) console.log(`[sync-receipts] Đã dọn ${r.deleted} biên nhận quá hạn`)
-      })
-      .catch((err) => {
-        console.error('[sync-receipts] lỗi dọn biên nhận:', err)
-        captureServerException(err, { context: 'sync-receipt-cleanup' })
-      })
-  }, 60_000) // kiểm tra mỗi phút, chạy 1 lần khi sang ngày mới (UTC)
+  startDailyJob({
+    run: async () => {
+      const r = await purgeOldSyncReceipts(getPgPool())
+      if (r.deleted > 0) console.log(`[sync-receipts] Đã dọn ${r.deleted} biên nhận quá hạn`)
+    },
+    onError: (err) => {
+      console.error('[sync-receipts] lỗi dọn biên nhận:', err)
+      captureServerException(err, { context: 'sync-receipt-cleanup' })
+    },
+  })
 }
 
 // ── Dọn sổ chống lạm dụng quá 12 tháng (1 lần/ngày) ─────────────────────────
@@ -321,20 +320,16 @@ function startSyncReceiptCleanup() {
 // pháp — chống gian lận" không biện minh được việc giữ lâu hơn. Câu tra vốn đã tự lọc hạn giữ; job
 // này xoá hẳn dòng quá hạn. Xem packages/core-billing/erasedBenefitLedger.ts.
 function startErasedBenefitLedgerCleanup() {
-  let lastDayRun = new Date().getUTCDate()
-  setInterval(() => {
-    const day = new Date().getUTCDate()
-    if (day === lastDayRun) return
-    lastDayRun = day
-    void purgeExpiredErasedBenefits(getPgPool())
-      .then((r) => {
-        if (r.deleted > 0) console.log(`[erased-benefit-ledger] Đã dọn ${r.deleted} dòng quá hạn`)
-      })
-      .catch((err) => {
-        console.error('[erased-benefit-ledger] lỗi dọn sổ chống lạm dụng:', err)
-        captureServerException(err, { context: 'erased-benefit-ledger-cleanup' })
-      })
-  }, 60_000) // kiểm tra mỗi phút, chạy 1 lần khi sang ngày mới (UTC)
+  startDailyJob({
+    run: async () => {
+      const r = await purgeExpiredErasedBenefits(getPgPool())
+      if (r.deleted > 0) console.log(`[erased-benefit-ledger] Đã dọn ${r.deleted} dòng quá hạn`)
+    },
+    onError: (err) => {
+      console.error('[erased-benefit-ledger] lỗi dọn sổ chống lạm dụng:', err)
+      captureServerException(err, { context: 'erased-benefit-ledger-cleanup' })
+    },
+  })
 }
 
 // ── Dọn vị trí của chuyến "Đi chung" đã hết hạn (mỗi 15 phút) ───────────────

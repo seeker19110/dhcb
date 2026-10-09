@@ -94,6 +94,7 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
     referrer_id: string | null
     device_hash: string | null
     rewarded_at: Date | null
+    reward_blocked_at?: Date | null
   }
   const referrals = new Map<string, Referral>()
   const balances = new Map<string, number>()
@@ -103,6 +104,7 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
     {
       days: Map<string, number>
       reward: string | null
+      blocked: string | null
       acquire: (key: string) => Promise<void>
       recipients: string[]
     }
@@ -145,6 +147,7 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
       const state = {
         days: new Map<string, number>(),
         reward: null as string | null,
+        blocked: null as string | null,
         acquire,
         recipients: [] as string[],
       }
@@ -161,6 +164,7 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
           }
           state.days.forEach((days, id) => balances.set(id, (balances.get(id) ?? 0) + days))
           if (state.reward) referrals.get(state.reward)!.rewarded_at = new Date()
+          if (state.blocked) referrals.get(state.blocked)!.reward_blocked_at = new Date()
           finish()
           return { rows: [] }
         }
@@ -219,6 +223,10 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
               },
             ],
           }
+        }
+        if (sql.startsWith('update public.referrals set reward_blocked_at')) {
+          state.blocked = String(params[0])
+          return { rows: [], rowCount: 1 }
         }
         if (sql.startsWith('update public.referrals')) {
           state.reward = String(params[0])
@@ -334,6 +342,11 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
     await rewardReferralIfEligible('u2')
     expect(balances.size).toBe(0)
     expect(referrals.get('u2')?.rewarded_at).toBeNull()
+    // Đánh dấu bị chặn ⇒ không còn "chờ"; lần chấm bài sau không tra sổ lại.
+    expect(referrals.get('u2')?.reward_blocked_at).toBeInstanceOf(Date)
+    await rewardReferralIfEligible('u2')
+    expect(ledger.isBenefitBlocked).toHaveBeenCalledOnce()
+    expect(balances.size).toBe(0)
     const [db, userId, benefit, devices] = ledger.isBenefitBlocked.mock.calls[0] ?? []
     expect(clients).toContain(db) // tra trong CHÍNH transaction thưởng
     expect([userId, benefit, devices]).toEqual(['u2', 'referral_referee', ['dev-u2']])
@@ -445,10 +458,13 @@ describe('getReferralStats', () => {
     query
       .mockResolvedValueOnce({ rows: [{ referral_code: 'ABCDEF' }] }) // ensureReferralCode
       .mockResolvedValueOnce({ rows: [{ rewarded: '3', pending: '2' }] })
+    ledger.erasedBenefitUnits.mockResolvedValueOnce(1) // 1 lượt của người được mời đã xoá (0545)
     const stats = await getReferralStats('u1')
+    const statsSql = query.mock.calls[1]?.[0] as string
+    expect(statsSql).toContain('rewarded_at is null and reward_blocked_at is null')
     expect(stats).toEqual({
       code: 'ABCDEF',
-      rewardedCount: 3,
+      rewardedCount: 4,
       pendingCount: 2,
       maxRewarded: MAX_REWARDED_REFERRALS,
       rewardDays: REFERRAL_REWARD_DAYS,

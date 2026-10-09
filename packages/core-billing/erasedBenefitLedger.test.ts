@@ -104,6 +104,7 @@ const FACTS: ErasedAccountFacts = {
   signupTrialTaken: true,
   refereeRewarded: true,
   referrerRewardedCount: 4,
+  rewardedReferrerEmails: ['Nguoi.Moi@Example.vn'],
 }
 
 describe('buildLedgerEntries', () => {
@@ -117,11 +118,20 @@ describe('buildLedgerEntries', () => {
         .map((e) => e.subjectKind)
         .sort(),
     ).toEqual(['device', 'email', 'email'])
-    expect(by('referral_referrer').map((e) => e.units)).toEqual([4, 4])
+    // 2 email của chính người xoá (units = 4) + email người mời đã được thưởng nhờ họ (units = 1).
+    expect(by('referral_referrer').map((e) => e.units)).toEqual([4, 4, 1])
+    expect(by('referral_referrer')[2]?.subjectHash).toBe(
+      ledgerSubjectHash(KEY, 'email', 'nguoi.moi@example.vn'),
+    )
     // Không lọt plaintext.
     const json = JSON.stringify(entries)
-    for (const raw of [...FACTS.emails, DEVICE, 'nguoidung@gmail.com'])
-      expect(json).not.toContain(raw)
+    for (const raw of [
+      ...FACTS.emails,
+      ...FACTS.rewardedReferrerEmails,
+      DEVICE,
+      'nguoidung@gmail.com',
+    ])
+      expect(json.toLowerCase()).not.toContain(raw.toLowerCase())
   })
 
   it('không hưởng gì ⇒ không ghi dòng nào', () => {
@@ -131,6 +141,7 @@ describe('buildLedgerEntries', () => {
         signupTrialTaken: false,
         refereeRewarded: false,
         referrerRewardedCount: 0,
+        rewardedReferrerEmails: [],
       }),
     ).toEqual([])
   })
@@ -151,9 +162,9 @@ describe('recordErasedBenefits', () => {
   })
 
   it('có khoá ⇒ MỘT câu insert, tham số chỉ là mã băm hex', async () => {
-    const { db, query } = fakeDb([], 7)
+    const { db, query } = fakeDb([], 8)
     const res = await recordErasedBenefits(db, FACTS, ENV_OK)
-    expect(res).toEqual({ status: 'recorded', entries: 7 })
+    expect(res).toEqual({ status: 'recorded', entries: 8 })
     expect(query).toHaveBeenCalledOnce()
     const [sql, params] = query.mock.calls[0] as unknown as [string, string[][]]
     expect(sql).toMatch(/insert into platform\.erased_benefit_ledger/)
@@ -165,7 +176,13 @@ describe('recordErasedBenefits', () => {
     const { db, query } = fakeDb()
     const res = await recordErasedBenefits(
       db,
-      { ...FACTS, signupTrialTaken: false, refereeRewarded: false, referrerRewardedCount: 0 },
+      {
+        ...FACTS,
+        signupTrialTaken: false,
+        refereeRewarded: false,
+        referrerRewardedCount: 0,
+        rewardedReferrerEmails: [],
+      },
       ENV_OK,
     )
     expect(res).toEqual({ status: 'recorded', entries: 0 })

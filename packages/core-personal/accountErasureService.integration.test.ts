@@ -744,7 +744,23 @@ describe.skipIf(!DATABASE_URL)('xoá tài khoản + xuất dữ liệu (Postgres
       [helper, x, deviceX, invited, deviceInvited],
     )
 
+    // Trần của người MỜI X (helper) trước khi X xoá: 1 lượt đã thưởng (dòng referee_id = X).
+    const helperCap = async (): Promise<number> => {
+      const live = await pool.query<{ n: number }>(
+        `select count(*)::int as n from public.referrals
+          where referrer_id = $1 and rewarded_at is not null`,
+        [helper],
+      )
+      return (live.rows[0]?.n ?? 0) + (await erasedBenefitUnits(pool, helper, 'referral_referrer'))
+    }
+    expect(await helperCap()).toBe(1)
+
     await deleteAccount(pool, x)
+
+    // Rà soát 0545 mục 1: dòng referee_id = X đã xoá, nhưng sổ bù đúng 1 đơn vị cho email người
+    // mời ⇒ trần MAX_REWARDED_REFERRALS của người mời KHÔNG tụt.
+    expect(await helperCap()).toBe(1)
+    const helperHash = ledgerSubjectHash(LEDGER_KEY, 'email', `acct-0545-helper-${r}@example.test`)
 
     const emailHash = ledgerSubjectHash(LEDGER_KEY, 'email', `acct0545${r}@gmail.com`)
     const deviceHash = ledgerSubjectHash(LEDGER_KEY, 'device', deviceX)
@@ -786,7 +802,7 @@ describe.skipIf(!DATABASE_URL)('xoá tài khoản + xuất dữ liệu (Postgres
     expect(await isBenefitBlocked(pool, stranger, 'referral_referee', [deviceX])).toBe(true)
 
     await pool.query('delete from platform.erased_benefit_ledger where subject_hash = any($1)', [
-      [emailHash, deviceHash],
+      [emailHash, deviceHash, helperHash],
     ])
   })
 

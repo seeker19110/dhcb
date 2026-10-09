@@ -201,3 +201,46 @@ describe('Deep Health Check API (/api/health/deep)', () => {
     } as unknown as ReturnType<typeof pgPoolModule.getPgPool>)
   }
 })
+
+describe('/api/health/deep — sổ chống lạm dụng (0545)', () => {
+  const originalEnv = { ...process.env }
+  const okPool = {
+    query: vi.fn().mockResolvedValue({ rows: [] }),
+    totalCount: 1,
+    idleCount: 1,
+    waitingCount: 0,
+  } as unknown as ReturnType<typeof pgPoolModule.getPgPool>
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    process.env = { ...originalEnv }
+    delete process.env.REDIS_URL
+    vi.spyOn(pgPoolModule, 'getPgPool').mockReturnValue(okPool)
+    validateAuthMock.mockReset()
+    validateAuthMock.mockResolvedValue(null)
+  })
+
+  afterEach(() => {
+    process.env = originalEnv
+  })
+
+  it.each([
+    [undefined, { status: 'disabled', reason: 'missing' }],
+    ['ngan', { status: 'disabled', reason: 'invalid' }],
+    [Buffer.alloc(32, 1).toString('base64'), { status: 'enabled' }],
+  ])('khoá %s ⇒ %j, KHÔNG đổi trạng thái tổng (vẫn 200 healthy)', async (key, expected) => {
+    if (key === undefined) delete process.env.ERASED_BENEFIT_LEDGER_KEY
+    else process.env.ERASED_BENEFIT_LEDGER_KEY = key
+    const { statusCode, result } = await checkSystemHealth()
+    expect(result.checks.erasedBenefitLedger).toEqual(expected)
+    expect(statusCode).toBe(200)
+    expect(result.status).toBe('healthy')
+  })
+
+  it('người KHÔNG phải admin không thấy trạng thái sổ (không công bố "chống lạm dụng đang tắt")', async () => {
+    delete process.env.ERASED_BENEFIT_LEDGER_KEY
+    const res = await handler(new Request('http://localhost/api/health/deep'))
+    const body = (await res.json()) as Record<string, unknown>
+    expect(JSON.stringify(body)).not.toContain('erasedBenefitLedger')
+  })
+})

@@ -18,12 +18,19 @@
 --    không thể "được mời lại" để nhận thưởng lần hai, và `device_hash` của họ vẫn chặn cày thưởng.
 --    Ràng buộc `referrals_no_self_invite` (referrer_id <> referee_id) vẫn đúng với null.
 --
+-- 3. `public.referrals.reward_blocked_at` (timestamptz, null) — lượt mời bị sổ chặn thưởng (người
+--    được mời trùng tài khoản đã xoá từng được thưởng). Đánh dấu để lượt đó không nằm "chờ" vĩnh
+--    viễn (số `pendingCount` sai) và không tra sổ lại mỗi lần chấm bài.
+--
 -- Lũy đẳng: `if not exists` cho bảng/chỉ mục; khoá ngoại tìm theo CỘT trong `pg_constraint` (không
 -- giả định tên), chỉ bỏ khoá ngoại không phải SET NULL và chỉ thêm khi chưa có. Chạy lại không
 -- drop/add gì.
 --
--- ROLLBACK (chạy tay, theo thứ tự):
+-- ROLLBACK — ⚠️ LÙI MÃ (PR của changelog 0545) TRƯỚC, rồi mới chạy các lệnh dưới. Lùi bảng/cột
+-- trước mã thì `deleteAccount` (ghi sổ trong transaction xoá) và thưởng giới thiệu (đọc
+-- `reward_blocked_at`) lỗi 500 cho tới khi mã được lùi. Chạy tay, theo thứ tự:
 --   drop table if exists platform.erased_benefit_ledger;
+--   alter table public.referrals drop column if exists reward_blocked_at;
 --   -- Khoá ngoại referrer_id về cascade (tra tên: select conname from pg_constraint
 --   --   where conrelid = 'public.referrals'::regclass and contype = 'f'):
 --   alter table public.referrals drop constraint if exists referrals_referrer_id_fkey;
@@ -57,7 +64,10 @@ create index if not exists erased_benefit_ledger_lookup_idx
 create index if not exists erased_benefit_ledger_created_idx
   on platform.erased_benefit_ledger (created_at);
 
--- ── 2. referrals.referrer_id: nullable + on delete set null ───────────────────
+-- ── 2. referrals.reward_blocked_at ────────────────────────────────────────────
+alter table public.referrals add column if not exists reward_blocked_at timestamptz;
+
+-- ── 3. referrals.referrer_id: nullable + on delete set null ───────────────────
 alter table public.referrals alter column referrer_id drop not null;
 
 do $$

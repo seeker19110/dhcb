@@ -118,6 +118,14 @@ for VK in VAPID_PUBLIC_KEY VAPID_PRIVATE_KEY VAPID_EMAIL; do
   fi
 done
 
+# Sổ chống lạm dụng sau xoá tài khoản (changelog 0545): thiếu khoá thì sổ TẮT (fail-open — xoá rồi
+# đăng ký lại nhận lại dùng thử). CHỈ cảnh báo, không dừng deploy: xoá tài khoản vẫn phải chạy.
+if grep -q "^ERASED_BENEFIT_LEDGER_KEY=." "$ENV_FILE" 2>/dev/null; then
+  echo "  ✓ ERASED_BENEFIT_LEDGER_KEY đã có trong .env"
+else
+  echo "  ⚠️  .env thiếu ERASED_BENEFIT_LEDGER_KEY — sổ chống lạm dụng đang TẮT (xem .env.example)"
+fi
+
 # CRON_SECRET: chỉ thêm nếu bạn điền ở phần CONFIG (mặc định trống → bỏ qua).
 add_env "CRON_SECRET" "$CRON_SECRET"
 

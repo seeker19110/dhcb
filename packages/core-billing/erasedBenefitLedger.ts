@@ -136,6 +136,12 @@ export interface ErasedAccountFacts {
   readonly refereeRewarded: boolean
   /** Số lượt mời người khác đã được thưởng (giữ trần MAX_REWARDED_REFERRALS qua lần xoá). */
   readonly referrerRewardedCount: number
+  /**
+   * Email (đăng nhập + OAuth) của NGƯỜI MỜI đã được thưởng nhờ chính tài khoản sắp xoá. Dòng
+   * `referrals` theo `referee_id` bị xoá cùng tài khoản ⇒ trần thưởng của người mời sẽ tụt 1; ghi
+   * `referral_referrer` units=1 cho email người mời để `erasedBenefitUnits` bù lại (rà soát 0545).
+   */
+  readonly rewardedReferrerEmails: readonly string[]
 }
 
 export interface LedgerEntry {
@@ -165,6 +171,8 @@ export function buildLedgerEntries(key: Buffer, facts: ErasedAccountFacts): Ledg
     push(hashSubjects(key, facts.emails, facts.refereeDeviceHashes), 'referral_referee', 1)
   if (facts.referrerRewardedCount > 0)
     push(emails, 'referral_referrer', Math.floor(facts.referrerRewardedCount))
+  // Một tài khoản chỉ được mời đúng một lần (unique referee_id) ⇒ đúng 1 đơn vị.
+  push(hashSubjects(key, facts.rewardedReferrerEmails), 'referral_referrer', 1)
   return entries
 }
 
@@ -257,9 +265,10 @@ export async function isBenefitBlocked(
 }
 
 /**
- * Số đơn vị `benefit` mà tài khoản đã xoá trùng email với `userId` từng hưởng (trong hạn giữ).
- * Nhiều email cùng thuộc một tài khoản cũ đều mang cùng số ⇒ lấy MAX theo từng mã băm, không cộng
- * chéo (tránh đếm đôi).
+ * Số đơn vị `benefit` đã ghi sổ cho các email của `userId` (trong hạn giữ): lượt thưởng của tài
+ * khoản cũ cùng email đã xoá, CỘNG lượt thưởng mà người được mời của chính `userId` mang theo khi
+ * họ xoá tài khoản. Cùng một mã băm thì cộng dồn (mỗi lần xoá là một sự kiện riêng); nhiều email của
+ * cùng một người mang cùng số ⇒ lấy MAX giữa các mã băm, không cộng chéo (tránh đếm đôi).
  */
 export async function erasedBenefitUnits(
   db: Queryable,

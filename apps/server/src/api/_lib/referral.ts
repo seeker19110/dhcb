@@ -147,13 +147,15 @@ export async function rewardReferralIfEligible(refereeId: string): Promise<void>
         referrer_id: string | null
         device_hash: string | null
         rewarded_at: Date | null
+        reward_blocked_at: Date | null
       }>(
-        `select referrer_id, device_hash, rewarded_at from public.referrals
+        `select referrer_id, device_hash, rewarded_at, reward_blocked_at from public.referrals
          where referee_id = $1 for update`,
         [refereeId],
       )
       const referral = rows[0]
-      if (!referral || referral.rewarded_at != null) return
+      // Đã thưởng, hoặc đã bị sổ chống lạm dụng chặn (0545) ⇒ xong, không tra lại.
+      if (!referral || referral.rewarded_at != null || referral.reward_blocked_at != null) return
       const referrerId = referral.referrer_id
 
       // Cùng thiết bị ở các referrer khác nhau vẫn phải tuần tự. Mọi giao dịch lấy khoá
@@ -174,10 +176,16 @@ export async function rewardReferralIfEligible(refereeId: string): Promise<void>
       }
 
       // Sổ chống lạm dụng (0545): người được mời trùng email/thiết bị với một tài khoản ĐÃ XOÁ
-      // từng được thưởng giới thiệu ⇒ không thưởng ai (cùng cách xử lý thiết bị dùng lại ở trên).
+      // từng được thưởng giới thiệu ⇒ không thưởng ai. Đánh dấu `reward_blocked_at` để lượt mời
+      // không nằm "chờ" vĩnh viễn (pendingCount sai) và lần chấm bài sau không tra sổ lại.
       // Log không chứa PII (không id, không email).
       const refereeDevices = referral.device_hash ? [referral.device_hash] : []
       if (await isBenefitBlocked(client, refereeId, 'referral_referee', refereeDevices)) {
+        await client.query(
+          `update public.referrals set reward_blocked_at = now()
+            where referee_id = $1 and rewarded_at is null and reward_blocked_at is null`,
+          [refereeId],
+        )
         logSecurityEvent('REFERRAL_REPEAT_AFTER_ERASURE', 'system', { benefit: 'referral_referee' })
         return
       }
@@ -236,14 +244,18 @@ export async function getReferralStats(userId: string): Promise<ReferralStats> {
   const { rows } = await pool.query<{ rewarded: string; pending: string }>(
     `select
        count(*) filter (where rewarded_at is not null) as rewarded,
-       count(*) filter (where rewarded_at is null)     as pending
+       count(*) filter (where rewarded_at is null and reward_blocked_at is null) as pending
      from public.referrals where referrer_id = $1`,
     [userId],
   )
 
+  // Lượt đã thưởng còn ghi trong sổ chống lạm dụng (người được mời đã xoá tài khoản, hoặc tài khoản
+  // cũ cùng email của chính người này) vẫn tính vào trần — hiển thị đúng con số trần đang dùng.
+  const erasedUnits = await erasedBenefitUnits(pool, userId, 'referral_referrer')
+
   return {
     code,
-    rewardedCount: Number(rows[0]?.rewarded ?? 0),
+    rewardedCount: Number(rows[0]?.rewarded ?? 0) + erasedUnits,
     pendingCount: Number(rows[0]?.pending ?? 0),
     maxRewarded: MAX_REWARDED_REFERRALS,
     rewardDays: REFERRAL_REWARD_DAYS,

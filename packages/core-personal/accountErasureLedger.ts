@@ -32,7 +32,14 @@ const ERASED_FACTS_SQL = `select
      select 1 from public.referrals where referee_id = $1 and rewarded_at is not null
    ) as referee_rewarded,
    (select count(*)::int from public.referrals
-     where referrer_id = $1 and rewarded_at is not null) as referrer_rewarded_count`
+     where referrer_id = $1 and rewarded_at is not null) as referrer_rewarded_count,
+   array(
+     select u.email from public.referrals r join public.users u on u.id = r.referrer_id
+      where r.referee_id = $1 and r.rewarded_at is not null
+     union
+     select i.email from public.referrals r join public.identities i on i.user_id = r.referrer_id
+      where r.referee_id = $1 and r.rewarded_at is not null and i.email is not null
+   ) as rewarded_referrer_emails`
 
 interface FactsRow {
   emails: string[] | null
@@ -40,6 +47,7 @@ interface FactsRow {
   referee_device_hashes: string[] | null
   referee_rewarded: boolean
   referrer_rewarded_count: number | string | null
+  rewarded_referrer_emails: string[] | null
 }
 
 export async function readErasedAccountFacts(
@@ -54,7 +62,18 @@ export async function readErasedAccountFacts(
     signupTrialTaken: row?.signup_trial_taken === true,
     refereeRewarded: row?.referee_rewarded === true,
     referrerRewardedCount: Number(row?.referrer_rewarded_count ?? 0),
+    rewardedReferrerEmails: row?.rewarded_referrer_emails ?? [],
   }
+}
+
+/** Dùng khi sổ tắt: không đọc gì, `recordErasedBenefits` chỉ ghi log "sổ tắt". */
+const emptyFacts: ErasedAccountFacts = {
+  emails: [],
+  refereeDeviceHashes: [],
+  signupTrialTaken: false,
+  refereeRewarded: false,
+  referrerRewardedCount: 0,
+  rewardedReferrerEmails: [],
 }
 
 /** Đọc sự thật + ghi sổ. Sổ tắt ⇒ bỏ qua cả câu đọc. Lỗi CSDL ⇒ NÉM (transaction xoá rollback). */
@@ -65,12 +84,4 @@ export async function recordErasedBenefitsForAccount(
 ): Promise<RecordResult> {
   if (readLedgerKey(env).status !== 'ok') return recordErasedBenefits(client, emptyFacts, env)
   return recordErasedBenefits(client, await readErasedAccountFacts(client, userId), env)
-}
-
-const emptyFacts: ErasedAccountFacts = {
-  emails: [],
-  refereeDeviceHashes: [],
-  signupTrialTaken: false,
-  refereeRewarded: false,
-  referrerRewardedCount: 0,
 }

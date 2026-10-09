@@ -29,7 +29,16 @@ ký lại bằng cùng hộp thư/thiết bị không nhận lại dùng thử 1
   - `signup_trial` cho mỗi email nếu `signup_trial_granted_at` hoặc `trial_granted_at` (cột cũ
     `0013`) khác null;
   - `referral_referee` cho mỗi email + mỗi `device_hash` của lượt được mời ĐÃ được thưởng;
-  - `referral_referrer` cho mỗi email, `units` = số lượt mời người khác đã được thưởng.
+  - `referral_referrer` cho mỗi email, `units` = số lượt mời người khác đã được thưởng;
+  - **(rà soát 0545, mục 1)** `referral_referrer` units=1 cho mỗi email của NGƯỜI MỜI đã được thưởng
+    nhờ chính tài khoản sắp xoá. Dòng `referrals` theo `referee_id` bị xoá cùng người được mời ⇒
+    nếu không bù, trần 10 lượt của người mời tụt 1 mỗi lần người được mời xoá tài khoản (mời →
+    thưởng → bảo người kia xoá → mời tiếp). Chọn cách này thay vì cho `referee_id` nullable + ẩn
+    danh: không đổi schema/khoá ngoại thêm, không đổi `ACCOUNT_TABLES` thành hành động có điều
+    kiện (dòng chưa thưởng phải xoá, dòng đã thưởng phải giữ — kiểu khai báo hiện tại chỉ có một
+    hành động mỗi cột), và đi đúng đường cộng trần đã có (`erasedBenefitUnits`). Đánh đổi: sổ giữ
+    mã băm email của một người KHÔNG xoá tài khoản (người mời) — bút danh hoá, cùng mục đích chống
+    gian lận, cùng hạn 12 tháng; con số `rewardedCount` ở trang Mời bạn cũng cộng phần này.
   - "Email" = `users.email` + `identities.email` (liên kết OAuth), bỏ trùng sau chuẩn hoá.
 - **Người mời xoá tài khoản ⇒ `referrals.referrer_id` chỉ ẩn danh hoá (`null`), không xoá dòng**:
   dòng là dữ liệu của người ĐƯỢC mời. Giữ dòng ⇒ họ không "được mời lại" (ràng buộc unique
@@ -40,16 +49,27 @@ ký lại bằng cùng hộp thư/thiết bị không nhận lại dùng thử 1
   dùng vẫn đăng ký/đăng nhập bình thường.
 - Lúc **thưởng giới thiệu** (`rewardReferralIfEligible`, trong transaction thưởng):
   - người được mời khớp `referral_referee` (email hoặc `device_hash` của lượt mời) ⇒ không thưởng
-    ai, không đánh dấu `rewarded_at` (y như nhánh thiết bị dùng lại sẵn có), log
-    `REFERRAL_REPEAT_AFTER_ERASURE` không PII;
+    ai, đánh dấu `referrals.reward_blocked_at = now()` (cột mới trong `0089`) để lượt mời không
+    nằm "chờ" vĩnh viễn (`pendingCount` loại dòng này) và lần chấm bài sau không tra sổ lại; log
+    `REFERRAL_REPEAT_AFTER_ERASURE` không PII. Quyết định là cuối cùng: sổ hết hạn sau 12 tháng
+    thì dòng vẫn bị chặn. Nhánh "thiết bị dùng lại" có sẵn KHÔNG đổi (vẫn không đánh dấu — ngoài
+    phạm vi);
   - trần `MAX_REWARDED_REFERRALS` của người mời = số lượt đã thưởng hiện có + `units`
     `referral_referrer` của tài khoản cũ cùng email (lấy MAX theo từng mã băm, không cộng chéo) ⇒
     xoá rồi đăng ký lại không làm mới trần;
   - `referrer_id` null (người mời đã xoá) ⇒ chỉ người được mời nhận phần của mình.
-- **Hạn giữ 12 tháng**: mọi câu tra tự lọc `created_at > now() - 12 tháng`; job hằng ngày ở
-  `server.ts` (cùng khuôn `startSyncReceiptCleanup`, chỉ instance 0) xoá dòng quá hạn.
+- **Hạn giữ 12 tháng**: mọi câu tra tự lọc `created_at > now() - 12 tháng`; job ở `server.ts`
+  (chỉ instance 0) xoá dòng quá hạn qua `startDailyJob` (`apps/server/src/dailyJob.ts`): chạy MỘT
+  lần ~60 giây sau khởi động rồi mỗi lần sang ngày UTC. Khuôn cũ (`lastDayRun = hôm nay`, chỉ chạy
+  khi sang ngày) bỏ lỡ job nếu không tiến trình nào sống qua nửa đêm — `startSyncReceiptCleanup`
+  cùng lỗi nên chuyển luôn sang helper này. `startPlanExpiryScheduler` (hạ gói hết hạn) cũng cùng
+  khuôn nhưng KHÔNG đổi ở đợt này (chạm billing — đề xuất đợt riêng).
 - **Khoá HMAC**: biến môi trường MỚI `ERASED_BENEFIT_LEDGER_KEY` (≥ 32 byte base64), có mục trong
-  `.env.example`; log khởi động báo lỗi nếu thiếu (production) hoặc sai định dạng (mọi môi trường).
+  `.env.example`; log khởi động báo lỗi nếu thiếu (production) hoặc sai định dạng (mọi môi trường);
+  `scripts/deploy.sh` cảnh báo (không dừng) khi `.env` thiếu biến; `/api/health/deep` có
+  `checks.erasedBenefitLedger: { status: 'enabled' | 'disabled', reason? }` — CHỈ trong phần chi
+  tiết dành cho admin (công bố "chống lạm dụng đang tắt" ra ngoài là mời lạm dụng; dự án đã gỡ chi
+  tiết nội bộ khỏi endpoint công khai từ đợt N1 B2). Trạng thái sổ KHÔNG làm hệ thống `degraded`.
 - **Giao diện** (`AccountDataSection`): thêm một dòng vào danh sách cảnh báo trước khi xoá, song ngữ.
 - **Xuất dữ liệu KHÔNG chứa sổ này**: sổ không gắn với tài khoản nào (không `user_id`), không thể
   chọn ra "dòng của bạn" mà không băm lại email — và tài khoản đang tồn tại thì chưa có dòng nào
@@ -66,6 +86,10 @@ ký lại bằng cùng hộp thư/thiết bị không nhận lại dùng thử 1
 - KHÔNG chặn xoá tài khoản khi sổ tắt (thiếu/sai khoá) — xem ③ "Ca lỗi".
 - KHÔNG đổi chính sách dùng thử 14 ngày, thưởng 7 ngày, trần 10 lượt; KHÔNG đổi `claimReferral`.
 - KHÔNG xử lý "suất founder được giải phóng sau khi xoá" (rủi ro khác của `0533`, ngoài phạm vi).
+- KHÔNG ghi email CŨ vào sổ khi người dùng đổi email (`packages/core-auth/changeEmail.ts` có luồng
+  đổi email): ghi mọi email từng dùng là thu quá rộng. **Nợ chấp nhận:** nhận dùng thử bằng email A
+  → đổi sang email B → xoá tài khoản ⇒ sổ chỉ có B, đăng ký lại bằng A vẫn nhận dùng thử. Muốn làm
+  vậy phải xác thực lại email A (mã 6 số), nên chi phí lạm dụng vẫn cao.
 - KHÔNG đụng file cổng (lint/coverage/size-limit, `scripts/*-policy.test.ts`, `e2e/a11y*.spec.ts`,
   `.github/`).
 - Repo **không có trang chính sách quyền riêng tư** (rà `quyền riêng tư`/`privacy` trong
@@ -89,6 +113,10 @@ ký lại bằng cùng hộp thư/thiết bị không nhận lại dùng thử 1
 | Sửa  | `apps/server/src/api/_lib/referral.ts`                             | tra sổ người được mời; trần người mời cộng sổ; `referrer_id` null             |
 | Sửa  | `apps/server/src/api/_lib/referral.test.ts`                        |                                                                               |
 | Sửa  | `apps/server/src/server.ts`                                        | job dọn hằng ngày + báo cấu hình khi khởi động                                |
+| Thêm | `apps/server/src/dailyJob.ts`                                      | lịch job dọn: chạy lúc khởi động + mỗi ngày UTC (rà soát 0545)                |
+| Thêm | `apps/server/src/dailyJob.test.ts`                                 |                                                                               |
+| Sửa  | `apps/server/src/api/platform/healthDeep.ts`                       | `checks.erasedBenefitLedger` (chỉ admin)                                      |
+| Sửa  | `scripts/deploy.sh`                                                | cảnh báo thiếu `ERASED_BENEFIT_LEDGER_KEY` (không dừng deploy)                |
 | Sửa  | `apps/dhcb/src/components/AccountDataSection.tsx`                  | dòng thông báo giữ mã băm 12 tháng                                            |
 | Sửa  | `apps/dhcb/src/components/AccountDataSection.test.tsx`             |                                                                               |
 | Sửa  | `.env.example`                                                     | `ERASED_BENEFIT_LEDGER_KEY`                                                   |
@@ -141,6 +169,9 @@ hex. `key` = `ERASED_BENEFIT_LEDGER_KEY` (base64, ≥ 32 byte).
   khoá sổ chỉ làm sổ cũ hết khớp (chống lạm dụng tạm hở, không mất gì của ai). Tách khoá ⇒ lộ một
   khoá không kéo theo khoá kia.
 - Tên chứa `KEY` ⇒ `packages/core-config/secrets.ts` tự che giá trị trong log.
+- **Xoay khoá:** làm sổ cũ hết khớp (chống lạm dụng hở tới khi sổ mới đầy lên; không mất dữ liệu ai).
+  Tiền tố miền có `v1` nhưng bảng CHƯA có cột phiên bản khoá ⇒ chưa thể giữ song song khoá cũ/mới.
+  Cần xoay mà không hở thì thêm cột `key_version` + tra bằng mọi khoá còn giữ (đợt riêng).
 
 **Ca lỗi (là một phần hợp đồng):**
 
@@ -193,6 +224,12 @@ GIỜ ghi mã băm yếu. Việc tay: đặt `ERASED_BENEFIT_LEDGER_KEY` trên V
 - [ ] Chuẩn hoá email, HMAC có khoá + tiền tố miền, khoá thiếu/sai ⇒ tắt — `erasedBenefitLedger.test.ts`.
 - [ ] Test `ACCOUNT_TABLES` ↔ `information_schema`/`pg_constraint` vẫn xanh.
 - [ ] Migration `0089` lũy đẳng (chạy lại không lỗi, OID khoá ngoại không đổi).
+- [ ] Mời → thưởng → người được mời xoá ⇒ trần của người mời (lượt sống + sổ) không giảm —
+      integration test.
+- [ ] Lượt mời bị sổ chặn ⇒ `reward_blocked_at` có giá trị, không tính vào `pendingCount`, lần sau
+      không tra sổ lại — `referral.test.ts`.
+- [ ] Job dọn chạy cả khi tiến trình không sống qua nửa đêm — `dailyJob.test.ts`.
+- [ ] `/api/health/deep` báo trạng thái sổ cho admin, không lộ cho người ngoài — `healthDeep.test.ts`.
 - [ ] Tầng 8b: ảnh 1440 + 390px trước/sau, không tràn ngang.
 
 **Lệnh chứng minh:**

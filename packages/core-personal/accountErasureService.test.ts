@@ -280,6 +280,7 @@ describe('deleteAccount — sổ chống lạm dụng (0545)', () => {
     referee_device_hashes: ['b'.repeat(64)],
     referee_rewarded: true,
     referrer_rewarded_count: 2,
+    rewarded_referrer_emails: ['nguoi.moi@example.test'],
   }
   function withLedger(fail = false): Responder {
     const base = happyDelete()
@@ -309,6 +310,7 @@ describe('deleteAccount — sổ chống lạm dụng (0545)', () => {
     expect(params).not.toContain(EMAIL)
     expect(params).not.toContain(USER_ID)
     expect(params).not.toContain('b'.repeat(64))
+    expect(params).not.toContain('nguoi.moi@example.test')
     expect(calls.at(-1)?.sql).toBe('commit')
   })
 
