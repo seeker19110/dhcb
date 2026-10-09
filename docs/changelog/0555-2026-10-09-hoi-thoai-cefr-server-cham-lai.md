@@ -1,7 +1,6 @@
 # 0555 — Hội thoại CEFR: server CHẤM LẠI kiểm tra hiểu, chỉ server ghi "đã học" (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (chưa tạo — commit trên nhánh worktree
-  `feat/hoi-thoai-cefr-server-cham-lai`) · **Loại:** `feat(english)`
+- **Ngày:** 2026-10-09 · **PR:** #1301 · **Loại:** `feat(english)`
 - **Đặc tả:** `docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md` (Approved for
   implementation — giao qua coordinator, hướng "chất lượng cao nhất" chủ dự án duyệt 2026-10-09).
 - **Nguồn:** phần "còn mở" của nợ `PROGRESS.md` "[S11-1 … 0548] Hội thoại CEFR: 'đã học' mới có bằng
