@@ -2,11 +2,12 @@ import { createHash } from 'node:crypto'
 import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { mockLogin, USER_ID, type ThemeName } from './helpers/auth'
+import { resolveE2ePort } from '../scripts/lib/e2ePort.ts'
 import { freezeAnimations, waitForStableDom } from './helpers/axe'
 
 const FIXED_EPOCH = Date.parse('2026-09-18T03:00:00.000Z')
 const FIXTURE_VERSION = 'ux-r2-member-v1'
-const BASE_ORIGIN = 'http://localhost:5179'
+const BASE_ORIGIN = `http://localhost:${resolveE2ePort(process.env.E2E_PORT).port}`
 const THEMES: readonly ThemeName[] = ['dark-blue', 'blue-sky', 'kid']
 const CAPTURE_BEFORE = process.env.HOME_CLARITY_EVIDENCE_MODE === 'before'
 
