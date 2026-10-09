@@ -23,6 +23,7 @@
 // — `Dialogue` của app khớp kiểu này mà không cần chuyển đổi.
 
 import { shuffle } from '@dhcb/core-contracts/shuffle'
+import type { PublicDialogueQuestion } from '@dhcb/core-contracts/cefrDialogueCheck'
 
 /** Tên nhân vật song ngữ (chiều A hiện `vi`, chiều B hiện `en`). */
 export interface ComprehensionSpeaker {
@@ -402,6 +403,28 @@ export function buildComprehensionQuiz(
     if (q) questions.push(q)
   }
   return questions.length >= MIN_QUESTIONS ? questions : []
+}
+
+/**
+ * BẢN CÔNG KHAI của một câu hỏi — gửi cho giao diện khi seed do SERVER cấp (đợt 0558): giữ đúng
+ * phần cần để hiện đề, BỎ `correctId` và `explanation` (giải thích trích nguyên văn đáp án).
+ * Liệt kê từng trường thay vì rest-spread để thêm trường mới vào `ComprehensionQuestion` sau này
+ * không vô tình lọt ra ngoài.
+ */
+export function toPublicComprehensionQuestion(q: ComprehensionQuestion): PublicDialogueQuestion {
+  return {
+    id: q.id,
+    kind: q.kind,
+    prompt: q.prompt,
+    stem: q.stem,
+    stemLang: q.stemLang,
+    ...(q.stemSpeaker !== undefined ? { stemSpeaker: q.stemSpeaker } : {}),
+    options: q.options.map((o) => ({
+      id: o.id,
+      text: o.text,
+      ...(o.lang ? { lang: o.lang } : {}),
+    })),
+  }
 }
 
 /** Số câu đúng tối thiểu để đạt với `total` câu (làm tròn LÊN, số nguyên — không sai số thực). */

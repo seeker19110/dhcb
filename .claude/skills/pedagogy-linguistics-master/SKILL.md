@@ -69,9 +69,14 @@ ai nói — đáp án luôn kiểm ngược được từ dữ liệu, đúng �
 Anh/hỏi tiếng Việt, B đề tiếng Việt/hỏi tiếng Anh. **SERVER chấm lại** (từ 2026-10-09, đợt 0555):
 client gửi lựa chọn thô + seed tới `POST /api/learning/evidence?action=cefr-dialogue`, server dựng
 lại đề từ `apps/dhcb/public/data/dialogues.json` và chỉ server ghi `learned|…` vào `cefr_dialogues`;
-`/api/progress` lọc bỏ bản `learned|…` client tự đẩy. Mỗi lượt (seed) chấm một lần. Đặc tả:
+`/api/progress` lọc bỏ bản `learned|…` client tự đẩy. **Seed do SERVER cấp** (đợt 0558): đã đăng
+nhập thì client MỞ LƯỢT ở `?action=cefr-dialogue-start` nhận token HMAC
+(`packages/core-auth/attemptToken.ts`, khoá suy từ `USER_DATA_MASTER_KEY`) + đề ĐÃ BỎ ĐÁP ÁN; seed
+suy từ chữ ký nên máy không tính được đáp án; nộp bằng token, mỗi token chấm một lần, câu SAI không
+được trả đáp án/lời giải. Khách (chưa đăng nhập) vẫn làm tại máy, không lưu. Đặc tả:
 `docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md` +
-`docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md`. Đừng tính "đã xem" là hoàn thành.
+`docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md` +
+`docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md`. Đừng tính "đã xem" là hoàn thành.
 
 ### B. CHƯA CÓ — đừng mô tả hay thiết kế như đã có
 
