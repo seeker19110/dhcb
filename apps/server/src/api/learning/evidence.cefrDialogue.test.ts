@@ -10,25 +10,33 @@ const sec = vi.hoisted(() => ({
   used: new Set<string>(),
   resetCalls: [] as string[],
   logs: [] as unknown[][],
+  /** Mô phỏng Redis production không sẵn sàng: 'all' = mọi bộ đếm, 'lock' = chỉ bộ đếm lượt. */
+  unavailable: null as 'all' | 'lock' | null,
+  /** Trả lại lượt thất bại (Redis hỏng lúc reset). */
+  resetFails: false,
 }))
 
 vi.mock('@dhcb/core-auth/security', () => ({
   getCorsHeaders: () => ({}),
   SECURITY_HEADERS: {},
-  checkRateLimit: async (_subject: string, _max: number, bucket: string) =>
-    bucket === 'cefr-dialogue-check' ? sec.userOk : sec.ipOk,
+  checkRateLimit: async () => sec.ipOk,
   validateAuth: async () => sec.user,
   logSecurityEvent: (...args: unknown[]) => {
     sec.logs.push(args)
   },
-  consumeWindowCounter: async (key: string) => {
-    if (sec.used.has(key)) return false
+  consumeWindowCounterStatus: async (key: string) => {
+    const isRate = key.startsWith('cefr-dialogue-check:')
+    if (sec.unavailable === 'all' || (sec.unavailable === 'lock' && !isRate)) return 'unavailable'
+    if (isRate) return sec.userOk ? 'ok' : 'exhausted'
+    if (sec.used.has(key)) return 'exhausted'
     sec.used.add(key)
-    return true
+    return 'ok'
   },
-  resetCounter: async (key: string) => {
+  resetCounterChecked: async (key: string) => {
     sec.resetCalls.push(key)
+    if (sec.resetFails) return false
     sec.used.delete(key)
+    return true
   },
 }))
 
@@ -102,6 +110,8 @@ beforeEach(() => {
   sec.used.clear()
   sec.resetCalls.length = 0
   sec.logs.length = 0
+  sec.unavailable = null
+  sec.resetFails = false
   existingRow = undefined
   query.mockImplementation(async (sql: string) => {
     if (sql.includes('select cefr_dialogues')) return { rows: existingRow ? [existingRow] : [] }
@@ -284,5 +294,54 @@ describe('cefr-dialogue — server chấm lại', () => {
     expect(res.status).toBe(200)
     expect(insertCall()).toBeTruthy()
     warn.mockRestore()
+  })
+
+  it('ghi DB lỗi VÀ không trả lại được lượt (Redis hỏng) → 500 + log cảnh báo cho vận hành, không lộ userId', async () => {
+    sec.resetFails = true
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select cefr_dialogues')) return { rows: [] }
+      if (sql.includes('insert into english.learning_progress')) throw new Error('db down')
+      return { rows: [] }
+    })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const res = await post(body())
+    expect(res.status).toBe(500)
+    const logged = warn.mock.calls.map((c) => String(c[0]))
+    expect(logged.some((m) => m.startsWith('[cefr-dialogue]'))).toBe(true)
+    expect(logged.join()).not.toContain('user-1')
+    expect(logged.join()).not.toContain(TITLE)
+    warn.mockRestore()
+    err.mockRestore()
+  })
+})
+
+// Mục L1 sau rà soát (changelog 0555): Redis không sẵn sàng ở production KHÔNG được đổ cho người
+// học "nộp quá nhanh" (429) hay "lượt đã nộp" (409) — trả 503 mã riêng, vẫn không chấm/không ghi.
+describe('cefr-dialogue — bộ đếm dùng chung không sẵn sàng → 503 SERVICE_UNAVAILABLE', () => {
+  it('ở bước giới hạn theo tài khoản → 503, không chấm, không tiêu lượt, không ghi', async () => {
+    sec.unavailable = 'all'
+    const res = await post(body())
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('60')
+    const j = (await res.json()) as { code: string; error: string; items?: unknown }
+    expect(j.code).toBe('SERVICE_UNAVAILABLE')
+    expect(j.error).toContain('Máy chủ tạm bận, chưa chấm')
+    expect(j.items).toBeUndefined()
+    expect(sec.used.size).toBe(0)
+    expect(insertCall()).toBeUndefined()
+  })
+
+  it('ở bước khoá lượt → 503 (KHÔNG phải 409 ATTEMPT_USED), không trả đáp án, không ghi', async () => {
+    sec.unavailable = 'lock'
+    const res = await post(body())
+    expect(res.status).toBe(503)
+    const j = (await res.json()) as { code: string; items?: unknown }
+    expect(j.code).toBe('SERVICE_UNAVAILABLE')
+    expect(j.items).toBeUndefined()
+    expect(insertCall()).toBeUndefined()
+    // Redis hồi phục → gửi lại ĐÚNG bài đó được chấm bình thường.
+    sec.unavailable = null
+    expect((await post(body())).status).toBe(200)
   })
 })

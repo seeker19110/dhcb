@@ -91,5 +91,6 @@ export const DialogueCheckErrorCodeSchema = z.enum([
   'NO_QUIZ', // hội thoại quá ngắn, không dựng được đề
   'QUIZ_MISMATCH', // id câu client gửi không thuộc đề server dựng (dữ liệu hai bên lệch phiên bản)
   'ATTEMPT_USED', // lượt (seed) này đã nộp rồi — mỗi lượt chỉ chấm MỘT lần, chống dò đáp án
+  'SERVICE_UNAVAILABLE', // 503: bộ đếm dùng chung (Redis) không sẵn sàng — chưa chấm, gửi lại sau
 ])
 export type DialogueCheckErrorCode = z.infer<typeof DialogueCheckErrorCodeSchema>

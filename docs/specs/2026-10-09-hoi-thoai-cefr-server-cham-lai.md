@@ -142,20 +142,21 @@ bằng `cefr_dialogues || (phần tử mới không nằm trong mảng)` — kh�
 
 **Ca lỗi:**
 
-| Tình huống                                  | Mã lỗi                  | Hành vi mong đợi (server · giao diện)                                              |
-| ------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------- |
-| Chưa đăng nhập / phiên hết                  | 401                     | Không chấm · "Chưa lưu: phiên đăng nhập đã hết…" (kết quả chấm tại máy)            |
-| Quá 6 lượt/phút/tài khoản (hoặc 60/phút/IP) | 429 + `Retry-After: 60` | Không chấm, không tiêu lượt · "Chưa lưu: bạn nộp hơi nhanh…" + nút Gửi lại         |
-| Body sai schema / field lạ                  | 400                     | Không chấm                                                                         |
-| `?action=` lạ                               | 400 `BAD_ACTION`        | Không rơi nhầm sang luồng STEM                                                     |
-| Không có hội thoại (owner, titleEn)         | 400 `CONTENT_NOT_FOUND` | Giao diện: "Chưa lưu: máy chủ đang gặp lỗi…"                                       |
-| Hội thoại quá ngắn                          | 400 `NO_QUIZ`           | (Giao diện vốn không cho làm — "chưa kiểm tra được")                               |
-| Id câu lạ/trùng (dữ liệu hai bên lệch)      | 409 `QUIZ_MISMATCH`     | Không tiêu lượt · "Chưa lưu: nội dung hội thoại vừa được cập nhật. Tải lại trang…" |
-| Lượt (seed) đã chấm                         | 409 `ATTEMPT_USED`      | Không lộ gì thêm · "lượt này đã được nộp trước đó… Bấm Làm lại"                    |
-| Ghi DB lỗi                                  | 500                     | Trả lại lượt (reset bộ đếm) · "Chưa lưu: máy chủ đang gặp lỗi…" + Gửi lại          |
-| Cộng thưởng lỗi                             | (200)                   | Fail-open, "đã học" đã commit                                                      |
-| Mất mạng                                    | —                       | "Chưa lưu: mất kết nối… Kiểm tra mạng rồi bấm Gửi lại" (gửi lại đúng bài đó)       |
-| Chưa đăng nhập (khách)                      | — (không gọi server)    | Chấm tại máy · "Bạn đã đạt, nhưng cần đăng nhập để lưu tiến độ."                   |
+| Tình huống                                  | Mã lỗi                                        | Hành vi mong đợi (server · giao diện)                                                           |
+| ------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Chưa đăng nhập / phiên hết                  | 401                                           | Không chấm · "Chưa lưu: phiên đăng nhập đã hết…" (kết quả chấm tại máy)                         |
+| Quá 6 lượt/phút/tài khoản (hoặc 60/phút/IP) | 429 + `Retry-After: 60`                       | Không chấm, không tiêu lượt · "Chưa lưu: bạn nộp hơi nhanh…" + nút Gửi lại                      |
+| Body sai schema / field lạ                  | 400                                           | Không chấm                                                                                      |
+| `?action=` lạ                               | 400 `BAD_ACTION`                              | Không rơi nhầm sang luồng STEM                                                                  |
+| Không có hội thoại (owner, titleEn)         | 400 `CONTENT_NOT_FOUND`                       | Giao diện: "Chưa lưu: máy chủ đang gặp lỗi…"                                                    |
+| Hội thoại quá ngắn                          | 400 `NO_QUIZ`                                 | (Giao diện vốn không cho làm — "chưa kiểm tra được")                                            |
+| Id câu lạ/trùng (dữ liệu hai bên lệch)      | 409 `QUIZ_MISMATCH`                           | Không tiêu lượt · "Chưa lưu: nội dung hội thoại vừa được cập nhật. Tải lại trang…"              |
+| Lượt (seed) đã chấm                         | 409 `ATTEMPT_USED`                            | Không lộ gì thêm · "lượt này đã được nộp trước đó… Bấm Làm lại"                                 |
+| Redis không sẵn sàng (production)           | 503 `SERVICE_UNAVAILABLE` + `Retry-After: 60` | Fail-closed: không chấm, không ghi · "Chưa lưu: máy chủ tạm bận…" + Gửi lại (không bắt Làm lại) |
+| Ghi DB lỗi                                  | 500                                           | Trả lại lượt (reset bộ đếm) · "Chưa lưu: máy chủ đang gặp lỗi…" + Gửi lại                       |
+| Cộng thưởng lỗi                             | (200)                                         | Fail-open, "đã học" đã commit                                                                   |
+| Mất mạng                                    | —                                             | "Chưa lưu: mất kết nối… Kiểm tra mạng rồi bấm Gửi lại" (gửi lại đúng bài đó)                    |
+| Chưa đăng nhập (khách)                      | — (không gọi server)                          | Chấm tại máy · "Bạn đã đạt, nhưng cần đăng nhập để lưu tiến độ."                                |
 
 Kết quả chấm tại máy LUÔN kèm hậu tố "· chưa lưu" ở dòng điểm; chữ "ĐÃ HỌC" chỉ xuất hiện khi server
 trả `passed && saved`.
@@ -203,6 +204,15 @@ npm run check:specs && npm run audit:prose -- --ci
 | Không log PII (userId, tên hội thoại, đáp án)                    | `evidence.cefrDialogue.test.ts`                            |
 | Không tốn lượt AI                                                | hàm thuần, không import `core-ai`                          |
 
+**Mức bảo vệ của đợt này (ghi rõ sau rà soát bảo mật độc lập):** đợt này CHỐNG được hai đường
+gian lận phổ biến — **sửa localStorage** và **POST giả** (`/api/progress` mảng `learned|…` bịa, hoặc
+nộp bừa lên endpoint chấm để dò đáp án). Đợt này **KHÔNG chống người đọc mã có chủ ý**: seed do
+client chọn, đề dựng được từ `dialogues.json` công khai + thuật toán công khai, và server trả
+`correctId` sau khi chấm. Phương án chặn cả trường hợp này — **seed do server cấp (HMAC, TTL, dùng
+một lần) + không gửi `correctId` về client** — ghi thành nợ "cần chủ dự án quyết" trong
+`PROGRESS.md` (đánh đổi: thêm một vòng gọi server trước khi làm bài, và mất lời giải sau khi nộp vốn
+có chủ đích sư phạm).
+
 **Giới hạn đã biết (trung thực):**
 
 - Đáp án tính được từ dữ liệu công khai + mã nguồn công khai — server chặn khai suông và dò qua
@@ -211,8 +221,11 @@ npm run check:specs && npm run audit:prose -- --ci
 - Bản `learned|…` do client 0548 ghi lúc offline và chưa từng lên server: còn hiện "đã học" ở chính
   máy đó (client hợp nhất UNION khi kéo), nhưng không lên server và không sang máy khác. Cửa sổ
   rủi ro là thời gian giữa deploy #1291 và deploy đợt này (cùng ngày).
-- Production cần Redis sẵn sàng: Redis hỏng thì cả rate limit lẫn bộ đếm lượt đều từ chối (429/409)
-  — đúng chính sách "fail-closed" sẵn có của `checkRateLimit`/`consumeWindowCounter`.
+- Production cần Redis sẵn sàng: Redis hỏng thì cả rate limit lẫn bộ đếm lượt đều từ chối — vẫn
+  fail-closed, nhưng trả **503 `SERVICE_UNAVAILABLE`** (hàm ba trạng thái
+  `consumeWindowCounterStatus` trong `packages/core-auth/security.ts`), KHÔNG giả làm 429/409, để
+  người học thấy "máy chủ tạm bận" và Gửi lại thay vì bị bắt Làm lại. Ghi DB lỗi mà không trả lại
+  được lượt (`resetCounterChecked` = false) → `console.warn` tiền tố `[cefr-dialogue]`, khoá đã băm.
 
 ## ⑥ Quy ước dự án liên quan
 

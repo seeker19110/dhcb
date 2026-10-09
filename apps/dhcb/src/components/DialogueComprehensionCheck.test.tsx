@@ -253,6 +253,7 @@ describe('DialogueComprehensionCheck', () => {
   it.each([
     ['rate-limited', 'nộp hơi nhanh', true],
     ['error', 'máy chủ đang gặp lỗi', true],
+    ['unavailable', 'máy chủ tạm bận, chưa chấm', true],
     ['auth', 'phiên đăng nhập đã hết', false],
     ['attempt-used', 'lượt này đã được nộp trước đó', false],
     ['outdated', 'Tải lại trang', false],

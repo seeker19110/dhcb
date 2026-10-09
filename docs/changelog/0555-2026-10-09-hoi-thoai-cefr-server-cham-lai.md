@@ -81,10 +81,44 @@ thẳng `/api/progress` một mảng `learned|…` bịa ra, là "đã học" m�
   lý do + Gửi lại, mục lục giữ "đã học 0/3"; chưa đạt hiện đáp án đúng bằng chữ. Không vỡ bố cục ở
   390, tương phản theo lớp sẵn có của đợt 0548.
 
+## Sau rà soát (bảo mật độc lập trên `df382934`, không có mục Cao)
+
+1. **[Trung — kiến trúc] Mức bảo vệ phải ghi rõ, không thổi phồng.** Đợt này chống **sửa
+   localStorage** và **POST giả** (khai `learned|…` qua `/api/progress`, nộp bừa để dò đáp án qua
+   máy chủ); **KHÔNG chống người đọc mã có chủ ý** (seed do client chọn, đề dựng lại được từ dữ liệu +
+   thuật toán công khai, server trả `correctId`). Ghi ở đặc tả ⑤. Phương án chặn nốt — **seed do
+   server cấp (HMAC, TTL, dùng một lần) + không gửi `correctId` về client** — thành nợ "cần chủ dự án
+   quyết" trong `PROGRESS.md` (đánh đổi một vòng gọi server + mất lời giải sau khi nộp).
+2. **[Thấp — L1] Redis hỏng ở production trả 429/409 sai nghĩa.** Thêm
+   `consumeWindowCounterStatus` (`'ok' | 'exhausted' | 'unavailable'`) và `resetCounterChecked`
+   (trả `boolean`) vào `packages/core-auth/security.ts`; `consumeWindowCounter`/`resetCounter` cũ
+   giữ nguyên chữ ký, nay gọi qua hàm mới (mọi nơi gọi cũ không đổi hành vi). Handler trả **503
+   `SERVICE_UNAVAILABLE`** "Máy chủ tạm bận, chưa chấm — thử lại sau ít phút" + `Retry-After: 60` ở
+   cả bước rate limit lẫn bước khoá lượt — vẫn fail-closed (không chấm, không ghi, không lộ đáp án).
+   Client có kết cục `unavailable`: "Chưa lưu: máy chủ tạm bận…" + nút **Gửi lại**, không bắt Làm
+   lại. 503 không kèm mã đó → vẫn là lỗi chung.
+3. **[Thấp — L2] Trả lại lượt thất bại thì im lặng.** Ghi DB lỗi mà `resetCounterChecked` = false →
+   `console.warn` tiền tố `[cefr-dialogue]` kèm 12 ký tự cuối của khoá đã băm (không userId, không
+   tên hội thoại) — test khẳng định chuỗi log không chứa hai thứ đó.
+4. **[Thấp — L4] Phần tử `cefrDialogues` của `/api/progress` không giới hạn độ dài.** Thêm
+   `z.string().max(300)` (`MAX_DIALOGUE_ENTRY_LEN`). Đo: khoá thật dài nhất 65 ký tự; trần theo hợp
+   đồng `learned|` (8) + owner (64) + `:` (1) + titleEn (200) = 273 → 300 có biên. Test: phần tử 301
+   ký tự → 400, không ghi gì; khoá 273 ký tự → 200.
+
+**Kiểm chứng sau vá (chạy thật):** `npx prettier --write` + `npx eslint --max-warnings 0` trên 11 file
+sửa → exit 0 · `npm run typecheck` → exit 0 · `npx vitest run packages/core-auth
+apps/server/src/api/learning apps/server/src/api/core apps/dhcb/src/lib/dialogueCheckClient.test.ts
+apps/dhcb/src/components/DialogueComprehensionCheck.test.tsx packages/subject-english
+packages/core-contracts` → 128 file xanh (1 skip), 1.439 test xanh (2 skip). Test mới: 503 ở bước
+rate limit và bước khoá lượt + hồi phục sau đó; reset lỗi → warn không lộ PII; client 503 có/không
+mã; giao diện `unavailable` có Gửi lại; `consumeWindowCounterStatus` ok/exhausted/production
+unavailable/dev Map; `resetCounterChecked` true/false ở production.
+
 ## Rủi ro / còn lại
 
 - Đáp án tính được từ dữ liệu + mã công khai: server chặn khai suông và dò qua máy chủ, không chặn
   người tự chạy thuật toán (kiểm tra hiểu ngắn, không phải bài thi). Ghi ở đặc tả ⑤.
 - Bản `learned|…` client 0548 ghi lúc offline mà chưa lên server (cửa sổ giữa deploy #1291 và đợt
   này, cùng ngày) chỉ còn ở máy đó.
-- Production cần Redis: Redis hỏng thì rate limit/bộ đếm lượt từ chối (fail-closed như hiện hành).
+- Production cần Redis: Redis hỏng thì không chấm, trả 503 `SERVICE_UNAVAILABLE` (fail-closed).
+- Người đọc mã có chủ ý vẫn tính được đáp án — nợ "seed do server cấp" chờ chủ dự án quyết.

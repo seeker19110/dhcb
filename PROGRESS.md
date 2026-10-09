@@ -1157,6 +1157,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🟡 **[2026-10-09 — rà soát bảo mật changelog `0555`] Kiểm tra hiểu hội thoại CEFR chưa chống
+  người đọc mã có chủ ý — CẦN CHỦ DỰ ÁN QUYẾT.** Đợt `0555` đã chặn sửa localStorage và POST giả
+  (server chấm lại, mỗi lượt chấm một lần, `/api/progress` lọc `learned|…`). Còn mở: seed do client
+  chọn và server trả `correctId`, nên ai đọc mã vẫn tính được đáp án. Phương án: **seed do server
+  cấp (HMAC, TTL, dùng một lần) + không gửi `correctId` về client** — đánh đổi một vòng gọi server
+  trước khi làm bài và mất lời giải sau khi nộp (có chủ đích sư phạm). Chi tiết: đặc tả
+  `docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md` mục ⑤.
 - 🟡 **[2026-10-08 — HẠ MỨC từ 🔴 sau `0527`] Xuất/xoá dữ liệu cá nhân `/api/persons` ĐÃ SỬA** (5 cột
   sai, bỏ nuốt lỗi, 21 bảng `person_id` trong một danh sách duy nhất — trước sót 11 bảng; test tích hợp
   Postgres thật canh danh sách khớp `information_schema`). Lưới `unhandledRejection`/`uncaughtException`

@@ -83,6 +83,13 @@ describe('submitDialogueCheck', () => {
     expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'error' })
   })
 
+  it('503 SERVICE_UNAVAILABLE → unavailable (máy chủ tạm bận, chưa chấm); 503 không mã → error', async () => {
+    reply(503, { code: 'SERVICE_UNAVAILABLE', error: 'x' })
+    expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'unavailable' })
+    reply(503, 'Service Unavailable')
+    expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'error' })
+  })
+
   it('đầu vào sai hợp đồng → error, KHÔNG gọi mạng', async () => {
     expect(await submitDialogueCheck({ ...INPUT, attempt: -1 })).toEqual({ kind: 'error' })
     expect(fetchMock).not.toHaveBeenCalled()

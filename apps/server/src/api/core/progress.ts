@@ -42,12 +42,17 @@ import { findReceipt, saveReceipt } from '../_lib/syncReceipt.js'
 // Giới hạn kích thước hợp lý — chặn payload bất thường (DoS/lỗi client) mà vẫn đủ rộng
 // cho người học nhiều năm (từ điển app hiện ~12.000 từ).
 const MAX_ARR = 20_000
+const MAX_DIALOGUE_ENTRY_LEN = 300
 const ProgressSchema = z.object({
   learned: z.array(z.string()).max(MAX_ARR).default([]),
   hard: z.array(z.string()).max(MAX_ARR).default([]),
   srs: z.record(z.string(), z.unknown()).default({}),
   cefrGrammar: z.array(z.string()).max(MAX_ARR).default([]),
-  cefrDialogues: z.array(z.string()).max(MAX_ARR).default([]),
+  // Trần độ dài MỖI phần tử (changelog 0555): khoá dài nhất thật trong dialogues.json hiện là 65
+  // ký tự ("learned|b2-advanced-structures:I have never seen anything like it"); trần hợp đồng của
+  // khoá do server ghi là 8 ("learned|") + 64 (ownerId) + 1 + 200 (titleEn) = 273. Lấy 300 để
+  // KHÔNG BAO GIỜ từ chối một khoá hợp lệ (từ chối = hỏng cả lượt đồng bộ), mà chặn chuỗi rác.
+  cefrDialogues: z.array(z.string().max(MAX_DIALOGUE_ENTRY_LEN)).max(MAX_ARR).default([]),
   // CỐ Ý KHÔNG có `cefrUnlocked`: Zod object mặc định LOẠI BỎ khoá lạ, nên client cũ (hoặc kẻ
   // giả mạo) vẫn gửi trường này thì nó bị vứt im lặng — server tính lại từ plan + cefr_exams.
   cefrExams: z.record(z.string(), z.unknown()).default({}),

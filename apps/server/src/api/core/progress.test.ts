@@ -805,6 +805,22 @@ describe('POST /api/progress — bản "learned|…" do client tự đẩy bị 
     expect(dialoguesWritten()).toEqual(['a1-greetings:Hi', 'learned|a1-greetings:Hi', 'b1-x:Yo'])
   })
 
+  it('phần tử quá dài (> 300 ký tự) → 400, không ghi gì; khoá hợp lệ dài nhất theo hợp đồng (273) → 200', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return { rows: [EMPTY_PROGRESS_ROW] }
+      return { rows: [] }
+    })
+    const rac = await handler(makeRequest({ cefrDialogues: ['x'.repeat(301)] }))
+    expect(rac.status).toBe(400)
+    expect(findCall('insert into english.learning_progress')).toBeFalsy()
+    // "learned|" (8) + ownerId 64 + ":" + titleEn 200 = 273 — khoá dài nhất server có thể ghi.
+    const dai = `learned|${'a'.repeat(64)}:${'T'.repeat(200)}`
+    expect(dai).toHaveLength(273)
+    const ok = await handler(makeRequest({ cefrDialogues: [dai.slice('learned|'.length)] }))
+    expect(ok.status).toBe(200)
+  })
+
   it('chỉ đẩy thêm "learned|…" → không tính là học thật, không cộng thưởng', async () => {
     query.mockImplementation(async (sql: string) => {
       if (sql.includes('select learned, hard, srs, cefr_grammar'))

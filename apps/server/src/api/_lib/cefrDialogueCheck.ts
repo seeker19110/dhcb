@@ -18,9 +18,8 @@
 import { createHash } from 'node:crypto'
 import type { Pool } from 'pg'
 import {
-  checkRateLimit,
-  consumeWindowCounter,
-  resetCounter,
+  consumeWindowCounterStatus,
+  resetCounterChecked,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
@@ -43,6 +42,8 @@ import { findCefrDialogue } from '@dhcb/subject-english/dialogueData'
 
 /** Trần số lượt nộp mỗi phút của MỘT tài khoản (người thật làm 3 câu mất cả phút). */
 export const MAX_SUBMITS_PER_MIN = 6
+/** Cửa sổ của giới hạn theo tài khoản. */
+const RATE_WINDOW_MS = 60_000
 /** Lượt đã chấm bị "khoá" trong bao lâu — đủ dài để không nộp lại được cùng đề trong ngày. */
 const ATTEMPT_LOCK_MS = 24 * 60 * 60 * 1000
 
@@ -58,6 +59,21 @@ export function attemptLockKey(
     .update(JSON.stringify([userId, ownerId, titleEn, direction, attempt]))
     .digest('hex')
   return `cefr-dialogue-attempt:${h}`
+}
+
+/**
+ * Bộ đếm dùng chung (Redis) không sẵn sàng ở production → 503 với mã riêng, KHÔNG nói "nộp quá
+ * nhanh"/"lượt đã nộp" (người học chưa làm gì sai). Vẫn fail-closed: không chấm, không ghi.
+ */
+function unavailable(headers: Record<string, string>): Response {
+  return jsonResponse(
+    {
+      error: 'Máy chủ tạm bận, chưa chấm — thử lại sau ít phút',
+      code: 'SERVICE_UNAVAILABLE' satisfies DialogueCheckErrorCode,
+    },
+    503,
+    { ...headers, 'Retry-After': '60' },
+  )
 }
 
 function fail(
@@ -119,7 +135,13 @@ export async function handleCefrDialogueCheck(
   userId: string,
   headers: Record<string, string>,
 ): Promise<Response> {
-  if (!(await checkRateLimit(userId, MAX_SUBMITS_PER_MIN, 'cefr-dialogue-check'))) {
+  const rate = await consumeWindowCounterStatus(
+    `cefr-dialogue-check:${userId}`,
+    MAX_SUBMITS_PER_MIN,
+    RATE_WINDOW_MS,
+  )
+  if (rate === 'unavailable') return unavailable(headers)
+  if (rate === 'exhausted') {
     logSecurityEvent('RATE_LIMIT_EXCEEDED', getClientIp(req), {
       path: '/api/learning/evidence#cefr-dialogue',
     })
@@ -165,7 +187,9 @@ export async function handleCefrDialogueCheck(
     input.direction,
     input.attempt,
   )
-  if (!(await consumeWindowCounter(lockKey, 1, ATTEMPT_LOCK_MS))) {
+  const lock = await consumeWindowCounterStatus(lockKey, 1, ATTEMPT_LOCK_MS)
+  if (lock === 'unavailable') return unavailable(headers)
+  if (lock === 'exhausted') {
     return fail(
       'ATTEMPT_USED',
       'Lượt này đã được nộp — bấm Làm lại để có câu hỏi mới',
@@ -182,7 +206,13 @@ export async function handleCefrDialogueCheck(
       newlyLearned = await saveLearned(pool, userId, input.ownerId, input.titleEn)
     } catch (err: unknown) {
       // Chưa ghi được → TRẢ LẠI lượt để người học gửi lại đúng bài đó, không mất công làm.
-      await resetCounter(lockKey)
+      if (!(await resetCounterChecked(lockKey))) {
+        // Không trả lại được lượt (Redis hỏng) → người học sẽ gặp 409 nếu gửi lại đúng bài này.
+        // Log cho vận hành thấy; khoá đã băm, không có userId/tên hội thoại thô.
+        console.warn(
+          `[cefr-dialogue] không trả lại được lượt sau khi ghi DB lỗi (khoá ${lockKey.slice(-12)})`,
+        )
+      }
       return internalErrorResponse(err, headers, 'cefr-dialogue-check')
     }
     saved = true

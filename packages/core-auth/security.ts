@@ -394,6 +394,47 @@ function pruneDailyCounters(now: number): void {
 }
 
 /**
+ * Kết quả đếm có PHÂN BIỆT lý do từ chối (thêm 2026-10-09, changelog 0555): `exhausted` = vượt
+ * hạn mức thật; `unavailable` = production mà Redis không sẵn sàng/lỗi nên KHÔNG đếm được (vẫn
+ * fail-closed — nơi gọi phải từ chối, nhưng nói đúng là "máy chủ tạm bận", không đổ cho người dùng
+ * "nộp quá nhanh"). Các hàm boolean cũ giữ nguyên hành vi (gói lại hàm này).
+ */
+export type CounterStatus = 'ok' | 'exhausted' | 'unavailable'
+
+/**
+ * Như `consumeWindowCounter` nhưng trả ba trạng thái (xem `CounterStatus`). Dev/test không có
+ * Redis vẫn dùng Map in-memory như cũ.
+ */
+export async function consumeWindowCounterStatus(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<CounterStatus> {
+  if (limit <= 0) return 'exhausted'
+  const redis = getRedis()
+  if (redis && redis.status === 'ready') {
+    try {
+      const count = (await redis.eval(DAILY_COUNTER_LUA, 1, key, String(windowMs))) as number
+      noteRedisRecovered()
+      return count <= limit ? 'ok' : 'exhausted'
+    } catch (err) {
+      noteRedisDegraded(err)
+    }
+  }
+
+  if (isProduction()) return 'unavailable'
+  const now = Date.now()
+  pruneDailyCounters(now)
+  const entry = dailyCounterMap.get(key)
+  if (!entry || now > entry.resetAt) {
+    dailyCounterMap.set(key, { count: 1, resetAt: now + windowMs })
+    return 'ok'
+  }
+  entry.count += 1
+  return entry.count <= limit ? 'ok' : 'exhausted'
+}
+
+/**
  * Tăng bộ đếm `key` trong một cửa sổ `windowMs` (tính từ lượt ĐẦU, không gia hạn mỗi lần gọi);
  * trả `true` nếu VẪN trong hạn mức (đã tính lượt vừa dùng). Dùng chung cho hạn mức ngày của
  * khách và giới hạn thử sai theo TÀI KHOẢN (đăng nhập, mã 2FA — vá 2026-09-27).
@@ -403,28 +444,7 @@ export async function consumeWindowCounter(
   limit: number,
   windowMs: number,
 ): Promise<boolean> {
-  if (limit <= 0) return false
-  const redis = getRedis()
-  if (redis && redis.status === 'ready') {
-    try {
-      const count = (await redis.eval(DAILY_COUNTER_LUA, 1, key, String(windowMs))) as number
-      noteRedisRecovered()
-      return count <= limit
-    } catch (err) {
-      noteRedisDegraded(err)
-    }
-  }
-
-  if (isProduction()) return false
-  const now = Date.now()
-  pruneDailyCounters(now)
-  const entry = dailyCounterMap.get(key)
-  if (!entry || now > entry.resetAt) {
-    dailyCounterMap.set(key, { count: 1, resetAt: now + windowMs })
-    return true
-  }
-  entry.count += 1
-  return entry.count <= limit
+  return (await consumeWindowCounterStatus(key, limit, windowMs)) === 'ok'
 }
 
 /** Tăng bộ đếm ngày của `key`; trả `true` nếu VẪN trong hạn mức (đã tính lượt vừa dùng). */
@@ -432,18 +452,28 @@ export async function consumeDailyCounter(key: string, limit: number): Promise<b
   return consumeWindowCounter(key, limit, DAY_MS)
 }
 
-/** Xoá hẳn bộ đếm `key` (vd đăng nhập đúng thì xoá số lần thử). Nuốt mọi lỗi. */
-export async function resetCounter(key: string): Promise<void> {
+/**
+ * Xoá hẳn bộ đếm `key`, trả `true` nếu CHẮC CHẮN đã xoá ở kho dùng chung. `false` = production mà
+ * Redis không sẵn sàng/lỗi (bản Map cục bộ vẫn được xoá nhưng không có tác dụng ở cụm) — nơi gọi
+ * cần biết để ghi log vận hành (changelog 0555).
+ */
+export async function resetCounterChecked(key: string): Promise<boolean> {
   const redis = getRedis()
   if (redis && redis.status === 'ready') {
     try {
       await redis.del(key)
-      return
+      return true
     } catch (err) {
       noteRedisDegraded(err)
     }
   }
   dailyCounterMap.delete(key)
+  return !isProduction()
+}
+
+/** Xoá hẳn bộ đếm `key` (vd đăng nhập đúng thì xoá số lần thử). Nuốt mọi lỗi. */
+export async function resetCounter(key: string): Promise<void> {
+  await resetCounterChecked(key)
 }
 
 /** Trả lại 1 lượt đã trừ (nhà cung cấp lỗi). Nuốt mọi lỗi — không bao giờ làm vỡ luồng trả lỗi. */

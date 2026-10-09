@@ -31,6 +31,8 @@ export type DialogueCheckOutcome =
   | { kind: 'attempt-used' }
   /** 409 QUIZ_MISMATCH — dữ liệu hội thoại ở máy cũ hơn server; tải lại trang. */
   | { kind: 'outdated' }
+  /** 503 SERVICE_UNAVAILABLE — máy chủ tạm bận, CHƯA chấm; gửi lại đúng bài đó sau ít phút. */
+  | { kind: 'unavailable' }
   /** Còn lại (400 khác, 5xx, phản hồi sai hợp đồng) — gửi lại được. */
   | { kind: 'error' }
 
@@ -78,6 +80,9 @@ export async function submitDialogueCheck(
   }
   if (res.status === 401 || res.status === 403) return { kind: 'auth' }
   if (res.status === 429) return { kind: 'rate-limited' }
+  if (res.status === 503 && (await readCode(res)) === 'SERVICE_UNAVAILABLE') {
+    return { kind: 'unavailable' }
+  }
   if (res.status === 409) {
     const code = await readCode(res)
     if (code === 'ATTEMPT_USED') return { kind: 'attempt-used' }

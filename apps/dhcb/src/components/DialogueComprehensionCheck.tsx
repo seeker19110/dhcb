@@ -70,7 +70,7 @@ interface ShownResult {
 }
 
 /** Kết cục gửi lại được (lỗi tạm thời) — hiện nút "Gửi lại" với đúng các câu trả lời đó. */
-const RESENDABLE: ReadonlySet<Notice> = new Set(['offline', 'rate-limited', 'error'])
+const RESENDABLE: ReadonlySet<Notice> = new Set(['offline', 'rate-limited', 'error', 'unavailable'])
 
 /**
  * Lời nhắn dưới điểm số — nói THẬT tình trạng lưu. "Đã học" chỉ được nói khi server xác nhận.
@@ -105,6 +105,10 @@ function noticeText(r: ShownResult, isA: boolean): string {
       return isA
         ? 'Chưa lưu: máy chủ đang gặp lỗi. Thử Gửi lại sau ít phút.'
         : 'Not saved: the server ran into a problem. Try Send again in a few minutes.'
+    case 'unavailable':
+      return isA
+        ? 'Chưa lưu: máy chủ tạm bận, chưa chấm lượt này. Thử Gửi lại sau ít phút — không cần làm lại bài.'
+        : 'Not saved: the server is busy and has not checked this attempt yet. Try Send again in a few minutes — no need to redo the check.'
     case 'auth':
       return isA
         ? 'Chưa lưu: phiên đăng nhập đã hết. Đăng nhập lại rồi làm lại bài.'
