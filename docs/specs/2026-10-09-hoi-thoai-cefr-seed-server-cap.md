@@ -166,9 +166,11 @@ explanation?` — **`explanation` chỉ có khi ĐÚNG**; câu sai không trả 
   **trước khi mở lượt** (nộp thẳng không nhìn đề), **replay** cùng lượt, và **xem đáp án câu sai
   rồi nộp lại**. Chặn script tra dữ liệu đòi hỏi đổi kiến trúc (hội thoại không còn công khai) —
   ghi nợ cho chủ dự án quyết.
-- **Đoán mò để đạt:** 3 câu × 3–4 phương án, đạt ≥ 2/3 ⇒ đoán ngẫu nhiên đạt ~16–26 % mỗi lượt,
-  6 lượt nộp/phút. Chưa thêm trần số lần SAI theo (người, hội thoại) — lợi ích thấp (chỉ tự lừa
-  mình; thưởng ngày idempotent theo ngày), ghi nợ cùng mục trên.
+- **Đoán mò để đạt — ĐÃ VÁ ở đợt 0559 (xem ⑥).** Đo lại trên dữ liệu thật: mọi đề 3 câu, số phương
+  án {2,4,4} hoặc {2,3,4}, đạt ≥ 2/3 ⇒ đoán ngẫu nhiên đạt **25,0–29,2 %** mỗi lượt (con số cũ
+  "~16–26 %" ước sai). Trước 0559 chỉ có 6 lượt nộp/phút → vét cạn tự động đạt trong vài giây; nay
+  tối đa 5 lượt nộp KHÔNG ĐẠT/24 giờ/(người, hội thoại). **Vẫn còn** ~77 % đoán mò đạt trong 5 lượt
+  một ngày — không trần nào ≥ 1 hạ được dưới 25 %; trần chặn vét cạn chứ không làm đoán mò bất khả.
 - Dựng lại seed từ đề bằng vét cạn PRNG 32 bit (`makeRng`): có thể, nhưng vô nghĩa vì đề công khai
   đã đủ để tra đáp án (mục 1) — không đổi PRNG.
 - Chữ ký base64url phải CHUẨN TẮC (đã vá sau rà soát): không thì một token có nhiều "chữ ký" →
@@ -177,7 +179,69 @@ explanation?` — **`explanation` chỉ có khi ĐÚNG**; câu sai không trả 
   "đã học" → Gửi lại nhận 409 nhưng màn phản chiếu "đã học" thay vì bắt làm lại.
 - Xoay `USER_DATA_MASTER_KEY` làm token đang dở hết hiệu lực (màn báo "hết hạn, Làm lại").
 
-## ⑥ Quy ước dự án liên quan
+## ⑥ Trần số lần sai (đợt 0559)
+
+Trả mục (2) nợ 🟡 `PROGRESS.md` "Kiểm tra hiểu hội thoại CEFR: script vẫn TRA được đáp án…". Mục
+(1) (tra `dialogues.json`) KHÔNG làm — đổi kiến trúc, chờ chủ dự án.
+
+**Luật:** tối đa `DIALOGUE_FAIL_CAP_PER_DAY = 5` lượt nộp **không đạt** (`passed === false`) trong
+cửa sổ 24 giờ (tính từ lượt sai đầu, không gia hạn) cho MỘT cặp (tài khoản, hội thoại). Khoá Redis
+`cefr-dialogue-fail:<sha256(JSON[userId, ownerId, titleEn])>` — băm, không PII, **không gồm chiều
+A/B** (đổi chiều không thêm lượt). Khách (chưa đăng nhập) không đổi.
+
+**Cách đếm:**
+
+- **Mở lượt** chỉ ĐỌC bộ đếm (`peekWindowCounter`), không tiêu: đã ≥ 5 → 409 `ATTEMPT_CAP`, không
+  cấp token/đề.
+- **Nộp:** sau khi verify token, chấm (thuần) và tiêu khoá lượt, server **giữ chỗ** bằng một INCR
+  nguyên tử (`consumeWindowCounterCount`) TRƯỚC khi trả bất kỳ đúng/sai nào; vượt 5 → trả lại khoá
+  lượt + chỗ vừa giữ, 409 `ATTEMPT_CAP`, không trả kết quả, không ghi. Đạt → trả lại chỗ (DECR) rồi
+  ghi "đã học" như cũ; không đạt → giữ, thân 200 kèm `attemptsLeft = 5 − số lượt sai`. Ròng lại bộ
+  đếm chỉ tăng ở lượt không đạt; giữ chỗ trước để **token cất sẵn nộp đồng loạt** cũng không vượt
+  trần (đếm sau khi chấm thì một lượt đạt có thể lọt qua giữa các lượt sai đồng thời).
+- Không miễn người đã học: làm lại sau khi đã học không được gì thêm; miễn thì tốn một lần đọc DB
+  mỗi lượt mở.
+
+**Hợp đồng (bổ sung, tương thích ngược):**
+
+```ts
+// DialogueCheckResultSchema (.strict()) thêm:
+attemptsLeft?: number // 0..5, CHỈ khi passed === false
+// DialogueCheckErrorCodeSchema thêm: 'ATTEMPT_CAP'
+// Hằng: DIALOGUE_FAIL_CAP_PER_DAY = 5 (packages/core-contracts/cefrDialogueCheck.ts)
+```
+
+| Tình huống                                        | Mã                        | Hành vi (server · giao diện)                                                                 |
+| ------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------- |
+| Mở lượt khi đã sai 5 lần trong 24 giờ             | 409 `ATTEMPT_CAP`         | Không cấp đề · "Hôm nay đã hết lượt thử…" + chỉ nút "Xem lại hội thoại" (không Thử lại)      |
+| Nộp (kể cả đúng) khi đã sai 5 lần — token cất sẵn | 409 `ATTEMPT_CAP`         | Không chấm, không ghi, trả lại khoá lượt · "Chưa chấm: …mai làm tiếp", không Gửi lại/Làm lại |
+| Nộp không đạt, còn lượt                           | 200 + `attemptsLeft` ≥ 1  | · "Còn N lượt thử hôm nay" + Làm lại                                                         |
+| Nộp không đạt ở lượt thứ 5                        | 200 + `attemptsLeft` = 0  | · lời nhắn hết lượt, KHÔNG Làm lại, "Xem lại hội thoại" là nút chính                         |
+| Bộ đếm lượt sai không sẵn sàng (production)       | 503 `SERVICE_UNAVAILABLE` | Fail-closed, trả lại khoá lượt · "máy chủ tạm bận" + Gửi lại                                 |
+
+**Điểm chạm:**
+
+| Việc | Đường dẫn file                                               | Ghi chú                                             |
+| ---- | ------------------------------------------------------------ | --------------------------------------------------- |
+| Sửa  | `packages/core-auth/security.ts`                             | `consumeWindowCounterCount` + `peekWindowCounter`   |
+| Sửa  | `packages/core-contracts/cefrDialogueCheck.ts`               | hằng trần, `attemptsLeft?`, mã `ATTEMPT_CAP`        |
+| Sửa  | `apps/server/src/api/_lib/cefrDialogueCheck.ts`              | `failCapKey`, chặn ở start, giữ chỗ/trả chỗ ở check |
+| Sửa  | `apps/dhcb/src/lib/dialogueCheckClient.ts`                   | outcome `attempt-cap` ở cả hai bước                 |
+| Sửa  | `apps/dhcb/src/components/DialogueComprehensionCheck.tsx`    | "Còn N lượt", màn hết lượt, ẩn Làm lại              |
+| Sửa  | `apps/server/src/api/learning/evidence.cefrDialogue.test.ts` | 10 ca trần                                          |
+
+**Tiêu chí chấp nhận:**
+
+1. Sai 5 lần liên tiếp → lần 1..5 trả `attemptsLeft` 4..0; mở lượt lần sau → 409 `ATTEMPT_CAP`.
+2. Mở lượt không đổi bộ đếm; lượt đạt không đổi bộ đếm (ròng); `ATTEMPT_USED` không đụng bộ đếm.
+3. Token mở trước khi hết trần, nộp sau (kể cả đáp án đúng) → 409, không có `items`/`passed`, không
+   ghi DB; 3 token nộp đồng loạt khi còn 1 lượt → đúng 1 lượt được chấm.
+4. Khoá `^cefr-dialogue-fail:[0-9a-f]{64}$`, không chứa userId/owner/tên; chiều B dùng chung khoá A.
+5. Bộ đếm không sẵn sàng → 503 ở cả hai bước, không trả kết quả; hồi phục thì gửi lại đúng token.
+6. Giao diện: "Còn N lượt thử hôm nay" (B: "N tries left today", số ít "1 try"); hết lượt → không
+   nút Làm lại/Thử lại/Gửi lại, chỉ "Xem lại hội thoại"; câu hỏi khoá (fieldset `disabled`).
+
+## ⑦ Quy ước dự án liên quan
 
 CLAUDE.md mục 4.2 (logic nhạy cảm ở server), 4.9 (ca biên: hạn, race nộp đúp), mục 8 cổng;
 `docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md` (nền).

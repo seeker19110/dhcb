@@ -16,6 +16,7 @@ vi.mock('../lib/dialogueCheckClient', () => ({
 import DialogueComprehensionCheck from './DialogueComprehensionCheck'
 import * as cefrProgress from '../lib/cefrProgress'
 import { ACCENT } from '../lib/cefrAccent'
+import { buttonClass } from '@core/buttonStyles'
 import type { Dialogue, DialogueLine } from '../data/dialogues'
 import {
   buildComprehensionQuiz,
@@ -450,6 +451,100 @@ describe('DialogueComprehensionCheck — đã đăng nhập (đề từ server)'
     await render({ onBack })
     act(() => nut('Xem lại hội thoại')!.click())
     expect(onBack).toHaveBeenCalledTimes(1)
+  })
+})
+
+// Đợt 0559 — trần lượt nộp sai theo (người, hội thoại): đặc tả 0558 §⑥.
+describe('DialogueComprehensionCheck — trần lượt nộp sai', () => {
+  /** Server giả chấm chưa đạt (0/3) kèm số lượt còn lại. */
+  function serverFails(attemptsLeft: number) {
+    submitMock.mockImplementation(async (input: { token: string }) => {
+      const de = issued.get(input.token)!
+      return {
+        kind: 'graded',
+        result: {
+          correct: 0,
+          total: de.length,
+          required: 2,
+          passed: false,
+          saved: false,
+          items: de.map((q) => ({ questionId: q.id, chosenId: 'o0', correct: false })),
+          attemptsLeft,
+        },
+      } satisfies DialogueCheckOutcome
+    })
+  }
+  const lamBai = async () => {
+    deCua('A', 0).forEach((q, i) => chon(i, q.options[0]!.id))
+    await nop()
+  }
+
+  it('mở lượt bị chặn (409 ATTEMPT_CAP) → nói rõ hết lượt hôm nay; KHÔNG có đề, KHÔNG Thử lại/Làm lại; chỉ Xem lại hội thoại', async () => {
+    startMock.mockResolvedValue({ kind: 'attempt-cap' } satisfies DialogueStartOutcome)
+    const onBack = vi.fn()
+    await render({ onBack })
+    expect(container.textContent).toContain('Hôm nay đã hết lượt thử hội thoại này')
+    expect(status().textContent).toContain('thử sai 5 lần hôm nay')
+    expect(status().textContent).toContain('mai làm tiếp')
+    expect(container.querySelectorAll('[role="radiogroup"]')).toHaveLength(0)
+    expect(nut('Thử lại')).toBeUndefined()
+    expect(nut('Làm lại')).toBeUndefined()
+    const back = [...status().querySelectorAll('button')].find((b) =>
+      b.textContent?.includes('Xem lại hội thoại'),
+    )!
+    act(() => back.click())
+    expect(onBack).toHaveBeenCalledTimes(1)
+    expect(startMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('chưa đạt, còn lượt → "Còn N lượt thử hôm nay" + vẫn có Làm lại', async () => {
+    serverStarts('A')
+    serverFails(3)
+    await render({})
+    await lamBai()
+    expect(status().textContent).toContain('Đúng 0/3 — chưa đạt')
+    expect(status().textContent).toContain('Còn 3 lượt thử hôm nay.')
+    expect(nut('Làm lại')).toBeTruthy()
+  })
+
+  it('chưa đạt ở lượt CUỐI (attemptsLeft=0) → lời nhắn hết lượt, KHÔNG Làm lại, Xem lại hội thoại là nút chính', async () => {
+    serverStarts('A')
+    serverFails(0)
+    await render({})
+    await lamBai()
+    expect(status().textContent).toContain('thử sai 5 lần hôm nay')
+    expect(nut('Làm lại')).toBeUndefined()
+    const back = [...status().querySelectorAll('button')].find((b) =>
+      b.textContent?.includes('Xem lại hội thoại'),
+    )!
+    expect(back.className).toBe(buttonClass({ variant: 'primary' }))
+  })
+
+  it('nộp bị chặn (409 ATTEMPT_CAP) → "Chưa chấm" + hết lượt; KHÔNG Gửi lại, KHÔNG Làm lại, KHÔNG onVerified', async () => {
+    serverStarts('A')
+    submitMock.mockResolvedValue({ kind: 'attempt-cap' } satisfies DialogueCheckOutcome)
+    const onVerified = vi.fn()
+    await render({ onVerified })
+    await lamBai()
+    expect(status().textContent).toContain('Chưa chấm')
+    expect(status().textContent).toContain('mai làm tiếp')
+    expect(status().textContent).not.toMatch(/Đúng \d\/\d/)
+    expect(nut('Gửi lại')).toBeUndefined()
+    expect(nut('Làm lại')).toBeUndefined()
+    expect(onVerified).not.toHaveBeenCalled()
+    // Không còn nút nộp → câu hỏi phải khoá, không để radio bấm đổi được.
+    const groups = [...container.querySelectorAll<HTMLFieldSetElement>('[role="radiogroup"]')]
+    expect(groups.length).toBeGreaterThan(0)
+    expect(groups.every((g) => g.disabled)).toBe(true)
+  })
+
+  it('chiều B: câu chữ tiếng Anh, số ít "1 try left today"', async () => {
+    serverStarts('B')
+    serverFails(1)
+    await render({ isA: false })
+    deCua('B', 0).forEach((q, i) => chon(i, q.options[0]!.id))
+    await nop()
+    expect(status().textContent).toContain('1 try left today.')
   })
 })
 

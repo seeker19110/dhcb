@@ -13,6 +13,8 @@
 // lại hội thoại rồi Làm lại (đề mới). Không tới được server lúc nộp → nói thật "chưa chấm", giữ
 // nguyên lựa chọn, Gửi lại gửi lại đúng lượt đó.
 // Chưa đăng nhập (khách): đề từ seed máy, chấm tại máy, có lời giải — kết quả khách vốn không lưu.
+// TRẦN LƯỢT SAI (đợt 0559): nộp không đạt thì hiện "Còn N lượt thử hôm nay"; hết trần (server trả
+// 409 ATTEMPT_CAP ở lúc mở hoặc lúc nộp) thì nói rõ + KHÔNG có nút Làm lại, chỉ "Xem lại hội thoại".
 //
 // A11y: mỗi câu là một `fieldset role="radiogroup"` + `legend`, radio THẬT (phím mũi tên chạy sẵn);
 // phản hồi đúng/sai bằng CHỮ + biểu tượng, không chỉ bằng màu; sau khi nộp, focus chuyển tới khối
@@ -47,7 +49,10 @@ import {
   type DialogueCheckOutcome,
   type DialogueStartOutcome,
 } from '../lib/dialogueCheckClient'
-import type { PublicDialogueQuestion } from '@dhcb/core-contracts/cefrDialogueCheck'
+import {
+  DIALOGUE_FAIL_CAP_PER_DAY,
+  type PublicDialogueQuestion,
+} from '@dhcb/core-contracts/cefrDialogueCheck'
 import { buttonClass } from '@core/buttonStyles'
 
 export interface DialogueComprehensionCheckProps {
@@ -82,6 +87,8 @@ type Phase =
   | { kind: 'loading' }
   | { kind: 'start-failed'; failure: DialogueCheckFailure['kind'] }
   | { kind: 'no-quiz' }
+  /** Server báo đã hết trần lượt nộp sai trong 24 giờ — không cấp đề. */
+  | { kind: 'capped' }
   | { kind: 'ready'; quiz: Quiz }
 
 /** Lời nhắn kèm kết quả ĐÃ CHẤM. */
@@ -104,6 +111,8 @@ interface GradedView {
     explanation: ComprehensionExplanation | null
   }[]
   notice: GradedNotice
+  /** Lượt nộp sai còn lại hôm nay (server trả khi chưa đạt); `null` = không áp dụng/không rõ. */
+  attemptsLeft: number | null
 }
 
 /** Kết cục gửi lại được (lỗi tạm thời) — hiện nút "Gửi lại" với đúng các câu trả lời đó. */
@@ -118,6 +127,20 @@ function randomAttempt(): number {
   return Math.floor(Math.random() * MAX_GUEST_ATTEMPT)
 }
 
+/** Lời nhắn khi đã hết trần lượt nộp sai — dùng chung cho màn bị chặn lúc mở và lúc nộp. */
+function capText(isA: boolean): string {
+  return isA
+    ? `Bạn đã thử sai ${DIALOGUE_FAIL_CAP_PER_DAY} lần hôm nay với hội thoại này — đọc lại hội thoại, mai làm tiếp.`
+    : `You've had ${DIALOGUE_FAIL_CAP_PER_DAY} unsuccessful tries on this dialogue today — read it again and come back tomorrow.`
+}
+
+/** Hết lượt thử hôm nay: server báo chặn, hoặc lượt chưa đạt vừa rồi là lượt cuối. */
+function isOutOfTries(result: GradedView | null, failure: FailedNotice | null): boolean {
+  return (
+    failure === 'attempt-cap' || (result !== null && !result.passed && result.attemptsLeft === 0)
+  )
+}
+
 /** Lời nhắn dưới điểm số của kết quả ĐÃ CHẤM — "đã học" chỉ nói khi server xác nhận. */
 function gradedNoticeText(r: GradedView, isA: boolean): string {
   const retryHint = isA
@@ -128,8 +151,14 @@ function gradedNoticeText(r: GradedView, isA: boolean): string {
       return isA
         ? 'Máy chủ đã chấm và ghi hội thoại này là ĐÃ HỌC.'
         : 'Checked by the server — this dialogue is now marked as LEARNED.'
-    case 'server-not-passed':
-      return retryHint
+    case 'server-not-passed': {
+      const left = r.attemptsLeft
+      if (left === null) return retryHint
+      if (left === 0) return capText(isA)
+      return isA
+        ? `${retryHint} Còn ${left} lượt thử hôm nay.`
+        : `${retryHint} ${left} ${left === 1 ? 'try' : 'tries'} left today.`
+    }
     case 'guest':
       return r.passed
         ? isA
@@ -178,6 +207,8 @@ function failedNoticeText(notice: FailedNotice, isA: boolean): string {
       return isA
         ? 'Chưa chấm: nội dung hội thoại vừa được cập nhật. Tải lại trang rồi làm lại.'
         : 'Not checked: this dialogue was just updated. Reload the page, then retake the check.'
+    case 'attempt-cap':
+      return `${isA ? 'Chưa chấm: ' : 'Not checked: '}${capText(isA)}`
   }
 }
 
@@ -272,6 +303,8 @@ export default function DialogueComprehensionCheck({
           })
         } else if (outcome.kind === 'no-quiz') {
           setServerPhase({ kind: 'no-quiz' })
+        } else if (outcome.kind === 'attempt-cap') {
+          setServerPhase({ kind: 'capped' })
         } else {
           setServerPhase({ kind: 'start-failed', failure: outcome.kind })
         }
@@ -308,6 +341,7 @@ export default function DialogueComprehensionCheck({
         explanation: q.explanation,
       })),
       notice: 'guest',
+      attemptsLeft: null,
     }
   }
 
@@ -354,6 +388,7 @@ export default function DialogueComprehensionCheck({
         }
       }),
       notice: r.passed && r.saved ? 'saved' : 'server-not-passed',
+      attemptsLeft: r.attemptsLeft ?? null,
     })
     if (r.passed && r.saved) onVerified()
   }
@@ -420,6 +455,27 @@ export default function DialogueComprehensionCheck({
     )
   }
 
+  // Hết trần lượt nộp sai hôm nay → không có đề, không có "Thử lại"; chỉ đường về hội thoại.
+  if (phase.kind === 'capped') {
+    return (
+      <div className="animate-fade-in space-y-3">
+        {backButton}
+        <div className="glass rounded-2xl p-4 sm:p-5" role="status">
+          <h3 ref={headingRef} tabIndex={-1} className="font-bold text-white outline-none">
+            {isA ? 'Hôm nay đã hết lượt thử hội thoại này' : 'No more tries on this dialogue today'}
+          </h3>
+          <p className="mt-2 text-sm text-zinc-300">{capText(isA)}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={onBack} className={buttonClass({ variant: 'primary' })}>
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              {isA ? 'Xem lại hội thoại' : 'Back to the dialogue'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Đang mở lượt ở server / mở lượt thất bại.
   if (phase.kind === 'loading' || phase.kind === 'start-failed') {
     const loading = phase.kind === 'loading'
@@ -472,7 +528,10 @@ export default function DialogueComprehensionCheck({
 
   const total = questions.length
   const need = requiredCorrect(total)
-  const locked = result !== null || submitting
+  const outOfTries = isOutOfTries(result, failure)
+  // Hết lượt hôm nay thì cũng khoá câu hỏi: không còn nút nộp nào, để radio bấm được là gợi ý sai
+  // (thấy ở ảnh Tầng 8b đợt 0559 — 409 ATTEMPT_CAP lúc nộp).
+  const locked = result !== null || submitting || outOfTries
 
   return (
     <div className="animate-fade-in space-y-3">
@@ -724,23 +783,27 @@ export default function DialogueComprehensionCheck({
                   {submitting ? (isA ? 'Đang gửi…' : 'Sending…') : isA ? 'Gửi lại' : 'Send again'}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={retry}
-                className={buttonClass({
-                  variant:
-                    result?.passed || (failure && RESENDABLE.has(failure)) ? 'outline' : 'primary',
-                })}
-              >
-                <RotateCcw className="w-4 h-4" aria-hidden="true" />
-                {isA ? 'Làm lại (câu hỏi mới)' : 'Retry (new questions)'}
-              </button>
+              {!outOfTries && (
+                <button
+                  type="button"
+                  onClick={retry}
+                  className={buttonClass({
+                    variant:
+                      result?.passed || (failure && RESENDABLE.has(failure))
+                        ? 'outline'
+                        : 'primary',
+                  })}
+                >
+                  <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                  {isA ? 'Làm lại (câu hỏi mới)' : 'Retry (new questions)'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onBack}
                 className={buttonClass({
                   variant:
-                    result?.notice === 'saved' || failure === 'already-saved'
+                    result?.notice === 'saved' || failure === 'already-saved' || outOfTries
                       ? 'primary'
                       : 'outline',
                 })}

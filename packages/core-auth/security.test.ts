@@ -3,6 +3,8 @@ import {
   getCorsHeaders,
   checkRateLimit,
   consumeWindowCounter,
+  consumeWindowCounterCount,
+  peekWindowCounter,
   resetCounter,
   rateLimitSubject,
   isAllowedWebSocketOrigin,
@@ -185,6 +187,19 @@ describe('consumeWindowCounter + resetCounter (fallback Map)', () => {
 
   it('limit <= 0 → luôn chặn', async () => {
     expect(await consumeWindowCounter('zero-' + Math.random(), 0, 60_000)).toBe(false)
+  })
+
+  it('consumeWindowCounterCount trả số đếm; peekWindowCounter đọc KHÔNG tăng, hết cửa sổ → 0', async () => {
+    vi.useFakeTimers()
+    const key = 'count-' + Math.random()
+    expect(await peekWindowCounter(key)).toBe(0)
+    expect(await consumeWindowCounterCount(key, 60_000)).toBe(1)
+    expect(await consumeWindowCounterCount(key, 60_000)).toBe(2)
+    expect(await peekWindowCounter(key)).toBe(2)
+    expect(await peekWindowCounter(key)).toBe(2)
+    vi.advanceTimersByTime(60_001)
+    expect(await peekWindowCounter(key)).toBe(0)
+    expect(await consumeWindowCounterCount(key, 60_000)).toBe(1)
   })
 })
 

@@ -73,7 +73,10 @@ lại đề từ `apps/dhcb/public/data/dialogues.json` và chỉ server ghi `le
 nhập thì client MỞ LƯỢT ở `?action=cefr-dialogue-start` nhận token HMAC
 (`packages/core-auth/attemptToken.ts`, khoá suy từ `USER_DATA_MASTER_KEY`) + đề ĐÃ BỎ ĐÁP ÁN; seed
 suy từ chữ ký nên máy không tính được đáp án; nộp bằng token, mỗi token chấm một lần, câu SAI không
-được trả đáp án/lời giải. Khách (chưa đăng nhập) vẫn làm tại máy, không lưu. Đặc tả:
+được trả đáp án/lời giải. **Trần lượt sai** (đợt 0559): tối đa 5 lượt nộp KHÔNG ĐẠT mỗi 24 giờ cho
+một cặp (tài khoản, hội thoại) (`DIALOGUE_FAIL_CAP_PER_DAY`, khoá Redis băm, không theo chiều A/B);
+hết trần thì cả mở lượt lẫn nộp trả 409 `ATTEMPT_CAP` và màn chỉ còn "Xem lại hội thoại". Khách
+(chưa đăng nhập) vẫn làm tại máy, không lưu. Đặc tả:
 `docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md` +
 `docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md` +
 `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md`. Đừng tính "đã xem" là hoàn thành.

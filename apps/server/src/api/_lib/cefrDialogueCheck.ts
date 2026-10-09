@@ -1,5 +1,6 @@
 // api/_lib/cefrDialogueCheck.ts — SERVER CẤP LƯỢT và CHẤM LẠI kiểm tra hiểu hội thoại CEFR
-// (đợt 0555 chấm lại; đợt 0558 seed do server cấp, không trả đáp án câu sai).
+// (đợt 0555 chấm lại; đợt 0558 seed do server cấp, không trả đáp án câu sai; đợt 0559 trần số lần
+// nộp sai theo (người, hội thoại)).
 //
 // POST /api/learning/evidence?action=cefr-dialogue-start   body = DialogueStartInputSchema
 //   → ký token lượt (HMAC, TTL), suy SEED ẨN từ chữ ký, dựng đề từ `dialogues.json` + seed bằng
@@ -12,7 +13,7 @@
 // Đặc tả: docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §③–⑤ và
 // docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md.
 //
-// BỐN LỚP CHỐNG GIAN LẬN / DÒ ĐÁP ÁN:
+// NĂM LỚP CHỐNG GIAN LẬN / DÒ ĐÁP ÁN:
 //   1. Client không gửi được đúng/sai/điểm (schema `.strict()`), server tự chấm.
 //   2. Seed không bao giờ rời server: client cầm token mờ, đáp án không tính được từ dữ liệu công
 //      khai + mã nguồn. Token gắn `userId`, có hạn, chữ ký so timing-safe.
@@ -20,11 +21,17 @@
 //      (thêm vào giới hạn theo IP chung của handler).
 //   4. MỖI LƯỢT (token) CHỈ CHẤM MỘT LẦN; câu sai không trả đáp án đúng, nên nộp bừa chỉ biết
 //      "phương án này sai" của riêng đề đó.
+//   5. TRẦN LƯỢT SAI (đợt 0559): tối đa DIALOGUE_FAIL_CAP_PER_DAY lượt nộp KHÔNG ĐẠT mỗi 24 giờ cho
+//      một cặp (tài khoản, hội thoại). Hết trần thì cả MỞ lượt lẫn NỘP đều 409 `ATTEMPT_CAP` —
+//      chặn vét cạn "nộp bừa tới khi đạt" (đặc tả 0558 §⑥).
 // Không log PII: không ghi titleEn/đáp án/userId ra log; khoá bộ đếm dùng băm SHA-256.
 import { createHash } from 'node:crypto'
 import type { Pool } from 'pg'
 import {
+  consumeWindowCounterCount,
   consumeWindowCounterStatus,
+  peekWindowCounter,
+  releaseDailyCounter,
   resetCounterChecked,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
@@ -40,6 +47,7 @@ import { withTransaction } from '@dhcb/core-db/transaction'
 import { vnDateStr } from '@dhcb/core-db/date'
 import { FREE_WEEKLY_BONUS_PER_DAY } from '@dhcb/core-billing/usage'
 import {
+  DIALOGUE_FAIL_CAP_PER_DAY,
   DialogueCheckInputSchema,
   DialogueStartInputSchema,
   dialogueKey,
@@ -65,6 +73,8 @@ const RATE_WINDOW_MS = 60_000
 export const ATTEMPT_TTL_MS = 60 * 60 * 1000
 /** Lượt đã chấm bị "khoá" trong bao lâu — phải ≥ TTL để token còn hạn không nộp lại được. */
 const ATTEMPT_LOCK_MS = 24 * 60 * 60 * 1000
+/** Cửa sổ của trần lượt nộp sai (tính từ lượt sai ĐẦU, không gia hạn mỗi lần sai). */
+export const FAIL_CAP_WINDOW_MS = 24 * 60 * 60 * 1000
 /** Không gian khoá của token loại này (tách khỏi mọi loại lượt khác dùng chung khoá gốc). */
 export const ATTEMPT_SCOPE = 'cefr-dialogue'
 
@@ -80,6 +90,28 @@ interface AttemptClaims {
 export function attemptLockKey(signature: string): string {
   const h = createHash('sha256').update(signature).digest('hex')
   return `cefr-dialogue-attempt:${h}`
+}
+
+/**
+ * Khoá bộ đếm "lượt nộp sai" của một cặp (tài khoản, hội thoại). KHÔNG gồm chiều A/B: đổi chiều
+ * không được thêm lượt đoán. Băm SHA-256 của bộ ba mã hoá JSON (không nhập nhằng ranh giới) — không
+ * đưa userId/tên hội thoại thô vào Redis/log.
+ */
+export function failCapKey(userId: string, ownerId: string, titleEn: string): string {
+  const h = createHash('sha256')
+    .update(JSON.stringify([userId, ownerId, titleEn]))
+    .digest('hex')
+  return `cefr-dialogue-fail:${h}`
+}
+
+/** 409 `ATTEMPT_CAP` — đã nộp sai đủ trần trong 24 giờ; nói rõ việc cần làm, không có "Làm lại". */
+function attemptCapped(headers: Record<string, string>): Response {
+  return fail(
+    'ATTEMPT_CAP',
+    `Bạn đã thử sai ${DIALOGUE_FAIL_CAP_PER_DAY} lần hôm nay — đọc lại hội thoại, mai làm tiếp`,
+    409,
+    headers,
+  )
 }
 
 /**
@@ -209,6 +241,13 @@ export async function handleCefrDialogueStart(
   const input = validated.data
   const dialogue = findCefrDialogue(input.ownerId, input.titleEn)
   if (!dialogue) return fail('CONTENT_NOT_FOUND', 'Không tìm thấy hội thoại này', 400, headers)
+
+  // Trần lượt sai: CHỈ ĐỌC (mở lượt không tiêu gì). Hết trần thì không cấp đề — cấp rồi cũng không
+  // nộp được. Không miễn cho người đã học: làm lại sau khi đã học không được gì thêm, mà miễn thì
+  // tốn một lần đọc DB mỗi lượt mở.
+  const fails = await peekWindowCounter(failCapKey(userId, input.ownerId, input.titleEn))
+  if (fails === 'unavailable') return unavailable(headers)
+  if (fails >= DIALOGUE_FAIL_CAP_PER_DAY) return attemptCapped(headers)
 
   const claims: AttemptClaims = {
     u: userId,
@@ -352,7 +391,22 @@ export async function handleCefrDialogueCheck(
     )
   }
 
+  // Trần lượt sai — GIỮ CHỖ trước khi trả kết quả, trả lại chỗ nếu đạt. Tăng nguyên tử (INCR) trước
+  // khi lộ bất kỳ đúng/sai nào nên nộp đồng loạt nhiều token cất sẵn cũng không vượt trần: lượt thứ
+  // CAP+1 không được chấm. Ròng lại, bộ đếm chỉ tăng ở lượt KHÔNG ĐẠT (đúng ý đặc tả §⑥).
   const { questions, result } = graded
+  const failKey = failCapKey(userId, claims.o, claims.t)
+  const failCount = await consumeWindowCounterCount(failKey, FAIL_CAP_WINDOW_MS)
+  if (failCount === 'unavailable' || failCount > DIALOGUE_FAIL_CAP_PER_DAY) {
+    // Lượt này KHÔNG được chấm → trả lại khoá lượt (Redis hồi phục thì gửi lại được) và chỗ vừa giữ
+    // (bộ đếm phản ánh đúng số lượt sai thật). Best-effort: Redis đang hỏng thì không trả lại được.
+    await resetCounterChecked(lockKey)
+    if (failCount === 'unavailable') return unavailable(headers)
+    await releaseDailyCounter(failKey)
+    return attemptCapped(headers)
+  }
+  if (result.passed) await releaseDailyCounter(failKey)
+
   let saved = false
   if (result.passed) {
     let newlyLearned: boolean
@@ -402,6 +456,8 @@ export async function handleCefrDialogueCheck(
         ...(correct ? { explanation: q.explanation } : {}),
       }
     }),
+    // Không đạt → nói còn mấy lượt sai trong 24 giờ (giao diện hiện "Còn N lượt hôm nay").
+    ...(result.passed ? {} : { attemptsLeft: Math.max(0, DIALOGUE_FAIL_CAP_PER_DAY - failCount) }),
   }
   return jsonResponse(body, 200, headers)
 }
