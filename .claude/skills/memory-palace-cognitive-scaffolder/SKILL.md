@@ -73,9 +73,14 @@ dựng công thức trọng số.
 
   Giao diện nên trình bày là "**có thể** bạn đang…" kèm câu hỏi Socratic, không phải chẩn đoán.
 
-- **"Chỉ số tự nhận thức" (`overallAwarenessIndex`)** hiện tính từ **số từ** của bài viết cộng
-  thưởng theo số bẫy nhận ra. Đây KHÔNG phải thang MAI chuẩn (bộ câu hỏi tự đánh giá). Không dùng
-  con số này để xếp hạng, so sánh người học, hay đưa lên màn hình chính.
+- **KHÔNG có con số nào chấm người viết** (changelog 0539). "Chỉ số tự nhận thức" (MAI giả, tính
+  từ số từ của bài viết), "Growth Mindset" và "xu hướng tư duy" đã BỎ khỏi service, hợp đồng, API
+  và giao diện. Phản hồi chỉ định tính: bẫy có thể đang mắc, nguyên văn cụm từ khiến bộ dò nghĩ tới
+  (`triggerPhrases`), câu hỏi Socratic riêng cho từng bẫy.
+  - Bản ghi cũ trong `platform.feature_state` còn hai trường số. Server chiếu qua
+    `toPublicReflection` (danh sách trắng) nên số không bao giờ ra client. Đừng thêm lại điểm số
+    nào: test `.strict()` + `findForbiddenLanguage` trong
+    `packages/core-personal/metacognitiveReflectionService.test.ts` sẽ đỏ.
   - Luật số 1 của sản phẩm: kết quả chẩn đoán **không bao giờ là màn hình chính**
     (`docs/research/luong-nguoi-moi-ho-so-nang-luc-an-2026-08-23.md`).
 - **Khoảnh khắc "Aha"** trích từ câu dài trong bài viết — giữ, vì nó phản chiếu lời người học chứ

@@ -35,10 +35,8 @@ describe('metacognitiveReflectionApi', () => {
 
   it('fetches metacognitive summary', async () => {
     const mockSummary = {
-      overallAwarenessIndex: 88,
       totalReflectionsCount: 5,
       topDetectedBiases: ['analysis_paralysis'],
-      mindsetTrend: 'accelerating',
       recentAhaMoments: ['Hành động thực tế quan trọng hơn suy nghĩ quá mức.'],
     }
 
@@ -48,7 +46,8 @@ describe('metacognitiveReflectionApi', () => {
     } as unknown as Response)
 
     const res = await fetchMetacognitiveSummary()
-    expect(res.summary.overallAwarenessIndex).toBe(88)
+    expect(res.summary.totalReflectionsCount).toBe(5)
+    expect(res.summary.topDetectedBiases).toEqual(['analysis_paralysis'])
   })
 
   it('submits metacognitive reflection', async () => {
@@ -59,8 +58,6 @@ describe('metacognitiveReflectionApi', () => {
       title: 'Tự đánh giá',
       reflectionPrompt: 'Prompt',
       userReflection: 'Reflection text',
-      metacognitiveIndex: 85,
-      growthMindsetScore: 90,
       ahaMoments: [],
       identifiedBiases: [],
       socraticFollowUps: [],
@@ -79,6 +76,6 @@ describe('metacognitiveReflectionApi', () => {
     })
 
     expect(res.id).toBe('refl-1')
-    expect(res.metacognitiveIndex).toBe(85)
+    expect(res.socraticFollowUps).toEqual([])
   })
 })

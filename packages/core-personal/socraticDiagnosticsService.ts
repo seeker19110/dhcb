@@ -6,6 +6,8 @@ import {
   type SocraticReflectionTurn,
   SOCRATIC_SCHEMA_VERSION,
 } from '@dhcb/core-contracts/socraticDiagnostics'
+import { ConflictError } from '@dhcb/core-errors/appError'
+import { createPracticeSessionStore } from './ttlSessionStore.js'
 
 export const PREDEFINED_MISCONCEPTIONS: MentalModelMisconception[] = [
   {
@@ -93,8 +95,15 @@ export const PREDEFINED_MISCONCEPTIONS: MentalModelMisconception[] = [
   },
 ]
 
-// Bộ nhớ đệm cho các phiên Socratic
-const socraticSessions = new Map<string, CognitiveBreakthroughRecord>()
+// Phiên Socratic giữ trong RAM có TTL trượt + trần mỗi người + trần toàn tiến trình (changelog
+// 0538 — trước đây là `Map` không bao giờ dọn). Số lượt mỗi phiên tự có trần (= số bước của
+// `inquiryPath`; trả lời sai chỉ ghi đè lượt hiện tại) nên không cần trần lượt như Holodeck.
+const socraticSessions = createPracticeSessionStore<CognitiveBreakthroughRecord>()
+
+/** Dừng bộ dọn nền và xoá mọi phiên — CHỈ dùng trong test. */
+export function resetSocraticSessionsForTest(): void {
+  socraticSessions.dispose()
+}
 
 export function listMisconceptions(): MentalModelMisconception[] {
   return [...PREDEFINED_MISCONCEPTIONS]
@@ -105,11 +114,14 @@ export function getMisconceptionById(id: string): MentalModelMisconception | und
 }
 
 /**
- * Đọc một phiên Socratic theo id (không kiểm chủ). Handler PHẢI so `personId` của phiên với
- * người đang đăng nhập trước khi dùng — Map này chứa phiên của MỌI người dùng.
+ * Đọc phiên Socratic của đúng `personId` (gia hạn TTL). Không có / hết hạn / của người khác →
+ * `undefined` — ba ca giống hệt nhau, không lộ id nào có thật (audit 0526).
  */
-export function getSocraticSession(sessionId: string): CognitiveBreakthroughRecord | undefined {
-  return socraticSessions.get(sessionId)
+export function getSocraticSession(
+  sessionId: string,
+  personId: string,
+): CognitiveBreakthroughRecord | undefined {
+  return socraticSessions.get(sessionId, personId)
 }
 
 export function startSocraticSession(
@@ -146,7 +158,7 @@ export function startSocraticSession(
     schemaVersion: SOCRATIC_SCHEMA_VERSION,
   }
 
-  socraticSessions.set(record.id, record)
+  socraticSessions.create(record.id, personId, record)
   return record
 }
 
@@ -159,11 +171,13 @@ export interface SubmitReflectionResult {
 
 export function submitSocraticReflection(
   sessionId: string,
+  personId: string,
   learnerAnswer: string,
 ): SubmitReflectionResult {
-  const record = socraticSessions.get(sessionId)
-  if (!record || record.status === 'breakthrough_achieved') {
-    throw new Error(`Phiên Socratic ${sessionId} không hợp lệ hoặc đã hoàn tất`)
+  // Không có / hết hạn / của người khác → SessionGoneError (404).
+  const record = socraticSessions.require(sessionId, personId)
+  if (record.status === 'breakthrough_achieved') {
+    throw new ConflictError('Phiên Socratic đã hoàn tất — hãy bắt đầu chủ đề mới.')
   }
 
   const misconception = getMisconceptionById(record.misconceptionId)
@@ -205,7 +219,6 @@ export function submitSocraticReflection(
     record.status = 'breakthrough_achieved'
     record.breakthroughSummary = `Người học đã thấu suốt bản chất của "${misconception.title}" thông qua phương pháp tự phản tư Socratic.`
     record.updatedAt = now
-    socraticSessions.set(sessionId, record)
     return {
       updatedRecord: record,
       isComplete: true,
@@ -226,7 +239,6 @@ export function submitSocraticReflection(
     }
     record.turns.push(nextTurn)
     record.updatedAt = now
-    socraticSessions.set(sessionId, record)
     return {
       updatedRecord: record,
       isComplete: false,
@@ -236,7 +248,6 @@ export function submitSocraticReflection(
   }
 
   record.updatedAt = now
-  socraticSessions.set(sessionId, record)
   return {
     updatedRecord: record,
     isComplete: false,

@@ -228,7 +228,7 @@ describe('POST delete — xác minh lại (step-up)', () => {
   it('token Google cũ → 401 REAUTH_FAILED (thông báo bảo lấy lại)', async () => {
     reauth.verifyAccountReauth.mockResolvedValue({ ok: false, reason: 'stale' })
     const res = await handler(
-      post({ ...DELETE_OK, reauth: { method: 'google', accessToken: 'ya29.cu-roi-abc' } }),
+      post({ ...DELETE_OK, reauth: { method: 'google', accessToken: 'token-token-cu' } }),
     )
     expect(res.status).toBe(401)
     expect(String((await json(res)).error)).toMatch(/Google đã cũ/)

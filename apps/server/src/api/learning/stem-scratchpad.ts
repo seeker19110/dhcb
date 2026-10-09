@@ -6,6 +6,7 @@ import { StemProblemState, StemSubjectType } from '@dhcb/core-contracts/stemScra
 import { filterStemQuestions, getStemQuestionById } from '@dhcb/core-ai/stemQuestionBank'
 import type { StemQuestion } from '@dhcb/core-ai/stemQuestionBank'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
+import { gradeFinalAnswer } from '@dhcb/core-grading/finalAnswer'
 
 // [2026-08-24] Trước đây các bài đang làm dở nằm trong `new Map` cấp module — mất khi restart,
 // VỠ trong PM2 cluster 3 instance, và Map khoá theo problemId TOÀN CỤC nên ai biết id cũng đọc
@@ -211,18 +212,25 @@ export default async function handler(req: Request): Promise<Response> {
         if (!prob) {
           return jsonResponse({ error: 'Problem not found' }, 404)
         }
-        // Kiểm tra bài giải dựa vào câu từ question bank
+        if (typeof finalAnswer !== 'string') {
+          return jsonResponse({ error: 'Missing finalAnswer' }, 400)
+        }
+        // So ĐÁP SỐ đã chuẩn hoá với đáp án ngân hàng đề qua engine chấm dùng chung
+        // (@dhcb/core-grading): bỏ "x =", thống nhất `,`/`.`, dung sai nhỏ, đơn vị phải khớp.
+        // Trước changelog 0539 so CHUỖI CON với 10 ký tự đầu đáp án — "15" khớp "5".
         const question = getStemQuestionById(problemId)
         const isCorrect =
-          prob.isSolved || (question && finalAnswer?.includes(question.solutionLatex?.slice(0, 10)))
-        prob.isSolved = !!isCorrect
+          question !== undefined && gradeFinalAnswer(finalAnswer, question.solutionLatex).correct
+        prob.isSolved = prob.isSolved || isCorrect
         prob.updatedAt = new Date().toISOString()
         await saveProblem(personId, book, prob)
+        // Chỉ hé lời giải khi bài ĐÃ giải đúng — trước đây nộp đại một đáp số sai cũng nhận về
+        // 100 ký tự đầu lời giải, biến nút "nộp" thành nút "xem đáp án".
         return jsonResponse(
           {
             success: true,
             isSolved: prob.isSolved,
-            solutionPreview: question?.solutionLatex?.slice(0, 100),
+            ...(prob.isSolved ? { solutionPreview: question?.solutionLatex?.slice(0, 100) } : {}),
           },
           200,
         )

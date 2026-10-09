@@ -168,17 +168,16 @@ describe('physics lessons', () => {
       'tiêu đề phải phân biệt được bài này với bài kia',
     ).toEqual([])
   })
-  it('không lời giải nào cụt dưới 40 ký tự', () => {
+  it('không lời giải nào cụt dưới 60 ký tự', () => {
     // Audit 2026-09-14 (F9): 19 câu Lí + 1 câu Hoá có `explain` dưới 40 ký tự — đủ chỗ cho phép
     // thế số, không đủ chỗ nói VÌ SAO dùng công thức đó. Với môn mà học sinh sai vì hiểu nhầm
     // khái niệm, một dòng cụt là mất luôn giá trị sư phạm của câu hỏi. Schema chỉ ép min(1).
-    // Ngưỡng 40 = đúng ngưỡng lượt audit đã đo và đã sửa hết. Đo lại 2026-09-14 ở ngưỡng 60 thì
-    // còn 25 câu Lí + 5 câu Hoá nữa ở dải 41-59 — chưa sửa, chờ người dùng quyết (nợ đã ghi ở
-    // PROGRESS.md). Nâng ngưỡng lên 60 chỉ khi đã viết lại nốt dải đó.
+    // Ngưỡng 60 (nâng từ 40 ở đợt 0540): dải 41-59 đã được viết lại hết ở changelog 0304, nên
+    // cổng chặn đúng mức vừa trả xong. Nâng tiếp chỉ khi đã viết lại nốt dải dưới ngưỡng mới.
     const cut = PHYSICS_LESSONS.flatMap((l) =>
       l.checkQuestions
         .map((q, i) => ({ q, i }))
-        .filter(({ q }) => q.explain.trim().length < 40)
+        .filter(({ q }) => q.explain.trim().length < 60)
         .map(({ q, i }) => `${l.id}#q${i + 1} (${q.explain.trim().length} ký tự)`),
     )
     expect(cut, 'lời giải phải nói được vì sao, không chỉ thế số').toEqual([])

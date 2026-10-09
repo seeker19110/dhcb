@@ -48,15 +48,10 @@ export default function MetacognitiveJournalCard() {
               <p className="text-xs sm:text-sm text-zinc-300 mt-0.5 leading-relaxed">
                 {dailyPrompt
                   ? `Hôm nay: "${dailyPrompt.theme}" — ${dailyPrompt.promptText.slice(0, 85)}...`
-                  : 'Khám phá tư duy sâu, đo lường chỉ số Metacognitive Index và phát hiện thiên kiến nhận thức.'}
+                  : 'Viết vài dòng suy ngẫm, nhận lại câu hỏi gợi mở và những bẫy tư duy có thể bạn đang mắc.'}
               </p>
               {summary && summary.totalReflectionsCount > 0 && (
                 <div className="flex items-center gap-3 mt-2 text-xs text-teal-300 theme-light:text-teal-900/90 font-medium">
-                  <span>
-                    💡 MAI Index:{' '}
-                    <strong className="text-white">{summary.overallAwarenessIndex}/100</strong>
-                  </span>
-                  <span>•</span>
                   <span>
                     📝 Đã phản tỉnh:{' '}
                     <strong className="text-white">{summary.totalReflectionsCount} phiên</strong>

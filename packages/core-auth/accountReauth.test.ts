@@ -125,7 +125,7 @@ describe('verifyAccountReauth — Google', () => {
       USER,
       {
         method: 'google',
-        accessToken: 'tok-1234567890',
+        accessToken: 'token-token-token',
       },
     )
     expect(r).toEqual({ ok: true, method: 'google' })
@@ -135,14 +135,14 @@ describe('verifyAccountReauth — Google', () => {
     const pool = poolWith({ password_hash: null, google_sub: 'g' }).pool
     google('g', edge)
     expect(
-      await verifyAccountReauth(pool, USER, { method: 'google', accessToken: 'tok-1234567890' }),
+      await verifyAccountReauth(pool, USER, { method: 'google', accessToken: 'token-token-token' }),
     ).toEqual({
       ok: true,
       method: 'google',
     })
     google('g', edge - 1)
     expect(
-      await verifyAccountReauth(pool, USER, { method: 'google', accessToken: 'tok-1234567890' }),
+      await verifyAccountReauth(pool, USER, { method: 'google', accessToken: 'token-token-token' }),
     ).toEqual({
       ok: false,
       reason: 'stale',
@@ -156,7 +156,7 @@ describe('verifyAccountReauth — Google', () => {
       USER,
       {
         method: 'google',
-        accessToken: 'tok-1234567890',
+        accessToken: 'token-token-token',
       },
     )
     expect(r).toEqual({ ok: false, reason: 'stale' })
@@ -169,7 +169,7 @@ describe('verifyAccountReauth — Google', () => {
       USER,
       {
         method: 'google',
-        accessToken: 'tok-1234567890',
+        accessToken: 'token-token-token',
       },
     )
     expect(r).toEqual({ ok: false, reason: 'failed' })
@@ -182,7 +182,7 @@ describe('verifyAccountReauth — Google', () => {
       USER,
       {
         method: 'google',
-        accessToken: 'tok-1234567890',
+        accessToken: 'token-token-token',
       },
     )
     expect(r).toEqual({ ok: false, reason: 'failed' })
@@ -194,7 +194,7 @@ describe('verifyAccountReauth — Google', () => {
       USER,
       {
         method: 'google',
-        accessToken: 'tok-1234567890',
+        accessToken: 'token-token-token',
       },
     )
     expect(r).toEqual({ ok: false, reason: 'unavailable' })

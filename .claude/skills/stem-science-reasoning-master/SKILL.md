@@ -48,8 +48,11 @@ chứng minh**, và cần test ca sai rõ ràng (vd `2x = 15 + 7` sau `2x + 5 = 
 
 - kiểm đẳng trị đại số giữa hai dòng biến đổi;
 - đếm nguyên tử / bảo toàn điện tích cho phương trình bất kỳ;
-- kiểm thứ nguyên;
-- `submit_solution` vẫn so chuỗi con (nợ ghi ở `PROGRESS.md`).
+- kiểm thứ nguyên cho từng bước giữa.
+
+**Đáp số cuối của `submit_solution`** (đề ngân hàng) chấm qua `gradeFinalAnswer`
+(`packages/core-grading/finalAnswer.ts`, changelog 0539): bỏ "x =", thống nhất `,`/`.`, dung sai
+tương đối 0,1%, đơn vị phải cùng thứ nguyên — tái dùng `gradeAnswer`, KHÔNG so chuỗi con.
 
 ---
 

@@ -1,4 +1,9 @@
 // api/socratic-diagnostics.ts — V3 Socratic Cognitive Diagnostic Endpoint.
+//
+// Phiên giữ trong RAM có hạn (TTL trượt 30 phút, trần 5 phiên/người, trần toàn tiến trình) —
+// xem `packages/core-personal/ttlSessionStore.ts`, changelog 0538. Phiên hết hạn / không còn /
+// của người khác → 404 `{error:{code:'session_not_found'}}`; client hiện lỗi + "Bắt đầu lại".
+import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import {
   getCorsHeaders,
@@ -12,11 +17,45 @@ import {
   listMisconceptions,
   startSocraticSession,
   submitSocraticReflection,
-  getSocraticSession,
 } from '@dhcb/core-personal/socraticDiagnosticsService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
-import { readJsonBody } from '@dhcb/core-http/validation'
+import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
+
+/** Trần độ dài một câu trả lời — chặn một lượt nhét hàng MB vào phiên trong RAM. */
+const MAX_ANSWER_CHARS = 2000
+const MAX_ID_CHARS = 100
+
+// Body POST — kiểm bằng Zod thay vì ép kiểu tay (dữ liệu ngoài, CLAUDE.md mục 4.1).
+const SocraticBodySchema = z.discriminatedUnion(
+  'action',
+  [
+    z.object({
+      action: z.literal('start'),
+      misconceptionId: z
+        .string({ error: 'Thiếu misconceptionId' })
+        .min(1, { error: 'Thiếu misconceptionId' })
+        .max(MAX_ID_CHARS, { error: 'misconceptionId không hợp lệ' }),
+    }),
+    z.object({
+      action: z.literal('reflect'),
+      sessionId: z
+        .string({ error: 'Thiếu sessionId hoặc answer' })
+        .min(1, { error: 'Thiếu sessionId hoặc answer' })
+        .max(MAX_ID_CHARS, { error: 'sessionId không hợp lệ' }),
+      answer: z
+        .string({ error: 'Thiếu sessionId hoặc answer' })
+        .trim()
+        .min(1, { error: 'Thiếu sessionId hoặc answer' })
+        // `refine` (không phải `.max`) để `params.status` tới được `validateBody` → 413.
+        .refine((v) => v.length <= MAX_ANSWER_CHARS, {
+          error: `Câu trả lời quá dài (tối đa ${MAX_ANSWER_CHARS} ký tự)`,
+          params: { status: 413 },
+        }),
+    }),
+  ],
+  { error: 'Action không hợp lệ' },
+)
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -49,36 +88,20 @@ export default async function handler(req: Request): Promise<Response> {
         return jsonResponse({ error: bodyResult.error.message }, bodyResult.error.status, headers)
       }
 
-      const body = bodyResult.raw as {
-        action: 'start' | 'reflect'
-        misconceptionId?: string
-        sessionId?: string
-        answer?: string
+      const parsed = validateBody(SocraticBodySchema, bodyResult.raw)
+      if (!parsed.ok) {
+        return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
       }
+      const body = parsed.data
 
       if (body.action === 'start') {
-        if (!body.misconceptionId) {
-          return jsonResponse({ error: 'Thiếu misconceptionId' }, 400, headers)
-        }
         const session = startSocraticSession(person.id, body.misconceptionId)
         return jsonResponse({ session }, 201, headers)
       }
-
-      if (body.action === 'reflect') {
-        if (!body.sessionId || !body.answer) {
-          return jsonResponse({ error: 'Thiếu sessionId hoặc answer' }, 400, headers)
-        }
-        // Chỉ chủ phiên mới trả lời được. Phiên không tồn tại và phiên của người khác trả CÙNG
-        // 404 — không để lộ id nào có thật, không để user B đọc/ghi câu trả lời của user A.
-        const owned = getSocraticSession(body.sessionId)
-        if (!owned || owned.personId !== person.id) {
-          return jsonResponse({ error: 'Phiên không tồn tại' }, 404, headers)
-        }
-        const result = submitSocraticReflection(body.sessionId, body.answer)
-        return jsonResponse(result, 200, headers)
-      }
-
-      return jsonResponse({ error: 'Action không hợp lệ' }, 400, headers)
+      // Chỉ chủ phiên mới trả lời được — service kiểm chủ + hạn. Phiên không có/hết hạn/của
+      // người khác trả CÙNG 404: không lộ id nào có thật, user B không đọc/ghi được phiên user A.
+      const result = submitSocraticReflection(body.sessionId, person.id, body.answer)
+      return jsonResponse(result, 200, headers)
     }
 
     return jsonResponse({ error: 'Method not allowed' }, 405, headers)

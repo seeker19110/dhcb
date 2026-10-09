@@ -1,11 +1,66 @@
-// packages/core-personal/metacognitiveReflectionService.ts — V5 Flagship Metacognitive & Socratic Reflection Engine.
+// packages/core-personal/metacognitiveReflectionService.ts — Nhật ký phản tỉnh Socratic: câu hỏi
+// hằng ngày, dò bẫy tư duy theo từ khoá, câu hỏi gợi mở tiếp theo. KHÔNG chấm điểm người viết.
 import {
-  MetacognitiveReflection,
-  IdentifiedBias,
-  SocraticDailyPrompt,
-  MetacognitiveSummary,
-  CognitiveBiasType,
+  COGNITIVE_BIAS_LABELS,
+  type MetacognitiveReflection,
+  type IdentifiedBias,
+  type SocraticDailyPrompt,
+  type MetacognitiveSummary,
+  type CognitiveBiasType,
 } from '@dhcb/core-contracts/metacognitiveReflection'
+
+// ── Bảng luật dò bẫy tư duy ─────────────────────────────────────────────────
+// Câu chữ viết theo giọng "có thể bạn đang…" (skill memory-palace-cognitive-scaffolder §3): bộ dò
+// chỉ khớp từ khoá, nên nó GỢI Ý để người viết tự hỏi lại, không phải chẩn đoán.
+
+type DetectableBias = Exclude<CognitiveBiasType, 'none'>
+
+const BIAS_RULES: ReadonlyArray<{
+  biasType: DetectableBias
+  keywords: readonly string[]
+  explanation: string
+  followUpQuestion: string
+  severity: IdentifiedBias['severity']
+}> = [
+  {
+    biasType: 'overconfidence',
+    keywords: ['chắc chắn', 'dễ ợt', 'quá đơn giản', 'ai cũng biết'],
+    explanation: 'Có thể bạn đang đánh giá thấp những chỗ phức tạp còn ẩn trong vấn đề.',
+    followUpQuestion:
+      'Có tình huống nào khiến điều bạn đang chắc chắn không còn đúng nữa không? Thử nghĩ ra ba tình huống như vậy.',
+    severity: 'moderate',
+  },
+  {
+    biasType: 'analysis_paralysis',
+    keywords: ['sợ sai', 'nghĩ mãi', 'chưa đủ hoàn hảo', 'chưa sẵn sàng'],
+    explanation: 'Có thể mong muốn làm thật hoàn hảo đang khiến bạn chần chừ chưa bắt tay vào làm.',
+    followUpQuestion: 'Nếu chỉ có 15 phút để làm một bản nháp thô, bạn sẽ bắt đầu từ đâu?',
+    severity: 'high',
+  },
+  {
+    biasType: 'imposter_syndrome',
+    keywords: ['may mắn', 'không xứng đáng', 'sợ bị phát hiện'],
+    explanation:
+      'Có thể bạn đang gán kết quả cho may mắn thay vì cho công sức và kỹ năng của chính mình.',
+    followUpQuestion: 'Những việc cụ thể nào chính bạn đã làm để có được kết quả này?',
+    severity: 'moderate',
+  },
+  {
+    biasType: 'sunk_cost',
+    keywords: ['tiếc công', 'đã bỏ ra nhiều', 'không thể bỏ'],
+    explanation: 'Có thể bạn đang muốn tiếp tục chủ yếu vì đã lỡ bỏ ra nhiều công sức.',
+    followUpQuestion:
+      'Nếu bắt đầu lại từ con số 0 vào hôm nay, bạn có còn chọn con đường này không?',
+    severity: 'high',
+  },
+]
+
+/** Dấu hiệu người viết đang kể một điều vừa vỡ lẽ — để trích câu "Aha" từ chính lời họ. */
+const AHA_MARKERS = ['nhận ra', 'vỡ lẽ', 'hóa ra', 'hoá ra', 'bài học'] as const
+
+const OPEN_FOLLOW_UP = 'Điều gì trong những dòng bạn vừa viết khiến chính bạn bất ngờ nhất? Vì sao?'
+const CLOSING_FOLLOW_UP =
+  'Bạn có thể biến điều vừa nhận ra thành một quy tắc "Nếu… thì…" cụ thể cho tuần này không?'
 
 export class MetacognitiveReflectionService {
   /**
@@ -98,7 +153,12 @@ export class MetacognitiveReflectionService {
   }
 
   /**
-   * Phân tích văn bản phản tỉnh của người dùng, nhận diện bẫy tư duy và tính toán Metacognitive Awareness Index.
+   * Đọc bài phản tỉnh, dò những bẫy tư duy CÓ THỂ đang hiện diện (theo từ khoá trong chính bài viết)
+   * và soạn câu hỏi Socratic tiếp theo cho từng bẫy.
+   *
+   * KHÔNG chấm điểm người viết (Luật số 1, changelog 0539). Trước đây hàm này còn trả
+   * "Metacognitive Index" = `wordCount * 1.5 + 40` + thưởng theo số bẫy, và "Growth Mindset" =
+   * 90/75 theo từ khoá — số giả được trình bày như chỉ số năng lực, nên đã gỡ hẳn.
    */
   static analyzeReflection(
     personId: string,
@@ -110,123 +170,38 @@ export class MetacognitiveReflectionService {
     },
   ): MetacognitiveReflection {
     const text = params.userReflection.toLowerCase()
+
+    // 1. Dò bẫy tư duy: giữ lại nguyên văn cụm từ đã khớp để người viết thấy VÌ SAO có gợi ý.
     const identifiedBiases: IdentifiedBias[] = []
+    for (const rule of BIAS_RULES) {
+      const triggerPhrases = rule.keywords.filter((k) => text.includes(k))
+      if (triggerPhrases.length === 0) continue
+      identifiedBiases.push({
+        biasType: rule.biasType,
+        biasName: COGNITIVE_BIAS_LABELS[rule.biasType],
+        explanation: rule.explanation,
+        antidotePrompt: rule.followUpQuestion,
+        severity: rule.severity,
+        triggerPhrases,
+      })
+    }
+
+    // 2. Khoảnh khắc "Aha": CHỈ trích câu người viết tự nói ra. Không có thì để trống — không
+    // bịa một câu "nhận thức rõ ràng hơn…" thay lời họ như bản cũ.
     const ahaMoments: string[] = []
+    const ahaSentence = params.userReflection
+      .split(/[.!?\n]/)
+      .filter((s) => s.trim().length > 15)
+      .find((s) => AHA_MARKERS.some((m) => s.toLowerCase().includes(m)))
+    if (ahaSentence) ahaMoments.push(ahaSentence.trim())
 
-    // 1. Phân tích thiên kiến nhận thức (Cognitive Biases)
-    if (
-      text.includes('chắc chắn') ||
-      text.includes('dễ ợt') ||
-      text.includes('quá đơn giản') ||
-      text.includes('ai cũng biết')
-    ) {
-      identifiedBiases.push({
-        biasType: 'overconfidence',
-        biasName: 'Thiên kiến tự tin thái quá (Overconfidence Bias)',
-        explanation: 'Bạn có thể đang đánh giá thấp độ phức tạp tiềm ẩn của vấn đề.',
-        antidotePrompt: 'Hãy thử tìm 3 tình huống ngoại lệ mà giả định này không còn đúng.',
-        severity: 'moderate',
-      })
-    }
-
-    if (
-      text.includes('sợ sai') ||
-      text.includes('nghĩ mãi') ||
-      text.includes('chưa đủ hoàn hảo') ||
-      text.includes('chưa sẵn sàng')
-    ) {
-      identifiedBiases.push({
-        biasType: 'analysis_paralysis',
-        biasName: 'Tê liệt phân tích (Analysis Paralysis)',
-        explanation: 'Xu hướng cầu toàn dẫn đến chần chừ hành động thực tế.',
-        antidotePrompt: 'Áp dụng nguyên lý MVP cá nhân: Hoàn thành một bản nháp thô trong 15 phút.',
-        severity: 'high',
-      })
-    }
-
-    if (
-      text.includes('may mắn') ||
-      text.includes('không xứng đáng') ||
-      text.includes('sợ bị phát hiện')
-    ) {
-      identifiedBiases.push({
-        biasType: 'imposter_syndrome',
-        biasName: 'Hội chứng kẻ giả mạo (Imposter Syndrome)',
-        explanation: 'Gán thành tựu cho yếu tố ngẫu nhiên thay vì năng lực thực tế.',
-        antidotePrompt:
-          'Liệt kê 3 bằng chứng cụ thể về sự nỗ lực và kỹ năng đã tạo ra kết quả này.',
-        severity: 'moderate',
-      })
-    }
-
-    if (
-      text.includes('tiếc công') ||
-      text.includes('đã bỏ ra nhiều') ||
-      text.includes('không thể bỏ')
-    ) {
-      identifiedBiases.push({
-        biasType: 'sunk_cost',
-        biasName: 'Bẫy chi phí chìm (Sunk Cost Fallacy)',
-        explanation:
-          'Tiếp tục đầu tư nguồn lực vào quyết định không hiệu quả chỉ vì đã lỡ dồn công sức.',
-        antidotePrompt:
-          'Nếu bắt đầu lại từ số 0 vào hôm nay, bạn có tiếp tục chọn con đường này không?',
-        severity: 'high',
-      })
-    }
-
-    if (identifiedBiases.length === 0) {
-      identifiedBiases.push({
-        biasType: 'none',
-        biasName: 'Tư duy trung dung & Cởi mở',
-        explanation: 'Không phát hiện thiên kiến nhận thức nổi cộm.',
-        antidotePrompt: 'Tiếp tục duy trì trạng thái quan sát khách quan.',
-        severity: 'low',
-      })
-    }
-
-    // 2. Trích xuất Aha! Moments
-    if (
-      text.includes('nhận ra') ||
-      text.includes('vỡ lẽ') ||
-      text.includes('hóa ra') ||
-      text.includes('bài học')
-    ) {
-      const sentences = params.userReflection.split(/[.!?\n]/).filter((s) => s.trim().length > 15)
-      const matching = sentences.find(
-        (s) =>
-          s.toLowerCase().includes('nhận ra') ||
-          s.toLowerCase().includes('vỡ lẽ') ||
-          s.toLowerCase().includes('hóa ra') ||
-          s.toLowerCase().includes('bài học'),
-      )
-      if (matching) {
-        ahaMoments.push(matching.trim())
-      }
-    }
-
-    if (ahaMoments.length === 0) {
-      ahaMoments.push('Nhận thức rõ ràng hơn về phản ứng cảm xúc và thói quen tư duy của bản thân.')
-    }
-
-    // 3. Tính toán Metacognitive Index & Growth Mindset Score
-    const wordCount = params.userReflection.trim().split(/\s+/).length
-    const depthScore = Math.min(100, Math.round(wordCount * 1.5 + 40))
-    const biasClarityBonus = identifiedBiases.filter((b) => b.biasType !== 'none').length * 10
-    const metacognitiveIndex = Math.min(100, Math.max(30, depthScore + biasClarityBonus))
-
-    const growthMindsetScore =
-      text.includes('cải thiện') ||
-      text.includes('thay đổi') ||
-      text.includes('thử nghiệm') ||
-      text.includes('học hỏi')
-        ? 90
-        : 75
-
-    // 4. Sinh Socratic Follow-up
+    // 3. Câu hỏi Socratic tiếp theo: câu hỏi riêng của từng bẫy dò được, rồi một câu chốt biến
+    // điều vừa nhận ra thành hành động. Không dò được bẫy nào → câu hỏi mở chung.
     const socraticFollowUps = [
-      'Điều gì sẽ xảy ra nếu bạn hành động hoàn toàn trái ngược với thói quen cũ trong vòng 24 giờ tới?',
-      'Làm thế nào để biến nhận thức này thành một quy tắc thực thi (If-Then Rule) cụ thể?',
+      ...(identifiedBiases.length > 0
+        ? identifiedBiases.map((b) => b.antidotePrompt)
+        : [OPEN_FOLLOW_UP]),
+      CLOSING_FOLLOW_UP,
     ]
 
     return {
@@ -240,51 +215,30 @@ export class MetacognitiveReflectionService {
       userReflection: params.userReflection,
       ahaMoments,
       identifiedBiases,
-      metacognitiveIndex,
-      growthMindsetScore,
       socraticFollowUps,
-      actionCommitment: `Tôi cam kết áp dụng bài học này vào hành động thực tế tiếp theo.`,
       createdAt: new Date().toISOString(),
     }
   }
 
   /**
-   * Tạo tóm tắt tiến trình nhận thức tổng thể.
+   * Tóm tắt lịch sử phản tỉnh — CHỈ định tính (số phiên, bẫy hay gặp lại, câu "Aha" gần đây).
+   * Không còn "chỉ số trung bình" hay "xu hướng tư duy" suy ra từ số giả (changelog 0539).
    */
   static summarizeReflections(reflections: MetacognitiveReflection[]): MetacognitiveSummary {
-    if (reflections.length === 0) {
-      return {
-        overallAwarenessIndex: 0,
-        totalReflectionsCount: 0,
-        topDetectedBiases: [],
-        mindsetTrend: 'needs_reflection',
-        recentAhaMoments: [],
-      }
+    const biasFrequency = new Map<CognitiveBiasType, number>()
+    for (const b of reflections.flatMap((r) => r.identifiedBiases)) {
+      if (b.biasType === 'none') continue
+      biasFrequency.set(b.biasType, (biasFrequency.get(b.biasType) ?? 0) + 1)
     }
-
-    const avgAwareness = Math.round(
-      reflections.reduce((acc, cur) => acc + cur.metacognitiveIndex, 0) / reflections.length,
-    )
-
-    const allBiases = reflections
-      .flatMap((r) => r.identifiedBiases.map((b) => b.biasType))
-      .filter((b) => b !== 'none')
-    const biasFrequency: Record<string, number> = {}
-    for (const b of allBiases) {
-      biasFrequency[b] = (biasFrequency[b] || 0) + 1
-    }
-    const topBiases = Object.keys(biasFrequency)
-      .sort((a, b) => (biasFrequency[b] ?? 0) - (biasFrequency[a] ?? 0))
-      .slice(0, 3) as CognitiveBiasType[]
-
-    const ahaMoments = reflections.flatMap((r) => r.ahaMoments).slice(0, 5)
+    const topDetectedBiases = [...biasFrequency.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([type]) => type)
 
     return {
-      overallAwarenessIndex: avgAwareness,
       totalReflectionsCount: reflections.length,
-      topDetectedBiases: topBiases,
-      mindsetTrend: avgAwareness >= 80 ? 'accelerating' : 'stable',
-      recentAhaMoments: ahaMoments,
+      topDetectedBiases,
+      recentAhaMoments: reflections.flatMap((r) => r.ahaMoments).slice(0, 5),
     }
   }
 }

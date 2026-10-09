@@ -1167,17 +1167,18 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   chỉ thay tiêu đề nút gốc. Câu chữ giao diện đã sửa thành "bản nháp sơ đồ từ khung mẫu" (không
   còn hứa "AI phân rã"). **Muốn phân rã thật:** cần đặc tả (gọi AI có đếm lượt, rào chắn skill
   `autonomous-agent-orchestrator`), hoặc chủ dự án chọn đổi khung mẫu thành canvas trống.
-- 🟡 **[2026-10-02 — changelog `0479`] "Chỉ số tự nhận thức" của nhật ký phản tỉnh là đại lượng
-  thay thế bằng SỐ TỪ** (`metacognitiveReflectionService.ts`: `wordCount * 1.5 + 40` + thưởng theo
-  số bẫy nhận ra), không phải thang MAI chuẩn. Không dùng để xếp hạng/đưa lên màn hình chính; cân
-  nhắc đổi tên hoặc bỏ con số.
+- ✅ **[2026-10-02 — changelog `0479`, ĐÃ XỬ LÝ ở `0539`] "Chỉ số tự nhận thức" giả của nhật ký
+  phản tỉnh đã BỎ HẲN** (cùng "Growth Mindset" và "xu hướng tư duy"): service không còn tính, hợp
+  đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
+  bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
+  còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`] Bảng nháp STEM (Companion › Thử thách)
   chưa kiểm được bước giải ở giữa.** Lỗi 🔴 cũ (chấm MỌI bước là "đúng", "ĐÃ GIẢI XONG" bằng so
   chuỗi con) đã sửa: bước không kiểm được nay hiện "? Chưa tự kiểm được"; chỉ đáp số cuối khớp
   nguyên vẹn đáp số của 3 đề mẫu mới là "✓ Hợp lệ". **Còn lại:** (1) muốn kiểm bước giữa thì cần
-  bộ giải ký hiệu (thay nghiệm vào hai vế, đếm nguyên tử) — tính năng mới, cần đặc tả; (2) hành
-  động `submit_solution` vẫn so chuỗi con với đề ngân hàng câu hỏi — giao diện CHƯA gọi, sửa khi
-  nối ngân hàng đề STEM vào giao diện.
+  bộ giải ký hiệu (thay nghiệm vào hai vế, đếm nguyên tử) — tính năng mới, cần đặc tả. (Đã xử lý ở
+  `0539`: `submit_solution` thôi so chuỗi con, nay chấm đáp số đã chuẩn hoá qua `@dhcb/core-grading`
+  — `gradeFinalAnswer`. Ngân hàng đề STEM vẫn là dữ liệu mẫu `S_{n} = …` và giao diện chưa gọi.)
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0475`] "Tổng hợp đa miền" (Life Synthesis) chờ
   dữ liệu thật.** Lỗi 🔴 cũ (studio "Tổng kết" hiện điểm "phân tích cuộc sống" BỊA — 88/92/85 —
   giống nhau cho mọi người dùng) đã gỡ: tab không còn, `/api/life-synthesis` trả 501 kèm lời giải
@@ -1212,9 +1213,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `CF-Connecting-IP` giả" nên chạy tay sau khi deploy, cách làm ở `docs/cloudflare-setup.md`.
   **[2026-10-08 — audit kiểm soát truy cập 113 route, `docs/changelog/0526-*.md`]** Đã vá 4 lỗ IDOR
   (realtime-multimodal, scenario-holodeck, socratic-diagnostics, gắn task/tài liệu vào dự án người
-  khác ở `/api/work`). (a) ✅ `/api/realtime-multimodal` ĐÃ GỠ ở `0534` (không client nào gọi); **còn chờ chủ dự án
-  quyết:** Map phiên `/api/scenario-holodeck` + `/api/socratic-diagnostics` không dọn (hai endpoint
-  này CÓ client thật trong Companion nên giữ — cần trần phiên/người + TTL); (b) ✅ `/api/pronunciation`
+  khác ở `/api/work`). (a) ✅ `/api/realtime-multimodal` ĐÃ GỠ ở `0534` (không client nào gọi); ✅ Map
+  phiên `/api/scenario-holodeck` + `/api/socratic-diagnostics` (CÓ client thật trong Companion nên
+  giữ) ĐÃ XỬ LÝ ở `0538`: TTL trượt 30 phút, trần 5 phiên/người (đóng phiên cũ nhất), trần 2 000
+  phiên/tiến trình (503), client hiện "Bắt đầu lại"; (b) ✅ `/api/pronunciation`
   cache MISS nay trừ lượt Free/VIP (`0534`);
   ~~(c) `/api/admin-feature-status` so `x-cron-key` bằng `===`~~ — ✅ ĐÃ SỬA ở `0531` (`packages/core-auth/secretCompare.ts`).
 

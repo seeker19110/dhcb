@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const authState: { user: { userId: string } | null } = {
   user: { userId: 'user-1' },
@@ -21,6 +21,8 @@ vi.mock('@dhcb/core-personal/personService', () => ({
 }))
 
 import handler from './socratic-diagnostics.js'
+import { resetSocraticSessionsForTest } from '@dhcb/core-personal/socraticDiagnosticsService'
+import { PRACTICE_SESSION_IDLE_TTL_MS } from '@dhcb/core-personal/ttlSessionStore'
 
 const PERSON = '11111111-1111-4111-8111-111111111111'
 
@@ -39,6 +41,11 @@ describe('api/socratic-diagnostics', () => {
     authState.user = { userId: 'user-1' }
     rateLimitOk = true
     getOrCreatePerson.mockResolvedValue({ id: PERSON })
+  })
+
+  afterEach(() => {
+    resetSocraticSessionsForTest()
+    vi.useRealTimers()
   })
 
   it('handles GET list of misconceptions', async () => {
@@ -172,5 +179,27 @@ describe('api/socratic-diagnostics', () => {
     expect(res.status).toBe(422)
     const data = await res.json()
     expect(data.error.code).toBe('bad_person')
+  })
+
+  // ── Phiên có hạn (changelog 0538) ──
+  it('phiên hết hạn sau 30 phút không hoạt động → 404 kèm mã session_not_found + lời dặn', async () => {
+    vi.useFakeTimers()
+    const startRes = await handler(
+      req('POST', { action: 'start', misconceptionId: 'present_perfect_past_confusion' }),
+    )
+    const sessionId = ((await startRes.json()) as { session: { id: string } }).session.id
+    vi.advanceTimersByTime(PRACTICE_SESSION_IDLE_TTL_MS)
+    const res = await handler(req('POST', { action: 'reflect', sessionId, answer: 'quá khứ đơn' }))
+    expect(res.status).toBe(404)
+    const body = (await res.json()) as { error: { code: string; message: string } }
+    expect(body.error.code).toBe('session_not_found')
+    expect(body.error.message).toMatch(/Bắt đầu lại/)
+  })
+
+  it('câu trả lời quá dài → 413, không ghi vào phiên', async () => {
+    const res = await handler(
+      req('POST', { action: 'reflect', sessionId: 's1', answer: 'a'.repeat(2001) }),
+    )
+    expect(res.status).toBe(413)
   })
 })

@@ -158,6 +158,78 @@ describe('Metacognitive Reflection API Handler (/api/metacognitive-reflection)',
     expect(res.status).toBe(200)
   })
 
+  it('Luật số 1: bản ghi CŨ còn số giả MAI/Growth Mindset — GET không trả số đó, CSDL giữ nguyên', async () => {
+    authOk()
+    const legacy = {
+      id: 'refl-old',
+      personId: USER,
+      title: 'Bản ghi trước changelog 0539',
+      domain: 'learning',
+      reflectionPrompt: 'Câu hỏi',
+      userReflection: 'Bài viết cũ',
+      ahaMoments: [],
+      identifiedBiases: [
+        {
+          biasType: 'none',
+          biasName: 'Tư duy trung dung & Cởi mở',
+          explanation: 'Không phát hiện thiên kiến nhận thức nổi cộm.',
+          antidotePrompt: 'Tiếp tục.',
+          severity: 'low',
+        },
+      ],
+      metacognitiveIndex: 87,
+      growthMindsetScore: 90,
+      socraticFollowUps: [],
+      createdAt: '2026-10-01T00:00:00.000Z',
+    }
+    featureStore.set(USER + '|metacognitive_reflection', [legacy])
+
+    for (const url of [
+      'http://localhost/api/metacognitive-reflection',
+      'http://localhost/api/metacognitive-reflection?action=summary',
+    ]) {
+      const res = await handler(new Request(url, { method: 'GET' }))
+      const raw = await res.text()
+      expect(raw).not.toMatch(/metacognitiveIndex|growthMindsetScore|AwarenessIndex|mindsetTrend/)
+      expect(JSON.parse(raw).reflections[0].identifiedBiases).toEqual([])
+    }
+
+    // Gửi bài mới: bản ghi cũ trong CSDL vẫn còn nguyên (không xoá dữ liệu thật), bản mới không có số.
+    const post = await handler(
+      new Request('http://localhost/api/metacognitive-reflection?action=submit_reflection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reflectionPrompt: 'Câu hỏi', userReflection: 'Tôi sợ sai.' }),
+      }),
+    )
+    const posted = await post.json()
+    expect(posted.reflection.identifiedBiases[0].triggerPhrases).toEqual(['sợ sai'])
+    expect(JSON.stringify(posted)).not.toMatch(/metacognitiveIndex|growthMindsetScore/)
+    const stored = featureStore.get(USER + '|metacognitive_reflection') as Array<
+      Record<string, unknown>
+    >
+    expect(stored).toHaveLength(2)
+    expect(stored[1]).toEqual(legacy)
+    expect(stored[0]).not.toHaveProperty('metacognitiveIndex')
+  })
+
+  it('POST submit_reflection: domain lạ hoặc bài chỉ có khoảng trắng → 400', async () => {
+    authOk()
+    for (const body of [
+      { reflectionPrompt: 'Câu hỏi', userReflection: 'Trả lời', domain: 'hack' },
+      { reflectionPrompt: 'Câu hỏi', userReflection: '    ' },
+    ]) {
+      const res = await handler(
+        new Request('http://localhost/api/metacognitive-reflection?action=submit_reflection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      )
+      expect(res.status).toBe(400)
+    }
+  })
+
   it('POST action không xác định trả 400', async () => {
     authOk()
     const res = await handler(

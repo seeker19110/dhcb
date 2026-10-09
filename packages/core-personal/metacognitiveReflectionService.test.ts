@@ -1,6 +1,9 @@
 // packages/core-personal/metacognitiveReflectionService.test.ts
 import { describe, it, expect } from 'vitest'
 import { MetacognitiveReflectionService } from './metacognitiveReflectionService.js'
+import { findForbiddenLanguage } from './intakeSuggestion.js'
+import { MetacognitiveReflectionSchema } from '@dhcb/core-contracts/metacognitiveReflection'
+import type { MetacognitiveReflection } from '@dhcb/core-contracts/metacognitiveReflection'
 
 describe('MetacognitiveReflectionService', () => {
   it('generates a daily socratic prompt for learning domain', () => {
@@ -19,9 +22,13 @@ describe('MetacognitiveReflectionService', () => {
     })
 
     expect(analysis.personId).toBe('user-1')
-    expect(analysis.metacognitiveIndex).toBeGreaterThan(40)
-    const hasParalysis = analysis.identifiedBiases.some((b) => b.biasType === 'analysis_paralysis')
-    expect(hasParalysis).toBe(true)
+    const paralysis = analysis.identifiedBiases.find((b) => b.biasType === 'analysis_paralysis')
+    expect(paralysis).toBeDefined()
+    // Nêu nguyên văn cụm từ đã khiến bộ dò nghĩ tới bẫy — người viết thấy được VÌ SAO.
+    expect(paralysis?.triggerPhrases).toEqual(['sợ sai', 'nghĩ mãi', 'chưa đủ hoàn hảo'])
+    // Câu hỏi tiếp theo đầu tiên là câu hỏi riêng của bẫy này, rồi mới tới câu chốt.
+    expect(analysis.socraticFollowUps[0]).toBe(paralysis?.antidotePrompt)
+    expect(analysis.socraticFollowUps).toHaveLength(2)
   })
 
   it('detects overconfidence bias', () => {
@@ -71,7 +78,7 @@ describe('MetacognitiveReflectionService', () => {
     expect(sunk.identifiedBiases.some((b) => b.biasType === 'sunk_cost')).toBe(true)
   })
 
-  it('handles neutral reflection with bias=none and growth mindset', () => {
+  it('bài không có dấu hiệu bẫy nào → danh sách bẫy RỖNG (không có bẫy "none" giữ chỗ), câu hỏi mở chung', () => {
     const neutral = MetacognitiveReflectionService.analyzeReflection('u1', {
       title: 'Custom Title',
       domain: 'life',
@@ -79,22 +86,99 @@ describe('MetacognitiveReflectionService', () => {
       userReflection: 'Hôm nay tôi muốn cải thiện và học hỏi cách quản lý cảm xúc tốt hơn.',
     })
     expect(neutral.title).toBe('Custom Title')
-    expect(neutral.identifiedBiases[0]?.biasType).toBe('none')
-    expect(neutral.growthMindsetScore).toBe(90)
+    expect(neutral.identifiedBiases).toEqual([])
+    expect(neutral.socraticFollowUps).toHaveLength(2)
+    // Không bịa câu "Aha" thay lời người viết khi họ không kể điều gì vừa vỡ lẽ.
+    expect(neutral.ahaMoments).toEqual([])
   })
 
-  it('summarizes empty reflections and calculates accelerating trend', () => {
-    const emptySummary = MetacognitiveReflectionService.summarizeReflections([])
-    expect(emptySummary.totalReflectionsCount).toBe(0)
-    expect(emptySummary.mindsetTrend).toBe('needs_reflection')
+  it('tóm tắt rỗng; bẫy hay gặp xếp theo số lần, bỏ "none" của bản ghi cũ', () => {
+    const empty = MetacognitiveReflectionService.summarizeReflections([])
+    expect(empty).toEqual({ totalReflectionsCount: 0, topDetectedBiases: [], recentAhaMoments: [] })
 
-    const rHigh = MetacognitiveReflectionService.analyzeReflection('u1', {
+    const viet = (userReflection: string) =>
+      MetacognitiveReflectionService.analyzeReflection('u1', {
+        domain: 'learning',
+        reflectionPrompt: 'P',
+        userReflection,
+      })
+    const legacyNone: MetacognitiveReflection = {
+      ...viet('Một ngày bình thường.'),
+      identifiedBiases: [
+        {
+          biasType: 'none',
+          biasName: 'Tư duy trung dung',
+          explanation: 'x',
+          antidotePrompt: 'y',
+          severity: 'low',
+          triggerPhrases: [],
+        },
+      ],
+    }
+    const summary = MetacognitiveReflectionService.summarizeReflections([
+      viet('Tôi sợ sai.'),
+      viet('Tôi vẫn sợ sai và tiếc công.'),
+      legacyNone,
+    ])
+    expect(summary.totalReflectionsCount).toBe(3)
+    expect(summary.topDetectedBiases).toEqual(['analysis_paralysis', 'sunk_cost'])
+  })
+})
+
+// ── Luật số 1: không con số năng lực nào rò ra ngoài ─────────────────────────
+// Mở rộng nhóm test bất biến của luồng người mới (docs/research/luong-nguoi-moi-ho-so-nang-luc-an-
+// 2026-08-23.md mục 7) sang nhật ký phản tỉnh (changelog 0539): quét mọi tổ hợp từ khoá bẫy tư duy
+// + câu "Aha" qua `analyzeReflection`, rồi kiểm (1) hợp đồng strict — không trường điểm lạ,
+// (2) không khoá nào mang tên điểm/chỉ số, (3) không chuỗi hiển thị nào chứa ngôn ngữ chấm điểm.
+describe('Luật số 1 — nhật ký phản tỉnh không chấm điểm người viết', () => {
+  const FRAGMENTS = [
+    'chắc chắn quá đơn giản',
+    'sợ sai nên nghĩ mãi',
+    'chỉ là may mắn',
+    'tiếc công đã bỏ ra nhiều',
+    'hôm nay tôi nhận ra là cần nghỉ sớm hơn',
+  ]
+  // Mọi tập con của 5 mảnh (32 tổ hợp, kể cả rỗng → bài trung tính).
+  const COMBOS = Array.from({ length: 1 << FRAGMENTS.length }, (_, mask) => {
+    const parts = FRAGMENTS.filter((_, i) => mask & (1 << i))
+    return parts.length > 0 ? parts.join('. ') + '.' : 'Một ngày bình thường, không có gì đặc biệt.'
+  })
+  const results = COMBOS.map((userReflection) =>
+    MetacognitiveReflectionService.analyzeReflection('u1', {
       domain: 'learning',
-      reflectionPrompt: 'P',
-      userReflection:
-        'Tôi nhận ra và hóa ra việc học hỏi liên tục giúp thay đổi toàn diện tư duy của mình rất nhiều. Bằng cách quan sát bản thân mỗi ngày, tôi thấy rõ ràng hơn các điểm mù kiến thức và có thể chủ động cải thiện phương pháp học tập hiệu quả nhất.',
-    })
-    const highSummary = MetacognitiveReflectionService.summarizeReflections([rHigh])
-    expect(highSummary.mindsetTrend).toBe('accelerating')
+      reflectionPrompt: 'Hôm nay thế nào?',
+      userReflection,
+    }),
+  )
+
+  const allKeys = (v: unknown): string[] =>
+    v && typeof v === 'object'
+      ? Object.entries(v).flatMap(([k, child]) => [k, ...allKeys(child)])
+      : []
+
+  it(`quét ${COMBOS.length} tổ hợp: kết quả hợp lệ theo hợp đồng strict (không trường điểm lạ)`, () => {
+    for (const r of results) {
+      expect(MetacognitiveReflectionSchema.strict().safeParse(r).success).toBe(true)
+      for (const b of r.identifiedBiases) expect(Object.keys(b)).toHaveLength(6)
+    }
+  })
+
+  it('không khoá nào mang tên điểm/chỉ số, không giá trị số nào trong kết quả', () => {
+    for (const r of results) {
+      expect(allKeys(r).filter((k) => /score|index|awareness|trend/i.test(k))).toEqual([])
+      expect(Object.values(r).some((v) => typeof v === 'number')).toBe(false)
+    }
+  })
+
+  it('mọi câu chữ hiển thị (trừ lời chính người viết) không chứa ngôn ngữ chấm điểm/xếp loại', () => {
+    for (const r of results) {
+      const shown = [
+        ...r.identifiedBiases.flatMap((b) => [b.biasName, b.explanation, b.antidotePrompt]),
+        ...r.socraticFollowUps,
+      ]
+      expect(findForbiddenLanguage(shown)).toEqual([])
+    }
+    const summary = MetacognitiveReflectionService.summarizeReflections(results)
+    expect(allKeys(summary).filter((k) => /score|index|trend/i.test(k))).toEqual([])
   })
 })

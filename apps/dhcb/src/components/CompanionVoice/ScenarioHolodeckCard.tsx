@@ -19,6 +19,8 @@ import {
 import LoadError from '../LoadError'
 import { useCatalogList } from '../../lib/useCatalogList'
 import { buttonClass } from '@core/buttonStyles'
+import { isSessionGone, practiceErrorFromResponse } from '../../lib/practiceSessionError'
+import PracticeSessionAlert from './PracticeSessionAlert'
 
 export default function ScenarioHolodeckCard() {
   // Danh sách kịch bản: trạng thái tải/lỗi/rỗng tách bạch (trước đây lỗi tải để thân thẻ trống trơn).
@@ -33,6 +35,15 @@ export default function ScenarioHolodeckCard() {
   const [userUtterance, setUserUtterance] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  // Phiên trên server đã hết hạn/không còn (404 session_not_found) → khoá ô nhập, hiện
+  // "Bắt đầu lại" (changelog 0538). Không thì người học bấm "Gửi" mãi vào một phiên đã chết.
+  const [sessionGone, setSessionGone] = useState<boolean>(false)
+
+  /** Ghi lỗi lên UI; lỗi "phiên không còn" bật thêm trạng thái mở lại phiên. */
+  const showError = (err: unknown, fallback: string) => {
+    if (isSessionGone(err)) setSessionGone(true)
+    setErrorMsg(thongDiepLoiThanThien(err, fallback))
+  }
 
   const currentScenario =
     scenarios.find((s) => s.id === (activeSession?.scenarioId || selectedScenarioId)) ||
@@ -47,11 +58,12 @@ export default function ScenarioHolodeckCard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'start', scenarioId }),
       })
-      if (!res.ok) throw new Error('Không thể bắt đầu kịch bản')
+      if (!res.ok) throw await practiceErrorFromResponse(res, 'Không thể bắt đầu kịch bản')
       const data = await res.json()
       setActiveSession(data.session)
+      setSessionGone(false)
     } catch (err) {
-      setErrorMsg(thongDiepLoiThanThien(err, 'Lỗi bắt đầu phiên'))
+      showError(err, 'Lỗi bắt đầu phiên')
     } finally {
       setIsLoading(false)
     }
@@ -76,11 +88,13 @@ export default function ScenarioHolodeckCard() {
           utterance: message,
         }),
       })
-      if (!res.ok) throw new Error('Lỗi gửi lượt phản hồi')
+      if (!res.ok) throw await practiceErrorFromResponse(res, 'Lỗi gửi lượt phản hồi')
       const data = await res.json()
       setActiveSession(data.updatedSession)
     } catch (err) {
-      setErrorMsg(thongDiepLoiThanThien(err, 'Lỗi gửi lượt phản hồi'))
+      // Trả lại câu vừa gõ để người học không mất bài (gửi lại / chép sang phiên mới).
+      setUserUtterance(message)
+      showError(err, 'Lỗi gửi lượt phản hồi')
     } finally {
       setIsLoading(false)
     }
@@ -100,11 +114,11 @@ export default function ScenarioHolodeckCard() {
           sessionId: activeSession.sessionId,
         }),
       })
-      if (!res.ok) throw new Error('Lỗi tổng kết phiên')
+      if (!res.ok) throw await practiceErrorFromResponse(res, 'Lỗi tổng kết phiên')
       const data = await res.json()
       setActiveSession(data.session)
     } catch (err) {
-      setErrorMsg(thongDiepLoiThanThien(err, 'Lỗi tổng kết'))
+      showError(err, 'Lỗi tổng kết')
     } finally {
       setIsLoading(false)
     }
@@ -153,7 +167,11 @@ export default function ScenarioHolodeckCard() {
               </span>
             </div>
             <button
-              onClick={() => setActiveSession(null)}
+              onClick={() => {
+                setActiveSession(null)
+                setSessionGone(false)
+                setErrorMsg(null)
+              }}
               className="p-1.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
               title="Đổi kịch bản"
             >
@@ -164,10 +182,15 @@ export default function ScenarioHolodeckCard() {
       </div>
 
       {errorMsg && (
-        <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 theme-light:text-red-900 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>{errorMsg}</span>
-        </div>
+        <PracticeSessionAlert
+          message={errorMsg}
+          restarting={isLoading}
+          onRestart={
+            sessionGone && activeSession
+              ? () => void handleStartSession(activeSession.scenarioId)
+              : undefined
+          }
+        />
       )}
 
       {!activeSession && catalog.status === 'loading' && (
@@ -420,15 +443,16 @@ export default function ScenarioHolodeckCard() {
           )}
 
           {/* Turn Input Form */}
-          {activeSession.status === 'active' && (
-            <form onSubmit={handleSendTurn} className="flex gap-2">
+          {/* Màn hẹp: ô nhập một hàng, nút xuống hàng dưới (ảnh Tầng 8b 0538: nút tràn khỏi thẻ ở 390px). */}
+          {activeSession.status === 'active' && !sessionGone && (
+            <form onSubmit={handleSendTurn} className="flex flex-wrap gap-2">
               <input
                 type="text"
                 value={userUtterance}
                 onChange={(e) => setUserUtterance(e.target.value)}
                 placeholder="Nhập câu trả lời hoặc phản biện bằng tiếng Anh..."
                 disabled={isLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="min-w-0 basis-full sm:basis-0 flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               <button
                 type="submit"
