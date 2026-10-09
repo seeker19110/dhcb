@@ -39,7 +39,46 @@ if printf '%s' "$cmd_scan" | grep -Eq '(^|[[:space:]])--no-verify([[:space:]]|$)
   exit 0
 fi
 
-cd "$ROOT" || exit 0
+# THƯ MỤC COMMIT THẬT (changelog 0566). Trước đây cổng luôn `cd "$ROOT"` (checkout chính) nên
+# commit trong git worktree (subagent `isolation: worktree`) bị kiểm SAI CÂY: đỏ oan khi checkout
+# chính đang dở cherry-pick, xanh giả khi lỗi chỉ nằm trong worktree. Nay lấy theo thứ tự:
+# `cwd` của payload → các `cd <dir>` đứng trước `git commit` → `git -C <dir>` → gốc repo của nó.
+strip_quotes() { local s="$1"; s="${s#[\"\']}"; s="${s%[\"\']}"; printf '%s' "${s/#\~/$HOME}"; }
+join_dir() { case "$2" in /*) printf '%s' "$2" ;; *) printf '%s/%s' "$1" "$2" ;; esac; }
+
+dir="$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null)"
+[ -n "$dir" ] && [ -d "$dir" ] || dir="$ROOT"
+# Phần lệnh trước lần `git … commit` cuối — `cd` nằm SAU commit không ảnh hưởng nơi commit chạy.
+pre="${cmd%git*commit*}"
+while IFS= read -r d; do
+  [ -n "$d" ] && dir="$(join_dir "$dir" "$(strip_quotes "$d")")"
+done < <(printf '%s' "$pre" \
+  | grep -oE "(^|[;&|[:space:]])cd[[:space:]]+(\"[^\"]+\"|'[^']+'|[^[:space:];&|]+)" \
+  | sed -E 's/^[;&|[:space:]]?cd[[:space:]]+//')
+c_dir="$(printf '%s' "${cmd:${#pre}}" \
+  | grep -oE "^git[[:space:]]+-C[[:space:]]+(\"[^\"]+\"|'[^']+'|[^[:space:];&|]+)" \
+  | sed -E 's/^git[[:space:]]+-C[[:space:]]+//')"
+[ -n "$c_dir" ] && dir="$(join_dir "$dir" "$(strip_quotes "$c_dir")")"
+GATE_DIR="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || GATE_DIR="$ROOT"
+[ -n "$GATE_DIR" ] || GATE_DIR="$ROOT"
+# Chỉ gác repo NÀY (checkout chính + worktree của nó — cùng `--git-common-dir`); commit ở repo
+# khác (thư mục nháp…) không phải việc của cổng DHCB.
+common_of() { (cd "$1" 2>/dev/null && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P); }
+if [ "$(common_of "$GATE_DIR")" != "$(common_of "$ROOT")" ]; then
+  echo "[pre-commit-gate] $GATE_DIR không thuộc repo dự án → bỏ qua cổng." >&2
+  exit 0
+fi
+
+if [ "${PRE_COMMIT_GATE_DRY_RUN:-}" = "1" ]; then # chỉ cho test: in thư mục, không chạy cổng
+  echo "[pre-commit-gate] thư mục cổng: $GATE_DIR" >&2
+  exit 0
+fi
+
+cd "$GATE_DIR" || exit 0
+if [ ! -d node_modules ]; then
+  echo "❌ [pre-commit-gate] $GATE_DIR chưa có node_modules (worktree mới?) — chạy \`npm ci\` ở đó rồi commit lại." >&2
+  exit 2
+fi
 
 run() { # $1 = nhãn, $2.. = lệnh
   local label="$1"; shift

@@ -192,7 +192,7 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
 
 ## §8 — Cổng trước khi COMMIT
 
-**Từ 2026-09-19, hook PreToolUse `.claude/hooks/pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ** (không chạy `build` ở đây — quá chậm cho mỗi commit, vẫn bắt buộc ở CI job `build` + checklist merge). Bỏ qua có chủ đích: `git commit --no-verify`. Hook `.claude/hooks/block-dangerous-git.sh` cũng chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/`push --force`/`merge --abort` (thi hành mục 11 bằng máy, không chỉ bằng văn bản).
+**Từ 2026-09-19, hook PreToolUse `.claude/hooks/pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ** (không chạy `build` ở đây — quá chậm cho mỗi commit, vẫn bắt buộc ở CI job `build` + checklist merge). Bỏ qua có chủ đích: `git commit --no-verify`. **Từ 2026-10-09 (changelog 0566) cổng chạy ở đúng cây đang commit** (`cwd` của payload → `cd <dir>` trước commit → `git -C <dir>`), nên commit trong git worktree của subagent được kiểm trên chính worktree đó; cây thuộc repo khác thì bỏ qua; worktree chưa `npm ci` thì chặn kèm lời nhắc (`TRAPS.md` mục 20). Hook `.claude/hooks/block-dangerous-git.sh` cũng chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/`push --force`/`merge --abort` (thi hành mục 11 bằng máy, không chỉ bằng văn bản).
 
 **Từ 2026-10-01 (chuyển thể từ ECC, ADR-0013):** hook PreToolUse `.claude/hooks/config-protection.sh`
 canh Edit/Write vào một CỔNG (cấu hình lint/format/coverage, test canh luật

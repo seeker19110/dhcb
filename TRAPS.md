@@ -775,3 +775,22 @@ lỗi). Mỗi worktree chạy `E2E_PORT=<cổng riêng> npx playwright test …`
 `reuseExistingServer` tự là `false`, luôn dựng server của chính worktree này. Không đặt thì như
 cũ (5179, CI không đổi). Trong spec chụp ảnh vẫn nên `expect(...).toBeVisible()` phần tử MỚI.
 Còn mở: ai quên đặt `E2E_PORT` vẫn dính cổng 5179 dùng chung.
+
+## 20. Hook cổng commit chạy ở checkout chính trong khi commit diễn ra ở git worktree → đỏ oan / xanh giả
+
+**Ngày/PR:** 2026-10-09, đợt `0566`. Lộ ra khi subagent (`isolation: worktree`) báo một test CEFR
+"chập chờn" lúc commit — thực ra test đó xanh 5/5 trong worktree; hook đã chạy `npm test` ở
+checkout CHÍNH, nơi phiên chính đang dở `git cherry-pick`.
+
+**Khuôn lỗi:** `.claude/hooks/pre-commit-gate.sh` làm `cd "${CLAUDE_PROJECT_DIR}"` rồi chạy
+typecheck/lint/test. `CLAUDE_PROJECT_DIR` luôn là checkout chính, kể cả khi lệnh `git commit` chạy
+trong worktree `.claude/worktrees/agent-*`. Hệ quả hai chiều: checkout chính đang dở việc → chặn
+oan commit sạch của worktree; lỗi chỉ có trong worktree → cổng xanh giả.
+
+**Cách rà:** cổng commit báo lỗi ở file mà commit không đụng, hoặc lỗi không tái hiện khi chạy
+đúng lệnh đó trong thư mục đang commit → nghi hook kiểm sai cây.
+
+**Cổng chốt chặn:** hook lấy thư mục từ `cwd` của payload → các `cd <dir>` trước `git commit` →
+`git -C <dir>`, rồi `git rev-parse --show-toplevel`; chỉ gác cây cùng `--git-common-dir` với repo
+dự án; worktree chưa có `node_modules` thì chặn kèm lời nhắc `npm ci`. Test:
+`scripts/claude-hooks.test.ts` (describe "pre-commit-gate.sh — chọn thư mục cổng").

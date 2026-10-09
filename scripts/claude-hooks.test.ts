@@ -3,7 +3,7 @@
 // `codemap impact` khi sửa file dùng chung). Hook là mã chạy thật trên máy người dùng ở mọi
 // phiên — sai một regex là chặn oan lệnh hợp lệ hoặc để lọt lệnh nguy hiểm, nên mỗi nhánh có ca.
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -193,3 +193,72 @@ describe.runIf(hasJq || process.env.CI)(
     })
   },
 )
+
+// changelog 0566: cổng commit phải chạy ở ĐÚNG cây đang commit. Trước đây hook luôn `cd` về
+// CLAUDE_PROJECT_DIR (checkout chính) → commit trong git worktree của subagent bị kiểm sai cây.
+// PRE_COMMIT_GATE_DRY_RUN=1 chỉ in thư mục cổng, không chạy typecheck/lint/test thật.
+describe.runIf(hasJq || process.env.CI)('pre-commit-gate.sh — chọn thư mục cổng', () => {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'gate-dir-')))
+  afterAll(() => rmSync(base, { recursive: true, force: true }))
+  const repo = join(base, 'repo')
+  const wt = join(base, 'wt')
+  const other = join(base, 'other')
+  const git = (cwd: string, ...args: string[]) =>
+    execFileSync('git', args, { cwd, stdio: 'ignore' })
+  mkdirSync(repo)
+  mkdirSync(other)
+  for (const d of [repo, other]) {
+    git(d, 'init', '-q')
+    git(d, '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'x')
+  }
+  git(repo, 'worktree', 'add', '-q', wt)
+  mkdirSync(join(repo, 'sub'))
+
+  const gate = (command: string, cwd: string, dryRun = true) =>
+    runHook(
+      'pre-commit-gate.sh',
+      { cwd, tool_input: { command } },
+      { CLAUDE_PROJECT_DIR: repo, PRE_COMMIT_GATE_DRY_RUN: dryRun ? '1' : '' },
+    )
+  const gateDir = (command: string, cwd: string): string | undefined => {
+    const r = gate(command, cwd)
+    expect(r.status).toBe(0)
+    return /thư mục cổng: (.*)/.exec(r.stderr)?.[1]
+  }
+
+  it.each([
+    ['cwd là worktree', "git commit -m 'x'", wt],
+    ['cd tương đối trước commit', `cd ../wt && git commit -m x`, repo],
+    ['cd có nháy', `cd "${wt}" && git add . && git commit -m x`, repo],
+    ['git -C', `git -C ${wt} commit -m x`, repo],
+  ])('%s → kiểm ở worktree', (_label, command, cwd) => {
+    expect(gateDir(command, cwd)).toBe(wt)
+  })
+
+  it.each([
+    ['thư mục con của checkout chính', 'git commit -m x', join(repo, 'sub')],
+    ['cd nằm SAU commit không tính', `git commit -m x && cd ${wt}`, repo],
+    ['chữ "cd" trong message không tính', "git commit -m 'cd ../wt'", repo],
+    ['cwd không tồn tại → về CLAUDE_PROJECT_DIR', 'git commit -m x', join(base, 'khong-co')],
+  ])('%s → kiểm ở checkout chính', (_label, command, cwd) => {
+    expect(gateDir(command, cwd)).toBe(repo)
+  })
+
+  it('commit ở repo KHÁC → bỏ qua cổng, không chặn', () => {
+    const r = gate('git commit -m x', other)
+    expect(r.status).toBe(0)
+    expect(r.stderr).toContain('không thuộc repo dự án')
+  })
+
+  it('worktree chưa có node_modules → chặn kèm lời nhắc npm ci', () => {
+    const r = gate('git commit -m x', wt, false)
+    expect(r.status).toBe(2)
+    expect(r.stderr).toContain('npm ci')
+    expect(r.stderr).toContain(wt)
+  })
+
+  it('lệnh không phải commit, hoặc --no-verify → không đụng tới', () => {
+    expect(gate('git status', wt, false).status).toBe(0)
+    expect(gate('git commit --no-verify -m x', wt, false).status).toBe(0)
+  })
+})

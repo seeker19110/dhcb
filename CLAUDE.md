@@ -224,7 +224,8 @@ Build `npm run build` · Type `npm run typecheck` · Lint `npm run lint` (0 cả
 `scripts/agent-config-security.test.ts`):**
 
 - `pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ (không chạy
-  `build` — vẫn bắt buộc ở CI). Bỏ qua có chủ đích: `git commit --no-verify`.
+  `build` — vẫn bắt buộc ở CI), chạy ở ĐÚNG cây đang commit, kể cả git worktree (`TRAPS.md`
+  mục 20). Bỏ qua có chủ đích: `git commit --no-verify`.
 - `block-dangerous-git.sh` chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/
   `push --force`/`merge --abort`.
 - `config-protection.sh` canh Edit/Write vào CỔNG (cấu hình lint/format/coverage,
