@@ -279,21 +279,19 @@ function startWeeklyReportScheduler() {
 // ── Dọn gói VIP hết hạn (1 lần/ngày) ─────────────────────────────────────
 // Chỉ dọn dữ liệu cho ĐÚNG (cột `plan` trong DB) — việc CHẶN quyền hết hạn đã tự áp ngay lúc
 // đọc plan (resolvePlan trong api/_lib/plan.ts), không phụ thuộc job này chạy đúng giờ hay không.
+// Lịch: `startDailyJob` — chạy một lần lúc khởi động rồi mỗi ngày UTC. `downgradeExpiredPlans`
+// lũy đẳng (chỉ hạ gói có `plan_expires_at < now()`) nên chạy thêm một lần mỗi lần khởi động là vô hại.
 function startPlanExpiryScheduler() {
-  let lastDaySent = new Date().getUTCDate()
-  setInterval(() => {
-    const day = new Date().getUTCDate()
-    if (day === lastDaySent) return
-    lastDaySent = day
-    void downgradeExpiredPlans()
-      .then((r) => {
-        if (r.downgraded > 0) console.log(`[plan-expiry] Đã hạ ${r.downgraded} gói hết hạn về free`)
-      })
-      .catch((err) => {
-        console.error('[plan-expiry] lỗi dọn gói hết hạn:', err)
-        captureServerException(err, { context: 'plan-expiry-scheduler' })
-      })
-  }, 60_000) // kiểm tra mỗi phút, chạy 1 lần khi sang ngày mới (UTC)
+  startDailyJob({
+    run: async () => {
+      const r = await downgradeExpiredPlans()
+      if (r.downgraded > 0) console.log(`[plan-expiry] Đã hạ ${r.downgraded} gói hết hạn về free`)
+    },
+    onError: (err) => {
+      console.error('[plan-expiry] lỗi dọn gói hết hạn:', err)
+      captureServerException(err, { context: 'plan-expiry-scheduler' })
+    },
+  })
 }
 
 // ── Dọn biên nhận đồng bộ quá 7 ngày (1 lần/ngày) ───────────────────────────
