@@ -1,8 +1,13 @@
 import { existsSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
+import { resolveE2ePort } from './scripts/lib/e2ePort.ts'
 
-// Cổng dev server riêng cho E2E (tránh đụng 5173 nếu đang chạy dev tay).
-const PORT = 5179
+// Cổng dev server riêng cho E2E (tránh đụng 5173 nếu đang chạy dev tay). Mặc định 5179; đặt
+// `E2E_PORT` để mỗi worktree tự chọn cổng (khi đó luôn dựng server riêng, không dùng lại).
+const { port: PORT, reuseExistingServer: reuseLocalServer } = resolveE2ePort(
+  process.env.E2E_PORT,
+  !!process.env.CI,
+)
 const baseURL = `http://localhost:${PORT}`
 
 // Dùng Chromium cài sẵn của môi trường nếu có (KHÔNG chạy "playwright install");
@@ -45,6 +50,6 @@ export default defineConfig({
     command: `npm run dev -- --port ${PORT} --strictPort`,
     url: baseURL,
     timeout: 120_000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: reuseLocalServer,
   },
 })

@@ -769,8 +769,9 @@ phục vụ là của ai: log `[WebServer]` có in đường dẫn worktree củ
 đã dùng lại server sẵn có); `ss -ltnp | grep 5179` xem tiến trình giữ cổng chạy từ thư mục nào.
 Spec chụp ảnh nên `expect` chính chữ/phần tử vừa thêm hiện ra trước khi chụp — thiếu là đỏ ngay.
 
-**Cổng chốt chặn:** CHƯA có cổng tự động (không đổi `playwright.config.ts` trong đợt này). Quy
-ước khi nhiều tác nhân chạy song song: chạy Playwright bằng cấu hình tạm có cổng riêng +
-`reuseExistingServer: false` (`--config <tạm>`), xoá file tạm trước khi commit, và trong spec chụp
-ảnh luôn `expect(...).toBeVisible()` phần tử MỚI. Đề xuất đợt riêng: cho `playwright.config.ts`
-đọc cổng từ biến môi trường (vd `E2E_PORT`) để mỗi worktree tự chọn cổng.
+**Cổng chốt chặn:** từ 2026-10-09 (changelog 0557) `playwright.config.ts` đọc cổng từ
+`E2E_PORT` (hàm `resolveE2ePort`, `scripts/lib/e2ePort.ts`; số nguyên 1024–65535, sai thì ném
+lỗi). Mỗi worktree chạy `E2E_PORT=<cổng riêng> npx playwright test …` — khác 5179 thì
+`reuseExistingServer` tự là `false`, luôn dựng server của chính worktree này. Không đặt thì như
+cũ (5179, CI không đổi). Trong spec chụp ảnh vẫn nên `expect(...).toBeVisible()` phần tử MỚI.
+Còn mở: ai quên đặt `E2E_PORT` vẫn dính cổng 5179 dùng chung.
