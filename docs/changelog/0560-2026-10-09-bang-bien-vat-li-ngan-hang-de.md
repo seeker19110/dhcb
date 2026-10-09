@@ -1,6 +1,6 @@
 # 0560 — Bảng thứ nguyên biến cho câu Vật lí của ngân hàng đề Bảng nháp STEM (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (chưa mở — commit trên nhánh worktree, coordinator tạo PR) ·
+- **Ngày:** 2026-10-09 · **PR:** #1305 ·
   **Loại:** `feat(stem)`
 - **Nguồn:** mục (1) của nợ 🟡 "Bảng nháp STEM" trong `PROGRESS.md` — "Vật lí — đề ngân hàng chưa
   khai bảng `variables` … và giao diện chưa gửi `variables` khi tạo đề". Đặc tả
