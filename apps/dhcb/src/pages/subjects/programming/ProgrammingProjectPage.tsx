@@ -231,11 +231,12 @@ export default function ProgrammingProjectPage() {
         stdinLines: check.stdinLines,
         files: workspace,
         ...(activeStep.domHtml ? { domHtml: activeStep.domHtml } : {}),
-        // Bước fetch gọi API giả của CHÍNH dự án (T1 menu quán, T2 sổ quỹ lớp), không phải API
-        // thời tiết của bài học P3-U7 — dự án nào dùng API nào khai ở projectTracks.ts.
+        // Bước fetch gọi API giả của CHÍNH dự án (T1 menu quán, T2 sổ quỹ lớp, T3 kho tài liệu),
+        // không phải API thời tiết của bài học P3-U7 — dự án nào dùng API nào khai ở
+        // projectTracks.ts.
         ...(trackInfo.fetchApi ? { fetchApi: trackInfo.fetchApi } : {}),
-        // Bước SQL chấm trên bộ dữ liệu RIÊNG của ca (T2 có sổ quỹ, không dùng CSDL quán mẫu)
-        // — y như trang bài học truyền testCase.datasetSql.
+        // Bước SQL chấm trên bộ dữ liệu RIÊNG của ca (T2 có sổ quỹ, T3 có bảng điểm — không dùng
+        // CSDL quán mẫu) — y như trang bài học truyền testCase.datasetSql.
         ...(check.datasetSql ? { datasetSql: check.datasetSql } : {}),
       })
       out.push(

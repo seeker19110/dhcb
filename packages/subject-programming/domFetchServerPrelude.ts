@@ -6,7 +6,7 @@
 // `fetchWorker.ts` — chấm xem trước phía học viên) LẪN cổng nội dung CI. `node:vm` là module
 // RIÊNG của Node, KHÔNG tồn tại trong trình duyệt — đổi thẳng import ở đó sẽ vỡ bundle client
 // ngay khi build. Nên giữ nguyên chúng (Worker vẫn cách ly bằng `terminate()`), và file này
-// lắp lại đúng các mảnh THUẦN đã có (`parseHTML`, `thucHien()`, `moTaCayDom()`, `taoFetchGia()`)
+// lắp lại đúng các mảnh THUẦN đã có (`parseHTML`, `thucHien()`, `moTaCayDom()`, `taoFetchTheoApi()`)
 // nhưng thay DUY NHẤT dòng thực thi script học viên: `new Function(...)` → `vm.runInContext()`
 // trong một context TỐI GIẢN (không `require`/`process`/`global`) + timeout cứng.
 //

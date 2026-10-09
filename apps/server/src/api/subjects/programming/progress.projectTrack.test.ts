@@ -161,7 +161,7 @@ describe('bước dự án T2/T3 — đối xử y như bước T1', () => {
   })
 
   it('bước T2/T3 đúng khuôn nhưng KHÔNG tồn tại → 400, không ghi DB', async () => {
-    for (const lessonId of ['t2-p1-s99', 't3-p2-s1']) {
+    for (const lessonId of ['t2-p1-s99', 't3-p2-s99']) {
       vi.clearAllMocks()
       const res = await handler(req('POST', { lessonId, status: 'completed' }))
       expect(res.status, lessonId).toBe(400)
