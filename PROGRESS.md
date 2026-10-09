@@ -1190,13 +1190,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
   còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`] Bảng nháp STEM
-  (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, còn Vật lí.** `0547` (đặc tả
+  (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên (`0552`).** `0547` (đặc tả
   `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
   NGHIỆM THỰC với đề, chính xác (đa thức hữu tỉ BigInt + Sturm, giữ điều kiện xác định) → `✓ Hợp lệ`
   / `✗ Đổi nghiệm` (mất/thêm nghiệm) / `✗ Chia cho 0`; Hoá — đếm nguyên tử + điện tích, bắt đổi chất
   → `✗ Lệch nguyên tử` / `✗ Lệch điện tích` / `✗ Đổi chất`; còn lại `? Chưa tự kiểm được` kèm câu
-  nói rõ phạm vi. "Giải xong" cần `isFinalAnswer`. **Còn lại:** (1) Vật lí — kiểm thứ nguyên từng
-  bước (cần gán thứ nguyên cho biến theo đề); (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất
+  nói rõ phạm vi. "Giải xong" cần `isFinalAnswer`. **Còn lại:** (1) Vật lí — ĐÃ kiểm thứ nguyên từng
+  bước ở `0552` (`stepCheckPhysics.ts`, đặc tả `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md`):
+  lệch đã chứng minh → `✗ Lệch thứ nguyên`, khớp vẫn là "?" (điều kiện cần); CÒN THIẾU bảng
+  `variables` cho đề Vật lí của ngân hàng đề (chưa khai → "chưa tự kiểm được") và giao diện chưa gửi
+  `variables` khi tạo đề; (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất
   phương trình, nhiều ẩn, dấu chia `:`; (3) `generateMicroHint` còn đưa thẳng `x = 5` cho đề mẫu (trái
   Socratic); (4) ngân hàng đề STEM vẫn là dữ liệu mẫu `S_{n} = …` và giao diện chưa gọi
   `submit_solution` (`0539`); (5) ở 390px hàng nhập của bảng nháp chật (nút "Gợi ý" bị ép xuống 2

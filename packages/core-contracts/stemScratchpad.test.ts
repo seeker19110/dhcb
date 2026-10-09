@@ -4,6 +4,7 @@ import {
   StemSubjectTypeSchema,
   ScratchpadStepSchema,
   StemProblemStateSchema,
+  StemVariableTableSchema,
   ScratchpadStepValidationSchema,
   ketQuaBuoc,
   nhanKetQuaBuoc,
@@ -114,10 +115,31 @@ describe('STEM Scratchpad Contracts', () => {
     expect(loi('unbalanced_charge')).toBe('✗ Lệch điện tích')
     expect(loi('substance_changed')).toBe('✗ Đổi chất')
     expect(loi('division_by_zero')).toBe('✗ Chia cho 0')
+    expect(loi('dimension_mismatch')).toBe('✗ Lệch thứ nguyên')
     expect(loi('logic_gap')).toBe('✗ Cần chỉnh sửa')
     // Bước cũ (trước 0473) không có status → không bao giờ thành ✓.
     expect(nhanKetQuaBuoc({ ...base, isValid: true, errorType: 'none' })).toBe(
       '? Chưa tự kiểm được',
     )
+  })
+
+  it('bảng thứ nguyên biến: tuỳ chọn (đề cũ vẫn hợp lệ), có trần số mục (changelog 0552)', () => {
+    expect(StemVariableTableSchema.safeParse({ v: 'm/s', t: 's', N: '' }).success).toBe(true)
+    expect(StemVariableTableSchema.safeParse({ '': 'm' }).success).toBe(false)
+    const qua = Object.fromEntries(Array.from({ length: 65 }, (_, i) => [`x_${i}`, 'm']))
+    expect(StemVariableTableSchema.safeParse(qua).success).toBe(false)
+    const de = {
+      id: 'p',
+      personId: '11111111-1111-4111-8111-111111111111',
+      subject: 'physics',
+      title: 't',
+      problemStatement: 's',
+      steps: [],
+      isSolved: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    expect(StemProblemStateSchema.safeParse(de).success).toBe(true)
+    expect(StemProblemStateSchema.safeParse({ ...de, variables: { v: 'm/s' } }).success).toBe(true)
   })
 })

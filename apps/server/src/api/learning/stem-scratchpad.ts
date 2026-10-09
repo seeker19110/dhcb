@@ -2,7 +2,11 @@
 import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import { StemScratchpadService } from '@dhcb/core-ai/stemScratchpadService'
-import { StemProblemState, StemSubjectType } from '@dhcb/core-contracts/stemScratchpad'
+import {
+  StemProblemState,
+  StemSubjectType,
+  StemVariableTableSchema,
+} from '@dhcb/core-contracts/stemScratchpad'
 import { filterStemQuestions, getStemQuestionById } from '@dhcb/core-ai/stemQuestionBank'
 import type { StemQuestion } from '@dhcb/core-ai/stemQuestionBank'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
@@ -120,6 +124,14 @@ export default async function handler(req: Request): Promise<Response> {
         if (!subject || !title || !problemStatement) {
           return jsonResponse({ error: 'Missing required problem fields' }, 400)
         }
+        // Bảng thứ nguyên biến (đề Vật lí, changelog 0552) — dữ liệu ngoài nên validate bằng Zod.
+        const variables =
+          body.variables === undefined
+            ? undefined
+            : StemVariableTableSchema.safeParse(body.variables)
+        if (variables !== undefined && !variables.success) {
+          return jsonResponse({ error: 'Invalid variables table' }, 400)
+        }
 
         const prob = StemScratchpadService.createProblemSession({
           personId,
@@ -127,6 +139,7 @@ export default async function handler(req: Request): Promise<Response> {
           title,
           problemStatement,
           problemLatex,
+          ...(variables?.success ? { variables: variables.data } : {}),
         })
         await saveProblem(personId, await readProblems(personId), prob)
         return jsonResponse({ success: true, problem: prob }, 200)
