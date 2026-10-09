@@ -44,6 +44,15 @@ describe('VisionSolver Contracts', () => {
     expect(parsed.confidence).toBe(0.98)
   })
 
+  it('không tự điền confidence khi thiếu (không bịa số mặc định)', () => {
+    const parsed = VisionSolveResponseSchema.parse({
+      problemText: 'Đề',
+      steps: [{ title: 'B1', detail: 'Giải' }],
+      finalAnswer: 'x = 1',
+    })
+    expect(parsed.confidence).toBeUndefined()
+  })
+
   it('rejects empty steps response', () => {
     const invalid = {
       problemText: 'Bài toán',
