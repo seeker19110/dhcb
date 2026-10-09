@@ -26,7 +26,7 @@ import * as path from 'node:path'
 import * as dotenv from 'dotenv'
 import { generateChatText } from '@dhcb/core-ai/chatFallback'
 import { buildGoalDecompositionPrompt } from '@dhcb/core-personal/actionCanvasPrompt'
-import { sanitizeGoal } from '@dhcb/core-personal/goalDecomposition'
+import { GOAL_DECOMPOSITION_JSON_SCHEMA, sanitizeGoal } from '@dhcb/core-personal/goalDecomposition'
 import {
   scoreActionCanvasOutput,
   summarizeActionCanvas,
@@ -82,6 +82,8 @@ async function main(): Promise<void> {
       mode: 'eval-action-canvas',
       // Cùng nhiệm vụ với production → cùng model Claude (aiConfig.ts#getAnthropicRoute).
       task: 'action_canvas',
+      // Cùng khuôn JSON ép Claude như production — eval đo đúng thứ người dùng nhận.
+      outputSchema: GOAL_DECOMPOSITION_JSON_SCHEMA,
     })
 
     const score = scoreActionCanvasOutput(f, text ?? '')

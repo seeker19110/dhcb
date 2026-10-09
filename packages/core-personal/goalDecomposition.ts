@@ -14,6 +14,7 @@ import {
   type CanvasEdge,
   type CanvasNode,
 } from '@dhcb/core-contracts/actionCanvas'
+import { arr, obj, str, strEnum, type JsonSchema } from '@dhcb/core-ai/jsonSchema'
 import { ActionCanvasService } from './actionCanvasService.js'
 
 /** Trần số bước AI được đề xuất (không tính nút mục tiêu gốc). */
@@ -60,7 +61,8 @@ function cleanLabel(raw: string): string {
 // Miền hợp lệ cho bước do AI đề xuất: CHỈ hai trụ còn thật + chung. KHÔNG dùng
 // `CanvasDomainSchema` (nó đổi career/startup/life về general để đọc canvas CŨ) — model trả miền đã
 // xoá là dấu hiệu lạc prompt, phải bị từ chối chứ không lặng lẽ sửa hộ.
-const StepDomainSchema = z.enum(['learning', 'work', 'general'])
+export const STEP_DOMAINS = ['learning', 'work', 'general'] as const
+const StepDomainSchema = z.enum(STEP_DOMAINS)
 
 const StepSchema = z
   .object({
@@ -84,6 +86,29 @@ export const GoalDecompositionSchema = z
   .strict()
 
 export type DecompositionStep = z.infer<typeof StepSchema>
+
+/**
+ * JSON Schema gửi Claude (structured outputs, `output_config.format`) — API giải mã có ràng buộc
+ * nên đầu ra luôn là JSON đúng khuôn, hết hẳn ca `not_json`/thiếu khoá/miền lạ. Đây CHỈ là lớp
+ * thứ nhất: API không hỗ trợ trần độ dài/số phần tử/regex, nên `parseGoalDecomposition` (Zod +
+ * kiểm DAG/độ sâu/link) vẫn chạy y nguyên — và là lớp duy nhất khi rơi xuống Groq/Gemini.
+ * Khoá phải khớp `StepSchema` và khuôn trong prompt (test `goalDecomposition.test.ts` canh).
+ */
+export const GOAL_DECOMPOSITION_JSON_SCHEMA: JsonSchema = obj({
+  steps: arr(
+    obj({
+      key: str('"s1", "s2", … lần lượt, không trùng.'),
+      title: str(`Bắt đầu bằng động từ, tối đa ${STEP_TITLE_MAX} ký tự.`),
+      detail: str(`Một câu giải thích cách làm, tối đa ${STEP_DETAIL_MAX} ký tự.`),
+      domain: strEnum(STEP_DOMAINS),
+      dependsOn: arr(
+        str(),
+        `Key các bước phải xong trước (tối đa ${MAX_DEPS_PER_STEP}); [] nếu làm được ngay.`,
+      ),
+    }),
+    `${MIN_STEPS}–${MAX_STEPS} bước.`,
+  ),
+})
 
 export type DecompositionFailure =
   | 'empty'

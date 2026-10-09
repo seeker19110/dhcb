@@ -40,7 +40,7 @@ học viên không còn mất lượt vì "AI trả về định dạng không �
 - Không gỡ phần kiểm JSON ở frontend. Đó là lớp phòng thủ thứ hai, và là lớp duy nhất khi rơi
   xuống dự phòng.
 - Chưa áp schema cho góp ý code, Action Canvas, tranh biện (đi qua `chatFallback.ts`). Các đường
-  đó có trình kiểm riêng, để đợt sau nếu cần.
+  đó có trình kiểm riêng, để đợt sau nếu cần. → Action Canvas làm ở `docs/specs/2026-10-09-structured-outputs-action-canvas.md`.
 
 ## ② Điểm chạm
 

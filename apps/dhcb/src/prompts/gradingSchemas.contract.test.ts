@@ -11,8 +11,8 @@ import {
   getGradingSchema,
   isGradingSchemaName,
   type GradingSchemaName,
-  type JsonSchema,
 } from '@dhcb/core-ai/gradingSchemas'
+import { schemaKeys, schemaViolations } from '@dhcb/core-ai/jsonSchema'
 import {
   chatFullEvaluationPrompt,
   interviewAnswerFeedbackPrompt,
@@ -38,29 +38,6 @@ function promptJsonKeys(prompt: string): Set<string> {
   return new Set([...block.matchAll(/"([a-z_]+)"\s*:/g)].map((m) => m[1]!))
 }
 
-function schemaKeys(node: JsonSchema, out = new Set<string>()): Set<string> {
-  if (node.type === 'object') {
-    for (const [k, child] of Object.entries(node.properties)) {
-      out.add(k)
-      schemaKeys(child, out)
-    }
-  } else if (node.type === 'array') {
-    schemaKeys(node.items, out)
-  }
-  return out
-}
-
-// Duyệt mọi nút để kiểm luật của API structured outputs.
-function allNodes(node: JsonSchema, out: JsonSchema[] = []): JsonSchema[] {
-  out.push(node)
-  if (node.type === 'object') Object.values(node.properties).forEach((c) => allNodes(c, out))
-  if (node.type === 'array') allNodes(node.items, out)
-  return out
-}
-
-// Từ khoá API KHÔNG hỗ trợ — gửi lên là 400 cho MỌI lượt chấm.
-const UNSUPPORTED = ['minimum', 'maximum', 'multipleOf', 'minLength', 'maxLength', 'maxItems']
-
 describe('schema chấm điểm ↔ prompt', () => {
   for (const name of GRADING_SCHEMA_NAMES) {
     for (const dir of ['A', 'B'] as const) {
@@ -70,13 +47,7 @@ describe('schema chấm điểm ↔ prompt', () => {
     }
 
     it(`${name}: mọi object additionalProperties:false + required đủ mọi khoá; không từ khoá cấm`, () => {
-      for (const node of allNodes(getGradingSchema(name))) {
-        for (const kw of UNSUPPORTED) expect(node).not.toHaveProperty(kw)
-        if (node.type === 'object') {
-          expect(node.additionalProperties).toBe(false)
-          expect([...node.required].sort()).toEqual(Object.keys(node.properties).sort())
-        }
-      }
+      expect(schemaViolations(getGradingSchema(name))).toEqual([])
     })
   }
 

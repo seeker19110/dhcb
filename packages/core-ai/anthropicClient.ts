@@ -17,7 +17,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { AnthropicRoute } from './aiConfig.js'
-import type { JsonSchema } from './gradingSchemas.js'
+import type { JsonSchema } from './jsonSchema.js'
 import { parseAnthropicUsage, type AiTokenUsage } from './aiTokenUsage.js'
 
 type BetaMessageParam = Anthropic.Beta.Messages.BetaMessageParam

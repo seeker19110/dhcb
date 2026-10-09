@@ -15,6 +15,7 @@ import { callAnthropicText } from './anthropicClient.js'
 import { callGemini } from './geminiApi.js'
 import { GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, getAnthropicRoute, type AiTask } from './aiConfig.js'
 import { recordAiTokenUsage, type AiTokenUsage } from './aiTokenUsage.js'
+import type { JsonSchema } from './jsonSchema.js'
 
 export async function generateChatText(params: {
   system: string
@@ -25,8 +26,13 @@ export async function generateChatText(params: {
   mode: string
   /** Nhiệm vụ → server chọn model Claude phù hợp (Haiku cho việc nhanh, Sonnet cho việc cần đúng). */
   task: AiTask
+  /**
+   * Ép Claude trả JSON đúng khuôn (structured outputs). Chỉ áp cho nhánh Anthropic — Groq/Gemini
+   * không bị ép nên caller VẪN phải tự kiểm đầu ra như cũ.
+   */
+  outputSchema?: JsonSchema
 }): Promise<string | null> {
-  const { system, userMessage, maxTokens, mode, task } = params
+  const { system, userMessage, maxTokens, mode, task, outputSchema } = params
   const messages = [{ role: 'user', content: userMessage }]
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY
@@ -36,6 +42,7 @@ export async function generateChatText(params: {
       route: getAnthropicRoute(task),
       system,
       messages,
+      outputSchema,
     })
     // Token đã bị tính tiền cả khi response không dùng được (bị cắt/từ chối) → ghi trước.
     if (res.kind === 'success' || res.kind === 'unusable') {
