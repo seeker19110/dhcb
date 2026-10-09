@@ -181,9 +181,6 @@ export default function ArticulatoryPhoneticsVisualizer() {
                 fill={guide.vocalCordVibration ? '#10b981' : '#475569'}
                 className={guide.vocalCordVibration ? 'animate-pulse' : ''}
               />
-              <text x="30" y="172" fill="#94a3b8" fontSize="8" fontFamily="sans-serif">
-                {guide.vocalCordVibration ? 'Thanh quản rung' : 'Vô thanh (không rung)'}
-              </text>
 
               {/* Lưỡi giải phẫu động (Tongue Curve) */}
               <path
@@ -205,6 +202,12 @@ export default function ArticulatoryPhoneticsVisualizer() {
               />
             </svg>
 
+            {/* Nhãn dây thanh là chữ HTML theo token, không phải <text> trong SVG: trước đây tô
+                cứng `#94a3b8` cỡ ~7px — ở theme sáng chỉ ≈ 2,6:1 và axe không đo được chữ SVG
+                (lộ ra khi quét trạng thái sau tương tác, changelog 0544). */}
+            <div className="mt-1 text-[0.6875rem] font-semibold text-content-secondary">
+              Dây thanh: {guide.vocalCordVibration ? 'thanh quản rung' : 'vô thanh (không rung)'}
+            </div>
             <div className="mt-2 text-[0.6875rem] text-center text-content-secondary max-w-xs">
               {guide.airflowDescription}
             </div>
@@ -249,8 +252,9 @@ export default function ArticulatoryPhoneticsVisualizer() {
                   </span>
                 </div>
 
-                {/* Simulated Pitch Chart */}
-                <div className="h-16 w-full bg-surface-raised rounded-lg p-2 flex items-center relative overflow-hidden border border-line-subtle">
+                {/* Simulated Pitch Chart — chú giải nằm DƯỚI biểu đồ, không đè lên đường cong
+                    (chữ đè lên nét vẽ thì nền không xác định, axe không đo được — changelog 0544). */}
+                <div className="h-16 w-full bg-surface-raised rounded-lg p-2 flex items-center overflow-hidden border border-line-subtle">
                   {/* Native curve */}
                   <svg className="w-full h-full" viewBox="0 0 300 50">
                     <path
@@ -267,10 +271,10 @@ export default function ArticulatoryPhoneticsVisualizer() {
                       strokeWidth="2.5"
                     />
                   </svg>
-                  <div className="absolute bottom-1 right-2 text-[0.6875rem] text-content-secondary">
-                    <span className="text-content-secondary">--- Bản xứ</span> |{' '}
-                    <span className="text-teal-300 theme-light:text-teal-900">― Của bạn</span>
-                  </div>
+                </div>
+                <div className="text-right text-[0.6875rem] text-content-secondary">
+                  <span>--- Bản xứ</span> |{' '}
+                  <span className="text-teal-300 theme-light:text-teal-900">― Của bạn</span>
                 </div>
 
                 <p className="text-[0.6875rem] text-content-secondary italic">

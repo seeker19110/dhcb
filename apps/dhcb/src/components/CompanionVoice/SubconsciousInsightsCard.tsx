@@ -62,15 +62,19 @@ export const SubconsciousInsightsCard: React.FC = () => {
 
   return (
     <div className="bg-gradient-to-br from-purple-950/50 via-zinc-900/90 to-indigo-950/50 theme-light:from-purple-50 theme-light:to-indigo-50 border border-purple-700/50 rounded-2xl p-4 space-y-3.5 shadow-xl animate-fade-in text-xs">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-xl bg-purple-500/20 text-purple-300 theme-light:text-purple-800 border border-purple-500/30">
+      {/* Header mobile-first (changelog 0544): ở 390px chip "V3 Autonomous" và nút "Hợp nhất lại"
+          từng ép tiêu đề xuống 3 dòng. Nay khối chữ co giãn (`min-w-0 flex-1`), chip xuống dòng
+          dưới tiêu đề khi chật, nút chỉ còn biểu tượng 44×44 (tên đọc qua `aria-label`) cho tới
+          `sm`, từ `sm` hiện lại nhãn chữ như cũ. */}
+      <div className="flex items-start justify-between gap-3 sm:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-2 sm:items-center">
+          <div className="shrink-0 p-1.5 rounded-xl bg-purple-500/20 text-purple-300 theme-light:text-purple-800 border border-purple-500/30">
             <Brain className="w-4 h-4" />
           </div>
-          <div>
-            <h4 className="font-bold text-[#fff] theme-light:text-purple-950 text-sm flex items-center gap-1.5">
-              <span>Nhận thức ngầm & dự đoán đón đầu</span>
-              <span className="px-1.5 py-0.5 rounded text-[0.6875rem] font-mono bg-purple-500/20 text-purple-200 theme-light:text-purple-900 border border-purple-500/30">
+          <div className="min-w-0">
+            <h4 className="font-bold text-[#fff] theme-light:text-purple-950 text-sm flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <span className="text-balance">Nhận thức ngầm & dự đoán đón đầu</span>
+              <span className="whitespace-nowrap px-1.5 py-0.5 rounded text-[0.6875rem] font-mono bg-purple-500/20 text-purple-200 theme-light:text-purple-900 border border-purple-500/30">
                 V3 Autonomous
               </span>
             </h4>
@@ -83,11 +87,12 @@ export const SubconsciousInsightsCard: React.FC = () => {
         <button
           onClick={triggerConsolidation}
           disabled={triggering}
-          className="tap-44 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 theme-light:text-purple-800 border border-purple-500/40 transition disabled:opacity-50 text-xs font-semibold"
+          aria-label={triggering ? 'Đang hợp nhất…' : 'Hợp nhất lại'}
+          className="tap-44 shrink-0 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 theme-light:text-purple-800 border border-purple-500/40 transition disabled:opacity-50 text-xs font-semibold"
           title="Kích hoạt chu trình hợp nhất nhận thức ngầm"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${triggering ? 'animate-spin' : ''}`} />
-          <span>{triggering ? 'Đang hợp nhất…' : 'Hợp nhất lại'}</span>
+          <span className="hidden sm:inline">{triggering ? 'Đang hợp nhất…' : 'Hợp nhất lại'}</span>
         </button>
       </div>
 
