@@ -263,14 +263,39 @@ describe('POST delete — xác minh lại (step-up)', () => {
     expect(svc.deleteAccount).not.toHaveBeenCalled()
   })
 
-  it('2FA: mã sai → 401 TWO_FACTOR_INVALID, trừ lượt theo bộ đếm CHUNG của /api/two-factor', async () => {
+  it('2FA: mã sai → 401 lỗi CHUNG, trừ lượt theo bộ đếm CHUNG của /api/two-factor', async () => {
     tf.getTwoFactorStatus.mockResolvedValue({ enabled: true, pending: false, recoveryCodesLeft: 5 })
     tf.hasStepUp.mockResolvedValue(false)
     tf.verifyTwoFactor.mockResolvedValue({ ok: false, reason: 'invalid' })
     const res = await handler(post({ ...DELETE_OK, twoFactorCode: '000000' }))
     expect(res.status).toBe(401)
-    expect((await json(res)).code).toBe('TWO_FACTOR_INVALID')
+    expect((await json(res)).code).toBe('REAUTH_FAILED')
     expect(counters.consumed).toContain('2fa-user:user-1')
+    expect(svc.deleteAccount).not.toHaveBeenCalled()
+  })
+
+  // Rà bảo mật 0541: phản hồi không được thành "máy dò" mật khẩu khi 2FA bật.
+  it('2FA bật, thiếu mã → 403 STEP_UP_REQUIRED mà KHÔNG kiểm mật khẩu', async () => {
+    tf.getTwoFactorStatus.mockResolvedValue({ enabled: true, pending: false, recoveryCodesLeft: 5 })
+    tf.hasStepUp.mockResolvedValue(false)
+    reauth.verifyAccountReauth.mockResolvedValue({ ok: false, reason: 'failed' })
+    const res = await handler(post(DELETE_OK))
+    expect(res.status).toBe(403)
+    expect((await json(res)).code).toBe('STEP_UP_REQUIRED')
+    expect(reauth.verifyAccountReauth).not.toHaveBeenCalled()
+  })
+
+  it('2FA bật: sai mật khẩu và sai mã trả CÙNG một phản hồi; sai mật khẩu không tiêu mã 2FA', async () => {
+    tf.getTwoFactorStatus.mockResolvedValue({ enabled: true, pending: false, recoveryCodesLeft: 5 })
+    tf.hasStepUp.mockResolvedValue(false)
+    reauth.verifyAccountReauth.mockResolvedValueOnce({ ok: false, reason: 'failed' })
+    const wrongPassword = await handler(post({ ...DELETE_OK, twoFactorCode: '123456' }))
+    expect(tf.verifyTwoFactor).not.toHaveBeenCalled()
+    tf.verifyTwoFactor.mockResolvedValueOnce({ ok: false, reason: 'invalid' })
+    const wrongCode = await handler(post({ ...DELETE_OK, twoFactorCode: '123456' }))
+    expect(wrongPassword.status).toBe(401)
+    expect(wrongCode.status).toBe(401)
+    expect(await json(wrongPassword)).toEqual(await json(wrongCode))
     expect(svc.deleteAccount).not.toHaveBeenCalled()
   })
 

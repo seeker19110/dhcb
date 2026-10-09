@@ -17,14 +17,12 @@ import {
   getCorsHeaders,
   SECURITY_HEADERS,
   checkRateLimit,
-  consumeWindowCounter,
-  resetCounter,
   validateAuth,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { buildClearSessionCookie, readSessionCookie } from '@dhcb/core-auth/sessionCookie'
-import { getTwoFactorStatus, hasStepUp, verifyTwoFactor } from '@dhcb/core-auth/twoFactor'
-import { getReauthMethods, verifyAccountReauth } from '@dhcb/core-auth/accountReauth'
+import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
+import { getReauthMethods } from '@dhcb/core-auth/accountReauth'
 import { resolvePlan } from '@dhcb/core-billing/plan'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 import {
@@ -45,21 +43,17 @@ import {
 } from '@dhcb/core-personal/accountErasureShared'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
-import {
-  TWO_FACTOR_USER_MAX_ATTEMPTS,
-  TWO_FACTOR_USER_WINDOW_MS,
-  twoFactorUserKey,
-} from './two-factor.js'
+import { requireReauth } from '../_lib/reauthGate.js'
+
+// Giữ export cũ cho nơi đang import từ account.ts (test, tài liệu) — nguồn thật ở reauthGate.ts.
+export {
+  ACCOUNT_REAUTH_MAX_ATTEMPTS,
+  ACCOUNT_REAUTH_WINDOW_MS,
+  accountReauthKey,
+} from '../_lib/reauthGate.js'
 
 /** Theo IP — mọi request vào route (kể cả GET options). */
 export const ACCOUNT_IP_LIMIT_PER_MIN = 10
-/** Theo NGƯỜI DÙNG — số lần thử xác minh lại (mật khẩu/Google) trong cửa sổ. */
-export const ACCOUNT_REAUTH_MAX_ATTEMPTS = 5
-export const ACCOUNT_REAUTH_WINDOW_MS = 15 * 60_000
-
-export function accountReauthKey(userId: string): string {
-  return `account-reauth:${userId}`
-}
 
 function errorBody(
   error: string,
@@ -181,90 +175,20 @@ export default async function handler(req: Request): Promise<Response> {
     if (await hasLivePendingPayment(pool, userId)) return pendingPaymentResponse(allHeaders)
   }
 
-  // ── Xác minh lại danh tính ─────────────────────────────────────────────────
-  if (
-    !(await consumeWindowCounter(
-      accountReauthKey(userId),
-      ACCOUNT_REAUTH_MAX_ATTEMPTS,
-      ACCOUNT_REAUTH_WINDOW_MS,
-    ))
-  ) {
-    logSecurityEvent('ACCOUNT_REAUTH_THROTTLED', clientIp, { subject, action: body.action })
-    return jsonResponse(
-      errorBody('Thử xác minh quá nhiều lần — chờ 15 phút rồi thử lại.', 'RATE_LIMITED'),
-      429,
-      { ...allHeaders, 'Retry-After': String(ACCOUNT_REAUTH_WINDOW_MS / 1000) },
-    )
-  }
-
-  const reauth = await verifyAccountReauth(pool, userId, body.reauth)
-  if (!reauth.ok) {
-    logSecurityEvent('ACCOUNT_REAUTH_FAILED', clientIp, {
-      subject,
-      action: body.action,
-      method: body.reauth.method,
-      reason: reauth.reason,
-    })
-    if (reauth.reason === 'unavailable') {
-      return jsonResponse(
-        errorBody(
-          'Tài khoản của bạn không dùng được cách xác minh này. Hãy chọn cách khác hoặc liên hệ hỗ trợ.',
-          'REAUTH_UNAVAILABLE',
-        ),
-        409,
-        allHeaders,
-      )
-    }
-    return jsonResponse(
-      errorBody(
-        reauth.reason === 'stale'
-          ? 'Phiên Google đã cũ — bấm "Xác minh bằng Google" lại rồi thử ngay.'
-          : body.reauth.method === 'password'
-            ? 'Mật khẩu không đúng.'
-            : 'Không xác minh được tài khoản Google này.',
-        'REAUTH_FAILED',
-      ),
-      401,
-      allHeaders,
-    )
-  }
-
-  // ── Lớp 2FA (nếu bật): TÁI DÙNG cửa sổ nâng quyền + bộ đếm sai mã của /api/two-factor ───
-  const twoFactor = await getTwoFactorStatus(pool, userId)
-  if (twoFactor.enabled && !(await hasStepUp(pool, userId, readSessionCookie(req)))) {
-    if (!body.twoFactorCode) {
-      return jsonResponse(
-        errorBody('Nhập mã xác thực hai bước để tiếp tục.', 'STEP_UP_REQUIRED'),
-        403,
-        allHeaders,
-      )
-    }
-    const attemptKey = twoFactorUserKey(userId)
-    if (
-      !(await consumeWindowCounter(
-        attemptKey,
-        TWO_FACTOR_USER_MAX_ATTEMPTS,
-        TWO_FACTOR_USER_WINDOW_MS,
-      ))
-    ) {
-      logSecurityEvent('TWO_FACTOR_USER_THROTTLED', clientIp, { subject })
-      return jsonResponse(
-        errorBody('Nhập sai mã quá nhiều lần — chờ 15 phút rồi thử lại.', 'RATE_LIMITED'),
-        429,
-        { ...allHeaders, 'Retry-After': String(TWO_FACTOR_USER_WINDOW_MS / 1000) },
-      )
-    }
-    const verified = await verifyTwoFactor(pool, userId, body.twoFactorCode)
-    if (!verified.ok) {
-      logSecurityEvent('AUTH_FAILURE', clientIp, { path: '/api/account', action: body.action })
-      return jsonResponse(
-        errorBody('Mã xác thực hai bước không đúng.', 'TWO_FACTOR_INVALID'),
-        401,
-        allHeaders,
-      )
-    }
-    await resetCounter(attemptKey)
-  }
+  // ── Xác minh lại danh tính + 2FA: cổng dùng chung (reauthGate.ts, changelog 0541) ────
+  const denied = await requireReauth({
+    req,
+    pool,
+    userId,
+    clientIp,
+    headers: allHeaders,
+    reauth: body.reauth,
+    twoFactorCode: body.twoFactorCode,
+    subject,
+    action: body.action,
+    path: '/api/account',
+  })
+  if (denied) return denied
 
   // ── Xuất ───────────────────────────────────────────────────────────────────
   if (body.action === 'export') {
