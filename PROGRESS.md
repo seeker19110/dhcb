@@ -1366,10 +1366,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   **Rà mắt Sinh xong (2026-09-27, `docs/changelog/0462-*.md`):** 64/64 soi 5 mốc, sửa 47 (khoảng
   20 sai KIẾN THỨC: chạc chữ Y vẽ ngược, nguyên phân 2n = 4 không có cặp tương đồng, phả hệ "ba thế
   hệ" chỉ có hai, đường S nằm trên đường J…) + một bài gắn nhầm hoạt ảnh (`sinh10-c8-b26`). **Chuỗi
-  rà mắt 4 môn STEM xong.** **Còn thiếu:** 21 hoạt ảnh Sinh dạng "chuỗi ô chữ" đúng nhưng nghèo
-  hình — **5/21 đã vẽ lại thành hình thật ở `docs/changelog/0561-*.md`** (trùng ngưng, virus nhân
-  lên, nephron, đột biến điểm, ADN tái tổ hợp — đúng 5 bài ưu tiên của changelog 0462), **còn 16**;
-  cấu trúc animation cho môn Anh (chưa thiết kế).
+  rà mắt 4 môn STEM xong.** **Hoạt ảnh Sinh dạng "chuỗi ô chữ": đã vẽ lại hết thành hình thật**
+  (đếm lại trên `main` là 20 bài, không phải 21 như 0462 ghi: 5 bài ở changelog 0561 — PR #1306,
+  15 bài còn lại ở changelog 0564). **Còn thiếu:** cấu trúc animation cho môn Anh (chưa
+  thiết kế).
   (Bản này thay 9 file bài học của #1187 — changelog 0461; `shots:lesson-anim` chạy được trên Windows từ #1187.)
   Đặc tả: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`.
 - ✅ **[2026-09-20 — PR #1061 → ĐÓNG 2026-09-25, `docs/changelog/0447-*.md`] Ảnh Tầng 8b cho sửa
