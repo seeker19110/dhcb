@@ -1,5 +1,21 @@
 # Eval gia sư AI — baseline (⑤ T1)
 
+> ## ⚠️ HIỆU LỰC CỦA BASELINE — cập nhật 2026-10-09 (changelog 0553)
+>
+> **Mọi số liệu bên dưới (2026-08-26) CHỈ còn hiệu lực với bộ 62 câu cũ** (toàn chiều A). Golden
+> set nay là **180 câu** (62 cũ + 118 mới ở `scripts/eval-tutor-fixtures-extra.json`, cả hai chiều
+> A/B, nhóm đúng/ca biên 60 câu): **bộ mới CHƯA có baseline** — không so số của bộ 180 câu với bảng
+> dưới đây. Muốn đối chiếu với baseline cũ: `npm run eval:tutor -- --limit 62` (bộ cũ luôn đứng
+> trước khi gộp).
+>
+> **Việc tay chủ dự án (cần key AI thật):** chạy `npm run eval:tutor -- --runs 3 --write-baseline`
+> (≈ 540 lời gọi/chế độ), xem lại các câu bị hỏng, rồi commit file này. Lưu ý lệnh ghi đè TOÀN BỘ file
+> (kể cả phần "Dải nhiễu" cuối file) — nếu cần giữ phần đó, chép lại sau khi chạy. `--runs N` in
+> trung bình ± độ lệch chuẩn giữa các lượt và khoảng tin cậy Wilson 95% theo từng nhóm lỗi; hai lần
+> chạy chỉ coi là KHÁC NHAU khi khoảng Wilson không chồng lên nhau. `--group <tên>` chạy riêng một
+> nhóm (loại lỗi · error · correct · edge · clean · A · B). `CLAUDE.md` §8 không đổi: vẫn "không tụt
+> so với baseline" — baseline mới (nhiều lượt) mới đủ rộng để luật đó có nghĩa.
+
 > Sinh tự động bởi `npm run eval:tutor -- --write-baseline`. KHÔNG sửa tay phần số liệu.
 > Phương pháp + cách đọc chỉ số: xem cuối file.
 

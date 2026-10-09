@@ -1759,8 +1759,13 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   bằng chứng; nghi ngờ thì chạy ≥ 3 lượt so trung bình; Type-hit không dùng pass/fail; chỉ số
   đáng tin nhất là recall theo từng nhóm lỗi).
 
-  **Cách chữa thật** là mở rộng golden set — nhất là nhóm câu đúng/ca biên, hiện chỉ 18 câu —
-  chứ không phải chạy đi chạy lại cùng 62 câu. Chưa làm vì cần soạn fixture mới có đối chiếu.
+  **[2026-10-09, changelog 0553] ĐÃ THU HẸP:** golden set mở rộng 62 → **180 câu** (nhóm
+  đúng/ca biên 18 → 60, mọi loại lỗi ≥ 8 câu, thêm chiều B với 4 loại lỗi riêng), mỗi câu có bản
+  sửa + giải thích + nguồn đối chiếu, cổng tĩnh `scripts/evalTutorFixtures.test.ts` canh; thêm
+  `--runs N` (trung bình ± SD + Wilson 95%) và `--group`. **Còn nợ — việc tay chủ dự án:** chạy
+  `npm run eval:tutor -- --runs 3 --write-baseline` với key AI thật để có baseline cho bộ 180 câu
+  (số 2026-08-26 chỉ còn đúng với bộ 62 câu cũ; `--limit 62` tái hiện bộ đó). Xong việc này mới đóng
+  hẳn nợ.
 
   **Rủi ro nếu để lâu:** Gemini là fallback THỨ 3 trong chat (sau Groq, Anthropic) — sự cố chỉ lộ
   ra khi cả hai provider chính cùng lúc gặp vấn đề, tức âm thầm mất một lớp dự phòng mà không ai
