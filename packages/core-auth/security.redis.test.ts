@@ -18,6 +18,7 @@ class FakeRedis {
   eval = vi.fn<(...args: unknown[]) => Promise<unknown>>()
   ping = vi.fn<() => Promise<string>>(async () => 'PONG')
   del = vi.fn<(key: string) => Promise<number>>(async () => 1)
+  get = vi.fn<(key: string) => Promise<string | null>>(async () => null)
   constructor(public url: string) {
     if (FakeRedis.ctorError) throw FakeRedis.ctorError
     FakeRedis.instances.push(this)
@@ -216,6 +217,36 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       const { consumeWindowCounterStatus } = await loadSecurity()
       expect(await consumeWindowCounterStatus('m', 1, 60_000)).toBe('ok')
       expect(await consumeWindowCounterStatus('m', 1, 60_000)).toBe('exhausted')
+    })
+
+    // changelog 0559: trần lượt nộp sai cần ĐỌC mà không tiêu (mở lượt) và biết SỐ ĐẾM (còn mấy lượt).
+    it('consumeWindowCounterCount: Redis trả số đếm của Lua; production Redis lỗi → unavailable', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { consumeWindowCounterCount } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.eval.mockResolvedValueOnce(4)
+      expect(await consumeWindowCounterCount('f', 1000)).toBe(4)
+      client.eval.mockRejectedValueOnce(new Error('down'))
+      expect(await consumeWindowCounterCount('f', 1000)).toBe('unavailable')
+    })
+
+    it('peekWindowCounter: GET không tăng; null/rác → 0; production Redis lỗi/connecting → unavailable', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { peekWindowCounter } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.eval.mockClear()
+      client.get.mockResolvedValueOnce('3').mockResolvedValueOnce(null).mockResolvedValueOnce('x')
+      expect(await peekWindowCounter('f')).toBe(3)
+      expect(await peekWindowCounter('f')).toBe(0)
+      expect(await peekWindowCounter('f')).toBe(0)
+      expect(client.get).toHaveBeenCalledWith('f')
+      expect(client.eval).not.toHaveBeenCalled()
+      client.get.mockRejectedValueOnce(new Error('down'))
+      expect(await peekWindowCounter('f')).toBe('unavailable')
+      client.status = 'connecting'
+      expect(await peekWindowCounter('f')).toBe('unavailable')
     })
 
     it('resetCounterChecked: Redis xoá được → true; production Redis lỗi → false', async () => {

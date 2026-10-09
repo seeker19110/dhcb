@@ -1162,10 +1162,11 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   chặn tính đáp án trước khi mở lượt, replay cùng lượt, và xem đáp án câu sai (token HMAC, seed ẩn,
   không trả `correctId`). Còn lại hai đường, không chặn được bằng seed: (1) đọc đề rồi tra
   `dialogues.json` (đáp án là sự thật trong dữ liệu công khai) — chỉ hết khi dữ liệu hội thoại không
-  còn gửi cho giao diện (đổi kiến trúc, tốn nhiều); (2) đoán mò đạt ~16–26 %/lượt với 6 lượt nộp/phút
-  — vá được bằng trần số lần SAI theo (người, hội thoại) (~40 dòng + test). Lợi ích thấp (người học
-  chỉ tự lừa mình; thưởng ngày idempotent), nên dừng ở đây chờ quyết. Đặc tả
-  `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md` ⑤b.
+  còn gửi cho giao diện (đổi kiến trúc, tốn nhiều) — **vẫn chờ quyết**; (2) ✅ **đoán mò — đã vá
+  đợt `0559`** (PR (điền sau khi tạo)): trần 5 lượt nộp KHÔNG ĐẠT/24 giờ/(người, hội thoại), hết
+  trần → 409 `ATTEMPT_CAP` ở cả mở lượt lẫn nộp. Đo thật: đoán ngẫu nhiên đạt 25–29 %/lượt nên vẫn
+  ~77 % đạt trong 5 lượt/ngày — trần chặn VÉT CẠN tự động, không làm đoán mò bất khả. Đặc tả
+  `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md` ⑤b + ⑥.
 - 🟡 **[2026-10-08 — HẠ MỨC từ 🔴 sau `0527`] Xuất/xoá dữ liệu cá nhân `/api/persons` ĐÃ SỬA** (5 cột
   sai, bỏ nuốt lỗi, 21 bảng `person_id` trong một danh sách duy nhất — trước sót 11 bảng; test tích hợp
   Postgres thật canh danh sách khớp `information_schema`). Lưới `unhandledRejection`/`uncaughtException`

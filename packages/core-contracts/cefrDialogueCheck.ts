@@ -1,5 +1,6 @@
 // packages/core-contracts/cefrDialogueCheck.ts — Hợp đồng "server CHẤM LẠI kiểm tra hiểu hội
-// thoại CEFR" (đợt 0555) + "seed do SERVER cấp, không trả đáp án câu sai" (đợt 0558).
+// thoại CEFR" (đợt 0555) + "seed do SERVER cấp, không trả đáp án câu sai" (đợt 0558) + "trần số
+// lần NỘP SAI theo (người, hội thoại)" (đợt 0559).
 //
 // Đặc tả: docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §③ và
 // docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md §③
@@ -34,6 +35,22 @@ export const isLearnedDialogueEntry = (entry: string): boolean =>
 export const CEFR_DIALOGUE_ACTION = 'cefr-dialogue'
 /** Giá trị `?action=`: MỞ lượt — server cấp token + đề đã bỏ đáp án (đợt 0558). */
 export const CEFR_DIALOGUE_START_ACTION = 'cefr-dialogue-start'
+
+/**
+ * Trần số lượt NỘP KHÔNG ĐẠT mỗi 24 giờ cho MỘT cặp (tài khoản, hội thoại) — đợt 0559, đặc tả
+ * docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md §⑥. Khai ở gói hợp đồng vì server dùng
+ * để chặn còn giao diện dùng để nói đúng con số trong lời nhắn.
+ *
+ * VÌ SAO 5 (con số đo trên `dialogues.json` thật, 139 hội thoại × 2 chiều × 20 seed = 5 560 đề):
+ * mọi đề có 3 câu, số phương án {2,4,4} (92 %) hoặc {2,3,4} (8 %), đạt khi đúng ≥ 2/3. Đoán ngẫu
+ * nhiên đạt 25,0–29,2 % MỖI LƯỢT (trung bình 25,3 %) ⇒ trong 5 lượt/ngày xác suất đoán mò đạt là
+ * 1 − 0,747⁵ ≈ 77 % (76–82 % tuỳ đề). Tức là trần KHÔNG làm đoán mò "gần như không thể" — không
+ * trần nào ≥ 1 làm được, vì một lượt đơn đã ~25 %. Thứ trần làm được: chặn vét cạn tự động (trước
+ * đây 6 lượt nộp/phút ≈ hàng nghìn lượt/ngày → đạt trong vài giây) xuống tối đa 5 lượt sai mỗi
+ * ngày mỗi hội thoại, và buộc người làm sai liên tục DỪNG LẠI đọc hội thoại. 5 đủ rộng cho người
+ * thật (sai 1–2 lần rồi đọc lại là chuyện thường) mà không thành máy đoán.
+ */
+export const DIALOGUE_FAIL_CAP_PER_DAY = 5
 
 /** Trần độ dài token lượt làm client gửi lại (khớp `MAX_ATTEMPT_TOKEN_LENGTH` phía server). */
 export const MAX_DIALOGUE_TOKEN_LENGTH = 2048
@@ -139,6 +156,11 @@ export const DialogueCheckResultSchema = z
     /** `true` = sau request này server ĐANG giữ bản ghi "đã học" (mới ghi, hoặc đã có từ trước). */
     saved: z.boolean(),
     items: z.array(DialogueCheckItemSchema),
+    /**
+     * CHỈ khi `passed === false` (đợt 0559): số lượt nộp không đạt CÒN LẠI trong 24 giờ cho hội
+     * thoại này (0 = đã hết, lượt sau sẽ bị `ATTEMPT_CAP`).
+     */
+    attemptsLeft: z.number().int().min(0).max(DIALOGUE_FAIL_CAP_PER_DAY).optional(),
   })
   .strict()
 export type DialogueCheckResult = z.infer<typeof DialogueCheckResultSchema>
@@ -159,5 +181,6 @@ export const DialogueCheckErrorCodeSchema = z.enum([
   'ATTEMPT_USED', // lượt (token) này đã nộp rồi — mỗi lượt chỉ chấm MỘT lần, chống dò đáp án
   'ATTEMPT_EXPIRED', // token quá hạn / sai chữ ký / không thuộc tài khoản này — mở lượt mới
   'SERVICE_UNAVAILABLE', // 503: bộ đếm dùng chung (Redis) không sẵn sàng — chưa chấm, gửi lại sau
+  'ATTEMPT_CAP', // 409: đã nộp sai DIALOGUE_FAIL_CAP_PER_DAY lần trong 24 giờ — đọc lại, mai làm tiếp
 ])
 export type DialogueCheckErrorCode = z.infer<typeof DialogueCheckErrorCodeSchema>

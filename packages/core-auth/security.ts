@@ -402,21 +402,21 @@ function pruneDailyCounters(now: number): void {
 export type CounterStatus = 'ok' | 'exhausted' | 'unavailable'
 
 /**
- * Như `consumeWindowCounter` nhưng trả ba trạng thái (xem `CounterStatus`). Dev/test không có
- * Redis vẫn dùng Map in-memory như cũ.
+ * Tăng bộ đếm `key` (cửa sổ `windowMs` tính từ lượt ĐẦU) và trả SỐ ĐẾM sau khi cộng, hoặc
+ * `unavailable` khi production mà Redis không sẵn sàng (fail-closed — nơi gọi phải từ chối). Dùng
+ * khi nơi gọi cần biết còn bao nhiêu lượt (thêm 2026-10-09, changelog 0559). Dev/test không Redis
+ * dùng Map in-memory.
  */
-export async function consumeWindowCounterStatus(
+export async function consumeWindowCounterCount(
   key: string,
-  limit: number,
   windowMs: number,
-): Promise<CounterStatus> {
-  if (limit <= 0) return 'exhausted'
+): Promise<number | 'unavailable'> {
   const redis = getRedis()
   if (redis && redis.status === 'ready') {
     try {
       const count = (await redis.eval(DAILY_COUNTER_LUA, 1, key, String(windowMs))) as number
       noteRedisRecovered()
-      return count <= limit ? 'ok' : 'exhausted'
+      return count
     } catch (err) {
       noteRedisDegraded(err)
     }
@@ -428,10 +428,48 @@ export async function consumeWindowCounterStatus(
   const entry = dailyCounterMap.get(key)
   if (!entry || now > entry.resetAt) {
     dailyCounterMap.set(key, { count: 1, resetAt: now + windowMs })
-    return 'ok'
+    return 1
   }
   entry.count += 1
-  return entry.count <= limit ? 'ok' : 'exhausted'
+  return entry.count
+}
+
+/**
+ * ĐỌC số đếm hiện tại của `key` mà KHÔNG tăng (key chưa có/đã hết cửa sổ → 0). `unavailable` khi
+ * production mà Redis không sẵn sàng. Dùng để chặn sớm (vd mở lượt khi đã hết trần) mà không tiêu
+ * lượt nào (thêm 2026-10-09, changelog 0559).
+ */
+export async function peekWindowCounter(key: string): Promise<number | 'unavailable'> {
+  const redis = getRedis()
+  if (redis && redis.status === 'ready') {
+    try {
+      const raw = await redis.get(key)
+      noteRedisRecovered()
+      const count = raw === null ? 0 : Number.parseInt(raw, 10)
+      return Number.isFinite(count) && count > 0 ? count : 0
+    } catch (err) {
+      noteRedisDegraded(err)
+    }
+  }
+
+  if (isProduction()) return 'unavailable'
+  const entry = dailyCounterMap.get(key)
+  return entry && Date.now() <= entry.resetAt ? entry.count : 0
+}
+
+/**
+ * Như `consumeWindowCounter` nhưng trả ba trạng thái (xem `CounterStatus`). Dev/test không có
+ * Redis vẫn dùng Map in-memory như cũ.
+ */
+export async function consumeWindowCounterStatus(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<CounterStatus> {
+  if (limit <= 0) return 'exhausted'
+  const count = await consumeWindowCounterCount(key, windowMs)
+  if (count === 'unavailable') return 'unavailable'
+  return count <= limit ? 'ok' : 'exhausted'
 }
 
 /**

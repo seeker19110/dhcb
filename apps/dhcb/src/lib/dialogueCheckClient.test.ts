@@ -127,6 +127,13 @@ describe('startDialogueCheck', () => {
     expect(await startDialogueCheck(START_INPUT)).toEqual({ kind: 'error' })
   })
 
+  it('409 ATTEMPT_CAP → attempt-cap (hết trần lượt sai, đợt 0559); 409 mã khác → error', async () => {
+    reply(409, { code: 'ATTEMPT_CAP', error: 'x' })
+    expect(await startDialogueCheck(START_INPUT)).toEqual({ kind: 'attempt-cap' })
+    reply(409, { code: 'ATTEMPT_USED' })
+    expect(await startDialogueCheck(START_INPUT)).toEqual({ kind: 'error' })
+  })
+
   it('đầu vào sai hợp đồng → error, KHÔNG gọi mạng', async () => {
     expect(await startDialogueCheck({ ...START_INPUT, direction: 'C' as unknown as 'A' })).toEqual({
       kind: 'error',
@@ -184,10 +191,26 @@ describe('submitDialogueCheck', () => {
     expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'attempt-expired' })
     reply(409, { code: 'QUIZ_MISMATCH' })
     expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'outdated' })
+    reply(409, { code: 'ATTEMPT_CAP', error: 'x' })
+    expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'attempt-cap' })
     reply(409, { code: 'KHAC' })
     expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'error' })
     reply(409, 'html')
     expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'error' })
+  })
+
+  it('200 chưa đạt kèm attemptsLeft (đợt 0559) → graded giữ nguyên; attemptsLeft âm/quá trần → error', async () => {
+    reply(200, { ...RESULT, attemptsLeft: 3 })
+    expect(await submitDialogueCheck(INPUT)).toEqual({
+      kind: 'graded',
+      result: { ...RESULT, attemptsLeft: 3 },
+    })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    reply(200, { ...RESULT, attemptsLeft: -1 })
+    expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'error' })
+    reply(200, { ...RESULT, attemptsLeft: 99 })
+    expect(await submitDialogueCheck(INPUT)).toEqual({ kind: 'error' })
+    warn.mockRestore()
   })
 
   it('503 SERVICE_UNAVAILABLE → unavailable (máy chủ tạm bận, chưa chấm); 503 không mã → error', async () => {

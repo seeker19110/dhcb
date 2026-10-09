@@ -1,5 +1,5 @@
 // dialogueCheckClient.ts — Phía CLIENT của kiểm tra hiểu hội thoại CEFR do server cấp lượt và chấm
-// (đợt 0555 chấm lại; đợt 0558 seed do server cấp).
+// (đợt 0555 chấm lại; đợt 0558 seed do server cấp; đợt 0559 trần lượt nộp sai).
 //
 // Đặc tả: docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §③ (bảng ca lỗi) +
 // docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md §③.
@@ -46,6 +46,8 @@ export type DialogueStartOutcome =
   | { kind: 'started'; result: DialogueStartResult }
   /** 400 NO_QUIZ — hội thoại quá ngắn, không kiểm tra được. */
   | { kind: 'no-quiz' }
+  /** 409 ATTEMPT_CAP — đã nộp sai đủ trần trong 24 giờ; đọc lại hội thoại, mai làm tiếp. */
+  | { kind: 'attempt-cap' }
   | DialogueCheckFailure
 
 export type DialogueCheckOutcome =
@@ -60,6 +62,8 @@ export type DialogueCheckOutcome =
   | { kind: 'attempt-expired' }
   /** 409 QUIZ_MISMATCH — dữ liệu hội thoại ở máy lệch server; tải lại trang. */
   | { kind: 'outdated' }
+  /** 409 ATTEMPT_CAP — hết trần lượt nộp sai trong 24 giờ; lượt này KHÔNG được chấm. */
+  | { kind: 'attempt-cap' }
   | DialogueCheckFailure
 
 async function readCode(res: Response): Promise<DialogueCheckErrorCode | undefined> {
@@ -115,6 +119,7 @@ export async function startDialogueCheck(input: DialogueStartInput): Promise<Dia
     return { kind: 'error' }
   }
   if (res.status === 400 && (await readCode(res)) === 'NO_QUIZ') return { kind: 'no-quiz' }
+  if (res.status === 409 && (await readCode(res)) === 'ATTEMPT_CAP') return { kind: 'attempt-cap' }
   return commonFailure(res)
 }
 
@@ -151,6 +156,7 @@ export async function submitDialogueCheck(
     if (code === 'ATTEMPT_USED') return { kind: 'attempt-used', saved: false }
     if (code === 'ATTEMPT_EXPIRED') return { kind: 'attempt-expired' }
     if (code === 'QUIZ_MISMATCH') return { kind: 'outdated' }
+    if (code === 'ATTEMPT_CAP') return { kind: 'attempt-cap' }
     return { kind: 'error' }
   }
   return commonFailure(res)

@@ -14,8 +14,14 @@ const sec = vi.hoisted(() => ({
   used: new Set<string>(),
   resetCalls: [] as string[],
   logs: [] as unknown[][],
-  /** Mô phỏng Redis production không sẵn sàng: 'all' = mọi bộ đếm, 'lock' = chỉ bộ đếm lượt. */
-  unavailable: null as 'all' | 'lock' | null,
+  /**
+   * Mô phỏng Redis production không sẵn sàng: 'all' = mọi bộ đếm, 'lock' = chỉ bộ đếm lượt,
+   * 'fail' = chỉ bộ đếm lượt nộp sai (đợt 0559).
+   */
+  unavailable: null as 'all' | 'lock' | 'fail' | null,
+  /** Bộ đếm lượt nộp sai theo khoá (đợt 0559). */
+  fails: new Map<string, number>(),
+  releaseCalls: [] as string[],
   /** Trả lại lượt thất bại (Redis hỏng lúc reset). */
   resetFails: false,
 }))
@@ -38,6 +44,21 @@ vi.mock('@dhcb/core-auth/security', () => ({
     if (sec.used.has(key)) return 'exhausted'
     sec.used.add(key)
     return 'ok'
+  },
+  consumeWindowCounterCount: async (key: string) => {
+    if (sec.unavailable === 'all' || sec.unavailable === 'fail') return 'unavailable'
+    const n = (sec.fails.get(key) ?? 0) + 1
+    sec.fails.set(key, n)
+    return n
+  },
+  peekWindowCounter: async (key: string) => {
+    if (sec.unavailable === 'all' || sec.unavailable === 'fail') return 'unavailable'
+    return sec.fails.get(key) ?? 0
+  },
+  releaseDailyCounter: async (key: string) => {
+    sec.releaseCalls.push(key)
+    const n = sec.fails.get(key) ?? 0
+    if (n > 0) sec.fails.set(key, n - 1)
   },
   resetCounterChecked: async (key: string) => {
     sec.resetCalls.push(key)
@@ -72,7 +93,8 @@ import {
   signAttemptToken,
   verifyAttemptToken,
 } from '@dhcb/core-auth/attemptToken'
-import { ATTEMPT_SCOPE, ATTEMPT_TTL_MS } from '../_lib/cefrDialogueCheck.js'
+import { ATTEMPT_SCOPE, ATTEMPT_TTL_MS, failCapKey } from '../_lib/cefrDialogueCheck.js'
+import { DIALOGUE_FAIL_CAP_PER_DAY } from '@dhcb/core-contracts/cefrDialogueCheck'
 
 const OWNER = 'a1-greetings'
 const TITLE = 'Meeting in class'
@@ -145,6 +167,8 @@ beforeEach(() => {
   sec.logs.length = 0
   sec.unavailable = null
   sec.resetFails = false
+  sec.fails.clear()
+  sec.releaseCalls.length = 0
   existingRow = undefined
   query.mockImplementation(async (sql: string) => {
     if (sql.includes('select cefr_dialogues')) return { rows: existingRow ? [existingRow] : [] }
@@ -573,5 +597,116 @@ describe('cefr-dialogue — bộ đếm dùng chung không sẵn sàng → 503 S
     expect(insertCall()).toBeUndefined()
     sec.unavailable = null
     expect((await post({ token, answers })).status).toBe(200)
+  })
+})
+
+// Đợt 0559 — trần số lượt NỘP SAI theo (người, hội thoại): đặc tả 0558 §⑥.
+describe('cefr-dialogue — trần lượt nộp sai theo (người, hội thoại)', () => {
+  const FAIL_KEY = () => failCapKey('user-1', OWNER, TITLE)
+
+  it('trần là 5 lượt/24 giờ (hằng có tên ở gói hợp đồng)', () => {
+    expect(DIALOGUE_FAIL_CAP_PER_DAY).toBe(5)
+  })
+
+  it('khoá là bản BĂM, không chứa userId/tên hội thoại; khác người → khác khoá', () => {
+    expect(FAIL_KEY()).toMatch(/^cefr-dialogue-fail:[0-9a-f]{64}$/)
+    expect(FAIL_KEY()).not.toContain('user-1')
+    expect(FAIL_KEY()).not.toContain(OWNER)
+    expect(failCapKey('user-2', OWNER, TITLE)).not.toBe(FAIL_KEY())
+    // Không nhập nhằng ranh giới giữa các trường.
+    expect(failCapKey('a|b', 'c', 'd')).not.toBe(failCapKey('a', 'b|c', 'd'))
+  })
+
+  it('nộp KHÔNG ĐẠT → 200 kèm attemptsLeft, bộ đếm +1; nộp ĐẠT → không có attemptsLeft, bộ đếm không đổi', async () => {
+    const { res } = await startAndSubmit(2)
+    const sai = DialogueCheckResultSchema.parse(await res.json())
+    expect(sai).toMatchObject({ passed: false, attemptsLeft: 4 })
+    expect(sec.fails.get(FAIL_KEY())).toBe(1)
+
+    const { res: res2 } = await startAndSubmit(0)
+    const dat = DialogueCheckResultSchema.parse(await res2.json())
+    expect(dat.passed).toBe(true)
+    expect(dat.attemptsLeft).toBeUndefined()
+    expect(sec.fails.get(FAIL_KEY())).toBe(1) // giữ chỗ rồi trả lại
+    expect(sec.releaseCalls).toEqual([FAIL_KEY()])
+  })
+
+  it('mở lượt CHỈ ĐỌC bộ đếm, không tiêu', async () => {
+    sec.fails.set(FAIL_KEY(), 3)
+    await start()
+    await start()
+    expect(sec.fails.get(FAIL_KEY())).toBe(3)
+  })
+
+  it('sai đủ 5 lần → lần 5 attemptsLeft=0; mở lượt sau đó → 409 ATTEMPT_CAP, không cấp token', async () => {
+    for (let i = 1; i <= DIALOGUE_FAIL_CAP_PER_DAY; i++) {
+      const { res } = await startAndSubmit(3)
+      const j = DialogueCheckResultSchema.parse(await res.json())
+      expect(j.attemptsLeft).toBe(DIALOGUE_FAIL_CAP_PER_DAY - i)
+    }
+    const res = await post({ ownerId: OWNER, titleEn: TITLE, direction: 'A' }, URL_START)
+    expect(res.status).toBe(409)
+    const j = (await res.json()) as { code: string; error: string; token?: unknown }
+    expect(j.code).toBe('ATTEMPT_CAP')
+    expect(j.error).toContain('5 lần hôm nay')
+    expect(j.token).toBeUndefined()
+    expect(sec.fails.get(FAIL_KEY())).toBe(DIALOGUE_FAIL_CAP_PER_DAY)
+  })
+
+  it('đổi chiều A→B KHÔNG được thêm lượt (khoá không gồm chiều)', async () => {
+    sec.fails.set(FAIL_KEY(), DIALOGUE_FAIL_CAP_PER_DAY)
+    const res = await post({ ownerId: OWNER, titleEn: TITLE, direction: 'B' }, URL_START)
+    expect(res.status).toBe(409)
+  })
+
+  it('token cất sẵn TRƯỚC khi hết trần, nộp SAU khi hết trần (kể cả đáp án đúng) → 409 ATTEMPT_CAP, không chấm, không ghi, trả lại khoá lượt', async () => {
+    const { token } = await start()
+    sec.fails.set(FAIL_KEY(), DIALOGUE_FAIL_CAP_PER_DAY)
+    const res = await post({ token, answers: answersFor(token) })
+    expect(res.status).toBe(409)
+    const j = (await res.json()) as { code: string; items?: unknown; passed?: unknown }
+    expect(j.code).toBe('ATTEMPT_CAP')
+    expect(j.items).toBeUndefined()
+    expect(j.passed).toBeUndefined()
+    expect(insertCall()).toBeUndefined()
+    expect(sec.used.size).toBe(0) // khoá lượt đã trả lại
+    expect(sec.fails.get(FAIL_KEY())).toBe(DIALOGUE_FAIL_CAP_PER_DAY) // chỗ giữ đã trả lại
+  })
+
+  it('nộp đồng loạt nhiều token cất sẵn khi còn 1 lượt → chỉ ĐÚNG MỘT lượt được chấm', async () => {
+    sec.fails.set(FAIL_KEY(), DIALOGUE_FAIL_CAP_PER_DAY - 1)
+    const tokens = [await start(), await start(), await start()].map((x) => x.token)
+    const codes = await Promise.all(
+      tokens.map(async (token) => (await post({ token, answers: answersFor(token, 3) })).status),
+    )
+    expect(codes.filter((c) => c === 200)).toHaveLength(1)
+    expect(codes.filter((c) => c === 409)).toHaveLength(2)
+    expect(sec.fails.get(FAIL_KEY())).toBe(DIALOGUE_FAIL_CAP_PER_DAY)
+  })
+
+  it('bộ đếm lượt sai không sẵn sàng: mở lượt → 503; nộp → 503 không trả kết quả, không ghi, trả lại khoá lượt', async () => {
+    const { token } = await start()
+    sec.unavailable = 'fail'
+    const s = await post({ ownerId: OWNER, titleEn: TITLE, direction: 'A' }, URL_START)
+    expect(s.status).toBe(503)
+    expect(((await s.json()) as { code: string }).code).toBe('SERVICE_UNAVAILABLE')
+    const res = await post({ token, answers: answersFor(token) })
+    expect(res.status).toBe(503)
+    const j = (await res.json()) as { code: string; items?: unknown }
+    expect(j.code).toBe('SERVICE_UNAVAILABLE')
+    expect(j.items).toBeUndefined()
+    expect(insertCall()).toBeUndefined()
+    expect(sec.used.size).toBe(0)
+    // Redis hồi phục → gửi lại ĐÚNG token đó được chấm.
+    sec.unavailable = null
+    expect((await post({ token, answers: answersFor(token) })).status).toBe(200)
+  })
+
+  it('lượt đã nộp (ATTEMPT_USED) không đụng bộ đếm lượt sai', async () => {
+    const { token } = await startAndSubmit(3)
+    expect(sec.fails.get(FAIL_KEY())).toBe(1)
+    const lan2 = await post({ token, answers: answersFor(token, 3) })
+    expect(lan2.status).toBe(409)
+    expect(sec.fails.get(FAIL_KEY())).toBe(1)
   })
 })
