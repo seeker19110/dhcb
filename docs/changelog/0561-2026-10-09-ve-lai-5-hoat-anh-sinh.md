@@ -1,6 +1,6 @@
 # 0561 — Vẽ lại 5 hoạt ảnh Sinh từ "chuỗi ô chữ" thành hình thật (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `fix(biology)`
+- **Ngày:** 2026-10-09 · **PR:** #1306 · **Loại:** `fix(biology)`
 - **Nguồn:** nợ `PROGRESS.md` mục hoạt ảnh (2026-09-21 — PR #1099), phần "Còn thiếu: 21 hoạt ảnh
   Sinh dạng chuỗi ô chữ". Làm đúng 5 bài ưu tiên mà `docs/changelog/0462-*.md` mục "Còn lại" đã
   nêu. Đặc tả nền: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`,
