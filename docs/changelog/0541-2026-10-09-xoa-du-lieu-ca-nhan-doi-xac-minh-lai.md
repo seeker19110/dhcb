@@ -17,7 +17,8 @@
   - body rỗng / thiếu `reauth` / sai dạng → **403 `REAUTH_REQUIRED`** (không trừ lượt thử);
   - JSON hỏng → 400; sai mật khẩu/token → 401 `REAUTH_FAILED`; cách xác minh không có → 409
     `REAUTH_UNAVAILABLE`; hết lượt → 429 `RATE_LIMITED` (+ `Retry-After: 900`); bật 2FA chưa nâng
-    quyền → 403 `STEP_UP_REQUIRED` / mã sai → 401 `TWO_FACTOR_INVALID`.
+    quyền mà chưa gửi mã → 403 `STEP_UP_REQUIRED` (KHÔNG kiểm mật khẩu); có mã mà sai mật khẩu
+    hoặc sai mã → cùng một 401 `REAUTH_FAILED` (xem mục Quyết định).
   - Log bảo mật dùng `accountSubjectHash` (không ghi userId trần), `action: 'person_full_erase'`.
   - `GET` và `GET ?action=export` giữ nguyên.
 - **Hợp đồng** `packages/core-contracts/account.ts`: thêm `ReauthProofSchema` (dùng chung),
@@ -40,6 +41,16 @@
   mã 2FA). Vì không chạm giao diện nên không có ảnh chụp Tầng 8b.
 - **Breaking change API**: client nào gọi `full_erase` không kèm body sẽ nhận 403 thay vì xoá —
   đúng chủ đích; trong repo không có client như vậy.
+
+- **Vá sau rà bảo mật (Medium): cổng xác minh lại không còn là "máy dò" mật khẩu khi bật 2FA.**
+  Trước đây cổng kiểm mật khẩu TRƯỚC rồi mới xét 2FA: kẻ cầm cookie đánh cắp gửi mật khẩu đoán,
+  sai thì nhận 401, đúng thì nhận 403 "nhập mã 2FA" — xác nhận được mật khẩu dù không có mã.
+  Lỗi có sẵn từ `/api/account` (0533), commit này mở thêm route đi qua cùng cổng nên vá luôn cho
+  cả hai. Nay: người bật 2FA mà chưa gửi mã nhận 403 ngay, mật khẩu chưa được kiểm; có mã rồi thì
+  sai mật khẩu hay sai mã đều nhận CÙNG phản hồi 401 `REAUTH_FAILED`. Khi mật khẩu sai, cổng KHÔNG
+  gọi `verifyTwoFactor` vì hàm đó tiêu mã (mã khôi phục bị đánh dấu đã dùng) — gọi lúc ấy là đốt
+  mã của chính chủ. Còn lại một chênh lệch thời gian nhỏ (một truy vấn 2FA), đã bị giới hạn
+  5 lượt/15 phút. Mã `TWO_FACTOR_INVALID` không còn được trả nên gỡ khỏi `REAUTH_ERROR_CODES`.
 
 ## Bằng chứng
 

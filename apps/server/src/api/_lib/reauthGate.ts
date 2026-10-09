@@ -98,7 +98,25 @@ export async function requireReauth(input: ReauthGateInput): Promise<Response | 
     )
   }
 
-  // ── 2. Bằng chứng xác minh lại ─────────────────────────────────────────────
+  // ── 2. Trạng thái 2FA — xét TRƯỚC khi chạm mật khẩu ──────────────────────────
+  // Rà bảo mật 0541: nếu kiểm mật khẩu trước thì phản hồi thành "máy dò" mật khẩu cho kẻ cầm
+  // cookie đánh cắp (sai ⇒ 401, đúng ⇒ 403 "nhập mã 2FA"). Nay người đã bật 2FA mà chưa gửi mã
+  // nhận 403 ngay, không đụng mật khẩu; có mã rồi thì sai mật khẩu hay sai mã đều nhận CÙNG
+  // một lỗi chung — phản hồi không còn cho biết vế nào đúng.
+  const twoFactor = await getTwoFactorStatus(pool, userId)
+  const needsCode = twoFactor.enabled && !(await hasStepUp(pool, userId, readSessionCookie(req)))
+  if (needsCode && !input.twoFactorCode) {
+    return errorResponse('Nhập mã xác thực hai bước để tiếp tục.', 'STEP_UP_REQUIRED', 403, headers)
+  }
+  const combinedFailure = (): Response =>
+    errorResponse(
+      'Thông tin xác minh hoặc mã xác thực hai bước không đúng.',
+      'REAUTH_FAILED',
+      401,
+      headers,
+    )
+
+  // ── 3. Bằng chứng xác minh lại ─────────────────────────────────────────────
   const outcome = await verifyAccountReauth(pool, userId, input.reauth)
   if (!outcome.ok) {
     logSecurityEvent('ACCOUNT_REAUTH_FAILED', clientIp, {
@@ -115,6 +133,9 @@ export async function requireReauth(input: ReauthGateInput): Promise<Response | 
         headers,
       )
     }
+    // Không gọi verifyTwoFactor ở nhánh này: hàm đó TIÊU mã (đánh dấu mã khôi phục đã dùng), gọi
+    // khi mật khẩu đã sai là đốt mã của chính chủ.
+    if (needsCode) return combinedFailure()
     return errorResponse(
       outcome.reason === 'stale'
         ? 'Phiên Google đã cũ — bấm "Xác minh bằng Google" lại rồi thử ngay.'
@@ -127,13 +148,8 @@ export async function requireReauth(input: ReauthGateInput): Promise<Response | 
     )
   }
 
-  // ── 3. Lớp 2FA (nếu bật): TÁI DÙNG cửa sổ nâng quyền + bộ đếm sai mã của /api/two-factor ───
-  const twoFactor = await getTwoFactorStatus(pool, userId)
-  if (!twoFactor.enabled || (await hasStepUp(pool, userId, readSessionCookie(req)))) return null
-
-  if (!input.twoFactorCode) {
-    return errorResponse('Nhập mã xác thực hai bước để tiếp tục.', 'STEP_UP_REQUIRED', 403, headers)
-  }
+  // ── 4. Lớp 2FA (nếu cần): TÁI DÙNG bộ đếm sai mã của /api/two-factor ─────────
+  if (!needsCode || !input.twoFactorCode) return null
   const attemptKey = twoFactorUserKey(userId)
   if (
     !(await consumeWindowCounter(
@@ -156,7 +172,7 @@ export async function requireReauth(input: ReauthGateInput): Promise<Response | 
   const verified = await verifyTwoFactor(pool, userId, input.twoFactorCode)
   if (!verified.ok) {
     logSecurityEvent('AUTH_FAILURE', clientIp, { path: input.path, action })
-    return errorResponse('Mã xác thực hai bước không đúng.', 'TWO_FACTOR_INVALID', 401, headers)
+    return combinedFailure()
   }
   await resetCounter(attemptKey)
   return null

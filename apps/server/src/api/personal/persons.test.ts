@@ -306,12 +306,12 @@ describe('DELETE /api/persons?action=full_erase — xác minh lại danh tính (
     expect(erasePersonDataMock).not.toHaveBeenCalled()
   })
 
-  it('bật 2FA, mã sai → 401 TWO_FACTOR_INVALID, không xoá, không reset bộ đếm', async () => {
+  it('bật 2FA, mã sai → 401 lỗi chung REAUTH_FAILED, không xoá, không reset bộ đếm', async () => {
     twoFactor.hasStepUp.mockResolvedValue(false)
     twoFactor.verifyTwoFactor.mockResolvedValue({ ok: false })
     const res = await handler(eraseReq({ ...REAUTH_OK, twoFactorCode: '000000' }))
     expect(res.status).toBe(401)
-    expect(await res.json()).toMatchObject({ code: 'TWO_FACTOR_INVALID' })
+    expect(await res.json()).toMatchObject({ code: 'REAUTH_FAILED' })
     expect(counters.consumed).toContain('2fa-user:user-1')
     expect(counters.reset).toEqual([])
     expect(erasePersonDataMock).not.toHaveBeenCalled()

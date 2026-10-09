@@ -47,7 +47,6 @@ export const REAUTH_ERROR_CODES = [
   'REAUTH_UNAVAILABLE',
   'REAUTH_FAILED',
   'STEP_UP_REQUIRED',
-  'TWO_FACTOR_INVALID',
   'RATE_LIMITED',
 ] as const
 export type ReauthErrorCode = (typeof REAUTH_ERROR_CODES)[number]

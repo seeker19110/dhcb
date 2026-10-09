@@ -171,7 +171,7 @@ type AccountExport = {
 | Phương thức xác minh không khả dụng cho tài khoản       | 409 | `REAUTH_UNAVAILABLE`              |                                               |
 | Mật khẩu sai / token Google sai, cũ (> 10 phút), lạ sub | 401 | `REAUTH_FAILED`                   | trừ 1 lượt, ghi `logSecurityEvent`            |
 | 2FA bật, chưa nâng quyền, thiếu mã                      | 403 | `STEP_UP_REQUIRED`                |                                               |
-| Mã 2FA sai                                              | 401 | `TWO_FACTOR_INVALID`              | trừ lượt theo `twoFactorUserKey`              |
+| Mã 2FA sai (cùng phản hồi với sai mật khẩu — 0541)      | 401 | `REAUTH_FAILED`                   | trừ lượt theo `twoFactorUserKey`              |
 | VIP còn hạn, thiếu `acknowledgeNoRefund`                | 409 | `VIP_ACK_REQUIRED`                | kiểm TRƯỚC khi trừ lượt xác minh              |
 | Quá lượt (IP hoặc người dùng)                           | 429 | `RATE_LIMITED`                    | `Retry-After`                                 |
 | Người dùng đã bị xoá (request song song thứ hai)        | 404 | —                                 | transaction thứ hai chờ khoá rồi thấy 0 dòng  |
