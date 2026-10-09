@@ -1,7 +1,6 @@
 # 0551 — Bảng nháp STEM: gợi ý Socratic, ngân hàng đề thật, nộp lời giải, hàng nhập 390px (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (chưa tạo — commit trên nhánh `feat/stem-goi-y-socratic`) ·
-  **Loại:** `feat(stem)`
+- **Ngày:** 2026-10-09 · **PR:** #1302 · **Loại:** `feat(stem)`
 - **Đặc tả:** `docs/specs/2026-10-09-stem-goi-y-socratic-va-nop-loi-giai.md` (Approved for
   implementation — coordinator giao đợt 0551).
 - **Nguồn:** ba mục còn lại (3)(4)(5) của nợ 🟡 "Bảng nháp STEM" trong `PROGRESS.md` (sau `0547`).
