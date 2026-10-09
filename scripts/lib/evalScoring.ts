@@ -21,7 +21,14 @@ export const ERROR_TYPES = [
   'adjective_order', // sai trật tự tính từ (a red big car → a big red car)
   'pronoun', // sai đại từ (me and him → he and I)
   'word_by_word', // dịch word-by-word nghe không tự nhiên
+  // ── Loại lỗi riêng của chiều B (người nước ngoài viết tiếng Việt) — thêm 2026-10-09 ──
+  'tone_mark', // sai dấu thanh/dấu phụ làm đổi nghĩa (mua → mùa, mưa → mua)
+  'classifier', // sai loại từ (hai con sách → hai quyển sách)
+  'word_order', // sai trật tự từ (tôi thích rất phở → tôi rất thích phở)
+  'negation', // sai phủ định không/chưa/đừng/không phải
 ] as const
+// Các nhãn dùng chung hai chiều (tense, preposition, pronoun…) mang nghĩa theo chiều của câu:
+// chiều B = đã/đang/sẽ · giới từ tiếng Việt · xưng hô · thiếu/thừa "là" · tính từ sau danh từ.
 export type ErrorType = (typeof ERROR_TYPES)[number]
 
 // error = câu CÓ lỗi (đo recall) · correct = câu ĐÚNG (đo bịa lỗi) · edge = ca biên
@@ -36,6 +43,11 @@ export const FixtureSchema = z.object({
   level: z.enum(['beginner', 'intermediate', 'advanced']),
   dir: z.enum(['A', 'B']).default('A'),
   note: z.string().optional(),
+  // ── Trường đối chiếu (bắt buộc với bộ mở rộng, xem parseRichFixtures; bộ 62 câu cũ không có) ──
+  corrected: z.string().optional(), // bản sửa đúng (chỉ câu 'error')
+  explanation: z.string().optional(), // giải thích ngắn: chiều A bằng tiếng Việt, chiều B bằng tiếng Anh
+  source: z.string().optional(), // nguồn đối chiếu hoặc "quy tắc chung" + luật
+  whyCorrect: z.string().optional(), // vì sao câu 'correct'/'edge' là ĐÚNG
 })
 export type Fixture = z.infer<typeof FixtureSchema>
 
@@ -52,6 +64,29 @@ export function parseFixtures(raw: unknown): Fixture[] {
     }
     if (f.kind !== 'error' && f.expectedErrors.length > 0) {
       throw new Error(`Fixture "${f.id}" kind=${f.kind} nhưng lại có expectedErrors`)
+    }
+  }
+  return arr
+}
+
+// Bộ mở rộng (scripts/eval-tutor-fixtures-extra.json) có chuẩn chặt hơn bộ cũ: mỗi câu phải mang
+// đủ bằng chứng đối chiếu để người duyệt kiểm lại được "đáp án" mà không phải tin vào trí nhớ.
+export function parseRichFixtures(raw: unknown): Fixture[] {
+  const arr = parseFixtures(raw)
+  for (const f of arr) {
+    const miss = (field: string): never => {
+      throw new Error(`Fixture "${f.id}" (${f.kind}) thiếu trường "${field}"`)
+    }
+    if (!f.source || f.source.trim().length < 15) miss('source')
+    if (f.kind === 'error') {
+      if (!f.corrected?.trim()) miss('corrected')
+      if (!f.explanation?.trim()) miss('explanation')
+      if (f.whyCorrect !== undefined) throw new Error(`Fixture "${f.id}" kind=error có whyCorrect`)
+    } else {
+      if (!f.whyCorrect?.trim()) miss('whyCorrect')
+      if (f.corrected !== undefined) {
+        throw new Error(`Fixture "${f.id}" kind=${f.kind} (câu đúng) lại có bản sửa "corrected"`)
+      }
     }
   }
   return arr
@@ -149,16 +184,36 @@ export function classifyOutcome(hasError: boolean, detected: boolean): Outcome {
 // feedback tự do nên không thể match chính xác — dùng để thấy xu hướng, không để chấm đỗ/trượt.
 export const ERROR_TYPE_KEYWORDS: Record<ErrorType, string[]> = {
   third_person_s: ['ngôi thứ ba', 'ngôi thứ 3', 'số ít', 'thêm s', 'thêm "s"', '-s', '-es'],
-  plural_s: ['số nhiều', 'đếm được', 'thêm s', '-s'],
+  plural_s: ['số nhiều', 'đếm được', 'thêm s', '-s', 'plural', 'số từ'],
   article: ['mạo từ', 'quán từ', 'a/an', '"a"', '"an"', '"the"'],
-  tense: ['thì', 'quá khứ', 'hiện tại', 'chia động từ', 'chia thì'],
+  tense: [
+    'thì',
+    'quá khứ',
+    'hiện tại',
+    'chia động từ',
+    'chia thì',
+    'tense marker',
+    'future',
+    'past',
+  ],
   aux_verb: ['trợ động từ', '"do"', '"does"', '"did"'],
-  missing_be: ['động từ to be', 'thiếu be', 'thiếu "be"', 'thiếu động từ'],
-  extra_be: ['thừa be', 'thừa "be"', 'bỏ be', 'không cần be'],
-  preposition: ['giới từ', 'good at', 'depend on', '"in"', '"on"', '"at"'],
-  adjective_order: ['trật tự tính từ', 'thứ tự tính từ', 'trật tự từ'],
-  pronoun: ['đại từ', 'chủ ngữ', 'tân ngữ'],
+  missing_be: ['động từ to be', 'thiếu be', 'thiếu "be"', 'thiếu động từ', '"là"'],
+  extra_be: ['thừa be', 'thừa "be"', 'bỏ be', 'không cần be', 'do not insert', 'no need for'],
+  preposition: ['giới từ', 'good at', 'depend on', '"in"', '"on"', '"at"', 'preposition'],
+  adjective_order: [
+    'trật tự tính từ',
+    'thứ tự tính từ',
+    'trật tự từ',
+    'adjective',
+    'follow the noun',
+  ],
+  pronoun: ['đại từ', 'chủ ngữ', 'tân ngữ', 'pronoun', 'address', 'kinship', 'polite'],
   word_by_word: ['word-by-word', 'từng chữ', 'từng từ', 'tự nhiên hơn', 'người bản xứ', 'bản ngữ'],
+  // Loại lỗi chiều B: nhận xét bằng tiếng Anh nên từ khoá là tiếng Anh (soft signal như trên).
+  tone_mark: ['tone', 'diacritic', 'accent mark', 'tone mark'],
+  classifier: ['classifier', 'measure word'],
+  word_order: ['word order', 'comes before', 'comes after', 'goes before', 'goes after', 'placed'],
+  negation: ['negat', 'not yet', 'no longer', 'double negative'],
 }
 export function typeHit(feedback: string, expected: ErrorType[]): boolean {
   if (expected.length === 0 || feedback === '') return false
@@ -170,6 +225,7 @@ export function typeHit(feedback: string, expected: ErrorType[]): boolean {
 export interface EvalResult {
   id: string
   kind: FixtureKind
+  dir?: 'A' | 'B' // chiều học của câu; thiếu = A (kết quả cũ). Chiều B: nhận xét bằng tiếng Anh.
   expectedErrors: ErrorType[]
   outcome: Outcome
   feedbackNonEmpty: boolean
@@ -187,6 +243,7 @@ export function scoreOne(mode: EvalMode, fixture: Fixture, rawText: string): Eva
   return {
     id: fixture.id,
     kind: fixture.kind,
+    dir: fixture.dir,
     expectedErrors: fixture.expectedErrors,
     outcome: classifyOutcome(hasError, detected),
     feedbackNonEmpty: detected,
@@ -222,7 +279,8 @@ export function summarize(results: EvalResult[]): Summary {
   const fn = scored.filter((r) => r.outcome === 'FN').length
   const tn = scored.filter((r) => r.outcome === 'TN').length
   const fp = scored.filter((r) => r.outcome === 'FP').length
-  const withFeedback = scored.filter((r) => r.feedbackNonEmpty)
+  // Tỉ lệ "nhận xét bằng tiếng Việt" chỉ có nghĩa ở chiều A; chiều B nhận xét phải là tiếng Anh.
+  const withFeedback = scored.filter((r) => r.feedbackNonEmpty && r.dir !== 'B')
   const speakingScored = scored.filter((r) => r.jsonValid !== null)
   const typeHitTp = scored.filter((r) => r.outcome === 'TP' && r.typeHit).length
   return {

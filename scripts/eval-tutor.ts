@@ -17,6 +17,12 @@
 //   npm run eval:tutor -- --write-baseline      # ghi docs/research/eval-tutor-baseline.md
 //   npm run eval:tutor -- --limit 5             # chỉ 5 câu đầu (thử nhanh)
 //   npm run eval:tutor -- --delay 800           # giãn cách giữa các lời gọi (ms), tránh rate limit
+//   npm run eval:tutor -- --runs 3              # chạy 3 lượt → trung bình ± SD + khoảng Wilson 95%
+//   npm run eval:tutor -- --group clean         # chỉ một nhóm: loại lỗi (vd tense) | error | correct |
+//                                               #   edge | clean (đúng+ca biên) | A | B
+//
+// Golden set = scripts/eval-tutor-fixtures.json (62 câu cũ, chiều A) + scripts/eval-tutor-fixtures-extra.json
+// (bộ mở rộng, cả hai chiều). `--limit 62` (không kèm --group) tái hiện đúng bộ 62 câu của baseline cũ.
 //
 // QUY TRÌNH (CLAUDE.md §8): mọi PR đổi prompt (src/prompts) hoặc model (aiConfig) PHẢI chạy lại
 // eval và dán bảng so sánh với baseline vào mô tả PR.
@@ -37,6 +43,7 @@ import {
 } from '@dhcb/core-ai/aiConfig'
 import {
   parseFixtures,
+  parseRichFixtures,
   scoreOne,
   summarize,
   ERROR_TYPES,
@@ -46,10 +53,19 @@ import {
   type Fixture,
   type Summary,
 } from './lib/evalScoring.ts'
+import {
+  aggregateGroups,
+  aggregateOverall,
+  fixtureInGroup,
+  parseGroup,
+  parseRuns,
+  renderStatsTable,
+} from './lib/evalStats.ts'
 
 const SCRIPT_DIR = fileURLToPath(new URL('.', import.meta.url))
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..')
 const FIXTURES_PATH = path.join(SCRIPT_DIR, 'eval-tutor-fixtures.json')
+const EXTRA_FIXTURES_PATH = path.join(SCRIPT_DIR, 'eval-tutor-fixtures-extra.json')
 const BASELINE_PATH = path.join(PROJECT_ROOT, 'docs', 'research', 'eval-tutor-baseline.md')
 
 dotenv.config({ path: path.join(PROJECT_ROOT, '.env') })
@@ -70,6 +86,10 @@ const DELAY_MS = Number(argVal('--delay', '500'))
 // theo `retry-after` Groq gửi) đủ vượt cửa sổ hạn mức phút của gói free.
 const MAX_RETRY_429 = Number(argVal('--max-retry-429', '5'))
 const WRITE_BASELINE = args.includes('--write-baseline')
+const RUNS_ARG = argVal('--runs', '1')
+const GROUP_ARG = argVal('--group', '')
+// Ngưỡng tối thiểu số câu chấm được (không lỗi provider) để cho phép ghi baseline.
+const NGUONG_TOI_THIEU = 0.8
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
@@ -348,6 +368,136 @@ function renderReport(fixtures: Fixture[], sections: Section[]): string {
   return L.join('\n')
 }
 
+// Gộp bộ cũ (chiều A, có thể thiếu trường đối chiếu) + bộ mở rộng (cả hai chiều, đủ đối chiếu).
+// Thứ tự cố định: bộ cũ trước → `--limit 62` luôn tái hiện đúng bộ 62 câu của baseline cũ.
+function loadFixtures(group: ReturnType<typeof parseGroup>): Fixture[] {
+  const base = JSON.parse(readFileSync(FIXTURES_PATH, 'utf8')) as unknown[]
+  const extra = JSON.parse(readFileSync(EXTRA_FIXTURES_PATH, 'utf8')) as unknown[]
+  parseRichFixtures(extra) // fail sớm nếu bộ mở rộng thiếu bản sửa/nguồn
+  let fixtures = parseFixtures([...base, ...extra]) // kiểm id trùng trên TOÀN bộ
+  if (group) fixtures = fixtures.filter((f) => fixtureInGroup(f, group))
+  if (LIMIT > 0) fixtures = fixtures.slice(0, LIMIT)
+  return fixtures
+}
+
+// CỔNG CHẶN [2026-08-26] — trước đây `--write-baseline` ghi đè VÔ ĐIỀU KIỆN, kể cả khi
+// 100% request lỗi provider. Đã xảy ra thật: `GROQ_API_KEY` hết hiệu lực → 62/62 câu trả
+// 401 → mọi chỉ số `n/a` → script vẫn in "✅ Đã ghi" và baseline thật bị thay bằng bảng
+// rỗng. Một baseline rỗng còn tệ hơn baseline cũ: nó xoá mất mốc so sánh DUY NHẤT, và
+// PR sau đó sẽ "không tụt so với baseline" vì chẳng còn gì để tụt.
+//
+// Luật: chỉ ghi khi chấm được ÍT NHẤT 80% số câu ở MỌI chế độ (và MỌI lượt) đã chạy.
+function ghiBaselineNeuDuDuLieu(
+  doc: string,
+  items: Array<{ label: string; summary: Summary }>,
+): void {
+  const khongDat = items.filter(({ summary: m }) => {
+    const tong = m.scored + m.providerErrors
+    return tong === 0 || m.scored / tong < NGUONG_TOI_THIEU
+  })
+
+  if (khongDat.length > 0) {
+    process.stderr.write('\n❌ KHÔNG ghi baseline — lượt chạy này không đo được đủ dữ liệu.\n')
+    for (const { label, summary: m } of khongDat) {
+      const tong = m.scored + m.providerErrors
+      process.stderr.write(
+        `   ${label}: chấm được ${m.scored}/${tong} câu ` +
+          `(cần ≥ ${Math.ceil(tong * NGUONG_TOI_THIEU)}), ${m.providerErrors} câu lỗi provider.\n`,
+      )
+    }
+    process.stderr.write(
+      '   Baseline CŨ giữ nguyên — nó vẫn là mốc so sánh đúng.\n' +
+        '   Sửa nguyên nhân rồi chạy lại: lỗi 401 = khoá API sai/hết hạn (kiểm .env),\n' +
+        '   lỗi 404 = tên model sai, lỗi 429 = chạm hạn mức nhà cung cấp.\n',
+    )
+    process.exit(1)
+  }
+
+  writeFileSync(BASELINE_PATH, doc + '\n')
+  process.stderr.write(`\n✅ Đã ghi ${path.relative(PROJECT_ROOT, BASELINE_PATH)}\n`)
+}
+
+// ─── Báo cáo NHIỀU LƯỢT (--runs N > 1) ──────────────────────────────────────────
+function renderMultiRunReport(
+  fixtures: Fixture[],
+  runs: number,
+  group: ReturnType<typeof parseGroup>,
+  sections: Array<{ mode: EvalMode; runs: EvalResult[][] }>,
+): string {
+  const nErr = fixtures.filter((f) => f.kind === 'error').length
+  const nOk = fixtures.filter((f) => f.kind === 'correct').length
+  const nEdge = fixtures.filter((f) => f.kind === 'edge').length
+  const L: string[] = []
+  L.push('# Eval gia sư AI — baseline nhiều lượt (⑤ T1)')
+  L.push('')
+  L.push(
+    '> Sinh tự động bởi `npm run eval:tutor -- --runs N --write-baseline`. KHÔNG sửa tay phần số liệu.',
+  )
+  L.push('> Trung bình ± SD tính GIỮA các lượt (SD mẫu, n−1). Khoảng Wilson 95% tính trên số gộp')
+  L.push(
+    '> (mỗi lượt-câu là một phép thử) nên hơi LẠC QUAN: các lượt chạy cùng một bộ câu, không độc lập hẳn.',
+  )
+  L.push('')
+  L.push(`- **Ngày chạy:** ${new Date().toISOString().slice(0, 10)}`)
+  L.push(`- **Provider · model:** ${providerLabel()}`)
+  L.push(
+    `- **Golden set:** ${fixtures.length} câu (${nErr} lỗi · ${nOk} đúng · ${nEdge} ca biên)${group ? ` — lọc nhóm "${group}"` : ''}`,
+  )
+  L.push(`- **Số lượt:** ${runs}`)
+  L.push(`- **Chế độ chạy:** ${sections.map((s) => s.mode).join(', ')}`)
+  L.push('')
+  for (const s of sections) {
+    L.push(`## Chế độ ${s.mode} — chỉ số tổng (${runs} lượt)`)
+    L.push('')
+    L.push(renderStatsTable(aggregateOverall(s.runs.map(summarize))))
+    L.push('')
+    L.push(`## Theo nhóm — chế độ ${s.mode}`)
+    L.push('')
+    L.push(renderStatsTable(aggregateGroups(s.runs)))
+    L.push('')
+  }
+  L.push('## Cách đọc')
+  L.push('')
+  L.push(
+    '- **Recall theo nhóm lỗi** = bắt được lỗi / số câu có lỗi đó. **FP-rate** (nhóm correct · edge · clean) = bịa lỗi / số câu đúng.',
+  )
+  L.push(
+    '- Hai lần chạy chỉ đáng coi là KHÁC NHAU khi khoảng Wilson của chúng không chồng lên nhau (hoặc chênh vượt rõ ± SD).',
+  )
+  L.push(
+    '- Type-hit và Feedback VI không có trong bản nhiều lượt; chạy `npm run eval:tutor` một lượt nếu cần.',
+  )
+  L.push('')
+  return L.join('\n')
+}
+
+async function mainMultiRun(
+  runs: number,
+  group: ReturnType<typeof parseGroup>,
+  fixtures: Fixture[],
+  modes: EvalMode[],
+): Promise<void> {
+  const sections: Array<{ mode: EvalMode; runs: EvalResult[][] }> = []
+  for (const mode of modes) {
+    const perRun: EvalResult[][] = []
+    for (let i = 1; i <= runs; i++) {
+      process.stderr.write(`\n■ Lượt ${i}/${runs} (${mode})`)
+      perRun.push(await runMode(mode, fixtures))
+    }
+    sections.push({ mode, runs: perRun })
+  }
+  const doc = renderMultiRunReport(fixtures, runs, group, sections)
+  process.stdout.write('\n' + doc + '\n')
+  if (WRITE_BASELINE) {
+    ghiBaselineNeuDuDuLieu(
+      doc,
+      sections.flatMap((s) =>
+        s.runs.map((r, i) => ({ label: `${s.mode} lượt ${i + 1}`, summary: summarize(r) })),
+      ),
+    )
+  }
+}
+
 // ─── main ──────────────────────────────────────────────────────────────────────
 async function main(): Promise<void> {
   if (providerLabel() === 'none') {
@@ -360,14 +510,33 @@ async function main(): Promise<void> {
     console.error(`❌ --mode không hợp lệ: "${MODE_ARG}" (cho phép: chat | speaking | both)`)
     process.exit(1)
   }
+  let runs: number
+  let group: ReturnType<typeof parseGroup>
+  try {
+    runs = parseRuns(RUNS_ARG)
+    group = parseGroup(GROUP_ARG)
+  } catch (e) {
+    console.error(`❌ ${e instanceof Error ? e.message : String(e)}`)
+    process.exit(1)
+  }
 
-  let fixtures = parseFixtures(JSON.parse(readFileSync(FIXTURES_PATH, 'utf8')))
-  if (LIMIT > 0) fixtures = fixtures.slice(0, LIMIT)
+  const fixtures = loadFixtures(group)
+  if (fixtures.length === 0) {
+    console.error(`❌ Không có câu nào khớp --group "${GROUP_ARG}" (và --limit ${LIMIT}).`)
+    process.exit(1)
+  }
 
   const modes: EvalMode[] = MODE_ARG === 'both' ? ['chat', 'speaking'] : [MODE_ARG as EvalMode]
   process.stderr.write(
-    `Provider: ${providerLabel()} · ${fixtures.length} câu · delay ${DELAY_MS}ms\n`,
+    `Provider: ${providerLabel()} · ${fixtures.length} câu · delay ${DELAY_MS}ms` +
+      `${group ? ` · nhóm ${group}` : ''}` +
+      `${runs > 1 ? ` · ${runs} lượt (≈ ${fixtures.length * runs * modes.length} lời gọi AI)` : ''}\n`,
   )
+
+  if (runs > 1) {
+    await mainMultiRun(runs, group, fixtures, modes)
+    return
+  }
 
   const sections: Section[] = []
   for (const mode of modes) {
@@ -379,38 +548,10 @@ async function main(): Promise<void> {
   process.stdout.write('\n' + doc + '\n')
 
   if (WRITE_BASELINE) {
-    // CỔNG CHẶN [2026-08-26] — trước đây `--write-baseline` ghi đè VÔ ĐIỀU KIỆN, kể cả khi
-    // 100% request lỗi provider. Đã xảy ra thật: `GROQ_API_KEY` hết hiệu lực → 62/62 câu trả
-    // 401 → mọi chỉ số `n/a` → script vẫn in "✅ Đã ghi" và baseline thật bị thay bằng bảng
-    // rỗng. Một baseline rỗng còn tệ hơn baseline cũ: nó xoá mất mốc so sánh DUY NHẤT, và
-    // PR sau đó sẽ "không tụt so với baseline" vì chẳng còn gì để tụt.
-    //
-    // Luật: chỉ ghi khi chấm được ÍT NHẤT 80% số câu ở MỌI chế độ đã chạy.
-    const NGUONG_TOI_THIEU = 0.8
-    const khongDat = sections.filter((s) => {
-      const tong = s.summary.scored + s.summary.providerErrors
-      return tong === 0 || s.summary.scored / tong < NGUONG_TOI_THIEU
-    })
-
-    if (khongDat.length > 0) {
-      process.stderr.write('\n❌ KHÔNG ghi baseline — lượt chạy này không đo được đủ dữ liệu.\n')
-      for (const s of khongDat) {
-        const tong = s.summary.scored + s.summary.providerErrors
-        process.stderr.write(
-          `   ${s.mode}: chấm được ${s.summary.scored}/${tong} câu ` +
-            `(cần ≥ ${Math.ceil(tong * NGUONG_TOI_THIEU)}), ${s.summary.providerErrors} câu lỗi provider.\n`,
-        )
-      }
-      process.stderr.write(
-        '   Baseline CŨ giữ nguyên — nó vẫn là mốc so sánh đúng.\n' +
-          '   Sửa nguyên nhân rồi chạy lại: lỗi 401 = khoá API sai/hết hạn (kiểm .env),\n' +
-          '   lỗi 404 = tên model sai, lỗi 429 = chạm hạn mức nhà cung cấp.\n',
-      )
-      process.exit(1)
-    }
-
-    writeFileSync(BASELINE_PATH, doc + '\n')
-    process.stderr.write(`\n✅ Đã ghi ${path.relative(PROJECT_ROOT, BASELINE_PATH)}\n`)
+    ghiBaselineNeuDuDuLieu(
+      doc,
+      sections.map((s) => ({ label: s.mode, summary: s.summary })),
+    )
   }
 }
 

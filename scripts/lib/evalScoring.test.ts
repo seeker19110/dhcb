@@ -1,6 +1,7 @@
 // Test logic chấm eval gia sư (thuần, KHÔNG gọi API). Cũng canh golden set luôn hợp lệ.
 import { describe, it, expect } from 'vitest'
 import goldenSet from '../eval-tutor-fixtures.json'
+import extraGoldenSet from '../eval-tutor-fixtures-extra.json'
 import {
   parseChatFeedback,
   parseSpeakingReply,
@@ -195,8 +196,10 @@ describe('golden set thật (eval-tutor-fixtures.json)', () => {
   it('có ≥ 55 câu', () => {
     expect(fixtures.length).toBeGreaterThanOrEqual(55)
   })
-  it('phủ đủ mọi loại lỗi trong ERROR_TYPES', () => {
-    const covered = new Set(fixtures.flatMap((f) => f.expectedErrors))
+  it('phủ đủ mọi loại lỗi trong ERROR_TYPES (bộ cũ + bộ mở rộng chiều B)', () => {
+    const covered = new Set(
+      parseFixtures([...goldenSet, ...extraGoldenSet]).flatMap((f) => f.expectedErrors),
+    )
     for (const t of ERROR_TYPES) expect(covered.has(t)).toBe(true)
   })
   it('có cả câu đúng và ca biên (đo bịa lỗi)', () => {
