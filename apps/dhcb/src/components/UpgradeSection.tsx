@@ -66,12 +66,8 @@ const PLAN_INFO: Record<
     title: { vi: 'VIP', en: 'VIP' },
     tagline: { vi: 'Tự do lựa chọn cách học', en: 'Learn in your own order' },
     bullets: [
-      {
-        // Gemini Live CHƯA kiểm chứng với key thật (nợ mở PROGRESS.md #15) — bắt buộc gắn
-        // nhãn "đang thử nghiệm"/"beta" để không hứa quá lời một tính năng chưa chắc chạy.
-        vi: 'Nói chuyện trực tiếp với gia sư bằng giọng, ngắt lời được như người thật (đang thử nghiệm)',
-        en: 'Talk live with your tutor by voice, interrupt like a real conversation (beta)',
-      },
+      // [changelog 0568] Đã gỡ dòng "Nói chuyện trực tiếp với gia sư bằng giọng (đang thử
+      // nghiệm)": Gemini Live chưa có giao diện nào trong app — không bán tính năng chưa dùng được.
       {
         vi: 'Cung điện trí nhớ 3D: ghi nhớ từ vựng theo không gian',
         en: '3D memory palace: remember vocabulary spatially',

@@ -1836,7 +1836,8 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   `cf44362`: gỡ `/api/co-learning-audio` + service + hợp đồng (0 client từ #628/#644, Map phòng
   không TTL) và `scripts/stress-test.ts` (mọi request 401 vẫn tính là thành công); sửa 3 chỗ số
   giả (độ bền Cung điện trí nhớ `random`, Vision Solver trả lời giải bịa khi thiếu key mà vẫn trừ
-  lượt, "Khớp N%" pitch ngẫu nhiên ở thẻ khẩu hình). **Chờ chủ dự án quyết:** Gemini Live
-  (`/api/gemini-live`, `/ws/gemini-live`) là mã thật nhưng CHƯA có client nào trong `apps/` —
-  giữ / gỡ / xây client; dòng VIP "Nói chuyện trực tiếp với gia sư bằng giọng (đang thử nghiệm)"
-  ở `UpgradeSection.tsx` đang quảng cáo đúng tính năng chưa có client đó.
+  lượt, "Khớp N%" pitch ngẫu nhiên ở thẻ khẩu hình). **Chủ dự án quyết 2026-10-09 (changelog
+  `0568`): GỠ dòng quảng cáo** VIP "Nói chuyện trực tiếp với gia sư bằng giọng (đang thử nghiệm)"
+  khỏi `UpgradeSection.tsx` (không bán tính năng chưa có giao diện). Mã server Gemini Live
+  (`/api/gemini-live`, `/ws/gemini-live`) GIỮ NGUYÊN, vẫn CHƯA có client trong `apps/` — xây
+  client hay gỡ hẳn: chưa quyết.
