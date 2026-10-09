@@ -231,6 +231,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật dao động điều hoà với phương trình li độ x = 5.cos(10πt + π/3) cm. Hãy tính chu kì dao động của vật.',
+        variables: { ω: 'rad/s', T: 's', t: 's', f: 'Hz' },
         answer: {
           kind: 'numeric',
           value: 0.2,
@@ -242,6 +243,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
         // Câu bẫy kép: (1) nhầm quãng đường đi trong 1 chu kì với biên độ; (2) quên đổi cm sang m.
         prompt:
           'Một vật dao động điều hoà với phương trình x = 5.cos(4πt) cm. Trong một chu kì, vật đi được quãng đường bao nhiêu? Trả lời theo đơn vị mét (m).',
+        variables: { S: 'm', A: 'm', x: 'm', t: 's', T: 's', ω: 'rad/s' },
         answer: {
           kind: 'numeric',
           value: 0.2,
@@ -550,6 +552,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một điểm chuyển động tròn đều với bán kính 0,1 m. Biên độ của hình chiếu chuyển động này lên một trục nằm trong mặt phẳng quỹ đạo bằng bao nhiêu mét?',
+        variables: { A: 'm', R: 'm', r: 'm' },
         answer: {
           kind: 'numeric',
           value: 0.1,
@@ -952,6 +955,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật dao động điều hoà với biên độ A = 0,1 m và tần số góc ω = 10 rad/s. Tính độ lớn vận tốc cực đại của vật.',
+        variables: { A: 'm', ω: 'rad/s', 'v_{max}': 'm/s', v: 'm/s' },
         answer: {
           kind: 'numeric',
           value: 1,
@@ -1026,6 +1030,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật dao động điều hoà có biên độ A = 0,05 m, tần số góc ω = 10 rad/s. Khi vật đi qua vị trí cân bằng (x = 0), hãy tính vận tốc của vật theo chiều dương.',
+        variables: { A: 'm', ω: 'rad/s', x: 'm', v: 'm/s', 'v_{max}': 'm/s' },
         answer: {
           kind: 'numeric',
           value: 0.5,
@@ -1275,6 +1280,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật dao động điều hoà có cơ năng toàn phần là W. Khi thế năng của vật bằng 3/4 cơ năng thì động năng của vật bằng bao nhiêu phần cơ năng?',
+        variables: { W: 'J', W_t: 'J', 'W_{đ}': 'J', W_d: 'J' },
         answer: {
           kind: 'numeric',
           value: 0.25,
@@ -1706,6 +1712,7 @@ export const LY11_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật dao động điều hoà với biên độ A = 10 cm. Tìm li độ dương của vật tại vị trí mà thế năng bằng 3 lần động năng.',
+        variables: { A: 'm', x: 'm', W: 'J', W_t: 'J', 'W_{đ}': 'J', W_d: 'J', n: '' },
         answer: {
           kind: 'numeric',
           value: donViHienThi(8.66, 'cm'),

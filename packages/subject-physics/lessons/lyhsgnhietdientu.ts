@@ -58,6 +58,7 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Khí lí tưởng giãn nở đẳng áp ở p = 2·10⁵ Pa, thể tích tăng từ 1 L lên 4 L. Tính công khí sinh ra (theo J).',
+        variables: { p: 'Pa', ΔV: 'm^3', V: 'm^3', "A'": 'J', A: 'J' },
         answer: {
           kind: 'numeric',
           value: 600,
@@ -69,6 +70,7 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một chu trình có dạng hình chữ nhật trên giản đồ p–V với hai cạnh Δp = 1,5·10⁵ Pa và ΔV = 4·10⁻³ m³, đi theo chiều kim đồng hồ. Tính công khí sinh ra trong một chu trình (theo J).',
+        variables: { Δp: 'Pa', p: 'Pa', ΔV: 'm^3', V: 'm^3', "A'": 'J', A: 'J' },
         answer: {
           kind: 'numeric',
           value: 600,
@@ -177,6 +179,19 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Khí lí tưởng đơn nguyên tử bị đun nóng đẳng tích, tích p·V tăng từ 400 J lên 1000 J. Tính nhiệt lượng khí nhận vào (theo J).',
+        variables: {
+          Q: 'J',
+          ΔU: 'J',
+          U: 'J',
+          "A'": 'J',
+          A: 'J',
+          p: 'Pa',
+          V: 'm^3',
+          p_1: 'Pa',
+          p_2: 'Pa',
+          V_1: 'm^3',
+          V_2: 'm^3',
+        },
         answer: {
           kind: 'numeric',
           value: 900,
@@ -188,6 +203,7 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một chu trình có công khí sinh ra A′ = 600 J, nhiệt lượng nhận vào Q_thu = 2850 J. Tính hiệu suất của chu trình (dạng số thập phân, không đơn vị).',
+        variables: { H: '', "A'": 'J', A: 'J', 'Q_{thu}': 'J', Q: 'J' },
         answer: {
           kind: 'numeric',
           value: 0.2105,
@@ -294,6 +310,7 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Thanh dẫn l = 1 m trượt trên ray nối điện trở R = 0,5 Ω trong từ trường B = 1 T, kéo bằng lực không đổi F = 2 N. Tính vận tốc giới hạn của thanh (theo m/s).',
+        variables: { l: 'm', R: 'Ω', B: 'T', F: 'N', v: 'm/s', 'v_{gh}': 'm/s' },
         answer: {
           kind: 'numeric',
           value: 1,
@@ -305,6 +322,7 @@ export const LY_HSG_NHIET_DIEN_TU_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vẫn hệ trên, thanh có khối lượng m = 0,2 kg. Tính hằng số thời gian τ = m·R/(B²·l²) của chuyển động (theo s).',
+        variables: { τ: 's', m: 'kg', R: 'Ω', B: 'T', l: 'm' },
         answer: {
           kind: 'numeric',
           value: 0.1,

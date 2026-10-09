@@ -1198,7 +1198,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
   bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
   còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
-- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`] Bảng nháp
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`, `0560`] Bảng nháp
   STEM (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên.** `0547` (đặc tả
   `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
   NGHIỆM THỰC với đề, chính xác (đa thức hữu tỉ BigInt + Sturm, giữ điều kiện xác định) → `✓ Hợp lệ`
@@ -1211,8 +1211,11 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   hỏi Socratic ba bậc theo bộ kiểm Toán · Hoá · Vật lí (không còn lộ `x = 5`, có test bất biến);
   ngân hàng đề THẬT 272 câu từ bài học Toán · Lí · Hoá thay dữ liệu mẫu `S_{n} = …`; nút "Nộp lời
   giải" gọi `submit_solution` (chấm theo `questionId` do server gán); hàng nhập 390px hết chật.
-  **Còn lại:** (1) Vật lí — đề ngân hàng chưa khai bảng `variables` (chưa khai → "chưa tự kiểm
-  được") và giao diện chưa gửi `variables` khi tạo đề; chưa kiểm vector/chiều, đạo hàm/tích phân;
+  ✅ `0560` (đặc tả `docs/specs/2026-10-09-bang-bien-vat-li-ngan-hang-de.md`): 86/89 câu Vật lí của
+  ngân hàng có bảng `variables` khai trong bài học, server gắn vào phiên khi mở đề bằng
+  `questionId` (giao diện chỉ mở đề từ ngân hàng nên không cần gửi gì); 3 câu số đếm cố ý không
+  khai. **Còn lại:** (1) Vật lí — chưa kiểm vector/chiều, đạo hàm/tích phân; bảng biến cho đề TỰ DO
+  chỉ gửi được qua API (giao diện không có luồng tạo đề tự do);
   (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất phương trình, nhiều ẩn (dấu chia `:` ✅ 0562); (3) đề
   ngân hàng là lời văn nên bước Toán chỉ so được với bước 1 của người học (chưa có phương trình đề
   để làm mốc); 272 câu đều là bài `draft` chưa duyệt chuyên môn.

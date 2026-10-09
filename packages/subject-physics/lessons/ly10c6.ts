@@ -228,6 +228,7 @@ export const LY10_C6_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một bánh xe quay đều với tốc độ góc 20 rad/s. Một điểm nằm cách trục quay 0,5 m có tốc độ dài bằng bao nhiêu?',
+        variables: { v: 'm/s', ω: 'rad/s', r: 'm' },
         answer: {
           kind: 'numeric',
           value: 10,
@@ -480,6 +481,7 @@ export const LY10_C6_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một sợi dây treo vật nặng 2 kg quay tròn đều trong mặt phẳng nằm ngang với bán kính quỹ đạo r = 0,5 m. Tốc độ dài của vật là v = 5 m/s. Tính lực căng dây đóng vai trò lực hướng tâm.',
+        variables: { 'F_{ht}': 'N', F: 'N', m: 'kg', v: 'm/s', r: 'm' },
         answer: {
           kind: 'numeric',
           value: 100,

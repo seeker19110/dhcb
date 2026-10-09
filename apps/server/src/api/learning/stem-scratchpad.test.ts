@@ -541,6 +541,42 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       expect(StemMicroHintSchema.safeParse(r.data.hint).success).toBe(true)
       expect(r.data.hintsUsed).toBe(1)
     })
+
+    it('Vật lí từ ngân hàng: server gắn bảng biến của câu → bước lệch thứ nguyên ✗ (changelog 0560)', async () => {
+      // Câu "tàu hãm phanh" (a = (v_t − v_o)/t): bảng khai trong bài học, client CHỈ gửi questionId.
+      const cau = BANK.find((q) => q.id === 'ly10-c2-b8-q1')
+      expect(cau?.variables).toMatchObject({ a: 'm/s^2', v_o: 'm/s', t: 's' })
+      const { data } = await post('create_problem', {
+        questionId: cau?.id,
+        // Client cố gửi bảng khác — phải bị bỏ qua (bảng do server gắn).
+        variables: { a: 'm', v_t: 'm', v_o: 'm', t: 's' },
+      })
+      expect(data.problem.variables).toEqual(cau?.variables)
+      const id = data.problem.id
+
+      const lech = await post('validate_step', { problemId: id, latexInput: 'a = (v_t - v_o) t' })
+      expect(lech.data.validation.status).toBe('invalid')
+      expect(lech.data.validation.errorType).toBe('dimension_mismatch')
+
+      // Bước đúng của lời giải: khớp thứ nguyên → vẫn "chưa tự kiểm được", không làm bài xong.
+      const khop = await post('validate_step', { problemId: id, latexInput: 'a = (v_t - v_o) / t' })
+      expect(khop.data.validation.status).toBe('unverified')
+      expect(khop.data.validation.errorType).toBe('none')
+      expect(khop.data.isSolved).toBe(false)
+    })
+
+    it('Vật lí từ ngân hàng, câu KHÔNG có bảng → vẫn "chưa tự kiểm được" như trước 0560', async () => {
+      // Câu bảo toàn số khối: số đếm, cố ý không khai bảng (changelog 0560).
+      const cau = BANK.find((q) => q.id === 'ly12-c4-b22-q2')
+      expect(cau).toBeDefined()
+      expect(cau?.variables).toBeUndefined()
+      const { data } = await post('create_problem', { questionId: cau?.id })
+      expect(data.problem).not.toHaveProperty('variables')
+      const r = await post('validate_step', { problemId: data.problem.id, latexInput: 'v = a t^2' })
+      expect(r.data.validation.status).toBe('unverified')
+      expect(r.data.validation.errorType).not.toBe('dimension_mismatch')
+      expect(r.data.validation.feedback).toContain('chưa khai bảng thứ nguyên')
+    })
   })
 
   it('cắt bớt bài cũ nhất khi vượt trần MAX_PROBLEMS (30 bài/người)', async () => {

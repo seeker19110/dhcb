@@ -251,6 +251,7 @@ export const LY11_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Hai điện tích điểm trong chân không q₁ = 10⁻⁹ C và q₂ = 2 * 10⁻⁹ C đặt cách nhau r = 0,03 m. Tính độ lớn lực đẩy giữa chúng.',
+        variables: { F: 'N', k: 'N·m^2/C^2', q_1: 'C', q_2: 'C', r: 'm' },
         answer: {
           kind: 'numeric',
           value: 2e-5,
@@ -567,6 +568,7 @@ export const LY11_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một điện tích thử q = 2 * 10⁻⁹ C đặt tại một điểm trong điện trường chịu tác dụng của lực điện F = 10⁻⁵ N. Tính độ lớn cường độ điện trường tại điểm đó.',
+        variables: { E: 'V/m', F: 'N', q: 'C' },
         answer: {
           kind: 'numeric',
           value: 5000,
@@ -834,6 +836,7 @@ export const LY11_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Hai bản kim loại song song tích điện trái dấu cách nhau 0,01 m. Hiệu điện thế giữa hai bản là 50 V. Tính cường độ điện trường đều giữa hai bản.',
+        variables: { E: 'V/m', U: 'V', d: 'm' },
         answer: {
           kind: 'numeric',
           value: 5000,
@@ -1104,6 +1107,7 @@ export const LY11_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một điện tích q = 10⁻⁹ C di chuyển trong điện trường đều E = 1000 V/m. Biết hình chiếu quãng đường di chuyển dọc theo chiều đường sức điện là d = 0,05 m. Tính công của lực điện trường thực hiện.',
+        variables: { A: 'J', q: 'C', E: 'V/m', d: 'm' },
         answer: {
           kind: 'numeric',
           value: 5e-8,
@@ -1382,6 +1386,7 @@ export const LY11_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Điện thế tại điểm A trong điện trường là 100 V, tại điểm B là 40 V. Tính công của lực điện trường thực hiện để dịch chuyển điện tích q = 10⁻⁹ C từ A đến B.',
+        variables: { V_A: 'V', V_B: 'V', 'U_{AB}': 'V', 'A_{AB}': 'J', A: 'J', q: 'C' },
         answer: {
           kind: 'numeric',
           value: 6e-8,
@@ -1767,6 +1772,7 @@ export const LY11_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một tụ điện có điện dung C = 2 * 10⁻⁶ F (2 μF) được nối vào nguồn điện có hiệu điện thế U = 50 V. Tính năng lượng điện trường tích luỹ trong tụ điện.',
+        variables: { W: 'J', C: 'F', U: 'V' },
         answer: {
           kind: 'numeric',
           value: 0.0025,

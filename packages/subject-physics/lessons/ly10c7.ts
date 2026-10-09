@@ -275,6 +275,7 @@ export const LY10_C7_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một lò xo có độ cứng 200 N/m bị nén một đoạn 0,02 m. Tính độ lớn lực đàn hồi của lò xo xuất hiện lúc này.',
+        variables: { 'F_{đh}': 'N', 'F_{dh}': 'N', F: 'N', k: 'N/m', Δl: 'm' },
         answer: {
           kind: 'numeric',
           value: 4,
@@ -559,6 +560,7 @@ export const LY10_C7_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một khối gỗ có thể tích 0,002 m³ chìm hoàn toàn trong nước có khối lượng riêng 1000 kg/m³. Tính độ lớn lực đẩy Archimedes tác dụng lên khối gỗ (lấy g = 10 m/s²).',
+        variables: { F_A: 'N', ρ: 'kg/m^3', V: 'm^3' },
         answer: {
           kind: 'numeric',
           value: 20,

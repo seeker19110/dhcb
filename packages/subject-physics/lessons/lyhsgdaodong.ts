@@ -58,6 +58,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Hai lò xo có độ cứng k₁ = 30 N/m và k₂ = 60 N/m được ghép SONG SONG. Tính độ cứng tương đương (theo N/m).',
+        variables: { k: 'N/m', k_1: 'N/m', k_2: 'N/m', 'k_{td}': 'N/m' },
         answer: {
           kind: 'numeric',
           value: 90,
@@ -69,6 +70,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vẫn hai lò xo k₁ = 30 N/m và k₂ = 60 N/m nhưng ghép NỐI TIẾP. Tính độ cứng tương đương (theo N/m).',
+        variables: { k: 'N/m', k_1: 'N/m', k_2: 'N/m', 'k_{td}': 'N/m' },
         answer: {
           kind: 'numeric',
           value: 20,
@@ -179,6 +181,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một con lắc đơn treo trong thang máy đi lên NHANH DẦN đều với gia tốc 2 m/s², nơi có g = 10 m/s². Gia tốc trọng trường hiệu dụng bằng bao nhiêu (theo m/s²)?',
+        variables: { 'g_{hd}': 'm/s^2', a_0: 'm/s^2', a: 'm/s^2' },
         answer: {
           kind: 'numeric',
           value: 12,
@@ -190,6 +193,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Con lắc đơn dài l = 1,2 m treo trong thang máy đi lên nhanh dần đều với a₀ = 2 m/s² (g = 10 m/s², g_hd = 12 m/s²). Tính chu kì dao động nhỏ (theo s).',
+        variables: { T: 's', T_0: 's', l: 'm', 'g_{hd}': 'm/s^2', a_0: 'm/s^2' },
         answer: {
           kind: 'numeric',
           value: 1.99,
@@ -294,6 +298,7 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Hệ ván + vật có tần số góc ω² = 50 rad²/s², hệ số ma sát nghỉ cực đại μ = 0,5 giữa vật và ván, g = 10 m/s². Tính biên độ lớn nhất để vật không trượt (theo m).',
+        variables: { 'A_{max}': 'm', A: 'm', μ: '', ω: 'rad/s', m: 'kg' },
         answer: {
           kind: 'numeric',
           value: 0.1,
@@ -305,6 +310,16 @@ export const LY_HSG_DAO_DONG_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vật M = 3 kg gắn lò xo đang dao động, khi đi qua vị trí cân bằng với tốc độ 0,4 m/s thì một vật m = 1 kg được đặt nhẹ lên và dính vào nó. Tính tốc độ của hệ ngay sau đó (theo m/s).',
+        variables: {
+          M: 'kg',
+          m: 'kg',
+          v: 'm/s',
+          "v'": 'm/s',
+          A: 'm',
+          "A'": 'm',
+          ω: 'rad/s',
+          "ω'": 'rad/s',
+        },
         answer: {
           kind: 'numeric',
           value: 0.3,

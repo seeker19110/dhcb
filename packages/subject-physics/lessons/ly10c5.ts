@@ -190,6 +190,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một lực kéo 50 N tác dụng lên một chiếc xe đẩy trong khoảng thời gian 0,2s. Tính độ biến thiên động lượng của chiếc xe đẩy (bỏ qua các lực khác).',
+        variables: { Δp: 'kg·m/s', p: 'kg·m/s', F: 'N', Δt: 's', t: 's' },
         answer: {
           kind: 'numeric',
           value: 10,
@@ -398,6 +399,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một xe lăn A khối lượng 1 kg chuyển động với tốc độ 2 m/s va chạm và dính vào một xe lăn B khối lượng 1 kg đang đứng yên. Tính tốc độ của hai xe sau va chạm.',
+        variables: { v: 'm/s', "v'": 'm/s', v_A: 'm/s', v_B: 'm/s', m_A: 'kg', m_B: 'kg' },
         answer: {
           kind: 'numeric',
           value: 1,
@@ -409,6 +411,15 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
         // Câu bẫy: động lượng là VECTƠ — hai vật đi ngược chiều thì phải trừ, không phải cộng.
         prompt:
           'Xe A nặng 2 kg chạy sang phải với tốc độ 3 m/s, xe B nặng 1 kg chạy sang trái với tốc độ 2 m/s trên cùng một đường thẳng. Chọn chiều dương là chiều sang phải. Tổng động lượng của hệ hai xe bằng bao nhiêu (theo kg·m/s)?',
+        variables: {
+          p: 'kg·m/s',
+          p_A: 'kg·m/s',
+          p_B: 'kg·m/s',
+          m_A: 'kg',
+          m_B: 'kg',
+          v_A: 'm/s',
+          v_B: 'm/s',
+        },
         answer: {
           kind: 'numeric',
           value: 4,
@@ -679,6 +690,7 @@ export const LY10_C5_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một xe trượt khối lượng 0,2 kg chuyển động với tốc độ 1,5 m/s va chạm mềm với xe trượt thứ hai khối lượng 0,1 kg đang đứng yên. Tính động lượng tổng cộng của hệ sau va chạm.',
+        variables: { p: 'kg·m/s', m_1: 'kg', m_2: 'kg', v_1: 'm/s', v_2: 'm/s', v: 'm/s' },
         answer: {
           kind: 'numeric',
           value: 0.3,

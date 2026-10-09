@@ -219,6 +219,7 @@ export const LY11_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một dòng điện không đổi có cường độ I = 0,2 A chạy qua một dây dẫn. Tính lượng điện tích dịch chuyển qua tiết diện dây dẫn trong thời gian 10 s.',
+        variables: { q: 'C', I: 'A', t: 's' },
         answer: {
           kind: 'numeric',
           value: 2,
@@ -526,6 +527,7 @@ export const LY11_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Đặt một hiệu điện thế U = 5 V vào hai đầu một điện trở R = 10 Ω. Hãy tính cường độ dòng điện chạy qua điện trở đó.',
+        variables: { I: 'A', U: 'V', R: 'Ω' },
         answer: {
           kind: 'numeric',
           value: 0.5,
@@ -817,6 +819,7 @@ export const LY11_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một nguồn điện có suất điện động E = 12 V, điện trở trong r = 2 Ω được mắc vào một điện trở ngoài R = 10 Ω tạo thành mạch kín. Tính cường độ dòng điện chạy qua mạch.',
+        variables: { I: 'A', E: 'V', r: 'Ω', R: 'Ω' },
         answer: {
           kind: 'numeric',
           value: 1,
@@ -1129,6 +1132,7 @@ export const LY11_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một bóng đèn có điện trở R = 20 Ω chạy dòng điện cường độ I = 2 A. Tính công suất toả nhiệt của bóng đèn này.',
+        variables: { P: 'W', R: 'Ω', I: 'A' },
         answer: {
           kind: 'numeric',
           value: 80,
@@ -1420,6 +1424,7 @@ export const LY11_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Từ phương trình U = E - I * r, nếu kết quả đo thực nghiệm chỉ ra: khi dòng điện mạch hở (I = 0) vôn kế chỉ 1,5 V, và khi dòng điện I = 0,5 A vôn kế chỉ 1,3 V. Hãy tính điện trở trong r của pin.',
+        variables: { U: 'V', E: 'V', I: 'A', r: 'Ω' },
         answer: {
           kind: 'numeric',
           value: 0.4,

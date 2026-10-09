@@ -253,6 +253,7 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một lực ma sát trượt có độ lớn 20 N tác dụng lên một hộp gỗ trượt thẳng trên sàn, hướng lực ma sát luôn ngược hướng chuyển động (α = 180°). Tính công của lực ma sát khi hộp gỗ dịch chuyển được 5 m.',
+        variables: { A: 'J', F: 'N', 'F_{ms}': 'N', s: 'm', α: '' },
         answer: {
           kind: 'numeric',
           value: -100,
@@ -477,6 +478,7 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Động cơ của một xe máy sinh ra công suất kéo 3 kW khi xe chạy đều trên đường phẳng. Tính công kéo của động cơ xe máy trong thời gian 10 giây.',
+        variables: { A: 'J', P: 'W', t: 's' },
         answer: {
           kind: 'numeric',
           value: 30000,
@@ -700,6 +702,7 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật có khối lượng 2 kg được đặt ở độ cao 5 m so với mặt đất (mốc thế năng). Lấy gia tốc trọng trường g = 10 m/s². Tính thế năng trọng trường của vật.',
+        variables: { W_t: 'J', m: 'kg', h: 'm' },
         answer: {
           kind: 'numeric',
           value: 100,
@@ -899,6 +902,7 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật có cơ năng tổng cộng là 100 J chuyển động trong trọng trường. Tại một vị trí, thế năng trọng trường của vật đo được là 40 J. Tính động năng của vật tại vị trí đó.',
+        variables: { W: 'J', W_t: 'J', 'W_{đ}': 'J', W_d: 'J' },
         answer: {
           kind: 'numeric',
           value: 60,
@@ -1112,6 +1116,7 @@ export const LY10_C4_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một máy bơm nước tiêu thụ năng lượng toàn phần là 500 J, trong đó phần năng lượng có ích dùng để bơm nước lên bồn chứa là 400 J. Tính hiệu suất của máy bơm.',
+        variables: { H: '', 'W_{ci}': 'J', 'W_{tp}': 'J', 'A_{ci}': 'J', 'A_{tp}': 'J' },
         answer: {
           kind: 'numeric',
           value: donViHienThi(80, '%'),

@@ -62,6 +62,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vật A khối lượng 4 kg trên mặt bàn nằm ngang nhẵn được nối qua ròng rọc nhẹ với vật B khối lượng 1 kg treo lơ lửng. Lấy g = 10 m/s². Tính độ lớn gia tốc của hệ (theo m/s²).',
+        variables: { a: 'm/s^2', m_A: 'kg', m_B: 'kg', T: 'N' },
         answer: {
           kind: 'numeric',
           value: 2,
@@ -73,6 +74,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vẫn hệ trên (A = 4 kg trên bàn nhẵn, B = 1 kg treo, g = 10 m/s², a = 2 m/s²). Tính lực căng dây (theo N).',
+        variables: { a: 'm/s^2', m_A: 'kg', m_B: 'kg', T: 'N' },
         answer: {
           kind: 'numeric',
           value: 8,
@@ -176,6 +178,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một con lắc treo trong toa xe chuyển động nhanh dần đều theo phương ngang với gia tốc a₀ = 4 m/s², lấy g = 10 m/s². Tính tan của góc lệch của dây treo so với phương thẳng đứng.',
+        variables: { a_0: 'm/s^2', a: 'm/s^2', α: '' },
         answer: {
           kind: 'numeric',
           value: 0.4,
@@ -186,6 +189,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một người khối lượng 60 kg đứng trên cân trong thang máy đang đi LÊN nhanh dần đều với gia tốc 2 m/s² (g = 10 m/s²). Cân chỉ số chỉ trọng lượng biểu kiến bằng bao nhiêu N?',
+        variables: { m: 'kg', a_0: 'm/s^2', a: 'm/s^2', 'g_{hd}': 'm/s^2', N: 'N' },
         answer: {
           kind: 'numeric',
           value: 720,
@@ -296,6 +300,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vật m = 2 kg trượt không ma sát từ đỉnh nêm M = 2 kg cao h = 0,8 m, nêm đặt trên sàn nhẵn và tự do. Lấy g = 10 m/s². Tính tốc độ của vật so với mặt đất khi nó tới chân nêm (theo m/s).',
+        variables: { m: 'kg', M: 'kg', h: 'm', v_1: 'm/s', v_2: 'm/s', v: 'm/s' },
         answer: {
           kind: 'numeric',
           value: 2.83,
@@ -308,6 +313,7 @@ export const LY_HSG_CO_HOC_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Vẫn hệ vật m = 1 kg trên nêm M = 3 kg trong bài mẫu (v₁ = 3 m/s). Tính tổng động lượng theo phương ngang của hệ ngay khi vật tới chân nêm (theo kg·m/s).',
+        variables: { m: 'kg', M: 'kg', v_1: 'm/s', v_2: 'm/s', p: 'kg·m/s' },
         answer: {
           kind: 'numeric',
           value: 0,

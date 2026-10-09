@@ -56,6 +56,16 @@ giao diện `apps/dhcb/src/components/StemScratchpad/`). Đặc tả:
   "đơn vị ghi sau", `½at`) → `unverified` hỏi lại; **khớp thứ nguyên → vẫn `unverified`** (điều kiện
   cần, không đủ — `v = 2at` khớp mà sai). Đáp số đề mẫu viết cứng (`khopDapSo`) đã gỡ ở 0551. Đặc tả
   `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md` §6 (quy ước "số trần").
+- **Bảng biến của câu Vật lí ngân hàng (changelog 0560):** khai ở trường `variables` của từng câu
+  "Tự kiểm tra" trong `packages/subject-physics/lessons/*.ts` (schema `PhysicsCheckQuestionSchema`
+  dùng lại `StemVariableTableSchema`); ngân hàng mang theo, server gắn vào phiên khi mở đề bằng
+  `questionId` — client không gửi bảng. 86/89 câu có bảng; 3 câu số đếm cố ý không khai. Luật
+  soạn: chỉ ký hiệu đề/lời giải dùng, đúng NGHĨA của bài (`k` lò xo ≠ Coulomb ≠ số bó sóng; `c`
+  nhiệt dung riêng thắng hằng tốc độ ánh sáng); chữ vừa là đơn vị (`V`, `T`, `W`, `N`) mà lời giải
+  viết `V1`, `T2` thì PHẢI khai cả ký hiệu gốc, không thì `V1` bị đọc là "1 vôn" và bước đúng bị
+  hỏi lại "lệch có điều kiện"; chỉ số dưới nhiều chữ viết `v_{max}`. Không chắc nghĩa thì bỏ —
+  thiếu chỉ ra "?", sai thì ✗ oan. Test `packages/core-ai/stemQuestionBank.physicsVariables.test.ts`
+  chạy bước ĐÚNG lấy từ lời giải của từng câu.
 - **Sinh:** CHƯA kiểm bước.
 - **"Giải xong"** chỉ khi `status: 'valid'` VÀ `isFinalAnswer: true` (`x = 5` tương đương đề; PTHH cân
   bằng tối giản, đúng chất của đề). Bước giữa `valid` (vd `2x = 10`) KHÔNG làm bài xong.
@@ -80,7 +90,7 @@ hay bước đúng.
 **CHƯA CÓ — cần đặc tả trước khi làm:**
 
 - căn, lượng giác, log/mũ, π, giá trị tuyệt đối, bất phương trình, hệ nhiều ẩn;
-- bảng `variables` cho đề Vật lí của ngân hàng đề; kiểm vector/chiều, đạo hàm/tích phân;
+- Vật lí: kiểm vector/chiều, đạo hàm/tích phân; ô nhập bảng biến cho đề TỰ DO trên giao diện;
 - hệ số phân số trong PTHH (`1/2 O_2`).
 
 **Đáp số cuối của `submit_solution`** (đề ngân hàng) chấm theo câu gắn với phiên
