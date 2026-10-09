@@ -6,7 +6,7 @@ Nguồn: `apps/dhcb/src/App.tsx` (route giao diện) + `apps/server/src/routes.t
 Dùng để **đối chiếu chéo tính năng** trong audit toàn diện (Nhóm 12): một tính năng có màn hình
 mà không có API, hoặc có API mà không màn hình nào gọi, là dấu hiệu việc làm dở dang.
 
-Tổng: **128 route giao diện** · **113 endpoint API**.
+Tổng: **128 route giao diện** · **112 endpoint API**.
 
 ## Route giao diện theo trụ
 

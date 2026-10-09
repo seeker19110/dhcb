@@ -20,15 +20,14 @@ Bằng chứng: `grep -c 'path="' App.tsx` = 60 (đúng con số bộ sinh cũ) 
    tay nên không lệch. Dạng động không giải được thì bỏ qua (không văng lỗi). Thêm `buildFeatureMap()`.
 2. **Test** `scripts/gen-feature-map.test.ts`: +3 ca cho dạng khai mới, +1 ca **canh file khớp bộ
    sinh** (mẫu như `lessonsLazy.test.ts`) — lệch thì đỏ kèm lệnh sửa.
-3. **Sinh lại** `docs/FEATURE-MAP.md`: **128 route giao diện · 113 endpoint API** (file cũ 104 / 111).
+3. **Sinh lại** `docs/FEATURE-MAP.md`: **128 route giao diện · 112 endpoint API** (file cũ 104 / 111).
    Route: -36 mất (URL cũ không còn là route chính) / +60 mới. API: +6 (`/api/account`,
    `/api/admin-stem-review`, `/api/cefr-assessment`, `/api/learner-intent`, `/api/learning/evidence`,
    `/api/payment-cancel`) và -4 (`/api/career`, `/api/career-interview`, `/api/life`,
-   `/api/startup`): 111 + 6 - 4 = 113.
+   `/api/startup`) và -1 (`/api/co-learning-audio`, gỡ ở #1308): 111 + 6 - 4 - 1 = 112.
 
 ## Lưu ý
 
-- Nhánh tách từ `main` CHƯA có PR #1308 (đợt 0563): bản sinh này còn `/api/co-learning-audio`.
-  Sau khi #1308 merge phải chạy lại `npm run gen:feature-map` (test canh mới sẽ đỏ nếu quên).
+- Đã sinh lại trên `main` có #1308 (đợt 0563 gỡ `/api/co-learning-audio`) và #1309: 112 API.
 - Không sửa `PROGRESS.md`: không có mục nợ nào nhắc FEATURE-MAP.
 - Cổng CI không đổi (`ci.yml` là file được bảo vệ); test canh nằm trong `npm test` nên CI job `unit` chạy.
