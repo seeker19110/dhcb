@@ -13,6 +13,8 @@ import { PROJECT_MAIN_FILE, type ProjectStage } from './projectStepTypes.js'
 import { T2_PROJECT_MAIN_FILE, T2_PROJECT_STARTER_CODE } from './projectStepsT2.js'
 import { T3_PROJECT_MAIN_FILE, T3_PROJECT_STARTER_CODE } from './projectStepsT3.js'
 import { DEFAULT_PROJECT_TRACK, PROJECT_TRACK_IDS, type ProjectTrackId } from './projectTrackIds.js'
+// Chỉ KIỂU — fetchGia.ts không import gì của họ projectStep*/projectTracks nên không có chu trình.
+import type { FetchApi } from './fetchGia.js'
 
 export {
   PROJECT_TRACK_IDS,
@@ -32,6 +34,9 @@ export interface ProjectTrack {
   mainFile: string
   /** Code khởi đầu của file chính. */
   starterCode: string
+  /** API giả mà bước `fetch` của dự án gọi (fetchGia.ts). Bỏ trống = dự án chưa có bước fetch;
+   *  trang dự án đọc trường này thay cho rẽ nhánh theo mã dự án. */
+  fetchApi?: FetchApi
   /** SUY từ dữ liệu: dự án có ít nhất một bước thì mở — không ghi cứng (xem isTrackAvailable). */
   available: boolean
 }
@@ -52,6 +57,7 @@ const TRACK_INFO: readonly ProjectTrackInfo[] = [
     productNoun: 'cửa hàng',
     mainFile: PROJECT_MAIN_FILE,
     starterCode: PROJECT_STARTER_CODE,
+    fetchApi: 'cua-hang',
   },
   {
     id: 'T2',
@@ -60,6 +66,7 @@ const TRACK_INFO: readonly ProjectTrackInfo[] = [
     productNoun: 'sổ quỹ',
     mainFile: T2_PROJECT_MAIN_FILE,
     starterCode: T2_PROJECT_STARTER_CODE,
+    fetchApi: 'quy-lop',
   },
   {
     id: 'T3',

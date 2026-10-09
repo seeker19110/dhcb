@@ -17,10 +17,8 @@ import vm from 'node:vm'
 import { parseHTML } from 'linkedom'
 import { moTaCayDom, type ElementLike } from './htmlPrelude.js'
 import { thucHien, type DomLike, type DomRunResult } from './domPrelude.js'
-import { taoFetchGia, taoFetchCuaHang } from './fetchGia.js'
-import { THOI_TIET_63_TINH } from './weatherData.js'
-import { MENU_CUA_HANG } from './shopData.js'
-import type { FetchApi, FetchRunResult } from './fetchPrelude.js'
+import { taoFetchTheoApi, type FetchApi } from './fetchGia.js'
+import type { FetchRunResult } from './fetchPrelude.js'
 
 /** Khớp `TIMEOUT_MS` của `completionSandboxServer.ts` (và timeout client) — cùng trải nghiệm. */
 const TIMEOUT_MS = 10_000
@@ -100,8 +98,7 @@ export async function chayBaiFetchServer(
   try {
     const { document, window } = parseHTML(html)
     const EventCtor = (window as unknown as { Event: new (t: string) => unknown }).Event
-    const fetchGia =
-      api === 'cua-hang' ? taoFetchCuaHang(MENU_CUA_HANG) : taoFetchGia(THOI_TIET_63_TINH)
+    const fetchGia = taoFetchTheoApi(api)
     // Gắn cả lên window cho ai viết window.fetch(...) — cùng một hàm, không lệch hành vi.
     ;(window as unknown as Record<string, unknown>).fetch = fetchGia
 

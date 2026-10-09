@@ -91,6 +91,17 @@ describe('PROJECT_TRACKS', () => {
   })
 })
 
+describe('API giả của bước fetch', () => {
+  it('dự án nào có bước fetch thì PHẢI khai fetchApi (không thì trang dự án gọi nhầm API thời tiết)', () => {
+    for (const t of PROJECT_TRACKS) {
+      const coFetch = getProjectStages(t.id).some((stage) =>
+        stage.steps.some((step) => step.language === 'fetch'),
+      )
+      if (coFetch) expect(t.fetchApi, t.id).toBeDefined()
+    }
+  })
+})
+
 describe('normalizeProjectTrack', () => {
   it('giá trị lạ/rỗng → T1', () => {
     for (const v of [null, undefined, '', 'T4', 't2', 42, {}]) {

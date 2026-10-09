@@ -36,7 +36,7 @@ import { runLessonCode, resetLessonRunners } from '../../../lib/codeRunner'
 import { HtmlPreview } from '../../../components/HtmlPreview'
 // fetchGia chứ KHÔNG phải fetchPrelude: prelude kéo theo linkedom (~94KB gzip), thư viện đó
 // chỉ được sống trong worker (xem ghi chú cùng nội dung ở ProgrammingLessonPage).
-import { FETCH_SHIM_CUA_HANG_JS } from '@dhcb/subject-programming/fetchGia'
+import { FETCH_SHIM_THEO_API } from '@dhcb/subject-programming/fetchGia'
 import {
   loadProjectFiles,
   saveProjectFileAt,
@@ -231,10 +231,12 @@ export default function ProgrammingProjectPage() {
         stdinLines: check.stdinLines,
         files: workspace,
         ...(activeStep.domHtml ? { domHtml: activeStep.domHtml } : {}),
-        // Bước fetch của DỰ ÁN T1 gọi API menu của chính cửa hàng, không phải API thời tiết
-        // của bài học P3-U7. T2/T3 chưa có API giả riêng (PR nội dung bổ sung khi soạn bước
-        // fetch — xem đặc tả hạ tầng T2/T3 mục hợp đồng).
-        ...(track === 'T1' ? { fetchApi: 'cua-hang' as const } : {}),
+        // Bước fetch gọi API giả của CHÍNH dự án (T1 menu quán, T2 sổ quỹ lớp), không phải API
+        // thời tiết của bài học P3-U7 — dự án nào dùng API nào khai ở projectTracks.ts.
+        ...(trackInfo.fetchApi ? { fetchApi: trackInfo.fetchApi } : {}),
+        // Bước SQL chấm trên bộ dữ liệu RIÊNG của ca (T2 có sổ quỹ, không dùng CSDL quán mẫu)
+        // — y như trang bài học truyền testCase.datasetSql.
+        ...(check.datasetSql ? { datasetSql: check.datasetSql } : {}),
       })
       out.push(
         gradeTestCase(check, r.output, r.error ?? (r.timedOut ? 'Quá thời gian' : undefined)),
@@ -453,14 +455,15 @@ export default function ProgrammingProjectPage() {
 
           {/* Bước DOM/fetch: chỉ chạy khi BẤM — script dở dang (vòng lặp vô hạn đang gõ nửa
               chừng) mà tự chạy là tự bắn vào chân. Bước fetch nhúng thêm fetch giả của API
-              cửa hàng, vì khung xem trang không có mạng thật. */}
+              của dự án đang chọn, vì khung xem trang không có mạng thật. */}
           {files !== null && activeStep.domHtml && (
             <div className="space-y-2">
               <button
                 onClick={() =>
                   setPreviewScript(
-                    (stepLanguage === 'fetch' && track === 'T1' ? FETCH_SHIM_CUA_HANG_JS : '') +
-                      (files[shownFile] ?? ''),
+                    (stepLanguage === 'fetch' && trackInfo.fetchApi
+                      ? FETCH_SHIM_THEO_API[trackInfo.fetchApi]
+                      : '') + (files[shownFile] ?? ''),
                   )
                 }
                 className="tap-44 inline-flex items-center px-4 py-2 rounded-2xl border border-zinc-700 hover:border-zinc-500 text-sm text-zinc-200 transition"

@@ -19,21 +19,20 @@
 import { parseHTML } from 'linkedom'
 import { moTaCayDom, type ElementLike } from './htmlPrelude.js'
 import { thucHien, type DomLike } from './domPrelude.js'
-import { THOI_TIET_63_TINH } from './weatherData.js'
-import { MENU_CUA_HANG } from './shopData.js'
-import { taoFetchGia, taoFetchCuaHang } from './fetchGia.js'
+import { taoFetchTheoApi, type FetchApi } from './fetchGia.js'
 
 export {
   taoFetchBang,
   taoFetchGia,
   taoFetchCuaHang,
+  taoFetchQuyLop,
+  taoFetchTheoApi,
   FETCH_SHIM_JS,
   FETCH_SHIM_CUA_HANG_JS,
+  FETCH_SHIM_QUY_LOP_JS,
+  type FetchApi,
   type ResponseGia,
 } from './fetchGia.js'
-
-/** API mẫu nào phục vụ lượt chạy này: bài học P3-U7 (thời tiết) hay dự án trục (menu quán). */
-export type FetchApi = 'thoi-tiet' | 'cua-hang'
 
 /** Kết quả một lượt chạy — cùng hình dạng với DomRunResult của bài DOM. */
 export interface FetchRunResult {
@@ -65,8 +64,7 @@ export async function chayBaiFetch(
   try {
     const { document, window } = parseHTML(html)
     const EventCtor = (window as unknown as { Event: new (t: string) => unknown }).Event
-    const fetchGia =
-      api === 'cua-hang' ? taoFetchCuaHang(MENU_CUA_HANG) : taoFetchGia(THOI_TIET_63_TINH)
+    const fetchGia = taoFetchTheoApi(api)
     // Gắn cả lên window cho ai viết window.fetch(...) — cùng một hàm, không lệch hành vi.
     ;(window as unknown as Record<string, unknown>).fetch = fetchGia
 
