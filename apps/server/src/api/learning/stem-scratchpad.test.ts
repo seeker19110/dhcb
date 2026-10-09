@@ -108,7 +108,14 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
 
     const sai = await post('validate_step', { problemId: problem.id, latexInput: 'x = 50' })
     expect(sai.isSolved).toBe(false)
-    expect(sai.validation.status).toBe('unverified')
+    // Từ changelog 0547 bộ kiểm so tập nghiệm với đề: x = 50 bị bắt là ĐỔI NGHIỆM.
+    expect(sai.validation.status).toBe('invalid')
+    expect(sai.validation.errorType).toBe('changed_solutions')
+
+    // Bước GIỮA đúng (tương đương đề) → ✓ nhưng CHƯA "giải xong".
+    const giua = await post('validate_step', { problemId: problem.id, latexInput: '2x = 10' })
+    expect(giua.validation.status).toBe('valid')
+    expect(giua.isSolved).toBe(false)
 
     const dung = await post('validate_step', { problemId: problem.id, latexInput: 'x = 5' })
     expect(dung.isSolved).toBe(true)

@@ -18,6 +18,9 @@ type Node =
   | { type: 'binary'; op: '+' | '-' | '*' | '/' | '^'; left: Node; right: Node }
   | { type: 'call'; name: string; arg: Node }
 
+/** Cây biểu thức đã phân tích — xuất ra cho bộ kiểm bước giải (stepCheckMath.ts) duyệt lại. */
+export type ExprNode = Node
+
 const FUNCTIONS: Record<string, (x: number) => number> = {
   sqrt: Math.sqrt,
   abs: Math.abs,

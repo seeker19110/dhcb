@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useDialogBehavior } from '../useDialogBehavior'
 import {
   ketQuaBuoc,
+  nhanKetQuaBuoc,
   type StemProblemState,
   type ScratchpadStep,
   type StemSubjectType,
@@ -23,25 +24,19 @@ interface StemScratchpadModalProps {
  * khỏi `valid` (xanh lá = "đúng" — CLAUDE.md mục 4.8): bộ kiểm chưa chứng minh được bước nào
  * đúng thì không được tô xanh (changelog 0473).
  */
-const HIEN_THI_KET_QUA: Record<
-  StepVerdict,
-  { nhan: string; khung: string; huyHieu: string; phanHoi: string }
-> = {
+const HIEN_THI_KET_QUA: Record<StepVerdict, { khung: string; huyHieu: string; phanHoi: string }> = {
   valid: {
-    nhan: '✓ Hợp lệ',
     khung: 'bg-emerald-950/20 theme-light:bg-emerald-50 border-emerald-500/30',
     huyHieu: 'bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900',
     phanHoi:
       'bg-emerald-900/30 theme-light:bg-emerald-100 text-emerald-200 theme-light:text-emerald-900',
   },
   invalid: {
-    nhan: '✗ Cần chỉnh sửa',
     khung: 'bg-rose-950/20 theme-light:bg-rose-50 border-rose-500/30',
     huyHieu: 'bg-rose-500/20 text-rose-300 theme-light:text-rose-900',
     phanHoi: 'bg-rose-900/30 theme-light:bg-rose-100 text-rose-200 theme-light:text-rose-900',
   },
   unverified: {
-    nhan: '? Chưa tự kiểm được',
     khung: 'bg-amber-950/20 theme-light:bg-amber-50 border-amber-500/30',
     huyHieu: 'bg-amber-500/20 text-amber-300 theme-light:text-amber-900',
     phanHoi: 'bg-amber-900/30 theme-light:bg-amber-100 text-amber-200 theme-light:text-amber-900',
@@ -136,6 +131,8 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
     }
   }
 
+  const buocCuoi = problem?.steps[problem.steps.length - 1]
+
   // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
   // `space-y-*` (lề dưới 16px) làm lớp phủ `fixed inset-0` lệch/co lại (changelog 0474).
   return createPortal(
@@ -216,6 +213,14 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
             )}
           </div>
 
+          {/* Trình đọc màn hình nghe được kết luận của bước VỪA kiểm (nhãn có ký hiệu + chữ, không
+              chỉ dựa vào màu). */}
+          <p role="status" className="sr-only">
+            {buocCuoi
+              ? `Bước ${buocCuoi.stepNumber}: ${nhanKetQuaBuoc(buocCuoi.validation)}. ${buocCuoi.validation?.feedback ?? ''}`
+              : ''}
+          </p>
+
           {/* Steps Timeline */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-zinc-400">
@@ -241,7 +246,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                       <span
                         className={`text-[0.6875rem] font-bold px-2 py-0.5 rounded-full ${hienThi.huyHieu}`}
                       >
-                        {hienThi.nhan}
+                        {nhanKetQuaBuoc(step.validation)}
                       </span>
                     </div>
 
@@ -257,7 +262,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                       <div className={`mt-2 text-xs p-2 rounded-xl ${hienThi.phanHoi}`}>
                         {step.validation.feedback}
                         {step.validation.suggestedCorrection && (
-                          <div className="mt-1 font-mono text-[0.6875rem] text-amber-300 theme-light:text-amber-900">
+                          <div className="mt-1 text-[0.6875rem] text-amber-300 theme-light:text-amber-900">
                             Gợi ý: {step.validation.suggestedCorrection}
                           </div>
                         )}
