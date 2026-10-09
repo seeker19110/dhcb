@@ -6,7 +6,7 @@ bỏ). Thứ tự: như thứ tự cũ trong `PROGRESS.md`, mới hơn ở trên
 
 Khi đóng thêm một món nợ: cắt khối đó khỏi `PROGRESS.md`, dán vào ĐẦU danh sách dưới đây.
 
-- ✅ **[ĐÃ ĐÓNG 2026-10-09 — changelog `0550`: `/api/life-synthesis` dựng "Tổng hợp 30 ngày" CHỈ từ bản ghi thật (Học tập 6 môn + Ghi chú), không điểm tổng hợp, câu chữ tất định theo 17 luật có tên, không AI; khối gắn lại ở đầu studio "Kế hoạch"; đặc tả `docs/specs/2026-10-09-tong-hop-da-mien-du-lieu-that.md`] [2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0475`] "Tổng hợp đa miền" (Life Synthesis) chờ
+- ✅ **[ĐÃ ĐÓNG 2026-10-09 — changelog `0550`: `/api/life-synthesis` dựng "Tổng hợp 30 ngày" CHỈ từ bản ghi thật (Học tập 6 môn + Ghi chú), không điểm tổng hợp, câu chữ tất định theo 17 luật có tên, không AI; khối gắn lại trong studio "Kế hoạch" (sau thẻ Workplace Harvester); đặc tả `docs/specs/2026-10-09-tong-hop-da-mien-du-lieu-that.md`] [2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0475`] "Tổng hợp đa miền" (Life Synthesis) chờ
   dữ liệu thật.** Lỗi 🔴 cũ (studio "Tổng kết" hiện điểm "phân tích cuộc sống" BỊA — 88/92/85 —
   giống nhau cho mọi người dùng) đã gỡ: tab không còn, `/api/life-synthesis` trả 501 kèm lời giải
   thích. Thẻ Agent + banner Action Canvas dời sang studio "Kế hoạch". **Muốn bật lại:** nối nguồn

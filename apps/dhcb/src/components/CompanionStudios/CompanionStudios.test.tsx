@@ -115,15 +115,17 @@ describe('CompanionStudios', () => {
     expect(html).toContain('Mở Workspace')
   })
 
-  // Changelog 0550: "Tổng hợp 30 ngày" (dữ liệu thật) gắn lại vào studio "Kế hoạch", đứng TRƯỚC
-  // các thẻ thử nghiệm — không quay lại thành tab riêng.
-  it('StudioProactive có khối Tổng hợp 30 ngày, đứng trước thẻ Neural Curriculum', () => {
+  // Changelog 0550: "Tổng hợp 30 ngày" (dữ liệu thật) gắn lại vào studio "Kế hoạch", ngay SAU thẻ
+  // Workplace Harvester (cổng E2E [S06d] đòi thẻ đó nằm trong màn hình đầu ở 390 px) và TRƯỚC các
+  // thẻ thử nghiệm còn lại — không quay lại thành tab riêng.
+  it('StudioProactive có khối Tổng hợp 30 ngày, ngay sau thẻ Workplace Harvester', () => {
     const html = renderToStaticMarkup(
       React.createElement(StudioProactive, { proactiveState: null, navigate: vi.fn() }),
     )
     const synthesis = html.indexOf('data-testid="life-synthesis"')
     expect(synthesis).toBeGreaterThan(-1)
-    expect(synthesis).toBeLessThan(html.indexOf('data-testid="neural-card"'))
+    expect(synthesis).toBeGreaterThan(html.indexOf('data-testid="harvester-card"'))
+    expect(synthesis).toBeLessThan(html.indexOf('data-testid="a2a-card"'))
     expect(STUDIO_TABS_CONFIG.map((t) => t.id)).not.toContain('synthesis')
   })
 })

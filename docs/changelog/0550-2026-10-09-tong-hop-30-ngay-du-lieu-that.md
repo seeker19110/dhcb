@@ -35,7 +35,9 @@ hoạt động gán cứng, điểm 88/92/85, mục tiêu mẫu, câu soạn s�
   `lifeSynthesisRoutes.ts` dựng URL đích qua `subjectsPath`/`duongDanGhiChu`; `LifeSynthesisDashboard`
   viết lại — "30 ngày qua của bạn": khung chờ (Skeleton, `aria-busy`) · LoadError + Thử lại · hai khu
   Học tập / Ghi chú + "Gợi ý cho hôm nay" (Link `tap-44`); token `content`/`surface`/`line`/`accent`.
-  Gắn ở đầu studio **Kế hoạch** (sau nudge/AutoPilot) — không tab riêng, không lên Trang chủ.
+  Gắn trong studio **Kế hoạch**, ngay SAU thẻ Workplace Harvester — không tab riêng, không lên
+  Trang chủ. (Bản đầu đặt ở đầu studio làm đỏ cổng E2E [S06d] `e2e/a11y.spec.ts` ở CI: tab "Thẻ
+  SRS" của Harvester bị đẩy xuống dưới nếp gấp 390 px; cổng này không sửa, đổi vị trí khối.)
 - **Xoá mã chết** của bản cũ: `LifeSynthesisDetailModal.tsx` (POST số tự khai, "xác suất đạt"),
   `lifeSynthesisFormat.ts` (chuẩn hoá điểm 0–100). `UiNoise.design.test.ts` gỡ mục allowlist chữ HOA
   của huy hiệu "V5.4 Flagship" đã bỏ.

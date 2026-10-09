@@ -35,7 +35,8 @@ gợi ý sinh tất định theo luật có tên.
 - Câu nhận xét (12 luật) và khuyến nghị (5 luật, tối đa 3, mỗi đích một lần) sinh TẤT ĐỊNH, mỗi câu
   mang `ruleId`. Khuyến nghị mang `target` (môn / Góc học tập / Ghi chú) — client dựng URL qua
   `subjectsPath()` / `duongDanGhiChu()`.
-- Gắn lại `LifeSynthesisDashboard` vào studio "Kế hoạch" (đầu studio, sau nudge/AutoPilot), đủ
+- Gắn lại `LifeSynthesisDashboard` vào studio "Kế hoạch" (sau thẻ Workplace Harvester — cổng
+  E2E [S06d] đòi thẻ đó nằm trong màn hình đầu ở 390 px; thay đổi so với bản nháp "đầu studio"), đủ
   trạng thái tải · lỗi (LoadError + Thử lại) · rỗng nói thật.
 - Mock E2E dùng chung trong `mockLogin` để cổng a11y AA/AAA quét được nội dung thật của khối.
 
