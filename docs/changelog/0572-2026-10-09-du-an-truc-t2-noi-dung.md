@@ -1,6 +1,6 @@
 # 0572 — Nội dung dự án trục T2 "Quỹ lớp / Chi tiêu nhà mình" đủ P1→P5
 
-- **Ngày:** 2026-10-09 · **PR:** (xem mô tả PR) · **Loại:** `feat(programming)`
+- **Ngày:** 2026-10-09 · **PR:** #1321 · **Loại:** `feat(programming)`
 - **Đặc tả:** `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md` (Approved for implementation —
   hợp đồng nội dung T2/T3: mã `t2-p<n>-s<k>`, unit theo chặng, `files`, bước milestone).
 - **Số changelog:** dùng 0572 vì `main` đã có tới 0571 lúc soạn; trùng số với PR song song cũng
