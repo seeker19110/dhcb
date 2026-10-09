@@ -1,6 +1,6 @@
 # 0559 — Hội thoại CEFR: trần 5 lượt nộp sai/24 giờ theo (người, hội thoại) (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `feat(cefr)`
+- **Ngày:** 2026-10-09 · **PR:** #1307 · **Loại:** `feat(cefr)`
 - **Nguồn:** mục (2) nợ 🟡 `PROGRESS.md` "[sau changelog `0558`, rà bảo mật độc lập] Kiểm tra hiểu
   hội thoại CEFR: script vẫn TRA được đáp án…" — "đoán mò … vá được bằng trần số lần SAI theo
   (người, hội thoại)". Đặc tả `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md` §⑥
