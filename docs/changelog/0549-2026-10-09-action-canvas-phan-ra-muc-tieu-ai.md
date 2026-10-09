@@ -17,7 +17,7 @@
 
 | Bước | Rào chắn                                                                                         |
 | ---- | ------------------------------------------------------------------------------------------------ |
-| 1    | rate limit 10/phút/IP (`action-canvas-ai`) — như `/api/programming/feedback`                     |
+| 1    | rate limit 10/phút/IP (`action-canvas-ai`) + 5/phút/user (`action-canvas-ai:user`, xem vòng sửa) |
 | 2    | Zod body: mục tiêu làm sạch (bỏ ký tự điều khiển/đảo chiều, gộp khoảng trắng), 3–300 ký tự       |
 | 3    | khoá theo user `action_canvas_ai_lock` (Postgres, hết hạn 120 giây) — đang giữ ⇒ 409             |
 | 4    | `checkAndConsumeUsage(userId, 'chat')` — chung hạn mức AI/ngày (Free 30), trừ nguyên tử          |
@@ -93,6 +93,25 @@ cạnh kết quả AI chỉ làm người dùng lẫn đâu là phân tích, đ�
   lỗi · hết lượt · tự bắt đầu. Quét axe trong hộp thoại ở 5 trạng thái × 4 tổ hợp: AA 0 vi phạm, AAA
   `color-contrast-enhanced` 0 vi phạm. Đã tự xem ảnh: phát hiện thẻ mục tiêu "tự bắt đầu" đặt ở
   x=350 nằm ngoài khung nhìn 390px → dời về góc trên-trái (40, 40), chụp lại đã thấy.
+
+## Vòng sửa sau rà bảo mật
+
+Coordinator rà commit `2d967873`: không có mục Cao/Trung, có 2 mục Thấp — đã sửa cả hai.
+
+1. **Khoá không có định danh chủ.** Request A chạy quá TTL 120 giây → B giữ khoá → A xong,
+   `finally` của A xoá khoá CỦA B → C lọt vào chạy song song với B. Sửa:
+   `tryAcquireFeatureLock` sinh token `crypto.randomUUID()` lưu vào `state` (`{"t": token}`),
+   trả token hoặc `null`; `releaseFeatureLock(userId, lockName, token)` chỉ
+   `delete … where user_id=$1 and feature=$2 and state->>'t' = $3`. Test mới: nhả bằng token
+   cũ không xoá khoá mới, và C sau đó vẫn nhận 409 (`action-canvas.synthesize.test.ts`); đúng SQL
+   - token khác nhau mỗi lần (`featureState.test.ts`). Chạy tay trên Postgres 16 thật: A giữ →
+     B 0 dòng → A quá hạn, B giữ → A nhả bằng tok-A `DELETE 0`, khoá còn `{"t": "tok-B"}` → C
+     0 dòng → B nhả `DELETE 1`. `check:sql` PREPARE cả hai câu mới.
+2. **Rate limit chỉ theo IP.** Thêm bucket thứ hai theo người dùng ngay sau `validateAuth`:
+   `checkRateLimit(personId, 5, 'action-canvas-ai:user')` (cùng khuôn với
+   `cefr-assessment.ts`/`progress.ts`). Đổi IP (4G/VPN) không lách được; người chung IP không ăn
+   hạn mức của nhau. Test mới: user vượt hạn mức trong khi IP còn → 429, không khoá, không trừ
+   lượt, không gọi AI.
 
 ## Rủi ro / còn để ngỏ
 

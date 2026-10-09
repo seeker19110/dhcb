@@ -34,29 +34,42 @@ export async function setFeatureState<T>(userId: string, feature: string, state:
 // Khoá tự hết hạn sau `ttlSeconds` — tiến trình chết giữa chừng không khoá người dùng mãi mãi.
 // Changelog 0549 (Action Canvas phân rã mục tiêu bằng AI).
 
-/** Thử giữ khoá. `true` = giữ được; `false` = đang có request khác giữ (chưa hết hạn). */
+// [Vòng sửa sau rà bảo mật 0549] Khoá có ĐỊNH DANH CHỦ: mỗi lần giữ sinh một token ngẫu nhiên
+// lưu ở `state.t`, và chỉ người giữ đúng token mới nhả được. Không có token thì: request A chạy quá
+// TTL → B giữ khoá → A xong, `finally` của A xoá khoá CỦA B → C lọt vào chạy song song với B.
+
+/** Thử giữ khoá. Trả token chủ khoá; `null` = đang có request khác giữ (chưa hết hạn). */
 export async function tryAcquireFeatureLock(
   userId: string,
   lockName: string,
   ttlSeconds: number,
-): Promise<boolean> {
+): Promise<string | null> {
   const pool = getPgPool()
+  const token = crypto.randomUUID()
   const { rows } = await pool.query<{ acquired: boolean }>(
     `insert into platform.feature_state (user_id, feature, state, updated_at)
-     values ($1, $2, '{}'::jsonb, now())
-     on conflict (user_id, feature) do update set updated_at = now()
+     values ($1, $2, jsonb_build_object('t', $4::text), now())
+     on conflict (user_id, feature) do update set state = excluded.state, updated_at = now()
        where platform.feature_state.updated_at < now() - make_interval(secs => $3::int)
      returning true as acquired`,
-    [userId, lockName, ttlSeconds],
+    [userId, lockName, ttlSeconds, token],
   )
-  return rows[0]?.acquired === true
+  return rows[0]?.acquired === true ? token : null
 }
 
-/** Nhả khoá. Gọi trong `finally`; lỗi nhả khoá để nơi gọi tự quyết (khoá vẫn tự hết hạn). */
-export async function releaseFeatureLock(userId: string, lockName: string): Promise<void> {
+/**
+ * Nhả khoá — CHỈ khi khoá còn là của mình (đúng token). Khoá đã hết hạn và bị request khác giữ
+ * thì không đụng tới. Gọi trong `finally`; lỗi nhả khoá để nơi gọi tự quyết (khoá vẫn tự hết hạn).
+ */
+export async function releaseFeatureLock(
+  userId: string,
+  lockName: string,
+  token: string,
+): Promise<void> {
   const pool = getPgPool()
-  await pool.query('delete from platform.feature_state where user_id = $1 and feature = $2', [
-    userId,
-    lockName,
-  ])
+  await pool.query(
+    `delete from platform.feature_state
+     where user_id = $1 and feature = $2 and state->>'t' = $3`,
+    [userId, lockName, token],
+  )
 }

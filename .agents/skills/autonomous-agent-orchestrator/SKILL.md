@@ -71,7 +71,8 @@ Mẫu tham chiếu khi làm một tính năng "AI đề xuất, người xác nh
   `packages/core-personal/actionCanvasPrompt.ts` (mục tiêu bọc rào `<muc_tieu>`, là DỮ LIỆU).
 - Lượt: `checkAndConsumeUsage(userId, 'chat')`; **hoàn** khi provider không trả lời, đầu ra hỏng
   hoặc lỗi sau khi trừ. Chống đua: `tryAcquireFeatureLock` (`packages/core-db/featureState.ts`,
-  khoá có hạn ở `platform.feature_state`) — request thứ hai 409, không trừ lượt.
+  khoá có hạn ở `platform.feature_state`, có token chủ — chỉ request giữ khoá mới nhả được) —
+  request thứ hai 409, không trừ lượt. Rate limit hai tầng: IP + người dùng.
 - Đầu ra qua `parseGoalDecomposition` (`packages/core-personal/goalDecomposition.ts`): Zod strict,
   2–8 bước, DAG, sâu ≤ 4, không link, miền chỉ `learning`/`work`/`general`. Hỏng ⇒ 502 + hoàn
   lượt, **không** rơi về khung mẫu.

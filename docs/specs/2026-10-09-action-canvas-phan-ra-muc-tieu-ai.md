@@ -27,8 +27,8 @@ Người dùng đã đăng nhập nhập một mục tiêu, server gọi AI rẻ
   chặn nhưng vẫn ghi thống kê), trừ NGUYÊN TỬ bằng hàm SQL sẵn có. **Hoàn lượt**
   (`refundUsage(…, gate.day)`) khi: không provider nào trả lời · đầu ra hỏng · lỗi bất ngờ sau khi
   đã trừ. Chi phí token ghi nhãn riêng `action_canvas` trên dashboard admin.
-- Chống đua: khoá theo user `action_canvas_ai_lock` trong `platform.feature_state` (upsert có điều
-  kiện hết hạn 120 giây — nguyên tử ở Postgres, đúng cả khi chạy nhiều tiến trình PM2). Request thứ
+- Chống đua: khoá theo user `action_canvas_ai_lock` trong `platform.feature_state`, có token chủ
+  trong `state.t` — chỉ người giữ đúng token mới nhả được (upsert có điều kiện hết hạn 120 giây — nguyên tử ở Postgres, đúng cả khi chạy nhiều tiến trình PM2). Request thứ
   hai khi request đầu chưa xong ⇒ 409, KHÔNG gọi AI, KHÔNG trừ lượt.
 - Prompt tách file `packages/core-personal/actionCanvasPrompt.ts` (server dựng, client không gửi
   được prompt); mục tiêu bọc rào `<muc_tieu>…</muc_tieu>`, ký tự `<`/`>` của người dùng bị đổi
@@ -122,7 +122,7 @@ test. Trang `/action-canvas` nằm trong cổng `e2e/a11y.spec.ts` (trạng thá
 | Tình huống                                  | Mã lỗi                             | Hành vi mong đợi                                                 |
 | ------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
 | Chưa đăng nhập                              | 401                                | không khoá, không trừ lượt                                       |
-| Quá 10 lần/phút/IP                          | 429 `rate_limited`                 | không trừ lượt                                                   |
+| Quá 10 lần/phút/IP hoặc 5 lần/phút/user     | 429 `rate_limited`                 | không trừ lượt                                                   |
 | Mục tiêu rỗng/ngắn/sai kiểu                 | 400 `invalid_goal`                 | không khoá, không trừ lượt                                       |
 | Đang có request khác của cùng user          | 409 `synthesis_in_progress`        | không gọi AI, không trừ lượt                                     |
 | Hết lượt / cầu dao AI / không xác minh lượt | 429 `usage_limit` (+ `message`)    | không gọi AI; giao diện mời tự bắt đầu                           |

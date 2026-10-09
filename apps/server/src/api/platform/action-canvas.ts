@@ -64,10 +64,12 @@ const AI_LOCK = 'action_canvas_ai_lock'
 // Mỗi provider timeout 30 giây (CHAT_PROVIDER_TIMEOUT_MS) nên chuỗi Groq → Anthropic → Gemini
 // thường xong trong 120 giây; tiến trình chết thì khoá tự nhả sau chừng này giây. Trường hợp hiếm
 // chuỗi chạy lâu hơn (Groq nhiều key cùng timeout), request thứ hai có thể lọt — hệ quả tối đa là
-// trừ thêm một lượt, vẫn được hoàn nếu lời gọi đó hỏng.
+// trừ thêm một lượt, vẫn được hoàn nếu lời gọi đó hỏng. Request chạy quá hạn KHÔNG xoá được khoá
+// của request sau (khoá có token chủ).
 const AI_LOCK_TTL_SECONDS = 120
 // Mỗi lượt là một lời gọi model TRẢ TIỀN — rate limit chặt như /api/programming/feedback.
 const SYNTH_RATE_LIMIT_PER_MIN = 10
+const SYNTH_RATE_LIMIT_PER_USER_PER_MIN = 5
 
 const SynthesizeBodySchema = z
   .object({
@@ -105,6 +107,21 @@ async function handleSynthesize(
       429,
     )
   }
+  // [Vòng sửa sau rà bảo mật 0549] Thêm bucket theo NGƯỜI DÙNG: chỉ chặn theo IP thì một tài khoản
+  // đổi IP (4G/VPN) vẫn dồn được lời gọi AI; chặn theo user thì người dùng chung IP (trường học,
+  // văn phòng) cũng không ăn hạn mức của nhau.
+  if (
+    !(await checkRateLimit(personId, SYNTH_RATE_LIMIT_PER_USER_PER_MIN, 'action-canvas-ai:user'))
+  ) {
+    logSecurityEvent('RATE_LIMIT_EXCEEDED', clientIp, {
+      path: '/api/action-canvas?synthesize',
+      scope: 'user',
+    })
+    return jsonResponse(
+      { error: 'rate_limited', message: 'Quá nhiều yêu cầu — thử lại sau 1 phút.' },
+      429,
+    )
+  }
 
   const parsed = SynthesizeBodySchema.safeParse(body)
   if (!parsed.success) {
@@ -120,7 +137,9 @@ async function handleSynthesize(
   const requestedId = UuidSchema.safeParse(parsed.data.canvasId)
   const canvasId = requestedId.success ? requestedId.data : DEFAULT_CANVAS_ID
 
-  if (!(await tryAcquireFeatureLock(personId, AI_LOCK, AI_LOCK_TTL_SECONDS))) {
+  // Token chủ khoá — chỉ nhả được khoá của CHÍNH request này (xem tryAcquireFeatureLock).
+  const lockToken = await tryAcquireFeatureLock(personId, AI_LOCK, AI_LOCK_TTL_SECONDS)
+  if (!lockToken) {
     return jsonResponse({ error: 'synthesis_in_progress', message: MSG_BUSY }, 409)
   }
 
@@ -165,7 +184,7 @@ async function handleSynthesize(
     throw err
   } finally {
     // Nhả khoá lỗi thì thôi — khoá tự hết hạn sau AI_LOCK_TTL_SECONDS.
-    await releaseFeatureLock(personId, AI_LOCK).catch((e: unknown) =>
+    await releaseFeatureLock(personId, AI_LOCK, lockToken).catch((e: unknown) =>
       console.warn('[action-canvas] nhả khoá lỗi → chờ tự hết hạn:', e),
     )
   }

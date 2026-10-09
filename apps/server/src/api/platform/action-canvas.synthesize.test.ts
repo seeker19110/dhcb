@@ -10,26 +10,35 @@ const DAY = '2026-10-09'
 
 const authState: { user: { userId: string } | null } = { user: { userId: USER } }
 let rateLimitOk = true
+// Bucket bị chặn riêng (vd chỉ 'action-canvas-ai:user') — kiểm từng tầng rate limit.
+let blockedBucket: string | null = null
+const rateLimitCalls = vi.hoisted(() => [] as Array<[string, number, string]>)
 vi.mock('@dhcb/core-auth/security', () => ({
   getCorsHeaders: () => ({}),
-  checkRateLimit: async () => rateLimitOk,
+  checkRateLimit: async (key: string, max: number, bucket: string) => {
+    rateLimitCalls.push([key, max, bucket])
+    return rateLimitOk && bucket !== blockedBucket
+  },
   validateAuth: async () => authState.user,
   logSecurityEvent: () => {},
 }))
 
-// Kho feature_state giả: khoá mô phỏng ĐÚNG ngữ nghĩa upsert có điều kiện (đang có dòng khoá ⇒
-// không giữ được). JS đơn luồng nên kiểm-và-đặt trong một hàm đồng bộ là nguyên tử như ở Postgres.
+// Kho feature_state giả: khoá mô phỏng ĐÚNG ngữ nghĩa SQL thật — upsert có điều kiện (đang có
+// dòng khoá ⇒ không giữ được) và nhả chỉ khi đúng token chủ (`state.t`). JS đơn luồng nên
+// kiểm-và-đặt trong một hàm đồng bộ là nguyên tử như ở Postgres.
 const store = vi.hoisted(() => new Map<string, unknown>())
 const setState = vi.hoisted(() => vi.fn())
 const releaseLock = vi.hoisted(() => vi.fn())
+let tokenSeq = 0
 vi.mock('@dhcb/core-db/featureState', () => ({
   getFeatureState: async (u: string, f: string) => store.get(`${u}|${f}`) ?? null,
   setFeatureState: setState,
   tryAcquireFeatureLock: async (u: string, name: string) => {
     const key = `${u}|${name}`
-    if (store.has(key)) return false
-    store.set(key, {})
-    return true
+    if (store.has(key)) return null
+    const t = `tok-${++tokenSeq}`
+    store.set(key, { t })
+    return t
   },
   releaseFeatureLock: releaseLock,
 }))
@@ -88,8 +97,12 @@ beforeEach(() => {
   consume.mockResolvedValue({ ok: true, day: DAY })
   refund.mockResolvedValue(undefined)
   generate.mockResolvedValue(GOOD_OUTPUT)
-  releaseLock.mockImplementation(async (u: string, name: string) => {
-    store.delete(`${u}|${name}`)
+  blockedBucket = null
+  rateLimitCalls.length = 0
+  releaseLock.mockImplementation(async (u: string, name: string, token: string) => {
+    const key = `${u}|${name}`
+    const held = store.get(key) as { t?: string } | undefined
+    if (held?.t === token) store.delete(key)
   })
 })
 
@@ -224,6 +237,19 @@ describe('synthesize — hết lượt / cổng vào', () => {
     expect(consume).not.toHaveBeenCalled()
   })
 
+  // [Vòng sửa sau rà bảo mật 0549] Tầng rate limit thứ hai theo NGƯỜI DÙNG (đổi IP không lách được).
+  it('quá rate limit theo user (IP còn hạn mức) → 429, không khoá, không trừ lượt', async () => {
+    blockedBucket = 'action-canvas-ai:user'
+    const res = await handler(synth({ goalPrompt: 'Đạt IELTS 6.5' }))
+    expect(res.status).toBe(429)
+    expect((await res.json()).error).toBe('rate_limited')
+    expect(rateLimitCalls).toContainEqual([USER, 5, 'action-canvas-ai:user'])
+    expect(rateLimitCalls.some(([, , b]) => b === 'action-canvas-ai')).toBe(true)
+    expect(consume).not.toHaveBeenCalled()
+    expect(generate).not.toHaveBeenCalled()
+    expect(store.size).toBe(0)
+  })
+
   it('chưa đăng nhập → 401', async () => {
     authState.user = null
     expect((await handler(synth({ goalPrompt: 'Đạt IELTS 6.5' }))).status).toBe(401)
@@ -299,6 +325,34 @@ describe('synthesize — hai request đua nhau', () => {
     // Xong request đầu → khoá đã nhả, lần bấm sau đi qua bình thường.
     expect((await handler(synth({ goalPrompt: 'Đạt IELTS 6.5' }))).status).toBe(200)
     expect(consume).toHaveBeenCalledTimes(2)
+  })
+
+  // [Vòng sửa sau rà bảo mật 0549] A chạy quá TTL, khoá hết hạn và B giữ khoá mới → A xong KHÔNG
+  // được xoá khoá của B (nếu xoá, C sẽ lọt vào chạy song song với B).
+  it('request chạy quá hạn nhả bằng token CŨ → khoá mới của request sau vẫn còn', async () => {
+    let finish: (v: string) => void = () => {}
+    generate.mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          finish = resolve
+        }),
+    )
+    const first = handler(synth({ goalPrompt: 'Đạt IELTS 6.5' }))
+    await vi.waitFor(() => expect(generate).toHaveBeenCalledTimes(1))
+    // Giả khoá của A hết hạn và B đã giữ khoá mới.
+    const key = `${USER}|action_canvas_ai_lock`
+    store.set(key, { t: 'tok-of-B' })
+
+    finish(GOOD_OUTPUT)
+    expect((await first).status).toBe(200)
+    expect(releaseLock).toHaveBeenCalledWith(USER, 'action_canvas_ai_lock', expect.any(String))
+    expect(releaseLock.mock.calls[0]![2]).not.toBe('tok-of-B')
+    expect(store.get(key)).toEqual({ t: 'tok-of-B' })
+
+    // C tới trong lúc B còn giữ khoá → 409, không trừ lượt.
+    const third = await handler(synth({ goalPrompt: 'Đạt IELTS 6.5' }))
+    expect(third.status).toBe(409)
+    expect(consume).toHaveBeenCalledTimes(1)
   })
 
   it('khoá không giữ được do request khác ⇒ không đụng tới lượt của người dùng', async () => {

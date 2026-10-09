@@ -41,24 +41,33 @@ describe('featureState', () => {
   // Changelog 0549: khoá chống hai request đua nhau gọi AI. Ngữ nghĩa nguyên tử nằm ở SQL (upsert
   // có điều kiện hết hạn) — ở đây canh đúng câu + đọc đúng kết quả; PREPARE trên schema thật do
   // `npm run check:sql` canh.
-  it('tryAcquireFeatureLock: có dòng trả về → giữ được; không dòng (đang bị giữ) → false', async () => {
+  it('tryAcquireFeatureLock: giữ được → trả token (lưu vào state.t); đang bị giữ → null', async () => {
     queryMock.mockResolvedValueOnce({ rows: [{ acquired: true }] })
-    expect(await tryAcquireFeatureLock(UID, 'action_canvas_ai_lock', 90)).toBe(true)
+    const token = await tryAcquireFeatureLock(UID, 'action_canvas_ai_lock', 90)
+    expect(token).toMatch(/^[0-9a-f-]{36}$/)
     const [sql, params] = queryMock.mock.calls[0] ?? []
-    expect(sql).toContain('on conflict (user_id, feature) do update')
+    expect(sql).toContain("jsonb_build_object('t', $4::text)")
+    expect(sql).toContain('on conflict (user_id, feature) do update set state = excluded.state')
     expect(sql).toContain('where platform.feature_state.updated_at < now() - make_interval')
-    expect(params).toEqual([UID, 'action_canvas_ai_lock', 90])
+    expect(params).toEqual([UID, 'action_canvas_ai_lock', 90, token])
 
     queryMock.mockResolvedValueOnce({ rows: [] })
-    expect(await tryAcquireFeatureLock(UID, 'action_canvas_ai_lock', 90)).toBe(false)
+    expect(await tryAcquireFeatureLock(UID, 'action_canvas_ai_lock', 90)).toBeNull()
   })
 
-  it('releaseFeatureLock xoá đúng dòng khoá của user', async () => {
+  it('mỗi lần giữ khoá có token khác nhau', async () => {
+    queryMock.mockResolvedValue({ rows: [{ acquired: true }] })
+    const a = await tryAcquireFeatureLock(UID, 'k', 90)
+    const b = await tryAcquireFeatureLock(UID, 'k', 90)
+    expect(a).not.toBe(b)
+  })
+
+  it('releaseFeatureLock chỉ xoá dòng khoá có ĐÚNG token của mình', async () => {
     queryMock.mockResolvedValueOnce({ rows: [] })
-    await releaseFeatureLock(UID, 'action_canvas_ai_lock')
-    expect(queryMock).toHaveBeenCalledWith(
-      expect.stringContaining('delete from platform.feature_state'),
-      [UID, 'action_canvas_ai_lock'],
-    )
+    await releaseFeatureLock(UID, 'action_canvas_ai_lock', 'tok-1')
+    const [sql, params] = queryMock.mock.calls[0] ?? []
+    expect(sql).toContain('delete from platform.feature_state')
+    expect(sql).toContain("state->>'t' = $3")
+    expect(params).toEqual([UID, 'action_canvas_ai_lock', 'tok-1'])
   })
 })
