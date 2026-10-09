@@ -1159,8 +1159,9 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   khi còn đơn chờ trả. **Còn chờ chủ dự án quyết (ghi ở `0533`):** (a) xoá rồi đăng ký lại cùng email
   có nhận lại trial không — hiện `trial_granted_at`/`device_hash` bị xoá theo tài khoản; giữ mã băm
   chống lạm dụng là quyết định sản phẩm + pháp lý; (b) một đơn chờ trả có thể chặn xoá tới ~24,5 giờ
-  (hạn đơn + ân hạn webhook). (2) `/api/persons?action=full_erase` vẫn không đòi xác minh lại
-  (step-up) — nên dùng chung luồng xác minh của `/api/account`; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
+  (hạn đơn + ân hạn webhook). (2) ✅ `/api/persons?action=full_erase` nay đòi xác minh lại
+  (mật khẩu/Google + 2FA) qua cổng dùng chung với `/api/account` (`api/_lib/reauthGate.ts`, cùng
+  hạn mức lượt thử), `0541` — chưa có giao diện nào gọi endpoint này; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
   từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
   (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —

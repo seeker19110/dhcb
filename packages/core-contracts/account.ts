@@ -24,6 +24,34 @@ export type Reauth = z.infer<typeof ReauthSchema>
 /** Mã 2FA (6 số) hoặc mã khôi phục — cùng ràng buộc với `/api/two-factor`. */
 const TwoFactorCodeSchema = z.string().min(6).max(32)
 
+/**
+ * Bằng chứng xác minh lại đi kèm một thao tác nguy hiểm — dùng chung cho `/api/account` và
+ * `DELETE /api/persons?action=full_erase` (changelog 0541).
+ */
+export const ReauthProofSchema = z.object({
+  reauth: ReauthSchema,
+  twoFactorCode: TwoFactorCodeSchema.optional(),
+})
+export type ReauthProof = z.infer<typeof ReauthProofSchema>
+
+// ── Body DELETE /api/persons?action=full_erase ─────────────────────────────────
+
+/** Xoá toàn bộ dữ liệu cá nhân Personal OS — bắt buộc xác minh lại như xoá tài khoản. */
+export const PersonFullEraseBodySchema = ReauthProofSchema
+export type PersonFullEraseBody = ReauthProof
+
+/** Mã lỗi của cổng xác minh lại (`apps/server/src/api/_lib/reauthGate.ts`). */
+export const REAUTH_ERROR_CODES = [
+  // Request thao tác nguy hiểm mà KHÔNG kèm bằng chứng xác minh lại hợp lệ.
+  'REAUTH_REQUIRED',
+  'REAUTH_UNAVAILABLE',
+  'REAUTH_FAILED',
+  'STEP_UP_REQUIRED',
+  'TWO_FACTOR_INVALID',
+  'RATE_LIMITED',
+] as const
+export type ReauthErrorCode = (typeof REAUTH_ERROR_CODES)[number]
+
 // ── Câu xác nhận gõ tay ─────────────────────────────────────────────────────────
 
 /** Câu hiển thị cho người dùng gõ lại, theo ngôn ngữ GIAO DIỆN. */
@@ -60,16 +88,12 @@ export function isDeleteConfirmationValid(input: string): boolean {
 
 // ── Body POST /api/account ─────────────────────────────────────────────────────
 
-export const AccountExportBodySchema = z.object({
+export const AccountExportBodySchema = ReauthProofSchema.extend({
   action: z.literal('export'),
-  reauth: ReauthSchema,
-  twoFactorCode: TwoFactorCodeSchema.optional(),
 })
 
-export const AccountDeleteBodySchema = z.object({
+export const AccountDeleteBodySchema = ReauthProofSchema.extend({
   action: z.literal('delete'),
-  reauth: ReauthSchema,
-  twoFactorCode: TwoFactorCodeSchema.optional(),
   // Chỉ giới hạn độ dài ở đây; khớp câu thì kiểm riêng để trả mã lỗi rõ (CONFIRMATION_MISMATCH).
   confirmation: z.string().min(1).max(100),
   // Bắt buộc `true` khi gói VIP còn hạn — server kiểm (VIP_ACK_REQUIRED).
@@ -102,13 +126,9 @@ export const AccountDeleteResultSchema = z.object({
 /** Mã lỗi máy đọc được — giao diện rẽ nhánh theo đây, không theo chuỗi thông báo. */
 export const ACCOUNT_ERROR_CODES = [
   'CONFIRMATION_MISMATCH',
-  'REAUTH_UNAVAILABLE',
-  'REAUTH_FAILED',
-  'STEP_UP_REQUIRED',
-  'TWO_FACTOR_INVALID',
+  ...REAUTH_ERROR_CODES,
   'VIP_ACK_REQUIRED',
   // Còn đơn thanh toán chờ trả — xoá lúc này sẽ làm mất tiền chuyển vào sau (rà soát 0533).
   'PAYMENT_PENDING',
-  'RATE_LIMITED',
 ] as const
 export type AccountErrorCode = (typeof ACCOUNT_ERROR_CODES)[number]
