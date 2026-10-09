@@ -172,6 +172,11 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-10-09] Dự án trục T2/T3 môn Lập trình** — hạ tầng xong (changelog `0571`, đặc tả
+  `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md`): chọn dự án, mã bước
+  `t2-`/`t3-`, tiến độ + workspace riêng từng dự án. **Còn nội dung 4 PR** (bước P1→P5 của T2 và
+  T3, theo mục "Hợp đồng cho PR nội dung" của đặc tả); T2/T3 tự mở khi có bước đầu tiên.
+
 - **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Engine Git (#1243) và B1 nội dung/rubric `p3-u11-l1` (#1258) đã merge; B2 hoạt họa Git chờ chuyên gia chốt storyboard. Hai lỗi nội dung cũ FR-3a (convolution "bất biến" → tương đương tịnh tiến ở `cv1-u2-l1`/`cv2-u1-l4`/`mlds-u3-l1`; `llmagent-u1-l1` bỏ hứa "BPE") đã sửa ở changelog `0511`, đã merge (#1261). Ba hoạt họa thí điểm còn lại (convolution, RAG, agent) chờ reviewer nội dung; bài mới cần lát contract chốt ID. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
 
 - **[2026-10-06 — cập nhật hiện trạng] `main` ở #1257.** Đã merge sau mục dưới:

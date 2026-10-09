@@ -17,10 +17,28 @@ describe('levelOfSpineLesson', () => {
     expect(levelOfSpineLesson('web-s2-m1')).toBeNull()
     expect(levelOfSpineLesson('git-u2-l1')).toBeNull()
   })
+
+  it('bước dự án T2/T3 (2026-10-09) cũng KHÔNG phải bài xương sống — đối xử y như bước T1', () => {
+    expect(levelOfSpineLesson('t2-p3-s1')).toBeNull()
+    expect(levelOfSpineLesson('t3-p5-s4')).toBeNull()
+  })
 })
 
 describe('checkLevelWriteAllowed', () => {
   const levels = buildLevelLessonsServer()
+
+  it('bước dự án T1/T2/T3 ở bậc cao KHÔNG bị khoá bậc (Free, chưa học gì)', () => {
+    for (const lessonId of ['p5-s1', 't2-p5-s1', 't3-p4-s2']) {
+      const result = checkLevelWriteAllowed({
+        lessonId,
+        plan: 'free',
+        completedLessonIds: [],
+        everEnteredLessonIds: [],
+      })
+      expect(result.allowed, lessonId).toBe(true)
+    }
+  })
+
   const p2Lessons = levels.find((l) => l.levelId === 'p2')?.lessonIds ?? []
   const firstP2Lesson = p2Lessons[0]
   if (!firstP2Lesson) throw new Error('P2 chưa có bài nào — dữ liệu giáo trình đã đổi?')

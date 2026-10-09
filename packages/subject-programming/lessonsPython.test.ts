@@ -18,7 +18,8 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { PROGRAMMING_LESSONS } from './lessons.js'
 import { laLanPython, fileCuaLan, noiCodeTheoLan, type PythonLane } from './pyLanes.js'
-import { PROJECT_STAGES, getStepLanguage, type ProjectStep } from './projectSteps.js'
+import { getProjectStages, getStepLanguage, type ProjectStep } from './projectSteps.js'
+import { PROJECT_TRACK_IDS } from './projectTrackIds.js'
 import { gradeTestCase, allTestsPassed } from './grading.js'
 import type { ProgrammingTestCase } from './lessonTypes.js'
 
@@ -231,9 +232,12 @@ describe.skipIf(!hasPython)('nội dung môn Lập trình chạy THẬT bằng p
   //
   // PR-L17: chặng P4 có bước chạy bằng LÀN mở rộng (pytest/apisim) — vẫn cùng engine Python,
   // nên chúng đi qua chính cổng này; thư mục của bước được ghi thêm module của làn.
-  const ALL_STEPS: ProjectStep[] = PROJECT_STAGES.flatMap((stage) => stage.steps).filter((s) =>
-    laLanPython(getStepLanguage(s)),
-  )
+  //
+  // 2026-10-09: quét bước của CẢ BA dự án trục T1/T2/T3 — PR nội dung T2/T3 chỉ cần điền bước,
+  // cổng này tự chạy code tham chiếu của chúng (không phải nhớ đăng ký thêm).
+  const ALL_STEPS: ProjectStep[] = PROJECT_TRACK_IDS.flatMap((track) => getProjectStages(track))
+    .flatMap((stage) => stage.steps)
+    .filter((s) => laLanPython(getStepLanguage(s)))
 
   it.each(ALL_STEPS)(
     '$id — code tham chiếu đạt HẾT milestone check',

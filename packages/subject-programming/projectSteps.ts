@@ -9,10 +9,14 @@
 import { TestCaseSchema, type ProgrammingTestCase } from './lessonTypes.js'
 // Schema/kiểu/helper của MỘT BƯỚC nằm ở projectStepTypes.ts — file này và projectStepsP3.ts
 // cùng import xuống đó, nên không có chu trình import (cổng `codemap -- cycles` chặn CI).
-import type { ProjectStep } from './projectStepTypes.js'
+import type { ProjectStage, ProjectStep } from './projectStepTypes.js'
+import type { ProjectTrackId } from './projectTrackIds.js'
 import { P3_PROJECT_STEPS } from './projectStepsP3.js'
 import { P4_PROJECT_STEPS } from './projectStepsP4.js'
 import { P5_PROJECT_STEPS } from './projectStepsP5.js'
+// Dự án T2/T3 (hạ tầng 2026-10-09): file riêng, chỉ import KIỂU xuống projectStepTypes.ts.
+import { T2_PROJECT_STAGES } from './projectStepsT2.js'
+import { T3_PROJECT_STAGES } from './projectStepsT3.js'
 
 export {
   PROJECT_MAIN_FILE,
@@ -21,6 +25,7 @@ export {
   getStepFiles,
   getStepMainFile,
   type ProjectStep,
+  type ProjectStage,
 } from './projectStepTypes.js'
 export { P3_PROJECT_STEPS } from './projectStepsP3.js'
 export { P4_PROJECT_STEPS } from './projectStepsP4.js'
@@ -654,12 +659,9 @@ print(f"So moi: {so_don} {doanh_thu}")`,
   },
 ]
 
-/** Các chặng dự án đã mở (theo bậc) — UI đọc bảng này để dựng thanh chọn chặng. */
-export const PROJECT_STAGES: {
-  level: 'p1' | 'p2' | 'p3' | 'p4' | 'p5'
-  title: string
-  steps: ProjectStep[]
-}[] = [
+/** Các chặng của dự án T1 "Cửa hàng của tôi" (theo bậc) — giữ tên export cũ vì nhiều nơi
+ *  đang dùng; nơi cần đúng dự án học viên đã chọn thì gọi `getProjectStages(track)`. */
+export const PROJECT_STAGES: ProjectStage[] = [
   { level: 'p1', title: 'Chặng P1 — Máy tính tiền', steps: P1_PROJECT_STEPS },
   { level: 'p2', title: 'Chặng P2 — Sổ sách tử tế', steps: P2_PROJECT_STEPS },
   { level: 'p3', title: 'Chặng P3 — Lên web', steps: P3_PROJECT_STEPS },
@@ -667,7 +669,24 @@ export const PROJECT_STAGES: {
   { level: 'p5', title: 'Chặng P5 — Ra Internet', steps: P5_PROJECT_STEPS },
 ]
 
-const stepMap = new Map(PROJECT_STAGES.flatMap((stage) => stage.steps).map((s) => [s.id, s]))
+const STAGES_BY_TRACK: Readonly<Record<ProjectTrackId, readonly ProjectStage[]>> = {
+  T1: PROJECT_STAGES,
+  T2: T2_PROJECT_STAGES,
+  T3: T3_PROJECT_STAGES,
+}
+
+/** Các chặng P1–P5 của một dự án trục. T1 trả ĐÚNG mảng `PROJECT_STAGES` (cùng tham chiếu). */
+export function getProjectStages(track: ProjectTrackId): readonly ProjectStage[] {
+  return STAGES_BY_TRACK[track]
+}
+
+// Tra bước theo mã trên CẢ BA dự án — mã đã mang tiền tố dự án (T1 không tiền tố, T2 `t2-`,
+// T3 `t3-`) nên không thể trùng nhau giữa các dự án.
+const stepMap = new Map(
+  Object.values(STAGES_BY_TRACK)
+    .flatMap((stages) => stages.flatMap((stage) => stage.steps))
+    .map((s) => [s.id, s]),
+)
 
 export function getProjectStep(stepId: string): ProjectStep | undefined {
   return stepMap.get(stepId)

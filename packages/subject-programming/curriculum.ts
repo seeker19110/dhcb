@@ -1709,33 +1709,6 @@ export function getLevelIdOfLesson(lessonId: string): ProgrammingLevelId | undef
   return PROGRAMMING_LEVEL_IDS.find((id) => id === prefix)
 }
 
-/** Ba phương án dự án trục — học viên chọn 1 lúc vào môn (MVP mới mở T1). */
-export interface ProjectTrack {
-  id: 'T1' | 'T2' | 'T3'
-  name: string
-  description: string
-  /** MVP chỉ mở T1; T2/T3 hiển thị "sắp mở". */
-  available: boolean
-}
-
-export const PROJECT_TRACKS: ProjectTrack[] = [
-  {
-    id: 'T1',
-    name: 'Cửa hàng của tôi',
-    description:
-      'Quản lý bán hàng nhỏ: menu, đơn, kho, doanh thu, trang đặt hàng — từ console P1 đến web chạy thật trên Internet ở P5.',
-    available: true,
-  },
-  {
-    id: 'T2',
-    name: 'Quỹ lớp / Chi tiêu nhà mình',
-    description: 'Thu chi, thành viên, báo cáo, trang minh bạch quỹ.',
-    available: false,
-  },
-  {
-    id: 'T3',
-    name: 'Sổ học tập của tôi',
-    description: 'Quản lý môn học, deadline, điểm, thẻ ôn, trang chia sẻ tài liệu.',
-    available: false,
-  },
-]
+// Ba phương án dự án trục T1/T2/T3 (`PROJECT_TRACKS`) đã chuyển sang `projectTracks.ts`
+// (2026-10-09): cờ `available` nay suy từ dữ liệu bước dự án, mà file này không được import nội
+// dung bước (curriculum.ts nằm trong bundle của rất nhiều trang).

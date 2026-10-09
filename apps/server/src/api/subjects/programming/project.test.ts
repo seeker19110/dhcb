@@ -97,6 +97,51 @@ describe('/api/programming/project', () => {
   })
 
   it('snapshot milestone lạ → 400', async () => {
-    expect((await handler(req('POST', { action: 'snapshot', milestone: 'p9' }))).status).toBe(400)
+    for (const milestone of ['p9', 't1-p1', 't4-p1', 'T2-p1', 't2-p9']) {
+      expect(
+        (await handler(req('POST', { action: 'snapshot', milestone }))).status,
+        milestone,
+      ).toBe(400)
+    }
+  })
+
+  // Hạ tầng T2/T3 (2026-10-09): ba dự án chung bảng project_files, tách bằng tiền tố đường dẫn.
+  describe('snapshot theo dự án', () => {
+    const ROWS = [
+      { path: 'cua_hang.py', content: 't1', updated_at: new Date() },
+      { path: 'logic.py', content: 't1-logic', updated_at: new Date() },
+      { path: 't2--quy_lop.py', content: 't2', updated_at: new Date() },
+      { path: 't2--logic.py', content: 't2-logic', updated_at: new Date() },
+      { path: 't3--so_hoc_tap.py', content: 't3', updated_at: new Date() },
+    ]
+
+    it('mốc T1 (p1) chỉ chốt file T1 — file T2/T3 không lẫn vào', async () => {
+      query.mockResolvedValueOnce({ rows: ROWS }).mockResolvedValueOnce({ rows: [] })
+      const res = await handler(req('POST', { action: 'snapshot', milestone: 'p1' }))
+      expect(res.status).toBe(200)
+      expect(query.mock.calls[1]?.[1]).toEqual([
+        'user-1',
+        'p1',
+        JSON.stringify({ 'cua_hang.py': 't1', 'logic.py': 't1-logic' }),
+      ])
+    })
+
+    it('mốc T2 (t2-p2) chỉ chốt file T2, giữ nguyên tên lưu', async () => {
+      query.mockResolvedValueOnce({ rows: ROWS }).mockResolvedValueOnce({ rows: [] })
+      const res = await handler(req('POST', { action: 'snapshot', milestone: 't2-p2' }))
+      expect(res.status).toBe(200)
+      expect(query.mock.calls[1]?.[1]).toEqual([
+        'user-1',
+        't2-p2',
+        JSON.stringify({ 't2--quy_lop.py': 't2', 't2--logic.py': 't2-logic' }),
+      ])
+    })
+
+    it('dự án chưa có file nào (dù dự án khác có) → 400, không insert', async () => {
+      query.mockResolvedValueOnce({ rows: ROWS.filter((r) => !r.path.startsWith('t3--')) })
+      const res = await handler(req('POST', { action: 'snapshot', milestone: 't3-p1' }))
+      expect(res.status).toBe(400)
+      expect(query).toHaveBeenCalledTimes(1)
+    })
   })
 })

@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import {
   PROGRAMMING_LEVELS,
   PROGRAMMING_LEVEL_IDS,
-  PROJECT_TRACKS,
   getProgrammingLevel,
   getLevelIdOfLesson,
 } from './curriculum.js'
@@ -53,6 +52,9 @@ describe('programming curriculum', () => {
     expect(getLevelIdOfLesson('p9-u1-l1')).toBeUndefined()
     expect(getLevelIdOfLesson('khong-phai-ma-bai')).toBeUndefined()
     expect(getLevelIdOfLesson('')).toBeUndefined()
+    // Bước dự án T2/T3 (2026-10-09) không phải mã bài học — không suy ra bậc.
+    expect(getLevelIdOfLesson('t2-p3-s1')).toBeUndefined()
+    expect(getLevelIdOfLesson('t3-p1-s1')).toBeUndefined()
   })
 
   it('mọi bài đã soạn đều suy được về bậc có thật', () => {
@@ -61,9 +63,5 @@ describe('programming curriculum', () => {
         expect(getLevelIdOfLesson(`${unit.id}-l1`)).toBe(level.id)
       }
     }
-  })
-
-  it('MVP chỉ mở track T1', () => {
-    expect(PROJECT_TRACKS.filter((t) => t.available).map((t) => t.id)).toEqual(['T1'])
   })
 })

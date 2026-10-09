@@ -3,6 +3,8 @@
 // là bộ đệm hiển thị nhanh/ngoại tuyến — cùng mô hình với sổ tay lỗi sai (mistakes.ts).
 import { getAuthHeader } from '@core/authHeader'
 import { isGuestId } from '@core/guestId'
+import { isProjectTrackId, type ProjectTrackId } from '@dhcb/subject-programming/projectTrackIds'
+import { cacheProjectTrack } from './programmingProjectTrack'
 import {
   enqueue as enqueueSync,
   pendingProgrammingItems,
@@ -62,6 +64,15 @@ export interface ProgrammingLessonProgress {
 
 const cacheKey = (uid: string) => `dhcb_prog_progress_${uid}`
 
+/** Dự án trục đang chọn trong phần `state` của GET (2026-10-09); sai khuôn → null (bỏ qua).
+ *  Kiểm lúc chạy bằng type guard một-giá-trị thay vì Zod: file này nằm trong bundle của nhiều
+ *  trang, không đáng kéo thêm Zod vào chunk đó chỉ để kiểm một chuỗi enum. */
+function projectTrackOfState(state: unknown): ProjectTrackId | null {
+  if (typeof state !== 'object' || state === null) return null
+  const value = (state as { projectTrack?: unknown }).projectTrack
+  return isProjectTrackId(value) ? value : null
+}
+
 function readCache(uid: string): ProgrammingLessonProgress[] {
   try {
     const raw = localStorage.getItem(cacheKey(uid))
@@ -101,9 +112,13 @@ async function readProgress(uid: string): Promise<ProgressReadResult> {
   try {
     const res = await fetch('/api/programming/progress', { headers: getAuthHeader() })
     if (!res.ok) return { lessons: readCache(uid), fromCache: true }
-    const body = (await res.json()) as { lessons: ProgrammingLessonProgress[] }
+    const body = (await res.json()) as { lessons: ProgrammingLessonProgress[]; state?: unknown }
     const lessons = overlayPending(uid, body.lessons ?? [])
     writeCache(uid, lessons)
+    // Cùng lượt GET này server trả luôn dự án trục đang chọn — ghi bộ đệm để trang dự án/trang
+    // môn đọc lại qua readProjectTrack() mà không phải hỏi server thêm một lần.
+    const track = projectTrackOfState(body.state)
+    if (track) cacheProjectTrack(uid, track)
     return { lessons, fromCache: false }
   } catch {
     return { lessons: readCache(uid), fromCache: true }

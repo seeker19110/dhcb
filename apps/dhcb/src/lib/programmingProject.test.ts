@@ -116,3 +116,71 @@ describe('programmingProject — lưu file & snapshot', () => {
     expect(await snapshotMilestone('p1')).toBe(false)
   })
 })
+
+// Hạ tầng T2/T3 (2026-10-09): mỗi dự án một không gian tên file — đổi dự án không mất gì.
+describe('programmingProject — tách workspace theo dự án', () => {
+  const SERVER_FILES = [
+    { path: PROJECT_MAIN_FILE, content: 't1-main' },
+    { path: 'logic.py', content: 't1-logic' },
+    { path: 't2--quy_lop.py', content: 't2-main' },
+    { path: 't2--logic.py', content: 't2-logic' },
+  ]
+
+  it('T1 (mặc định) KHÔNG thấy file của T2', async () => {
+    mockFetch(() => okJson({ files: SERVER_FILES }))
+    expect(await loadProjectFiles(UID)).toEqual({
+      [PROJECT_MAIN_FILE]: 't1-main',
+      'logic.py': 't1-logic',
+    })
+  })
+
+  it('T2 chỉ thấy file của mình, dưới TÊN CHẠY (bỏ tiền tố lưu)', async () => {
+    mockFetch(() => okJson({ files: SERVER_FILES }))
+    expect(await loadProjectFiles(UID, 'T2')).toEqual({
+      'quy_lop.py': 't2-main',
+      'logic.py': 't2-logic',
+    })
+  })
+
+  it('T3 lần đầu: chỉ có file chính T3 với code khởi đầu riêng', async () => {
+    mockFetch(() => okJson({ files: SERVER_FILES }))
+    const files = await loadProjectFiles(UID, 'T3')
+    expect(Object.keys(files)).toEqual(['so_hoc_tap.py'])
+    expect(files['so_hoc_tap.py']).toContain('Sổ học tập của tôi')
+  })
+
+  it('mất mạng: cache giữ CẢ cây, mỗi dự án đọc đúng phần của mình', async () => {
+    mockFetch(() => okJson({ files: SERVER_FILES }))
+    await loadProjectFiles(UID)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('offline'))) as unknown as typeof fetch,
+    )
+    expect((await loadProjectFiles(UID, 'T2'))['logic.py']).toBe('t2-logic')
+    expect((await loadProjectFiles(UID, 'T1'))['logic.py']).toBe('t1-logic')
+  })
+
+  it('lưu file T2: gửi tên LƯU có tiền tố, file T1 cùng tên không bị đè', async () => {
+    const fn = mockFetch(() => okJson({ ok: true }))
+    await saveProjectFileAt(UID, 'logic.py', 'cua T1')
+    await saveProjectFileAt(UID, 'logic.py', 'cua T2', 'T2')
+    expect(JSON.parse(String((fn.mock.calls[1]?.[1] as RequestInit).body))).toEqual({
+      action: 'save',
+      path: 't2--logic.py',
+      content: 'cua T2',
+    })
+    const cached = JSON.parse(String(localStorage.getItem(CACHE_KEY))) as {
+      files: Record<string, string>
+    }
+    expect(cached.files).toEqual({ 'logic.py': 'cua T1', 't2--logic.py': 'cua T2' })
+  })
+
+  it('snapshot T2 gửi mốc có tiền tố dự án', async () => {
+    const fn = mockFetch(() => okJson({ ok: true }))
+    await snapshotMilestone('p3', 'T2')
+    expect(JSON.parse(String((fn.mock.calls[0]?.[1] as RequestInit).body))).toEqual({
+      action: 'snapshot',
+      milestone: 't2-p3',
+    })
+  })
+})

@@ -3,6 +3,10 @@
 // GET  /api/programming/progress → { state: {currentLevel, projectTrack}, lessons: [{lessonId, status, completedAt}] }
 // POST /api/programming/progress  body { lessonId, status } → upsert 1 dòng tiến độ; hoàn
 //      thành thì giữ nguyên completed (không hạ cấp về in_progress khi học lại).
+// POST /api/programming/progress  body { projectTrack: 'T1'|'T2'|'T3' } → ghi dự án trục đang
+//      chọn vào learner_state (2026-10-09, docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md).
+//      Dự án chưa có bước nào → 400. Đặt chung endpoint với GET vì GET đã trả `projectTrack`
+//      từ cùng dòng learner_state — một nơi đọc, một nơi ghi.
 //
 // Bảng: programming.learner_state + programming.lesson_progress (migration 0064).
 // lessonId là khoá từ dữ liệu giáo trình (packages/subject-programming/lessons.ts) — server
@@ -21,6 +25,11 @@ import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp, internalErrorResponse } from '@dhcb/core-http/http'
 import { getLesson } from '@dhcb/subject-programming/lessons'
 import { getProjectStep } from '@dhcb/subject-programming/projectSteps'
+import {
+  PROJECT_TRACK_IDS,
+  isProjectTrackAvailable,
+  type ProjectTrackId,
+} from '@dhcb/subject-programming/projectTracks'
 import { getSpecStage } from '@dhcb/subject-programming/specializations/registry'
 import { getSpecStageDetail } from '@dhcb/subject-programming/specializations/stageDetails'
 import { checkLevelWriteAllowed } from '@dhcb/subject-programming/levelLockServer'
@@ -40,13 +49,13 @@ const UpdateSchema = z
   .object({
     // Bốn loại khoá dùng CHUNG một bảng tiến độ:
     //  · bài học xương sống          'p1-u4-l1'
-    //  · bước dự án trục             'p1-s1'
+    //  · bước dự án trục             'p1-s1' (T1) · 't2-p1-s1' (T2) · 't3-p1-s1' (T3)
     //  · module/tiêu chí hướng chuyên sâu 'web-s2-m1' / 'web-s2-r3' (chi tiết chặng S2)
     //  · bài thuộc khoá NGẮN (cắt ngang bậc: khoá Git, khoá Hermes)  'git-u2-l1' / 'hermes-u1-l1'
     lessonId: z
       .string()
       .regex(
-        /^(p[1-6]-(u\d+-l\d+|s\d+)|[a-z]+-s[1-4]-[mr]\d+|(git|hermes|vibe|openclaw|ml|pyai|mathai|mlds|cv1|cv2|llmagent)-u\d+-l\d+)$/,
+        /^(p[1-6]-(u\d+-l\d+|s\d+)|t[23]-p[1-6]-s\d+|[a-z]+-s[1-4]-[mr]\d+|(git|hermes|vibe|openclaw|ml|pyai|mathai|mlds|cv1|cv2|llmagent)-u\d+-l\d+)$/,
       ),
     status: z.enum(['in_progress', 'completed']),
     /** ADR-0007 + ADR-0008: code Make — BẮT BUỘC khi báo 'completed' một bài thuộc phạm vi
@@ -84,8 +93,11 @@ const BatchSchema = z
   })
   .strict()
 
-/** Một trong hai dạng body; Zod thử `.strict()` từng nhánh nên không nhầm lẫn được. */
-const BodySchema = z.union([BatchSchema, UpdateSchema])
+/** Chọn dự án trục (2026-10-09) — dạng body thứ ba, không đi chung với tiến độ bài. */
+const ProjectTrackBodySchema = z.object({ projectTrack: z.enum(PROJECT_TRACK_IDS) }).strict()
+
+/** Một trong ba dạng body; Zod thử `.strict()` từng nhánh nên không nhầm lẫn được. */
+const BodySchema = z.union([BatchSchema, UpdateSchema, ProjectTrackBodySchema])
 
 /**
  * Khoá tiến độ của tầng HƯỚNG CHUYÊN SÂU có thật hay không.
@@ -130,6 +142,44 @@ async function readEffectivePlan(pool: Pool, userId: string): Promise<Plan> {
     console.warn('[programming-progress] đọc plan lỗi → coi như Free (khoá chặt):', err)
     return 'free'
   }
+}
+
+/**
+ * Ghi dự án trục đang chọn. Upsert vì người mới có thể chọn dự án TRƯỚC khi ghi tiến độ bài nào
+ * (chưa có dòng learner_state). Dự án chưa có bước nào thì chặn: chọn được là mở ra trang trắng.
+ */
+async function writeProjectTrack(
+  pool: Pool,
+  userId: string,
+  track: ProjectTrackId,
+  headers: Record<string, string>,
+): Promise<Response> {
+  if (!isProjectTrackAvailable(track)) {
+    return jsonResponse(
+      { error: `Dự án ${track} chưa mở — chưa có bước nào`, code: 'PROJECT_TRACK_NOT_AVAILABLE' },
+      400,
+      headers,
+    )
+  }
+  const { rows } = await pool.query<StateRow>(
+    `insert into programming.learner_state (user_id, project_track, updated_at)
+     values ($1, $2, now())
+     on conflict (user_id) do update
+       set project_track = excluded.project_track, updated_at = now()
+     returning current_level, project_track`,
+    [userId, track],
+  )
+  return jsonResponse(
+    {
+      ok: true,
+      state: {
+        currentLevel: rows[0]?.current_level ?? 'p1',
+        projectTrack: rows[0]?.project_track ?? track,
+      },
+    },
+    200,
+    headers,
+  )
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -191,8 +241,13 @@ export default async function handler(req: Request): Promise<Response> {
     if (!validated.ok)
       return jsonResponse({ error: validated.error.message }, validated.error.status, headers)
 
-    // Quy về MỘT dạng: batch có `attemptId` + nhiều mục; dạng cũ là batch 1 mục không có attemptId.
     const body = validated.data
+    // Chọn dự án trục: nhánh riêng, không chạm tiến độ bài / khoá bậc / chấm lại.
+    if ('projectTrack' in body) {
+      return await writeProjectTrack(pool, auth.userId, body.projectTrack, headers)
+    }
+
+    // Quy về MỘT dạng: batch có `attemptId` + nhiều mục; dạng cũ là batch 1 mục không có attemptId.
     const attemptId = 'attemptId' in body ? body.attemptId : null
     const items =
       'items' in body

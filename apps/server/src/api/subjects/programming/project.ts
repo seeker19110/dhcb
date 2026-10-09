@@ -3,7 +3,11 @@
 // GET  /api/programming/project → { files: [{path, content, updatedAt}], snapshots: [{id, milestone, createdAt}] }
 // POST /api/programming/project
 //   body { action: 'save', path, content }        → upsert 1 file (kiểm quota)
-//   body { action: 'snapshot', milestone }        → chốt toàn bộ cây file hiện tại (jsonb)
+//   body { action: 'snapshot', milestone }        → chốt cây file CỦA DỰ ÁN ứng với mốc (jsonb)
+//
+// Ba dự án trục T1/T2/T3 dùng chung bảng project_files nhưng TÁCH không gian tên bằng tiền tố
+// đường dẫn (T1 giữ tên gốc, T2 `t2--…`, T3 `t3--…` — projectTrackIds.ts). Mốc snapshot mang
+// tiền tố tương ứng (`p1` · `t2-p1` · `t3-p1`) và chỉ chốt file của đúng dự án đó.
 //
 // Bảng: programming.project_files + programming.project_snapshots (migration 0064).
 // Quota (đặc tả xuyên suốt §4.1): tổng ~2MB text + tối đa 50 file mỗi học viên — kiểm ở
@@ -19,6 +23,11 @@ import {
 } from '@dhcb/core-auth/security'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp, internalErrorResponse } from '@dhcb/core-http/http'
+import {
+  PROJECT_SNAPSHOT_MILESTONE_RE,
+  trackOfSnapshotMilestone,
+  trackOfWorkspaceStoragePath,
+} from '@dhcb/subject-programming/projectTrackIds'
 
 const MAX_FILES = 50
 const MAX_TOTAL_BYTES = 2 * 1024 * 1024 // ~2MB text toàn workspace
@@ -38,7 +47,7 @@ const BodySchema = z.discriminatedUnion('action', [
   z
     .object({
       action: z.literal('snapshot'),
-      milestone: z.string().regex(/^p[1-6]$/),
+      milestone: z.string().regex(PROJECT_SNAPSHOT_MILESTONE_RE),
     })
     .strict(),
 ])
@@ -140,11 +149,15 @@ export default async function handler(req: Request): Promise<Response> {
       return jsonResponse({ ok: true }, 200, headers)
     }
 
-    // action === 'snapshot': chốt toàn bộ cây file hiện tại theo milestone.
-    const { rows: files } = await pool.query<FileRow>(
+    // action === 'snapshot': chốt cây file hiện tại CỦA DỰ ÁN ứng với mốc. Lọc ở đây (không
+    // trong SQL) để luật tiền tố chỉ nằm ở MỘT chỗ — projectTrackIds.ts, client dùng chung.
+    // Regex của schema đã đảm bảo mốc đúng khuôn nên không bao giờ null; `?? 'T1'` cho kiểu.
+    const track = trackOfSnapshotMilestone(body.milestone) ?? 'T1'
+    const { rows: allFiles } = await pool.query<FileRow>(
       'select path, content, updated_at from programming.project_files where user_id = $1',
       [auth.userId],
     )
+    const files = allFiles.filter((f) => trackOfWorkspaceStoragePath(f.path) === track)
     if (files.length === 0) {
       return jsonResponse({ error: 'Workspace trống — chưa có gì để chốt milestone' }, 400, headers)
     }
