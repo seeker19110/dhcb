@@ -1,6 +1,6 @@
 # 0562 — Bộ kiểm bước Toán đọc dấu chia `:` theo lối SGK (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `feat(stem)`
+- **Ngày:** 2026-10-09 · **PR:** #1304 · **Loại:** `feat(stem)`
 - **Nguồn:** nợ 🟡 `PROGRESS.md` "Bảng nháp STEM" mục (2) — "Toán ngoài phạm vi: … dấu chia `:`".
   Đặc tả `docs/specs/2026-10-09-kiem-buoc-giai-stem.md` (Approved for implementation, giữ nguyên).
 
