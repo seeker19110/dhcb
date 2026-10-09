@@ -1,7 +1,8 @@
 // Cổng cho chỗ GHÉP adapter cây STEM với dữ liệu của app (S07-2).
 //
-// Chạy trên registry THẬT của môn Vật lí và Sinh học: hai bẫy cần canh đều là bẫy DỮ LIỆU
-// (Vật lí có chuyên đề HSG, Sinh học có 0 chuyên đề), mà dữ liệu giả thì không nói lên điều đó.
+// Chạy trên registry THẬT của môn Vật lí và Sinh học. Từ 2026-10-09 cả bốn môn đều có chuyên đề
+// HSG, nên ca "môn không có chuyên đề" giả lập bằng cách cho `listAdvanced` của Sinh trả rỗng —
+// bất biến cần canh (không dựng khung HSG rỗng) vẫn còn nguyên nghĩa cho môn mới thêm sau này.
 import { describe, it, expect, vi } from 'vitest'
 import { PHYSICS_LOADER } from '@dhcb/subject-physics/lessonsLoader'
 import { BIOLOGY_LOADER } from '@dhcb/subject-biology/lessonsLoader'
@@ -44,7 +45,9 @@ describe('buildStemOutlineForApp', () => {
   })
 
   it('lớp không có bài và môn không có chuyên đề → undefined, không dựng cây rỗng', () => {
+    const spy = vi.spyOn(BIOLOGY_LOADER, 'listAdvanced').mockReturnValue([])
     expect(buildStemOutlineForApp(SINH, '99')).toBeUndefined()
+    spy.mockRestore()
   })
 })
 
@@ -66,9 +69,18 @@ describe('locNhanh — tách hai tab "chuẩn" và "bồi dưỡng HSG" từ M�
     expect(cay.nodes.some((n) => n.hint?.includes('Cấp') === true)).toBe(true)
   })
 
-  it('môn KHÔNG có chuyên đề (Sinh học) → nhánh HSG là undefined, không khung rỗng', () => {
-    expect(BIOLOGY_LOADER.listAdvanced().length, 'ca test mất nghĩa nếu Sinh có chuyên đề').toBe(0)
+  it('môn KHÔNG có chuyên đề → nhánh HSG là undefined, không khung rỗng', () => {
+    const spy = vi.spyOn(BIOLOGY_LOADER, 'listAdvanced').mockReturnValue([])
+    expect(BIOLOGY_LOADER.listAdvanced().length, 'giả lập môn không có chuyên đề').toBe(0)
     expect(locNhanh(buildStemOutlineForApp(SINH, '10'), 'biology', 'advanced')).toBeUndefined()
+    spy.mockRestore()
+  })
+
+  it('Sinh học có chuyên đề HSG thật → nhánh HSG có đủ bài', () => {
+    const cay = locNhanh(buildStemOutlineForApp(SINH, '10'), 'biology', 'advanced')!
+    expect(cay.nodes.filter((n) => n.kind === 'lesson').length).toBe(
+      BIOLOGY_LOADER.listAdvanced().length,
+    )
   })
 
   it('không có cây thì trả undefined, không ném', () => {

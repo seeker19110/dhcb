@@ -6,7 +6,12 @@ import {
   moTaLoiHoatAnh,
   timLoiHoatAnh,
 } from '@dhcb/core-contracts/animationQuality'
-import { BIOLOGY_LESSONS, getBiologyLesson, listBiologyLessonsByGrade } from './lessons.js'
+import {
+  BIOLOGY_LESSONS,
+  getBiologyLesson,
+  listBiologyAdvancedLessons,
+  listBiologyLessonsByGrade,
+} from './lessons.js'
 import { BiologyLessonSchema, BIOLOGY_GRADES } from './lessonTypes.js'
 import { moTaLoiTuCham, timLoiTuCham } from '@dhcb/core-grading/selfGrade'
 
@@ -21,6 +26,19 @@ describe('BIOLOGY_LESSONS registry', () => {
   it('tổng số bài học đủ số lượng tối thiểu', () => {
     // Sinh 10: 26 bài, Sinh 11: 26 bài, Sinh 12: 30 bài => ≥ 80
     expect(BIOLOGY_LESSONS.length).toBeGreaterThanOrEqual(80)
+  })
+
+  it('mỗi cấp HSG đều có chuyên đề, và chuyên đề nào cũng thuộc nhánh advanced', () => {
+    // Sinh từng là môn STEM duy nhất không có nhánh HSG (tab "Chuyên đề HSG" trống) — thêm
+    // 2026-10-09, đặc tả docs/specs/2026-10-09-toan12c5-duong-thang-va-sinh-hsg.md.
+    const advanced = listBiologyAdvancedLessons()
+    for (const tier of ['hsg-truong', 'hsg-tinh', 'hsg-quoc-gia'] as const) {
+      expect(
+        advanced.some((l) => l.advancedTier === tier),
+        `Chưa có chuyên đề nào ở cấp ${tier}`,
+      ).toBe(true)
+    }
+    expect(advanced.every((l) => l.track === 'advanced')).toBe(true)
   })
 
   it('mọi id bài học là duy nhất', () => {

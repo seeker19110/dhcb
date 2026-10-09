@@ -73,11 +73,14 @@ describe('buildStemOutline — dữ liệu thật bốn môn', () => {
     }
   })
 
-  it('nhánh HSG vắng hẳn khi môn không có chuyên đề (Sinh học)', () => {
+  it('nhánh HSG vắng hẳn khi môn không có chuyên đề', () => {
+    // Từ 2026-10-09 cả bốn môn đều có chuyên đề HSG (Sinh là môn cuối, changelog 0568), nên
+    // "môn không có chuyên đề" được giả lập bằng cách cho listAdvanced của Sinh trả rỗng.
     const bio = MON[3]!
-    expect(bio.loader.listAdvanced()).toHaveLength(0)
+    const spy = vi.spyOn(bio.loader, 'listAdvanced').mockReturnValue([])
     const outline = buildStemOutline('biology', '10', ctxCua(bio))
     expect(outline!.nodes.some((n) => n.contentId === 'hsg')).toBe(false)
+    spy.mockRestore()
   })
 
   it('nhánh HSG là một chương riêng, bài mang nhãn cấp', () => {
@@ -100,7 +103,9 @@ describe('buildStemOutline — dữ liệu thật bốn môn', () => {
 
   it('lớp không có bài và môn không chuyên đề → undefined', () => {
     const bio = MON[3]!
+    const spy = vi.spyOn(bio.loader, 'listAdvanced').mockReturnValue([])
     expect(buildStemOutline('biology', '99', ctxCua(bio))).toBeUndefined()
+    spy.mockRestore()
   })
 
   it('href do nơi gọi dựng, gắn đúng từng bài', () => {
