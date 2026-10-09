@@ -15,7 +15,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { ProjectStepSchema, getProjectStages, getStepLanguage } from './projectSteps.js'
-import { T2_P1_PROJECT_STEPS, T2_PROJECT_STAGES } from './projectStepsT2.js'
+import { T2_P1_PROJECT_STEPS, T2_P2_PROJECT_STEPS, T2_PROJECT_STAGES } from './projectStepsT2.js'
 import { PROGRAMMING_LEVELS } from './curriculum.js'
 import { fileCuaLan, laLanPython, noiCodeTheoLan, type PythonLane } from './pyLanes.js'
 import { allTestsPassed, gradeTestCase, type TestCaseResult } from './grading.js'
@@ -75,6 +75,8 @@ function chamPython(
   step: ProjectStep,
   code: string,
   filesThay: Record<string, string> = {},
+  checks: ProjectStep['checks'] = step.checks,
+  dungProbe = true,
 ): TestCaseResult[] {
   const lane = getStepLanguage(step) as PythonLane
   const dir = mkdtempSync(join(tmpdir(), `dhcb-t2-${step.id}-`))
@@ -86,8 +88,8 @@ function chamPython(
     writeFileSync(join(dir, path), content, 'utf8')
   }
   writeFileSync(join(dir, step.files![0]!), code, 'utf8')
-  const entry = noiCodeTheoLan(lane, step.probeCode ?? code)
-  return step.checks.map((c) => {
+  const entry = noiCodeTheoLan(lane, (dungProbe ? step.probeCode : undefined) ?? code)
+  return checks.map((c) => {
     const r = chayPython(entry, c.stdinLines, dir)
     return gradeTestCase(c, r.output, r.error)
   })
@@ -223,6 +225,56 @@ describe.skipIf(!hasPython)('T2 chặng P1 — check thật sự BẮT LỖI (ch
     rot('t2-p1-s4', 'if so_tien <= so_du:', 'if so_tien <= da_thu:'))
   it('s5: làm tròn XUỐNG thay vì lên thì rớt', () =>
     rot('t2-p1-s5', 'math.ceil(can_them', 'math.floor(can_them'))
+})
+
+// ── Chặng P2 ─────────────────────────────────────────────────────────────────────────────
+describe('T2 chặng P2 — Sổ quỹ không mất', () => {
+  it('đủ 5 bước; milestone khai đủ 3 file, file chính đứng đầu, mọi file phụ có code mẫu', () => {
+    expect(T2_P2_PROJECT_STEPS.map((s) => s.id)).toEqual([
+      't2-p2-s1',
+      't2-p2-s2',
+      't2-p2-s3',
+      't2-p2-s4',
+      't2-p2-s5',
+    ])
+    const s5 = buoc(T2_P2_PROJECT_STEPS, 't2-p2-s5')
+    expect(s5.files).toEqual(['quy_lop.py', 'tinh_quy.py', 'luu_so.py'])
+    expect(Object.keys(s5.referenceFiles ?? {}).sort()).toEqual(['luu_so.py', 'tinh_quy.py'])
+    expect(s5.probeCode).toContain('from tinh_quy import')
+    expect(s5.probeCode).toContain('from luu_so import')
+  })
+})
+
+describe.skipIf(!hasPython)('T2 chặng P2 — check thật sự BẮT LỖI (chống test dễ dãi)', () => {
+  const rot = (id: string, tu: string, thanh: string) => {
+    const step = buoc(T2_P2_PROJECT_STEPS, id)
+    expect(allTestsPassed(chamPython(step, dotBien(step.referenceCode, tu, thanh)))).toBe(false)
+  }
+
+  it('s1: coi bạn đóng thiếu là "chưa đóng" thì rớt', () =>
+    rot('t2-p2-s1', 'if tien == 0:', 'if tien < 50000:'))
+  it('s2: ghi đè hạng mục thay vì cộng dồn thì rớt', () =>
+    rot('t2-p2-s2', 'CHI[hang_muc] = CHI.get(hang_muc, 0) + tien', 'CHI[hang_muc] = tien'))
+  it('s3: quên mở sổ mới "w" đầu phiên thì rớt (cộng dồn sổ cũ)', () =>
+    rot('t2-p2-s3', 'open(SO_FILE, "w", encoding="utf-8").close()', 'pass'))
+  it('s4: chỉ bắt chữ mà để lọt số âm thì rớt', () =>
+    rot('t2-p2-s4', '    if tien <= 0:\n        return None\n', ''))
+  it('s5: mo_so_moi() không xoá sổ cũ thì rớt', () => {
+    const step = buoc(T2_P2_PROJECT_STEPS, 't2-p2-s5')
+    const luuSo = dotBien(
+      step.referenceFiles!['luu_so.py']!,
+      'open(SO_FILE, "w", encoding="utf-8").close()',
+      'pass',
+    )
+    expect(allTestsPassed(chamPython(step, step.referenceCode, { 'luu_so.py': luuSo }))).toBe(false)
+  })
+
+  it('s5: quy_lop.py của milestone (chạy thật, không qua probe) giữ NGUYÊN hành vi bước 4', () => {
+    const s4 = buoc(T2_P2_PROJECT_STEPS, 't2-p2-s4')
+    const s5 = buoc(T2_P2_PROJECT_STEPS, 't2-p2-s5')
+    const ketQua = chamPython(s5, s5.referenceCode, {}, s4.checks, false)
+    expect(allTestsPassed(ketQua), JSON.stringify(ketQua.filter((r) => !r.passed))).toBe(true)
+  })
 })
 
 // Mọi bước Python của T2 đi qua cổng chung lessonsPython.test.ts; ở đây chỉ chặn trường hợp

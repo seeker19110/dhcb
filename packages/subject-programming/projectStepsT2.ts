@@ -290,7 +290,510 @@ export const T2_P1_PROJECT_STEPS: ProjectStep[] = [
   },
 ]
 
-export const T2_P2_PROJECT_STEPS: ProjectStep[] = []
+// ─────────────────────────────────────────────────────────────────────────────
+// CHẶNG P2 — "Sổ quỹ không mất". Sổ quỹ chạy chữ của P1 thành SỔ SÁCH: thu theo TÊN từng
+// bạn (dict thay cho một con số "số bạn đã đóng"), chi theo HẠNG MỤC, ghi ra CSV nên tắt máy
+// không mất, nhập bậy không sập, và cuối chặng tách 3 file đúng vai trò.
+//
+// Hợp đồng I/O chung của cả chặng (mỗi bước THÊM khả năng, không đổi dòng cũ):
+//   input  : "Ten lop" → lặp lệnh: tên một bạn (thu tiền bạn đó) · "chi" (bước 2+) · "xong"
+//   output : "Quy lop <ten>" · "Thanh vien: 4" · "Da thu <ban>: <t>" · "Da chi <hang muc>: <t>"
+//            · kết phiên "Tong thu" · "Tong chi" · "So du" · "- <hang muc>: <t>" · "Chua dong: …"
+// Lớp có 4 bạn cố định (tên không dấu, viết thường): an · binh · hoa · minh.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** File vai trò của milestone chặng P2 (tên khác T1 cho dễ nhận; workspace vốn đã tách). */
+export const T2_P2_LOGIC_FILE = 'tinh_quy.py'
+export const T2_P2_STORAGE_FILE = 'luu_so.py'
+
+const FILES_P2 = [T2_PROJECT_MAIN_FILE]
+
+const P2_DANH_SACH = `DANH_SACH = {"an": 0, "binh": 0, "hoa": 0, "minh": 0}`
+
+const P2_CHUA_DONG = `def chua_dong(so_quy):
+    ds = []
+    for ten, tien in so_quy.items():
+        if tien == 0:
+            ds.append(ten)
+    return ds`
+
+/** Đoạn kết phiên in danh sách chưa đóng — giữ nguyên văn từ bước 1 tới milestone. */
+const P2_IN_CHUA_DONG = `ds = chua_dong(DANH_SACH)
+if len(ds) == 0:
+    print("Chua dong: khong ai")
+else:
+    print("Chua dong: " + ", ".join(ds))`
+
+const P2_S1_CODE = `${P2_DANH_SACH}
+
+
+def tong_thu(so_quy):
+    tong = 0
+    for tien in so_quy.values():
+        tong = tong + tien
+    return tong
+
+
+${P2_CHUA_DONG}
+
+
+ten_lop = input("Ten lop: ")
+print(f"Quy lop {ten_lop}")
+print(f"Thanh vien: {len(DANH_SACH)}")
+
+while True:
+    lenh = input("Ten ban (xong de ket thuc): ").strip().lower()
+    if lenh == "xong":
+        break
+    if lenh not in DANH_SACH:
+        print("Khong co ban nay")
+        continue
+    tien = int(input("So tien: "))
+    DANH_SACH[lenh] = DANH_SACH[lenh] + tien
+    print(f"Da thu {lenh}: {tien}")
+
+print(f"Tong thu: {tong_thu(DANH_SACH)}")
+${P2_IN_CHUA_DONG}`
+
+const P2_S2_CODE = `${P2_DANH_SACH}
+CHI = {}
+
+
+def tong_thu(so_quy):
+    tong = 0
+    for tien in so_quy.values():
+        tong = tong + tien
+    return tong
+
+
+def tong_chi(chi):
+    tong = 0
+    for tien in chi.values():
+        tong = tong + tien
+    return tong
+
+
+def so_du(so_quy, chi):
+    return tong_thu(so_quy) - tong_chi(chi)
+
+
+${P2_CHUA_DONG}
+
+
+ten_lop = input("Ten lop: ")
+print(f"Quy lop {ten_lop}")
+print(f"Thanh vien: {len(DANH_SACH)}")
+
+while True:
+    lenh = input("Lenh (ten ban/chi/xong): ").strip().lower()
+    if lenh == "xong":
+        break
+    if lenh == "chi":
+        hang_muc = input("Hang muc: ").strip().lower()
+        tien = int(input("So tien: "))
+        if tien > so_du(DANH_SACH, CHI):
+            print("Khong du quy")
+            continue
+        CHI[hang_muc] = CHI.get(hang_muc, 0) + tien
+        print(f"Da chi {hang_muc}: {tien}")
+        continue
+    if lenh not in DANH_SACH:
+        print("Khong co ban nay")
+        continue
+    tien = int(input("So tien: "))
+    DANH_SACH[lenh] = DANH_SACH[lenh] + tien
+    print(f"Da thu {lenh}: {tien}")
+
+print(f"Tong thu: {tong_thu(DANH_SACH)}")
+print(f"Tong chi: {tong_chi(CHI)}")
+print(f"So du: {so_du(DANH_SACH, CHI)}")
+for hang_muc, tien in CHI.items():
+    print(f"- {hang_muc}: {tien}")
+${P2_IN_CHUA_DONG}`
+
+/** Phần LƯU TRỮ của sổ (bước 3 trở đi): ghi thêm từng giao dịch, đọc lại để chốt số. */
+const P2_LUU_TRU = `SO_FILE = "so_quy.csv"
+
+
+def ghi_giao_dich(loai, ten, tien):
+    with open(SO_FILE, "a", encoding="utf-8") as f:
+        f.write(f"{loai},{ten},{tien}\\n")
+
+
+def doc_so():
+    thu = 0
+    chi = 0
+    theo_hang_muc = {}
+    with open(SO_FILE, "r", encoding="utf-8") as f:
+        for dong in f:
+            dong = dong.strip()
+            if dong == "":
+                continue
+            loai, ten, tien = dong.split(",")
+            tien = int(tien)
+            if loai == "thu":
+                thu = thu + tien
+            else:
+                chi = chi + tien
+                theo_hang_muc[ten] = theo_hang_muc.get(ten, 0) + tien
+    return thu, chi, theo_hang_muc`
+
+/** Đoạn kết phiên chốt số TỪ FILE — giữ nguyên văn từ bước 3 tới milestone. */
+const P2_KET_PHIEN = `thu, chi, theo_hang_muc = doc_so()
+print(f"Tong thu: {thu}")
+print(f"Tong chi: {chi}")
+print(f"So du: {thu - chi}")
+for hang_muc, tien in theo_hang_muc.items():
+    print(f"- {hang_muc}: {tien}")
+${P2_IN_CHUA_DONG}`
+
+const P2_S3_CODE = `${P2_DANH_SACH}
+${P2_LUU_TRU}
+
+
+${P2_CHUA_DONG}
+
+
+open(SO_FILE, "w", encoding="utf-8").close()
+
+ten_lop = input("Ten lop: ")
+print(f"Quy lop {ten_lop}")
+print(f"Thanh vien: {len(DANH_SACH)}")
+
+while True:
+    lenh = input("Lenh (ten ban/chi/xong): ").strip().lower()
+    if lenh == "xong":
+        break
+    if lenh == "chi":
+        hang_muc = input("Hang muc: ").strip().lower()
+        tien = int(input("So tien: "))
+        thu, chi, _ = doc_so()
+        if tien > thu - chi:
+            print("Khong du quy")
+            continue
+        ghi_giao_dich("chi", hang_muc, tien)
+        print(f"Da chi {hang_muc}: {tien}")
+        continue
+    if lenh not in DANH_SACH:
+        print("Khong co ban nay")
+        continue
+    tien = int(input("So tien: "))
+    DANH_SACH[lenh] = DANH_SACH[lenh] + tien
+    ghi_giao_dich("thu", lenh, tien)
+    print(f"Da thu {lenh}: {tien}")
+
+${P2_KET_PHIEN}`
+
+const P2_DOC_SO_TIEN = `def doc_so_tien(chuoi):
+    """Tra ve so tien la so nguyen DUONG, hoac None neu nhap bay."""
+    try:
+        tien = int(chuoi)
+    except ValueError:
+        return None
+    if tien <= 0:
+        return None
+    return tien`
+
+/** Vòng lặp lệnh đã chống nhập bậy — bước 4 và hàm main() của milestone dùng chung. */
+const P2_VONG_LAP_AN_TOAN = `while True:
+    lenh = input("Lenh (ten ban/chi/xong): ").strip().lower()
+    if lenh == "xong":
+        break
+    if lenh == "chi":
+        hang_muc = input("Hang muc: ").strip().lower()
+        tien = doc_so_tien(input("So tien: "))
+        if tien is None:
+            print("Du lieu khong hop le")
+            continue
+        thu, chi, _ = doc_so()
+        if tien > thu - chi:
+            print("Khong du quy")
+            continue
+        ghi_giao_dich("chi", hang_muc, tien)
+        print(f"Da chi {hang_muc}: {tien}")
+        continue
+    if lenh not in DANH_SACH:
+        print("Khong co ban nay")
+        continue
+    tien = doc_so_tien(input("So tien: "))
+    if tien is None:
+        print("Du lieu khong hop le")
+        continue
+    DANH_SACH[lenh] = DANH_SACH[lenh] + tien
+    ghi_giao_dich("thu", lenh, tien)
+    print(f"Da thu {lenh}: {tien}")`
+
+const P2_S4_CODE = `${P2_DANH_SACH}
+${P2_LUU_TRU}
+
+
+${P2_CHUA_DONG}
+
+
+${P2_DOC_SO_TIEN}
+
+
+open(SO_FILE, "w", encoding="utf-8").close()
+
+ten_lop = input("Ten lop: ")
+print(f"Quy lop {ten_lop}")
+print(f"Thanh vien: {len(DANH_SACH)}")
+
+${P2_VONG_LAP_AN_TOAN}
+
+${P2_KET_PHIEN}`
+
+/** Thụt mỗi dòng 4 dấu cách — để đặt đoạn code dùng chung vào thân hàm main(). */
+const thut = (code: string) =>
+  code
+    .split('\n')
+    .map((d) => (d === '' ? d : `    ${d}`))
+    .join('\n')
+
+const P2_S5_CODE = `from tinh_quy import DANH_SACH, chua_dong, doc_so_tien
+from luu_so import mo_so_moi, ghi_giao_dich, doc_so
+
+
+def main():
+    mo_so_moi()
+
+    ten_lop = input("Ten lop: ")
+    print(f"Quy lop {ten_lop}")
+    print(f"Thanh vien: {len(DANH_SACH)}")
+
+${thut(P2_VONG_LAP_AN_TOAN)}
+
+${thut(P2_KET_PHIEN)}
+
+
+main()`
+
+const P2_S5_LOGIC = `# tinh_quy.py — chỉ TÍNH, không input/print
+${P2_DANH_SACH}
+
+
+${P2_CHUA_DONG}
+
+
+${P2_DOC_SO_TIEN}
+`
+
+const P2_S5_STORAGE = `# luu_so.py — chỉ LƯU TRỮ, không input/print
+${P2_LUU_TRU}
+
+
+def mo_so_moi():
+    open(SO_FILE, "w", encoding="utf-8").close()
+`
+
+export const T2_P2_PROJECT_STEPS: ProjectStep[] = [
+  {
+    id: 't2-p2-s1',
+    isMilestone: false,
+    files: FILES_P2,
+    title: 'Thu theo TÊN từng bạn — sổ là dict, tính tổng bằng hàm',
+    unitId: 'p2-u1',
+    requirement:
+      'Sổ P1 chỉ biết "bao nhiêu bạn đã đóng", không biết AI đóng — cuối kỳ có bạn bảo "mình đóng rồi mà" là bạn hết đường đối chiếu. Từ chặng này sổ ghi theo TÊN.\n\nDANH_SACH là dict tên → số tiền đã đóng, lớp có 4 bạn: {"an": 0, "binh": 0, "hoa": 0, "minh": 0}.\n\nLuồng chương trình:\n1. Hỏi tên lớp → in "Quy lop <ten>", rồi "Thanh vien: <so ban trong DANH_SACH>".\n2. Lặp: hỏi tên một bạn.\n   - Gõ "xong" → kết thúc phiên.\n   - Tên có trong DANH_SACH (bỏ khoảng trắng thừa, không phân biệt hoa/thường) → hỏi số tiền, cộng vào sổ của bạn đó, in "Da thu <ten>: <tien>".\n   - Tên lạ → in "Khong co ban nay", KHÔNG hỏi số tiền.\n3. Kết phiên in "Tong thu: <tong>", rồi "Chua dong: <ten, ten>" (các bạn còn 0 đồng, đúng thứ tự trong DANH_SACH, cách nhau dấu phẩy và một khoảng trắng). Ai cũng đã đóng → "Chua dong: khong ai".\n\nBẮT BUỘC có hai hàm không print bên trong: tong_thu(so_quy) trả tổng tiền, chua_dong(so_quy) trả DANH SÁCH tên còn 0 đồng.',
+    hint: 'Duyệt dict bằng for ten, tien in so_quy.items(). Chuẩn hoá tên ngay khi đọc: input(...).strip().lower(). Ghép danh sách thành một dòng bằng ", ".join(ds).',
+    referenceCode: P2_S1_CODE,
+    checks: [
+      tc(
+        ['10A1', 'an', '50000', 'binh', '50000', 'xong'],
+        'Tong thu: 100000',
+        'Hai bạn đóng, tổng cộng đúng',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'binh', '50000', 'xong'],
+        'Chua dong: hoa, minh',
+        'Liệt kê đúng những bạn chưa đóng, đúng thứ tự',
+      ),
+      tc(['10A1', 'lan', 'xong'], 'Khong co ban nay', 'Tên lạ: báo và KHÔNG hỏi số tiền'),
+      tc(
+        ['10A1', '  Hoa ', '50000', 'xong'],
+        'Da thu hoa: 50000',
+        'Ca ẩn: tên gõ hoa hoặc thừa khoảng trắng vẫn nhận',
+        true,
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'binh', '50000', 'hoa', '20000', 'minh', '50000', 'xong'],
+        'Chua dong: khong ai',
+        'Ca ẩn: cả lớp đã đóng (kể cả đóng thiếu) thì không còn ai trong danh sách',
+        true,
+      ),
+      tc(
+        ['10A1', 'an', '30000', 'an', '20000', 'xong'],
+        'Tong thu: 50000',
+        'Ca ẩn: một bạn đóng hai lần thì cộng dồn',
+        true,
+      ),
+    ],
+  },
+  {
+    id: 't2-p2-s2',
+    isMilestone: false,
+    files: FILES_P2,
+    title: 'Chi theo HẠNG MỤC — dict thứ hai cộng dồn từng mục',
+    unitId: 'p2-u4',
+    requirement:
+      'Giữ nguyên mọi hành vi bước 1, thêm lệnh "chi" trong vòng lặp:\n\nGõ "chi" → hỏi "Hang muc:" (chuẩn hoá như tên bạn) rồi "So tien:".\n- Số tiền vượt số dư (tổng thu − tổng chi) → in "Khong du quy", không ghi gì.\n- Ngược lại → cộng vào dict CHI theo hạng mục và in "Da chi <hang muc>: <tien>". Chi nhiều lần cùng một hạng mục thì CỘNG DỒN vào đúng mục đó.\n\nKết phiên, sau "Tong thu", in thêm:\nTong chi: <tong>\nSo du: <tong thu − tong chi>\nmỗi hạng mục một dòng "- <hang muc>: <tien>" (thứ tự lần đầu xuất hiện)\nrồi mới tới dòng "Chua dong" như bước 1.',
+    hint: 'CHI = {} ở đầu file. Cộng dồn một mục bằng CHI[hang_muc] = CHI.get(hang_muc, 0) + tien — .get(…, 0) cho 0 khi mục chưa có, khỏi phải if. Kiểm "chi" TRƯỚC khi kiểm tên bạn, nếu không "chi" sẽ rơi vào nhánh "Khong co ban nay".',
+    referenceCode: P2_S2_CODE,
+    checks: [
+      tc(
+        ['10A1', 'an', '50000', 'binh', '50000', 'chi', 'photo', '30000', 'xong'],
+        'So du: 70000',
+        'Số dư = tổng thu − tổng chi',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'photo', '20000', 'chi', ' Photo ', '10000', 'xong'],
+        '- photo: 30000',
+        'Chi hai lần cùng hạng mục thì cộng dồn vào một dòng',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'lien hoan', '80000', 'xong'],
+        'Khong du quy',
+        'Chi vượt số dư bị chặn',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'xong'],
+        'Chua dong: binh, hoa, minh',
+        'Hành vi bước 1 không được vỡ',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'lien hoan', '80000', 'xong'],
+        'Tong chi: 0',
+        'Ca ẩn: khoản bị chặn KHÔNG được ghi vào sổ chi',
+        true,
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'qua', '50000', 'xong'],
+        'So du: 0',
+        'Ca ẩn: chi vừa đúng bằng số dư vẫn được',
+        true,
+      ),
+    ],
+  },
+  {
+    id: 't2-p2-s3',
+    isMilestone: false,
+    files: FILES_P2,
+    title: 'Sổ không mất — ghi từng giao dịch ra CSV, chốt số từ file',
+    unitId: 'p2-u6',
+    requirement:
+      'Tắt máy là mất sổ thì không ai tin thủ quỹ. Giữ nguyên hành vi bước 2, thêm phần LƯU TRỮ:\n\n1. Đầu phiên, mở file "so_quy.csv" bằng chế độ "w" để bắt đầu SỔ MỚI (nhờ vậy chạy lại không cộng dồn nhầm sổ phiên trước).\n2. Mỗi giao dịch thành công, ghi THÊM một dòng: <loai>,<ten ban hoac hang muc>,<so tien> — loai là thu hoặc chi. Ví dụ:\n   thu,an,50000\n   chi,photo,30000\n3. Viết hàm doc_so() đọc lại file, trả về (tong_thu, tong_chi, dict hạng mục → tổng chi).\n4. Kết phiên: "Tong thu", "Tong chi", "So du" và các dòng hạng mục phải tính TỪ FILE qua doc_so(), không phải từ biến trong bộ nhớ. Lệnh "chi" cũng hỏi doc_so() để biết số dư hiện tại.',
+    hint: 'Đầu chương trình: open("so_quy.csv", "w", encoding="utf-8").close() tạo sổ rỗng. Ghi mỗi dòng bằng chế độ "a" và f.write(f"{loai},{ten},{tien}\\n"). Khi đọc: dong.strip().split(",") rồi int(...) cột thứ ba — mọi thứ đọc từ file đều là chuỗi.',
+    referenceCode: P2_S3_CODE,
+    checks: [
+      tc(
+        ['10A1', 'an', '50000', 'binh', '50000', 'chi', 'photo', '30000', 'xong'],
+        'So du: 70000',
+        'Số dư chốt từ file khớp các giao dịch',
+      ),
+      tc(['10A1', 'xong'], 'Tong thu: 0', 'Phiên rỗng: sổ mới phải trống'),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'lien hoan', '80000', 'xong'],
+        'Khong du quy',
+        'Vẫn chặn chi vượt số dư (số dư hỏi từ sổ)',
+      ),
+      tc(
+        ['10A1', 'hoa', '50000', 'xong'],
+        'Tong thu: 50000',
+        'Ca ẩn: chạy lại KHÔNG cộng dồn sổ phiên trước (mở "w" đầu phiên)',
+        true,
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'photo', '20000', 'chi', 'photo', '10000', 'xong'],
+        '- photo: 30000',
+        'Ca ẩn: dòng hạng mục cộng dồn đúng khi đọc lại từ file',
+        true,
+      ),
+    ],
+  },
+  {
+    id: 't2-p2-s4',
+    isMilestone: false,
+    files: FILES_P2,
+    title: 'Sổ không thể sập — chống nhập bậy bằng try/except',
+    unitId: 'p2-u7',
+    requirement:
+      'Giữ nguyên hành vi bước 3, thêm lớp chống nhập bậy cho MỌI ô số tiền (cả thu lẫn chi):\n\n- Không phải số nguyên, hoặc không lớn hơn 0 → in "Du lieu khong hop le", KHÔNG ghi gì vào sổ, và phiên VẪN TIẾP TỤC.\n\nVì sao chặn cả số âm: một khoản "chi −20000" lọt vào sổ sẽ làm quỹ TĂNG lên 20.000 mà không ai đóng đồng nào — đúng loại lỗi khiến sổ quỹ mất uy tín.\n\nViết hàm doc_so_tien(chuoi) trả về số tiền hợp lệ, hoặc None khi nhập bậy. Chương trình tuyệt đối không được văng traceback.',
+    hint: 'Trong doc_so_tien: try: tien = int(chuoi) / except ValueError: return None, rồi kiểm thêm if tien <= 0: return None. Chỗ gọi chỉ cần: if tien is None: print("Du lieu khong hop le") rồi continue.',
+    referenceCode: P2_S4_CODE,
+    checks: [
+      tc(
+        ['10A1', 'an', 'nam muoi', 'xong'],
+        'Du lieu khong hop le',
+        'Số tiền gõ chữ: báo lỗi, không sập',
+      ),
+      tc(
+        ['10A1', 'an', 'abc', 'an', '50000', 'xong'],
+        'Tong thu: 50000',
+        'Sau lần nhập hỏng, phiên vẫn chạy tiếp bình thường',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'photo', '-20000', 'xong'],
+        'Du lieu khong hop le',
+        'Khoản chi âm bị chặn',
+      ),
+      tc(
+        ['10A1', 'an', '50000', 'chi', 'photo', '-20000', 'xong'],
+        'So du: 50000',
+        'Ca ẩn: khoản chi âm KHÔNG được làm quỹ tăng lên',
+        true,
+      ),
+      tc(
+        ['10A1', 'an', '-50000', 'xong'],
+        'Chua dong: an, binh, hoa, minh',
+        'Ca ẩn: khoản thu âm không được tính là đã đóng',
+        true,
+      ),
+    ],
+  },
+  {
+    id: 't2-p2-s5',
+    isMilestone: true,
+    files: [T2_PROJECT_MAIN_FILE, T2_P2_LOGIC_FILE, T2_P2_STORAGE_FILE],
+    title: 'Milestone P2 — tách 3 file đúng vai trò',
+    unitId: 'p2-u9',
+    requirement:
+      'Bước cuối chặng: tách chương trình thành BA file, hành vi giữ nguyên như bước 4.\n\n- tinh_quy.py: DANH_SACH và hai hàm chua_dong(so_quy), doc_so_tien(chuoi) — chỉ tính, KHÔNG input/print.\n- luu_so.py: hằng SO_FILE và ba hàm mo_so_moi(), ghi_giao_dich(loai, ten, tien), doc_so() → trả về (tong_thu, tong_chi, dict hạng mục).\n- quy_lop.py: phần giao diện trong hàm main(), import hai file kia rồi gọi main().\n\nBộ chấm sẽ import THẲNG tinh_quy.py và luu_so.py để gọi hàm của bạn — gộp tất cả vào một file là không qua được bước này.',
+    hint: 'Trong quy_lop.py: from tinh_quy import DANH_SACH, chua_dong, doc_so_tien và from luu_so import mo_so_moi, ghi_giao_dich, doc_so. Ba file nằm cùng thư mục nên import thẳng bằng tên file (không có đuôi .py). Dòng open(..., "w") đầu phiên nay chính là mo_so_moi().',
+    referenceCode: P2_S5_CODE,
+    referenceFiles: {
+      [T2_P2_LOGIC_FILE]: P2_S5_LOGIC,
+      [T2_P2_STORAGE_FILE]: P2_S5_STORAGE,
+    },
+    // Bộ chấm KHÔNG chạy quy_lop.py mà import thẳng hai module vai trò — cách duy nhất ép tách
+    // file thật, vì code gộp một file vẫn in ra output y hệt (cùng lý do với milestone P2 T1).
+    probeCode: `from tinh_quy import chua_dong, doc_so_tien
+from luu_so import mo_so_moi, ghi_giao_dich, doc_so
+
+so = {"an": 50000, "binh": 0, "hoa": 20000, "minh": 0}
+print("Chua dong: " + ", ".join(chua_dong(so)))
+print(f"So tien: {doc_so_tien('30000')} {doc_so_tien('ba muoi')} {doc_so_tien('-5')}")
+
+mo_so_moi()
+ghi_giao_dich("thu", "an", 50000)
+ghi_giao_dich("thu", "hoa", 50000)
+ghi_giao_dich("chi", "photo", 30000)
+ghi_giao_dich("chi", "photo", 10000)
+thu, chi, theo = doc_so()
+print(f"So: thu {thu} chi {chi} du {thu - chi}")
+print(f"Photo: {theo.get('photo', 0)}")
+
+mo_so_moi()
+thu, chi, theo = doc_so()
+print(f"So moi: {thu} {chi} {len(theo)}")`,
+    checks: [
+      tc([], 'Chua dong: binh, minh', 'tinh_quy.chua_dong gọi được từ ngoài và đúng thứ tự'),
+      tc([], 'So tien: 30000 None None', 'doc_so_tien nhận số hợp lệ, trả None khi nhập bậy'),
+      tc([], 'So: thu 100000 chi 40000 du 60000', 'luu_so ghi rồi đọc lại đúng tổng thu/chi'),
+      tc([], 'Photo: 40000', 'doc_so gom đúng tiền theo hạng mục'),
+      tc([], 'So moi: 0 0 0', 'Ca ẩn: mo_so_moi() phải XOÁ sổ cũ', true),
+    ],
+  },
+]
 export const T2_P3_PROJECT_STEPS: ProjectStep[] = []
 export const T2_P4_PROJECT_STEPS: ProjectStep[] = []
 export const T2_P5_PROJECT_STEPS: ProjectStep[] = []
