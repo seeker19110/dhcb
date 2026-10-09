@@ -1152,12 +1152,15 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 - 🟡 **[2026-10-08 — HẠ MỨC từ 🔴 sau `0527`] Xuất/xoá dữ liệu cá nhân `/api/persons` ĐÃ SỬA** (5 cột
   sai, bỏ nuốt lỗi, 21 bảng `person_id` trong một danh sách duy nhất — trước sót 11 bảng; test tích hợp
   Postgres thật canh danh sách khớp `information_schema`). Lưới `unhandledRejection`/`uncaughtException`
-  (`0528`) và cổng CI `sql-prepare` (`0529`) cũng đã làm. **Còn chờ chủ dự án quyết:** (1) full_erase
-  chỉ xoá dữ liệu Personal OS gắn `personal.persons.id`; dữ liệu gắn thẳng `user_id` (`personal.intake`
-  hồ sơ ẩn, `learner_intent`, `platform.completion_*`, `public.*` tiến độ/thanh toán/phiên, schema
-  `english`/`programming`/`chat`/`location`) KHÔNG được xuất/xoá — gộp vào là tính năng "xoá tài khoản",
-  đụng chứng từ thanh toán + Luật số 1, cần đặc tả riêng; (2) full_erase không đòi xác minh lại (step-up)
-  dù không hoàn tác được; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
+  (`0528`) và cổng CI `sql-prepare` (`0529`) cũng đã làm. (1) ✅ **Xoá tài khoản + tải toàn bộ dữ liệu** đã làm ở `0533`
+  (`/api/account`, đặc tả `docs/specs/2026-10-08-xoa-tai-khoan-va-xuat-du-lieu.md`): mọi bảng có cột
+  người dùng khai trong `ACCOUNT_TABLES` (test tích hợp đối chiếu `information_schema`), xác minh lại
+  bằng mật khẩu/Google + 2FA, chứng từ thanh toán ẨN DANH chứ không xoá (migration `0088`), chặn xoá
+  khi còn đơn chờ trả. **Còn chờ chủ dự án quyết (ghi ở `0533`):** (a) xoá rồi đăng ký lại cùng email
+  có nhận lại trial không — hiện `trial_granted_at`/`device_hash` bị xoá theo tài khoản; giữ mã băm
+  chống lạm dụng là quyết định sản phẩm + pháp lý; (b) một đơn chờ trả có thể chặn xoá tới ~24,5 giờ
+  (hạn đơn + ân hạn webhook). (2) `/api/persons?action=full_erase` vẫn không đòi xác minh lại
+  (step-up) — nên dùng chung luồng xác minh của `/api/account`; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
 - 🟡 **[2026-10-02 — phát hiện khi gỡ miền đã xoá ở changelog `0485`] Action Canvas "tạo sơ đồ
   từ mục tiêu" chỉ là KHUNG MẪU cố định.** `synthesizeCrossDomainGoalCanvas` luôn trả cùng 4 nút
   (IELTS Speaking, "Dự án Portfolio Quốc tế", "Phỏng vấn Quốc tế"…) bất kể mục tiêu người dùng gõ —
