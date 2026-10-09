@@ -1,6 +1,7 @@
 // lessonTypes.ts — Kiểu + Zod schema cho BÀI HỌC môn Vật lí.
 import { z } from 'zod'
 import { LessonReviewSchema } from '@dhcb/core-contracts/lessonReview'
+import { StemVariableTableSchema } from '@dhcb/core-contracts/stemScratchpad'
 import {
   AdvancedTierSchema,
   LessonAnimationSchema,
@@ -56,10 +57,25 @@ export const PhysicsCheckQuestionSchema = z
     choices: z.array(z.object({ id: z.string().min(1), label: z.string().min(1) })).optional(),
     answer: PhysicsAnswerSpecSchema,
     explain: z.string().min(1).max(1000),
+    /**
+     * Bảng THỨ NGUYÊN biến của câu (ký hiệu → đơn vị SI, `''` = không thứ nguyên) — để Bảng nháp
+     * STEM kiểm từng bước giải theo thứ nguyên (`@dhcb/core-grading/stepCheckPhysics`). Thêm
+     * changelog 0560 (`docs/specs/2026-10-09-bang-bien-vat-li-ngan-hang-de.md`). Dùng lại đúng
+     * hợp đồng `StemVariableTableSchema` của bảng nháp, không khai schema song song.
+     *
+     * Luật soạn: CHỈ khai ký hiệu đề/lời giải dùng, đúng NGHĨA của bài (`k` lò xo `N/m` khác `k`
+     * Coulomb; `c` nhiệt dung riêng thắng hằng tốc độ ánh sáng). Không chắc nghĩa thì BỎ — thiếu
+     * chỉ ra "chưa tự kiểm được", khai sai thì báo ✗ oan người học đúng. Chỉ số dưới nhiều chữ viết
+     * trong ngoặc nhọn (`v_{max}`) để khớp cách học sinh gõ LaTeX.
+     */
+    variables: StemVariableTableSchema.optional(),
   })
   .strict()
   .refine((q) => (q.answer.kind === 'choice') === (q.choices !== undefined), {
     message: "câu 'choice' phải có choices; đáp án khác thì không được có choices",
+  })
+  .refine((q) => q.answer.kind !== 'choice' || q.variables === undefined, {
+    message: "câu 'choice' không có bước giải để kiểm — không khai variables",
   })
 
 export const PhysicsLessonSchema = z

@@ -16,7 +16,11 @@
 // File này THUẦN (không import gói môn học — `packages/core-*` không phụ thuộc `subject-*`): server
 // truyền danh sách bài học vào `buildStemQuestionBank` (apps/server/src/api/learning/stem-scratchpad.ts).
 import type { AnswerSpec } from '@dhcb/core-grading/types'
-import type { StemBankQuestionPublic, StemSubjectType } from '@dhcb/core-contracts/stemScratchpad'
+import type {
+  StemBankQuestionPublic,
+  StemSubjectType,
+  StemVariableTable,
+} from '@dhcb/core-contracts/stemScratchpad'
 
 /** Phần bài học STEM mà ngân hàng đề cần — khớp `MathLesson`/`PhysicsLesson`/`ChemLesson`. */
 export interface StemLessonSource {
@@ -30,6 +34,8 @@ export interface StemLessonSource {
     readonly prompt: string
     readonly answer: AnswerSpec
     readonly explain: string
+    /** Bảng thứ nguyên biến (chỉ câu Vật lí có — changelog 0560). */
+    readonly variables?: StemVariableTable
   }[]
 }
 
@@ -39,6 +45,14 @@ export interface StemQuestion extends StemBankQuestionPublic {
   answer: Exclude<AnswerSpec, { kind: 'choice' }>
   /** Lời giải của bài học — chỉ trả cho client SAU khi giải đúng. */
   explain: string
+  /**
+   * Bảng thứ nguyên biến của câu (Vật lí, changelog 0560) — server gắn vào phiên ở
+   * `create_problem` để bộ kiểm thứ nguyên chạy được. KHÔNG đưa vào bản công khai của DANH SÁCH đề
+   * (`toPublicStemQuestion`) vì màn chọn đề không dùng tới. Phiên đã mở thì vẫn mang bảng (trường
+   * `variables` của `StemProblemState`, có từ 0552) — bảng chỉ là ký hiệu → đơn vị, không phải
+   * đáp án.
+   */
+  variables?: StemVariableTable
 }
 
 /** Câu đúng/sai mã hoá thành số ("Nhập 1 nếu ĐÚNG, nhập 0 nếu SAI") — không có phép tính để nháp. */
@@ -84,6 +98,7 @@ export function buildStemQuestionBank(
           reviewStatus: lesson.reviewStatus,
           answer,
           explain: q.explain,
+          ...(q.variables === undefined ? {} : { variables: q.variables }),
         })
       })
     }

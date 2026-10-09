@@ -1039,6 +1039,7 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
         prompt:
           'Tính độ hụt khối (theo đơn vị amu) của hạt nhân Heli _2^4He biết khối lượng hạt nhân Heli là 4.0015 amu, ' +
           'khối lượng proton mp = 1.00728 amu, khối lượng neutron mn = 1.00866 amu.',
+        variables: { Δm: 'kg', m_p: 'kg', m_n: 'kg', 'm_{He}': 'kg' },
         answer: {
           kind: 'numeric',
           value: donViHienThi(0.03038, 'amu'),
@@ -1947,6 +1948,7 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một đồng vị phóng xạ có chu kì bán rã là 5 ngày. ' +
           'Sau 15 ngày, lượng chất phóng xạ còn lại chiếm bao nhiêu phần trăm so với ban đầu?',
+        variables: { t: 's', T: 's', N: '', N_0: '', m: 'kg', m_0: 'kg' },
         answer: {
           kind: 'numeric',
           value: donViHienThi(12.5, '%'),
@@ -2883,6 +2885,7 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một đồng vị phóng xạ có chu kì bán rã T = 10 ngày. ' +
           'Hằng số phóng xạ lambda của chất phóng xạ này xấp xỉ bằng bao nhiêu ngày^-1?',
+        variables: { λ: 's^-1', T: 's' },
         answer: {
           kind: 'numeric',
           value: donViHienThi(0.0693, 'ngày^-1'),
@@ -2895,6 +2898,14 @@ export const LY12_C4_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một phản ứng hạt nhân có tổng khối lượng các hạt trước phản ứng nhỏ hơn tổng khối lượng các hạt sau phản ứng là 0.005 amu. ' +
           'Tính năng lượng thu vào của phản ứng này theo đơn vị MeV (lấy 1 amu.c² = 931.5 MeV).',
+        variables: {
+          E: 'J',
+          'E_{thu}': 'J',
+          Δm: 'kg',
+          'm_{sau}': 'kg',
+          'm_{truoc}': 'kg',
+          'm_{trước}': 'kg',
+        },
         answer: {
           kind: 'numeric',
           value: donViHienThi(4.6575, 'MeV'),

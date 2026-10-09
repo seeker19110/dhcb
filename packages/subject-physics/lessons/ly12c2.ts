@@ -435,6 +435,7 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một khối khí lí tưởng có thể tích 3 lít ở nhiệt độ 300 K. ' +
           'Nhiệt độ của khối khí tăng lên đến bao nhiêu Kelvin nếu nó giãn nở đẳng áp đến thể tích 4.5 lít?',
+        variables: { V: 'L', V_1: 'L', V_2: 'L', T: 'K', T_1: 'K', T_2: 'K' },
         answer: {
           kind: 'numeric',
           value: 450,
@@ -871,6 +872,17 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một khối khí lí tưởng ở trạng thái 1 có p1 = 1 atm, V1 = 4 lít, T1 = 300 K. ' +
           'Khối khí biến đổi sang trạng thái 2 có V2 = 2 lít và T2 = 600 K. Tính áp suất p2 (theo đơn vị atm) của khối khí ở trạng thái mới.',
+        variables: {
+          p: 'Pa',
+          p_1: 'Pa',
+          p_2: 'Pa',
+          V: 'L',
+          V_1: 'L',
+          V_2: 'L',
+          T: 'K',
+          T_1: 'K',
+          T_2: 'K',
+        },
         answer: {
           kind: 'numeric',
           value: donViHienThi(4, 'atm'),
@@ -1787,6 +1799,20 @@ export const LY12_C2_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một khối khí lí tưởng có thể tích 6 lít ở nhiệt độ 27 °C và áp suất 1 atm. ' +
           'Khi nén khối khí này đến thể tích 3 lít và nung nóng đến nhiệt độ 327 °C, áp suất mới của khối khí là bao nhiêu atm?',
+        variables: {
+          p: 'Pa',
+          p_1: 'Pa',
+          p_2: 'Pa',
+          V: 'L',
+          V_1: 'L',
+          V_2: 'L',
+          T: 'K',
+          T_1: 'K',
+          T_2: 'K',
+          t: '°C',
+          t_1: '°C',
+          t_2: '°C',
+        },
         answer: {
           kind: 'numeric',
           value: donViHienThi(4, 'atm'),

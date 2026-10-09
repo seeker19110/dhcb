@@ -1418,6 +1418,7 @@ export const LY12_C3_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một đoạn dây dẫn thẳng dài 0.2 m mang dòng điện 5 A đặt song song với các đường sức từ của một từ trường đều có B = 0.5 T. ' +
           'Tính độ lớn lực từ (theo đơn vị N) tác dụng lên đoạn dây dẫn.',
+        variables: { F: 'N', B: 'T', I: 'A', L: 'm', l: 'm', θ: '', α: '' },
         answer: {
           kind: 'numeric',
           value: 0,
@@ -2325,6 +2326,7 @@ export const LY12_C3_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một proton (q = 1.6e-19 C) chuyển động song song với đường sức từ của một từ trường đều B = 0.8 T. ' +
           'Lực Lorentz tác dụng lên proton có độ lớn bằng bao nhiêu?',
+        variables: { F: 'N', q: 'C', B: 'T', v: 'm/s', θ: '', α: '' },
         answer: {
           kind: 'numeric',
           value: 0,
@@ -2745,6 +2747,7 @@ export const LY12_C3_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một ống dây có độ tự cảm 0.5 H. Nếu tốc độ biến thiên của cường độ dòng điện trong ống dây là 10 A/s, ' +
           'thì độ lớn suất điện động tự cảm xuất hiện trong ống dây là bao nhiêu Volt?',
+        variables: { 'e_{tc}': 'V', L: 'H', i: 'A', Δi: 'A', t: 's', Δt: 's' },
         answer: {
           kind: 'numeric',
           value: 5,
@@ -3774,6 +3777,7 @@ export const LY12_C3_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một ống dây có độ tự cảm 0.1 H. Cường độ dòng điện biến thiên đều với tốc độ 20 A/s. ' +
           'Độ lớn suất điện động tự cảm xuất hiện trong ống dây là bao nhiêu Volt?',
+        variables: { 'e_{tc}': 'V', L: 'H', i: 'A', Δi: 'A', t: 's', Δt: 's' },
         answer: {
           kind: 'numeric',
           value: 2,
@@ -3786,6 +3790,7 @@ export const LY12_C3_LESSONS: PhysicsLesson[] = [
         prompt:
           'Một máy biến áp lí tưởng có số vòng dây cuộn sơ cấp là 2200 vòng và cuộn thứ cấp là 110 vòng. ' +
           'Nếu đặt vào hai đầu cuộn sơ cấp điện áp xoay chiều hiệu dụng 220 V thì điện áp hiệu dụng ở hai đầu cuộn thứ cấp để hở là bao nhiêu Volt?',
+        variables: { U: 'V', U_1: 'V', U_2: 'V', N: '', N_1: '', N_2: '' },
         answer: {
           kind: 'numeric',
           value: 11,

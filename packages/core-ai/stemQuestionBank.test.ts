@@ -66,6 +66,8 @@ describe('Ngân hàng đề STEM (dựng từ bài học thật)', () => {
       expect(goc?.prompt).toBe(q.problemStatement)
       expect(goc?.answer).toEqual(q.answer)
       expect(goc?.explain).toBe(q.explain)
+      // Bảng thứ nguyên biến (0560) lấy nguyên từ bài học — không dựng ở nơi khác.
+      expect(q.variables).toEqual(goc?.variables)
       expect(q.reviewStatus).toBe(lesson?.reviewStatus)
     }
   })
@@ -132,6 +134,8 @@ describe('Ngân hàng đề STEM (dựng từ bài học thật)', () => {
       expect(StemBankQuestionPublicSchema.safeParse(pub).success).toBe(true)
       expect(pub).not.toHaveProperty('answer')
       expect(pub).not.toHaveProperty('explain')
+      // Danh sách đề không cần bảng biến (0560) — chỉ phiên đã mở mới mang bảng.
+      expect(pub).not.toHaveProperty('variables')
     }
   })
 

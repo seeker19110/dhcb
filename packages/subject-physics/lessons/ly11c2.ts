@@ -207,6 +207,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một sóng cơ truyền trên mặt nước với tốc độ v = 2 m/s, tần số f = 50 Hz. Tính bước sóng λ của sóng nước này.',
+        variables: { v: 'm/s', f: 'Hz', λ: 'm', T: 's' },
         answer: {
           kind: 'numeric',
           value: 0.04,
@@ -816,6 +817,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Nếu một sóng âm hiển thị trên màn hình dao động kí có chu kì đo được là 0,0025 s, hãy tính tần số của sóng âm này.',
+        variables: { f: 'Hz', T: 's' },
         answer: {
           kind: 'numeric',
           value: 400,
@@ -1190,6 +1192,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Trong chân không, một sóng ánh sáng có tần số 5 * 10¹⁴ Hz. Tính bước sóng của sóng ánh sáng này (lấy tốc độ ánh sáng c = 3 * 10⁸ m/s).',
+        variables: { λ: 'm', f: 'Hz' },
         answer: {
           kind: 'numeric',
           value: 6e-7,
@@ -1493,6 +1496,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Hai nguồn kết hợp cùng pha tạo ra sóng có bước sóng 4 cm trên mặt nước. Điểm M cách nguồn 1 một đoạn 10 cm, cách nguồn 2 một đoạn 16 cm. Tính tỉ số (d₂ - d₁) / λ để xác định M là cực đại hay cực tiểu.',
+        variables: { λ: 'm', d_1: 'm', d_2: 'm' },
         answer: {
           kind: 'numeric',
           value: 1.5,
@@ -1999,6 +2003,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một sợi dây cao su dài 1,5 m có hai đầu cố định. Khi xảy ra sóng dừng có tần số xác định, người ta quan sát thấy trên dây có 3 bó sóng (k = 3). Tính bước sóng của sóng truyền trên dây.',
+        variables: { L: 'm', k: '', λ: 'm' },
         answer: {
           kind: 'numeric',
           value: 1,
@@ -2054,6 +2059,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một sóng cơ có tần số f = 500 Hz và tốc độ truyền sóng v = 350 m/s. Tính bước sóng của sóng này.',
+        variables: { λ: 'm', v: 'm/s', f: 'Hz' },
         answer: {
           kind: 'numeric',
           value: 0.7,
@@ -2065,6 +2071,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một sợi dây thép dài 0,6 m có hai đầu cố định. Khi xảy ra sóng dừng trên dây với bước sóng λ = 0,4 m. Hãy tính số bụng sóng quan sát được trên dây.',
+        variables: { L: 'm', k: '', λ: 'm' },
         answer: {
           kind: 'numeric',
           value: 3,
@@ -2368,6 +2375,7 @@ export const LY11_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Khi sử dụng âm thoa f = 1000 Hz, khoảng cách giữa hai mức nước cộng hưởng liên tiếp đo được là 0,17 m. Tính tốc độ truyền âm đo được trong không khí.',
+        variables: { λ: 'm', v: 'm/s', f: 'Hz' },
         answer: {
           kind: 'numeric',
           value: 340,

@@ -187,6 +187,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Nếu hai lực đồng quy có độ lớn F₁ = 3 N và F₂ = 4 N tác dụng vuông góc lên một vật, lực tổng hợp có độ lớn bằng bao nhiêu?',
+        variables: { F: 'N', F_1: 'N', F_2: 'N' },
         answer: {
           kind: 'numeric',
           value: 5,
@@ -662,6 +663,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một ô tô khối lượng 1000 kg bắt đầu tăng tốc chuyển động thẳng nhanh dần đều với gia tốc 2,5 m/s². Tính lực kéo của động cơ ô tô (bỏ qua ma sát).',
+        variables: { F: 'N', m: 'kg', a: 'm/s^2' },
         answer: {
           kind: 'numeric',
           value: 2500,
@@ -1474,6 +1476,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một khúc gỗ khối lượng 10 kg bị đẩy trên sàn ngang dưới áp lực vuông góc lên sàn là N = 100 N. Hệ số ma sát trượt giữa gỗ và sàn là 0,3. Tính lực ma sát trượt tác dụng lên khúc gỗ.',
+        variables: { 'F_{mst}': 'N', 'F_{ms}': 'N', F: 'N', μ: '', μ_t: '', N: 'N', m: 'kg' },
         answer: {
           kind: 'numeric',
           value: 30,
@@ -1801,6 +1804,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một vật khối lượng 5 kg trượt xuống mặt phẳng nghiêng góc 30 độ không ma sát. Tính gia tốc trượt của vật (lấy g = 10 m/s²).',
+        variables: { a: 'm/s^2', m: 'kg', α: '' },
         answer: {
           kind: 'numeric',
           value: 5,
@@ -2139,6 +2143,7 @@ export const LY10_C3_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Khi thực hiện thí nghiệm tổng hợp lực trên mặt phẳng nằm ngang, hợp lực tối đa có thể thu được của hai lực kế chỉ 3 N và 4 N bằng bao nhiêu?',
+        variables: { 'F_{max}': 'N', F_1: 'N', F_2: 'N', F: 'N' },
         answer: {
           kind: 'numeric',
           value: 7,

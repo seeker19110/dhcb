@@ -421,6 +421,7 @@ export const LY10_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một người bơi xuôi dòng sông với tốc độ 2 m/s so với dòng nước. Dòng sông chảy với tốc độ 0,5 m/s so với bờ. Tính tốc độ của người đó so với bờ.',
+        variables: { v: 'm/s', 'v_{13}': 'm/s', 'v_{12}': 'm/s', 'v_{23}': 'm/s' },
         answer: {
           kind: 'numeric',
           value: 2.5,
@@ -494,6 +495,7 @@ export const LY10_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Khoảng cách giữa hai cổng quang điện là 0,5 m. Đồng hồ đo được thời gian xe đi qua là 0,2 s. Tính tốc độ của xe.',
+        variables: { v: 'm/s', s: 'm', t: 's' },
         answer: {
           kind: 'numeric',
           value: 2.5,
@@ -927,6 +929,7 @@ export const LY10_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một đoàn tàu đang đi vào ga với vận tốc 20 m/s thì hãm phanh chuyển động chậm dần đều. Sau 3s vận tốc tàu còn 5 m/s. Tính gia tốc của tàu.',
+        variables: { a: 'm/s^2', v: 'm/s', v_t: 'm/s', v_o: 'm/s', v_0: 'm/s', t: 's' },
         answer: {
           kind: 'numeric',
           value: -5,
@@ -1203,6 +1206,7 @@ export const LY10_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một xe đạp bắt đầu chuyển động từ trạng thái nghỉ (v_o = 0) và tăng tốc đều với gia tốc 2 m/s². Tính độ dịch chuyển của xe sau khi đi được 5 s.',
+        variables: { d: 'm', v_o: 'm/s', v_0: 'm/s', a: 'm/s^2', t: 's' },
         answer: {
           kind: 'numeric',
           value: 25,
@@ -1431,6 +1435,7 @@ export const LY10_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Thả một vật rơi tự do không vận tốc đầu từ độ cao h. Sau 2s vật chạm đất. Lấy g = 10 m/s². Tính vận tốc chạm đất của vật.',
+        variables: { v: 'm/s', t: 's', h: 'm', v_0: 'm/s', v_o: 'm/s' },
         answer: {
           kind: 'numeric',
           value: 20,
@@ -1950,6 +1955,7 @@ export const LY10_C2_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một máy bay bay ngang ở độ cao 80 m với tốc độ 50 m/s thì thả một thùng hàng cứu trợ xuống đất. Tính tầm xa của thùng hàng (lấy g = 10 m/s²).',
+        variables: { t: 's', h: 'm', L: 'm', v_o: 'm/s', v_0: 'm/s' },
         answer: {
           kind: 'numeric',
           value: 200,

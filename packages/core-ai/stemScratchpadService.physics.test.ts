@@ -92,16 +92,27 @@ describe('StemScratchpadService.validateStep — Vật lí (thứ nguyên)', () 
     expect((r.suggestedCorrection ?? '').length).toBeLessThanOrEqual(500)
   })
 
-  it('quét ngân hàng đề THẬT: đề Vật lí chưa khai bảng biến → "chưa tự kiểm được", không ✓/✗', () => {
-    // Ngân hàng (changelog 0551) là đề lời văn từ bài học, chưa có `variables` (nợ mở) — bộ kiểm
-    // không được đoán thứ nguyên theo tên ký hiệu, kể cả với bước lệch rõ như `v = a t^2`.
+  it('quét ngân hàng đề THẬT: câu chưa khai bảng → "chưa tự kiểm được"; câu có bảng → khớp vẫn không ✓', () => {
+    // Từ changelog 0560, 86/89 câu Vật lí của ngân hàng có bảng `variables` (server gắn vào phiên).
+    // Câu CHƯA khai: bộ kiểm không được đoán thứ nguyên theo tên ký hiệu, kể cả với bước lệch rõ
+    // như `v = a t^2`. Câu ĐÃ khai: bước khớp thứ nguyên vẫn chỉ là điều kiện cần → không ✓.
     const deLi = buildStemQuestionBank([{ subject: 'physics', lessons: PHYSICS_LESSONS }])
     expect(deLi.length).toBeGreaterThan(0)
     for (const q of deLi) {
-      const r = kiem('v = a t^2', { problemStatement: q.problemStatement })
-      expect(r.errorType).not.toBe('dimension_mismatch')
-      expect(r.status).toBe('unverified')
-      expect(r.feedback).toContain('chưa khai bảng thứ nguyên')
+      if (q.variables === undefined) {
+        const r = kiem('v = a t^2', { problemStatement: q.problemStatement })
+        expect(r.errorType).not.toBe('dimension_mismatch')
+        expect(r.status).toBe('unverified')
+        expect(r.feedback).toContain('chưa khai bảng thứ nguyên')
+        continue
+      }
+      const kyHieu = Object.keys(q.variables)[0] ?? 'v'
+      const r = kiem(`${kyHieu} = ${kyHieu}`, {
+        problemStatement: q.problemStatement,
+        variables: q.variables,
+      })
+      expect(r.status, q.id).toBe('unverified')
+      expect(r.isFinalAnswer).not.toBe(true)
     }
   })
 })

@@ -1421,6 +1421,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Một chất khí nhận nhiệt lượng 500 J từ bên ngoài để dãn nở sinh công 200 J ra môi trường (hệ thực hiện công). Tính độ biến thiên nội năng của khối khí này.',
+        variables: { ΔU: 'J', U: 'J', A: 'J', Q: 'J' },
         answer: {
           kind: 'numeric',
           value: 300,
@@ -1765,6 +1766,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Chuyển đổi nhiệt độ t = 25 °C sang thang nhiệt độ Kelvin (nhập giá trị chính xác dùng hằng số gốc 273,15).',
+        variables: { t: '°C', T: 'K' },
         answer: {
           kind: 'numeric',
           value: 298.15,
@@ -2101,6 +2103,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Cần cung cấp nhiệt lượng bằng bao nhiêu Joule để đun nóng 0,5 kg nước tăng thêm 10 K? Biết nhiệt dung riêng của nước là 4200 J/kg.K.',
+        variables: { Q: 'J', m: 'kg', c: 'J/(kg·K)', Δt: 'K', ΔT: 'K' },
         answer: {
           kind: 'numeric',
           value: 21000,
@@ -2529,6 +2532,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Cần cung cấp nhiệt lượng 6 * 10⁵ J để nóng chảy hoàn toàn một khối kim loại ở nhiệt độ nóng chảy của nó. Biết nhiệt nóng chảy riêng của kim loại này là 2 * 10⁵ J/kg. Tính khối lượng của khối kim loại đó.',
+        variables: { Q: 'J', λ: 'J/kg', m: 'kg' },
         answer: {
           kind: 'numeric',
           value: 3,
@@ -2947,6 +2951,7 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Cung cấp nhiệt lượng 4 * 10⁶ J làm hoá hơi hoàn toàn 2 kg một chất lỏng ở nhiệt độ sôi của nó. Tính nhiệt hoá hơi riêng L của chất lỏng này.',
+        variables: { L: 'J/kg', Q: 'J', m: 'kg' },
         answer: {
           kind: 'numeric',
           value: 2e6,
@@ -3328,6 +3333,18 @@ export const LY12_C1_LESSONS: PhysicsLesson[] = [
       {
         prompt:
           'Pha trộn 2 kg nước ở 90 °C với 1 kg nước ở 30 °C trong bình cách nhiệt tốt. Tính nhiệt độ cân bằng của hỗn hợp nước thu được.',
+        variables: {
+          m_1: 'kg',
+          m_2: 'kg',
+          c: 'J/(kg·K)',
+          t_1: '°C',
+          t_2: '°C',
+          θ: '°C',
+          t: '°C',
+          'Q_{toả}': 'J',
+          'Q_{toa}': 'J',
+          'Q_{thu}': 'J',
+        },
         answer: {
           kind: 'numeric',
           value: donViHienThi(70, '°C'),
