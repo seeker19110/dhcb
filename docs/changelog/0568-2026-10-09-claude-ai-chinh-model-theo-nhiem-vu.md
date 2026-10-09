@@ -1,6 +1,6 @@
 # 0568 — Claude là AI chính, phân chia model theo nhiệm vụ
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `feat(ai)`
+- **Ngày:** 2026-10-09 · **PR:** #1315 · **Loại:** `feat(ai)`
 - **Nguồn:** yêu cầu chủ dự án: "đã có API Anthropic — thiết lập làm AI trò chuyện đồng hành, chấm
   bài; phân chia các model theo nhiệm vụ; đảm bảo ít sai sót". Hai quyết định chốt trong phiên:
   **Anthropic chính** (Anthropic → Groq → Gemini) và **Haiku 5.5 + Sonnet 5.5**.

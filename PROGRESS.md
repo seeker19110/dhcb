@@ -767,7 +767,7 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
-- **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`] Ba việc trên VPS sau
+- **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`, PR #1315] Ba việc trên VPS sau
   khi deploy** (phiên AI không có key Anthropic thật):
   1. Kiểm `ANTHROPIC_API_KEY` trong `/var/www/dhcb/.env` còn hiệu lực + tài khoản còn credit
      (`console.anthropic.com` › Billing). Từ đợt này Claude chạy MỌI lượt chat/chấm bài → hết credit
