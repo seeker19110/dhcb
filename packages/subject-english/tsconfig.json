@@ -5,5 +5,10 @@
     "rootDir": "."
   },
   "include": ["**/*.ts"],
-  "exclude": ["dist", "**/*.test.ts"]
+  "exclude": ["dist", "**/*.test.ts"],
+  "references": [
+    {
+      "path": "../core-contracts"
+    }
+  ]
 }

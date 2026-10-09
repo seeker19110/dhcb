@@ -62,11 +62,16 @@ Logic thuần, có test ca biên — giữ tính chất đó khi sửa.
 ### A2. Hội thoại CEFR: "đã xem" ≠ "đã học" — ĐANG CÓ (2026-10-09)
 
 Mở hội thoại chỉ ghi **đã xem** (`markDialogueViewed`). **Đã học** cần đạt kiểm tra hiểu 3 câu
-tất định, không tốn lượt AI (`apps/dhcb/src/lib/dialogueComprehension.ts`, màn
+tất định, không tốn lượt AI (hàm dùng chung client + server
+`packages/subject-english/dialogueComprehension.ts`, màn
 `apps/dhcb/src/components/DialogueComprehensionCheck.tsx`): nghĩa của một dòng · câu nói ngay sau ·
-ai nói — đáp án luôn kiểm ngược được từ dữ liệu, đúng ≥ 2/3 mới ghi `markDialogueLearned`. Hai
-chiều: A đề tiếng Anh/hỏi tiếng Việt, B đề tiếng Việt/hỏi tiếng Anh. Đặc tả:
-`docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md`. Đừng tính "đã xem" là hoàn thành.
+ai nói — đáp án luôn kiểm ngược được từ dữ liệu, đúng ≥ 2/3 mới là đạt. Hai chiều: A đề tiếng
+Anh/hỏi tiếng Việt, B đề tiếng Việt/hỏi tiếng Anh. **SERVER chấm lại** (từ 2026-10-09, đợt 0555):
+client gửi lựa chọn thô + seed tới `POST /api/learning/evidence?action=cefr-dialogue`, server dựng
+lại đề từ `apps/dhcb/public/data/dialogues.json` và chỉ server ghi `learned|…` vào `cefr_dialogues`;
+`/api/progress` lọc bỏ bản `learned|…` client tự đẩy. Mỗi lượt (seed) chấm một lần. Đặc tả:
+`docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md` +
+`docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md`. Đừng tính "đã xem" là hoàn thành.
 
 ### B. CHƯA CÓ — đừng mô tả hay thiết kế như đã có
 

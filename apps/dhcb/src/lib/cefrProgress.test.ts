@@ -12,7 +12,7 @@ import {
   getViewedDialogues,
   getLearnedDialogues,
   markDialogueViewed,
-  markDialogueLearned,
+  recordServerVerifiedDialogue,
   dialogueKey,
   DIALOGUE_LEARNED_PREFIX,
   circleDoneCount,
@@ -127,8 +127,8 @@ describe('hội thoại đã học (đạt kiểm tra hiểu)', () => {
     expect(getLearnedDialogues('u1').size).toBe(0)
   })
 
-  it('markDialogueLearned ghi cả "đã xem" lẫn "đã học", cùng một kho (đồng bộ chung)', () => {
-    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
+  it('recordServerVerifiedDialogue ghi cả "đã xem" lẫn "đã học", cùng một kho', () => {
+    recordServerVerifiedDialogue('u1', 'a1-greetings', 'Meeting in class')
     const key = dialogueKey('a1-greetings', 'Meeting in class')
     expect(getLearnedDialogues('u1')).toEqual(new Set([key]))
     // Bản ghi có tiền tố KHÔNG lẫn vào tập "đã xem" (mục lục đếm theo khoá unit).
@@ -138,19 +138,22 @@ describe('hội thoại đã học (đạt kiểm tra hiểu)', () => {
     expect(getLearnedDialogues('u2').size).toBe(0)
   })
 
-  it('ghi lại lần nữa → idempotent, không đẩy đồng bộ thừa', async () => {
+  // Đợt 0555: server đã ghi cột rồi — client KHÔNG đẩy bản "đã học" lên (server lọc bỏ đằng nào).
+  it('chỉ phản chiếu kết quả server: KHÔNG đẩy đồng bộ, idempotent, uid rỗng thì bỏ qua', async () => {
     const { pushProgress } = await import('./progressSync')
-    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
-    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
-    expect(vi.mocked(pushProgress)).toHaveBeenCalledTimes(1)
+    recordServerVerifiedDialogue('u1', 'a1-greetings', 'Meeting in class')
+    recordServerVerifiedDialogue('u1', 'a1-greetings', 'Meeting in class')
+    expect(vi.mocked(pushProgress)).not.toHaveBeenCalled()
+    recordServerVerifiedDialogue('', 'a1-greetings', 'Meeting in class')
+    expect(localStorage.getItem('et_cefr_dialogue_')).toBeNull()
   })
 
-  it('đã xem trước rồi mới học → vẫn ghi (và đẩy) bản "đã học"', async () => {
+  it('đã xem trước rồi server xác nhận học → có cả hai, "đã xem" vẫn đẩy như cũ', async () => {
     const { pushProgress } = await import('./progressSync')
     markDialogueViewed('u1', 'a1-greetings', 'Meeting in class')
-    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
+    recordServerVerifiedDialogue('u1', 'a1-greetings', 'Meeting in class')
     expect(getLearnedDialogues('u1').size).toBe(1)
-    expect(vi.mocked(pushProgress)).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(pushProgress)).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -17,6 +17,7 @@ class FakeRedis {
   handlers = new Map<string, Handler>()
   eval = vi.fn<(...args: unknown[]) => Promise<unknown>>()
   ping = vi.fn<() => Promise<string>>(async () => 'PONG')
+  del = vi.fn<(key: string) => Promise<number>>(async () => 1)
   constructor(public url: string) {
     if (FakeRedis.ctorError) throw FakeRedis.ctorError
     FakeRedis.instances.push(this)
@@ -32,6 +33,12 @@ class FakeRedis {
 
 vi.mock('ioredis', () => ({ Redis: FakeRedis }))
 vi.mock('./authService.js', () => ({ validateSessionToken: vi.fn() }))
+
+/** Gọi một lệnh đếm để security.ts tạo client Redis (client tạo lười ở lần gọi đầu). */
+async function checkSeed(): Promise<void> {
+  const { checkRateLimit } = await import('./security.js')
+  await checkRateLimit('seed', 5, 'seed')
+}
 
 async function loadSecurity() {
   vi.resetModules()
@@ -173,6 +180,55 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       client.eval.mockResolvedValue(1)
       expect(await checkRateLimit('p', 5)).toBe(true)
       expect(await consumeDailyCounter('guest:p', 5)).toBe(true)
+    })
+  })
+
+  // changelog 0555 (rà soát L1/L2): phân biệt "vượt hạn mức" với "không đếm được" để nơi gọi trả
+  // đúng mã (503 thay vì 429/409), và biết khi trả lại lượt KHÔNG thành công.
+  describe('consumeWindowCounterStatus / resetCounterChecked', () => {
+    afterEach(() => vi.unstubAllEnvs())
+
+    it('Redis sẵn sàng: ok → exhausted theo hạn mức; limit ≤ 0 → exhausted', async () => {
+      const { consumeWindowCounterStatus } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.eval.mockResolvedValueOnce(1).mockResolvedValueOnce(2)
+      expect(await consumeWindowCounterStatus('k', 1, 1000)).toBe('ok')
+      expect(await consumeWindowCounterStatus('k', 1, 1000)).toBe('exhausted')
+      expect(await consumeWindowCounterStatus('k', 0, 1000)).toBe('exhausted')
+    })
+
+    it('production + Redis connecting/lỗi → unavailable (vẫn từ chối), boolean cũ vẫn false', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { consumeWindowCounterStatus, consumeWindowCounter } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.status = 'connecting'
+      expect(await consumeWindowCounterStatus('k', 5, 1000)).toBe('unavailable')
+      expect(await consumeWindowCounter('k', 5, 1000)).toBe(false)
+      client.status = 'ready'
+      client.eval.mockRejectedValue(new Error('down'))
+      expect(await consumeWindowCounterStatus('k', 5, 1000)).toBe('unavailable')
+    })
+
+    it('dev không Redis → Map: ok rồi exhausted (không bao giờ unavailable)', async () => {
+      delete process.env.REDIS_URL
+      const { consumeWindowCounterStatus } = await loadSecurity()
+      expect(await consumeWindowCounterStatus('m', 1, 60_000)).toBe('ok')
+      expect(await consumeWindowCounterStatus('m', 1, 60_000)).toBe('exhausted')
+    })
+
+    it('resetCounterChecked: Redis xoá được → true; production Redis lỗi → false', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { resetCounterChecked } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      expect(await resetCounterChecked('k')).toBe(true)
+      expect(client.del).toHaveBeenCalledWith('k')
+      client.del.mockRejectedValue(new Error('down'))
+      expect(await resetCounterChecked('k')).toBe(false)
+      client.status = 'connecting'
+      expect(await resetCounterChecked('k')).toBe(false)
     })
   })
 

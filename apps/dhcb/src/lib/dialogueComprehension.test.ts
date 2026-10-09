@@ -290,3 +290,14 @@ describe('dialogues.json thật', () => {
     }
   })
 })
+
+// Đợt 0555 (docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md): giao diện và server phải
+// dùng ĐÚNG MỘT hàm sinh đề + chấm — không có bản "viết lại" ở app có thể lệch với server.
+describe('một hàm dùng chung client + server', () => {
+  it('lib của app chỉ re-export gói @dhcb/subject-english (cùng tham chiếu hàm)', async () => {
+    const pkg = await import('@dhcb/subject-english/dialogueComprehension')
+    expect(buildComprehensionQuiz).toBe(pkg.buildComprehensionQuiz)
+    expect(gradeComprehension).toBe(pkg.gradeComprehension)
+    expect(comprehensionSeed).toBe(pkg.comprehensionSeed)
+  })
+})

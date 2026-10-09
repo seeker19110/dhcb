@@ -1157,6 +1157,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🟡 **[2026-10-09 — rà soát bảo mật changelog `0555`] Kiểm tra hiểu hội thoại CEFR chưa chống
+  người đọc mã có chủ ý — CẦN CHỦ DỰ ÁN QUYẾT.** Đợt `0555` đã chặn sửa localStorage và POST giả
+  (server chấm lại, mỗi lượt chấm một lần, `/api/progress` lọc `learned|…`). Còn mở: seed do client
+  chọn và server trả `correctId`, nên ai đọc mã vẫn tính được đáp án. Phương án: **seed do server
+  cấp (HMAC, TTL, dùng một lần) + không gửi `correctId` về client** — đánh đổi một vòng gọi server
+  trước khi làm bài và mất lời giải sau khi nộp (có chủ đích sư phạm). Chi tiết: đặc tả
+  `docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md` mục ⑤.
 - 🟡 **[2026-10-08 — HẠ MỨC từ 🔴 sau `0527`] Xuất/xoá dữ liệu cá nhân `/api/persons` ĐÃ SỬA** (5 cột
   sai, bỏ nuốt lỗi, 21 bảng `person_id` trong một danh sách duy nhất — trước sót 11 bảng; test tích hợp
   Postgres thật canh danh sách khớp `information_schema`). Lưới `unhandledRejection`/`uncaughtException`
@@ -1421,7 +1428,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `regradeSubmission()` vẫn là dispatcher duy nhất. Test canh gồm ca xác minh ATTACH DATABASE
   không tạo file thật trên server. Bước dự án `p<n>-s<x>` + tiêu chí hướng chuyên sâu vẫn NGOÀI
   phạm vi ADR-0008 (câu hỏi 2 chốt KHÔNG mở rộng — chấm bằng rubric/artifact, khác bài toán này).
-- 🟡 **[2026-09-15 — S11-1, THU HẸP 2026-10-09 `docs/changelog/0548-*.md`] Hội thoại CEFR: "đã học" mới có bằng chứng ở MÁY, server chưa chấm lại.** Phần chính ĐÃ XONG: sau khi xem, người học làm kiểm tra hiểu 3 câu tất định (không tốn lượt AI, hai chiều A/B), đạt ≥ 2/3 → `markDialogueLearned`; mục lục phân biệt chưa xem / đã xem (`english.cefrDialogue`, đang học dở) / đã học (`english.cefrDialogueLearned`) — đặc tả `docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md`. Còn mở: bản ghi "đã học" do client khai (cùng mức tin cậy `cefrGrammar`), muốn server chấm lại qua `/api/learning/evidence` thì phải đưa dữ liệu hội thoại lên server.
 
 > Mục này CHỈ giữ nợ **đang mở** (🟡/🔴). Nợ đã đóng (🟢) được dời sang
 > `docs/legacy/no-ky-thuat-da-dong.md` (2026-09-01) để file này chỉ nói trạng thái hiện tại —

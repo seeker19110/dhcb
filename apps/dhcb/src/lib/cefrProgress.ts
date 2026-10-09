@@ -17,6 +17,11 @@
 import type { CefrLevel, CefrUnit } from '../data/cefr'
 import type { Circle } from '../data/curriculum'
 import { UNLOCK_PCT } from '@dhcb/core-learner/unlockThreshold'
+import {
+  DIALOGUE_LEARNED_PREFIX,
+  dialogueKey,
+  learnedDialogueEntry,
+} from '@dhcb/core-contracts/cefrDialogueCheck'
 import { pushProgress } from './progressSync'
 import { addGrammarToSRS } from './srs'
 
@@ -72,16 +77,17 @@ export function isGrammarDone(uid: string, lessonId: string): boolean {
 }
 
 // ── Hội thoại: đã xem → đã học ──────────────────────────────────────────
-// Hội thoại không có id riêng → khóa = "<id unit/vòng>:<titleEn>" (ổn định).
-export const dialogueKey = (ownerId: string, titleEn: string) => `${ownerId}:${titleEn}`
+// Hội thoại không có id riêng → khóa = "<id unit/vòng>:<titleEn>" (ổn định). Định nghĩa khoá nằm
+// ở gói hợp đồng (đợt 0555) vì server ghi bản "đã học" bằng đúng khoá này.
+export { dialogueKey, DIALOGUE_LEARNED_PREFIX }
 
 // "ĐÃ HỌC" (đạt kiểm tra hiểu — lib/dialogueComprehension.ts) lưu CHUNG mảng với "đã xem"
 // (`et_cefr_dialogue_<uid>` ↔ cột `cefr_dialogues`), phân biệt bằng tiền tố. Lý do (đặc tả
 // docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md §③): luồng đồng bộ hiện có hợp nhất
 // mảng này kiểu UNION ở cả client lẫn server — bản ghi mới đi theo mà KHÔNG cần migration, và
 // client cũ chưa biết tiền tố vẫn giữ nguyên (không xoá) khi đẩy lại. Id unit/vòng không bao giờ
-// bắt đầu bằng tiền tố này (test canh trên dữ liệu thật).
-export const DIALOGUE_LEARNED_PREFIX = 'learned|'
+// bắt đầu bằng tiền tố này (test canh trên dữ liệu thật). Từ đợt 0555 bản "đã học" trên cột chỉ do
+// SERVER ghi sau khi chấm lại; client chỉ phản chiếu (`recordServerVerifiedDialogue`).
 
 /** Hội thoại ĐÃ XEM (khoá `dialogueKey`). Không gồm bản ghi "đã học" có tiền tố. */
 export function getViewedDialogues(uid: string): Set<string> {
@@ -113,19 +119,22 @@ export function markDialogueViewed(uid: string, ownerId: string, titleEn: string
 }
 
 /**
- * Ghi "ĐÃ HỌC" — CHỈ gọi sau khi người học ĐẠT kiểm tra hiểu (`gradeComprehension().passed`).
- * Đã học thì chắc chắn đã xem: ghi luôn cả khoá "đã xem" (phòng khi màn mở bằng đường khác).
- * Dữ liệu "đã xem" cũ KHÔNG bao giờ tự được nâng thành "đã học".
+ * Phản chiếu "ĐÃ HỌC" mà SERVER vừa xác nhận vào kho máy này (đợt 0555 — đặc tả
+ * docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md). CHỈ gọi khi
+ * `/api/learning/evidence?action=cefr-dialogue` trả `saved: true` — client KHÔNG tự phong "đã học"
+ * nữa. Không đẩy đồng bộ: server đã ghi cột `cefr_dialogues` rồi (và `/api/progress` lọc bỏ bản
+ * "đã học" do client đẩy lên), bản ở đây chỉ để mục lục máy này hiện đúng ngay, khỏi chờ lượt kéo
+ * tiến độ kế tiếp. Ghi luôn khoá "đã xem" (đã học thì chắc chắn đã xem). Idempotent.
  */
-export function markDialogueLearned(uid: string, ownerId: string, titleEn: string) {
+export function recordServerVerifiedDialogue(uid: string, ownerId: string, titleEn: string) {
+  if (!uid) return
   const set = readSet(DIALOGUE_KEY(uid))
   const key = dialogueKey(ownerId, titleEn)
-  const learnedEntry = `${DIALOGUE_LEARNED_PREFIX}${key}`
-  if (set.has(key) && set.has(learnedEntry)) return // đã ghi rồi — idempotent
+  const learnedEntry = learnedDialogueEntry(ownerId, titleEn)
+  if (set.has(key) && set.has(learnedEntry)) return
   set.add(key)
   set.add(learnedEntry)
   writeSet(DIALOGUE_KEY(uid), set)
-  pushProgress(uid) // đồng bộ lên server
 }
 
 // ── Đếm tiến độ ─────────────────────────────────────────────────────────

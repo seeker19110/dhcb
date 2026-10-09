@@ -29,6 +29,7 @@ import { withTransaction } from '@dhcb/core-db/transaction'
 import { resolvePlan } from '@dhcb/core-billing/plan'
 import { computeUnlockedLevels } from '@dhcb/core-learner/cefrUnlock'
 import { SyncEnvelopeSchema } from '@dhcb/core-contracts/sync'
+import { isLearnedDialogueEntry } from '@dhcb/core-contracts/cefrDialogueCheck'
 import {
   mergeSrsMap,
   mergeByTimestamp,
@@ -41,12 +42,17 @@ import { findReceipt, saveReceipt } from '../_lib/syncReceipt.js'
 // Giới hạn kích thước hợp lý — chặn payload bất thường (DoS/lỗi client) mà vẫn đủ rộng
 // cho người học nhiều năm (từ điển app hiện ~12.000 từ).
 const MAX_ARR = 20_000
+const MAX_DIALOGUE_ENTRY_LEN = 300
 const ProgressSchema = z.object({
   learned: z.array(z.string()).max(MAX_ARR).default([]),
   hard: z.array(z.string()).max(MAX_ARR).default([]),
   srs: z.record(z.string(), z.unknown()).default({}),
   cefrGrammar: z.array(z.string()).max(MAX_ARR).default([]),
-  cefrDialogues: z.array(z.string()).max(MAX_ARR).default([]),
+  // Trần độ dài MỖI phần tử (changelog 0555): khoá dài nhất thật trong dialogues.json hiện là 65
+  // ký tự ("learned|b2-advanced-structures:I have never seen anything like it"); trần hợp đồng của
+  // khoá do server ghi là 8 ("learned|") + 64 (ownerId) + 1 + 200 (titleEn) = 273. Lấy 300 để
+  // KHÔNG BAO GIỜ từ chối một khoá hợp lệ (từ chối = hỏng cả lượt đồng bộ), mà chặn chuỗi rác.
+  cefrDialogues: z.array(z.string().max(MAX_DIALOGUE_ENTRY_LEN)).max(MAX_ARR).default([]),
   // CỐ Ý KHÔNG có `cefrUnlocked`: Zod object mặc định LOẠI BỎ khoá lạ, nên client cũ (hoặc kẻ
   // giả mạo) vẫn gửi trường này thì nó bị vứt im lặng — server tính lại từ plan + cefr_exams.
   cefrExams: z.record(z.string(), z.unknown()).default({}),
@@ -242,7 +248,14 @@ export default async function handler(req: Request): Promise<Response> {
   if (!result.ok)
     return jsonResponse({ error: result.error.message }, result.error.status, allHeaders)
 
-  const d = result.data
+  // Đợt 0555: hội thoại "ĐÃ HỌC" (`learned|…`) chỉ do server ghi sau khi CHẤM LẠI kiểm tra hiểu
+  // (`/api/learning/evidence?action=cefr-dialogue`). Bản client tự đẩy lên bị LỌC BỎ ở đây — nếu
+  // không, sửa localStorage là "đã học" cả cấp. Bản đã có trong DB vẫn giữ nguyên (merge UNION với
+  // `existing` bên dưới), nên dữ liệu cũ không bao giờ bị hạ cấp. Bản "đã xem" giữ luật cũ.
+  const d = {
+    ...result.data,
+    cefrDialogues: result.data.cefrDialogues.filter((e) => !isLearnedDialogueEntry(e)),
+  }
   const sync = d.sync
 
   // S09-1 bước 2 — TRA BIÊN NHẬN TRƯỚC TRANSACTION. Có biên nhận nghĩa là request này đã được

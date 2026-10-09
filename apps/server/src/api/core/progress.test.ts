@@ -764,3 +764,74 @@ describe('CEFR chỉ cấp quyền từ sổ chấm thi máy chủ', () => {
     expect(JSON.parse((saved[1] as unknown[])[7] as string)).toEqual({})
   })
 })
+
+// ── Đợt 0555: "đã học" hội thoại CEFR chỉ do SERVER ghi (sau khi chấm lại) ──────────────────
+// Đặc tả docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §⑤.
+describe('POST /api/progress — bản "learned|…" do client tự đẩy bị lọc, bản cũ trong DB giữ nguyên', () => {
+  function dialoguesWritten(): string[] {
+    const call = findCall('insert into english.learning_progress')
+    // Tham số $6 = cefr_dialogues (xem thứ tự cột trong câu insert của handler).
+    return JSON.parse((call?.[1] as unknown[])[5] as string) as string[]
+  }
+
+  it('client khai "learned|…" mới → KHÔNG vào DB, bản "đã xem" vẫn vào', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return { rows: [EMPTY_PROGRESS_ROW] }
+      return { rows: [] }
+    })
+    const resp = await handler(
+      makeRequest({ cefrDialogues: ['a1-greetings:Hi', 'learned|a1-greetings:Hi'] }),
+    )
+    expect(resp.status).toBe(200)
+    expect(dialoguesWritten()).toEqual(['a1-greetings:Hi'])
+  })
+
+  it('bản "learned|…" ĐÃ CÓ trong DB (server ghi / dữ liệu cũ) → giữ nguyên, không hạ cấp', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return {
+          rows: [
+            {
+              ...EMPTY_PROGRESS_ROW,
+              cefr_dialogues: ['a1-greetings:Hi', 'learned|a1-greetings:Hi'],
+            },
+          ],
+        }
+      return { rows: [] }
+    })
+    const resp = await handler(makeRequest({ cefrDialogues: ['a1-greetings:Hi', 'b1-x:Yo'] }))
+    expect(resp.status).toBe(200)
+    expect(dialoguesWritten()).toEqual(['a1-greetings:Hi', 'learned|a1-greetings:Hi', 'b1-x:Yo'])
+  })
+
+  it('phần tử quá dài (> 300 ký tự) → 400, không ghi gì; khoá hợp lệ dài nhất theo hợp đồng (273) → 200', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return { rows: [EMPTY_PROGRESS_ROW] }
+      return { rows: [] }
+    })
+    const rac = await handler(makeRequest({ cefrDialogues: ['x'.repeat(301)] }))
+    expect(rac.status).toBe(400)
+    expect(findCall('insert into english.learning_progress')).toBeFalsy()
+    // "learned|" (8) + ownerId 64 + ":" + titleEn 200 = 273 — khoá dài nhất server có thể ghi.
+    const dai = `learned|${'a'.repeat(64)}:${'T'.repeat(200)}`
+    expect(dai).toHaveLength(273)
+    const ok = await handler(makeRequest({ cefrDialogues: [dai.slice('learned|'.length)] }))
+    expect(ok.status).toBe(200)
+  })
+
+  it('chỉ đẩy thêm "learned|…" → không tính là học thật, không cộng thưởng', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return { rows: [{ ...EMPTY_PROGRESS_ROW, cefr_dialogues: ['a1-greetings:Hi'] }] }
+      return { rows: [] }
+    })
+    const resp = await handler(
+      makeRequest({ cefrDialogues: ['a1-greetings:Hi', 'learned|a1-greetings:Hi'] }),
+    )
+    expect(resp.status).toBe(200)
+    expect(findCall('grant_daily_bonus_rolling')).toBeFalsy()
+    expect(dialoguesWritten()).toEqual(['a1-greetings:Hi'])
+  })
+})
