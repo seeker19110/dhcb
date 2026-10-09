@@ -128,6 +128,7 @@ describe('summarizeOutline — cây THẬT môn Tiếng Anh', () => {
       learned: new Set(),
       doneGrammar: new Set(),
       viewedDialogues: new Set(),
+      learnedDialogues: new Set(),
       circles,
       lockedMap: new Map(),
     })
@@ -147,6 +148,7 @@ describe('summarizeOutline — cây THẬT môn Tiếng Anh', () => {
         learned: new Set(),
         doneGrammar: new Set([grammarId]),
         viewedDialogues: new Set(),
+        learnedDialogues: new Set(),
         circles,
         lockedMap: new Map(),
       }),

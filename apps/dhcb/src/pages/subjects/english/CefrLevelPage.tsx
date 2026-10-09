@@ -88,7 +88,9 @@ import {
 import {
   getDoneGrammar,
   getViewedDialogues,
+  getLearnedDialogues,
   markDialogueViewed,
+  markDialogueLearned,
   dialogueKey,
   circleDoneCount,
   levelVocabCounts,
@@ -270,6 +272,8 @@ export default function CefrLevelPage() {
   const [lesson, setLesson] = useState<GrammarLesson | null>(null)
   const [circle, setCircle] = useState<Circle | null>(null)
   const [dialogue, setDialogue] = useState<Dialogue | null>(null)
+  // Id unit/vòng SỞ HỮU hội thoại đang mở — khoá ghi "đã xem"/"đã học" (`dialogueKey`).
+  const [dialogueOwner, setDialogueOwner] = useState('')
   // Đang làm bài thi cuối cấp (màn thi toàn màn hình đè lên trang cấp).
   const [examing, setExaming] = useState(false)
 
@@ -340,6 +344,8 @@ export default function CefrLevelPage() {
   const doneGrammar = useMemo(() => getDoneGrammar(uid), [uid, refresh])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const viewedDialogues = useMemo(() => getViewedDialogues(uid), [uid, refresh])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const learnedDialogues = useMemo(() => getLearnedDialogues(uid), [uid, refresh])
 
   // Kết quả thi cuối cấp (để mở khóa + hiện điểm/huy hiệu + CTA "Thi cuối cấp").
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -457,6 +463,14 @@ export default function CefrLevelPage() {
   // dấu, và trên MOBILE có panel — trước đây mở một màn con trên điện thoại là mất hẳn lối
   // nhảy sang mục khác, phải bấm "Quay lại" rồi cuộn tìm.
   const circleMap = useMemo(() => new Map(Object.entries(circleById)), [circleById])
+  // Tên hội thoại từng unit (đã tải ở `loadLevelDialogues`) — để mục lục đếm "đã học x/N".
+  const dialogueTitlesByUnit = useMemo(
+    () =>
+      dialoguesByUnit
+        ? new Map(Object.entries(dialoguesByUnit).map(([id, ds]) => [id, ds.map((d) => d.titleEn)]))
+        : undefined,
+    [dialoguesByUnit],
+  )
   const chiSoCap = level ? levels.findIndex((l) => l.id === level.id) : -1
   const maCapTruoc = chiSoCap > 0 ? levels[chiSoCap - 1]?.id : undefined
   const outline = useMemo(
@@ -466,12 +480,24 @@ export default function CefrLevelPage() {
             learned,
             doneGrammar,
             viewedDialogues,
+            learnedDialogues,
+            ...(dialogueTitlesByUnit ? { dialogueTitlesByUnit } : {}),
             circles: circleMap,
             lockedMap,
             ...(maCapTruoc ? { prevLevelId: maCapTruoc } : {}),
           })
         : undefined,
-    [level, learned, doneGrammar, viewedDialogues, circleMap, lockedMap, maCapTruoc],
+    [
+      level,
+      learned,
+      doneGrammar,
+      viewedDialogues,
+      learnedDialogues,
+      dialogueTitlesByUnit,
+      circleMap,
+      lockedMap,
+      maCapTruoc,
+    ],
   )
 
   // Hoạt động được chỉ đích danh trên URL (`?unit=…&hd=…`) — đây là thứ mục lục liên kết tới.
@@ -552,6 +578,7 @@ export default function CefrLevelPage() {
         if (uid) markDialogueViewed(uid, unit.id, d.titleEn)
         setLoiHoiThoaiUrl(null)
         setRefresh((k) => k + 1)
+        setDialogueOwner(unit.id)
         setDialogue(d)
       },
       (err: unknown) => {
@@ -647,6 +674,7 @@ export default function CefrLevelPage() {
   function openDialogue(ownerId: string, d: Dialogue) {
     if (uid) markDialogueViewed(uid, ownerId, d.titleEn)
     bump()
+    setDialogueOwner(ownerId)
     setDialogue(d)
   }
 
@@ -767,6 +795,20 @@ export default function CefrLevelPage() {
         plan={user?.plan ?? 'free'}
         userId={uid}
         onBack={dongHoiThoai}
+        comprehension={
+          dialogueOwner
+            ? {
+                ownerId: dialogueOwner,
+                learned: learnedDialogues.has(dialogueKey(dialogueOwner, dialogue.titleEn)),
+                canSave: uid !== '',
+                // Đạt kiểm tra hiểu → ghi "ĐÃ HỌC" + tính lại tiến độ/mục lục.
+                onPassed: () => {
+                  if (uid) markDialogueLearned(uid, dialogueOwner, dialogue.titleEn)
+                  bump()
+                },
+              }
+            : undefined
+        }
       />,
       dongHoiThoai,
     )
@@ -1378,6 +1420,7 @@ export default function CefrLevelPage() {
                       learned={learned}
                       doneGrammar={doneGrammar}
                       viewedDialogues={viewedDialogues}
+                      learnedDialogues={learnedDialogues}
                       dialogues={dialoguesByUnit?.[unit.id]}
                       lessonStartIndex={start}
                       onOpenLesson={setLesson}
@@ -1408,6 +1451,7 @@ export function UnitSection({
   learned,
   doneGrammar,
   viewedDialogues,
+  learnedDialogues,
   dialogues: unitDialogues,
   lessonStartIndex,
   onOpenLesson,
@@ -1422,6 +1466,8 @@ export function UnitSection({
   learned: Set<string>
   doneGrammar: Set<string>
   viewedDialogues: Set<string>
+  /** Hội thoại ĐÃ HỌC (đạt kiểm tra hiểu) — chỉ những bài này mới tính là "xong". */
+  learnedDialogues: Set<string>
   /** Hội thoại của unit; `undefined` = chưa tải xong hoặc tải lỗi (cấp trang báo lỗi một lần). */
   dialogues: Dialogue[] | undefined
   lessonStartIndex: number
@@ -1444,10 +1490,12 @@ export function UnitSection({
     .filter((c): c is Circle => c != null)
   const isCircleDone = (c: Circle) => circleDoneCount(c, learned) >= c.words.length
   const isDlgViewed = (d: Dialogue) => viewedDialogues.has(dialogueKey(unit.id, d.titleEn))
+  // "Xong" một hội thoại = ĐÃ HỌC (đạt kiểm tra hiểu), không phải chỉ mở ra xem.
+  const isDlgLearned = (d: Dialogue) => learnedDialogues.has(dialogueKey(unit.id, d.titleEn))
 
   const doneCircles = circles.filter(isCircleDone)
   const doneLessons = unit.grammar.filter((g) => doneGrammar.has(g.id))
-  const doneDlgs = dialogues.filter(isDlgViewed)
+  const doneDlgs = dialogues.filter(isDlgLearned)
   const hiddenCount = doneCircles.length + doneLessons.length + doneDlgs.length
   const totalCount = circles.length + unit.grammar.length + dialogues.length
   // Chỉ coi là "xong hết" khi hội thoại đã tải xong (tránh nhấp nháy thu gọn).
@@ -1477,7 +1525,7 @@ export function UnitSection({
 
   const visCircles = showAll ? circles : circles.filter((c) => !isCircleDone(c))
   const visLessons = showAll ? unit.grammar : unit.grammar.filter((g) => !doneGrammar.has(g.id))
-  const visDlgs = showAll ? dialogues : dialogues.filter((d) => !isDlgViewed(d))
+  const visDlgs = showAll ? dialogues : dialogues.filter((d) => !isDlgLearned(d))
 
   // Đánh số bước theo các phần CÓ TRONG unit (unit thiếu phần nào thì bỏ qua số đó).
   let step = 0
@@ -1595,20 +1643,36 @@ export function UnitSection({
           {visDlgs.length > 0 ? (
             <div className="space-y-1.5">
               {visDlgs.map((dl, i) => {
-                const viewed = isDlgViewed(dl)
+                const daHoc = isDlgLearned(dl)
+                const daXem = daHoc || isDlgViewed(dl)
+                // Trạng thái bằng CHỮ (không chỉ màu/biểu tượng): chưa xem · đã xem · đã học.
+                const nhan = daHoc
+                  ? isA
+                    ? 'Đã học'
+                    : 'Learned'
+                  : daXem
+                    ? isA
+                      ? 'Đã xem · chưa kiểm tra hiểu'
+                      : 'Viewed · not checked yet'
+                    : isA
+                      ? 'Chưa xem'
+                      : 'Not viewed'
                 return (
                   <button
                     key={i}
                     onClick={() => onOpenDialogue(unit.id, dl)}
-                    className={`tap-44-y w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl border transition hover:border-zinc-600 ${viewed ? `${accent.soft} ${accent.ring}` : 'bg-zinc-900/70 border-zinc-800'}`}
+                    className={`tap-44-y w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl border transition hover:border-zinc-600 ${daHoc ? `${accent.soft} ${accent.ring}` : 'bg-zinc-900/70 border-zinc-800'}`}
                   >
-                    {viewed ? (
+                    {daHoc ? (
                       <CheckCircle2 className={`w-4 h-4 shrink-0 ${accent.text}`} />
                     ) : (
                       <MessageCircle className={`w-4 h-4 shrink-0 ${accent.text}`} />
                     )}
-                    <span className="flex-1 min-w-0 text-sm font-medium text-zinc-200 break-words">
-                      {isA ? dl.titleVi : dl.titleEn}
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-zinc-200 break-words">
+                        {isA ? dl.titleVi : dl.titleEn}
+                      </span>
+                      <span className="block text-xs text-zinc-400">{nhan}</span>
                     </span>
                     <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
                   </button>
@@ -1617,7 +1681,7 @@ export function UnitSection({
             </div>
           ) : (
             <p className="text-xs text-zinc-400">
-              {isA ? '✓ Đã xem hết hội thoại phần này' : '✓ All dialogues viewed'}
+              {isA ? '✓ Đã học hết hội thoại phần này' : '✓ All dialogues learned'}
             </p>
           )}
         </div>

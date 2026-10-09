@@ -1409,7 +1409,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `regradeSubmission()` vẫn là dispatcher duy nhất. Test canh gồm ca xác minh ATTACH DATABASE
   không tạo file thật trên server. Bước dự án `p<n>-s<x>` + tiêu chí hướng chuyên sâu vẫn NGOÀI
   phạm vi ADR-0008 (câu hỏi 2 chốt KHÔNG mở rộng — chấm bằng rubric/artifact, khác bài toán này).
-- 🟡 **[2026-09-15 — S11-1] Hội thoại CEFR đánh dấu "đã xem" (`markDialogueViewed`) chứ không phải "đã học".** Mục lục phải ghi đúng nhãn `english.cefrDialogue` = đã xem; cần một dạng evidence thật (nói lại/trả lời câu hỏi) ở slice môn Anh sau này.
+- 🟡 **[2026-09-15 — S11-1, THU HẸP 2026-10-09 `docs/changelog/0548-*.md`] Hội thoại CEFR: "đã học" mới có bằng chứng ở MÁY, server chưa chấm lại.** Phần chính ĐÃ XONG: sau khi xem, người học làm kiểm tra hiểu 3 câu tất định (không tốn lượt AI, hai chiều A/B), đạt ≥ 2/3 → `markDialogueLearned`; mục lục phân biệt chưa xem / đã xem (`english.cefrDialogue`, đang học dở) / đã học (`english.cefrDialogueLearned`) — đặc tả `docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md`. Còn mở: bản ghi "đã học" do client khai (cùng mức tin cậy `cefrGrammar`), muốn server chấm lại qua `/api/learning/evidence` thì phải đưa dữ liệu hội thoại lên server. Kèm: 162/197 unit không có hội thoại nhưng cây vẫn sinh nút "Hội thoại" (nay ghi chữ "Phần này chưa có hội thoại").
 
 > Mục này CHỈ giữ nợ **đang mở** (🟡/🔴). Nợ đã đóng (🟢) được dời sang
 > `docs/legacy/no-ky-thuat-da-dong.md` (2026-09-01) để file này chỉ nói trạng thái hiện tại —

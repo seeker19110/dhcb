@@ -36,6 +36,7 @@ import {
   Lock,
   Drama,
   Award,
+  ClipboardCheck,
 } from 'lucide-react'
 import {
   speak,
@@ -62,6 +63,7 @@ import { getDialogues } from '../data/dialoguesLoader'
 import { useAsyncLoad } from '../lib/useAsyncLoad'
 import { LOI_HOI_THOAI_EN, LOI_HOI_THOAI_VI } from '../lib/curriculumMessages'
 import DialogueLoadError from './DialogueLoadError'
+import DialogueComprehensionCheck from './DialogueComprehensionCheck'
 import type { DictEntry } from '../types'
 import { getLearnedWords, markLearned } from '../lib/vocab'
 import { addToSRS, addToSRSKnown } from '../lib/srs'
@@ -690,6 +692,7 @@ export function DialogueView({
   plan,
   userId,
   onBack,
+  comprehension,
 }: {
   dialogue: Dialogue
   isA: boolean
@@ -697,8 +700,20 @@ export function DialogueView({
   plan: Plan
   userId: string
   onBack: () => void
+  /**
+   * Kiểm tra hiểu sau khi xem (bằng chứng "đã học" — đặc tả
+   * docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md). Vắng = màn không có kiểm tra.
+   */
+  comprehension?: {
+    ownerId: string
+    learned: boolean
+    canSave: boolean
+    onPassed: () => void
+  }
 }) {
   const [activeLine, setActiveLine] = useState<number | null>(null)
+  // Đang làm kiểm tra hiểu → màn kiểm tra CHE bản hội thoại (xem DialogueComprehensionCheck).
+  const [checking, setChecking] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(false)
   const [speed, setSpeed] = useState<DlgSpeed>(getRatePref())
@@ -1121,6 +1136,26 @@ export function DialogueView({
     { key: 'vi', label: 'VI' },
   ]
 
+  if (checking && comprehension) {
+    return (
+      <DialogueComprehensionCheck
+        dialogue={dialogue}
+        ownerId={comprehension.ownerId}
+        isA={isA}
+        accent={accent}
+        canSave={comprehension.canSave}
+        onPassed={comprehension.onPassed}
+        onBack={() => setChecking(false)}
+      />
+    )
+  }
+
+  // Mở kiểm tra hiểu: dừng mọi audio đang phát trước (không để giọng đọc chạy dưới màn câu hỏi).
+  function openCheck() {
+    handleStop()
+    setChecking(true)
+  }
+
   // Đang xem kết quả chấm điểm đóng vai → thay toàn bộ nội dung màn hội thoại.
   if (rpEvaluation) {
     return (
@@ -1532,6 +1567,43 @@ export function DialogueView({
           })}
         </div>
       </div>
+
+      {/* Kiểm tra hiểu — bằng chứng "ĐÃ HỌC". Ẩn trong lúc đóng vai (đang luyện nói). */}
+      {comprehension && !rolePlay && (
+        <div className="glass rounded-2xl p-4 sm:p-5 mt-3">
+          {comprehension.learned ? (
+            <p className="flex items-start gap-1.5 text-sm text-zinc-200">
+              <CheckCircle2
+                className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400 theme-light:text-emerald-800"
+                aria-hidden="true"
+              />
+              {isA
+                ? 'Đã học — bạn đã đạt kiểm tra hiểu hội thoại này.'
+                : 'Learned — you passed the comprehension check for this dialogue.'}
+            </p>
+          ) : (
+            <p className="text-sm text-zinc-200">
+              {isA
+                ? 'Đọc và nghe xong? Trả lời 3 câu hỏi ngắn về hội thoại — đạt thì hội thoại được ghi là ĐÃ HỌC (hiện đang là “đã xem”).'
+                : 'Done reading and listening? Answer 3 short questions about the dialogue — pass and it is marked as LEARNED (it is currently “viewed”).'}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={openCheck}
+            className={`${buttonClass({ variant: comprehension.learned ? 'outline' : 'primary' })} mt-3`}
+          >
+            <ClipboardCheck className="w-4 h-4" aria-hidden="true" />
+            {comprehension.learned
+              ? isA
+                ? 'Làm lại kiểm tra hiểu'
+                : 'Retake the comprehension check'
+              : isA
+                ? 'Làm kiểm tra hiểu'
+                : 'Take the comprehension check'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

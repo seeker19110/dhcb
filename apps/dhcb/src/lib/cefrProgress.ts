@@ -4,7 +4,7 @@
 // Gom toàn bộ logic tính tiến độ cho lộ trình A1→B2 (tab Lộ trình + trang
 // riêng từng cấp) vào 1 chỗ, để UI chỉ gọi hàm thay vì tự lắp ráp:
 //   - Đánh dấu BÀI NGỮ PHÁP đã học xong (nút "Đã học xong" trong bài).
-//   - Đánh dấu HỘI THOẠI đã xem (tự ghi khi mở hội thoại).
+//   - Đánh dấu HỘI THOẠI đã xem (tự ghi khi mở) và ĐÃ HỌC (đạt kiểm tra hiểu sau khi xem).
 //   - Đếm tiến độ từ vựng / ngữ pháp theo unit + theo cấp.
 //   - Luật mở khóa cấp (A1 luôn mở; cấp sau cần ≥70% từ vựng cấp trước).
 //   - Tìm "mục học tiếp theo" (vòng từ vựng / bài ngữ pháp đầu tiên chưa xong).
@@ -71,21 +71,61 @@ export function isGrammarDone(uid: string, lessonId: string): boolean {
   return getDoneGrammar(uid).has(lessonId)
 }
 
-// ── Hội thoại đã xem ────────────────────────────────────────────────────
+// ── Hội thoại: đã xem → đã học ──────────────────────────────────────────
 // Hội thoại không có id riêng → khóa = "<id unit/vòng>:<titleEn>" (ổn định).
 export const dialogueKey = (ownerId: string, titleEn: string) => `${ownerId}:${titleEn}`
 
+// "ĐÃ HỌC" (đạt kiểm tra hiểu — lib/dialogueComprehension.ts) lưu CHUNG mảng với "đã xem"
+// (`et_cefr_dialogue_<uid>` ↔ cột `cefr_dialogues`), phân biệt bằng tiền tố. Lý do (đặc tả
+// docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md §③): luồng đồng bộ hiện có hợp nhất
+// mảng này kiểu UNION ở cả client lẫn server — bản ghi mới đi theo mà KHÔNG cần migration, và
+// client cũ chưa biết tiền tố vẫn giữ nguyên (không xoá) khi đẩy lại. Id unit/vòng không bao giờ
+// bắt đầu bằng tiền tố này (test canh trên dữ liệu thật).
+export const DIALOGUE_LEARNED_PREFIX = 'learned|'
+
+/** Hội thoại ĐÃ XEM (khoá `dialogueKey`). Không gồm bản ghi "đã học" có tiền tố. */
 export function getViewedDialogues(uid: string): Set<string> {
-  return readSet(DIALOGUE_KEY(uid))
+  const out = new Set<string>()
+  for (const entry of readSet(DIALOGUE_KEY(uid))) {
+    if (!entry.startsWith(DIALOGUE_LEARNED_PREFIX)) out.add(entry)
+  }
+  return out
+}
+
+/** Hội thoại ĐÃ HỌC (đạt kiểm tra hiểu), trả về đúng khoá `dialogueKey` (đã bỏ tiền tố). */
+export function getLearnedDialogues(uid: string): Set<string> {
+  const out = new Set<string>()
+  for (const entry of readSet(DIALOGUE_KEY(uid))) {
+    if (entry.startsWith(DIALOGUE_LEARNED_PREFIX)) {
+      out.add(entry.slice(DIALOGUE_LEARNED_PREFIX.length))
+    }
+  }
+  return out
 }
 
 export function markDialogueViewed(uid: string, ownerId: string, titleEn: string) {
-  const set = getViewedDialogues(uid)
+  const set = readSet(DIALOGUE_KEY(uid))
   const key = dialogueKey(ownerId, titleEn)
   if (set.has(key)) return // đã xem rồi — khỏi ghi lại + khỏi đẩy mạng thừa
   set.add(key)
   writeSet(DIALOGUE_KEY(uid), set)
-  pushProgress(uid) // đồng bộ lên Supabase
+  pushProgress(uid) // đồng bộ lên server
+}
+
+/**
+ * Ghi "ĐÃ HỌC" — CHỈ gọi sau khi người học ĐẠT kiểm tra hiểu (`gradeComprehension().passed`).
+ * Đã học thì chắc chắn đã xem: ghi luôn cả khoá "đã xem" (phòng khi màn mở bằng đường khác).
+ * Dữ liệu "đã xem" cũ KHÔNG bao giờ tự được nâng thành "đã học".
+ */
+export function markDialogueLearned(uid: string, ownerId: string, titleEn: string) {
+  const set = readSet(DIALOGUE_KEY(uid))
+  const key = dialogueKey(ownerId, titleEn)
+  const learnedEntry = `${DIALOGUE_LEARNED_PREFIX}${key}`
+  if (set.has(key) && set.has(learnedEntry)) return // đã ghi rồi — idempotent
+  set.add(key)
+  set.add(learnedEntry)
+  writeSet(DIALOGUE_KEY(uid), set)
+  pushProgress(uid) // đồng bộ lên server
 }
 
 // ── Đếm tiến độ ─────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import {
   docHoatDongTuQuery,
   duongDanHoatDongCefr,
   nodeIdHoatDong,
+  tienDoHoiThoaiCuaUnit,
   type CefrOutlineCtx,
 } from './cefrOutline'
 
@@ -25,6 +26,7 @@ const ctxRong = (): CefrOutlineCtx => ({
   learned: new Set<string>(),
   doneGrammar: new Set<string>(),
   viewedDialogues: new Set<string>(),
+  learnedDialogues: new Set<string>(),
   circles,
   lockedMap: new Map(),
 })
@@ -103,23 +105,93 @@ describe('buildCefrOutline — dữ liệu cefr.json thật', () => {
     expect(nutChua.evidenceSource).toBeUndefined()
   })
 
-  it('ngữ pháp và hội thoại: đánh dấu xong → completed kèm đúng nguồn bằng chứng', () => {
+  it('ngữ pháp: đánh dấu xong → completed kèm đúng nguồn bằng chứng', () => {
     const level = levels.find((l) => l.id === 'A1')!
     const unit = level.units.find((u) => u.grammar.length > 0)!
     const grammarId = unit.grammar[0]!.id
     const outline = buildCefrOutline(level, {
       ...ctxRong(),
       doneGrammar: new Set([grammarId]),
-      viewedDialogues: new Set([`${unit.id}:Hello there`]),
     })
     expect(outline.nodes.find((n) => n.nodeId.endsWith(`:grammar:${grammarId}`))).toMatchObject({
       progress: 'completed',
       evidenceSource: 'english.cefrGrammar',
     })
+    OutlineSchema.parse(outline)
+  })
+
+  // Đặc tả docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md — chưa xem / đã xem / đã học.
+  it('hội thoại: "đã xem" KHÔNG còn là xong (dữ liệu cũ giữ nguyên là đã xem)', () => {
+    const level = levels.find((l) => l.id === 'A1')!
+    const unit = level.units[0]!
+    const outline = buildCefrOutline(level, {
+      ...ctxRong(),
+      viewedDialogues: new Set([`${unit.id}:Hello there`]),
+    })
     expect(
       outline.nodes.find((n) => n.nodeId === `activity:${unit.id}:dialogue:${unit.id}`),
-    ).toMatchObject({ progress: 'completed', evidenceSource: 'english.cefrDialogue' })
+    ).toMatchObject({
+      progress: 'in-progress',
+      evidenceSource: 'english.cefrDialogue',
+      hint: 'Đã xem',
+    })
     OutlineSchema.parse(outline)
+  })
+
+  it('hội thoại: biết tổng → chỉ XONG khi đã học hết; nhãn chữ đếm x/N', () => {
+    const level = levels.find((l) => l.id === 'A1')!
+    const unit = level.units[0]!
+    const titles = new Map([[unit.id, ['One', 'Two']]])
+    const nut = (ctx: Partial<CefrOutlineCtx>) =>
+      buildCefrOutline(level, { ...ctxRong(), dialogueTitlesByUnit: titles, ...ctx }).nodes.find(
+        (n) => n.nodeId === `activity:${unit.id}:dialogue:${unit.id}`,
+      )
+    expect(nut({})).toMatchObject({ progress: 'not-started', hint: 'Chưa xem' })
+    expect(nut({ viewedDialogues: new Set([`${unit.id}:One`]) })).toMatchObject({
+      progress: 'in-progress',
+      evidenceSource: 'english.cefrDialogue',
+      hint: 'Đã xem 1/2 · đã học 0/2',
+    })
+    expect(nut({ learnedDialogues: new Set([`${unit.id}:One`]) })).toMatchObject({
+      progress: 'in-progress',
+      evidenceSource: 'english.cefrDialogueLearned',
+      hint: 'Đã xem 1/2 · đã học 1/2',
+    })
+    expect(nut({ learnedDialogues: new Set([`${unit.id}:One`, `${unit.id}:Two`]) })).toMatchObject({
+      progress: 'completed',
+      evidenceSource: 'english.cefrDialogueLearned',
+      hint: 'Đã học 2/2',
+    })
+    // Khoá của unit KHÁC hay của vòng từ vựng không được tính cho unit này.
+    expect(nut({ learnedDialogues: new Set(['khac:One', 'khac:Two']) })).toMatchObject({
+      progress: 'not-started',
+    })
+  })
+
+  it('hội thoại: unit không có hội thoại nào → chưa học + nói rõ bằng chữ', () => {
+    expect(
+      tienDoHoiThoaiCuaUnit('u', {
+        viewedDialogues: new Set(),
+        learnedDialogues: new Set(),
+        dialogueTitlesByUnit: new Map([['u', []]]),
+      }),
+    ).toEqual({ progress: 'not-started', hint: 'Phần này chưa có hội thoại' })
+  })
+
+  it('hội thoại: CHƯA biết tổng (đang tải) → có bài đã học cũng chỉ là đang học, không khẳng định xong', () => {
+    expect(
+      tienDoHoiThoaiCuaUnit('u', {
+        viewedDialogues: new Set(),
+        learnedDialogues: new Set(['u:One']),
+      }),
+    ).toEqual({
+      progress: 'in-progress',
+      evidenceSource: 'english.cefrDialogueLearned',
+      hint: 'Có hội thoại đã học',
+    })
+    expect(
+      tienDoHoiThoaiCuaUnit('u', { viewedDialogues: new Set(), learnedDialogues: new Set() }),
+    ).toEqual({ progress: 'not-started', hint: 'Chưa xem' })
   })
 
   it('cấp KHOÁ: đọc bản đồ khoá của server, hoạt động không có href', () => {
