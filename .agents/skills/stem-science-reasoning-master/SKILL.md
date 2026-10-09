@@ -7,9 +7,10 @@ description: 'Kỹ năng Nghiệp vụ Khoa học STEM & Suy luận Logic Đa b�
 
 Quy chuẩn cho bài học, bài tập và phản hồi môn STEM (Toán · Lý · Hoá · Sinh) trong Đồng Hành.
 
-> **Đối chiếu mã ngày 2026-10-09 (changelog 0547).** Trước 0547 skill ghi đúng rằng mã KHÔNG có bộ
-> kiểm bước — và chính việc từng tin nhầm điều đó làm bảng nháp khen mọi bước là đúng (changelog
-> 0473). Từ 0547 đã có bộ kiểm THẬT cho hai dạng (§2); mọi dạng khác vẫn là "chưa tự kiểm được".
+> **Đối chiếu mã ngày 2026-10-09 (changelog 0547, 0552).** Trước 0547 skill ghi đúng rằng mã KHÔNG
+> có bộ kiểm bước — và chính việc từng tin nhầm điều đó làm bảng nháp khen mọi bước là đúng (changelog
+> 0473). Từ 0547 có bộ kiểm THẬT cho Toán một ẩn + PTHH; từ 0552 có kiểm THỨ NGUYÊN Vật lí (§2); mọi
+> dạng khác vẫn là "chưa tự kiểm được".
 > App **không render LaTeX**. Khi skill và mã lệch nhau, **MÃ thắng**.
 
 ---
@@ -45,15 +46,25 @@ giao diện `apps/dhcb/src/components/StemScratchpad/`). Đặc tả:
   `(s)/(aq)/(k)`, `↑↓`, điều kiện `→(t°)`, 118 ký hiệu nguyên tố. Thứ tự: đổi chất so với đề
   (`substance_changed`) → lệch nguyên tử, nêu đích danh nguyên tố + số đếm (`unbalanced_equation`) →
   lệch điện tích (`unbalanced_charge`) → cân bằng (`valid`, báo nếu chưa tối giản).
-- **Vật lí, Sinh:** CHƯA kiểm bước (thứ nguyên từng bước là nợ). Vật lí chỉ có `khopDapSo` cho đề mẫu.
+- **Vật lí — `checkPhysicsStep` (`stepCheckPhysics.ts` + `dimension.ts`, changelog 0552):** kiểm
+  THỨ NGUYÊN (vector số mũ hữu tỉ BigInt của 7 đại lượng SI) của hai vế, từng hạng tử cộng/trừ, đối số
+  `sin/cos/ln/e^…`. Thứ nguyên biến lấy từ bảng `variables` của ĐỀ (`{ v: 'm/s', t: 's' }`, hợp đồng
+  `StemVariableTableSchema`); không có bảng → `unverified` (KHÔNG đoán theo tên). Hằng chuẩn không mơ
+  hồ (g, c, G…); `k`, `h`, `e`, `R` đề phải khai. Ra: lệch CHỨNG MINH được → `invalid`,
+  `dimension_mismatch` (`✗ Lệch thứ nguyên`); lệch chỉ khi coi số trần là hệ số (`v = 2t` lối SGK
+  "đơn vị ghi sau", `½at`) → `unverified` hỏi lại; **khớp thứ nguyên → vẫn `unverified`** (điều kiện
+  cần, không đủ — `v = 2at` khớp mà sai). Đáp số đề mẫu vẫn qua `khopDapSo`. Đặc tả
+  `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md` §6 (quy ước "số trần").
+- **Sinh:** CHƯA kiểm bước.
 - **"Giải xong"** chỉ khi `status: 'valid'` VÀ `isFinalAnswer: true` (`x = 5` tương đương đề; PTHH cân
   bằng tối giản, đúng chất của đề). Bước giữa `valid` (vd `2x = 10`) KHÔNG làm bài xong.
 - Nhãn hiển thị qua `nhanKetQuaBuoc()` (`packages/core-contracts/stemScratchpad.ts`): `✓ Hợp lệ` ·
-  `✗ Đổi nghiệm|Chia cho 0|Lệch nguyên tử|Lệch điện tích|Đổi chất` · `? Chưa tự kiểm được` — luôn
+  `✗ Đổi nghiệm|Chia cho 0|Lệch nguyên tử|Lệch điện tích|Đổi chất|Lệch thứ nguyên` ·
+  `? Chưa tự kiểm được` — luôn
   ký hiệu + chữ, không chỉ màu.
 
 **Luật bất biến:** bước không chứng minh được thì **KHÔNG BAO GIỜ** báo "đúng"/"hợp lệ"/tô xanh.
-Mở rộng bộ kiểm (căn, bất phương trình, thứ nguyên…) phải giữ: `valid` **chỉ khi đã chứng minh**,
+Mở rộng bộ kiểm (căn, bất phương trình…) phải giữ: `valid` **chỉ khi đã chứng minh**,
 LaTeX lạ ⇒ `unverified` (không đoán), và có test ca sai rõ ràng (vd `2x = 15 + 7` sau `2x + 5 = 15`)
 không bao giờ ra `valid`. Gợi ý (`suggestedCorrection`) là **câu hỏi Socratic**, không chứa nghiệm
 hay bước đúng.
@@ -61,7 +72,7 @@ hay bước đúng.
 **CHƯA CÓ — cần đặc tả trước khi làm:**
 
 - căn, lượng giác, log/mũ, π, giá trị tuyệt đối, bất phương trình, hệ nhiều ẩn;
-- kiểm thứ nguyên cho từng bước giữa môn Vật lí;
+- bảng `variables` cho đề Vật lí của ngân hàng đề; kiểm vector/chiều, đạo hàm/tích phân;
 - hệ số phân số trong PTHH (`1/2 O_2`).
 
 **Đáp số cuối của `submit_solution`** (đề ngân hàng) chấm qua `gradeFinalAnswer`

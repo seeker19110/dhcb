@@ -566,4 +566,50 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(await res.text()).not.toContain('ECONNREFUSED')
     expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('stem-scratchpad'))
   })
+
+  it('đề Vật lí kèm bảng thứ nguyên biến: bước lệch thứ nguyên → ✗, bảng hỏng → 400 (changelog 0552)', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    const tao = (variables: unknown) =>
+      handler(
+        new Request('http://localhost/api/stem-scratchpad?action=create_problem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject: 'physics',
+            title: 'Chuyển động biến đổi đều',
+            problemStatement: 'Tính quãng đường',
+            problemLatex: 's = v_0 t + \\frac{1}{2} a t^2',
+            variables,
+          }),
+        }),
+      )
+    expect((await tao({ v: 42 })).status).toBe(400)
+    const res = await tao({ s: 'm', v_0: 'm/s', a: 'm/s^2', t: 's' })
+    expect(res.status).toBe(200)
+    const { problem } = await res.json()
+    expect(problem.variables).toEqual({ s: 'm', v_0: 'm/s', a: 'm/s^2', t: 's' })
+
+    const kiem = async (latexInput: string) => {
+      const r = await handler(
+        new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemId: problem.id, latexInput }),
+        }),
+      )
+      return (await r.json()) as {
+        validation: { status: string; errorType: string }
+        isSolved: boolean
+      }
+    }
+    const lech = await kiem('s = v_0 t + a t')
+    expect(lech.validation.status).toBe('invalid')
+    expect(lech.validation.errorType).toBe('dimension_mismatch')
+    const khop = await kiem('s = v_0 t + \\frac{1}{2} a t^2')
+    // Khớp thứ nguyên chỉ là điều kiện CẦN → không bao giờ ✓, không làm bài "giải xong".
+    expect(khop.validation.status).toBe('unverified')
+    expect(khop.isSolved).toBe(false)
+  })
 })

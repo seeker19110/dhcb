@@ -22,9 +22,11 @@ export const ScratchpadStepValidationSchema = z.object({
   /** Thêm 2026-10-02 (changelog 0473). Bước lưu trước ngày đó không có trường này. */
   status: StepVerdictSchema.optional(),
   /**
-   * Loại lỗi. Bốn giá trị cuối thêm 2026-10-09 (changelog 0547) cho bộ kiểm bước thật:
-   * `changed_solutions` (biến đổi làm đổi tập nghiệm), `division_by_zero`, `unbalanced_charge`
-   * (lệch điện tích), `substance_changed` (sửa chỉ số = đổi chất thay vì thêm hệ số).
+   * Loại lỗi. Bốn giá trị `changed_solutions` … `substance_changed` thêm 2026-10-09 (changelog
+   * 0547) cho bộ kiểm bước thật: `changed_solutions` (biến đổi làm đổi tập nghiệm),
+   * `division_by_zero`, `unbalanced_charge` (lệch điện tích), `substance_changed` (sửa chỉ số = đổi
+   * chất thay vì thêm hệ số). `dimension_mismatch` thêm cùng ngày (changelog 0552): bước Vật lí
+   * cộng/trừ hoặc cho bằng nhau hai đại lượng khác thứ nguyên — CHỨNG MINH được, không đoán.
    */
   errorType: z
     .enum([
@@ -37,6 +39,7 @@ export const ScratchpadStepValidationSchema = z.object({
       'division_by_zero',
       'unbalanced_charge',
       'substance_changed',
+      'dimension_mismatch',
     ])
     .default('none'),
   feedback: z.string().min(1).max(500),
@@ -68,6 +71,7 @@ const NHAN_LOI: Partial<Record<ScratchpadStepValidation['errorType'], string>> =
   unbalanced_equation: '✗ Lệch nguyên tử',
   unbalanced_charge: '✗ Lệch điện tích',
   substance_changed: '✗ Đổi chất',
+  dimension_mismatch: '✗ Lệch thứ nguyên',
 }
 
 /**
@@ -90,6 +94,17 @@ export const ScratchpadStepSchema = z.object({
 })
 export type ScratchpadStep = z.infer<typeof ScratchpadStepSchema>
 
+/**
+ * Bảng THỨ NGUYÊN biến của một đề Vật lí: ký hiệu → đơn vị SI, vd `{ v: 'm/s', a: 'm/s^2', t: 's' }`
+ * (`''` = không thứ nguyên). Thêm 2026-10-09 (changelog 0552,
+ * `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md`). Tuỳ chọn để tương thích ngược: đề không khai
+ * thì bộ kiểm thứ nguyên trả "chưa tự kiểm được" — KHÔNG đoán thứ nguyên từ tên biến.
+ */
+export const StemVariableTableSchema = z
+  .record(z.string().min(1).max(32), z.string().max(64))
+  .refine((t) => Object.keys(t).length <= 64, { message: 'tối đa 64 biến' })
+export type StemVariableTable = z.infer<typeof StemVariableTableSchema>
+
 export const StemProblemStateSchema = z.object({
   id: z.string().min(1),
   personId: UuidSchema,
@@ -97,6 +112,8 @@ export const StemProblemStateSchema = z.object({
   title: z.string().min(1).max(200),
   problemStatement: z.string().min(1).max(2000),
   problemLatex: z.string().max(1000).optional(),
+  /** Bảng thứ nguyên biến (chỉ đề Vật lí dùng) — xem `StemVariableTableSchema`. */
+  variables: StemVariableTableSchema.optional(),
   steps: z.array(ScratchpadStepSchema),
   isSolved: z.boolean(),
   hintsUsed: z.number().int().min(0).default(0),
