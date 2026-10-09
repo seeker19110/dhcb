@@ -39,6 +39,11 @@ Bảng nháp STEM tự **chứng minh** được bước giải giữa ở hai d
   biến theo đề — chưa có nguồn dữ liệu đó trong đề mẫu. Làm vội sẽ thành "kiểm" giả.
 - Không thêm phụ thuộc npm (xem §5 nghiên cứu). Không đụng `gradeAnswer`/`index.ts` của engine chấm
   (bộ kiểm bước KHÔNG export qua `index.ts` → không vào bundle client).
+- **Bổ sung đợt 0562 — dấu chia `:` (lối SGK Việt Nam) ĐƯỢC đọc cho bước Toán:** `6 : 2 = 3`,
+  `x : 4 = 5` hiểu là phép chia, cùng độ ưu tiên và kết hợp trái với `/` · `÷` · `\div`
+  (`6 : 2 : 3` = `(6:2):3`); `x : 0` → `division_by_zero`; `::` hoặc `:` thiếu toán hạng → "?".
+  Chỉ ở `stepCheckMath.ts` — `number.ts` (chấm đáp số) VẪN không coi `:` là chia vì môn Sinh dùng
+  `3:1`, `9:3:3:1` làm tỉ lệ. Mơ hồ tỉ lệ `a:b` trong một bước giải phương trình: đọc là a/b (cùng giá trị).
 - Không kiểm: căn, lượng giác, log/mũ, π, bất phương trình, hệ nhiều ẩn, giá trị tuyệt đối, phương
   trình hoá có hệ số phân số (`1/2 O_2`) — tất cả trả "?" kèm câu nói rõ phạm vi.
 - Không sửa `generateMicroHint` (gợi ý soạn sẵn của 3 đề mẫu) — ngoài phạm vi, ghi nợ ở changelog.

@@ -268,6 +268,11 @@ function latexToPlain(input: string): string | null {
     .replace(/\\[,;:! ]/g, ' ')
     .replace(/\\(?:cdot|times|ast)(?![a-zA-Z])/g, '*')
     .replace(/\\div(?![a-zA-Z])/g, '/')
+    // Dấu chia kiểu SGK Việt Nam `6 : 2` — cùng độ ưu tiên với `/` và `÷`. Đặt SAU bước đổi `\:`
+    // (khoảng trắng LaTeX) nên không nhầm. Trong MỘT BƯỚC GIẢI phương trình một ẩn thì `:` là chia;
+    // tỉ lệ `a:b` (hình học/xác suất/Sinh) ở đây cũng đọc là a/b — cùng giá trị nên không sai nghĩa.
+    // `::`, `:` đầu/cuối thành `//`, `/` thừa → bộ phân tích báo không đọc được như với `/`.
+    .replace(/:/g, '/')
   const expanded = expandFractions(s)
   if (expanded === null) return null
   s = expanded.replace(/\{/g, '(').replace(/\}/g, ')')
