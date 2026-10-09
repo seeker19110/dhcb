@@ -138,5 +138,33 @@ describe('VisionSolverService', () => {
     )
     expect(successRes.problemText).toBe('Tính tích phân')
     expect(successRes.tokenUsed).toBe(420)
+    // Không còn số tin cậy bịa (trước đây cố định 0.98).
+    expect(successRes.confidence).toBeUndefined()
+  })
+
+  it('API không báo usageMetadata → tokenUsed để trống, không bịa 350', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    problemText: 'Đề',
+                    steps: [{ title: 'B1', detail: 'Giải' }],
+                    finalAnswer: 'x = 1',
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    } as unknown as Response)
+    const res = await solveProblemWithVision({ imageBase64: 'abc', subjectId: 'math' }, 'k')
+    expect(res.tokenUsed).toBeUndefined()
+    expect(res.confidence).toBeUndefined()
   })
 })

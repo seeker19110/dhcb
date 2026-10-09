@@ -21,7 +21,8 @@ export const VisionSolveResponseSchema = z.object({
   problemText: z.string().min(1),
   steps: z.array(VisionSolvedStepSchema).min(1),
   finalAnswer: z.string().min(1),
-  confidence: z.number().min(0).max(1).default(0.95),
+  // Không có mặc định: model không trả độ tin cậy đo được, nên KHÔNG bịa số (changelog 0567).
+  confidence: z.number().min(0).max(1).optional(),
   tokenUsed: z.number().int().nonnegative().optional(),
 })
 export type VisionSolveResponse = z.infer<typeof VisionSolveResponseSchema>

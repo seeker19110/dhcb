@@ -181,7 +181,8 @@ Hãy đọc kỹ hình ảnh bài tập môn ${request.subjectId} (Cấp độ: 
     problemText: parsed.problemText,
     steps: parsed.steps,
     finalAnswer: parsed.finalAnswer,
-    confidence: 0.98,
-    tokenUsed: jsonResp.usageMetadata?.totalTokenCount || 350,
+    // Không gán `confidence`: Gemini không trả độ tin cậy cho lời giải, số cố định là số giả.
+    // `tokenUsed` chỉ có khi API báo thật (trước đây rơi về 350 bịa).
+    tokenUsed: jsonResp.usageMetadata?.totalTokenCount,
   }
 }
