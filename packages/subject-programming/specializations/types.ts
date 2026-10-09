@@ -5,7 +5,7 @@
 // thống, người làm nhúng đi ba con đường khác hẳn nhau. Tầng này mở P6 "Chuyên sâu" thành
 // 14 hướng riêng biệt, mỗi hướng đi từ căn bản của hướng đó tới mức chuyên gia.
 //
-// Lưu ý đặt tên: KHÔNG dùng chữ "track" — trong môn này `PROJECT_TRACKS` (curriculum.ts) đã
+// Lưu ý đặt tên: KHÔNG dùng chữ "track" — trong môn này `PROJECT_TRACKS` (projectTracks.ts) đã
 // mang nghĩa "chủ đề dự án trục T1/T2/T3". Ở đây dùng "specialization" / "hướng".
 //
 // Dữ liệu là hằng biên dịch, không I/O, không phụ thuộc thời gian — để test kiểm được và để

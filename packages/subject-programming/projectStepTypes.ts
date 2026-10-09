@@ -10,14 +10,18 @@
 // projectSteps*; mọi file nội dung import xuống đây. Một chiều, không vòng.
 import { z } from 'zod'
 import { TestCaseSchema } from './lessonTypes.js'
+// Khuôn mã theo dự án T1/T2/T3 nằm ở projectTrackIds.ts (file không import gì — đáy chuỗi).
+import { PROJECT_STEP_ID_RE, type ProjectStageLevel } from './projectTrackIds.js'
 
 /** File làm việc của chặng P1 (P2 trở đi mới chia nhiều file). */
 export const PROJECT_MAIN_FILE = 'cua_hang.py'
 
 export const ProjectStepSchema = z
   .object({
-    /** id ổn định `p<bậc>-s<số>` — khoá tiến độ (cùng bảng lesson_progress). */
-    id: z.string().regex(/^p[1-6]-s\d+$/),
+    /** id ổn định — khoá tiến độ (cùng bảng lesson_progress). T1 `p<bậc>-s<số>` (giữ nguyên
+     *  vì tiến độ người học thật gắn vào đó); T2/T3 thêm tiền tố `t2-`/`t3-` để mỗi dự án có
+     *  tiến độ riêng (xem projectTrackIds.ts). */
+    id: z.string().regex(PROJECT_STEP_ID_RE),
     title: z.string().min(1).max(120),
     /** Unit cung cấp kiến thức cho bước (tham chiếu curriculum). */
     unitId: z.string().regex(/^p[1-6]-u\d+$/),
@@ -68,6 +72,13 @@ export const ProjectStepSchema = z
   })
 
 export type ProjectStep = z.infer<typeof ProjectStepSchema>
+
+/** Một CHẶNG của một dự án trục (ứng với một bậc P1–P5) — UI dựng thanh chọn chặng từ đây. */
+export interface ProjectStage {
+  level: ProjectStageLevel
+  title: string
+  steps: ProjectStep[]
+}
 
 /** Ngôn ngữ của bước — bỏ trống nghĩa là Python (chặng P1/P2 thuần Python, xem schema). */
 export function getStepLanguage(step: ProjectStep): NonNullable<ProjectStep['language']> {

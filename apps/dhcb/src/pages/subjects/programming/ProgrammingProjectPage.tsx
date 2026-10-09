@@ -1,4 +1,4 @@
-// ProgrammingProjectPage — DỰ ÁN TRỤC T1 "Cửa hàng của tôi" (PR-L3b; P2 ở PR-L6b, P3 ở PR-L8).
+// ProgrammingProjectPage — DỰ ÁN TRỤC (T1 "Cửa hàng của tôi" từ PR-L3b; T2/T3 từ 2026-10-09).
 // Học viên xây cửa hàng của mình lớn dần qua các CHẶNG (P1 "Máy tính tiền" → P2 "Sổ sách tử
 // tế" → P3 "Lên web"); mỗi chặng 5 bước, mỗi bước có milestone check chấm HÀNH VI — đạt hết
 // mở bước sau; bước cuối chặng chốt snapshot.
@@ -6,6 +6,11 @@
 // Chặng P3 mỗi bước MỘT NGÔN NGỮ (html → CSS → dom → sql → fetch): bộ chạy do `language` của
 // bước quyết định qua runLessonCode — y hệt trang bài học, nên hai nơi không chấm lệch nhau.
 // Workspace bền server (lib/programmingProject), tiến độ bước dùng chung bảng tiến độ bài học.
+//
+// BA DỰ ÁN TRỤC (hạ tầng 2026-10-09, docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md): học
+// viên chọn T1/T2/T3 ở bộ chọn đầu trang. Mỗi dự án có tiến độ riêng (mã bước mang tiền tố dự
+// án) và workspace riêng (file lưu dưới tiền tố dự án) — đổi qua lại không mất gì. Dự án chưa
+// có bước nào hiện "Sắp mở" và không chọn được.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePageTitle } from '../../../lib/usePageTitle'
@@ -37,17 +42,23 @@ import {
   saveProjectFileAt,
   snapshotMilestone,
 } from '../../../lib/programmingProject'
+import { readCachedProjectTrack, saveProjectTrack } from '../../../lib/programmingProjectTrack'
+import { fetchProgress, saveLessonProgress } from '../../../lib/programmingProgress'
 import {
-  fetchProgress,
-  saveLessonProgress,
-  isLessonCompleted,
-} from '../../../lib/programmingProgress'
-import {
-  PROJECT_STAGES,
+  getProjectStages,
+  getProjectStep,
   getStepFiles,
   getStepMainFile,
   getStepLanguage,
+  type ProjectStage,
 } from '@dhcb/subject-programming/projectSteps'
+import {
+  PROJECT_TRACKS,
+  getProjectTrack,
+  normalizeProjectTrack,
+  type ProjectTrackId,
+} from '@dhcb/subject-programming/projectTracks'
+import ProjectTrackPicker from '../../../components/programming/ProjectTrackPicker'
 import {
   gradeTestCase,
   allTestsPassed,
@@ -55,9 +66,27 @@ import {
 } from '@dhcb/subject-programming/grading'
 import { buttonClass } from '@core/buttonStyles'
 
-/** Chặng nào cũng phải xong TOÀN BỘ chặng trước mới mở (dự án tiến hoá, không nhảy cóc). */
-function isStageUnlocked(index: number, done: Set<string>): boolean {
-  return PROJECT_STAGES.slice(0, index).every((st) => st.steps.every((s) => done.has(s.id)))
+/** Chặng nào cũng phải xong TOÀN BỘ chặng trước mới mở (dự án tiến hoá, không nhảy cóc).
+ *  Chặng chưa có bước (dự án đang soạn dở) thì chưa mở, và chặn luôn các chặng sau nó. */
+function isStageUnlocked(
+  stages: readonly ProjectStage[],
+  index: number,
+  done: Set<string>,
+): boolean {
+  if ((stages[index]?.steps.length ?? 0) === 0) return false
+  return stages
+    .slice(0, index)
+    .every((st) => st.steps.length > 0 && st.steps.every((s) => done.has(s.id)))
+}
+
+/** Chặng đang xem: chặng trong `?chang=` nếu có bước, không thì chặng đầu tiên có bước. */
+function pickStageIndex(stages: readonly ProjectStage[], requested: string | null): number {
+  const asked = stages.findIndex((s) => s.level === (requested ?? 'p1'))
+  if (asked >= 0 && stages[asked]!.steps.length > 0) return asked
+  return Math.max(
+    0,
+    stages.findIndex((s) => s.steps.length > 0),
+  )
 }
 
 export default function ProgrammingProjectPage() {
@@ -65,11 +94,26 @@ export default function ProgrammingProjectPage() {
   const nav = useNavigate()
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
+  // Dự án đang chọn: mở trang bằng bộ đệm máy này (server đã ghi vào đó ở lần đọc tiến độ trước),
+  // rồi cập nhật lại khi lượt đọc tiến độ mới về. Luôn quy về dự án ĐANG MỞ.
+  const [track, setTrack] = useState<ProjectTrackId>(() =>
+    normalizeProjectTrack(user ? readCachedProjectTrack(user.id) : null),
+  )
+  const [switchingTrack, setSwitchingTrack] = useState(false)
+  const [trackSaveFailed, setTrackSaveFailed] = useState(false)
+  // Học viên đã THAO TÁC trong phiên này (đổi dự án, gõ code, nạp code mẫu) → lượt đọc server về
+  // muộn KHÔNG được đổi dự án dưới tay họ: đổi lúc đó sẽ thay ô soạn bằng workspace dự án khác
+  // trong khi file đang sửa chưa lưu. Lựa chọn của server vẫn vào bộ đệm, có hiệu lực lần mở sau.
+  const userActedRef = useRef(false)
+  const trackInfo = getProjectTrack(track)
+  const stages = getProjectStages(track)
   const [files, setFiles] = useState<Record<string, string> | null>(null) // null = đang tải
   const [dirty, setDirty] = useState<Set<string>>(new Set())
   const [savingNow, setSavingNow] = useState(false)
   const [doneSteps, setDoneSteps] = useState<Set<string>>(new Set())
-  const [activeStepId, setActiveStepId] = useState(PROJECT_STAGES[0]!.steps[0]!.id)
+  const [activeStepId, setActiveStepId] = useState(
+    () => stages[pickStageIndex(stages, null)]?.steps[0]?.id ?? '',
+  )
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [results, setResults] = useState<TestCaseResult[] | null>(null)
@@ -85,31 +129,42 @@ export default function ProgrammingProjectPage() {
   const doneRef = useRef<Set<string>>(new Set())
 
   // Chặng đang xem nằm trong query ?chang= để chia sẻ/bookmark đúng chặng.
-  const stageIndex = Math.max(
-    0,
-    PROJECT_STAGES.findIndex((s) => s.level === (params.get('chang') ?? 'p1')),
-  )
-  const stage = PROJECT_STAGES[stageIndex]!
+  const stageIndex = pickStageIndex(stages, params.get('chang'))
+  const stage = stages[stageIndex]!
   const steps = stage.steps
 
-  // Nạp workspace + tiến độ bước; đặt bước hiện tại = bước đầu tiên CHƯA xong của chặng.
+  // Nạp tiến độ bước của CẢ BA dự án một lần (mã bước mang tiền tố dự án nên không lẫn nhau);
+  // đặt bước hiện tại = bước đầu tiên CHƯA xong của chặng (effect bên dưới).
   useEffect(() => {
     if (!user) return
-    void Promise.all([loadProjectFiles(user.id), fetchProgress(user.id)]).then(
-      ([workspace, progress]) => {
-        setFiles(workspace)
-        const done = new Set(
-          PROJECT_STAGES.flatMap((st) => st.steps)
-            .filter((s) => isLessonCompleted(progress, s.id))
-            .map((s) => s.id),
-        )
-        doneRef.current = done
-        setDoneSteps(done)
-        setLoaded(true)
-      },
-    )
+    void fetchProgress(user.id).then((progress) => {
+      const done = new Set(
+        progress
+          .filter((p) => p.status === 'completed' && getProjectStep(p.lessonId) !== undefined)
+          .map((p) => p.lessonId),
+      )
+      doneRef.current = done
+      setDoneSteps(done)
+      // fetchProgress vừa ghi dự án server đang giữ vào bộ đệm — theo nó, trừ khi học viên đã
+      // thao tác trong lúc chờ (xem userActedRef).
+      if (!userActedRef.current) setTrack(normalizeProjectTrack(readCachedProjectTrack(user.id)))
+      setLoaded(true)
+    })
     return () => resetLessonRunners()
   }, [user])
+
+  // Workspace theo DỰ ÁN: đổi dự án là nạp cây file của dự án đó (file dự án kia vẫn nằm yên ở
+  // server dưới tiền tố riêng). Cờ `cancelled` chặn lượt nạp cũ về muộn đè lên dự án mới.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    void loadProjectFiles(user.id, track).then((workspace) => {
+      if (!cancelled) setFiles(workspace)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user, track])
 
   // Đổi chặng (hoặc nạp xong tiến độ) → nhảy tới bước đầu tiên chưa xong của chặng đó.
   useEffect(() => {
@@ -140,6 +195,7 @@ export default function ProgrammingProjectPage() {
   const isUnlocked = (i: number) => steps.slice(0, i).every((s) => doneSteps.has(s.id))
 
   const onCodeChange = (next: string) => {
+    userActedRef.current = true
     setFiles((prev) => ({ ...(prev ?? {}), [shownFile]: next }))
     setDirty((prev) => new Set(prev).add(shownFile))
   }
@@ -149,7 +205,7 @@ export default function ProgrammingProjectPage() {
     if (!user || files === null || dirty.size === 0) return
     setSavingNow(true)
     for (const path of dirty) {
-      await saveProjectFileAt(user.id, path, files[path] ?? '')
+      await saveProjectFileAt(user.id, path, files[path] ?? '', track)
     }
     setDirty(new Set())
     setSavingNow(false)
@@ -175,9 +231,10 @@ export default function ProgrammingProjectPage() {
         stdinLines: check.stdinLines,
         files: workspace,
         ...(activeStep.domHtml ? { domHtml: activeStep.domHtml } : {}),
-        // Bước fetch của DỰ ÁN gọi API menu của chính cửa hàng, không phải API thời tiết
-        // của bài học P3-U7.
-        fetchApi: 'cua-hang',
+        // Bước fetch của DỰ ÁN T1 gọi API menu của chính cửa hàng, không phải API thời tiết
+        // của bài học P3-U7. T2/T3 chưa có API giả riêng (PR nội dung bổ sung khi soạn bước
+        // fetch — xem đặc tả hạ tầng T2/T3 mục hợp đồng).
+        ...(track === 'T1' ? { fetchApi: 'cua-hang' as const } : {}),
       })
       out.push(
         gradeTestCase(check, r.output, r.error ?? (r.timedOut ? 'Quá thời gian' : undefined)),
@@ -190,7 +247,7 @@ export default function ProgrammingProjectPage() {
       doneRef.current = nextDone
       setDoneSteps(nextDone)
       void saveLessonProgress(user.id, activeStep.id, 'completed')
-      if (activeStep.isMilestone) void snapshotMilestone(stage.level)
+      if (activeStep.isMilestone) void snapshotMilestone(stage.level, track)
       // KHÔNG tự nhảy bước: giữ nguyên các ca xanh cho học viên thấy thành quả,
       // banner bên dưới hiện nút "Sang bước tiếp" (đúng nhịp thong thả của Companion).
     }
@@ -198,6 +255,7 @@ export default function ProgrammingProjectPage() {
 
   /** "Phao": nạp code tham chiếu của bước (kể cả các file phụ) — không phạt, chỉ ghi nhận. */
   const loadReference = () => {
+    userActedRef.current = true
     setRefViewed(true)
     setFiles((prev) => ({
       ...(prev ?? {}),
@@ -211,22 +269,68 @@ export default function ProgrammingProjectPage() {
     })
   }
 
+  /** Đổi dự án: lưu file đang sửa của dự án CŨ trước (không mất gì), rồi mới chuyển. */
+  const switchTrack = async (next: ProjectTrackId) => {
+    if (!user || next === track || switchingTrack) return
+    userActedRef.current = true
+    setSwitchingTrack(true)
+    await doSave()
+    setFiles(null) // ô soạn hiện "đang tải" cho tới khi workspace dự án mới về
+    setActiveFile(null)
+    setTrack(next)
+    // Về chặng đầu của dự án mới — `?chang=` của dự án cũ không có nghĩa ở dự án này.
+    setParams({}, { replace: true })
+    setTrackSaveFailed(!(await saveProjectTrack(user.id, next)))
+    setSwitchingTrack(false)
+  }
+
+  const retrySaveTrack = async () => {
+    if (!user) return
+    setTrackSaveFailed(!(await saveProjectTrack(user.id, track)))
+  }
+
   const saveLabel = savingNow ? 'Đang lưu…' : dirty.size > 0 ? 'Chưa lưu' : 'Đã lưu'
+  const nextStage = stages[stageIndex + 1]
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
-      <Layout onBack={() => nav(PROGRAMMING_PREFIX)} title="Dự án: Cửa hàng của tôi" />
+      <Layout onBack={() => nav(PROGRAMMING_PREFIX)} title={`Dự án: ${trackInfo.name}`} />
 
       {/* [2026-09-02, đợt 4 thiết kế lại desktop] Trước đây một cột `max-w-4xl` ở mọi bề rộng. */}
       <PageShell width="standard" baseWidth="max-w-4xl" className="space-y-5">
         <h1 tabIndex={-1} className="sr-only focus:outline-none">
-          Dự án: Cửa hàng của tôi
+          Dự án: {trackInfo.name}
         </h1>
+
+        {/* Bộ chọn dự án trục — mỗi dự án giữ tiến độ + workspace riêng */}
+        <ProjectTrackPicker
+          tracks={PROJECT_TRACKS}
+          value={track}
+          onChange={(next) => void switchTrack(next)}
+          busy={switchingTrack || savingNow}
+        />
+        {trackSaveFailed && (
+          <div
+            role="status"
+            className="flex items-center justify-between gap-3 flex-wrap rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-zinc-100"
+          >
+            <p>
+              Chưa lưu được lựa chọn dự án lên máy chủ. Máy này vẫn nhớ, nhưng thiết bị khác sẽ chưa
+              thấy.
+            </p>
+            <button
+              onClick={() => void retrySaveTrack()}
+              className={buttonClass({ variant: 'secondary' })}
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
 
         {/* Thanh chọn chặng */}
         <nav aria-label="Các chặng dự án" className="flex gap-2 flex-wrap">
-          {PROJECT_STAGES.map((st, i) => {
-            const unlocked = isStageUnlocked(i, doneSteps)
+          {stages.map((st, i) => {
+            const unlocked = isStageUnlocked(stages, i, doneSteps)
             return (
               <button
                 key={st.level}
@@ -243,14 +347,16 @@ export default function ProgrammingProjectPage() {
               >
                 {unlocked ? <Store className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                 <span>{st.title}</span>
+                {st.steps.length === 0 && <span>· Sắp mở</span>}
               </button>
             )
           })}
         </nav>
-        {!isStageUnlocked(stageIndex, doneSteps) && (
+        {!isStageUnlocked(stages, stageIndex, doneSteps) && (
           <p className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3.5 text-sm text-zinc-300">
-            Chặng này mở khi bạn hoàn thành trọn chặng trước — cửa hàng phải có máy tính tiền chạy
-            được thì mới nói chuyện sổ sách được.
+            {track === 'T1'
+              ? 'Chặng này mở khi bạn hoàn thành trọn chặng trước — cửa hàng phải có máy tính tiền chạy được thì mới nói chuyện sổ sách được.'
+              : 'Chặng này mở khi bạn hoàn thành trọn chặng trước — dự án lớn dần từng chặng, không nhảy cóc.'}
           </p>
         )}
 
@@ -353,7 +459,7 @@ export default function ProgrammingProjectPage() {
               <button
                 onClick={() =>
                   setPreviewScript(
-                    (stepLanguage === 'fetch' ? FETCH_SHIM_CUA_HANG_JS : '') +
+                    (stepLanguage === 'fetch' && track === 'T1' ? FETCH_SHIM_CUA_HANG_JS : '') +
                       (files[shownFile] ?? ''),
                   )
                 }
@@ -476,10 +582,10 @@ export default function ProgrammingProjectPage() {
             <div>
               <p className="font-bold">Hoàn thành {stage.title}! 🎉</p>
               <p className="mt-1 leading-relaxed">
-                Bản cửa hàng của bạn đã được chốt snapshot milestone {stage.level.toUpperCase()} —
-                sau này nhìn lại sẽ thấy mình đi xa cỡ nào.{' '}
-                {stageIndex + 1 < PROJECT_STAGES.length
-                  ? `Chặng tiếp theo (${PROJECT_STAGES[stageIndex + 1]!.title}) đã mở ở thanh trên.`
+                Bản {trackInfo.productNoun} của bạn đã được chốt snapshot milestone{' '}
+                {stage.level.toUpperCase()} — sau này nhìn lại sẽ thấy mình đi xa cỡ nào.{' '}
+                {nextStage && nextStage.steps.length > 0
+                  ? `Chặng tiếp theo (${nextStage.title}) đã mở ở thanh trên.`
                   : 'Chặng tiếp theo sẽ mở cùng nội dung bậc sau.'}
               </p>
             </div>

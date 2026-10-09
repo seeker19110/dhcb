@@ -33,7 +33,13 @@ import { countCompleted, countCompletedByLevel } from '../../../lib/programmingN
 import { programmingNext } from '../../../lib/today/programmingNext'
 import { PROGRAMMING_LEVELS } from '@dhcb/subject-programming/curriculum'
 import { UNLOCK_PCT } from '@dhcb/subject-programming/levelLock'
-import { PROJECT_STAGES } from '@dhcb/subject-programming/projectSteps'
+import { getProjectStages } from '@dhcb/subject-programming/projectSteps'
+import {
+  getProjectTrack,
+  normalizeProjectTrack,
+  type ProjectTrackId,
+} from '@dhcb/subject-programming/projectTracks'
+import { readCachedProjectTrack } from '../../../lib/programmingProjectTrack'
 import { PROGRAMMING_SPECIALIZATIONS } from '@dhcb/subject-programming/specializations/registry'
 import { SHORT_COURSES } from '@dhcb/subject-programming/courses/registry'
 import { LEARNING_PATHS } from '@dhcb/subject-programming/learningPaths/registry'
@@ -68,6 +74,11 @@ export default function ProgrammingHome() {
   // [2026-09-22, audit UI/UX P1-2] 13 khoá ngắn với mô tả 2–4 dòng từng đứng TRƯỚC bậc P1–P6 và
   // đẩy trang lên 5.671px ở 390px. Nay khối khoá ngắn nằm SAU bậc học, mặc định chỉ hiện 3.
   const [hienHetKhoa, setHienHetKhoa] = useState(false)
+  // Dự án trục đang chọn (T1/T2/T3, 2026-10-09): đọc bộ đệm máy này, cập nhật sau khi lượt đọc
+  // tiến độ về (fetchProgress ghi dự án server đang giữ vào bộ đệm). Khách chưa chọn → T1.
+  const [track, setTrack] = useState<ProjectTrackId>(() =>
+    normalizeProjectTrack(user ? readCachedProjectTrack(user.id) : null),
+  )
   // Chưa đăng nhập thì không có gì để tải — coi như đã xong ngay, KHÔNG setState trong effect
   // (đặt state đồng bộ trong effect gây render dây chuyền, ESLint chặn).
   const loaded = !user || fetched
@@ -79,6 +90,7 @@ export default function ProgrammingHome() {
       // vào bậc đó (đặc tả §①.3). Phải chạy sau khi tiến độ về, trước khi tính bản đồ khoá.
       seedGrandfather(user.id, p)
       setProgress(p)
+      setTrack(normalizeProjectTrack(readCachedProjectTrack(user.id)))
       setFetched(true)
     })
   }, [user])
@@ -104,10 +116,13 @@ export default function ProgrammingHome() {
   // đủ — bậc xa hơn chỉ cần biết "mở sau bậc nào" theo LevelMilestones bên dưới.
   const bacKeTiepDangKhoa = PROGRAMMING_LEVELS.find((l) => lockMap.get(l.id)?.locked === true)?.id
 
-  // Chặng dự án đang ở = chặng của bậc chứa bài học tiếp; xong môn thì là chặng cuối.
+  // Chặng dự án đang ở = chặng của bậc chứa bài học tiếp; xong môn thì là chặng cuối. Tên
+  // chặng lấy theo DỰ ÁN đang chọn (mỗi dự án đặt tên chặng riêng, cùng thang P1–P5).
+  const projectStages = getProjectStages(track)
+  const trackInfo = getProjectTrack(track)
   const changDangO =
-    PROJECT_STAGES.find((s) => s.level === picked?.levelId) ??
-    PROJECT_STAGES[PROJECT_STAGES.length - 1]
+    projectStages.find((s) => s.level === picked?.levelId) ??
+    projectStages[projectStages.length - 1]
 
   const nutPhu =
     'tap-44 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-accent-500/60 text-white font-semibold text-sm transition active:scale-[0.98]'
@@ -229,13 +244,21 @@ export default function ProgrammingHome() {
             <Rocket className="w-5 h-5 text-accent-400" />
             <span>Dự án xuyên suốt — học tới đâu, xây tới đó</span>
           </h2>
-          <p className="text-sm text-zinc-300 leading-relaxed read-measure">
-            Mỗi bậc kết thúc bằng một chặng của <strong>cùng một sản phẩm</strong>: bắt đầu là máy
-            tính tiền chạy chữ, kết thúc là web bán hàng của bạn chạy thật trên Internet — kèm repo
-            GitHub làm hồ sơ xin việc.
-          </p>
+          {track === 'T1' ? (
+            <p className="text-sm text-zinc-300 leading-relaxed read-measure">
+              Mỗi bậc kết thúc bằng một chặng của <strong>cùng một sản phẩm</strong>: bắt đầu là máy
+              tính tiền chạy chữ, kết thúc là web bán hàng của bạn chạy thật trên Internet — kèm
+              repo GitHub làm hồ sơ xin việc.
+            </p>
+          ) : (
+            <p className="text-sm text-zinc-300 leading-relaxed read-measure">
+              Mỗi bậc kết thúc bằng một chặng của <strong>cùng một sản phẩm</strong> — dự án &ldquo;
+              {trackInfo.name}&rdquo; của bạn: bắt đầu chạy chữ, kết thúc chạy thật trên Internet —
+              kèm repo GitHub làm hồ sơ xin việc.
+            </p>
+          )}
           <ol className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            {PROJECT_STAGES.map((stage) => {
+            {projectStages.map((stage) => {
               const p = countCompletedByLevel(progress, stage.level)
               const xong = p.total > 0 && p.done === p.total
               const dangO = stage.level === changDangO?.level
