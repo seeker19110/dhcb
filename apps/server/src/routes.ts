@@ -376,7 +376,7 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/metacognitive-reflection', wrapEdge(metacognitiveReflectionHandler))
   // Spatial Multi-Sensory Memory Palace (Platform V5 Phase 3) — Method of Loci & Neural Anchors.
   app.all('/api/memory-palace', wrapEdge(memoryPalaceHandler))
-  // Cross-Domain Life Synthesis & Predictive Goal Horizon (Platform V5.4) — Strategic Alignment.
+  // Tổng hợp 30 ngày (Học tập + Ghi chú) — chỉ đếm bản ghi thật, không điểm tổng hợp (changelog 0550).
   app.all('/api/life-synthesis', wrapEdge(lifeSynthesisHandler))
   // Autonomous Multi-Agent Orchestrator Studio (Platform V5.5) — Multi-Step Autonomous Execution.
   app.all('/api/agent-orchestrator', wrapEdge(agentOrchestratorHandler))

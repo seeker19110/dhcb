@@ -50,6 +50,9 @@ vi.mock('../CompanionVoice/ScenarioHolodeckCard.js', () => ({
     React.createElement('div', { 'data-testid': 'holodeck-card' }, 'ScenarioHolodeckCard'),
 }))
 
+vi.mock('../LifeSynthesis/LifeSynthesisDashboard', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'life-synthesis' }),
+}))
 vi.mock('../NeuralCurriculum/NeuralMicroCurriculumCard', () => ({
   default: () => React.createElement('div', { 'data-testid': 'neural-card' }),
 }))
@@ -110,5 +113,17 @@ describe('CompanionStudios', () => {
     expect(html).not.toContain('Khởi chạy Agent')
     expect(html).toContain('Action Canvas')
     expect(html).toContain('Mở Workspace')
+  })
+
+  // Changelog 0550: "Tổng hợp 30 ngày" (dữ liệu thật) gắn lại vào studio "Kế hoạch", đứng TRƯỚC
+  // các thẻ thử nghiệm — không quay lại thành tab riêng.
+  it('StudioProactive có khối Tổng hợp 30 ngày, đứng trước thẻ Neural Curriculum', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(StudioProactive, { proactiveState: null, navigate: vi.fn() }),
+    )
+    const synthesis = html.indexOf('data-testid="life-synthesis"')
+    expect(synthesis).toBeGreaterThan(-1)
+    expect(synthesis).toBeLessThan(html.indexOf('data-testid="neural-card"'))
+    expect(STUDIO_TABS_CONFIG.map((t) => t.id)).not.toContain('synthesis')
   })
 })

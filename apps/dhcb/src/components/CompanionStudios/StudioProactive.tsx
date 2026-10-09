@@ -8,6 +8,7 @@ import ProactiveBriefingCard from '../ProactiveBriefingCard'
 import AmbientScreenCopilot from '../CompanionVoice/AmbientScreenCopilot'
 import NeuroAffectiveCard from '../CompanionVoice/NeuroAffectiveCard'
 import ActionCanvasBanner from './ActionCanvasBanner'
+import LifeSynthesisDashboard from '../LifeSynthesis/LifeSynthesisDashboard'
 import type { ProactiveAgentState } from '@dhcb/core-contracts/proactiveAgent'
 
 interface StudioProactiveProps {
@@ -33,6 +34,9 @@ export default function StudioProactive({ proactiveState, navigate }: StudioProa
         />
       )}
 
+      {/* "30 ngày qua của bạn" — bật lại sau changelog 0475, nay chỉ đếm bản ghi thật của Học tập +
+          Ghi chú (changelog 0550). Đặt trước các thẻ thử nghiệm: đây là khối có dữ liệu thật. */}
+      <LifeSynthesisDashboard />
       <NeuralMicroCurriculumCard />
       <WorkplaceHarvesterCard />
       <A2ANegotiatorCard />

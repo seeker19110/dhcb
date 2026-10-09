@@ -717,8 +717,8 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   `/api/life-synthesis` + `lifeGraphService` + bảng `personal.life_graph_*` (migration 0043) **cố
   ý GIỮ LẠI** — đó là đồ thị cá nhân/Learning chứ không phải trụ "Đời sống" (bảng nằm ở schema
   `personal`, không phải `life`): `learningGoalAdapter` → `/api/profile` chiếu learning goal vào
-  đó, `contextEngine` đọc nó theo consent `life_graph`. (`/api/life-synthesis` đã TẠM NGỪNG, trả 501
-  từ changelog `0475`; studio "Tổng kết" gọi nó đã gỡ.) Xoá sẽ gãy các luồng Learning + Companion
+  đó, `contextEngine` đọc nó theo consent `life_graph`. (`/api/life-synthesis` từ changelog `0550`
+  chỉ đếm bản ghi thật của Học tập + Ghi chú, không đọc đồ thị cá nhân.) Xoá sẽ gãy các luồng Learning + Companion
   đó, nên chờ quyết định riêng.
 
 ### Ưu tiên 3 — kỹ thuật (nhỏ, đo được, không đổi hành vi)
@@ -1204,13 +1204,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   Socratic); (4) ngân hàng đề STEM vẫn là dữ liệu mẫu `S_{n} = …` và giao diện chưa gọi
   `submit_solution` (`0539`); (5) ở 390px hàng nhập của bảng nháp chật (nút "Gợi ý" bị ép xuống 2
   dòng, sát mép) — có từ trước, thấy ở ảnh 8b `0547`.
-- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0475`] "Tổng hợp đa miền" (Life Synthesis) chờ
-  dữ liệu thật.** Lỗi 🔴 cũ (studio "Tổng kết" hiện điểm "phân tích cuộc sống" BỊA — 88/92/85 —
-  giống nhau cho mọi người dùng) đã gỡ: tab không còn, `/api/life-synthesis` trả 501 kèm lời giải
-  thích. Thẻ Agent + banner Action Canvas dời sang studio "Kế hoạch". **Muốn bật lại:** nối nguồn
-  hoạt động thật (Learning + Ghi chú), bỏ ba miền đã xoá (career/startup/life), VIẾT LẠI phần câu
-  chữ của `packages/core-personal/lifeSynthesisService.ts` (nhận xét, khó khăn, khuyến nghị đều
-  soạn sẵn) rồi mới gắn lại `LifeSynthesisDashboard`.
 - 🟡 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` —
   HẠ MỨC từ 🔴 sau changelog `0512`, 2026-10-07] Phần WCAG 2.2 A/AA của audit ĐÃ ĐÓNG.** U1–U9 +
   đợt minor (#1222–#1255) đóng 8 critical + major/minor. Đo lại bằng máy trên `main` `e3afc29`

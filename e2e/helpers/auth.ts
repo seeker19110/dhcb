@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { PublicAppSettingsSchema } from '../../packages/core-contracts/appSettings'
+import { MOCK_LIFE_SYNTHESIS } from './lifeSynthesisMock'
 
 // Giả "đã đăng nhập" cho E2E: gieo trước cờ phiên không bí mật (đúng key mà
 // src/lib/authHeader.ts đọc — gsa_session_present_v1) + chặn network `GET
@@ -83,5 +84,15 @@ export async function mockLogin(
 
   await page.route('**/api/history**', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  )
+
+  // Khối "30 ngày qua của bạn" ở studio "Kế hoạch" (changelog 0550) — dữ liệu đủ mọi phần để cổng
+  // a11y quét nội dung thật, không chỉ khối lỗi. Test cần trạng thái khác thì `page.route` đè sau.
+  await page.route('**/api/life-synthesis**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ report: MOCK_LIFE_SYNTHESIS }),
+    }),
   )
 }
