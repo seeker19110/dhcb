@@ -768,8 +768,9 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
-- **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`, PR #1315] Ba việc trên VPS sau
-  khi deploy** (phiên AI không có key Anthropic thật):
+- **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`, PR #1315 · structured
+  outputs chấm điểm, changelog `0569`, PR #1316] Bốn việc trên VPS sau khi deploy** (phiên AI không có key
+  Anthropic thật):
   1. Kiểm `ANTHROPIC_API_KEY` trong `/var/www/dhcb/.env` còn hiệu lực + tài khoản còn credit
      (`console.anthropic.com` › Billing). Từ đợt này Claude chạy MỌI lượt chat/chấm bài → hết credit
      là rơi hết về Groq/Gemini.
@@ -778,6 +779,10 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
      `docs/research/eval-tutor-baseline.md`; recall/precision tụt thì đổi model qua
      `ANTHROPIC_FAST_MODEL`, không cần sửa code. Sau vài ngày, đối chiếu thẻ "chi phí theo token
      thật" ở `/admin` với ước tính và chỉnh `AI_COST_*_USD`.
+  4. Chấm thử 1 bài ở mỗi màn Writing · Speaking · Chat · Challenge · Reverse Interview (lượt chấm
+     nay gửi JSON Schema — `packages/core-ai/gradingSchemas.ts`): điểm hiện đúng và counter
+     `ai_anthropic_status_400` ở `/admin` không tăng. Có 400 → lượt đó đã rơi sang Groq; báo lại
+     để gỡ schema gây lỗi.
 
 - **[2026-10-09 · sổ chống lạm dụng sau xoá tài khoản, changelog `0545`] Đặt khoá
   `ERASED_BENEFIT_LEDGER_KEY` trên VPS TRƯỚC khi deploy:**
@@ -939,7 +944,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   định tuyến ở `packages/core-ai/aiConfig.ts#getAnthropicRoute`, đổi model qua
   `ANTHROPIC_FAST_MODEL`/`ANTHROPIC_SMART_MODEL`. **Đánh đổi đã biết:** chi phí từ ~0 lên trả phí thật
   (ước tính $0.0006/lượt chat, ~$0.03/lượt chấm bài); đổi lại chất lượng ổn định hơn. Chưa có số
-  `eval:tutor` cho model mới — việc tay ở mục A.
+  `eval:tutor` cho model mới — việc tay ở mục A. **Lượt chấm điểm dùng structured outputs** (changelog
+  `0569`): client gửi TÊN khuôn JSON (`output_schema`), server giữ schema ở
+  `packages/core-ai/gradingSchemas.ts`; sửa khoá JSON trong prompt chấm thì PHẢI sửa schema
+  (`apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` canh).
 
 - **[2026-09-05] 🔑 QUYẾT ĐỊNH QUAN TRỌNG — thêm Tầng 8b "NHÌN trang thật bằng ảnh chụp" vào
   `docs/framework/QUY-TRINH-AUDIT.md`, BẮT BUỘC với mọi đợt việc chạm giao diện** (người dùng

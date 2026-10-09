@@ -258,7 +258,7 @@ lỗi máy nhìn được — phần dễ hiểu/đúng sư phạm vẫn phải 
 
 **Đổi prompt hoặc model AI:** mọi PR sửa `apps/dhcb/src/prompts/*` hoặc `packages/core-ai/aiConfig.ts` (model/guardrail) PHẢI chạy lại `npm run eval:tutor` (cần key AI trong `.env`) và **dán bảng so sánh với `docs/research/eval-tutor-baseline.md` vào mô tả PR** — recall/precision không được tụt so với baseline. Xem `scripts/eval-tutor.ts`. **Môn Lập trình có prompt + eval RIÊNG** (nó không đi qua `/api/agent`): PR sửa `packages/subject-programming/feedbackPrompt.ts` PHẢI chạy lại `npm run eval:code-feedback` và dán kết quả vào mô tả PR — còn ca vi phạm bất biến (lộ lời giải · không phải tiếng Việt · gợi ý không có câu hỏi) là script thoát mã 1. Tương tự: sửa `packages/core-personal/actionCanvasPrompt.ts`/`goalDecomposition.ts` (Action Canvas) ⇒ chạy `npm run eval:action-canvas`, dán kết quả vào PR.
 
-**Golden snapshot prompt:** `apps/dhcb/src/prompts/golden.test.ts` chụp nguyên văn prompt môn Anh (không gọi AI) để bắt prompt bị sửa **không chủ đích**. Sửa có chủ đích → xem kỹ diff snapshot rồi `npx vitest run apps/dhcb/src/prompts/golden.test.ts -u`, commit cả `.snap`. **Snapshot KHÔNG thay thế `eval:tutor`.**
+**Golden snapshot prompt:** `apps/dhcb/src/prompts/golden.test.ts` chụp nguyên văn prompt môn Anh (không gọi AI) để bắt prompt bị sửa **không chủ đích**. Sửa có chủ đích → xem kỹ diff snapshot rồi `npx vitest run apps/dhcb/src/prompts/golden.test.ts -u`, commit cả `.snap`. **Snapshot KHÔNG thay thế `eval:tutor`.** **Prompt chấm điểm có JSON Schema đi kèm** (structured outputs, `packages/core-ai/gradingSchemas.ts`): thêm/bớt khoá JSON trong prompt chấm thì sửa schema CÙNG LÚC — `apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` đỏ nếu lệch.
 
 ## 9. Cổng trước khi MERGE (thêm)
 

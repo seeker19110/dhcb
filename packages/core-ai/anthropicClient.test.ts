@@ -15,6 +15,7 @@ import {
   CLOSING_USER_TURN,
 } from './anthropicClient.js'
 import { getAnthropicRoute } from './aiConfig.js'
+import { getGradingSchema } from './gradingSchemas.js'
 
 const FAST = getAnthropicRoute('converse')
 const SMART = getAnthropicRoute('grade')
@@ -131,6 +132,18 @@ describe('buildAnthropicRequest — tham số theo nhiệm vụ', () => {
 
   it('system rỗng → không gửi trường system', () => {
     expect(buildAnthropicRequest(FAST, '', [])).not.toHaveProperty('system')
+  })
+
+  it('có schema chấm điểm → output_config.format json_schema, GIỮ effort, vẫn bật fallback', () => {
+    const schema = getGradingSchema('writing_eval')
+    const req = buildAnthropicRequest(SMART, 'sys', [], schema)
+    expect(req.output_config).toEqual({
+      effort: 'medium',
+      format: { type: 'json_schema', schema },
+    })
+    expect(req.fallbacks).toBe('default')
+    // Structured outputs không đi cùng prefill: tin cuối luôn là user.
+    expect(req.messages.at(-1)?.role).toBe('user')
   })
 })
 
@@ -294,5 +307,20 @@ describe('callAnthropicText — lỗi & thử lại', () => {
     expect(body.model).toBe('claude-haiku-5-5')
     expect(body.system).toBe('sys')
     expect(body.messages).toEqual([{ role: 'user', content: OPENING_USER_TURN }])
+    expect(body.output_config).toEqual({ effort: 'low' }) // không có schema → không ép format
+  })
+
+  it('outputSchema đi tới tận body HTTP; text JSON trả về nguyên vẹn', async () => {
+    const json = '{"score":80,"feedback":"Tốt","correction":""}'
+    const fetchImpl = fakeFetch(jsonResponse(message({ content: [{ type: 'text', text: json }] })))
+    const r = await callAnthropicText({
+      ...BASE,
+      route: SMART,
+      outputSchema: getGradingSchema('interview_feedback'),
+      fetchImpl,
+    })
+    expect(r).toMatchObject({ kind: 'success', text: json })
+    const format = (sentBody(fetchImpl).output_config as { format?: unknown }).format
+    expect(format).toEqual({ type: 'json_schema', schema: getGradingSchema('interview_feedback') })
   })
 })

@@ -9,7 +9,9 @@
 // BẢO MẬT: Server tự quyết định model và giới hạn max_tokens,
 // không tin giá trị client gửi lên (tránh bị gọi model đắt / token lớn). Client chỉ được xin
 // NHIỆM VỤ (`task`: 'converse' | 'grade') trong danh sách cho phép — model của từng nhiệm vụ
-// tra ở aiConfig.ts#getAnthropicRoute.
+// tra ở aiConfig.ts#getAnthropicRoute. Lượt chấm điểm gửi thêm TÊN schema (`output_schema`)
+// để Claude trả JSON đúng khuôn (structured outputs) — schema thô do server giữ ở
+// gradingSchemas.ts, client không gửi được schema tuỳ ý.
 
 import { z } from 'zod'
 import {
@@ -42,6 +44,7 @@ import {
   getAnthropicRoute,
   isClientAiTask,
 } from './aiConfig.js'
+import { getGradingSchema, isGradingSchemaName, type GradingSchemaName } from './gradingSchemas.js'
 
 // Thời gian chờ tối đa cho 1 lần gọi AI (ms) — tránh treo vô hạn khi nhà cung cấp chậm.
 const AI_TIMEOUT_MS = 30_000
@@ -117,6 +120,12 @@ const AiBodySchema = z
       .unknown()
       .optional()
       .transform((v) => (isClientAiTask(v) ? v : null)),
+    // TÊN schema chấm điểm (structured outputs, xem gradingSchemas.ts). Client chỉ chọn được
+    // tên trong danh sách cho phép — schema thô do server giữ. Tên lạ/thiếu → null (không ép).
+    output_schema: z
+      .unknown()
+      .optional()
+      .transform((v) => (isGradingSchemaName(v) ? v : null)),
   })
   .refine((d) => sumStringContent(d.messages) <= MAX_TOTAL_CONTENT, {
     error: 'Nội dung hội thoại quá dài',
@@ -124,8 +133,14 @@ const AiBodySchema = z
   })
 
 // Client cũ (chưa gửi `task`): chế độ Luyện viết toàn là chấm bài → 'grade'; còn lại trò chuyện.
-function resolveTask(task: 'converse' | 'grade' | null, mode: UsageMode): 'converse' | 'grade' {
+// Có schema chấm điểm mà thiếu `task` → cũng là chấm bài.
+function resolveTask(
+  task: 'converse' | 'grade' | null,
+  mode: UsageMode,
+  outputSchema: GradingSchemaName | null,
+): 'converse' | 'grade' {
   if (task) return task
+  if (outputSchema) return 'grade'
   return mode === 'writing' ? 'grade' : 'converse'
 }
 
@@ -256,7 +271,8 @@ export default async function handler(req: Request): Promise<Response> {
   // mode do client gửi: 'chat' | 'writing' | 'speaking' (mặc định 'chat').
   // Server đếm authoritative trong daily_usage → client không tự vượt giới hạn được.
   const mode = parsedBody.data.mode
-  const task = resolveTask(parsedBody.data.task, mode)
+  const outputSchemaName = parsedBody.data.output_schema
+  const task = resolveTask(parsedBody.data.task, mode, outputSchemaName)
   const gate = await checkAndConsumeActorUsage(actor, mode, clientIp)
   if (!gate.ok) {
     logSecurityEvent('USAGE_LIMIT', clientIp, { path: '/api/agent', mode })
@@ -275,13 +291,16 @@ export default async function handler(req: Request): Promise<Response> {
     const canFallback = Boolean(groqKey || geminiKey)
     const route = getAnthropicRoute(task)
 
-    log.debug(`gọi Anthropic bắt đầu, mode=${mode}, task=${task}, model=${route.model}`)
+    log.debug(
+      `gọi Anthropic bắt đầu, mode=${mode}, task=${task}, model=${route.model}, schema=${outputSchemaName ?? '-'}`,
+    )
     const anthropicResult = await withConcurrencyLimit('anthropic', () =>
       callAnthropicText({
         apiKey: anthropicKey,
         route,
         system,
         messages: sanitizedMessages,
+        outputSchema: outputSchemaName ? getGradingSchema(outputSchemaName) : undefined,
       }),
     )
     recordLatency('ai_anthropic_ms', anthropicResult.latencyMs)

@@ -48,6 +48,22 @@ describe('callClaude — xử lý lỗi thân thiện (song ngữ, không phơi 
     >
     expect(body).toMatchObject({ mode: 'writing', task: 'grade', max_tokens: 2048 })
     expect(body).not.toHaveProperty('model')
+    // Không truyền schema → không có khoá output_schema trong body (JSON.stringify bỏ undefined).
+    expect(body).not.toHaveProperty('output_schema')
+  })
+
+  it('lượt chấm điểm gửi TÊN schema (output_schema), không gửi schema thô', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ content: [{ type: 'text', text: '{}' }] }),
+    })
+    global.fetch = fetchMock as unknown as typeof fetch
+    await callClaude([], 'sys', 2048, 'writing', 'grade', 'writing_eval')
+    const body = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string) as Record<
+      string,
+      unknown
+    >
+    expect(body.output_schema).toBe('writing_eval')
   })
 
   it('fetch ném lỗi mạng → thông điệp song ngữ thân thiện, không phải "Failed to fetch"', async () => {
