@@ -1,6 +1,6 @@
 # 0573 — Dự án trục T3 "Sổ học tập của tôi": đủ năm chặng P1→P5 (26 bước)
 
-- **Ngày:** 2026-10-09 · **PR:** (xem mô tả PR) · **Loại:** `feat(programming)`
+- **Ngày:** 2026-10-09 · **PR:** #1323 · **Loại:** `feat(programming)`
 - **Đặc tả:** `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md` (Approved for implementation),
   đợt hạ tầng `0571`.
 

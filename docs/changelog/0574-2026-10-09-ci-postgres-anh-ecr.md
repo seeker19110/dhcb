@@ -1,6 +1,6 @@
 # 0574 — CI: kéo image Postgres của job SQL PREPARE từ ECR Public thay vì Docker Hub
 
-- **Ngày:** 2026-10-09 · **PR:** (xem mô tả PR) · **Loại:** `ci`
+- **Ngày:** 2026-10-09 · **PR:** #1322 · **Loại:** `ci`
 - **Nguồn:** chủ dự án chọn "Mở PR sửa CI" khi PR #1321 kẹt (phiên 2026-10-09).
 
 ## Vấn đề
