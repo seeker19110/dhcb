@@ -216,7 +216,7 @@ export default function LifeSynthesisDashboard() {
 
         {/* Top Predictive Goal Spotlight */}
         {topGoal && (
-          <div className="bg-gradient-to-r from-accent-950/30 via-zinc-900/60 to-indigo-950/30 border border-accent-500/20 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+          <div className="bg-gradient-to-r from-accent-950/30 via-zinc-900/60 to-indigo-950/30 theme-light:to-indigo-50 border border-accent-500/20 rounded-2xl p-3.5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-accent-500/20 text-accent-300 flex items-center justify-center shrink-0 border border-accent-500/30">
                 <TrendingUp className="w-4 h-4" />

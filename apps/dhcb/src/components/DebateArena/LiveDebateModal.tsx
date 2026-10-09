@@ -100,7 +100,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
         className="relative w-full max-w-4xl max-h-[92dvh] flex flex-col rounded-3xl border border-indigo-500/30 bg-zinc-950 text-white shadow-2xl overflow-hidden focus:outline-none"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-zinc-950 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-indigo-950/40 theme-light:from-indigo-50 via-purple-950/20 theme-light:via-purple-50 to-zinc-950 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-xl">
               ⚔️
@@ -156,7 +156,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
 
               {/* Turns Timeline */}
               {session?.turns.length === 0 ? (
-                <div className="p-8 text-center bg-indigo-950/20 border border-indigo-500/20 rounded-2xl">
+                <div className="p-8 text-center bg-indigo-950/20 theme-light:bg-indigo-50 border border-indigo-500/20 rounded-2xl">
                   <p className="text-sm text-zinc-300 font-medium">
                     Hãy đưa ra luận điểm mở màn (Opening Argument) của bạn bằng tiếng Anh!
                   </p>
@@ -171,7 +171,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                     key={turn.id}
                     className={`p-4 rounded-2xl border transition ${
                       turn.speakerRole === 'user'
-                        ? 'bg-indigo-950/30 border-indigo-500/30 ml-4 sm:ml-12'
+                        ? 'bg-indigo-950/30 theme-light:bg-indigo-50 border-indigo-500/30 ml-4 sm:ml-12'
                         : 'bg-zinc-900/70 border-white/10 mr-4 sm:mr-12'
                     }`}
                   >
@@ -205,7 +205,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
                     </p>
 
                     {turn.fallacyExplanation && (
-                      <div className="mt-2 text-xs p-2 rounded-xl bg-rose-950/40 text-rose-200 theme-light:text-rose-900 border border-rose-500/20">
+                      <div className="mt-2 text-xs p-2 rounded-xl bg-rose-950/40 theme-light:bg-rose-50 text-rose-200 theme-light:text-rose-900 border border-rose-500/20">
                         {turn.fallacyExplanation}
                       </div>
                     )}
@@ -229,7 +229,7 @@ export default function LiveDebateModal({ onClose }: LiveDebateModalProps) {
 
               {/* Rubric Review when completed */}
               {session?.finalRubric && (
-                <div className="p-5 rounded-3xl bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-zinc-950 border border-indigo-500/40 mt-4">
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-indigo-950/50 theme-light:from-indigo-50 via-purple-950/30 theme-light:via-purple-50 to-zinc-950 border border-indigo-500/40 mt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <span>🏆</span> Bảng Điểm & Nhận Xét Toàn Trận

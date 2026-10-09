@@ -293,7 +293,7 @@ export default function ActionCanvas() {
             <button
               type="button"
               onClick={handleExport}
-              className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-emerald-950/60 theme-light:bg-emerald-50 hover:bg-emerald-900/60 text-emerald-300 theme-light:text-emerald-800 border border-emerald-700/40 transition"
+              className="tap-44 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-emerald-950/60 theme-light:bg-emerald-50 hover:bg-emerald-900/60 theme-light:hover:bg-emerald-100 text-emerald-300 theme-light:text-emerald-800 border border-emerald-700/40 transition"
             >
               <Download className="w-3.5 h-3.5" />
               Xuất Markdown

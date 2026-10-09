@@ -157,7 +157,7 @@ export default function Subjects() {
         {/* AI Multi-Subject Diagnostic & Adaptive Recommendation Card */}
         <section
           aria-label="Đánh giá & Gợi ý lộ trình AI"
-          className="relative overflow-hidden rounded-3xl border border-accent-500/30 bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-blue-950/40 p-5 sm:p-6 shadow-xl backdrop-blur-md animate-fade-up"
+          className="relative overflow-hidden rounded-3xl border border-accent-500/30 bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-blue-950/40 theme-light:to-blue-50 p-5 sm:p-6 shadow-xl backdrop-blur-md animate-fade-up"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5">

@@ -150,7 +150,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
           <div className="lg:col-span-5 p-4 rounded-xl bg-surface-raised border border-line-subtle flex flex-col items-center justify-center">
             <div className="text-[0.6875rem] font-bold text-content-secondary mb-2 flex items-center gap-1.5">
               <span>Mặt cắt Giải phẫu Miệng / Vòm họng</span>
-              <span className="text-teal-400 theme-light:text-teal-900 font-mono text-sm">
+              <span className="text-teal-300 theme-light:text-teal-900 font-mono text-sm">
                 {guide.ipaSymbol}
               </span>
             </div>
@@ -227,7 +227,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
               <ul className="space-y-1.5">
                 {guide.stepByStepAnatomyTips.map((tip, idx) => (
                   <li key={idx} className="text-xs text-content-secondary flex items-start gap-2">
-                    <span className="w-4 h-4 rounded-full bg-teal-500/20 text-teal-300 theme-light:text-teal-900 text-[0.6875rem] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="w-4 h-4 rounded-full bg-teal-500/20 text-teal-200 theme-light:text-teal-950 text-[0.6875rem] font-bold flex items-center justify-center shrink-0 mt-0.5">
                       {idx + 1}
                     </span>
                     <span>{tip}</span>
@@ -238,13 +238,13 @@ export default function ArticulatoryPhoneticsVisualizer() {
 
             {/* Pitch Contour Result Section if generated */}
             {report && (
-              <div className="p-3.5 rounded-xl bg-teal-950/40 border border-teal-500/40 space-y-2 animate-fadeIn">
+              <div className="p-3.5 rounded-xl bg-teal-950/40 theme-light:bg-teal-50 border border-teal-500/40 space-y-2 animate-fadeIn">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-teal-200 theme-light:text-teal-900">
                     <TrendingUp className="w-4 h-4 text-teal-400 theme-light:text-teal-900" />
                     <span>Đường cong Ngữ điệu F0 (Pitch Contour):</span>
                   </div>
-                  <span className="text-xs font-bold text-emerald-400 theme-light:text-emerald-900 bg-emerald-400/10 px-2 py-0.5 rounded">
+                  <span className="text-xs font-bold text-emerald-300 theme-light:text-emerald-900 bg-emerald-400/10 px-2 py-0.5 rounded">
                     Khớp {report.pitchContour.alignmentScore}%
                   </span>
                 </div>
@@ -267,9 +267,9 @@ export default function ArticulatoryPhoneticsVisualizer() {
                       strokeWidth="2.5"
                     />
                   </svg>
-                  <div className="absolute bottom-1 right-2 text-[0.6875rem] text-content-muted">
+                  <div className="absolute bottom-1 right-2 text-[0.6875rem] text-content-secondary">
                     <span className="text-content-secondary">--- Bản xứ</span> |{' '}
-                    <span className="text-teal-400 theme-light:text-teal-900">― Của bạn</span>
+                    <span className="text-teal-300 theme-light:text-teal-900">― Của bạn</span>
                   </div>
                 </div>
 

@@ -79,7 +79,7 @@ export default function CollocationGraphExplorer({
       </div>
 
       {activeCol && (
-        <div className="mt-1 rounded-xl border border-sky-500/20 bg-sky-950/20 p-3.5 flex flex-col gap-2">
+        <div className="mt-1 rounded-xl border border-sky-500/20 bg-sky-950/20 theme-light:bg-sky-50 p-3.5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-sky-200 theme-light:text-sky-900">
@@ -88,7 +88,7 @@ export default function CollocationGraphExplorer({
               <button
                 type="button"
                 onClick={() => playAudio(activeCol.phraseEn)}
-                className="p-1 text-sky-400 theme-light:text-sky-900 hover:text-sky-200 hover:bg-sky-900/40 rounded-lg transition"
+                className="p-1 text-sky-400 theme-light:text-sky-900 hover:text-sky-200 hover:bg-sky-900/40 theme-light:hover:bg-sky-100 rounded-lg transition"
                 title="Phát âm"
               >
                 <Volume2 className="w-3.5 h-3.5" />

@@ -46,9 +46,9 @@ export default function ProactiveNudgeBanner({
   const getPriorityColor = () => {
     switch (nudge.priority) {
       case 'urgent':
-        return 'border-rose-500/40 bg-rose-950/30 text-rose-200 theme-light:text-rose-900'
+        return 'border-rose-500/40 bg-rose-950/30 theme-light:bg-rose-50 text-rose-200 theme-light:text-rose-900'
       case 'high':
-        return 'border-amber-500/40 bg-amber-950/30 text-amber-200 theme-light:text-amber-900'
+        return 'border-amber-500/40 bg-amber-950/30 theme-light:bg-amber-50 text-amber-200 theme-light:text-amber-900'
       default:
         return 'border-accent-500/40 bg-accent-950/30 text-accent-200'
     }

@@ -146,7 +146,7 @@ export default function OfflineSyncIndicator() {
         </div>
 
         {!isOnline && (
-          <span className="text-xs px-2 py-0.5 rounded bg-amber-900 text-amber-300 border border-amber-700/50 shrink-0">
+          <span className="text-xs px-2 py-0.5 rounded bg-amber-900 text-amber-200 border border-amber-700/50 shrink-0">
             Tự lưu cục bộ
           </span>
         )}

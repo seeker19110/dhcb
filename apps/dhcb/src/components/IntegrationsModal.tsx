@@ -168,8 +168,8 @@ export default function IntegrationsModal({ isOpen, onClose, itemData }: Integra
           <div
             className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 mb-4 ${
               statusMessage.type === 'success'
-                ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300 theme-light:text-emerald-900'
-                : 'bg-rose-950/40 border-rose-500/30 text-rose-300 theme-light:text-rose-900'
+                ? 'bg-emerald-950/40 theme-light:bg-emerald-50 border-emerald-500/30 text-emerald-300 theme-light:text-emerald-900'
+                : 'bg-rose-950/40 theme-light:bg-rose-50 border-rose-500/30 text-rose-300 theme-light:text-rose-900'
             }`}
           >
             {statusMessage.type === 'success' ? (

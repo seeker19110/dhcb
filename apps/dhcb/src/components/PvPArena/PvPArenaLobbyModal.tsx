@@ -135,7 +135,7 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
 
           {/* User Profile Banner */}
           {profile && (
-            <div className="my-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/30 via-zinc-900 to-indigo-950/30 border border-amber-500/30 flex items-center justify-between gap-3">
+            <div className="my-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/30 theme-light:from-amber-50 via-zinc-900 to-indigo-950/30 theme-light:to-indigo-50 border border-amber-500/30 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-2xl flex items-center justify-center border border-amber-400/40 shadow">
                   {profile.avatar}
@@ -247,11 +247,11 @@ export default function PvPArenaLobbyModal({ onClose }: PvPArenaLobbyModalProps)
                   key={entry.playerId}
                   className={`p-3 rounded-2xl border flex items-center justify-between gap-3 ${
                     entry.rank === 1
-                      ? 'bg-amber-950/30 border-amber-500/40 text-amber-200 theme-light:text-amber-900'
+                      ? 'bg-amber-950/30 theme-light:bg-amber-50 border-amber-500/40 text-amber-200 theme-light:text-amber-900'
                       : entry.rank === 2
                         ? 'bg-zinc-800/60 border-zinc-600 text-zinc-200'
                         : entry.rank === 3
-                          ? 'bg-orange-950/20 border-orange-700 text-orange-200 theme-light:text-orange-900'
+                          ? 'bg-orange-950/20 theme-light:bg-orange-50 border-orange-700 text-orange-200 theme-light:text-orange-900'
                           : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
                   }`}
                 >

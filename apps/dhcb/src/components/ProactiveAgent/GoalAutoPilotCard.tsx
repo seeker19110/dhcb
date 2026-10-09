@@ -84,7 +84,7 @@ export default function GoalAutoPilotCard({ plan, onActionClick }: GoalAutoPilot
             key={step.stepNumber}
             className={`p-2 rounded-xl border text-[0.6875rem] font-medium transition ${
               step.status === 'completed'
-                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300 theme-light:text-emerald-900'
+                ? 'bg-emerald-950/20 theme-light:bg-emerald-50 border-emerald-500/30 text-emerald-300 theme-light:text-emerald-900'
                 : step.status === 'in_progress'
                   ? 'bg-accent-950/20 border-accent-500/40 text-accent-200 ring-1 ring-accent-500/30'
                   : 'bg-zinc-900/40 border-zinc-800/40 text-zinc-500'

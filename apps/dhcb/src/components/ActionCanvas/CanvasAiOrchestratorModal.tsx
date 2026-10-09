@@ -104,7 +104,7 @@ export default function CanvasAiOrchestratorModal({
                   key={idx}
                   type="button"
                   onClick={() => setPrompt(sample)}
-                  className="flex items-center justify-between text-left text-xs p-2 rounded-lg bg-zinc-950 hover:bg-cyan-950/40 hover:text-cyan-300 border border-zinc-800/80 transition"
+                  className="flex items-center justify-between text-left text-xs p-2 rounded-lg bg-zinc-950 hover:bg-cyan-950/40 theme-light:hover:bg-cyan-100 hover:text-cyan-300 theme-light:hover:text-cyan-900 border border-zinc-800/80 transition"
                 >
                   <span className="line-clamp-1">{sample}</span>
                   <ArrowRight className="w-3 h-3 ml-2 flex-shrink-0 text-zinc-500" />

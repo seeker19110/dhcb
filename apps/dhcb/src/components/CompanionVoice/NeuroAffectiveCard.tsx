@@ -203,7 +203,7 @@ export const NeuroAffectiveCard: React.FC = () => {
                     disabled={toggling === shield.id}
                     className={`tap-44 p-2.5 rounded-xl border flex items-center justify-between transition text-left ${
                       isEnabled
-                        ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200 theme-light:text-emerald-900'
+                        ? 'bg-emerald-950/40 theme-light:bg-emerald-100 border-emerald-500/50 text-emerald-200 theme-light:text-emerald-900'
                         : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200'
                     }`}
                   >

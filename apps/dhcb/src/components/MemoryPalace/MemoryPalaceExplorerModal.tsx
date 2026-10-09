@@ -226,7 +226,7 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
           <div className="lg:col-span-7 space-y-4">
             {currentRoom && (
               <>
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/30 to-zinc-900/60 border border-amber-500/20">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/30 theme-light:from-amber-50 to-zinc-900/60 border border-amber-500/20">
                   <h3 className="font-bold text-base text-amber-300 theme-light:text-amber-900">
                     {currentRoom.name}
                   </h3>
@@ -372,8 +372,8 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                   <div
                     className={`p-3 rounded-xl text-xs space-y-1 animate-fadeIn border ${
                       recallResult.isAccurate
-                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200 theme-light:text-emerald-900'
-                        : 'bg-amber-950/40 border-amber-500/40 text-amber-200 theme-light:text-amber-900'
+                        ? 'bg-emerald-950/40 theme-light:bg-emerald-50 border-emerald-500/40 text-emerald-200 theme-light:text-emerald-900'
+                        : 'bg-amber-950/40 theme-light:bg-amber-50 border-amber-500/40 text-amber-200 theme-light:text-amber-900'
                     }`}
                   >
                     <div className="font-bold flex items-center gap-1.5">
