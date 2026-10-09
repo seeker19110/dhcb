@@ -1,6 +1,6 @@
 # 0568 — Gỡ dòng quảng cáo Gemini Live khỏi thẻ gói VIP
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `fix(billing)`
+- **Ngày:** 2026-10-09 · **PR:** #1313 · **Loại:** `fix(billing)`
 - **Nguồn:** chủ dự án quyết "gỡ dòng quảng cáo Gemini Live" (câu hỏi mở ở `PROGRESS.md`, mục
   Gemini Live, sau changelog `0563`).
 
