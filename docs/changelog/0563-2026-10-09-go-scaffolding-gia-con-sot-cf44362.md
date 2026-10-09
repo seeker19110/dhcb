@@ -1,6 +1,6 @@
 # 0563 — Gỡ scaffolding giả còn sót từ `cf44362`: phòng âm thanh không client, stress-test lỗi, 3 chỗ số giả (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `refactor(server)`
+- **Ngày:** 2026-10-09 · **PR:** #1308 · **Loại:** `refactor(server)`
 - **Nguồn:** mục (4) của nợ 🟡 "Gemini Live" trong `PROGRESS.md` — "audit lại các file V6.x/V7.0
   cùng thời điểm commit `cf44362` xem có scaffolding giả". Tiền lệ cùng khuôn: `0484` (gỡ điểm GOP
   giả), `0513` (gỡ `/ws/voice-companion`, `/ws/co-learning-room`), `0534` (gỡ
