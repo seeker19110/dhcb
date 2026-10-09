@@ -1,6 +1,6 @@
 # 0569 — Structured outputs (JSON Schema) cho các lượt chấm điểm
 
-- **Ngày:** 2026-10-09 · **PR:** (điền khi tạo) · **Loại:** `feat(ai)`
+- **Ngày:** 2026-10-09 · **PR:** #1316 · **Loại:** `feat(ai)`
 - **Nguồn:** yêu cầu chủ dự án: "làm structured outputs cho chấm điểm luôn". Đây là phần
   changelog `0568` để lại cho đợt sau.
 - **Đặc tả:** `docs/specs/2026-10-09-structured-outputs-cham-diem.md`.
