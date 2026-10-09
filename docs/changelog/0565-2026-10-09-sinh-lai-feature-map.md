@@ -1,6 +1,6 @@
 # 0565 — Sinh lại FEATURE-MAP: bộ sinh sót route, file cũ cũng lệch (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `fix(scripts)`
+- **Ngày:** 2026-10-09 · **PR:** #1310 · **Loại:** `fix(scripts)`
 - **Nguồn:** changelog `0534` ghi "generator sinh ra diff ~211 dòng, chưa ai xác minh bên nào đúng".
 
 ## Kết luận: CẢ HAI bên sai
