@@ -20,6 +20,7 @@ import { dirname, join } from 'node:path'
 import { ProjectStepSchema, getProjectStages, getStepLanguage } from './projectSteps.js'
 import { T2_P1_PROJECT_STEPS, T2_P2_PROJECT_STEPS, T2_PROJECT_STAGES } from './projectStepsT2.js'
 import { T2_P3_PROJECT_STEPS, T2_SQL_SO_QUY } from './projectStepsT2P3.js'
+import { T2_P4_PROJECT_STEPS } from './projectStepsT2P4.js'
 import { getProjectTrack } from './projectTracks.js'
 import { moTaCayDom, type ElementLike } from './htmlPrelude.js'
 import { chayBaiDom } from './domPrelude.js'
@@ -455,6 +456,54 @@ describe('T2 chặng P3 — check thật sự BẮT LỖI (chống test dễ dã
   it('s4: sai ranh giới đầu kỳ (> thay vì >=) thì rớt', () =>
     rot('t2-p3-s4', "kc.ngay >= '2026-11-01'", "kc.ngay > '2026-11-01'"))
   it('s5: không xử lý 404 thì rớt', () => rot('t2-p3-s5', 'if (!res.ok) {', 'if (false) {'))
+})
+
+// ── Chặng P4 ─────────────────────────────────────────────────────────────────────────────
+describe('T2 chặng P4 — Lõi quỹ có test và API', () => {
+  it('đủ 6 bước, đúng làn: python ×3 → pytest → apisim ×2', () => {
+    expect(T2_P4_PROJECT_STEPS.map((s) => `${s.id}:${getStepLanguage(s)}`)).toEqual([
+      't2-p4-s1:python',
+      't2-p4-s2:python',
+      't2-p4-s3:python',
+      't2-p4-s4:pytest',
+      't2-p4-s5:apisim',
+      't2-p4-s6:apisim',
+    ])
+  })
+
+  it('khối kiểm thử dán cuối file ở đề bài khớp NGUYÊN VĂN code tham chiếu (học viên chép đúng đề)', () => {
+    for (const id of ['t2-p4-s5', 't2-p4-s6']) {
+      const step = buoc(T2_P4_PROJECT_STEPS, id)
+      const khoi = step.referenceCode.slice(step.referenceCode.indexOf('client = TestClient(app)'))
+      expect(step.requirement, id).toContain(khoi)
+    }
+  })
+})
+
+describe.skipIf(!hasPython)('T2 chặng P4 — check thật sự BẮT LỖI (chống test dễ dãi)', () => {
+  const rot = (id: string, tu: string, thanh: string) => {
+    const step = buoc(T2_P4_PROJECT_STEPS, id)
+    expect(allTestsPassed(chamPython(step, dotBien(step.referenceCode, tu, thanh)))).toBe(false)
+  }
+
+  it('s1: còn thiếu ra số âm khi đóng dư thì rớt', () =>
+    rot('t2-p4-s1', '        if self.da_dong >= MUC_DONG:\n            return 0\n', ''))
+  it('s2: cộng lẫn thu với chi thì rớt', () =>
+    rot('t2-p4-s2', 'in self.giao_dich if l == loai)', 'in self.giao_dich)'))
+  it('s3: ghi khoản chi TRƯỚC khi kiểm số dư thì rớt', () =>
+    rot(
+      't2-p4-s3',
+      '        con = self.so_du()\n        if so_tien > con:\n            raise QuyKhongDu(f"Quy chi con {con}, khong du {so_tien}")\n        self.giao_dich.append(("chi", hang_muc, so_tien))',
+      '        con = self.so_du()\n        self.giao_dich.append(("chi", hang_muc, so_tien))\n        if so_tien > con:\n            raise QuyKhongDu(f"Quy chi con {con}, khong du {so_tien}")',
+    ))
+  it('s4: bộ test bắt được lõi viết sai mốc (> thành >=)', () =>
+    rot('t2-p4-s4', '    if so_tien > so_du:', '    if so_tien >= so_du:'))
+  it('s4: thiếu một hàm test thì rớt', () =>
+    rot('t2-p4-s4', 'def test_dung_moc_500k():', 'def kiem_moc_500k():'))
+  it('s5: DELETE không báo 404 khi không còn gì để xoá thì rớt', () =>
+    rot('t2-p4-s5', '    if cur.rowcount == 0:', '    if False:'))
+  it('s6: tin số dư người gọi gửi lên thì rớt', () =>
+    rot('t2-p4-s6', 'con = so_du_hien_tai()', 'con = du_lieu.get("so_du", so_du_hien_tai())'))
 })
 
 // Mọi bước Python của T2 đi qua cổng chung lessonsPython.test.ts; ở đây chỉ chặn trường hợp
