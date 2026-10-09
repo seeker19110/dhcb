@@ -1044,7 +1044,7 @@ export default function Speaking() {
       content: m.role === 'assistant' ? (m.speechEn ?? m.content) : m.content,
     }))
     try {
-      const raw = await callClaude(history, sys, 2048, 'speaking')
+      const raw = await callClaude(history, sys, 2048, 'speaking', 'grade')
       const data = parseJson<EvaluationResult>(raw)
       if (
         !data ||

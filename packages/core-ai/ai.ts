@@ -1,4 +1,5 @@
-// api/ai.ts — chạy qua server.ts (Express) khi deploy VPS — proxy gọi Anthropic API
+// api/ai.ts — chạy qua server.ts (Express) khi deploy VPS — proxy gọi AI (Anthropic chính,
+// Groq/Gemini dự phòng).
 // Giữ API key ở phía server (biến môi trường ANTHROPIC_API_KEY, KHÔNG có tiền tố VITE_
 // nên sẽ không bị đóng gói vào file JS gửi cho browser).
 //
@@ -6,7 +7,9 @@
 // — không hề biết và không cần gửi API key.
 //
 // BẢO MẬT: Server tự quyết định model và giới hạn max_tokens,
-// không tin giá trị client gửi lên (tránh bị gọi model đắt / token lớn).
+// không tin giá trị client gửi lên (tránh bị gọi model đắt / token lớn). Client chỉ được xin
+// NHIỆM VỤ (`task`: 'converse' | 'grade') trong danh sách cho phép — model của từng nhiệm vụ
+// tra ở aiConfig.ts#getAnthropicRoute.
 
 import { z } from 'zod'
 import {
@@ -20,12 +23,9 @@ import { type UsageMode } from '@dhcb/core-billing/usage'
 import { resolveActor } from '@dhcb/core-auth/guest'
 import { checkAndConsumeActorUsage, refundActorUsage } from '@dhcb/core-auth/actorUsage'
 import { callGemini } from './geminiApi.js'
-import {
-  recordAiTokenUsage,
-  parseAnthropicUsageFromText,
-  type AiTokenUsage,
-} from './aiTokenUsage.js'
-import { callGroqChatWithKeyPool, callAnthropicChat } from './chatProviders.js'
+import { recordAiTokenUsage, type AiTokenUsage } from './aiTokenUsage.js'
+import { callGroqChatWithKeyPool } from './chatProviders.js'
+import { callAnthropicText, type AnthropicTextResult } from './anthropicClient.js'
 import { hasGroqKey } from './groqKeyPool.js'
 import { withConcurrencyLimit } from '@dhcb/core-db/concurrencyLimiter'
 import { createRequestLogger } from '@dhcb/core-db/logger'
@@ -35,11 +35,19 @@ import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { validateBody } from '@dhcb/core-http/validation'
 // Model + guardrail tách sang aiConfig.ts để script eval offline (scripts/eval-tutor.ts)
 // dùng chung đúng một nguồn — đổi model ở đây tự động phản ánh vào bài đánh giá (⑤ T1).
-import { ALLOWED_MODEL, GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, SYSTEM_GUARDRAIL } from './aiConfig.js'
+import {
+  GEMINI_CHAT_MODEL,
+  GROQ_CHAT_MODEL,
+  SYSTEM_GUARDRAIL,
+  getAnthropicRoute,
+  isClientAiTask,
+} from './aiConfig.js'
 
 // Thời gian chờ tối đa cho 1 lần gọi AI (ms) — tránh treo vô hạn khi nhà cung cấp chậm.
 const AI_TIMEOUT_MS = 30_000
 
+// Trần max_tokens cho Groq/Gemini (dự phòng). Nhánh Anthropic dùng trần RIÊNG theo nhiệm vụ
+// (aiConfig.ts) vì phần "suy nghĩ" của Claude đời mới cũng tính vào max_tokens.
 const MAX_TOKENS_LIMIT = 2048 // tối đa cho phép (writing cần 2048, chat 1024)
 const MAX_BODY_BYTES = 64 * 1024 // 64KB — đủ cho 1 cuộc hội thoại dài
 const MAX_MSG_CONTENT = 2000 // mỗi tin nhắn không quá 2000 ký tự
@@ -83,7 +91,8 @@ function isChatEndpointMode(v: unknown): v is 'chat' | 'writing' | 'speaking' {
 // tổng nội dung quá lớn, giống hệt logic cũ.
 const AiBodySchema = z
   .object({
-    // Client gửi nhưng server KHÔNG dùng — model do server quyết định (ALLOWED_MODEL).
+    // Client gửi nhưng server KHÔNG dùng — model do server quyết định theo nhiệm vụ
+    // (aiConfig.ts#getAnthropicRoute).
     model: z.string().optional(),
     messages: z
       .array(z.unknown())
@@ -97,12 +106,47 @@ const AiBodySchema = z
       .string()
       .catch('')
       .transform((v) => v.slice(0, 8000)),
-    mode: z.unknown().transform((v) => (isChatEndpointMode(v) ? v : 'chat')),
+    // `.optional()` BẮT BUỘC với Zod 4: thiếu hẳn khoá thì z.unknown() không optional nữa khi đã
+    // .transform() → 400 "expected nonoptional" (body thiếu `mode`/`task` bị từ chối oan).
+    mode: z
+      .unknown()
+      .optional()
+      .transform((v) => (isChatEndpointMode(v) ? v : 'chat')),
+    // Nhiệm vụ để server chọn model Claude. Giá trị lạ/thiếu → null, suy ra từ mode bên dưới.
+    task: z
+      .unknown()
+      .optional()
+      .transform((v) => (isClientAiTask(v) ? v : null)),
   })
   .refine((d) => sumStringContent(d.messages) <= MAX_TOTAL_CONTENT, {
     error: 'Nội dung hội thoại quá dài',
     params: { status: 413 },
   })
+
+// Client cũ (chưa gửi `task`): chế độ Luyện viết toàn là chấm bài → 'grade'; còn lại trò chuyện.
+function resolveTask(task: 'converse' | 'grade' | null, mode: UsageMode): 'converse' | 'grade' {
+  if (task) return task
+  return mode === 'writing' ? 'grade' : 'converse'
+}
+
+// Thông điệp trả client khi Claude hỏng và KHÔNG còn provider dự phòng — song ngữ, có hành động
+// rõ ràng (frontend hiện nguyên văn message server trả).
+const MSG_AI_REFUSED =
+  'AI không thể trả lời nội dung này. Hãy diễn đạt lại rồi thử lại. / The AI could not answer this — please rephrase and try again.'
+const MSG_AI_BUSY =
+  'AI đang bận hoặc gặp lỗi tạm thời, vui lòng thử lại sau ít phút. / The AI is busy — please try again in a few minutes.'
+
+function anthropicFailureStatus(r: Exclude<AnthropicTextResult, { kind: 'success' }>): number {
+  if (r.kind === 'network_error') return 504
+  if (r.kind === 'unusable' && r.reason === 'refusal') return 422
+  return 502
+}
+
+function describeAnthropicFailure(r: Exclude<AnthropicTextResult, { kind: 'success' }>): string {
+  if (r.kind === 'network_error') return `lỗi mạng/timeout: ${r.message}`
+  if (r.kind === 'api_error') return `HTTP ${r.status}: ${r.message.slice(0, 200)}`
+  return `không dùng được (${r.reason}: ${r.detail})`
+}
 
 export default async function handler(req: Request): Promise<Response> {
   // requestId riêng cho MỖI lượt gọi — ghép vào mọi dòng log của lượt này (Phase 01 mục 6,
@@ -159,8 +203,8 @@ export default async function handler(req: Request): Promise<Response> {
     )
   }
 
-  // Chọn nhà cung cấp AI: ưu tiên Groq → Anthropic → Gemini (đổi thứ tự 2026-08-06 — Gemini
-  // xuống cuối, xem PROGRESS.md).
+  // Chọn nhà cung cấp AI: Anthropic → Groq → Gemini (2026-10-09, chủ dự án chốt: Claude là AI
+  // chính, chọn model theo nhiệm vụ; Groq miễn phí + Gemini làm dự phòng khi Claude lỗi).
   // Cần ít nhất một trong ba key.
   const geminiKey = process.env.GEMINI_API_KEY
   const groqKey = hasGroqKey()
@@ -212,6 +256,7 @@ export default async function handler(req: Request): Promise<Response> {
   // mode do client gửi: 'chat' | 'writing' | 'speaking' (mặc định 'chat').
   // Server đếm authoritative trong daily_usage → client không tự vượt giới hạn được.
   const mode = parsedBody.data.mode
+  const task = resolveTask(parsedBody.data.task, mode)
   const gate = await checkAndConsumeActorUsage(actor, mode, clientIp)
   if (!gate.ok) {
     logSecurityEvent('USAGE_LIMIT', clientIp, { path: '/api/agent', mode })
@@ -224,11 +269,68 @@ export default async function handler(req: Request): Promise<Response> {
     )
   }
 
-  // ── Nhánh Groq (ưu tiên — FREE, API tương thích chuẩn OpenAI) ───────────────
+  // ── Nhánh Anthropic (AI chính — model theo nhiệm vụ, xem aiConfig.ts) ─────────
+  if (anthropicKey) {
+    // Còn Groq/Gemini dự phòng → lỗi thì thử tiếp. Không còn → hoàn lượt + báo lỗi rõ ràng.
+    const canFallback = Boolean(groqKey || geminiKey)
+    const route = getAnthropicRoute(task)
+
+    log.debug(`gọi Anthropic bắt đầu, mode=${mode}, task=${task}, model=${route.model}`)
+    const anthropicResult = await withConcurrencyLimit('anthropic', () =>
+      callAnthropicText({
+        apiKey: anthropicKey,
+        route,
+        system,
+        messages: sanitizedMessages,
+      }),
+    )
+    recordLatency('ai_anthropic_ms', anthropicResult.latencyMs)
+    incrementCounter(
+      anthropicResult.kind === 'api_error'
+        ? `ai_anthropic_status_${anthropicResult.status}`
+        : anthropicResult.kind === 'unusable'
+          ? `ai_anthropic_unusable_${anthropicResult.reason}`
+          : `ai_anthropic_${anthropicResult.kind}`,
+    )
+    // Ghi chi phí khi Anthropic ĐÃ trả lời (kể cả bị cắt/từ chối — token vẫn bị tính tiền).
+    // Không await: đo đạc không được làm chậm câu trả lời.
+    if (anthropicResult.kind === 'success' || anthropicResult.kind === 'unusable') {
+      void recordAiTokenUsage({
+        provider: 'anthropic',
+        model: anthropicResult.model,
+        mode,
+        usage: anthropicResult.usage,
+      })
+    }
+
+    if (anthropicResult.kind === 'success') {
+      log.debug(`Anthropic xong sau ${anthropicResult.latencyMs}ms`)
+      // Đúng format frontend (apps/dhcb/src/lib/ai.ts) đang đọc: data.content[0].text
+      return jsonResponse(
+        { content: [{ type: 'text', text: anthropicResult.text }] },
+        200,
+        allHeaders,
+      )
+    }
+
+    log.warn(`Anthropic ${describeAnthropicFailure(anthropicResult)}`)
+    if (!canFallback) {
+      await refundActorUsage(actor, mode, gate.day, clientIp)
+      const refused = anthropicResult.kind === 'unusable' && anthropicResult.reason === 'refusal'
+      return jsonResponse(
+        { error: { message: refused ? MSG_AI_REFUSED : MSG_AI_BUSY } },
+        anthropicFailureStatus(anthropicResult),
+        allHeaders,
+      )
+    }
+    log.warn('Anthropic lỗi — chuyển sang provider dự phòng (Groq/Gemini)')
+  }
+
+  // ── Nhánh Groq (dự phòng thứ nhất — FREE, API tương thích chuẩn OpenAI) ─────
   if (groqKey) {
-    // Còn Anthropic/Gemini dự phòng → lỗi thì thử tiếp thay vì báo lỗi ngay. Khi KHÔNG còn
-    // provider nào khác, giữ NGUYÊN status/hành vi gốc (trước đây Groq luôn là nhánh cuối).
-    const canFallback = Boolean(anthropicKey || geminiKey)
+    // Còn Gemini dự phòng → lỗi thì thử tiếp thay vì báo lỗi ngay. Khi KHÔNG còn provider nào
+    // khác, giữ NGUYÊN status/hành vi gốc.
+    const canFallback = Boolean(geminiKey)
 
     log.debug(`gọi Groq bắt đầu, mode=${mode}`)
     const groqResult = await withConcurrencyLimit('groq', () =>
@@ -248,7 +350,7 @@ export default async function handler(req: Request): Promise<Response> {
           allHeaders,
         )
       }
-      log.warn('Groq lỗi — chuyển sang provider dự phòng (Anthropic/Gemini)')
+      log.warn('Groq lỗi — chuyển sang provider dự phòng (Gemini)')
     } else if (groqResult.kind === 'http_error') {
       if (!canFallback) {
         await refundActorUsage(actor, mode, gate.day, clientIp)
@@ -262,7 +364,7 @@ export default async function handler(req: Request): Promise<Response> {
           allHeaders,
         )
       }
-      log.warn('Groq lỗi — chuyển sang provider dự phòng (Anthropic/Gemini)')
+      log.warn('Groq lỗi — chuyển sang provider dự phòng (Gemini)')
     } else if (groqResult.kind === 'malformed_body') {
       // Groq trả 200 nhưng body hỏng (không phải JSON / thiếu field): người dùng KHÔNG nhận
       // được câu trả lời → phải hoàn lượt giống các nhánh lỗi khác.
@@ -271,7 +373,7 @@ export default async function handler(req: Request): Promise<Response> {
         return jsonResponse({ error: { message: groqResult.message } }, 500, allHeaders)
       }
       log.warn(
-        `Groq trả body hỏng (${groqResult.message}) — chuyển sang provider dự phòng (Anthropic/Gemini)`,
+        `Groq trả body hỏng (${groqResult.message}) — chuyển sang provider dự phòng (Gemini)`,
       )
     } else {
       // Ghi CHI PHÍ THẬT theo token (mục N4). Cố ý KHÔNG await — đo đạc không được làm chậm
@@ -288,72 +390,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
   }
 
-  // ── Nhánh Anthropic (chất lượng cao — cần credit) ────────────────────────
-  if (anthropicKey) {
-    // Còn Gemini dự phòng → lỗi thì thử tiếp. Không còn thì giữ NGUYÊN hành vi gốc (trước đây
-    // Anthropic luôn là nhánh cuối): forward thẳng status/body từ Anthropic, không bọc JSON.
-    const canFallback = Boolean(geminiKey)
-
-    log.debug(`gọi Anthropic bắt đầu, mode=${mode}`)
-    const anthropicResult = await withConcurrencyLimit('anthropic', () =>
-      callAnthropicChat(
-        anthropicKey,
-        ALLOWED_MODEL,
-        system,
-        sanitizedMessages,
-        maxTokens,
-        AI_TIMEOUT_MS,
-      ),
-    )
-    recordLatency('ai_anthropic_ms', anthropicResult.latencyMs)
-    incrementCounter(
-      anthropicResult.kind === 'network_error'
-        ? 'ai_anthropic_network_error'
-        : `ai_anthropic_status_${anthropicResult.status}`,
-    )
-
-    if (anthropicResult.kind === 'network_error') {
-      log.warn(`Anthropic lỗi mạng: ${anthropicResult.message}`)
-      if (!canFallback) {
-        await refundActorUsage(actor, mode, gate.day, clientIp)
-        return jsonResponse(
-          { error: { message: `Anthropic lỗi: ${anthropicResult.message.slice(0, 200)}` } },
-          504,
-          allHeaders,
-        )
-      }
-      log.warn('Anthropic lỗi — chuyển sang provider dự phòng (Gemini)')
-    } else {
-      log.debug(
-        `Anthropic phản hồi sau ${anthropicResult.latencyMs}ms, status=${anthropicResult.status}`,
-      )
-      const respOk = anthropicResult.status >= 200 && anthropicResult.status < 300
-      if (!respOk && canFallback) {
-        log.warn(
-          `Anthropic trả lỗi (${anthropicResult.status}) — chuyển sang provider dự phòng (Gemini)`,
-        )
-      } else {
-        // Thành công HOẶC không còn provider dự phòng → forward thẳng status/body gốc, giữ
-        // đúng hành vi cũ (kể cả lỗi 4xx/5xx của Anthropic, không bọc lại thành JSON riêng).
-        if (!respOk) await refundActorUsage(actor, mode, gate.day, clientIp)
-        // Chỉ ghi chi phí khi Anthropic thực sự trả lời (lỗi 4xx/5xx không tính tiền token).
-        if (respOk) {
-          void recordAiTokenUsage({
-            provider: 'anthropic',
-            model: ALLOWED_MODEL,
-            mode,
-            usage: parseAnthropicUsageFromText(anthropicResult.bodyText),
-          })
-        }
-        return new Response(anthropicResult.bodyText, {
-          status: anthropicResult.status,
-          headers: { 'content-type': 'application/json', ...allHeaders },
-        })
-      }
-    }
-  }
-
-  // ── Nhánh Gemini (cuối cùng — chỉ dùng khi Groq/Anthropic không có key hoặc đều lỗi)
+  // ── Nhánh Gemini (cuối cùng — chỉ dùng khi Anthropic/Groq không có key hoặc đều lỗi)
   const geminiStartedAt = Date.now()
   log.debug(`gọi Gemini bắt đầu, mode=${mode}`)
   // callGemini() trả về text; token thật lấy qua callback onUsage (xem geminiApi.ts).

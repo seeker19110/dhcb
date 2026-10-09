@@ -120,6 +120,7 @@ export default async function handler(req: Request): Promise<Response> {
       userMessage: prompt.userMessage,
       maxTokens: prompt.maxTokens,
       mode: 'code_feedback',
+      task: 'code_feedback',
     })
 
     if (!text) {

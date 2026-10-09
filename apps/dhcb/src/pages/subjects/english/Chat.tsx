@@ -744,7 +744,7 @@ export default function Chat() {
     const sys = chatFullEvaluationPrompt(dir)
     const history = session.messages.map((m) => ({ role: m.role, content: m.content }))
     try {
-      const raw = await callClaude(history, sys, 2048, 'chat')
+      const raw = await callClaude(history, sys, 2048, 'chat', 'grade')
       const data = parseJson<EvaluationResult>(raw)
       if (
         !data ||

@@ -61,8 +61,8 @@ async function readCanvas(personId: string): Promise<ActionCanvasState | null> {
 //    gọi AI, không trừ lượt.
 //  - Đầu ra hỏng ⇒ báo lỗi thật, KHÔNG rơi về khung mẫu giả vờ là AI.
 const AI_LOCK = 'action_canvas_ai_lock'
-// Mỗi provider timeout 30 giây (CHAT_PROVIDER_TIMEOUT_MS) nên chuỗi Groq → Anthropic → Gemini
-// thường xong trong 120 giây; tiến trình chết thì khoá tự nhả sau chừng này giây. Trường hợp hiếm
+// Anthropic tối đa 40 giây (aiConfig.ts, nhiệm vụ action_canvas), Groq/Gemini mỗi provider 30
+// giây (CHAT_PROVIDER_TIMEOUT_MS) nên chuỗi Anthropic → Groq → Gemini thường xong trong 120 giây; tiến trình chết thì khoá tự nhả sau chừng này giây. Trường hợp hiếm
 // chuỗi chạy lâu hơn (Groq nhiều key cùng timeout), request thứ hai có thể lọt — hệ quả tối đa là
 // trừ thêm một lượt, vẫn được hoàn nếu lời gọi đó hỏng. Request chạy quá hạn KHÔNG xoá được khoá
 // của request sau (khoá có token chủ).
@@ -155,6 +155,7 @@ async function handleSynthesize(
       userMessage: prompt.userMessage,
       maxTokens: prompt.maxTokens,
       mode: GOAL_DECOMPOSITION_COST_MODE,
+      task: 'action_canvas',
     })
     if (raw === null) {
       await refundUsage(personId, 'chat', chargedDay)

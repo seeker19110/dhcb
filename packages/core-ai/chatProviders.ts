@@ -1,5 +1,6 @@
-// packages/core-ai/chatProviders.ts — Lời gọi HTTP thô tới từng nhà cung cấp chat AI (Groq,
-// Anthropic), tách khỏi logic điều phối/fallback/hoàn lượt ở packages/core-ai/ai.ts.
+// packages/core-ai/chatProviders.ts — Lời gọi HTTP thô tới Groq (nhà cung cấp chat dự phòng),
+// tách khỏi logic điều phối/fallback/hoàn lượt ở packages/core-ai/ai.ts. Anthropic (AI chính)
+// gọi qua SDK chính thức ở anthropicClient.ts (2026-10-09).
 //
 // Phase 01 "Foundation OS" mục 3 (docs/phases/01-foundation-os.md): "AIProvider.generate() gateway
 // với timeout, phân loại lỗi retry". Gemini đã có sẵn dạng này (api/_lib/geminiApi.ts#callGemini) —
@@ -7,7 +8,7 @@
 //
 // ─── CỐ Ý CHỈ TÁCH PHẦN GỌI HTTP + PHÂN LOẠI LỖI, KHÔNG TÁCH LOGIC QUYẾT ĐỊNH ─────────────────
 // `ai.ts` xử lý đếm lượt/hoàn tiền thật (`checkAndConsumeUsage`/`refundUsage`) và có 34 test ghim
-// chặt hành vi (thứ tự fallback Groq→Anthropic→Gemini, khi nào hoàn lượt, status trả về client).
+// chặt hành vi (thứ tự fallback Anthropic→Groq→Gemini, khi nào hoàn lượt, status trả về client).
 // Rút cả logic đó ra khỏi handler trong 1 lần đổi là rủi ro cao — sai một nhánh là mất tiền hoặc
 // hoàn lượt sai. Nên ranh giới ở đây dừng lại đúng chỗ: mỗi hàm CHỈ gọi HTTP tới 1 provider rồi trả
 // về một trong 4 dạng kết quả rõ ràng (thành công / lỗi mạng-timeout / lỗi HTTP / body sai cấu
@@ -36,14 +37,6 @@ export type ChatCallResult =
   | { kind: 'network_error'; message: string; latencyMs: number }
   | { kind: 'http_error'; status: number; bodyText: string; latencyMs: number }
   | { kind: 'malformed_body'; message: string; latencyMs: number }
-
-/** Kết quả gọi Anthropic — KHÔNG chuẩn hoá thành text vì `ai.ts` cần forward NGUYÊN VĂN body/status
- * gốc cho client (khớp định dạng Anthropic mà frontend đang đọc trực tiếp). Chỉ tách riêng lỗi
- * mạng/timeout (không có response để forward) khỏi phần "có response" (dù response đó ok hay lỗi —
- * `ai.ts` tự quyết forward hay thử fallback dựa trên `status`). */
-export type AnthropicCallResult =
-  | { kind: 'response'; status: number; bodyText: string; latencyMs: number }
-  | { kind: 'network_error'; message: string; latencyMs: number }
 
 // Đọc text trả lời từ body JSON của Groq (chuẩn OpenAI: choices[0].message.content).
 // Chuyển từ ai.ts nguyên vẹn — chỉ đổi vị trí, không đổi 1 dòng logic.
@@ -174,49 +167,4 @@ export async function callGroqChatWithKeyPool(
   }
 
   return lastResult
-}
-
-/**
- * Gọi Anthropic Messages API. Trả nguyên `status`/body text — KHÔNG parse — để `ai.ts` forward
- * thẳng cho client (giữ đúng hành vi hiện có, xem chú thích `AnthropicCallResult`).
- * Hỗ trợ `enablePromptCaching` để kích hoạt Anthropic Prompt Caching (giảm 90% chi phí đọc input).
- */
-export async function callAnthropicChat(
-  apiKey: string,
-  model: string,
-  system: string | Array<{ type: string; text: string; cache_control?: { type: 'ephemeral' } }>,
-  messages: unknown[],
-  maxTokens: number,
-  timeoutMs: number = CHAT_PROVIDER_TIMEOUT_MS,
-  enablePromptCaching: boolean = false,
-): Promise<AnthropicCallResult> {
-  const startedAt = Date.now()
-  let resp: Response
-
-  const systemPayload =
-    enablePromptCaching && typeof system === 'string' && system.length > 0
-      ? [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }]
-      : system
-
-  try {
-    resp = await fetchWithTimeout(
-      'https://api.anthropic.com/v1/messages',
-      {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ model, max_tokens: maxTokens, system: systemPayload, messages }),
-      },
-      timeoutMs,
-    )
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return { kind: 'network_error', message, latencyMs: Date.now() - startedAt }
-  }
-
-  const bodyText = await resp.text()
-  return { kind: 'response', status: resp.status, bodyText, latencyMs: Date.now() - startedAt }
 }

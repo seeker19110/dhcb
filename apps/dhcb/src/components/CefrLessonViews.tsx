@@ -1098,7 +1098,7 @@ export function DialogueView({
       content: ln.who === role ? (rpTranscripts[i] ?? '') : isA ? ln.en : ln.vi,
     }))
     try {
-      const raw = await callClaude(history, sys, 2048, 'speaking')
+      const raw = await callClaude(history, sys, 2048, 'speaking', 'grade')
       const data = parseJson<EvaluationResult>(raw)
       if (!data) {
         throw new Error(

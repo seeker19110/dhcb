@@ -21,15 +21,41 @@ vi.mock('@dhcb/core-billing/usage', () => ({
 }))
 vi.mock('@dhcb/core-http/fetchTimeout', () => ({ fetchWithTimeout: vi.fn() }))
 vi.mock('./geminiApi.js', () => ({ callGemini: vi.fn() }))
+// Lớp gọi Claude test riêng ở anthropicClient.test.ts — ở đây chỉ canh handler đọc 4 dạng kết
+// quả của nó để quyết fallback/hoàn lượt/status.
+vi.mock('./anthropicClient.js', () => ({ callAnthropicText: vi.fn() }))
 
 import handler from './ai.js'
 import { refundUsage } from '@dhcb/core-billing/usage'
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 import { callGemini } from './geminiApi.js'
+import { callAnthropicText, type AnthropicTextResult } from './anthropicClient.js'
+import { SYSTEM_GUARDRAIL } from './aiConfig.js'
 
 const mockedFetch = vi.mocked(fetchWithTimeout)
 const mockedRefund = vi.mocked(refundUsage)
 const mockedGemini = vi.mocked(callGemini)
+const mockedAnthropic = vi.mocked(callAnthropicText)
+
+const ANTHROPIC_OK: AnthropicTextResult = {
+  kind: 'success',
+  text: 'Hi from Claude',
+  model: 'claude-haiku-5-5',
+  usage: { promptTokens: 10, completionTokens: 5, cacheReadTokens: 0, cacheWriteTokens: 0 },
+  latencyMs: 1,
+}
+const ANTHROPIC_DOWN: AnthropicTextResult = {
+  kind: 'network_error',
+  message: 'Hết thời gian chờ Anthropic',
+  latencyMs: 1,
+}
+const GROQ_OK = () =>
+  new Response(JSON.stringify({ choices: [{ message: { content: 'Từ Groq' } }] }), { status: 200 })
+
+// Model handler đã yêu cầu ở lượt gọi Claude gần nhất.
+function lastAnthropicModel(): string | undefined {
+  return mockedAnthropic.mock.calls.at(-1)?.[0].route.model
+}
 
 // Request hợp lệ tối thiểu cho /api/agent — cho phép ghi đè body để test validate/sanitize.
 function makeRequest(body?: object): Request {
@@ -58,6 +84,7 @@ beforeEach(() => {
   mockedFetch.mockReset()
   mockedRefund.mockClear()
   mockedGemini.mockReset()
+  mockedAnthropic.mockReset()
 })
 
 afterEach(() => {
@@ -237,17 +264,22 @@ describe('handler /api/agent — Groq lỗi tự chuyển sang Gemini dự phòn
     expect(mockedRefund).not.toHaveBeenCalled()
   })
 
-  it('Groq lỗi, Anthropic cũng lỗi, Gemini fallback cuối cùng thành công → 200', async () => {
+  it('Anthropic lỗi, Groq cũng lỗi, Gemini fallback cuối cùng thành công → 200', async () => {
     process.env.ANTHROPIC_API_KEY = 'anthropic-test-key'
-    mockedFetch
-      .mockResolvedValueOnce(new Response('boom', { status: 500 })) // Groq
-      .mockResolvedValueOnce(new Response('boom', { status: 500 })) // Anthropic
+    mockedAnthropic.mockResolvedValueOnce({
+      kind: 'api_error',
+      status: 500,
+      message: 'boom',
+      latencyMs: 1,
+    })
+    mockedFetch.mockResolvedValueOnce(new Response('boom', { status: 500 })) // Groq
     mockedGemini.mockResolvedValueOnce('Từ Gemini')
     const res = await handler(makeRequest())
     expect(res.status).toBe(200)
     const data = (await res.json()) as { content: Array<{ text: string }> }
     expect(data.content[0]?.text).toBe('Từ Gemini')
-    expect(mockedFetch).toHaveBeenCalledTimes(2)
+    expect(mockedAnthropic).toHaveBeenCalledTimes(1)
+    expect(mockedFetch).toHaveBeenCalledTimes(1)
     expect(mockedRefund).not.toHaveBeenCalled()
   })
 })
@@ -358,37 +390,180 @@ describe('handler /api/agent — nhánh Anthropic (không có Gemini/Groq)', () 
   beforeEach(() => {
     delete process.env.GEMINI_API_KEY
     delete process.env.GROQ_API_KEY
+    delete process.env.ANTHROPIC_FAST_MODEL
+    delete process.env.ANTHROPIC_SMART_MODEL
     process.env.ANTHROPIC_API_KEY = 'anthropic-test-key'
   })
 
-  it('Anthropic trả lời thành công → forward nguyên body + status 200, KHÔNG hoàn lượt', async () => {
-    mockedFetch.mockResolvedValue(
-      new Response(JSON.stringify({ content: [{ type: 'text', text: 'Hi from Claude' }] }), {
-        status: 200,
-      }),
-    )
+  it('thành công → 200 dạng { content: [{ type: text }] } frontend đọc được, KHÔNG hoàn lượt', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
     const res = await handler(makeRequest())
     expect(res.status).toBe(200)
-    const data = (await res.json()) as { content: Array<{ text: string }> }
-    expect(data.content[0]?.text).toBe('Hi from Claude')
+    const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
+    expect(data.content).toEqual([{ type: 'text', text: 'Hi from Claude' }])
     expect(mockedRefund).not.toHaveBeenCalled()
-    // Body gửi Anthropic phải dùng model do SERVER quyết định, không tin client.
-    const options = mockedFetch.mock.calls[0]?.[1] as { body: string }
-    const sentBody = JSON.parse(options.body) as { model: string }
-    expect(sentBody.model).toBeTruthy()
+    expect(mockedFetch).not.toHaveBeenCalled()
   })
 
-  it('Anthropic trả lỗi HTTP → forward status lỗi + HOÀN lượt', async () => {
-    mockedFetch.mockResolvedValue(new Response(JSON.stringify({ error: 'boom' }), { status: 529 }))
+  it('system gửi Claude có guardrail server ở ĐẦU (client không gỡ được)', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest({ messages: [{ role: 'user', content: 'Hi' }], system: 'PROMPT' }))
+    const system = mockedAnthropic.mock.calls[0]?.[0].system ?? ''
+    expect(system.startsWith(SYSTEM_GUARDRAIL)).toBe(true)
+    expect(system.endsWith('PROMPT')).toBe(true)
+  })
+
+  it('chat thường (không gửi task) → model NHANH (Haiku 5.5)', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest())
+    expect(lastAnthropicModel()).toBe('claude-haiku-5-5')
+  })
+
+  it('mode writing (không gửi task) → suy ra chấm bài → model MẠNH (Sonnet 5.5)', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest({ messages: [{ role: 'user', content: 'essay' }], mode: 'writing' }))
+    expect(lastAnthropicModel()).toBe('claude-sonnet-5-5')
+  })
+
+  it('task grade → Sonnet 5.5; vẫn đếm lượt vào đúng cột của mode', async () => {
+    const { checkAndConsumeUsage } = await import('@dhcb/core-billing/usage')
+    vi.mocked(checkAndConsumeUsage).mockClear()
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest({ messages: [], mode: 'speaking', task: 'grade' }))
+    expect(lastAnthropicModel()).toBe('claude-sonnet-5-5')
+    expect(vi.mocked(checkAndConsumeUsage)).toHaveBeenCalledWith('user-test', 'speaking')
+  })
+
+  it.each(['companion', 'code_feedback', 'opus', 42, null])(
+    'task lạ/chỉ-server (%p) → bỏ qua, dùng model trò chuyện (không leo thang model)',
+    async (task) => {
+      mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+      await handler(
+        makeRequest({ messages: [{ role: 'user', content: 'Hi' }], mode: 'chat', task }),
+      )
+      expect(lastAnthropicModel()).toBe('claude-haiku-5-5')
+    },
+  )
+
+  it('body thiếu hẳn `mode` và `task` → vẫn 200 (lenient), đếm lượt chat, model trò chuyện', async () => {
+    const { checkAndConsumeUsage } = await import('@dhcb/core-billing/usage')
+    vi.mocked(checkAndConsumeUsage).mockClear()
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    const res = await handler(makeRequest({ messages: [{ role: 'user', content: 'Hi' }] }))
+    expect(res.status).toBe(200)
+    expect(vi.mocked(checkAndConsumeUsage)).toHaveBeenCalledWith('user-test', 'chat')
+    expect(lastAnthropicModel()).toBe('claude-haiku-5-5')
+  })
+
+  it('client gửi `model` → server BỎ QUA, vẫn dùng model theo nhiệm vụ', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest({ messages: [], model: 'claude-fable-5-1' }))
+    expect(lastAnthropicModel()).toBe('claude-haiku-5-5')
+  })
+
+  it('ANTHROPIC_FAST_MODEL ghi đè được model trò chuyện qua .env', async () => {
+    process.env.ANTHROPIC_FAST_MODEL = 'claude-haiku-x'
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest())
+    expect(lastAnthropicModel()).toBe('claude-haiku-x')
+  })
+
+  it('lỗi HTTP → 502 + thông điệp bận song ngữ + HOÀN lượt', async () => {
+    mockedAnthropic.mockResolvedValueOnce({
+      kind: 'api_error',
+      status: 529,
+      message: 'overloaded',
+      latencyMs: 1,
+    })
     const res = await handler(makeRequest())
-    expect(res.status).toBe(529)
+    expect(res.status).toBe(502)
+    const data = (await res.json()) as { error: { message: string } }
+    expect(data.error.message).toMatch(/thử lại/)
+    expect(data.error.message).not.toMatch(/overloaded/) // không lộ lỗi kỹ thuật cho người học
     expect(mockedRefund).toHaveBeenCalledWith('user-test', 'chat', '2026-08-12')
   })
 
-  it('Anthropic timeout/lỗi mạng → 504 + HOÀN lượt', async () => {
-    mockedFetch.mockRejectedValue(new Error('Hết thời gian chờ (quá 30s)'))
+  it('timeout/lỗi mạng → 504 + HOÀN lượt đúng 1 lần', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_DOWN)
     const res = await handler(makeRequest())
     expect(res.status).toBe(504)
+    expect(mockedRefund).toHaveBeenCalledTimes(1)
+  })
+
+  it('bị từ chối (refusal) → 422 + lời mời diễn đạt lại + HOÀN lượt', async () => {
+    mockedAnthropic.mockResolvedValueOnce({
+      kind: 'unusable',
+      reason: 'refusal',
+      detail: 'general_harms',
+      model: 'claude-haiku-5-5',
+      usage: null,
+      latencyMs: 1,
+    })
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(422)
+    const data = (await res.json()) as { error: { message: string } }
+    expect(data.error.message).toMatch(/diễn đạt lại/)
+    expect(mockedRefund).toHaveBeenCalledTimes(1)
+  })
+
+  it('bị cắt vì chạm trần token (max_tokens) → 502 + HOÀN lượt (không trả câu dở dang)', async () => {
+    mockedAnthropic.mockResolvedValueOnce({
+      kind: 'unusable',
+      reason: 'max_tokens',
+      detail: 'chạm trần',
+      model: 'claude-sonnet-5-5',
+      usage: null,
+      latencyMs: 1,
+    })
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(502)
+    expect(mockedRefund).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('handler /api/agent — Anthropic là AI CHÍNH, Groq/Gemini dự phòng', () => {
+  beforeEach(() => {
+    process.env.ANTHROPIC_API_KEY = 'anthropic-test-key'
+    process.env.GROQ_API_KEY = 'groq-test-key'
+  })
+
+  it('có cả Anthropic + Groq, Anthropic trả lời → KHÔNG gọi Groq', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(200)
+    expect(mockedFetch).not.toHaveBeenCalled()
+  })
+
+  it('Anthropic lỗi mạng → Groq trả lời → 200 từ Groq, KHÔNG hoàn lượt', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_DOWN)
+    mockedFetch.mockResolvedValueOnce(GROQ_OK())
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { content: Array<{ text: string }> }
+    expect(data.content[0]?.text).toBe('Từ Groq')
+    expect(mockedRefund).not.toHaveBeenCalled()
+  })
+
+  it('Anthropic bị từ chối → Groq dự phòng vẫn được thử (không bỏ cuộc sớm)', async () => {
+    mockedAnthropic.mockResolvedValueOnce({
+      kind: 'unusable',
+      reason: 'refusal',
+      detail: 'cyber',
+      model: 'claude-haiku-5-5',
+      usage: null,
+      latencyMs: 1,
+    })
+    mockedFetch.mockResolvedValueOnce(GROQ_OK())
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(200)
+    expect(mockedRefund).not.toHaveBeenCalled()
+  })
+
+  it('Anthropic lỗi + Groq lỗi + không có Gemini → giữ status Groq + HOÀN lượt đúng 1 lần', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_DOWN)
+    mockedFetch.mockResolvedValueOnce(new Response('boom', { status: 500 }))
+    const res = await handler(makeRequest())
+    expect(res.status).toBe(500)
     expect(mockedRefund).toHaveBeenCalledTimes(1)
   })
 })
@@ -401,7 +576,7 @@ describe('handler /api/agent — Anthropic lỗi tự chuyển sang Gemini dự 
   })
 
   it('Anthropic lỗi mạng, Gemini fallback thành công → 200, KHÔNG hoàn lượt', async () => {
-    mockedFetch.mockRejectedValue(new Error('Hết thời gian chờ (quá 30s)'))
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_DOWN)
     mockedGemini.mockResolvedValueOnce('Từ Gemini')
     const res = await handler(makeRequest())
     expect(res.status).toBe(200)

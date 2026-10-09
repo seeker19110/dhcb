@@ -7,7 +7,7 @@
 // feedback đúng tiếng Việt.
 //
 // ⚠️ CHẠY TAY, TỐN PHÍ API — KHÔNG đưa vào CI. Cần 1 trong: GEMINI_API_KEY / GROQ_API_KEY /
-// ANTHROPIC_API_KEY (ưu tiên Groq → Anthropic → Gemini, ĐÚNG thứ tự packages/core-ai/ai.ts).
+// ANTHROPIC_API_KEY (ưu tiên Anthropic → Groq → Gemini, ĐÚNG thứ tự packages/core-ai/ai.ts).
 // Đặt trong .env ở gốc dự án.
 //
 // Dùng:
@@ -36,11 +36,12 @@ import { callGemini } from '@dhcb/core-ai/geminiApi'
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 import { groqKeyPool, isSkippableGroqKeyError } from '@dhcb/core-ai/groqKeyPool'
 import {
-  ALLOWED_MODEL,
   GEMINI_CHAT_MODEL,
   GROQ_CHAT_MODEL,
   SYSTEM_GUARDRAIL,
+  getAnthropicRoute,
 } from '@dhcb/core-ai/aiConfig'
+import { callAnthropicText } from '@dhcb/core-ai/anthropicClient'
 import {
   parseFixtures,
   parseRichFixtures,
@@ -112,12 +113,16 @@ const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY
 // chính nó chứ không đo hệ thống.
 const GROQ_KEYS = groqKeyPool()
 
+// [2026-10-09] Production đổi sang Anthropic → Groq → Gemini. Hai chế độ eval (chat, speaking)
+// đều là nhiệm vụ 'converse' ở production (getAnthropicRoute) → đo đúng model Haiku người học gặp.
+const EVAL_ROUTE = getAnthropicRoute('converse')
+
 function providerLabel(): string {
+  if (ANTHROPIC_KEY) return `Anthropic · ${EVAL_ROUTE.model} (effort ${EVAL_ROUTE.effort})`
   if (GROQ_KEYS.length > 0) {
     const n = GROQ_KEYS.length > 1 ? ` (${GROQ_KEYS.length} key)` : ''
     return `Groq · ${GROQ_CHAT_MODEL}${n}`
   }
-  if (ANTHROPIC_KEY) return `Anthropic · ${ALLOWED_MODEL}`
   if (GEMINI_KEY) return `Gemini · ${GEMINI_CHAT_MODEL}`
   return 'none'
 }
@@ -205,30 +210,24 @@ async function thuCaBeGroq(system: string, messages: Msg[]): Promise<KetQuaBe> {
 }
 
 async function callAnthropic(system: string, messages: Msg[]): Promise<string> {
-  const resp = await fetchWithTimeout(
-    'https://api.anthropic.com/v1/messages',
-    {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_KEY!,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ model: ALLOWED_MODEL, max_tokens: MAX_TOKENS, system, messages }),
-    },
-    AI_TIMEOUT_MS,
-  )
-  if (!resp.ok) throw new Error(`Anthropic ${resp.status}: ${(await resp.text()).slice(0, 200)}`)
-  const data = (await resp.json()) as { content?: Array<{ text?: unknown }> }
-  const text = data.content?.[0]?.text
-  if (typeof text !== 'string') throw new Error('Anthropic trả về cấu trúc không hợp lệ')
-  return text
+  // Đi ĐÚNG lớp gọi production (anthropicClient.ts): cùng model/effort/trần token, cùng cách
+  // lọc khối text — đo "cái người dùng thật nhận", không đo một đường gọi riêng của script.
+  const r = await callAnthropicText({
+    apiKey: ANTHROPIC_KEY!,
+    route: EVAL_ROUTE,
+    system,
+    messages,
+  })
+  if (r.kind === 'success') return r.text
+  if (r.kind === 'api_error') throw new Error(`Anthropic ${r.status}: ${r.message.slice(0, 200)}`)
+  if (r.kind === 'network_error') throw new Error(`Anthropic lỗi mạng: ${r.message}`)
+  throw new Error(`Anthropic không dùng được (${r.reason}: ${r.detail})`)
 }
 
 async function callProvider(system: string, userText: string): Promise<string> {
   const messages: Msg[] = [{ role: 'user', content: userText }]
-  if (GROQ_KEYS.length > 0) return callGroq(system, messages)
   if (ANTHROPIC_KEY) return callAnthropic(system, messages)
+  if (GROQ_KEYS.length > 0) return callGroq(system, messages)
   if (GEMINI_KEY) return callGemini(GEMINI_KEY, GEMINI_CHAT_MODEL, system, messages, MAX_TOKENS)
   throw new Error('Chưa cấu hình GEMINI_API_KEY / GROQ_API_KEY / ANTHROPIC_API_KEY')
 }

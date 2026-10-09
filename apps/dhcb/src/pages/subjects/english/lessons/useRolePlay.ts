@@ -281,7 +281,7 @@ export function useRolePlay({
       content: t.speaker === role ? (rpTranscripts[i] ?? '') : isA ? t.en : t.vi,
     }))
     try {
-      const raw = await callClaude(history, sys, 2048, 'speaking')
+      const raw = await callClaude(history, sys, 2048, 'speaking', 'grade')
       // Đã rời phiên (điều hướng/đổi bài/owner) khi đang chấm → bỏ phản hồi: không hiện điểm,
       // không cộng lượt. Lượt gọi AI đã tốn thì không lấy lại được, nhưng không "ghi điểm" sai chỗ.
       if (the !== theHeRef.current) return

@@ -331,7 +331,13 @@ export default function Writing() {
       ? `De bai: ${essayPrompt}\n\nBai viet cua hoc vien:\n${essay}`
       : `Essay prompt: ${essayPrompt}\n\nLearner's Vietnamese essay:\n${essay}`
     try {
-      const raw = await callClaude([{ role: 'user', content: userMsg }], sys, 2048, 'writing')
+      const raw = await callClaude(
+        [{ role: 'user', content: userMsg }],
+        sys,
+        2048,
+        'writing',
+        'grade',
+      )
       const data = parseJson<FeedbackData>(raw)
       if (
         !data ||

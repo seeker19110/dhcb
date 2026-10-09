@@ -9,9 +9,29 @@ export interface ModelPricing {
 
 // Bảng giá cơ sở cho các model phổ biến (USD / 1,000,000 tokens)
 export const MODEL_PRICING_REGISTRY: Record<string, ModelPricing> = {
+  // [2026-10-09] Model Claude theo nhiệm vụ (aiConfig.ts#getAnthropicRoute). Giá công bố của
+  // Anthropic, USD / 1M token. Haiku 5.5 có HAI bảng giá theo độ dài prompt: ≤ 100K token là
+  // $0.10/$0.50 (dùng ở đây — /api/agent giới hạn 40K ký tự nên luôn dưới ngưỡng), > 100K là
+  // $0.50/$2.50. Phần "suy nghĩ" (thinking) tính như token ra.
+  'claude-haiku-5-5': {
+    promptCostPer1MTokensUsd: 0.1,
+    completionCostPer1MTokensUsd: 0.5,
+  },
+  'claude-sonnet-5-5': {
+    promptCostPer1MTokensUsd: 2.0,
+    completionCostPer1MTokensUsd: 10.0,
+  },
+  // Model mà server-side fallback của Sonnet 5.5 có thể chuyển sang khi bộ lọc an toàn từ chối
+  // nhầm — response ghi đúng model đã chạy nên cần có giá để không rơi về giá mặc định.
+  'claude-opus-5-5': {
+    promptCostPer1MTokensUsd: 4.0,
+    completionCostPer1MTokensUsd: 20.0,
+  },
+  // Model cũ (trước 2026-10-09) — giữ để quy giá dữ liệu lịch sử. Sửa giá đúng $1/$5 (bản cũ
+  // ghi nhầm $0.8/$4 của Haiku 3.5).
   'claude-haiku-4-5-20251001': {
-    promptCostPer1MTokensUsd: 0.8,
-    completionCostPer1MTokensUsd: 4.0,
+    promptCostPer1MTokensUsd: 1.0,
+    completionCostPer1MTokensUsd: 5.0,
   },
   'gemini-2.0-flash': {
     promptCostPer1MTokensUsd: 0.1,
