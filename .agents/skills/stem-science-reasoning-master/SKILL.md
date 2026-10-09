@@ -25,7 +25,10 @@ Quy chuẩn cho bài học, bài tập và phản hồi môn STEM (Toán · Lý 
   `apps/dhcb/src/lib/stemLessonRoutes.ts`.
 - **Giải đề qua ảnh (Vision Solver):** `apps/server/src/api/learning/vision-solve.ts` (có rate
   limit + `validateAuth`), gọi từ `apps/dhcb/src/lib/visionSolverApi.ts`. Là lệnh gọi AI → phải
-  qua đếm lượt (`checkAndConsumeUsage`).
+  qua đếm lượt (`checkAndConsumeUsage`). **Không có nhánh giả lập** (changelog 0563): thiếu
+  `GEMINI_API_KEY` ⇒ `VisionSolverUnavailableError` (503), AI trả sai khuôn JSON ⇒
+  `VisionSolverBadOutputError` (502); handler hoàn lượt ở mọi nhánh lỗi. Đừng thêm lại lời giải mẫu
+  "Đáp số đã được xác minh chính xác."
 
 ---
 

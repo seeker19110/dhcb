@@ -1,13 +1,11 @@
-// packages/core-ai/articulatoryPhoneticsService.ts — V3 3D Articulatory Phonetics & Pitch Alignment Service.
-import { randomUUID } from 'node:crypto'
-import {
-  type L1PhonemeTarget,
-  type ArticulatoryGuide,
-  type PitchSample,
-  type PitchContourData,
-  type PhoneticAnalysisReport,
-  PHONETICS_SCHEMA_VERSION,
-} from '@dhcb/core-contracts/articulatoryPhonetics'
+// packages/core-ai/articulatoryPhoneticsService.ts — Hướng dẫn khẩu hình (mặt cắt miệng) cho âm
+// người Việt hay nhầm: dữ liệu tĩnh viết tay, không đo gì.
+//
+// Changelog 0563 (khuôn 0484) đã GỠ `generatePitchContour`/`analyzePhoneticsAndPitch`: đường pitch
+// "người học" = pitch mẫu (4 điểm sinh bằng công thức) + nhiễu ngẫu nhiên, kèm
+// `alignmentScore`/`overallPhoneticScore` lấy thẳng từ điểm client tự gửi — hiển thị như kết quả
+// đo dù không có âm thanh nào. Không thêm lại điểm/đường pitch khi chưa ghi âm + trích F0 thật.
+import type { L1PhonemeTarget, ArticulatoryGuide } from '@dhcb/core-contracts/articulatoryPhonetics'
 
 export const ARTICULATORY_GUIDES: Record<L1PhonemeTarget, ArticulatoryGuide> = {
   TH_VOICELESS: {
@@ -137,66 +135,4 @@ export function getArticulatoryGuide(phoneme: L1PhonemeTarget): ArticulatoryGuid
     throw new Error(`Chưa có hướng dẫn giải phẫu cho âm vị ${phoneme}`)
   }
   return guide
-}
-
-export function generatePitchContour(
-  targetWordOrPhrase: string,
-  userAcousticScore: number = 85,
-): PitchContourData {
-  const isQuestion = targetWordOrPhrase.trim().endsWith('?')
-  const baseFreq = 140
-
-  const nativePitchTrack: PitchSample[] = [
-    { timeMs: 0, f0Hz: baseFreq },
-    { timeMs: 150, f0Hz: isQuestion ? baseFreq + 40 : baseFreq + 25 },
-    { timeMs: 300, f0Hz: isQuestion ? baseFreq + 80 : baseFreq - 15 },
-    { timeMs: 450, f0Hz: isQuestion ? baseFreq + 95 : baseFreq - 35 },
-  ]
-
-  // Giả lập đường pitch của người học với độ lệch nhẹ
-  const deviation = (100 - userAcousticScore) * 0.4
-  const userPitchTrack: PitchSample[] = nativePitchTrack.map((p) => ({
-    timeMs: p.timeMs,
-    f0Hz: Math.max(80, p.f0Hz + (Math.random() * deviation * 2 - deviation)),
-  }))
-
-  const alignmentScore = Math.min(100, Math.max(50, userAcousticScore))
-  const intonationPattern = isQuestion ? 'rising' : 'falling'
-
-  const coachingAdvice =
-    alignmentScore >= 85
-      ? 'Độ cao và ngữ điệu câu rất tự nhiên, âm vực tương thích 95% với người bản xứ.'
-      : 'Cần hạ cao độ dần ở cuối câu trần thuật hoặc nhấn cao hơn ở từ mang trọng âm chính.'
-
-  return {
-    userPitchTrack,
-    nativePitchTrack,
-    alignmentScore,
-    intonationPattern,
-    stressAccentsMatch: alignmentScore >= 75,
-    coachingAdvice,
-  }
-}
-
-export function analyzePhoneticsAndPitch(
-  personId: string,
-  targetWordOrPhrase: string,
-  targetPhoneme: L1PhonemeTarget,
-  estimatedScore: number = 88,
-): PhoneticAnalysisReport {
-  const articulatoryGuide = getArticulatoryGuide(targetPhoneme)
-  const pitchContour = generatePitchContour(targetWordOrPhrase, estimatedScore)
-
-  return {
-    id: randomUUID(),
-    personId,
-    targetWordOrPhrase,
-    targetPhoneme,
-    articulatoryGuide,
-    pitchContour,
-    overallPhoneticScore: estimatedScore,
-    l1InterferenceMitigated: estimatedScore >= 80,
-    createdAt: new Date().toISOString(),
-    schemaVersion: PHONETICS_SCHEMA_VERSION,
-  }
 }

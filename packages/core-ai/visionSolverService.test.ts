@@ -1,12 +1,21 @@
 // packages/core-ai/visionSolverService.test.ts
-import { describe, it, expect, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import {
   cleanBase64,
   parseVisionSolutionText,
   solveProblemWithVision,
+  VisionSolverBadOutputError,
+  VisionSolverUnavailableError,
 } from './visionSolverService.js'
 
 describe('VisionSolverService', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
   it('cleans data url headers from base64 strings', () => {
     const raw = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=='
     const cleaned = cleanBase64(raw)
@@ -26,38 +35,53 @@ describe('VisionSolverService', () => {
 }
 \`\`\``
 
-    const parsed = parseVisionSolutionText(aiText, 'mathematics')
-    expect(parsed.problemText).toBe('Giải phương trình 2x + 4 = 0')
-    expect(parsed.steps).toHaveLength(2)
-    expect(parsed.finalAnswer).toBe('x = -2')
+    const parsed = parseVisionSolutionText(aiText)
+    expect(parsed?.problemText).toBe('Giải phương trình 2x + 4 = 0')
+    expect(parsed?.steps).toHaveLength(2)
+    expect(parsed?.finalAnswer).toBe('x = -2')
   })
 
-  it('provides structured fallback steps when AI response is unstructured', () => {
-    const parsed = parseVisionSolutionText('Không thể parse JSON', 'chemistry')
-    expect(parsed.steps.length).toBeGreaterThan(0)
-    expect(parsed.steps[0]?.title).toContain('Bước 1')
+  it('văn bản AI sai khuôn hoặc rỗng ⇒ null, KHÔNG bịa bước giải mẫu (changelog 0563)', () => {
+    expect(parseVisionSolutionText('Không thể parse JSON')).toBeNull()
+    expect(parseVisionSolutionText('')).toBeNull()
+    expect(parseVisionSolutionText('{"problemText":"x","steps":[],"finalAnswer":"y"}')).toBeNull()
   })
 
-  it('solves problem in fallback simulation mode when no API key provided', async () => {
-    const res = await solveProblemWithVision({
+  it('thiếu GEMINI_API_KEY ⇒ ném VisionSolverUnavailableError 503, không trả lời giải giả', async () => {
+    vi.stubEnv('GEMINI_API_KEY', '')
+    const fetchSpy = vi.spyOn(global, 'fetch')
+    const promise = solveProblemWithVision({
       imageBase64: 'iVBORw0KGgoAAAANSUhEUg==',
       subjectId: 'physics',
       userPrompt: 'Tính gia tốc a',
     })
-
-    expect(res.problemText).toContain('physics')
-    expect(res.steps.length).toBeGreaterThan(0)
-    expect(res.finalAnswer).toBeTruthy()
-    expect(res.confidence).toBeGreaterThan(0.9)
+    await expect(promise).rejects.toBeInstanceOf(VisionSolverUnavailableError)
+    await expect(promise).rejects.toMatchObject({ status: 503, code: 'vision_unavailable' })
+    expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  it('handles cleanBase64 without data prefix and empty aiText parsing', () => {
+  it('cleanBase64 không có tiền tố data: giữ nguyên và mặc định image/jpeg', () => {
     const rawClean = cleanBase64('justbase64string')
     expect(rawClean.mimeType).toBe('image/jpeg')
     expect(rawClean.data).toBe('justbase64string')
+  })
 
-    const emptyParsed = parseVisionSolutionText('', 'biology')
-    expect(emptyParsed.problemText).toBe('Bài tập biology từ hình ảnh tải lên')
+  it('AI trả văn bản sai khuôn ⇒ ném VisionSolverBadOutputError 502', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'xin lỗi, tôi không đọc được' }] } }],
+      }),
+    } as unknown as Response)
+    await expect(
+      solveProblemWithVision({ imageBase64: 'abc', subjectId: 'math' }, 'mock-api-key'),
+    ).rejects.toBeInstanceOf(VisionSolverBadOutputError)
+  })
+
+  it('mã nguồn không còn nhánh giả lập/đáp số bịa (chống kết quả giả)', () => {
+    const source = readFileSync(join(__dirname, 'visionSolverService.ts'), 'utf8')
+    expect(source).not.toMatch(/Mock/)
+    expect(source).not.toMatch(/'Đáp số đã được xác minh chính xác\.'/)
   })
 
   it('solves problem with apiKey and mock fetch responses', async () => {

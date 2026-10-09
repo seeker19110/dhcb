@@ -9,10 +9,7 @@ import {
   MentalModelMisconceptionSchema,
   type CognitiveBreakthroughRecord,
 } from '../../packages/core-contracts/socraticDiagnostics'
-import {
-  ArticulatoryGuideSchema,
-  PhoneticAnalysisReportSchema,
-} from '../../packages/core-contracts/articulatoryPhonetics'
+import { ArticulatoryGuideSchema } from '../../packages/core-contracts/articulatoryPhonetics'
 import {
   AutoSrsCardSchema,
   HarvestedMistakeSchema,
@@ -195,26 +192,6 @@ const ARTICULATORY_GUIDE = ArticulatoryGuideSchema.parse({
   stepByStepAnatomyTips: ['Đặt đầu lưỡi giữa hai răng', 'Thổi hơi nhẹ', 'Không rung dây thanh'],
 })
 
-const PHONETIC_REPORT = PhoneticAnalysisReportSchema.parse({
-  id: uuid(4),
-  personId: PERSON_ID,
-  targetWordOrPhrase: 'think',
-  targetPhoneme: 'TH_VOICELESS',
-  articulatoryGuide: ARTICULATORY_GUIDE,
-  pitchContour: {
-    userPitchTrack: [{ timeMs: 0, f0Hz: 180 }],
-    nativePitchTrack: [{ timeMs: 0, f0Hz: 175 }],
-    alignmentScore: 88,
-    intonationPattern: 'falling',
-    stressAccentsMatch: true,
-    coachingAdvice: 'Hạ giọng dứt khoát ở cuối câu.',
-  },
-  overallPhoneticScore: 88,
-  l1InterferenceMitigated: true,
-  createdAt: NOW,
-  schemaVersion: 'v3.0.0',
-})
-
 // ── Workplace Harvester, A2A, Thấu cảm sinh học (studio "Kế hoạch") ──────────────────────
 const HARVESTED_MISTAKE = HarvestedMistakeSchema.parse({
   id: uuid(5),
@@ -337,10 +314,9 @@ export async function mockCompanionInteractiveApis(page: Page): Promise<void> {
       return json(route, { updatedRecord: socraticRecord('breakthrough_achieved') })
     return json(route, { session: socraticRecord('in_progress') })
   })
+  // Chỉ còn GET hướng dẫn khẩu hình — POST "phân tích ngữ điệu" đã gỡ (changelog 0563).
   await page.route('**/api/articulatory-phonetics**', (route) =>
-    route.request().method() === 'GET'
-      ? json(route, { guide: ARTICULATORY_GUIDE })
-      : json(route, { report: PHONETIC_REPORT }),
+    json(route, { guide: ARTICULATORY_GUIDE }),
   )
   await page.route('**/api/workplace-insights**', (route) =>
     route.request().url().includes('kind=srs_cards')
@@ -364,7 +340,7 @@ export const MOCK_TEXT = {
   holodeckFirstTurn: HOLODECK_TURNS[0]?.content ?? '',
   socraticTopic: SOCRATIC_TOPIC.title,
   socraticFirstFeedback: SOCRATIC_FIRST_TURN.companionFeedback,
-  phoneticAdvice: PHONETIC_REPORT.pitchContour.coachingAdvice,
+  articulatoryMistake: ARTICULATORY_GUIDE.commonVietnameseMistake,
   harvestedMistake: HARVESTED_MISTAKE.detectedMistake,
   srsFront: SRS_CARD.frontPrompt,
   a2aTopic: A2A_NEGOTIATION.agreedTerms.skillTopic ?? '',

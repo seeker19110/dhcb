@@ -122,7 +122,6 @@ import memoryPalaceHandler from './api/learning/memory-palace.js'
 import lifeSynthesisHandler from './api/personal/life-synthesis.js'
 import agentOrchestratorHandler from './api/platform/agent-orchestrator.js'
 import pvpArenaHandler from './api/platform/pvp-arena.js'
-import coLearningAudioHandler from './api/learning/co-learning-audio.js'
 import geminiLiveHandler from './api/platform/gemini-live.js'
 
 // Content-Security-Policy dùng chung cho mọi response (API, static, health).
@@ -382,8 +381,6 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/agent-orchestrator', wrapEdge(agentOrchestratorHandler))
   // Live 1v1 PvP Arena & Ghost Matchmaking — Speed Vocab, Grammar Clash & Elo Rank.
   app.all('/api/pvp-arena', wrapEdge(pvpArenaHandler))
-  // Multiplayer Audio Co-Learning Room (Platform V7.1) — Realtime Live Audio Study Rooms & Socratic Moderator.
-  app.all('/api/co-learning-audio', wrapEdge(coLearningAudioHandler))
   // Gemini Live Bidirectional Streaming Gateway (Platform V7.2) — Full-Duplex PCM & Audio Streaming.
   app.all('/api/gemini-live', wrapEdge(geminiLiveHandler))
 }

@@ -296,7 +296,8 @@ export default function MemoryPalaceExplorerModal({ onClose }: MemoryPalaceExplo
                           </div>
                         </div>
                         <span className="text-[0.6875rem] px-2 py-0.5 rounded-full bg-zinc-800 font-semibold">
-                          {locus.retentionStrength}%
+                          {/* Chưa ôn lần nào ⇒ chưa có số đo thật, không hiện % (changelog 0563). */}
+                          {locus.lastRecalledAt ? `${locus.retentionStrength}%` : 'Chưa ôn'}
                         </span>
                       </button>
                     ))}

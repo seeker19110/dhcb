@@ -491,10 +491,6 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/api/checkout`
 
-### `/api/co-learning-audio` — 1 endpoint
-
-- `/api/co-learning-audio`
-
 ### `/api/companion` — 1 endpoint
 
 - `/api/companion`

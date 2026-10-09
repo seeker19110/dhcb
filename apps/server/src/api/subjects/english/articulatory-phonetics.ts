@@ -1,5 +1,12 @@
-// api/articulatory-phonetics.ts — V3 3D Articulatory Phonetics & Pitch Alignment Endpoint.
-import { getPgPool } from '@dhcb/core-db/pgPool'
+// api/articulatory-phonetics.ts — Hướng dẫn khẩu hình (mặt cắt miệng) cho âm người Việt hay nhầm.
+//
+// GET  → danh sách hướng dẫn, hoặc một hướng dẫn theo `?phoneme=`. Dữ liệu tĩnh viết tay
+//        (`ARTICULATORY_GUIDES`), không gọi AI, không đọc/ghi CSDL.
+// POST → 501 `PITCH_ANALYSIS_UNAVAILABLE`. GỠ 2026-10-09 (changelog 0563, khuôn 0484): bản trước
+//        "phân tích ngữ điệu" mà KHÔNG nhận âm thanh nào — client gửi điểm `Math.random()`, server
+//        sinh đường pitch "của bạn" = pitch mẫu + nhiễu ngẫu nhiên và trả "Khớp N%". Giữ route để
+//        client cũ nhận lỗi rõ thay vì 404. Đo ngữ điệu thật cần ghi âm + trích F0 — tính năng mới,
+//        phải có đặc tả.
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -7,19 +14,12 @@ import {
   validateAuth,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { getOrCreatePerson } from '@dhcb/core-personal/personService'
 import {
   getArticulatoryGuide,
-  analyzePhoneticsAndPitch,
   ARTICULATORY_GUIDES,
 } from '@dhcb/core-ai/articulatoryPhoneticsService'
-import {
-  type L1PhonemeTarget,
-  L1PhonemeTargetSchema,
-} from '@dhcb/core-contracts/articulatoryPhonetics'
-import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
+import { L1PhonemeTargetSchema } from '@dhcb/core-contracts/articulatoryPhonetics'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
-import { readJsonBody } from '@dhcb/core-http/validation'
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -37,54 +37,30 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ error: 'Unauthorized' }, 401, headers)
   }
 
-  try {
-    const pool = getPgPool()
-    const person = await getOrCreatePerson(pool, auth.userId)
-
-    if (req.method === 'GET') {
-      const url = new URL(req.url)
-      const phonemeParam = url.searchParams.get('phoneme')
-
-      if (phonemeParam) {
-        const validatedPhoneme = L1PhonemeTargetSchema.parse(phonemeParam)
-        const guide = getArticulatoryGuide(validatedPhoneme)
-        return jsonResponse({ guide }, 200, headers)
-      }
-
+  if (req.method === 'GET') {
+    const phonemeParam = new URL(req.url).searchParams.get('phoneme')
+    if (phonemeParam === null) {
       return jsonResponse({ guides: Object.values(ARTICULATORY_GUIDES) }, 200, headers)
     }
-
-    if (req.method === 'POST') {
-      const bodyResult = await readJsonBody(req)
-      if (!bodyResult.ok) {
-        return jsonResponse({ error: bodyResult.error.message }, bodyResult.error.status, headers)
-      }
-      const body = bodyResult.raw as {
-        targetWord: string
-        targetPhoneme: L1PhonemeTarget
-        scoreEstimate?: number
-      }
-
-      if (!body.targetWord || !body.targetPhoneme) {
-        return jsonResponse({ error: 'Thiếu targetWord hoặc targetPhoneme' }, 400, headers)
-      }
-
-      const validatedPhoneme = L1PhonemeTargetSchema.parse(body.targetPhoneme)
-      const report = analyzePhoneticsAndPitch(
-        person.id,
-        body.targetWord,
-        validatedPhoneme,
-        body.scoreEstimate ?? 88,
-      )
-
-      return jsonResponse({ report }, 200, headers)
+    const phoneme = L1PhonemeTargetSchema.safeParse(phonemeParam)
+    if (!phoneme.success) {
+      return jsonResponse({ error: 'Âm vị không hợp lệ' }, 400, headers)
     }
-
-    return jsonResponse({ error: 'Method not allowed' }, 405, headers)
-  } catch (err) {
-    if (isAppError(err)) {
-      return jsonResponse(toErrorBody(err), err.status, headers)
-    }
-    return jsonResponse({ error: 'Lỗi phân tích giải phẫu âm vị học 3D' }, 500, headers)
+    return jsonResponse({ guide: getArticulatoryGuide(phoneme.data) }, 200, headers)
   }
+
+  if (req.method === 'POST') {
+    return jsonResponse(
+      {
+        error: 'PITCH_ANALYSIS_UNAVAILABLE',
+        message:
+          'Chưa có phân tích ngữ điệu: bản trước hiện "Khớp N%" từ số ngẫu nhiên chứ không nghe ' +
+          'giọng bạn. Thẻ nay chỉ hướng dẫn khẩu hình.',
+      },
+      501,
+      headers,
+    )
+  }
+
+  return jsonResponse({ error: 'Method not allowed' }, 405, headers)
 }

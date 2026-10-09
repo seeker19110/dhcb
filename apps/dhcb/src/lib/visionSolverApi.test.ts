@@ -40,4 +40,17 @@ describe('visionSolverApi', () => {
       'Ảnh không hợp lệ',
     )
   })
+
+  it('đọc được lỗi khuôn AppError {error:{message,code}} (vd 503 thiếu key AI)', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({
+        error: { message: 'Tạm thời chưa sẵn sàng', code: 'vision_unavailable' },
+      }),
+    })
+    await expect(solveProblemImage({ imageBase64: 'x', subjectId: 'math' })).rejects.toThrow(
+      'Tạm thời chưa sẵn sàng',
+    )
+  })
 })

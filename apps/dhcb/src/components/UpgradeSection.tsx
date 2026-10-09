@@ -69,8 +69,8 @@ const PLAN_INFO: Record<
       {
         // Gemini Live CHƯA kiểm chứng với key thật (nợ mở PROGRESS.md #15) — bắt buộc gắn
         // nhãn "đang thử nghiệm"/"beta" để không hứa quá lời một tính năng chưa chắc chạy.
-        vi: 'Nói chuyện trực tiếp với gia sư bằng giọng, ngắt lời được như người thật (đang thử nghiệm) · Phòng học nhóm bằng âm thanh',
-        en: 'Talk live with your tutor by voice, interrupt like a real conversation (beta) · Audio co-learning rooms',
+        vi: 'Nói chuyện trực tiếp với gia sư bằng giọng, ngắt lời được như người thật (đang thử nghiệm)',
+        en: 'Talk live with your tutor by voice, interrupt like a real conversation (beta)',
       },
       {
         vi: 'Cung điện trí nhớ 3D: ghi nhớ từ vựng theo không gian',
