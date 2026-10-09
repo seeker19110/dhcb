@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { callGroqChat, callGroqChatWithKeyPool, callAnthropicChat } from './chatProviders.js'
+import { callGroqChat, callGroqChatWithKeyPool } from './chatProviders.js'
 import { __resetGroqKeyRotationForTests } from './groqKeyPool.js'
 
 const originalFetch = global.fetch
@@ -122,49 +122,6 @@ describe('callGroqChat', () => {
       json: async () => ({ choices: [{ message: {} }] }),
     } as Response)
     expect((await callGroqChat('key', 'model', '', [], 100)).kind).toBe('malformed_body')
-  })
-})
-
-describe('callAnthropicChat', () => {
-  it('thành công → response kèm status 200 + body NGUYÊN VĂN (không parse)', async () => {
-    const rawBody = '{"content":[{"type":"text","text":"xin chào"}]}'
-    mockFetchOnce({ ok: true, status: 200, text: async () => rawBody } as Response)
-    const result = await callAnthropicChat('key', 'model-x', 'system', [], 100)
-    expect(result).toMatchObject({ kind: 'response', status: 200, bodyText: rawBody })
-  })
-
-  it('lỗi HTTP → vẫn trả kind=response kèm status/body gốc (ai.ts tự quyết fallback hay forward)', async () => {
-    const rawBody = '{"error":{"message":"overloaded"}}'
-    mockFetchOnce({ ok: false, status: 529, text: async () => rawBody } as Response)
-    const result = await callAnthropicChat('key', 'model-x', 'system', [], 100)
-    expect(result).toMatchObject({ kind: 'response', status: 529, bodyText: rawBody })
-  })
-
-  it('lỗi mạng/timeout (fetch ném lỗi) → network_error, không có response để forward', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('Hết thời gian chờ'))
-    const result = await callAnthropicChat('key', 'model-x', 'system', [], 100)
-    expect(result).toMatchObject({ kind: 'network_error', message: 'Hết thời gian chờ' })
-  })
-
-  it('gửi đúng system + messages + max_tokens trong body request', async () => {
-    let sentBody: unknown
-    global.fetch = vi.fn().mockImplementation((_url, init: RequestInit) => {
-      sentBody = JSON.parse(init.body as string)
-      return Promise.resolve({ ok: true, status: 200, text: async () => '{}' } as Response)
-    })
-    await callAnthropicChat(
-      'key',
-      'claude-haiku',
-      'bạn là gia sư',
-      [{ role: 'user', content: 'hi' }],
-      256,
-    )
-    expect(sentBody).toEqual({
-      model: 'claude-haiku',
-      max_tokens: 256,
-      system: 'bạn là gia sư',
-      messages: [{ role: 'user', content: 'hi' }],
-    })
   })
 })
 

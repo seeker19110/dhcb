@@ -42,13 +42,19 @@ vi.mock('./proposedActionService.js', () => ({
 const chatProvidersMock = vi.hoisted(() => ({
   callGroqChat: vi.fn(),
   callGroqChatWithKeyPool: vi.fn(),
-  callAnthropicChat: vi.fn(),
 }))
 
 vi.mock('@dhcb/core-ai/chatProviders', () => ({
   callGroqChat: (...a: unknown[]) => chatProvidersMock.callGroqChat(...a),
   callGroqChatWithKeyPool: (...a: unknown[]) => chatProvidersMock.callGroqChatWithKeyPool(...a),
-  callAnthropicChat: (...a: unknown[]) => chatProvidersMock.callAnthropicChat(...a),
+}))
+
+const anthropicClientMock = vi.hoisted(() => ({
+  callAnthropicText: vi.fn(),
+}))
+
+vi.mock('@dhcb/core-ai/anthropicClient', () => ({
+  callAnthropicText: (...a: unknown[]) => anthropicClientMock.callAnthropicText(...a),
 }))
 
 const geminiApiMock = vi.hoisted(() => ({
@@ -659,20 +665,14 @@ describe('synthesizeCompanionReply with shared AI models', () => {
     delete process.env.GROQ_API_KEY
   })
 
-  it('fallback sang Anthropic khi Groq lỗi và có ANTHROPIC_API_KEY', async () => {
+  it('Anthropic là AI CHÍNH: có key thì gọi Claude (nhiệm vụ companion → Sonnet), KHÔNG gọi Groq', async () => {
     process.env.GROQ_API_KEY = 'test-groq-key'
     process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
-    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValueOnce({
-      kind: 'network_error',
-      message: 'Connection timeout',
-      latencyMs: 500,
-    })
-    chatProvidersMock.callAnthropicChat.mockResolvedValueOnce({
-      kind: 'response',
-      status: 200,
-      bodyText: JSON.stringify({
-        content: [{ text: 'Phản hồi từ Anthropic Claude cho Bạn Đồng Hành.' }],
-      }),
+    anthropicClientMock.callAnthropicText.mockResolvedValueOnce({
+      kind: 'success',
+      text: 'Phản hồi từ Anthropic Claude cho Bạn Đồng Hành.',
+      model: 'claude-sonnet-5-5',
+      usage: null,
       latencyMs: 350,
     })
 
@@ -685,7 +685,43 @@ describe('synthesizeCompanionReply with shared AI models', () => {
     )
 
     expect(reply).toBe('Phản hồi từ Anthropic Claude cho Bạn Đồng Hành.')
-    expect(chatProvidersMock.callAnthropicChat).toHaveBeenCalled()
+    const call = anthropicClientMock.callAnthropicText.mock.calls[0]![0] as {
+      route: { model: string }
+      system: string
+    }
+    expect(call.route.model).toBe('claude-sonnet-5-5')
+    expect(call.system).toContain('Bạn Đồng Hành')
+    expect(chatProvidersMock.callGroqChatWithKeyPool).not.toHaveBeenCalled()
+    delete process.env.GROQ_API_KEY
+    delete process.env.ANTHROPIC_API_KEY
+  })
+
+  it('Anthropic lỗi (bị cắt/từ chối/lỗi mạng) → fallback sang Groq', async () => {
+    process.env.GROQ_API_KEY = 'test-groq-key'
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
+    anthropicClientMock.callAnthropicText.mockResolvedValueOnce({
+      kind: 'unusable',
+      reason: 'max_tokens',
+      detail: 'chạm trần',
+      model: 'claude-sonnet-5-5',
+      usage: null,
+      latencyMs: 500,
+    })
+    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValueOnce({
+      kind: 'success',
+      text: 'Từ Groq',
+      latencyMs: 1,
+    })
+
+    const reply = await synthesizeCompanionReply(
+      'Tư vấn sự nghiệp',
+      'general_conversation',
+      'career',
+      [],
+      sampleContext,
+    )
+
+    expect(reply).toBe('Từ Groq')
     delete process.env.GROQ_API_KEY
     delete process.env.ANTHROPIC_API_KEY
   })

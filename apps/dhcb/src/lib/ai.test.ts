@@ -21,6 +21,35 @@ describe('callClaude — xử lý lỗi thân thiện (song ngữ, không phơi 
     expect(text).toBe('Hello!')
   })
 
+  it('khối thinking đứng trước khối text → vẫn đọc đúng text theo type', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          content: [
+            { type: 'thinking', thinking: '' },
+            { type: 'text', text: 'Đáp án' },
+          ],
+        }),
+    }) as unknown as typeof fetch
+    expect(await callClaude([], 'system')).toBe('Đáp án')
+  })
+
+  it('gửi mode + task cho server, KHÔNG gửi tên model (server tự chọn theo nhiệm vụ)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ content: [{ type: 'text', text: 'ok' }] }),
+    })
+    global.fetch = fetchMock as unknown as typeof fetch
+    await callClaude([{ role: 'user', content: 'bài viết' }], 'sys', 2048, 'writing', 'grade')
+    const body = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string) as Record<
+      string,
+      unknown
+    >
+    expect(body).toMatchObject({ mode: 'writing', task: 'grade', max_tokens: 2048 })
+    expect(body).not.toHaveProperty('model')
+  })
+
   it('fetch ném lỗi mạng → thông điệp song ngữ thân thiện, không phải "Failed to fetch"', async () => {
     global.fetch = vi
       .fn()

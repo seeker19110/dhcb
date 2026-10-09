@@ -82,15 +82,6 @@ export function parseGeminiUsage(body: unknown): AiTokenUsage | null {
   return buildUsage(toCount(meta.promptTokenCount), toCount(meta.candidatesTokenCount))
 }
 
-/** Như parseAnthropicUsage nhưng nhận chuỗi body chưa parse (ai.ts forward nguyên văn text). */
-export function parseAnthropicUsageFromText(bodyText: string): AiTokenUsage | null {
-  try {
-    return parseAnthropicUsage(JSON.parse(bodyText))
-  } catch {
-    return null
-  }
-}
-
 // ── Cảnh báo vượt ngân sách ────────────────────────────────────────────────────────────
 // Ngưỡng chi phí AI MỘT NGÀY (USD). Không đặt biến → không cảnh báo (mặc định an toàn:
 // không làm phiền khi chưa ai chọn ngưỡng).

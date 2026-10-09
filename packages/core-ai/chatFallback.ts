@@ -1,5 +1,5 @@
 // packages/core-ai/chatFallback.ts — Sinh MỘT đoạn văn bản bằng AI, thử lần lượt
-// Groq → Anthropic → Gemini, tự ghi token đã dùng (mục N4).
+// Anthropic (model theo nhiệm vụ) → Groq → Gemini, tự ghi token đã dùng (mục N4).
 //
 // VÌ SAO TÁCH RA: sau khi vá 2 chỗ "AI giả" ngày 2026-08-23 (Đấu trường Tranh biện và
 // Socratic Moderator phòng học nhóm), cả hai đều cần ĐÚNG chuỗi dự phòng này. Chép đôi đoạn
@@ -10,24 +10,40 @@
 // Trả `null` khi KHÔNG provider nào dùng được → caller tự quyết nói thật với người dùng
 // (vd gắn cờ isFallback) thay vì âm thầm đưa nội dung mẫu ra như thể AI vừa nghĩ.
 
-import { callGroqChatWithKeyPool, callAnthropicChat } from './chatProviders.js'
+import { callGroqChatWithKeyPool } from './chatProviders.js'
+import { callAnthropicText } from './anthropicClient.js'
 import { callGemini } from './geminiApi.js'
-import { ALLOWED_MODEL, GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL } from './aiConfig.js'
-import {
-  recordAiTokenUsage,
-  parseAnthropicUsageFromText,
-  type AiTokenUsage,
-} from './aiTokenUsage.js'
+import { GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, getAnthropicRoute, type AiTask } from './aiConfig.js'
+import { recordAiTokenUsage, type AiTokenUsage } from './aiTokenUsage.js'
 
 export async function generateChatText(params: {
   system: string
   userMessage: string
+  /** Trần token cho Groq/Gemini. Nhánh Anthropic dùng trần theo nhiệm vụ (aiConfig.ts). */
   maxTokens: number
   /** Nhãn chế độ để tách chi phí trên dashboard admin (vd 'debate', 'co-learning'). */
   mode: string
+  /** Nhiệm vụ → server chọn model Claude phù hợp (Haiku cho việc nhanh, Sonnet cho việc cần đúng). */
+  task: AiTask
 }): Promise<string | null> {
-  const { system, userMessage, maxTokens, mode } = params
+  const { system, userMessage, maxTokens, mode, task } = params
   const messages = [{ role: 'user', content: userMessage }]
+
+  const anthropicKey = process.env.ANTHROPIC_API_KEY
+  if (anthropicKey) {
+    const res = await callAnthropicText({
+      apiKey: anthropicKey,
+      route: getAnthropicRoute(task),
+      system,
+      messages,
+    })
+    // Token đã bị tính tiền cả khi response không dùng được (bị cắt/từ chối) → ghi trước.
+    if (res.kind === 'success' || res.kind === 'unusable') {
+      void recordAiTokenUsage({ provider: 'anthropic', model: res.model, mode, usage: res.usage })
+    }
+    if (res.kind === 'success') return res.text
+    // thất bại → thử provider kế tiếp
+  }
 
   if (process.env.GROQ_API_KEY) {
     try {
@@ -35,28 +51,6 @@ export async function generateChatText(params: {
       if (res.kind === 'success' && res.text.trim()) {
         void recordAiTokenUsage({ provider: 'groq', model: res.model, mode, usage: res.usage })
         return res.text.trim()
-      }
-    } catch {
-      // thử provider kế tiếp
-    }
-  }
-
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  if (anthropicKey) {
-    try {
-      const res = await callAnthropicChat(anthropicKey, ALLOWED_MODEL, system, messages, maxTokens)
-      if (res.kind === 'response' && res.status >= 200 && res.status < 300) {
-        const parsed = JSON.parse(res.bodyText) as { content?: Array<{ text?: string }> }
-        const text = parsed.content?.[0]?.text
-        if (typeof text === 'string' && text.trim()) {
-          void recordAiTokenUsage({
-            provider: 'anthropic',
-            model: ALLOWED_MODEL,
-            mode,
-            usage: parseAnthropicUsageFromText(res.bodyText),
-          })
-          return text.trim()
-        }
       }
     } catch {
       // thử provider kế tiếp

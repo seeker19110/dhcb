@@ -22,12 +22,16 @@ describe('CapabilityCostTracker', () => {
     const cost = calculateCostUsd('gemini-2.0-flash', 10_000, 5_000)
     expect(cost).toBeCloseTo(0.003, 6)
 
-    // claude-haiku: prompt 0.8 / 1M, completion 4.0 / 1M
-    // 1,000 prompt tokens = 0.0008 USD
-    // 500 completion tokens = 0.0020 USD
-    // total = 0.0028 USD
+    // claude-haiku 4.5: prompt 1.0 / 1M, completion 5.0 / 1M
+    // 1,000 prompt tokens = 0.0010 USD
+    // 500 completion tokens = 0.0025 USD
+    // total = 0.0035 USD
     const claudeCost = calculateCostUsd('claude-haiku-4-5-20251001', 1_000, 500)
-    expect(claudeCost).toBeCloseTo(0.0028, 6)
+    expect(claudeCost).toBeCloseTo(0.0035, 6)
+
+    // Model theo nhiệm vụ (2026-10-09): Haiku 5.5 $0.10/$0.50, Sonnet 5.5 $2/$10.
+    expect(calculateCostUsd('claude-haiku-5-5', 1_000_000, 1_000_000)).toBeCloseTo(0.6, 6)
+    expect(calculateCostUsd('claude-sonnet-5-5', 1_000_000, 1_000_000)).toBeCloseTo(12, 6)
 
     // Fallback model pricing
     const fallbackCost = calculateCostUsd('unknown-model-xyz', 1_000_000, 1_000_000)
@@ -158,14 +162,14 @@ describe('CapabilityCostTracker', () => {
   })
 
   it('calculates prompt caching discounts and tracks cost savings', () => {
-    // claude-haiku: 0.8 USD / 1M prompt.
+    // claude-haiku 4.5: 1.0 USD / 1M prompt.
     // 100,000 prompt tokens, trong đó 80,000 read from cache (được giảm 90% = 0.1x), 20,000 regular (1.0x).
-    // Regular 20k tokens = 0.016 USD
-    // Cache read 80k tokens = 80,000 * 0.08 / 1M = 0.0064 USD
-    // Completion 10k tokens = 10,000 * 4.0 / 1M = 0.04 USD
-    // Total = 0.016 + 0.0064 + 0.04 = 0.0624 USD (thay vì 0.08 + 0.04 = 0.12 USD không cache)
+    // Regular 20k tokens = 0.02 USD
+    // Cache read 80k tokens = 80,000 * 0.1 / 1M = 0.008 USD
+    // Completion 10k tokens = 10,000 * 5.0 / 1M = 0.05 USD
+    // Total = 0.02 + 0.008 + 0.05 = 0.078 USD (thay vì 0.1 + 0.05 = 0.15 USD không cache)
     const cachedCost = calculateCostUsd('claude-haiku-4-5-20251001', 100_000, 10_000, 80_000, 0)
-    expect(cachedCost).toBeCloseTo(0.0624, 4)
+    expect(cachedCost).toBeCloseTo(0.078, 4)
 
     const metric = tracker.recordInvocation({
       capabilityId: 'learning.tutor_turn',
@@ -181,7 +185,7 @@ describe('CapabilityCostTracker', () => {
 
     expect(metric.cacheReadTokens).toBe(80_000)
     expect(metric.costSavedUsd).toBeGreaterThan(0)
-    expect(metric.costUsd).toBeCloseTo(0.0624, 4)
+    expect(metric.costUsd).toBeCloseTo(0.078, 4)
 
     const summary = tracker.getMetricsByPerson('person-cache-test')
     expect(summary.totalCacheReadTokens).toBe(80_000)

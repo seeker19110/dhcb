@@ -3,7 +3,7 @@
 // [2026-08-23] SỬA LỖI NGHIÊM TRỌNG: `generateAiTurn` trước đây KHÔNG hề gọi AI — nó trả về
 // 1 trong 3 đoạn tiếng Anh CỨNG, bỏ qua cả chủ đề tranh biện lẫn lập luận người học vừa viết,
 // trong khi UI hiển thị tên "Debater AI". Nay gọi model thật theo đúng thứ tự dự phòng của
-// Companion (Groq → Anthropic → Gemini). Khi KHÔNG provider nào chạy được thì vẫn dùng mẫu
+// Companion (Anthropic → Groq → Gemini). Khi KHÔNG provider nào chạy được thì vẫn dùng mẫu
 // cứng, nhưng gắn cờ `isFallback` để UI NÓI THẬT thay vì để người học tưởng đang đấu với AI.
 import { generateChatText } from './chatFallback.js'
 import {
@@ -232,9 +232,7 @@ export class DebateArenaService {
     return { system, userMessage }
   }
 
-  // Gọi model thật theo thứ tự dự phòng Groq → Anthropic → Gemini (đúng khuôn companionRuntime).
-  // Trả null khi KHÔNG provider nào dùng được → caller rơi về mẫu cứng và gắn cờ isFallback.
-  // Gọi model thật qua chuỗi dự phòng dùng chung (Groq → Anthropic → Gemini, xem
+  // Gọi model thật qua chuỗi dự phòng dùng chung (Anthropic → Groq → Gemini, xem
   // chatFallback.ts). Trả null khi không provider nào dùng được → caller rơi về mẫu cứng và
   // gắn cờ isFallback.
   private static async callDebateModel(
@@ -242,7 +240,13 @@ export class DebateArenaService {
     speakerRole: 'affirmative' | 'negative' | 'socratic_moderator',
   ): Promise<string | null> {
     const { system, userMessage } = this.buildDebatePrompt(session, speakerRole)
-    return generateChatText({ system, userMessage, maxTokens: 512, mode: 'debate' })
+    return generateChatText({
+      system,
+      userMessage,
+      maxTokens: 512,
+      mode: 'debate',
+      task: 'debate',
+    })
   }
 
   /**

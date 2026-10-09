@@ -7,7 +7,6 @@ vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({ query: queryMock })
 import {
   parseGroqUsage,
   parseAnthropicUsage,
-  parseAnthropicUsageFromText,
   parseGeminiUsage,
   recordAiTokenUsage,
   getDailyBudgetUsd,
@@ -40,16 +39,6 @@ describe('parse usage của 3 nhà cung cấp', () => {
       completionTokens: 60,
       cacheReadTokens: 900,
       cacheWriteTokens: 10,
-    })
-  })
-
-  it('Anthropic từ chuỗi: body hỏng → null, không ném lỗi', () => {
-    expect(parseAnthropicUsageFromText('{ khong-phai-json')).toBeNull()
-    expect(parseAnthropicUsageFromText('{"usage":{"input_tokens":5,"output_tokens":7}}')).toEqual({
-      promptTokens: 5,
-      completionTokens: 7,
-      cacheReadTokens: 0,
-      cacheWriteTokens: 0,
     })
   })
 

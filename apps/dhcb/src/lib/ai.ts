@@ -1,11 +1,10 @@
 // Gọi AI qua /api/agent — KHÔNG gửi API key từ browser.
 // API key được giữ ở server: vite.config.ts (lúc dev) hoặc api/ai.ts (lúc deploy lên VPS).
-// Handler hỗ trợ Gemini (ưu tiên) / Groq / Anthropic — chọn dựa trên biến môi trường.
+// Server chọn nhà cung cấp (Anthropic chính → Groq → Gemini dự phòng) và chọn MODEL theo
+// nhiệm vụ (`task`) — frontend không gửi tên model.
 
 import { getAuthHeader } from '@core/authHeader'
 import { captureException } from './errorTracking'
-
-const MODEL = 'claude-haiku-4-5-20251001'
 
 interface ClaudeMessage {
   role: 'user' | 'assistant'
@@ -14,6 +13,11 @@ interface ClaudeMessage {
 
 // mode: cho server biết đây là lượt chat / viết / nói để đếm đúng cột giới hạn.
 export type CallMode = 'chat' | 'writing' | 'speaking'
+
+// task: cho server biết đây là lượt TRÒ CHUYỆN (cần nhanh → model nhẹ) hay CHẤM ĐIỂM/NHẬN XÉT
+// (cần đúng → model mạnh hơn). Khớp CLIENT_AI_TASKS ở packages/core-ai/aiConfig.ts. Bỏ trống thì
+// server tự suy: mode 'writing' → 'grade', còn lại → 'converse'.
+export type CallTask = 'converse' | 'grade'
 
 // Thông điệp chung khi phản hồi AI sai định dạng hoặc mạng lỗi — song ngữ (không cần biết
 // `dir` ở tầng này) để người học A1 vẫn hiểu cần làm gì tiếp, thay vì lỗi kỹ thuật tiếng Anh
@@ -35,6 +39,7 @@ export async function callClaude(
   system: string,
   maxTokens = 1024,
   mode: CallMode = 'chat',
+  task?: CallTask,
 ): Promise<string> {
   // /api/agent: lúc "npm run dev" được vite.config.ts proxy thẳng tới Anthropic (key đọc từ .env phía server);
   // lúc deploy lên Vercel, route này do api/claude.ts (serverless function) xử lý.
@@ -44,7 +49,7 @@ export async function callClaude(
     resp = await fetch('/api/agent', {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...authHeader },
-      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages, mode }),
+      body: JSON.stringify({ max_tokens: maxTokens, system, messages, mode, task }),
     })
   } catch (e) {
     return reportAndThrow(FRIENDLY_NETWORK_ERROR, e)
@@ -68,7 +73,13 @@ export async function callClaude(
   if (!Array.isArray(content) || content.length === 0) {
     return reportAndThrow(FRIENDLY_INVALID_RESPONSE, { reason: 'empty content array', data })
   }
-  const text = (content[0] as { text?: unknown }).text
+  // Đọc khối `type: 'text'` đầu tiên, KHÔNG đọc theo vị trí: model Claude đời mới có thể trả
+  // khối `thinking` đứng trước câu trả lời (server đã lọc, đây là lớp phòng thủ thứ hai).
+  const textBlock = content.find(
+    (b): b is { type: 'text'; text: unknown } =>
+      typeof b === 'object' && b !== null && (b as { type?: unknown }).type === 'text',
+  )
+  const text = (textBlock ?? (content[0] as { text?: unknown })).text
   if (typeof text !== 'string') {
     return reportAndThrow(FRIENDLY_INVALID_RESPONSE, { reason: 'non-string text', data })
   }

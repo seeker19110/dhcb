@@ -767,6 +767,17 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`] Ba việc trên VPS sau
+  khi deploy** (phiên AI không có key Anthropic thật):
+  1. Kiểm `ANTHROPIC_API_KEY` trong `/var/www/dhcb/.env` còn hiệu lực + tài khoản còn credit
+     (`console.anthropic.com` › Billing). Từ đợt này Claude chạy MỌI lượt chat/chấm bài → hết credit
+     là rơi hết về Groq/Gemini.
+  2. Đặt ngưỡng cảnh báo chi phí, vd `AI_DAILY_BUDGET_USD=5` → `pm2 reload dhcb` (log ERROR khi vượt).
+  3. Chạy `npm run eval:tutor -- --runs 3` (nay đo Haiku 5.5) rồi so với
+     `docs/research/eval-tutor-baseline.md`; recall/precision tụt thì đổi model qua
+     `ANTHROPIC_FAST_MODEL`, không cần sửa code. Sau vài ngày, đối chiếu thẻ "chi phí theo token
+     thật" ở `/admin` với ước tính và chỉnh `AI_COST_*_USD`.
+
 - **[2026-10-09 · sổ chống lạm dụng sau xoá tài khoản, changelog `0545`] Đặt khoá
   `ERASED_BENEFIT_LEDGER_KEY` trên VPS TRƯỚC khi deploy:**
   `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` → thêm vào
@@ -919,6 +930,15 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
    token của admin — `days: null` = vĩnh viễn.
 
 ## Quyết định quan trọng
+
+- **[2026-10-09] Claude (Anthropic) là AI CHÍNH, chọn model theo NHIỆM VỤ** (chủ dự án chốt trong
+  phiên, changelog `0568`, đặc tả `docs/specs/2026-10-09-phan-chia-model-claude-theo-nhiem-vu.md`).
+  Thứ tự provider: **Anthropic → Groq → Gemini** (trước: Groq miễn phí đứng đầu). Haiku 5.5 cho trò
+  chuyện/luyện nói/tranh biện; Sonnet 5.5 cho chấm bài, Companion, góp ý code, Action Canvas. Bảng
+  định tuyến ở `packages/core-ai/aiConfig.ts#getAnthropicRoute`, đổi model qua
+  `ANTHROPIC_FAST_MODEL`/`ANTHROPIC_SMART_MODEL`. **Đánh đổi đã biết:** chi phí từ ~0 lên trả phí thật
+  (ước tính $0.0006/lượt chat, ~$0.03/lượt chấm bài); đổi lại chất lượng ổn định hơn. Chưa có số
+  `eval:tutor` cho model mới — việc tay ở mục A.
 
 - **[2026-09-05] 🔑 QUYẾT ĐỊNH QUAN TRỌNG — thêm Tầng 8b "NHÌN trang thật bằng ảnh chụp" vào
   `docs/framework/QUY-TRINH-AUDIT.md`, BẮT BUỘC với mọi đợt việc chạm giao diện** (người dùng
@@ -1779,7 +1799,8 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   (số 2026-08-26 chỉ còn đúng với bộ 62 câu cũ; `--limit 62` tái hiện bộ đó). Xong việc này mới đóng
   hẳn nợ.
 
-  **Rủi ro nếu để lâu:** Gemini là fallback THỨ 3 trong chat (sau Groq, Anthropic) — sự cố chỉ lộ
+  **Rủi ro nếu để lâu:** Gemini là fallback THỨ 3 trong chat (sau Anthropic, Groq — thứ tự đổi ở
+  changelog `0568`) — sự cố chỉ lộ
   ra khi cả hai provider chính cùng lúc gặp vấn đề, tức âm thầm mất một lớp dự phòng mà không ai
   biết cho tới khi cần đến nó.
 

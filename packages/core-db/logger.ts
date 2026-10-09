@@ -37,7 +37,7 @@ export function createLogger(prefix: string): Logger {
 
 /**
  * Như `createLogger()`, nhưng ghép thêm `requestId` vào tiền tố — dùng ở handler MUỐN gắn cùng
- * 1 mã cho mọi dòng log của MỘT lượt xử lý (vd 3 dòng debug thử Groq→Anthropic→Gemini của cùng 1
+ * 1 mã cho mọi dòng log của MỘT lượt xử lý (vd 3 dòng debug thử Anthropic→Groq→Gemini của cùng 1
  * request `/api/agent`). Không bắt buộc mọi handler dùng — thêm dần khi cần lọc log 1 request cụ
  * thể, không migrate hàng loạt (giống cách `packages/core-config/env.ts` được thêm dần).
  *

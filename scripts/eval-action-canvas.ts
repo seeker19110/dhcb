@@ -4,7 +4,7 @@
 // VÌ SAO: prompt ở packages/core-personal/actionCanvasPrompt.ts quyết định đầu ra có qua được bộ
 // kiểm production không. Đầu ra hỏng KHÔNG tốn tiền người dùng (server hoàn lượt) nhưng TỐN TIỀN
 // API và làm người dùng thấy lỗi. Script chạy golden set qua ĐÚNG prompt + ĐÚNG chuỗi provider
-// production (generateChatText: Groq → Anthropic → Gemini) rồi chấm bằng
+// production (generateChatText: Anthropic → Groq → Gemini) rồi chấm bằng
 // scripts/lib/actionCanvasScoring.ts (dùng lại parseGoalDecomposition của production).
 //
 // ⚠️ CHẠY TAY, TỐN PHÍ API — KHÔNG đưa vào CI (cùng chính sách eval:tutor / eval:code-feedback).
@@ -80,6 +80,8 @@ async function main(): Promise<void> {
       maxTokens: prompt.maxTokens,
       // Nhãn riêng để lượt eval KHÔNG lẫn vào chi phí thật của người dùng trên dashboard.
       mode: 'eval-action-canvas',
+      // Cùng nhiệm vụ với production → cùng model Claude (aiConfig.ts#getAnthropicRoute).
+      task: 'action_canvas',
     })
 
     const score = scoreActionCanvasOutput(f, text ?? '')

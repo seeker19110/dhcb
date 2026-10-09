@@ -3,7 +3,7 @@
 // VÌ SAO: prompt ở packages/subject-programming/feedbackPrompt.ts là thứ giữ cho AI KHÔNG làm
 // bài hộ học viên. Sửa vài chữ trong đó là ranh giới sư phạm trôi mà không cổng nào đỏ — đúng
 // vấn đề mà eval:tutor giải cho gia sư ngôn ngữ. Script này chạy golden set qua ĐÚNG prompt +
-// ĐÚNG chuỗi provider production (generateChatText: Groq → Anthropic → Gemini) rồi chấm tự
+// ĐÚNG chuỗi provider production (generateChatText: Anthropic → Groq → Gemini) rồi chấm tự
 // động các bất biến ở scripts/lib/codeFeedbackScoring.ts.
 //
 // ⚠️ CHẠY TAY, TỐN PHÍ API — KHÔNG đưa vào CI (cùng chính sách với eval:tutor). Cần 1 trong:
@@ -93,6 +93,8 @@ async function main(): Promise<void> {
       maxTokens: prompt.maxTokens,
       // Nhãn riêng để lượt eval KHÔNG lẫn vào chi phí thật của người học trên dashboard.
       mode: 'eval-code-feedback',
+      // Cùng nhiệm vụ với production → cùng model Claude (aiConfig.ts#getAnthropicRoute).
+      task: 'code_feedback',
     })
 
     const score = scoreFeedback({ kind: f.kind, text: text ?? '', errorName: f.errorName })

@@ -25,14 +25,11 @@ import {
   formatProgrammingProgressForContext,
 } from '@dhcb/core-learner/programmingReadModelService'
 import { getDomainReadModelForContext } from '@dhcb/core-domains/domainReadModelService'
-import { callGroqChatWithKeyPool, callAnthropicChat } from '@dhcb/core-ai/chatProviders'
+import { callGroqChatWithKeyPool } from '@dhcb/core-ai/chatProviders'
+import { callAnthropicText } from '@dhcb/core-ai/anthropicClient'
 import { callGemini } from '@dhcb/core-ai/geminiApi'
-import { ALLOWED_MODEL, GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL } from '@dhcb/core-ai/aiConfig'
-import {
-  recordAiTokenUsage,
-  parseAnthropicUsageFromText,
-  type AiTokenUsage,
-} from '@dhcb/core-ai/aiTokenUsage'
+import { GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, getAnthropicRoute } from '@dhcb/core-ai/aiConfig'
+import { recordAiTokenUsage, type AiTokenUsage } from '@dhcb/core-ai/aiTokenUsage'
 
 export const COMPANION_SYSTEM_PROMPT =
   'Bạn là Bạn Đồng Hành AI — Người đồng hành trí tuệ, thấu cảm và tận tâm trong nền tảng "Đồng Hành Cùng Bạn".\n\n' +
@@ -430,7 +427,28 @@ export async function synthesizeCompanionReply(
     },
   ]
 
-  // 1. Nhánh Groq (ưu tiên hàng đầu — chung model với gia sư tiếng Anh: GROQ_CHAT_MODEL)
+  // 1. Nhánh Anthropic Claude (AI chính — nhiệm vụ 'companion' → Sonnet, xem aiConfig.ts)
+  if (anthropicKey) {
+    const anthropicRes = await callAnthropicText({
+      apiKey: anthropicKey,
+      route: getAnthropicRoute('companion'),
+      system: systemPrompt,
+      messages,
+    })
+    // Ghi chi phí cả khi response không dùng được (bị cắt/từ chối) — token vẫn bị tính tiền.
+    if (anthropicRes.kind === 'success' || anthropicRes.kind === 'unusable') {
+      void recordAiTokenUsage({
+        provider: 'anthropic',
+        model: anthropicRes.model,
+        mode: 'companion',
+        usage: anthropicRes.usage,
+      })
+    }
+    if (anthropicRes.kind === 'success') return anthropicRes.text
+    // thất bại → thử Groq/Gemini
+  }
+
+  // 2. Nhánh Groq (dự phòng thứ nhất — chung model với gia sư tiếng Anh: GROQ_CHAT_MODEL)
   if (groqKey) {
     try {
       const groqRes = await callGroqChatWithKeyPool(
@@ -450,45 +468,6 @@ export async function synthesizeCompanionReply(
           usage: groqRes.usage,
         })
         return groqRes.text.trim()
-      }
-    } catch {
-      // fallback
-    }
-  }
-
-  // 2. Nhánh Anthropic Claude (chất lượng cao — chung model với gia sư tiếng Anh: ALLOWED_MODEL)
-  if (anthropicKey) {
-    try {
-      const anthropicRes = await callAnthropicChat(
-        anthropicKey,
-        ALLOWED_MODEL,
-        systemPrompt,
-        messages,
-        2048,
-        30_000,
-      )
-      if (
-        anthropicRes.kind === 'response' &&
-        anthropicRes.status >= 200 &&
-        anthropicRes.status < 300
-      ) {
-        try {
-          const parsed = JSON.parse(anthropicRes.bodyText) as {
-            content?: Array<{ text?: string }>
-          }
-          const text = parsed.content?.[0]?.text
-          if (typeof text === 'string' && text.trim()) {
-            void recordAiTokenUsage({
-              provider: 'anthropic',
-              model: ALLOWED_MODEL,
-              mode: 'companion',
-              usage: parseAnthropicUsageFromText(anthropicRes.bodyText),
-            })
-            return text.trim()
-          }
-        } catch {
-          // fallback
-        }
       }
     } catch {
       // fallback

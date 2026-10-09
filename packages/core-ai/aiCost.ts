@@ -10,23 +10,29 @@
 // chỉnh lại bằng BIẾN MÔI TRƯỜNG — không cần sửa code, không cần deploy lại frontend.
 import type { UsageMode } from '@dhcb/core-billing/usage'
 
-// Đơn giá mặc định (USD cho MỖI lượt). Cơ sở ước tính:
-//   chat      — Claude Haiku 4.5, ~1.5k token vào + ~400 token ra mỗi lượt trò chuyện.
-//   writing   — bài viết dài hơn + chấm điểm chi tiết kiểu IELTS → nhiều token ra nhất.
-//   speaking  — 1 lượt nói = trả lời tiếng đích + phần sửa lỗi tiếng mẹ đẻ (2 đoạn văn bản).
+// Đơn giá mặc định (USD cho MỖI lượt). Cơ sở ước tính (2026-10-09, model theo nhiệm vụ —
+// aiConfig.ts#getAnthropicRoute; giá USD/1M token vào/ra: Haiku 5.5 $0.10/$0.50, Sonnet 5.5 $2/$10):
+//   chat      — đa số là lượt trò chuyện Haiku 5.5 (~2k token vào + ~700 token ra kể cả phần
+//               "suy nghĩ" ≈ $0.0006), thỉnh thoảng có lượt chấm cuối phiên bằng Sonnet 5.5
+//               (≈ $0.03) → bình quân làm tròn lên $0.002.
+//   writing   — toàn bộ là chấm bài kiểu IELTS bằng Sonnet 5.5: ~3k token vào + ~2.5k token ra
+//               (nhận xét chi tiết + suy nghĩ) ≈ $0.03.
+//   speaking  — lượt nói Haiku 5.5 + lượt chấm cuối phiên Sonnet 5.5 → bình quân ≈ $0.003.
 //   stt       — Whisper qua Groq (whisper-large-v3-turbo), đoạn ghi âm ~30 giây.
 //   pronounce — chấm phát âm Azure, tính theo giờ audio, mỗi lượt vài giây.
-//   code_feedback — AI đọc code môn Lập trình (đề bài + code học viên vào, góp ý/gợi ý ra):
-//                   cùng bể provider với chat, prompt vào dài hơn nhưng trả lời ngắn hơn.
+//   code_feedback — Sonnet 5.5 đọc code môn Lập trình (đề + code vào ~2k token, góp ý + suy
+//                   nghĩ ra ~1.5k token) ≈ $0.02.
+// Đây là ƯỚC TÍNH ban đầu — đối chiếu thẻ "chi phí theo token thật" trên /admin sau vài ngày
+// chạy rồi chỉnh AI_COST_*_USD cho sát.
 // CHƯA gồm: TTS (tính theo ký tự VÀ có cache dùng chung, xem tts_cache — chi phí thực tế
 // thấp hơn nhiều số lượt) và hạ tầng VPS (chi phí cố định, không theo lượt).
 const DEFAULT_UNIT_USD: Record<UsageMode, number> = {
-  chat: 0.0025,
-  writing: 0.004,
+  chat: 0.002,
+  writing: 0.03,
   speaking: 0.003,
   stt: 0.0005,
   pronounce: 0.0004,
-  code_feedback: 0.003,
+  code_feedback: 0.02,
 }
 
 // Tỉ giá quy đổi USD → VND để so trực tiếp với doanh thu (đơn thanh toán ghi bằng VND).

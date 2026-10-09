@@ -12,12 +12,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const callGroqMock = vi.fn()
 vi.mock('./chatProviders.js', () => ({
   callGroqChatWithKeyPool: (...args: unknown[]) => callGroqMock(...args),
-  callAnthropicChat: vi.fn(),
 }))
 // Không để phần đo token chạm DB thật trong test.
 vi.mock('./aiTokenUsage.js', () => ({
   recordAiTokenUsage: vi.fn(),
-  parseAnthropicUsageFromText: () => null,
+  parseAnthropicUsage: () => null,
 }))
 
 import { DebateArenaService } from './debateArenaService.js'
