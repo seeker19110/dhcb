@@ -66,6 +66,29 @@ describe('checkMathStep — biến đổi tương đương (✓)', () => {
   })
 })
 
+describe('checkMathStep — dấu chia `:` kiểu SGK (đợt 0562)', () => {
+  it.each([
+    ['x : 2 = 3', 'x = 6', 'equivalent'],
+    ['x / 2 = 3', 'x : 2 = 3', 'equivalent'],
+    ['x = 6', 'x : 2 = 3', 'equivalent'],
+    ['(x+1) : 3 = 2', 'x = 5', 'equivalent'],
+    ['x = 6 : 2 : 3 + 2', 'x = 3', 'equivalent'], // 6:2:3 = (6:2):3 = 1, kết hợp trái
+    ['x = 6 : 2 : 3', 'x = 1', 'equivalent'],
+    ['x = 6 : (2 : 3)', 'x = 9', 'equivalent'],
+    ['x = 10 : 2', '2x = 10', 'equivalent'],
+    ['x = \\frac{6:2}{3} + 4', 'x = 5', 'equivalent'], // `:` trong tử của \frac vẫn là chia
+    ['x = 6 \\: 2', 'x = 3', 'changed'], // `\:` là khoảng trắng LaTeX, không phải chia
+    ['x : 2 = 3', 'x = 5', 'changed'],
+  ])('%s (đề %s) → %s', (step, anchor, v) => {
+    expect(verdict(step, anchor)).toBe(v)
+  })
+
+  it('chia cho 0 bằng `:` → division_by_zero như `/`', () => {
+    expect(verdict('x : 0 = 3', 'x = 6')).toBe('division_by_zero')
+    expect(verdict('x = 10 : (5-5)', '2x = 10')).toBe('division_by_zero')
+  })
+})
+
 describe('checkMathStep — đổi nghiệm (✗)', () => {
   it('sai dấu khi chuyển vế: mất nghiệm đề + có nghiệm lạ', () => {
     expect(checkMathStep('2x = 15 + 5', '2x + 5 = 15')).toEqual({
@@ -149,7 +172,9 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
     ['x^{100} = 1', 'x = 1', 'too_complex'],
     ['x = \\frac{1}{2', '2x = 1', 'unknown_notation'],
     ['x = \\alpha', '2x = 1', 'unknown_notation'],
-    ['x = 10 : 2', '2x = 10', 'unknown_notation'], // dấu `:` (chia kiểu Việt) chưa nhận — nói thật
+    ['x = 10 :: 2', '2x = 10', 'unknown_notation'], // `::` không phải phép chia
+    ['x = : 2', '2x = 10', 'unknown_notation'], // `:` thiếu toán hạng
+    ['x = 10 :', '2x = 10', 'unknown_notation'],
     ['x = 5 (thoả mãn)', '2x = 10', 'unknown_notation'],
     ['x = \\pm 2 \\pm 1', 'x^2 = 4', 'unknown_notation'],
   ])('%s (đề %s) → %s', (step, anchor, reason) => {

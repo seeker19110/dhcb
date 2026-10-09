@@ -1213,7 +1213,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   giải" gọi `submit_solution` (chấm theo `questionId` do server gán); hàng nhập 390px hết chật.
   **Còn lại:** (1) Vật lí — đề ngân hàng chưa khai bảng `variables` (chưa khai → "chưa tự kiểm
   được") và giao diện chưa gửi `variables` khi tạo đề; chưa kiểm vector/chiều, đạo hàm/tích phân;
-  (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất phương trình, nhiều ẩn, dấu chia `:`; (3) đề
+  (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất phương trình, nhiều ẩn (dấu chia `:` ✅ 0562); (3) đề
   ngân hàng là lời văn nên bước Toán chỉ so được với bước 1 của người học (chưa có phương trình đề
   để làm mốc); 272 câu đều là bài `draft` chưa duyệt chuyên môn.
 - 🟡 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` —
