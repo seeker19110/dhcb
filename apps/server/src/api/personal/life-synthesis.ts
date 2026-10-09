@@ -21,6 +21,7 @@ import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp, internalErrorResponse } from '@dhcb/core-http/http'
 
 /** Đọc thuần (2 câu SQL gộp) — 30 lượt/phút/IP là dư cho một khối tự tải khi mở studio. */
+const RATE_LIMIT_PER_USER_PER_MINUTE = 12
 const RATE_LIMIT_PER_MINUTE = 30
 
 export default async function handler(req: Request): Promise<Response> {
@@ -45,6 +46,16 @@ export default async function handler(req: Request): Promise<Response> {
       401,
       headers,
     )
+  }
+
+  // Bucket thứ hai theo người dùng: nhiều người chung một IP (NAT trường học/công ty) không
+  // dùng cạn hạn mức của nhau, và một tài khoản không tự dồn request bằng nhiều IP.
+  if (!(await checkRateLimit(auth.userId, RATE_LIMIT_PER_USER_PER_MINUTE, 'life_synthesis:user'))) {
+    logSecurityEvent('RATE_LIMIT_EXCEEDED', clientIp, {
+      path: '/api/life-synthesis',
+      scope: 'user',
+    })
+    return jsonResponse({ error: 'Quá nhiều yêu cầu — thử lại sau 1 phút' }, 429, headers)
   }
 
   try {

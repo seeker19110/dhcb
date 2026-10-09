@@ -86,6 +86,16 @@ describe('/api/life-synthesis', () => {
     expect(res.status).toBe(429)
   })
 
+  it('IP còn hạn mức nhưng NGƯỜI DÙNG đã vượt bucket riêng → 429, không chạm CSDL', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({ userId: USER })
+    vi.spyOn(security, 'checkRateLimit').mockImplementation(
+      async (_key, _max, bucket) => bucket !== 'life_synthesis:user',
+    )
+    const res = await handler(new Request('http://localhost/api/life-synthesis'))
+    expect(res.status).toBe(429)
+    expect(db.calls).toHaveLength(0)
+  })
+
   it('GET → 200, báo cáo hợp lệ theo hợp đồng, mọi câu SQL lọc theo userId của token', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValue({ userId: USER })
     const res = await handler(new Request('http://localhost/api/life-synthesis?userId=other'))
