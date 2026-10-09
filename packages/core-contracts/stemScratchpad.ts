@@ -114,10 +114,127 @@ export const StemProblemStateSchema = z.object({
   problemLatex: z.string().max(1000).optional(),
   /** Bảng thứ nguyên biến (chỉ đề Vật lí dùng) — xem `StemVariableTableSchema`. */
   variables: StemVariableTableSchema.optional(),
+  /**
+   * Thêm 2026-10-09 (changelog 0551): id câu trong NGÂN HÀNG ĐỀ mà phiên này đang giải. Chỉ server
+   * gán (từ `create_problem` có `questionId`) — `submit_solution` chấm đáp số theo câu này, không
+   * theo id phiên do client gửi.
+   */
+  questionId: z.string().min(1).max(100).optional(),
   steps: z.array(ScratchpadStepSchema),
   isSolved: z.boolean(),
   hintsUsed: z.number().int().min(0).default(0),
+  /**
+   * Số lần `submit_solution` chấm SAI trong phiên này (thêm sau rà soát bảo mật 0551). Đủ
+   * `MAX_WRONG_SUBMITS` thì server từ chối nộp tiếp cho phiên đó — chặn dò đáp số. `.default(0)`
+   * để bản ghi cũ (chưa có trường) vẫn đọc được.
+   */
+  wrongSubmits: z.number().int().min(0).default(0),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 })
 export type StemProblemState = z.infer<typeof StemProblemStateSchema>
+
+// ── Ngân hàng đề + gợi ý + nộp lời giải (changelog 0551) ─────────────────────
+// Đặc tả: docs/specs/2026-10-09-stem-goi-y-socratic-va-nop-loi-giai.md §③.
+
+/**
+ * Một câu của ngân hàng đề như CLIENT được thấy: KHÔNG có đáp án, KHÔNG có lời giải (chỉ trả
+ * lời giải sau khi đã nộp đúng). Đề lấy nguyên văn từ `checkQuestions` của bài học STEM.
+ */
+export const StemBankQuestionPublicSchema = z
+  .object({
+    id: z.string().min(1).max(100),
+    subject: StemSubjectTypeSchema,
+    grade: z.enum(['10', '11', '12']),
+    lessonId: z.string().min(1).max(100),
+    lessonTitle: z.string().min(1).max(200),
+    topic: z.string().min(1).max(200),
+    track: z.enum(['core', 'advanced']),
+    problemStatement: z.string().min(1).max(800),
+    /** Đáp số phải kèm đơn vị (đề Vật lí có đơn vị bắt buộc) — để người học biết cách ghi. */
+    needsUnit: z.boolean(),
+    /** Đáp số dạng phân số (vd `1/3`). */
+    expectsFraction: z.boolean(),
+    /** `draft` = chưa có giáo viên đọc lại — giao diện PHẢI nói ra. */
+    reviewStatus: z.enum(['draft', 'reviewed']),
+  })
+  .strict()
+export type StemBankQuestionPublic = z.infer<typeof StemBankQuestionPublicSchema>
+
+/** Gợi ý Socratic: luôn là câu hỏi; `level` theo ba bậc của skill STEM §3. */
+export const StemMicroHintSchema = z
+  .object({
+    hintText: z.string().min(1).max(500),
+    level: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  })
+  .strict()
+export type StemMicroHint = z.infer<typeof StemMicroHintSchema>
+
+/**
+ * Mã lý do khi chấm đáp số cuối — trùng `ReasonCode` của `@dhcb/core-grading` (không import để
+ * gói hợp đồng không phụ thuộc engine chấm).
+ */
+export const SubmitReasonSchema = z.enum([
+  'CORRECT',
+  'CORRECT_LOOSE',
+  'WRONG_VALUE',
+  'WRONG_UNIT',
+  'MISSING_UNIT',
+  'WRONG_DIMENSION',
+  'NOT_SIMPLIFIED',
+  'SIGN_ERROR',
+  'UNBALANCED_ATOMS',
+  'UNBALANCED_CHARGE',
+  'WRONG_SUBSTANCES',
+  'PARSE_ERROR',
+  'EMPTY',
+])
+export type SubmitReason = z.infer<typeof SubmitReasonSchema>
+
+/**
+ * Mã lý do ĐƯỢC PHÉP trả cho client (sau rà soát bảo mật 0551). Các mã còn lại của
+ * `SubmitReasonSchema` (WRONG_UNIT, MISSING_UNIT, WRONG_DIMENSION, SIGN_ERROR, NOT_SIMPLIFIED…) nói
+ * quá nhiều về đáp án — vd MISSING_UNIT cho biết đáp án có đơn vị, SIGN_ERROR cho biết độ lớn đã
+ * đúng — nên khi nộp SAI server chỉ trả `correct: false` + câu chung. Hai mã giữ lại khi sai
+ * (PARSE_ERROR, EMPTY) chỉ nói về CÁCH GHI của người học, không lộ gì về đáp án.
+ */
+export const PublicSubmitReasonSchema = z.enum(['CORRECT', 'CORRECT_LOOSE', 'PARSE_ERROR', 'EMPTY'])
+export type PublicSubmitReason = z.infer<typeof PublicSubmitReasonSchema>
+
+/** Mã lý do của engine chấm → mã được phép trả client (`undefined` = chỉ báo sai chung). */
+export function publicSubmitReason(reason: SubmitReason): PublicSubmitReason | undefined {
+  const r = PublicSubmitReasonSchema.safeParse(reason)
+  return r.success ? r.data : undefined
+}
+
+/** Số lần nộp SAI tối đa cho MỘT phiên đề, quá thì server trả 409 (chặn dò đáp số). */
+export const MAX_WRONG_SUBMITS = 5
+
+/** Kết quả `submit_solution`. `explanation` (lời giải của bài học) CHỈ có khi đã giải đúng. */
+export const SubmitSolutionResultSchema = z
+  .object({
+    success: z.literal(true),
+    isSolved: z.boolean(),
+    /** Lần nộp NÀY đúng hay sai (bài có thể đã xong từ trước). */
+    correct: z.boolean(),
+    /** Chỉ có khi đúng, hoặc khi lỗi nằm ở cách ghi (PARSE_ERROR/EMPTY). */
+    reason: PublicSubmitReasonSchema.optional(),
+    /** Còn bao nhiêu lần được nộp sai trong phiên này. */
+    attemptsLeft: z.number().int().min(0).max(MAX_WRONG_SUBMITS),
+    explanation: z.string().max(1000).optional(),
+  })
+  .strict()
+export type SubmitSolutionResult = z.infer<typeof SubmitSolutionResultSchema>
+
+/** Câu nhắc theo mã lý do công khai — không bao giờ nêu đáp số hay đơn vị của đáp án. */
+export const NHAC_KHI_NOP: Record<PublicSubmitReason, string> = {
+  CORRECT: 'Đúng đáp số.',
+  CORRECT_LOOSE: 'Đúng đáp số (lệch nhẹ do làm tròn — xem lại bước làm tròn).',
+  PARSE_ERROR:
+    'Chưa đọc được đáp số. Hãy ghi một con số (có thể kèm đơn vị), phân số dạng a/b, hoặc công thức hoá học.',
+  EMPTY: 'Em chưa ghi đáp số.',
+}
+
+/** Câu chung khi nộp SAI (không có `reason`) — không nói sai ở giá trị, dấu hay đơn vị. */
+export const NHAC_NOP_SAI_CHUNG =
+  'Chưa đúng. Rà lại từng bước: em đã dùng đủ dữ kiện của đề chưa, phép tính và đơn vị có khớp với điều đề hỏi không?'

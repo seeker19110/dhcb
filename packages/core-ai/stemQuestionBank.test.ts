@@ -1,69 +1,155 @@
-import { describe, it, expect } from 'vitest'
-import { STEM_QUESTION_BANK, filterStemQuestions, getStemQuestionById } from './stemQuestionBank.js'
+// packages/core-ai/stemQuestionBank.test.ts — ngân hàng đề bảng nháp STEM dựng từ bài học THẬT
+// (changelog 0551). Canh ba điều: (1) không bịa — mọi đề/đáp án trùng nguyên văn bài học;
+// (2) máy chấm được — đáp án chuẩn của chính câu đó được `gradeAnswer` chấm đúng; (3) bản công
+// khai không lộ đáp án.
+import { describe, expect, it } from 'vitest'
+import { gradeAnswer } from '@dhcb/core-grading/index'
+import { UNITS } from '@dhcb/core-grading/units'
+import type { AnswerSpec } from '@dhcb/core-grading/types'
+import { StemBankQuestionPublicSchema } from '@dhcb/core-contracts/stemScratchpad'
+import { MATH_LESSONS } from '@dhcb/subject-math/lessons'
+import { PHYSICS_LESSONS } from '@dhcb/subject-physics/lessons'
+import { CHEM_LESSONS } from '@dhcb/subject-chemistry/lessons'
+import {
+  buildStemQuestionBank,
+  filterStemQuestions,
+  getStemQuestionById,
+  stemQuestionId,
+  toPublicStemQuestion,
+  type StemLessonSource,
+} from './stemQuestionBank.js'
 
-describe('STEM Question Bank', () => {
-  it('Bank has >= 60 questions', () => {
-    expect(STEM_QUESTION_BANK.length).toBeGreaterThanOrEqual(60)
-  })
+const NGUON = [
+  { subject: 'math' as const, lessons: MATH_LESSONS },
+  { subject: 'physics' as const, lessons: PHYSICS_LESSONS },
+  { subject: 'chemistry' as const, lessons: CHEM_LESSONS },
+]
+const BANK = buildStemQuestionBank(NGUON)
 
-  it('Each subject has >= 15 questions', () => {
-    const subjects = ['math', 'physics', 'chemistry', 'biology']
-    for (const sub of subjects) {
-      const count = STEM_QUESTION_BANK.filter((q) => q.subject === sub).length
-      expect(count).toBeGreaterThanOrEqual(15)
+/** Giá trị SI → con số ở đơn vị hiển thị (ngược với `toSI`): 0,8 với '%' → 80. */
+function tuSI(value: number, unit: string): number {
+  const def = UNITS[unit]
+  if (!def) throw new Error(`đơn vị lạ: ${unit}`)
+  return (value - (def.offset ?? 0)) / def.factor
+}
+
+/** Đáp án chuẩn dạng chữ của một AnswerSpec — đúng cách một học sinh sẽ gõ. */
+function dapAnChuan(spec: AnswerSpec): string | null {
+  switch (spec.kind) {
+    case 'numeric':
+      return spec.unit ? `${tuSI(spec.value, spec.unit)} ${spec.unit}` : `${spec.value}`
+    case 'fraction':
+      return `${spec.num}/${spec.den}`
+    case 'chemFormula':
+      return spec.formula
+    default:
+      return null
+  }
+}
+
+describe('Ngân hàng đề STEM (dựng từ bài học thật)', () => {
+  it('có câu cho cả ba môn của bảng nháp', () => {
+    for (const mon of ['math', 'physics', 'chemistry'] as const) {
+      expect(filterStemQuestions(BANK, { subject: mon }).length).toBeGreaterThan(20)
     }
   })
 
-  it('Filter by subject works', () => {
-    const mathQs = filterStemQuestions({ subject: 'math' })
-    expect(mathQs.length).toBeGreaterThan(0)
-    expect(mathQs.every((q) => q.subject === 'math')).toBe(true)
+  it('KHÔNG BỊA: mọi đề, đáp án, lời giải trùng NGUYÊN VĂN câu tự kiểm tra của bài học', () => {
+    const theoId = new Map<string, StemLessonSource>()
+    for (const { lessons } of NGUON) for (const l of lessons) theoId.set(l.id, l)
+    for (const q of BANK) {
+      const lesson = theoId.get(q.lessonId)
+      expect(lesson, q.id).toBeDefined()
+      const index = Number(q.id.slice(q.lessonId.length + 2)) - 1
+      expect(q.id).toBe(stemQuestionId(q.lessonId, index))
+      const goc = lesson?.checkQuestions[index]
+      expect(goc?.prompt).toBe(q.problemStatement)
+      expect(goc?.answer).toEqual(q.answer)
+      expect(goc?.explain).toBe(q.explain)
+      expect(q.reviewStatus).toBe(lesson?.reviewStatus)
+    }
   })
 
-  it('Filter by grade works', () => {
-    const grade10 = filterStemQuestions({ grade: 10 })
-    expect(grade10.length).toBeGreaterThan(0)
-    expect(grade10.every((q) => q.grade === 10)).toBe(true)
+  it('không có dữ liệu mẫu cũ (S_{n} = …, "Câu hỏi về …")', () => {
+    for (const q of BANK) {
+      expect(q.problemStatement).not.toMatch(/^Câu hỏi về /)
+      expect(q.problemStatement).not.toMatch(/P_\{\d+\}/)
+    }
   })
 
-  it('Filter by difficulty works', () => {
-    const hard = filterStemQuestions({ difficulty: 'hard' })
-    expect(hard.length).toBeGreaterThan(0)
-    expect(hard.every((q) => q.difficulty === 'hard')).toBe(true)
+  it('bỏ trắc nghiệm và câu đúng/sai mã hoá thành số', () => {
+    for (const q of BANK) {
+      expect(q.answer.kind).not.toBe('choice')
+      expect(q.problemStatement).not.toMatch(/nhập\s+\d+\s+nếu/i)
+    }
+    const nguon: StemLessonSource = {
+      id: 'toan10-c1-b1',
+      grade: '10',
+      chapterTitle: 'C',
+      title: 'T',
+      track: 'core',
+      reviewStatus: 'draft',
+      checkQuestions: [
+        { prompt: 'Chọn A hay B?', answer: { kind: 'choice', correctIds: ['a'] }, explain: 'e' },
+        {
+          prompt: 'Đúng hay sai? Nhập 1 nếu ĐÚNG.',
+          answer: { kind: 'numeric', value: 1 },
+          explain: 'e',
+        },
+        { prompt: 'Tính 2 + 3.', answer: { kind: 'numeric', value: 5 }, explain: 'e' },
+      ],
+    }
+    const nho = buildStemQuestionBank([{ subject: 'math', lessons: [nguon] }])
+    expect(nho.map((q) => q.id)).toEqual(['toan10-c1-b1-q3'])
   })
 
-  it('Filter combined works', () => {
-    const res = filterStemQuestions({ subject: 'math', grade: 12, difficulty: 'medium' })
-    expect(
-      res.every((q) => q.subject === 'math' && q.grade === 12 && q.difficulty === 'medium'),
-    ).toBe(true)
+  it('MÁY CHẤM ĐƯỢC: đáp án chuẩn của từng câu được gradeAnswer chấm đúng', () => {
+    let soCauDaKiem = 0
+    for (const q of BANK) {
+      const chuan = dapAnChuan(q.answer)
+      if (chuan === null) continue
+      soCauDaKiem++
+      expect(gradeAnswer(chuan, q.answer).correct, `${q.id}: "${chuan}"`).toBe(true)
+    }
+    expect(soCauDaKiem).toBe(BANK.length)
   })
 
-  it('getStemQuestionById returns correct question', () => {
-    const q = STEM_QUESTION_BANK[0]!
-    expect(getStemQuestionById(q.id)).toEqual(q)
+  it('cờ needsUnit/expectsFraction khớp đáp án', () => {
+    for (const q of BANK) {
+      if (q.needsUnit) {
+        expect(q.answer.kind).toBe('numeric')
+        const chiSo =
+          q.answer.kind === 'numeric' ? `${tuSI(q.answer.value, q.answer.unit ?? '')}` : ''
+        expect(gradeAnswer(chiSo, q.answer).reason, q.id).toBe('MISSING_UNIT')
+      }
+      expect(q.expectsFraction).toBe(q.answer.kind === 'fraction')
+    }
   })
 
-  it('getStemQuestionById returns undefined for unknown id', () => {
-    expect(getStemQuestionById('unknown-id-123')).toBeUndefined()
+  it('bản công khai KHÔNG có đáp án hay lời giải và đúng hợp đồng .strict()', () => {
+    for (const q of BANK) {
+      const pub = toPublicStemQuestion(q)
+      expect(StemBankQuestionPublicSchema.safeParse(pub).success).toBe(true)
+      expect(pub).not.toHaveProperty('answer')
+      expect(pub).not.toHaveProperty('explain')
+    }
   })
 
-  it('limit works correctly', () => {
-    const res = filterStemQuestions({ limit: 5 })
-    expect(res.length).toBe(5)
+  it('lọc theo môn/lớp/nhánh/giới hạn và tra theo id', () => {
+    const toan12 = filterStemQuestions(BANK, { subject: 'math', grade: '12' })
+    expect(toan12.length).toBeGreaterThan(0)
+    expect(toan12.every((q) => q.subject === 'math' && q.grade === '12')).toBe(true)
+    const nangCao = filterStemQuestions(BANK, { track: 'advanced' })
+    expect(nangCao.every((q) => q.track === 'advanced')).toBe(true)
+    expect(filterStemQuestions(BANK, { limit: 5 })).toHaveLength(5)
+    expect(filterStemQuestions(BANK, {})).toHaveLength(BANK.length)
+    const dau = BANK[0]
+    expect(dau && getStemQuestionById(BANK, dau.id)).toEqual(dau)
+    expect(getStemQuestionById(BANK, 'khong-co')).toBeUndefined()
   })
 
-  it('Each question has a unique id', () => {
-    const ids = STEM_QUESTION_BANK.map((q) => q.id)
-    const uniqueIds = new Set(ids)
-    expect(ids.length).toBe(uniqueIds.size)
-  })
-
-  it('problemLatex is not empty', () => {
-    expect(STEM_QUESTION_BANK.every((q) => q.problemLatex.length > 0)).toBe(true)
-  })
-
-  it('solutionLatex is not empty', () => {
-    expect(STEM_QUESTION_BANK.every((q) => q.solutionLatex.length > 0)).toBe(true)
+  it('id không trùng', () => {
+    const ids = BANK.map((q) => q.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 })

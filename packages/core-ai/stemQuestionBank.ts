@@ -1,761 +1,136 @@
-export interface StemQuestion {
-  id: string
-  subject: 'math' | 'physics' | 'chemistry' | 'biology'
-  grade: 10 | 11 | 12
-  topic: string
-  difficulty: 'medium' | 'hard' | 'olympiad'
-  problemStatement: string
-  problemLatex: string
-  solutionLatex: string
-  tags: string[]
-  cefrRelevant?: boolean
+// packages/core-ai/stemQuestionBank.ts — Ngân hàng đề cho bảng nháp STEM, dựng từ bài học THẬT.
+//
+// Đặc tả: docs/specs/2026-10-09-stem-goi-y-socratic-va-nop-loi-giai.md §①, §③.
+//
+// TRƯỚC changelog 0551 file này là 60 câu DỮ LIỆU MẪU sinh máy: đề "Câu hỏi về hệ phương trình",
+// `problemLatex: 'P_{2} = 10x + 0'`, đáp án `S_{2} = 0` — không có câu nào là bài toán thật. Nay
+// ngân hàng lấy NGUYÊN VĂN các câu "Tự kiểm tra" (`checkQuestions`) của bài học Toán · Lí · Hoá đã
+// có trong repo (`packages/subject-*/lessons`), kèm ĐÁP ÁN MÁY CHẤM ĐƯỢC (`AnswerSpec` của chính bài
+// học — cùng engine `gradeAnswer` mà trang bài học dùng). Không bịa đề, không bịa đáp án.
+//
+// Lọc (giải thích ở đặc tả §①):
+//   - bỏ câu trắc nghiệm (`choice`) — bảng nháp là chỗ VIẾT lời giải, không phải chọn A/B/C;
+//   - bỏ câu "Nhập 1 nếu ĐÚNG, nhập 0 nếu SAI" — đó là câu đúng/sai mã hoá thành số, không có phép
+//     tính để nháp.
+//
+// File này THUẦN (không import gói môn học — `packages/core-*` không phụ thuộc `subject-*`): server
+// truyền danh sách bài học vào `buildStemQuestionBank` (apps/server/src/api/learning/stem-scratchpad.ts).
+import type { AnswerSpec } from '@dhcb/core-grading/types'
+import type { StemBankQuestionPublic, StemSubjectType } from '@dhcb/core-contracts/stemScratchpad'
+
+/** Phần bài học STEM mà ngân hàng đề cần — khớp `MathLesson`/`PhysicsLesson`/`ChemLesson`. */
+export interface StemLessonSource {
+  readonly id: string
+  readonly grade: '10' | '11' | '12'
+  readonly chapterTitle: string
+  readonly title: string
+  readonly track: 'core' | 'advanced'
+  readonly reviewStatus: 'draft' | 'reviewed'
+  readonly checkQuestions: readonly {
+    readonly prompt: string
+    readonly answer: AnswerSpec
+    readonly explain: string
+  }[]
 }
 
-export const STEM_QUESTION_BANK: StemQuestion[] = [
-  {
-    id: 'math-10-1',
-    subject: 'math',
-    grade: 10,
-    topic: 'hệ phương trình',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về hệ phương trình',
-    problemLatex: 'P_{2} = 10x + 0',
-    solutionLatex: 'S_{2} = 0',
-    tags: ['hệ-phương-trình'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-10-2',
-    subject: 'math',
-    grade: 10,
-    topic: 'bất phương trình',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về bất phương trình',
-    problemLatex: 'P_{3} = 10x + 1',
-    solutionLatex: 'S_{3} = 10',
-    tags: ['bất-phương-trình'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'math-10-3',
-    subject: 'math',
-    grade: 10,
-    topic: 'hàm số bậc 2',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về hàm số bậc 2',
-    problemLatex: 'P_{4} = 10x + 2',
-    solutionLatex: 'S_{4} = 20',
-    tags: ['hàm-số-bậc-2'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-10-4',
-    subject: 'math',
-    grade: 10,
-    topic: 'hệ phương trình',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về hệ phương trình',
-    problemLatex: 'P_{5} = 10x + 3',
-    solutionLatex: 'S_{5} = 30',
-    tags: ['hệ-phương-trình'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'math-10-5',
-    subject: 'math',
-    grade: 10,
-    topic: 'bất phương trình',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về bất phương trình',
-    problemLatex: 'P_{6} = 10x + 4',
-    solutionLatex: 'S_{6} = 40',
-    tags: ['bất-phương-trình'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-11-6',
-    subject: 'math',
-    grade: 11,
-    topic: 'dãy số',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về dãy số',
-    problemLatex: 'P_{7} = 11x + 0',
-    solutionLatex: 'S_{7} = 0',
-    tags: ['dãy-số'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-11-7',
-    subject: 'math',
-    grade: 11,
-    topic: 'giới hạn',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về giới hạn',
-    problemLatex: 'P_{8} = 11x + 1',
-    solutionLatex: 'S_{8} = 11',
-    tags: ['giới-hạn'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'math-11-8',
-    subject: 'math',
-    grade: 11,
-    topic: 'đạo hàm',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về đạo hàm',
-    problemLatex: 'P_{9} = 11x + 2',
-    solutionLatex: 'S_{9} = 22',
-    tags: ['đạo-hàm'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-11-9',
-    subject: 'math',
-    grade: 11,
-    topic: 'dãy số',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về dãy số',
-    problemLatex: 'P_{10} = 11x + 3',
-    solutionLatex: 'S_{10} = 33',
-    tags: ['dãy-số'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'math-11-10',
-    subject: 'math',
-    grade: 11,
-    topic: 'giới hạn',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về giới hạn',
-    problemLatex: 'P_{11} = 11x + 4',
-    solutionLatex: 'S_{11} = 44',
-    tags: ['giới-hạn'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-12-11',
-    subject: 'math',
-    grade: 12,
-    topic: 'nguyên hàm tích phân',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về nguyên hàm tích phân',
-    problemLatex: 'P_{12} = 12x + 0',
-    solutionLatex: 'S_{12} = 0',
-    tags: ['nguyên-hàm-tích-phân'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-12-12',
-    subject: 'math',
-    grade: 12,
-    topic: 'tổ hợp xác suất',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về tổ hợp xác suất',
-    problemLatex: 'P_{13} = 12x + 1',
-    solutionLatex: 'S_{13} = 12',
-    tags: ['tổ-hợp-xác-suất'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'math-12-13',
-    subject: 'math',
-    grade: 12,
-    topic: 'hình học không gian',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về hình học không gian',
-    problemLatex: 'P_{14} = 12x + 2',
-    solutionLatex: 'S_{14} = 24',
-    tags: ['hình-học-không-gian'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'math-12-14',
-    subject: 'math',
-    grade: 12,
-    topic: 'nguyên hàm tích phân',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về nguyên hàm tích phân',
-    problemLatex: 'P_{15} = 12x + 3',
-    solutionLatex: 'S_{15} = 36',
-    tags: ['nguyên-hàm-tích-phân'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'math-12-15',
-    subject: 'math',
-    grade: 12,
-    topic: 'tổ hợp xác suất',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về tổ hợp xác suất',
-    problemLatex: 'P_{16} = 12x + 4',
-    solutionLatex: 'S_{16} = 48',
-    tags: ['tổ-hợp-xác-suất'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-10-16',
-    subject: 'physics',
-    grade: 10,
-    topic: 'động lực học Newton',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về động lực học Newton',
-    problemLatex: 'P_{17} = 10x + 0',
-    solutionLatex: 'S_{17} = 0',
-    tags: ['động-lực-học-Newton'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-10-17',
-    subject: 'physics',
-    grade: 10,
-    topic: 'công năng lượng',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về công năng lượng',
-    problemLatex: 'P_{18} = 10x + 1',
-    solutionLatex: 'S_{18} = 10',
-    tags: ['công-năng-lượng'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'physics-10-18',
-    subject: 'physics',
-    grade: 10,
-    topic: 'động lực học Newton',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về động lực học Newton',
-    problemLatex: 'P_{19} = 10x + 2',
-    solutionLatex: 'S_{19} = 20',
-    tags: ['động-lực-học-Newton'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-10-19',
-    subject: 'physics',
-    grade: 10,
-    topic: 'công năng lượng',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về công năng lượng',
-    problemLatex: 'P_{20} = 10x + 3',
-    solutionLatex: 'S_{20} = 30',
-    tags: ['công-năng-lượng'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'physics-10-20',
-    subject: 'physics',
-    grade: 10,
-    topic: 'động lực học Newton',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về động lực học Newton',
-    problemLatex: 'P_{21} = 10x + 4',
-    solutionLatex: 'S_{21} = 40',
-    tags: ['động-lực-học-Newton'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-11-21',
-    subject: 'physics',
-    grade: 11,
-    topic: 'điện trường',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về điện trường',
-    problemLatex: 'P_{22} = 11x + 0',
-    solutionLatex: 'S_{22} = 0',
-    tags: ['điện-trường'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-11-22',
-    subject: 'physics',
-    grade: 11,
-    topic: 'mạch điện',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về mạch điện',
-    problemLatex: 'P_{23} = 11x + 1',
-    solutionLatex: 'S_{23} = 11',
-    tags: ['mạch-điện'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'physics-11-23',
-    subject: 'physics',
-    grade: 11,
-    topic: 'điện trường',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về điện trường',
-    problemLatex: 'P_{24} = 11x + 2',
-    solutionLatex: 'S_{24} = 22',
-    tags: ['điện-trường'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-11-24',
-    subject: 'physics',
-    grade: 11,
-    topic: 'mạch điện',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về mạch điện',
-    problemLatex: 'P_{25} = 11x + 3',
-    solutionLatex: 'S_{25} = 33',
-    tags: ['mạch-điện'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'physics-11-25',
-    subject: 'physics',
-    grade: 11,
-    topic: 'điện trường',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về điện trường',
-    problemLatex: 'P_{26} = 11x + 4',
-    solutionLatex: 'S_{26} = 44',
-    tags: ['điện-trường'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-12-26',
-    subject: 'physics',
-    grade: 12,
-    topic: 'dao động',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về dao động',
-    problemLatex: 'P_{27} = 12x + 0',
-    solutionLatex: 'S_{27} = 0',
-    tags: ['dao-động'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-12-27',
-    subject: 'physics',
-    grade: 12,
-    topic: 'sóng',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về sóng',
-    problemLatex: 'P_{28} = 12x + 1',
-    solutionLatex: 'S_{28} = 12',
-    tags: ['sóng'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'physics-12-28',
-    subject: 'physics',
-    grade: 12,
-    topic: 'điện xoay chiều',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về điện xoay chiều',
-    problemLatex: 'P_{29} = 12x + 2',
-    solutionLatex: 'S_{29} = 24',
-    tags: ['điện-xoay-chiều'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'physics-12-29',
-    subject: 'physics',
-    grade: 12,
-    topic: 'dao động',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về dao động',
-    problemLatex: 'P_{30} = 12x + 3',
-    solutionLatex: 'S_{30} = 36',
-    tags: ['dao-động'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'physics-12-30',
-    subject: 'physics',
-    grade: 12,
-    topic: 'sóng',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về sóng',
-    problemLatex: 'P_{31} = 12x + 4',
-    solutionLatex: 'S_{31} = 48',
-    tags: ['sóng'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-10-31',
-    subject: 'chemistry',
-    grade: 10,
-    topic: 'cấu tạo nguyên tử',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về cấu tạo nguyên tử',
-    problemLatex: 'P_{32} = 10x + 0',
-    solutionLatex: 'S_{32} = 0',
-    tags: ['cấu-tạo-nguyên-tử'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-10-32',
-    subject: 'chemistry',
-    grade: 10,
-    topic: 'liên kết hóa học',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về liên kết hóa học',
-    problemLatex: 'P_{33} = 10x + 1',
-    solutionLatex: 'S_{33} = 10',
-    tags: ['liên-kết-hóa-học'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'chemistry-10-33',
-    subject: 'chemistry',
-    grade: 10,
-    topic: 'phản ứng oxi hóa khử',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về phản ứng oxi hóa khử',
-    problemLatex: 'P_{34} = 10x + 2',
-    solutionLatex: 'S_{34} = 20',
-    tags: ['phản-ứng-oxi-hóa-khử'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-10-34',
-    subject: 'chemistry',
-    grade: 10,
-    topic: 'cấu tạo nguyên tử',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về cấu tạo nguyên tử',
-    problemLatex: 'P_{35} = 10x + 3',
-    solutionLatex: 'S_{35} = 30',
-    tags: ['cấu-tạo-nguyên-tử'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'chemistry-10-35',
-    subject: 'chemistry',
-    grade: 10,
-    topic: 'liên kết hóa học',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về liên kết hóa học',
-    problemLatex: 'P_{36} = 10x + 4',
-    solutionLatex: 'S_{36} = 40',
-    tags: ['liên-kết-hóa-học'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-11-36',
-    subject: 'chemistry',
-    grade: 11,
-    topic: 'hóa hữu cơ cơ bản',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về hóa hữu cơ cơ bản',
-    problemLatex: 'P_{37} = 11x + 0',
-    solutionLatex: 'S_{37} = 0',
-    tags: ['hóa-hữu-cơ-cơ-bản'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-11-37',
-    subject: 'chemistry',
-    grade: 11,
-    topic: 'ancol',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về ancol',
-    problemLatex: 'P_{38} = 11x + 1',
-    solutionLatex: 'S_{38} = 11',
-    tags: ['ancol'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'chemistry-11-38',
-    subject: 'chemistry',
-    grade: 11,
-    topic: 'axit',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về axit',
-    problemLatex: 'P_{39} = 11x + 2',
-    solutionLatex: 'S_{39} = 22',
-    tags: ['axit'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-11-39',
-    subject: 'chemistry',
-    grade: 11,
-    topic: 'hóa hữu cơ cơ bản',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về hóa hữu cơ cơ bản',
-    problemLatex: 'P_{40} = 11x + 3',
-    solutionLatex: 'S_{40} = 33',
-    tags: ['hóa-hữu-cơ-cơ-bản'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'chemistry-11-40',
-    subject: 'chemistry',
-    grade: 11,
-    topic: 'ancol',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về ancol',
-    problemLatex: 'P_{41} = 11x + 4',
-    solutionLatex: 'S_{41} = 44',
-    tags: ['ancol'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-12-41',
-    subject: 'chemistry',
-    grade: 12,
-    topic: 'este',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về este',
-    problemLatex: 'P_{42} = 12x + 0',
-    solutionLatex: 'S_{42} = 0',
-    tags: ['este'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-12-42',
-    subject: 'chemistry',
-    grade: 12,
-    topic: 'polime',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về polime',
-    problemLatex: 'P_{43} = 12x + 1',
-    solutionLatex: 'S_{43} = 12',
-    tags: ['polime'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'chemistry-12-43',
-    subject: 'chemistry',
-    grade: 12,
-    topic: 'kim loại điện hóa',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về kim loại điện hóa',
-    problemLatex: 'P_{44} = 12x + 2',
-    solutionLatex: 'S_{44} = 24',
-    tags: ['kim-loại-điện-hóa'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'chemistry-12-44',
-    subject: 'chemistry',
-    grade: 12,
-    topic: 'este',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về este',
-    problemLatex: 'P_{45} = 12x + 3',
-    solutionLatex: 'S_{45} = 36',
-    tags: ['este'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'chemistry-12-45',
-    subject: 'chemistry',
-    grade: 12,
-    topic: 'polime',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về polime',
-    problemLatex: 'P_{46} = 12x + 4',
-    solutionLatex: 'S_{46} = 48',
-    tags: ['polime'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-10-46',
-    subject: 'biology',
-    grade: 10,
-    topic: 'tế bào',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về tế bào',
-    problemLatex: 'P_{47} = 10x + 0',
-    solutionLatex: 'S_{47} = 0',
-    tags: ['tế-bào'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-10-47',
-    subject: 'biology',
-    grade: 10,
-    topic: 'phân chia tế bào',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về phân chia tế bào',
-    problemLatex: 'P_{48} = 10x + 1',
-    solutionLatex: 'S_{48} = 10',
-    tags: ['phân-chia-tế-bào'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'biology-10-48',
-    subject: 'biology',
-    grade: 10,
-    topic: 'tế bào',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về tế bào',
-    problemLatex: 'P_{49} = 10x + 2',
-    solutionLatex: 'S_{49} = 20',
-    tags: ['tế-bào'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-10-49',
-    subject: 'biology',
-    grade: 10,
-    topic: 'phân chia tế bào',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về phân chia tế bào',
-    problemLatex: 'P_{50} = 10x + 3',
-    solutionLatex: 'S_{50} = 30',
-    tags: ['phân-chia-tế-bào'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'biology-10-50',
-    subject: 'biology',
-    grade: 10,
-    topic: 'tế bào',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về tế bào',
-    problemLatex: 'P_{51} = 10x + 4',
-    solutionLatex: 'S_{51} = 40',
-    tags: ['tế-bào'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-11-51',
-    subject: 'biology',
-    grade: 11,
-    topic: 'quang hợp',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về quang hợp',
-    problemLatex: 'P_{52} = 11x + 0',
-    solutionLatex: 'S_{52} = 0',
-    tags: ['quang-hợp'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-11-52',
-    subject: 'biology',
-    grade: 11,
-    topic: 'hô hấp',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về hô hấp',
-    problemLatex: 'P_{53} = 11x + 1',
-    solutionLatex: 'S_{53} = 11',
-    tags: ['hô-hấp'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'biology-11-53',
-    subject: 'biology',
-    grade: 11,
-    topic: 'sinh trưởng thực vật',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về sinh trưởng thực vật',
-    problemLatex: 'P_{54} = 11x + 2',
-    solutionLatex: 'S_{54} = 22',
-    tags: ['sinh-trưởng-thực-vật'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-11-54',
-    subject: 'biology',
-    grade: 11,
-    topic: 'quang hợp',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về quang hợp',
-    problemLatex: 'P_{55} = 11x + 3',
-    solutionLatex: 'S_{55} = 33',
-    tags: ['quang-hợp'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'biology-11-55',
-    subject: 'biology',
-    grade: 11,
-    topic: 'hô hấp',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về hô hấp',
-    problemLatex: 'P_{56} = 11x + 4',
-    solutionLatex: 'S_{56} = 44',
-    tags: ['hô-hấp'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-12-56',
-    subject: 'biology',
-    grade: 12,
-    topic: 'di truyền phân li',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về di truyền phân li',
-    problemLatex: 'P_{57} = 12x + 0',
-    solutionLatex: 'S_{57} = 0',
-    tags: ['di-truyền-phân-li'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-12-57',
-    subject: 'biology',
-    grade: 12,
-    topic: 'liên kết gen',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về liên kết gen',
-    problemLatex: 'P_{58} = 12x + 1',
-    solutionLatex: 'S_{58} = 12',
-    tags: ['liên-kết-gen'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'biology-12-58',
-    subject: 'biology',
-    grade: 12,
-    topic: 'đột biến',
-    difficulty: 'olympiad',
-    problemStatement: 'Câu hỏi về đột biến',
-    problemLatex: 'P_{59} = 12x + 2',
-    solutionLatex: 'S_{59} = 24',
-    tags: ['đột-biến'],
-    cefrRelevant: true,
-  },
-  {
-    id: 'biology-12-59',
-    subject: 'biology',
-    grade: 12,
-    topic: 'di truyền phân li',
-    difficulty: 'medium',
-    problemStatement: 'Câu hỏi về di truyền phân li',
-    problemLatex: 'P_{60} = 12x + 3',
-    solutionLatex: 'S_{60} = 36',
-    tags: ['di-truyền-phân-li'],
-    cefrRelevant: false,
-  },
-  {
-    id: 'biology-12-60',
-    subject: 'biology',
-    grade: 12,
-    topic: 'liên kết gen',
-    difficulty: 'hard',
-    problemStatement: 'Câu hỏi về liên kết gen',
-    problemLatex: 'P_{61} = 12x + 4',
-    solutionLatex: 'S_{61} = 48',
-    tags: ['liên-kết-gen'],
-    cefrRelevant: true,
-  },
-]
+/** Một câu của ngân hàng — bản ĐẦY ĐỦ, chỉ sống ở server (có đáp án + lời giải). */
+export interface StemQuestion extends StemBankQuestionPublic {
+  /** Đáp án máy chấm được, lấy nguyên từ bài học. */
+  answer: Exclude<AnswerSpec, { kind: 'choice' }>
+  /** Lời giải của bài học — chỉ trả cho client SAU khi giải đúng. */
+  explain: string
+}
 
-export function filterStemQuestions(opts: {
-  subject?: StemQuestion['subject']
-  grade?: 10 | 11 | 12
-  difficulty?: StemQuestion['difficulty']
-  limit?: number
-}): StemQuestion[] {
-  let filtered = STEM_QUESTION_BANK
-  if (opts.subject) {
-    filtered = filtered.filter((q) => q.subject === opts.subject)
+/** Câu đúng/sai mã hoá thành số ("Nhập 1 nếu ĐÚNG, nhập 0 nếu SAI") — không có phép tính để nháp. */
+const CAU_MA_HOA_DUNG_SAI = /nhập\s+\d+\s+nếu/i
+
+/** Id ổn định của câu: `<id bài>-q<số thứ tự câu trong bài, từ 1>`. */
+export function stemQuestionId(lessonId: string, index: number): string {
+  return `${lessonId}-q${index + 1}`
+}
+
+/** Đáp số có cần đơn vị không — theo đúng luật của `gradeAnswer` (`unitRequired` mặc định true). */
+function canDonVi(answer: AnswerSpec): boolean {
+  return (
+    answer.kind === 'numeric' &&
+    answer.unit !== undefined &&
+    answer.unit !== '' &&
+    answer.unitRequired !== false
+  )
+}
+
+/** Dựng ngân hàng đề từ bài học của từng môn. Thứ tự giữ theo thứ tự bài và câu trong bài. */
+export function buildStemQuestionBank(
+  sources: readonly { subject: StemSubjectType; lessons: readonly StemLessonSource[] }[],
+): StemQuestion[] {
+  const bank: StemQuestion[] = []
+  for (const { subject, lessons } of sources) {
+    for (const lesson of lessons) {
+      lesson.checkQuestions.forEach((q, index) => {
+        const answer = q.answer
+        if (answer.kind === 'choice') return
+        if (CAU_MA_HOA_DUNG_SAI.test(q.prompt)) return
+        bank.push({
+          id: stemQuestionId(lesson.id, index),
+          subject,
+          grade: lesson.grade,
+          lessonId: lesson.id,
+          lessonTitle: lesson.title,
+          topic: lesson.chapterTitle,
+          track: lesson.track,
+          problemStatement: q.prompt,
+          needsUnit: canDonVi(answer),
+          expectsFraction: answer.kind === 'fraction',
+          reviewStatus: lesson.reviewStatus,
+          answer,
+          explain: q.explain,
+        })
+      })
+    }
   }
-  if (opts.grade) {
-    filtered = filtered.filter((q) => q.grade === opts.grade)
+  return bank
+}
+
+/**
+ * Bản cho client: danh sách TRẮNG từng trường công khai — đáp án và lời giải không bao giờ lọt ra
+ * (trước 0551, `get_questions` trả nguyên `solutionLatex`, tức lộ đáp án).
+ */
+export function toPublicStemQuestion(q: StemQuestion): StemBankQuestionPublic {
+  return {
+    id: q.id,
+    subject: q.subject,
+    grade: q.grade,
+    lessonId: q.lessonId,
+    lessonTitle: q.lessonTitle,
+    topic: q.topic,
+    track: q.track,
+    problemStatement: q.problemStatement,
+    needsUnit: q.needsUnit,
+    expectsFraction: q.expectsFraction,
+    reviewStatus: q.reviewStatus,
   }
-  if (opts.difficulty) {
-    filtered = filtered.filter((q) => q.difficulty === opts.difficulty)
-  }
-  if (opts.limit !== undefined && opts.limit > 0) {
-    filtered = filtered.slice(0, opts.limit)
-  }
+}
+
+export function filterStemQuestions(
+  bank: readonly StemQuestion[],
+  opts: {
+    subject?: StemSubjectType
+    grade?: '10' | '11' | '12'
+    track?: 'core' | 'advanced'
+    limit?: number
+  },
+): StemQuestion[] {
+  let filtered = [...bank]
+  if (opts.subject) filtered = filtered.filter((q) => q.subject === opts.subject)
+  if (opts.grade) filtered = filtered.filter((q) => q.grade === opts.grade)
+  if (opts.track) filtered = filtered.filter((q) => q.track === opts.track)
+  if (opts.limit !== undefined && opts.limit > 0) filtered = filtered.slice(0, opts.limit)
   return filtered
 }
 
-export function getStemQuestionById(id: string): StemQuestion | undefined {
-  return STEM_QUESTION_BANK.find((q) => q.id === id)
+export function getStemQuestionById(
+  bank: readonly StemQuestion[],
+  id: string,
+): StemQuestion | undefined {
+  return bank.find((q) => q.id === id)
 }

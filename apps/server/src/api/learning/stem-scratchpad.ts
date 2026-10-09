@@ -1,16 +1,91 @@
 // api/stem-scratchpad.ts — REST handler cho Platform V5 STEM Interactive Scratchpad.
-import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
-import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
-import { StemScratchpadService } from '@dhcb/core-ai/stemScratchpadService'
+import { jsonResponse, badJsonOrInternalError, getClientIp } from '@dhcb/core-http/http'
 import {
-  StemProblemState,
-  StemSubjectType,
-  StemVariableTableSchema,
+  validateAuth,
+  getCorsHeaders,
+  checkRateLimit,
+  logSecurityEvent,
+} from '@dhcb/core-auth/security'
+import { StemScratchpadService } from '@dhcb/core-ai/stemScratchpadService'
+import { z } from 'zod'
+import {
+  MAX_WRONG_SUBMITS,
+  StemSubjectTypeSchema,
+  ScratchpadStepSchema,
+  StemProblemStateSchema,
+  publicSubmitReason,
+  type StemProblemState,
+  type SubmitSolutionResult,
 } from '@dhcb/core-contracts/stemScratchpad'
-import { filterStemQuestions, getStemQuestionById } from '@dhcb/core-ai/stemQuestionBank'
-import type { StemQuestion } from '@dhcb/core-ai/stemQuestionBank'
+import {
+  buildStemQuestionBank,
+  filterStemQuestions,
+  getStemQuestionById,
+  toPublicStemQuestion,
+} from '@dhcb/core-ai/stemQuestionBank'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
-import { gradeFinalAnswer } from '@dhcb/core-grading/finalAnswer'
+import { finalValueText } from '@dhcb/core-grading/finalAnswer'
+import { gradeAnswer } from '@dhcb/core-grading/index'
+import { MATH_LESSONS } from '@dhcb/subject-math/lessons'
+import { PHYSICS_LESSONS } from '@dhcb/subject-physics/lessons'
+import { CHEM_LESSONS } from '@dhcb/subject-chemistry/lessons'
+
+// Ngân hàng đề THẬT (changelog 0551): các câu "Tự kiểm tra" có đáp án máy chấm được của bài học
+// Toán · Lí · Hoá. Dựng MỘT lần khi nạp module (hàm thuần, vài trăm câu). Sinh học chưa có trong
+// bảng nháp (giao diện không có tab, bộ kiểm bước chưa hỗ trợ) nên không đưa vào.
+const BANK = buildStemQuestionBank([
+  { subject: 'math', lessons: MATH_LESSONS },
+  { subject: 'physics', lessons: PHYSICS_LESSONS },
+  { subject: 'chemistry', lessons: CHEM_LESSONS },
+])
+
+/** Tham số lọc của `get_questions` — sai kiểu thì 400, không âm thầm bỏ qua. */
+const GetQuestionsQuerySchema = z.object({
+  subject: StemSubjectTypeSchema.optional(),
+  grade: z.enum(['10', '11', '12']).optional(),
+  track: z.enum(['core', 'advanced']).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(20),
+})
+
+/** Mở phiên giải một câu của ngân hàng: client CHỈ gửi id, đề/môn do server tra. */
+const CreateFromBankSchema = z.object({ questionId: z.string().min(1).max(100) })
+
+// ── Validate body POST (sau rà soát bảo mật 0551) ─────────────────────────────
+// Trước đây `create_problem` tự do và `validate_step` đọc thẳng `body.x` — body `null` ném
+// TypeError (500), chuỗi dài vô hạn được lưu vào JSONB. Nay mọi action qua Zod; giới hạn độ dài
+// lấy lại từ chính hợp đồng trạng thái (`StemProblemStateSchema`, `ScratchpadStepSchema`) để thứ
+// được lưu luôn hợp lệ với hợp đồng.
+
+/** Id phiên do server sinh (`prob-…`); tuỳ chọn — thiếu thì nơi gọi tự xử (404 hoặc tạo phiên). */
+const ProblemIdSchema = z.string().min(1).max(100).optional()
+
+/** Mở phiên với đề TỰ DO (không thuộc ngân hàng) — vd đề Vật lí kèm bảng thứ nguyên (0552). */
+const CreateFreeSchema = StemProblemStateSchema.pick({
+  subject: true,
+  title: true,
+  problemStatement: true,
+  problemLatex: true,
+  variables: true,
+})
+
+const ValidateStepBodySchema = ScratchpadStepSchema.pick({
+  latexInput: true,
+  explanation: true,
+}).extend({ problemId: ProblemIdSchema })
+
+const ProblemRefSchema = z.object({ problemId: ProblemIdSchema })
+
+const SubmitBodySchema = z.object({
+  problemId: ProblemIdSchema,
+  finalAnswer: z.string().max(200),
+})
+
+/**
+ * Trần yêu cầu POST mỗi người mỗi phút cho bảng nháp (kiểm bước, gợi ý, nộp). Một người giải bài
+ * thật gửi vài bước/phút; 60 đủ rộng cho người gõ nhanh nhưng chặn script dò đáp số qua
+ * `submit_solution` và spam `get_hint`.
+ */
+const STEM_POST_PER_MINUTE = 60
 
 // [2026-08-24] Trước đây các bài đang làm dở nằm trong `new Map` cấp module — mất khi restart,
 // VỠ trong PM2 cluster 3 instance, và Map khoá theo problemId TOÀN CỤC nên ai biết id cũng đọc
@@ -24,7 +99,22 @@ type ProblemBook = Record<string, StemProblemState>
 
 async function readProblems(userId: string): Promise<ProblemBook> {
   const state = await getFeatureState<ProblemBook>(userId, FEATURE)
-  return state && typeof state === 'object' ? state : {}
+  if (!state || typeof state !== 'object') return {}
+  // Bản ghi trước rà soát bảo mật 0551 chưa có `wrongSubmits` — coi như 0 (khớp `.default(0)`).
+  for (const prob of Object.values(state)) {
+    if (typeof prob.wrongSubmits !== 'number') prob.wrongSubmits = 0
+  }
+  return state
+}
+
+/**
+ * Tra phiên theo id do client gửi. CHỈ khoá RIÊNG của sổ: `book['constructor']` trên object
+ * thường trả về hàm `Object` (không phải undefined), nên trước đây `problemId: 'constructor'` lọt
+ * qua kiểm "không tìm thấy" rồi vỡ ở bước sau (500).
+ */
+function findProblem(book: ProblemBook, problemId: unknown): StemProblemState | undefined {
+  if (typeof problemId !== 'string' || !Object.hasOwn(book, problemId)) return undefined
+  return book[problemId]
 }
 
 // Ghi lại một bài, cắt bớt bài cũ nhất nếu vượt trần (theo updatedAt).
@@ -63,96 +153,98 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'GET') {
     const problemId = url.searchParams.get('problemId')
     if (problemId) {
-      const prob = (await readProblems(personId))[problemId]
+      const prob = findProblem(await readProblems(personId), problemId)
       if (!prob) {
         return jsonResponse({ error: 'Problem not found' }, 404)
       }
       return jsonResponse({ success: true, problem: prob }, 200)
     }
 
-    // Lọc ngân hàng câu hỏi nâng cao
+    // Lọc ngân hàng đề — chỉ trả trường CÔNG KHAI (không đáp án, không lời giải).
     if (action === 'get_questions') {
-      const subject = url.searchParams.get('subject') as StemQuestion['subject'] | null
-      const gradeStr = url.searchParams.get('grade')
-      const difficulty = url.searchParams.get('difficulty') as StemQuestion['difficulty'] | null
-      const limitStr = url.searchParams.get('limit')
-
-      const questions = filterStemQuestions({
-        subject: subject ?? undefined,
-        grade: gradeStr ? (parseInt(gradeStr) as 10 | 11 | 12) : undefined,
-        difficulty: difficulty ?? undefined,
-        limit: limitStr ? parseInt(limitStr) : 20,
+      const q = GetQuestionsQuerySchema.safeParse({
+        subject: url.searchParams.get('subject') ?? undefined,
+        grade: url.searchParams.get('grade') ?? undefined,
+        track: url.searchParams.get('track') ?? undefined,
+        limit: url.searchParams.get('limit') ?? undefined,
       })
-      return jsonResponse({ success: true, questions, total: questions.length }, 200)
+      if (!q.success) {
+        return jsonResponse({ error: 'Tham số lọc không hợp lệ' }, 400)
+      }
+      const all = filterStemQuestions(BANK, { ...q.data, limit: undefined })
+      const questions = all.slice(0, q.data.limit).map(toPublicStemQuestion)
+      return jsonResponse({ success: true, questions, total: all.length }, 200)
     }
 
-    // Trả về danh sách bài tập STEM mẫu
-    const sampleProblems = [
-      {
-        id: 'math-linear-1',
-        subject: 'math' as StemSubjectType,
-        title: 'Phương trình bậc nhất 1 ẩn',
-        problemStatement: 'Giải phương trình: 2x + 5 = 15',
-        problemLatex: '2x + 5 = 15',
-      },
-      {
-        id: 'chem-redox-1',
-        subject: 'chemistry' as StemSubjectType,
-        title: 'Cân bằng phản ứng Oxy hóa - Khử',
-        problemStatement: 'Cân bằng phản ứng tạo nước từ Hydro và Oxi:',
-        problemLatex: 'H_2 + O_2 \\rightarrow H_2O',
-      },
-      {
-        id: 'phys-motion-1',
-        subject: 'physics' as StemSubjectType,
-        title: 'Phương trình chuyển động thẳng đều',
-        problemStatement:
-          'Một vật chuyển động từ trạng thái nghỉ với gia tốc a = 2m/s². Tính vận tốc v sau t = 5s:',
-        problemLatex: 'v = v_0 + a \\cdot t',
-      },
-    ]
-
-    return jsonResponse({ success: true, problems: sampleProblems }, 200)
+    // Trước changelog 0551 nhánh này trả 3 "bài mẫu" viết cứng (2x + 5 = 15…). Bảng nháp nay chỉ
+    // dùng ngân hàng đề thật (`action=get_questions`).
+    return jsonResponse({ error: 'Invalid action parameter' }, 400)
   }
 
   if (req.method === 'POST') {
+    // Một bộ đếm cho MỌI action POST (kiểm bước, gợi ý, nộp) theo người dùng — chặn dò đáp số và
+    // spam gợi ý (rà soát bảo mật 0551).
+    if (!(await checkRateLimit(personId, STEM_POST_PER_MINUTE, 'stem-scratchpad'))) {
+      logSecurityEvent('RATE_LIMIT_EXCEEDED', getClientIp(req), {
+        path: '/api/stem-scratchpad',
+        action,
+      })
+      return jsonResponse({ error: 'Quá nhiều yêu cầu — thử lại sau 1 phút' }, 429)
+    }
     try {
-      const body = await req.json()
+      const body: unknown = await req.json()
 
       if (action === 'create_problem') {
-        const { subject, title, problemStatement, problemLatex } = body
-        if (!subject || !title || !problemStatement) {
-          return jsonResponse({ error: 'Missing required problem fields' }, 400)
-        }
-        // Bảng thứ nguyên biến (đề Vật lí, changelog 0552) — dữ liệu ngoài nên validate bằng Zod.
-        const variables =
-          body.variables === undefined
-            ? undefined
-            : StemVariableTableSchema.safeParse(body.variables)
-        if (variables !== undefined && !variables.success) {
-          return jsonResponse({ error: 'Invalid variables table' }, 400)
+        // Mở phiên từ NGÂN HÀNG ĐỀ: đề, môn, tiêu đề lấy ở server — không tin client.
+        if (body && typeof body === 'object' && 'questionId' in body) {
+          const parsed = CreateFromBankSchema.safeParse(body)
+          if (!parsed.success) return jsonResponse({ error: 'questionId không hợp lệ' }, 400)
+          const question = getStemQuestionById(BANK, parsed.data.questionId)
+          if (!question) return jsonResponse({ error: 'Question not found' }, 404)
+          const prob = StemScratchpadService.createProblemSession({
+            personId,
+            subject: question.subject,
+            title: question.lessonTitle,
+            problemStatement: question.problemStatement,
+            questionId: question.id,
+          })
+          await saveProblem(personId, await readProblems(personId), prob)
+          return jsonResponse({ success: true, problem: prob }, 200)
         }
 
+        // Đề tự do: môn/tiêu đề/đề/bảng thứ nguyên biến (0552) đều qua Zod — thiếu, sai kiểu, quá
+        // dài hay bảng biến hỏng đều 400.
+        const parsed = CreateFreeSchema.safeParse(body)
+        if (!parsed.success) {
+          return jsonResponse({ error: 'Missing or invalid problem fields' }, 400)
+        }
+        const { subject, title, problemStatement, problemLatex, variables } = parsed.data
         const prob = StemScratchpadService.createProblemSession({
           personId,
           subject,
           title,
           problemStatement,
-          problemLatex,
-          ...(variables?.success ? { variables: variables.data } : {}),
+          ...(problemLatex === undefined ? {} : { problemLatex }),
+          ...(variables === undefined ? {} : { variables }),
         })
         await saveProblem(personId, await readProblems(personId), prob)
         return jsonResponse({ success: true, problem: prob }, 200)
       }
 
       if (action === 'validate_step') {
-        const { problemId, latexInput, explanation } = body
-        if (!latexInput) {
-          return jsonResponse({ error: 'Missing latexInput' }, 400)
+        const parsed = ValidateStepBodySchema.safeParse(body)
+        if (!parsed.success) {
+          return jsonResponse({ error: 'Missing or invalid latexInput' }, 400)
         }
+        const { problemId, latexInput, explanation } = parsed.data
 
         const book = await readProblems(personId)
-        let prob = problemId ? book[problemId] : undefined
+        let prob = findProblem(book, problemId)
+        // Có gửi id mà không thấy phiên → 404. Trước đây server tạo phiên MỚI mang đúng id client
+        // chọn (vd trùng id câu ngân hàng) — không còn lý do giữ đường đó.
+        if (!prob && problemId !== undefined) {
+          return jsonResponse({ error: 'Problem not found' }, 404)
+        }
         if (!prob) {
           prob = StemScratchpadService.createProblemSession({
             personId,
@@ -163,7 +255,6 @@ export default async function handler(req: Request): Promise<Response> {
             // và khen "tương đương đề bài" một cách vô nghĩa. Không có đề thì bước đầu là mốc so
             // cho các bước sau, còn bản thân nó "chưa tự kiểm được".
           })
-          if (problemId) prob.id = problemId
           book[prob.id] = prob
         }
 
@@ -206,9 +297,10 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'get_hint') {
-        const { problemId } = body
+        const parsed = ProblemRefSchema.safeParse(body)
+        if (!parsed.success) return jsonResponse({ error: 'Invalid problemId' }, 400)
         const book = await readProblems(personId)
-        const prob = problemId ? book[problemId] : undefined
+        const prob = findProblem(book, parsed.data.problemId)
         if (!prob) {
           return jsonResponse({ error: 'Problem not found' }, 404)
         }
@@ -222,34 +314,64 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'submit_solution') {
-        const { problemId, finalAnswer } = body
+        const parsed = SubmitBodySchema.safeParse(body)
+        if (!parsed.success) {
+          return jsonResponse({ error: 'Missing or invalid finalAnswer' }, 400)
+        }
+        const { problemId, finalAnswer } = parsed.data
         const book = await readProblems(personId)
-        const prob = problemId ? book[problemId] : undefined
+        const prob = findProblem(book, problemId)
         if (!prob) {
           return jsonResponse({ error: 'Problem not found' }, 404)
         }
-        if (typeof finalAnswer !== 'string') {
-          return jsonResponse({ error: 'Missing finalAnswer' }, 400)
+        // Chấm theo câu NGÂN HÀNG gắn với phiên (`prob.questionId` — do server gán lúc mở phiên).
+        // Trước changelog 0551 tra `getStemQuestionById(problemId)`: id phiên (`prob-…`) không bao
+        // giờ trùng id câu, nên nút nộp không thể chấm đúng cho phiên thật; còn client đặt
+        // problemId = id câu thì tự chọn được câu để chấm.
+        const question =
+          prob.questionId === undefined ? undefined : getStemQuestionById(BANK, prob.questionId)
+        if (!question) {
+          return jsonResponse(
+            {
+              error: 'NO_ANSWER_KEY',
+              message: 'Bài này không thuộc ngân hàng đề nên chưa có đáp án để chấm.',
+            },
+            409,
+          )
         }
-        // So ĐÁP SỐ đã chuẩn hoá với đáp án ngân hàng đề qua engine chấm dùng chung
-        // (@dhcb/core-grading): bỏ "x =", thống nhất `,`/`.`, dung sai nhỏ, đơn vị phải khớp.
-        // Trước changelog 0539 so CHUỖI CON với 10 ký tự đầu đáp án — "15" khớp "5".
-        const question = getStemQuestionById(problemId)
-        const isCorrect =
-          question !== undefined && gradeFinalAnswer(finalAnswer, question.solutionLatex).correct
-        prob.isSolved = prob.isSolved || isCorrect
+        // Đáp án của BÀI HỌC (`AnswerSpec`) qua engine chấm dùng chung: dung sai, đơn vị/thứ
+        // nguyên, phân số, công thức hoá — y như trang bài học. `finalValueText` bỏ "x =", vỏ LaTeX.
+        // Chặn dò đáp số (rà soát bảo mật 0551): phiên chưa giải mà đã nộp sai đủ trần thì thôi
+        // chấm. Chỉ khoá PHIÊN đề này — mở đề khác (phiên mới) vẫn nộp được.
+        if (!prob.isSolved && prob.wrongSubmits >= MAX_WRONG_SUBMITS) {
+          return jsonResponse(
+            {
+              error: 'TOO_MANY_WRONG_SUBMITS',
+              message: `Em đã nộp sai quá ${MAX_WRONG_SUBMITS} lần cho đề này — xem lại các bước rồi mở đề khác nhé.`,
+            },
+            409,
+          )
+        }
+        const ketQua = gradeAnswer(finalValueText(finalAnswer), question.answer)
+        // Mã công khai: chỉ CORRECT/CORRECT_LOOSE, hoặc lỗi ở CÁCH GHI (PARSE_ERROR/EMPTY). Mã chi
+        // tiết (thiếu/sai đơn vị, sai dấu…) lộ thông tin về đáp án nên không trả khi sai.
+        const reason = publicSubmitReason(ketQua.reason)
+        // Lỗi cách ghi không lộ gì về đáp án nên không tính vào số lần nộp sai.
+        const loiCachGhi = reason === 'PARSE_ERROR' || reason === 'EMPTY'
+        if (!ketQua.correct && !loiCachGhi && !prob.isSolved) prob.wrongSubmits += 1
+        prob.isSolved = prob.isSolved || ketQua.correct
         prob.updatedAt = new Date().toISOString()
         await saveProblem(personId, book, prob)
-        // Chỉ hé lời giải khi bài ĐÃ giải đúng — trước đây nộp đại một đáp số sai cũng nhận về
-        // 100 ký tự đầu lời giải, biến nút "nộp" thành nút "xem đáp án".
-        return jsonResponse(
-          {
-            success: true,
-            isSolved: prob.isSolved,
-            ...(prob.isSolved ? { solutionPreview: question?.solutionLatex?.slice(0, 100) } : {}),
-          },
-          200,
-        )
+        // Chỉ hé lời giải khi bài ĐÃ giải đúng — nếu không, nộp bừa thành nút "xem đáp án".
+        const result: SubmitSolutionResult = {
+          success: true,
+          isSolved: prob.isSolved,
+          correct: ketQua.correct,
+          ...(reason === undefined ? {} : { reason }),
+          attemptsLeft: Math.max(0, MAX_WRONG_SUBMITS - prob.wrongSubmits),
+          ...(prob.isSolved ? { explanation: question.explain } : {}),
+        }
+        return jsonResponse(result, 200)
       }
 
       return jsonResponse({ error: 'Invalid action parameter' }, 400)

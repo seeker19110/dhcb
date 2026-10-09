@@ -1,7 +1,7 @@
 // Ca biên của bộ kiểm bước giải phương trình một ẩn (đặc tả docs/specs/2026-10-09-kiem-buoc-giai-stem.md §8).
 // Luật bất biến: chỉ `equivalent` khi CHỨNG MINH được; không đọc được thì `unsupported`, không đoán.
 import { describe, it, expect } from 'vitest'
-import { checkMathStep } from './stepCheckMath.js'
+import { checkMathStep, describeMathStep } from './stepCheckMath.js'
 
 const verdict = (step: string, anchor: string, previous?: string) =>
   checkMathStep(step, anchor, previous).verdict
@@ -230,5 +230,84 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
     const b = checkMathStep('x = 1', 'x^3 - x = 0')
     expect(a).toEqual(b)
     expect(a).toMatchObject({ verdict: 'changed', lost: true })
+  })
+})
+
+// changelog 0551 — hình dạng bước cho gợi ý Socratic: chỉ đặc điểm hình thức, không nghiệm.
+describe('describeMathStep', () => {
+  it('nhận đúng từng đặc điểm', () => {
+    expect(describeMathStep('2x + 5 - 5 = 15 - 5')).toMatchObject({
+      hasLikeTerms: true,
+      constantBesideVariable: true,
+      degree: 1,
+      isAnswerForm: false,
+    })
+    expect(describeMathStep('2x = 10')).toMatchObject({
+      coefficientNotOne: true,
+      hasLikeTerms: false,
+      constantBesideVariable: false,
+    })
+    expect(describeMathStep('\\frac{x}{3} = 2')?.coefficientNotOne).toBe(true)
+    expect(describeMathStep('x = 5')).toMatchObject({
+      isAnswerForm: true,
+      coefficientNotOne: false,
+    })
+    expect(describeMathStep('3x - 6 = 2x + 1')?.variableOnBothSides).toBe(true)
+    expect(describeMathStep('3(x - 2) = 7')?.hasExpandableProduct).toBe(true)
+    expect(describeMathStep('(x - 1)^2 = 4')?.hasExpandableProduct).toBe(true)
+    expect(describeMathStep('x^2 - 5x + 6 = 0')).toMatchObject({ degree: 2, hasLikeTerms: false })
+    expect(describeMathStep('2x^2 + 3x^2 = 5')?.hasLikeTerms).toBe(true)
+    expect(describeMathStep('\\frac{1}{x - 1} = 2')?.hasVariableDenominator).toBe(true)
+    expect(describeMathStep('x = x')?.degree).toBe(0)
+  })
+
+  it('lấy mệnh đề cuối sau ⇒', () => {
+    expect(describeMathStep('2x = 10 \\implies x = 5')?.isAnswerForm).toBe(true)
+  })
+
+  it('ngoài phạm vi → null (không đoán)', () => {
+    for (const s of [
+      '\\sqrt{x} = 5',
+      'x + y = 5',
+      'x = 2 hoặc x = 3',
+      '2x',
+      'a = b = c',
+      'x = 1/0',
+    ]) {
+      expect(describeMathStep(s), s).toBeNull()
+    }
+  })
+})
+
+describe('lồng sâu / quá dài — KHÔNG ném lỗi (rà soát bảo mật 0551)', () => {
+  // Trước đây 30000 ngoặc lồng nhau làm tràn ngăn xếp (RangeError) → API trả 500.
+  const longNgoac = (n: number) => `x = ${'('.repeat(n)}1${')'.repeat(n)}`
+  const congDai = `x = ${Array.from({ length: 30000 }, () => '1').join('+')}`
+
+  it('ngoặc lồng sâu ở bước → unsupported too_complex; dưới trần vẫn kiểm bình thường', () => {
+    expect(checkMathStep(longNgoac(30000), 'x = 1')).toEqual({
+      verdict: 'unsupported',
+      reason: 'too_complex',
+    })
+    expect(checkMathStep(longNgoac(20), 'x = 1').verdict).toBe('equivalent')
+  })
+
+  it('ngoặc lồng sâu ở mốc → anchor_unsupported', () => {
+    expect(checkMathStep('x = 1', longNgoac(30000))).toEqual({
+      verdict: 'unsupported',
+      reason: 'anchor_unsupported',
+    })
+  })
+
+  it('chuỗi cộng rất dài không ngoặc (đệ quy ngoài bộ phân tích) → too_complex, không ném', () => {
+    expect(checkMathStep(congDai, 'x = 1')).toEqual({
+      verdict: 'unsupported',
+      reason: 'too_complex',
+    })
+  })
+
+  it('describeMathStep trả null thay vì ném', () => {
+    expect(describeMathStep(longNgoac(30000))).toBeNull()
+    expect(() => describeMathStep(congDai)).not.toThrow()
   })
 })

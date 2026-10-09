@@ -1,56 +1,69 @@
 import { getAuthHeader } from '@core/authHeader'
-// apps/dhcb/src/lib/stemScratchpadApi.ts — Client API cho STEM Interactive Scratchpad V5.
-import type {
-  StemProblemState,
-  ScratchpadStep,
-  ScratchpadStepValidation,
-  StemSubjectType,
+// apps/dhcb/src/lib/stemScratchpadApi.ts — Client API cho bảng nháp STEM.
+// Từ changelog 0551: đề lấy từ NGÂN HÀNG ĐỀ thật (`get_questions`), mở phiên bằng `questionId`,
+// nộp đáp số qua `submit_solution`. Dữ liệu server trả về được validate bằng Zod trước khi dùng.
+import { z } from 'zod'
+import {
+  StemBankQuestionPublicSchema,
+  StemMicroHintSchema,
+  StemProblemStateSchema,
+  SubmitSolutionResultSchema,
+  type ScratchpadStep,
+  type ScratchpadStepValidation,
+  type StemBankQuestionPublic,
+  type StemMicroHint,
+  type StemProblemState,
+  type StemSubjectType,
+  type SubmitSolutionResult,
 } from '@dhcb/core-contracts/stemScratchpad'
 
-export async function fetchSampleStemProblems(): Promise<
-  Array<{
-    id: string
-    subject: StemSubjectType
-    title: string
-    problemStatement: string
-    problemLatex?: string
-  }>
-> {
-  const res = await fetch('/api/stem-scratchpad', {
-    headers: {
-      ...getAuthHeader(),
-    },
-  })
+const QuestionsResponseSchema = z.object({
+  questions: z.array(StemBankQuestionPublicSchema),
+  total: z.number().int().min(0),
+})
 
-  if (!res.ok) {
-    throw new Error(`Lỗi tải danh sách bài tập STEM: ${res.status}`)
-  }
+const ProblemResponseSchema = z.object({ problem: StemProblemStateSchema })
 
-  const data = await res.json()
-  return data.problems
-}
+const HintResponseSchema = z.object({
+  hint: StemMicroHintSchema,
+  hintsUsed: z.number().int().min(0),
+})
 
-export async function createStemProblemApi(params: {
-  subject: StemSubjectType
-  title: string
-  problemStatement: string
-  problemLatex?: string
-}): Promise<StemProblemState> {
-  const res = await fetch('/api/stem-scratchpad?action=create_problem', {
+/** Số câu tối đa tải về một lượt cho một môn — đủ để bấm "Đề khác" nhiều lần. */
+const SO_CAU_MOI_LUOT = 200
+
+function postJson(action: string, body: unknown): Promise<Response> {
+  return fetch(`/api/stem-scratchpad?action=${action}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeader(),
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify(body),
   })
+}
 
+/** Tải các câu của ngân hàng đề cho một môn (không có đáp án — server không bao giờ gửi). */
+export async function fetchStemQuestionsApi(
+  subject: StemSubjectType,
+): Promise<StemBankQuestionPublic[]> {
+  const res = await fetch(
+    `/api/stem-scratchpad?action=get_questions&subject=${subject}&limit=${SO_CAU_MOI_LUOT}`,
+    { headers: { ...getAuthHeader() } },
+  )
+  if (!res.ok) {
+    throw new Error(`Lỗi tải ngân hàng đề STEM: ${res.status}`)
+  }
+  return QuestionsResponseSchema.parse(await res.json()).questions
+}
+
+/** Mở một phiên giải câu `questionId` của ngân hàng đề. */
+export async function createStemProblemFromBankApi(questionId: string): Promise<StemProblemState> {
+  const res = await postJson('create_problem', { questionId })
   if (!res.ok) {
     throw new Error(`Lỗi tạo bài tập STEM: ${res.status}`)
   }
-
-  const data = await res.json()
-  return data.problem
+  return ProblemResponseSchema.parse(await res.json()).problem
 }
 
 export async function validateStemStepApi(params: {
@@ -63,14 +76,7 @@ export async function validateStemStepApi(params: {
   isSolved: boolean
   problem: StemProblemState
 }> {
-  const res = await fetch('/api/stem-scratchpad?action=validate_step', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify(params),
-  })
+  const res = await postJson('validate_step', params)
 
   if (!res.ok) {
     throw new Error(`Lỗi kiểm tra bước giải: ${res.status}`)
@@ -82,20 +88,48 @@ export async function validateStemStepApi(params: {
 
 export async function getStemHintApi(
   problemId: string,
-): Promise<{ hint: { hintText: string; suggestedFormula?: string }; hintsUsed: number }> {
-  const res = await fetch('/api/stem-scratchpad?action=get_hint', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify({ problemId }),
-  })
+): Promise<{ hint: StemMicroHint; hintsUsed: number }> {
+  const res = await postJson('get_hint', { problemId })
 
   if (!res.ok) {
     throw new Error(`Lỗi lấy gợi ý: ${res.status}`)
   }
 
-  const data = await res.json()
-  return data
+  return HintResponseSchema.parse(await res.json())
+}
+
+/** Nộp đáp số cuối. Server chấm theo đáp án của bài học; lời giải chỉ có khi đã đúng. */
+export async function submitStemSolutionApi(
+  problemId: string,
+  finalAnswer: string,
+): Promise<SubmitSolutionResult> {
+  const res = await postJson('submit_solution', { problemId, finalAnswer })
+  if (!res.ok) {
+    // 409 (nộp sai quá số lần cho phép) và 429 (quá nhiều yêu cầu) có câu tiếng Việt cho người học
+    // — chuyển nguyên câu đó lên giao diện thay vì "kiểm tra kết nối" (sai sự thật ở đây).
+    const loi = ServerErrorSchema.safeParse(await res.json().catch(() => null))
+    const message = loi.success ? (loi.data.message ?? loi.data.error) : undefined
+    throw new StemApiError(res.status, message ?? `Lỗi nộp lời giải: ${res.status}`, {
+      forLearner: res.status === 409 || res.status === 429,
+    })
+  }
+  return SubmitSolutionResultSchema.parse(await res.json())
+}
+
+/** Phần thân lỗi server trả về (chỉ đọc chữ; mọi trường đều tuỳ chọn). */
+const ServerErrorSchema = z.object({
+  error: z.string().max(200).optional(),
+  message: z.string().max(500).optional(),
+})
+
+/** Lỗi gọi API bảng nháp. `forLearner` = câu `message` đã viết cho người học, hiện được nguyên văn. */
+export class StemApiError extends Error {
+  readonly status: number
+  readonly forLearner: boolean
+  constructor(status: number, message: string, opts: { forLearner: boolean }) {
+    super(message)
+    this.name = 'StemApiError'
+    this.status = status
+    this.forLearner = opts.forLearner
+  }
 }
