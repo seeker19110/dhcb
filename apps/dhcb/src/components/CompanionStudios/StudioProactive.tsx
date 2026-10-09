@@ -8,6 +8,7 @@ import ProactiveBriefingCard from '../ProactiveBriefingCard'
 import AmbientScreenCopilot from '../CompanionVoice/AmbientScreenCopilot'
 import NeuroAffectiveCard from '../CompanionVoice/NeuroAffectiveCard'
 import ActionCanvasBanner from './ActionCanvasBanner'
+import LifeSynthesisDashboard from '../LifeSynthesis/LifeSynthesisDashboard'
 import type { ProactiveAgentState } from '@dhcb/core-contracts/proactiveAgent'
 
 interface StudioProactiveProps {
@@ -35,6 +36,11 @@ export default function StudioProactive({ proactiveState, navigate }: StudioProa
 
       <NeuralMicroCurriculumCard />
       <WorkplaceHarvesterCard />
+      {/* "30 ngày qua của bạn" — bật lại sau changelog 0475, nay chỉ đếm bản ghi thật của Học tập +
+          Ghi chú (changelog 0550). Đứng SAU thẻ Workplace Harvester: cổng E2E [S06d]
+          (`e2e/a11y.spec.ts`) đòi tab "Thẻ SRS" của thẻ đó nằm trong màn hình đầu ở 390 px — khối
+          tổng hợp đặt trên sẽ đẩy nó xuống dưới nếp gấp. */}
+      <LifeSynthesisDashboard />
       <A2ANegotiatorCard />
       <ProactiveBriefingCard />
       <AmbientScreenCopilot />

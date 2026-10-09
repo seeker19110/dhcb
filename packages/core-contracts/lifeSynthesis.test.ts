@@ -1,112 +1,119 @@
+// lifeSynthesis.test.ts — hợp đồng "Tổng hợp 30 ngày" v2 (changelog 0550).
 import { describe, it, expect } from 'vitest'
 import {
   LifeSynthesisReportSchema,
-  PredictiveGoalHorizonSchema,
-  StrategicRecommendationSchema,
+  LifeSynthesisResponseSchema,
+  SubjectActivitySchema,
+  SynthesisTargetSchema,
   type LifeSynthesisReport,
 } from './lifeSynthesis.js'
 
-describe('LifeSynthesis Schemas', () => {
-  it('validates a valid LifeSynthesisReport', () => {
-    const mockReport: LifeSynthesisReport = {
-      schemaVersion: 'v5.4.0',
-      timestamp: new Date().toISOString(),
-      personId: 'user-123',
-      timeframe: 'weekly',
-      holisticAlignmentScore: 88,
-      lifeSynergyIndex: 92,
-      cognitiveResilienceScore: 85,
-      domainBreakdown: [
-        {
-          domain: 'learning',
-          score: 90,
-          activityCount: 14,
-          momentum: 'accelerating',
-          keyHighlight: 'Mastered 30 C1 collocations',
-          bottlenecks: [],
-        },
-        {
-          domain: 'career',
-          score: 80,
-          activityCount: 5,
-          momentum: 'stable',
-          keyHighlight: 'Completed System Architecture doc',
-          bottlenecks: ['Limited deep-work time'],
-        },
-      ],
-      predictiveGoals: [
-        {
-          goalId: 'goal-1',
-          title: 'IELTS Band 8.0',
-          domain: 'learning',
-          targetDate: '2026-12-31',
-          estimatedCompletionDate: '2026-11-15',
-          successProbabilityPercent: 87.5,
-          confidenceInterval: {
-            optimisticDate: '2026-10-30',
-            pessimisticDate: '2026-12-15',
-          },
-          criticalPathSteps: ['C1 Vocabulary', 'Speaking Full-duplex drills'],
-          riskFactors: ['Fatigue late evening'],
-          energyAlignmentScore: 90,
-        },
-      ],
-      highLeverageRecommendations: [
-        {
-          id: 'rec-1',
-          priority: 'high',
-          sourceDomain: 'learning',
-          targetDomain: 'career',
-          title: 'Translate Technical Architecture into English Case Study',
-          actionPrompt: 'Write a 500-word engineering reflection in English',
-          expectedSynergyImpact: 'Boosts both C1 Writing and Portfolio evidence',
-          estimatedMinutes: 25,
-        },
-      ],
-      synthesisSummaryMarkdown:
-        '## Weekly Life Synthesis Summary\nAll 5 domains show strong positive momentum.',
-    }
-
-    const parsed = LifeSynthesisReportSchema.parse(mockReport)
-    expect(parsed.schemaVersion).toBe('v5.4.0')
-    expect(parsed.holisticAlignmentScore).toBe(88)
-    expect(parsed.predictiveGoals).toHaveLength(1)
-  })
-
-  it('rejects invalid scores outside [0, 100]', () => {
-    const invalidGoal = {
-      goalId: 'g1',
-      title: 'Goal',
-      domain: 'career',
-      targetDate: '2026-12-31',
-      estimatedCompletionDate: '2026-12-31',
-      successProbabilityPercent: 120, // Invalid > 100
-      confidenceInterval: {
-        optimisticDate: '2026-12-01',
-        pessimisticDate: '2027-01-01',
+const VALID: LifeSynthesisReport = {
+  schemaVersion: 2,
+  generatedAt: '2026-10-09T03:00:00.000Z',
+  windowDays: 30,
+  windowStart: '2026-09-10',
+  windowEnd: '2026-10-09',
+  learning: {
+    activeDays: 3,
+    streakDays: 2,
+    lastActiveDate: '2026-10-09',
+    subjects: [
+      {
+        subjectId: 'english',
+        label: 'Tiếng Anh',
+        activeDays: 3,
+        lastActiveDate: '2026-10-09',
+        streakDays: 2,
+        completions: null,
       },
-      criticalPathSteps: [],
-      riskFactors: [],
-      energyAlignmentScore: 80,
-    }
+    ],
+  },
+  notes: {
+    totalTasks: 2,
+    openTasks: 1,
+    overdueTasks: 0,
+    dueSoonTasks: 1,
+    undatedOpenTasks: 0,
+    blockedTasks: 0,
+    totalNotes: 0,
+    notesCreated: 0,
+  },
+  observations: [
+    {
+      ruleId: 'learning.subject_streak',
+      domain: 'learning',
+      text: 'Có học Tiếng Anh 2 ngày liên tiếp, tính tới hôm nay.',
+    },
+  ],
+  recommendations: [
+    {
+      ruleId: 'rec.learning_start',
+      domain: 'learning',
+      text: 'Chọn một môn và học một bài ngắn để bắt đầu.',
+      actionLabel: 'Mở Góc học tập',
+      target: { kind: 'learning-hub' },
+    },
+  ],
+}
 
-    expect(() => PredictiveGoalHorizonSchema.parse(invalidGoal)).toThrow()
+describe('LifeSynthesisReportSchema v2', () => {
+  it('nhận báo cáo hợp lệ', () => {
+    expect(LifeSynthesisReportSchema.parse(VALID)).toEqual(VALID)
+    expect(LifeSynthesisResponseSchema.parse({ report: VALID }).report).toEqual(VALID)
   })
 
-  it('validates StrategicRecommendation', () => {
-    const rec = {
-      id: 'rec-1',
-      priority: 'critical' as const,
-      sourceDomain: 'startup' as const,
-      targetDomain: 'work' as const,
-      title: 'Automate weekly report generation',
-      actionPrompt: 'Setup agent workflow',
-      expectedSynergyImpact: 'Saves 3 hours/week',
-      estimatedMinutes: 15,
-    }
+  it('strict: từ chối trường điểm số lạ (vd holisticAlignmentScore của bản v5.4)', () => {
+    expect(
+      LifeSynthesisReportSchema.safeParse({ ...VALID, holisticAlignmentScore: 88 }).success,
+    ).toBe(false)
+  })
 
-    const parsed = StrategicRecommendationSchema.parse(rec)
-    expect(parsed.priority).toBe('critical')
-    expect(parsed.estimatedMinutes).toBe(15)
+  it('từ chối bản v5.4 cũ và cửa sổ khác 30 ngày', () => {
+    expect(LifeSynthesisReportSchema.safeParse({ ...VALID, schemaVersion: 'v5.4.0' }).success).toBe(
+      false,
+    )
+    expect(LifeSynthesisReportSchema.safeParse({ ...VALID, windowDays: 7 }).success).toBe(false)
+  })
+
+  it('từ chối miền đã xoá (career/startup/life) ở môn và ở câu nhận xét', () => {
+    expect(
+      SubjectActivitySchema.safeParse({ ...VALID.learning.subjects[0], subjectId: 'career' })
+        .success,
+    ).toBe(false)
+    expect(
+      LifeSynthesisReportSchema.safeParse({
+        ...VALID,
+        observations: [{ ruleId: 'learning.none', domain: 'life', text: 'x' }],
+      }).success,
+    ).toBe(false)
+  })
+
+  it('môn có mặt phải có ≥ 1 ngày học; số đếm âm bị từ chối', () => {
+    expect(
+      SubjectActivitySchema.safeParse({ ...VALID.learning.subjects[0], activeDays: 0 }).success,
+    ).toBe(false)
+    expect(
+      LifeSynthesisReportSchema.safeParse({ ...VALID, notes: { ...VALID.notes, openTasks: -1 } })
+        .success,
+    ).toBe(false)
+  })
+
+  it('tối đa 3 khuyến nghị', () => {
+    const rec = VALID.recommendations[0]
+    expect(
+      LifeSynthesisReportSchema.safeParse({ ...VALID, recommendations: [rec, rec, rec, rec] })
+        .success,
+    ).toBe(false)
+  })
+
+  it('đích khuyến nghị: môn phải là môn có thật', () => {
+    expect(SynthesisTargetSchema.safeParse({ kind: 'subject', subjectId: 'english' }).success).toBe(
+      true,
+    )
+    expect(SynthesisTargetSchema.safeParse({ kind: 'subject', subjectId: 'startup' }).success).toBe(
+      false,
+    )
+    expect(SynthesisTargetSchema.safeParse({ kind: 'notes', extra: 1 }).success).toBe(false)
   })
 })

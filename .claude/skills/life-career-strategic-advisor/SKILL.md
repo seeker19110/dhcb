@@ -9,8 +9,9 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
 > chủ dự án (ADR-0010): giao diện, service, route API và bảng CSDL — migration
 > `postgres/migrations/0085_drop_career_startup_life.sql`.
 >
-> Studio "Tổng kết" / Life Synthesis cũng **đã gỡ** (changelog 0475), vì nó hiện điểm bịa cho mọi
-> người dùng.
+> Studio "Tổng kết" / Life Synthesis **đã gỡ** (changelog 0475) vì hiện điểm bịa cho mọi người dùng;
+> từ changelog 0550 nó quay lại dưới dạng khối "30 ngày qua của bạn" trong studio "Kế hoạch", CHỈ
+> đếm bản ghi thật của Học tập + Ghi chú (xem mục 1).
 >
 > Bản trước của skill này mô tả cả bộ máy cố vấn 5 miền như đang chạy. Khi skill và mã lệch nhau,
 > **MÃ thắng**.
@@ -23,10 +24,15 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
   **quyết định sản phẩm lớn**, đảo ngược một ADR → dừng và hỏi chủ dự án (CLAUDE.md mục 12). Không
   tự dựng lại dưới tên khác.
 - Thấy mã còn sót **miền đã xoá** (`career`/`startup`/`life`) thì ghi nợ hoặc gỡ, không mở rộng
-  thêm. `classifyIntentEdge` và mẫu nút Action Canvas đã gỡ ở changelog 0485. Chỗ sót còn biết:
-  `packages/core-personal/lifeSynthesisService.ts` (không còn được gọi, giữ có cảnh báo).
-- **Không hiển thị điểm tổng hợp "cuộc sống"** (HAS / LSI / CRS, xác suất về đích) khi chưa có nguồn
-  dữ liệu hoạt động thật. `/api/life-synthesis` hiện trả 501 có chủ đích.
+  thêm. `classifyIntentEdge` và mẫu nút Action Canvas đã gỡ ở changelog 0485;
+  `lifeSynthesisService.ts` viết lại sạch ở changelog 0550.
+- **Không hiển thị điểm tổng hợp "cuộc sống"** (HAS / LSI / CRS, xác suất về đích, %, x/100).
+  `GET /api/life-synthesis` (`packages/core-personal/lifeSynthesisService.ts`, hợp đồng v2 strict
+  `packages/core-contracts/lifeSynthesis.ts`) chỉ trả PHÉP ĐẾM trong 30 ngày (ngày có học, chuỗi
+  ngày, bài hoàn thành lần đầu, số việc/ghi chú) + câu nhận xét/khuyến nghị sinh TẤT ĐỊNH theo luật
+  có `ruleId`, không gọi AI; POST trả 405 (không nhận số client tự khai). Thêm luật câu chữ thì
+  thêm ca biên hai phía + giữ phép quét `findForbiddenLanguage` trong
+  `lifeSynthesisService.test.ts`. Đặc tả: `docs/specs/2026-10-09-tong-hop-da-mien-du-lieu-that.md`.
 - Luật năng lực cá nhân vẫn áp dụng nếu có ngày quay lại mảng này:
   - giới tính KHÔNG là trục kỳ vọng năng lực;
   - kết quả chẩn đoán KHÔNG bao giờ là màn hình chính (CLAUDE.md mục 2, bộ tài liệu

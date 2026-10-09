@@ -1,50 +1,24 @@
+// apps/dhcb/src/lib/lifeSynthesisApi.ts — gọi `GET /api/life-synthesis` ("Tổng hợp 30 ngày").
+//
+// Phản hồi được PARSE qua đúng hợp đồng Zod của server: lệch hình dạng là LỖI (khối lỗi + Thử
+// lại), không bao giờ là một báo cáo nửa vời với số mặc định (CLAUDE.md mục 4.1 + 4.3).
+// Đặc tả: docs/specs/2026-10-09-tong-hop-da-mien-du-lieu-that.md.
 import { getAuthHeader } from '@core/authHeader'
-// apps/dhcb/src/lib/lifeSynthesisApi.ts — REST Client cho Cross-Domain Life Synthesis Engine V5.4.
-import type { LifeSynthesisReport, LifeDomainType } from '@dhcb/core-contracts/lifeSynthesis'
+import {
+  LifeSynthesisResponseSchema,
+  type LifeSynthesisReport,
+} from '@dhcb/core-contracts/lifeSynthesis'
 
-export async function fetchLifeSynthesisReport(
-  timeframe: 'daily' | 'weekly' | 'monthly' = 'weekly',
-): Promise<LifeSynthesisReport> {
-  const res = await fetch(`/api/life-synthesis?timeframe=${timeframe}`, {
-    headers: {
-      ...getAuthHeader(),
-    },
-  })
+export const LIFE_SYNTHESIS_ENDPOINT = '/api/life-synthesis'
 
+export async function fetchLifeSynthesisReport(): Promise<LifeSynthesisReport> {
+  const res = await fetch(LIFE_SYNTHESIS_ENDPOINT, { headers: { ...getAuthHeader() } })
   if (!res.ok) {
-    throw new Error(`Lỗi tải báo cáo tổng hợp đa miền: ${res.status}`)
+    throw new Error(`Lỗi tải bản tổng hợp: ${res.status}`)
   }
-
-  const data = await res.json()
-  return data.report
-}
-
-export async function generateCustomLifeSynthesisReport(params: {
-  timeframe?: 'daily' | 'weekly' | 'monthly'
-  domainActivityCounts?: Partial<Record<LifeDomainType, number>>
-  metacognitiveAwarenessIndex?: number
-  neuroEnergyScore?: number
-  activeGoals?: Array<{
-    id: string
-    title: string
-    domain: LifeDomainType
-    targetDaysRemaining: number
-    progressPercent: number
-  }>
-}): Promise<LifeSynthesisReport> {
-  const res = await fetch('/api/life-synthesis', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify(params),
-  })
-
-  if (!res.ok) {
-    throw new Error(`Lỗi sinh báo cáo tổng hợp đa miền: ${res.status}`)
+  const parsed = LifeSynthesisResponseSchema.safeParse(await res.json())
+  if (!parsed.success) {
+    throw new Error('Bản tổng hợp trả về sai định dạng — thử lại sau ít phút.')
   }
-
-  const data = await res.json()
-  return data.report
+  return parsed.data.report
 }

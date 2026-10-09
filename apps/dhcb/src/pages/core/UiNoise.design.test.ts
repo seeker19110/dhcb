@@ -468,7 +468,6 @@ const ALLOWED_UPPERCASE_TRACKING: Record<string, number> = {
   'components/ActionCanvas/InteractiveCanvasViewport.tsx': 1, // huy hiệu loại nút (mã ngắn)
   'components/Companion3D/CyberTutorAvatar3D.tsx': 1, // huy hiệu trạng thái avatar
   'components/DebateArena/DebateArenaCard.tsx': 1, // huy hiệu nhỏ
-  'components/LifeSynthesis/LifeSynthesisDashboard.tsx': 1, // huy hiệu nhỏ
   'components/MetacognitiveReflection/MetacognitiveJournalCard.tsx': 1, // huy hiệu nhỏ
   'components/PvPArena/PvPArenaCard.tsx': 1, // huy hiệu nhỏ
   'components/StemScratchpad/StemScratchpadCard.tsx': 1, // huy hiệu nhỏ
