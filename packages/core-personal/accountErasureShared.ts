@@ -22,7 +22,7 @@ export function accountSubjectHash(userId: string): string {
 
 /** Thông điệp hiển thị thẳng cho người dùng (tiếng Việt — server trả, giao diện có bản tiếng Anh riêng). */
 export const PENDING_PAYMENT_MESSAGE =
-  'Bạn còn đơn thanh toán đang chờ xử lý. Vui lòng đợi đơn hoàn tất hoặc hết hạn (tối đa 24 giờ sau hạn thanh toán) rồi thử xoá tài khoản lại.'
+  'Bạn còn đơn thanh toán đang chờ xử lý. Nếu bạn CHƯA chuyển khoản, hãy huỷ đơn ở mục "Đơn thanh toán đang chờ" rồi xoá lại; nếu đã chuyển, đợi đơn hoàn tất (tối đa 24 giờ sau hạn thanh toán).'
 
 /**
  * Người dùng còn đơn `pending` mà webhook SePay VẪN có thể tự cấp gói (chưa quá `expires_at` +

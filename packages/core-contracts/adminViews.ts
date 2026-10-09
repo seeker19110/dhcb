@@ -33,8 +33,10 @@ export interface AdminPaymentRow {
   provider: string
   paymentCode: string
   providerTxnId: string | null
-  status: 'pending' | 'paid' | 'failed' | 'expired'
+  // 'cancelled' = người dùng tự huỷ "tôi chưa chuyển khoản" (migration 0090, changelog 0546).
+  status: 'pending' | 'paid' | 'failed' | 'expired' | 'cancelled'
   createdAt: string
   expiresAt: string
   paidAt: string | null
+  cancelledAt: string | null
 }

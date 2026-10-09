@@ -18,9 +18,21 @@ import {
   verifySepayApiKey,
 } from '@dhcb/core-billing/sepay'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
+import {
+  recordRefundNeeded,
+  refundReasonFor,
+  type RefundReason,
+  type SepayRefundEvidence,
+} from '@dhcb/core-billing/paymentRefunds'
 import { CYCLE_DAYS, type PayableCycle, type PayablePlan } from '@dhcb/core-billing/prices'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { jsonResponse } from '@dhcb/core-http/http'
+
+/**
+ * Trường SePay chỉ dùng làm bằng chứng hoàn tiền (changelog 0546). `.catch(null)`: giá trị lạ/quá
+ * dài thì bỏ trường đó, KHÔNG làm hỏng cả payload — payload hỏng là mất khớp đơn (nhánh BAD_PAYLOAD).
+ */
+const evidenceField = (max: number) => z.string().max(max).nullable().optional().catch(null)
 
 const WebhookSchema = z.object({
   id: z.union([z.string(), z.number()]),
@@ -28,13 +40,23 @@ const WebhookSchema = z.object({
   transferAmount: z.number(),
   code: z.string().nullable().optional(),
   content: z.string().nullable().optional(),
+  gateway: evidenceField(100),
+  referenceCode: evidenceField(100),
+  // Số tài khoản NHẬN tiền (của ta), không phải của người gửi.
+  accountNumber: evidenceField(50),
+  transactionDate: evidenceField(40),
 })
 
 type PaidRow = { user_id: string; plan: PayablePlan; cycle: PayableCycle; years: number }
-/** Kết quả transaction cấp gói: đã cấp · thua race (request khác xử lý rồi) · đơn vừa bị ẩn danh. */
-type WebhookOutcome = { kind: 'paid'; row: PaidRow } | { kind: 'raced' } | { kind: 'orphaned' }
+/**
+ * Kết quả transaction cấp gói: đã cấp · thua race (request khác xử lý rồi) · đơn vừa bị huỷ/ẩn danh
+ * ngay trước UPDATE (tiền đã vào ⇒ đã ghi hàng chờ hoàn tiền trong cùng transaction).
+ */
+type WebhookOutcome =
+  | { kind: 'paid'; row: PaidRow }
+  | { kind: 'raced' }
+  | { kind: 'refund'; reason: RefundReason; created: boolean }
 const RACED: WebhookOutcome = { kind: 'raced' }
-const ORPHANED: WebhookOutcome = { kind: 'orphaned' }
 
 function ok(headers: Record<string, string>) {
   return jsonResponse({ success: true }, 200, headers)
@@ -54,11 +76,17 @@ export default async function handler(req: Request): Promise<Response> {
   if (!bodyResult.ok) return ok(headers) // body hỏng không phải ca ta xử lý được — không lặp lại
   const parsed = validateBody(WebhookSchema, bodyResult.raw)
   if (!parsed.ok) {
-    logSecurityEvent('SEPAY_WEBHOOK_BAD_PAYLOAD', 'sepay', { raw: bodyResult.raw })
+    logSecurityEvent('SEPAY_WEBHOOK_BAD_PAYLOAD', 'sepay', describeBadPayload(bodyResult.raw))
     return ok(headers)
   }
   const { id, transferType, transferAmount, code, content } = parsed.data
   const txnId = String(id)
+  const evidence: SepayRefundEvidence = {
+    gateway: parsed.data.gateway ?? null,
+    referenceCode: parsed.data.referenceCode ?? null,
+    receivingAccount: parsed.data.accountNumber ?? null,
+    transactionDate: parsed.data.transactionDate ?? null,
+  }
 
   // Tiền RA khỏi tài khoản không liên quan tới thanh toán gói.
   if (transferType && transferType !== 'in') return ok(headers)
@@ -90,14 +118,21 @@ export default async function handler(req: Request): Promise<Response> {
   }
   if (payment.status === 'paid') return ok(headers) // đã xử lý — idempotent, không log lỗi
 
-  // Đơn của tài khoản ĐÃ XOÁ (ẩn danh hoá — migration 0088, changelog 0533): không còn ai để cấp
-  // gói. Ghi log để admin đối chiếu tay/hoàn tiền theo quy trình ngoài hệ thống, không cấp gì.
-  if (payment.user_id === null) {
-    logSecurityEvent('SEPAY_PAYMENT_ORPHANED', 'sepay', {
+  // Đơn người dùng ĐÃ TỰ HUỶ ("tôi chưa chuyển khoản" — changelog 0546) hoặc của tài khoản ĐÃ XOÁ
+  // (ẩn danh hoá — migration 0088, changelog 0533): KHÔNG cấp gói (người dùng đã từ chối / không
+  // còn ai để cấp) nhưng tiền ĐÃ VÀO ⇒ ghi hàng chờ hoàn tiền thủ công cho admin. Kiểm TRƯỚC nhánh
+  // quá hạn/chuyển thiếu: với đơn đã huỷ, mọi khoản tiền về đều phải hoàn, bất kể thời điểm/số tiền.
+  // Lỗi CSDL khi ghi ⇒ NÉM (500) để SePay gửi lại — không được mất dấu vết tiền.
+  const earlyRefund = refundReasonFor(payment)
+  if (earlyRefund) {
+    const { created } = await recordRefundNeeded(pool, {
       paymentId: payment.id,
-      txnId,
-      transferAmount,
+      providerTxnId: txnId,
+      amountVnd: transferAmount,
+      reason: earlyRefund,
+      ...evidence,
     })
+    logRefundNeeded(payment.id, txnId, transferAmount, earlyRefund, created, 'select')
     return ok(headers)
   }
 
@@ -150,14 +185,24 @@ export default async function handler(req: Request): Promise<Response> {
       )
       const row = updated[0]
       if (!rowCount || !row) {
-        // Không thắng UPDATE: hoặc request khác vừa trả xong (bình thường), hoặc đơn vừa bị ẩn danh
-        // vì chủ tài khoản xoá tài khoản giữa lúc SELECT ở trên và UPDATE này (changelog 0533).
-        // Ca sau là TIỀN ĐÃ VÀO mà không cấp được cho ai — phải để lại dấu vết cho admin.
-        const { rows: current } = await client.query<{ user_id: string | null }>(
-          'select user_id from public.payments where id = $1',
+        // Không thắng UPDATE: hoặc request khác vừa trả xong (bình thường), hoặc đơn vừa bị người
+        // dùng huỷ (0546) / bị ẩn danh vì chủ xoá tài khoản (0533) giữa SELECT ở trên và UPDATE này.
+        // Hai ca sau là TIỀN ĐÃ VÀO mà không cấp gói ⇒ ghi hàng chờ hoàn tiền trong CÙNG transaction.
+        const { rows: current } = await client.query<{ user_id: string | null; status: string }>(
+          'select user_id, status from public.payments where id = $1',
           [payment.id],
         )
-        return current[0]?.user_id === null ? ORPHANED : RACED
+        const cur = current[0]
+        const reason = cur ? refundReasonFor(cur) : null
+        if (!reason) return RACED
+        const { created } = await recordRefundNeeded(client, {
+          paymentId: payment.id,
+          providerTxnId: txnId,
+          amountVnd: transferAmount,
+          reason,
+          ...evidence,
+        })
+        return { kind: 'refund', reason, created }
       }
 
       // years > 1 CHỈ có ý nghĩa với cycle='year' (mua nhiều năm liền — xem api/checkout.ts).
@@ -167,14 +212,8 @@ export default async function handler(req: Request): Promise<Response> {
       return { kind: 'paid', row }
     })
     if (won.kind === 'raced') return ok(headers) // request khác vừa xử lý xong
-    if (won.kind === 'orphaned') {
-      // Cùng tên sự kiện với nhánh user_id null ở trên để admin lọc một chỗ; chỉ id kỹ thuật, không PII.
-      logSecurityEvent('SEPAY_PAYMENT_ORPHANED', 'sepay', {
-        paymentId: payment.id,
-        txnId,
-        transferAmount,
-        stage: 'update',
-      })
+    if (won.kind === 'refund') {
+      logRefundNeeded(payment.id, txnId, transferAmount, won.reason, won.created, 'update')
       return ok(headers)
     }
 
@@ -191,6 +230,44 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   return ok(headers)
+}
+
+/**
+ * Tóm tắt payload hỏng để log MÀ KHÔNG lộ PII: `content`/`description` của SePay thường chứa họ
+ * tên người chuyển ⇒ chỉ ghi danh sách khoá, kiểu dữ liệu và `id` giao dịch (nếu là số/chuỗi).
+ */
+export function describeBadPayload(raw: unknown): {
+  payloadType: string
+  keys: string[]
+  txnId: string | null
+} {
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { payloadType: Array.isArray(raw) ? 'array' : typeof raw, keys: [], txnId: null }
+  }
+  const record = raw as Record<string, unknown>
+  const id = record.id
+  const txnId = typeof id === 'number' || typeof id === 'string' ? String(id).slice(0, 64) : null
+  return { payloadType: 'object', keys: Object.keys(record).slice(0, 50), txnId }
+}
+
+/**
+ * Log tiền về đơn không cấp gói được. Tên sự kiện cũ `SEPAY_PAYMENT_ORPHANED` giữ cho đơn của tài
+ * khoản đã xoá (bộ lọc log cũ vẫn chạy); đơn người dùng tự huỷ dùng `SEPAY_PAYMENT_CANCELLED_PAID`.
+ * Chỉ id kỹ thuật — không PII. `created=false` = SePay gửi lại giao dịch đã ghi.
+ */
+function logRefundNeeded(
+  paymentId: string,
+  txnId: string,
+  transferAmount: number,
+  reason: RefundReason,
+  created: boolean,
+  stage: 'select' | 'update',
+): void {
+  logSecurityEvent(
+    reason === 'account_deleted' ? 'SEPAY_PAYMENT_ORPHANED' : 'SEPAY_PAYMENT_CANCELLED_PAID',
+    'sepay',
+    { paymentId, txnId, transferAmount, refundQueued: true, duplicate: !created, stage },
+  )
 }
 
 export const config = { runtime: 'edge' }

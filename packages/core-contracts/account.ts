@@ -6,6 +6,7 @@
 // nhận, để client và server không bao giờ lệch nhau về "gõ thế nào thì được".
 
 import { z } from 'zod'
+import { LivePendingPaymentSchema } from './paymentCancel.js'
 
 // ── Xác minh lại danh tính (step-up) ────────────────────────────────────────────
 
@@ -114,6 +115,11 @@ export const AccountOptionsSchema = z.object({
   vipActive: z.boolean(),
   /** ISO 8601; null khi Free hoặc VIP vĩnh viễn (phân biệt bằng `vipActive`). */
   planExpiresAt: z.string().nullable(),
+  /**
+   * Đơn SePay chờ trả còn "sống" — mỗi đơn CHẶN xoá tài khoản tới khi trả xong, quá ân hạn, hoặc
+   * người dùng tự huỷ (changelog 0546). Mặc định rỗng để phản hồi cũ vẫn đọc được.
+   */
+  pendingPayments: z.array(LivePendingPaymentSchema).default([]),
 })
 export type AccountOptions = z.infer<typeof AccountOptionsSchema>
 

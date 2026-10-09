@@ -52,6 +52,10 @@ const svc = vi.hoisted(() => ({
 }))
 vi.mock('@dhcb/core-personal/accountErasureService', () => svc)
 
+// Đơn chờ chặn xoá hiện ở options (changelog 0546).
+const billing = vi.hoisted(() => ({ listLivePendingPayments: vi.fn() }))
+vi.mock('@dhcb/core-billing/paymentCancel', () => billing)
+
 vi.mock('./two-factor.js', () => ({
   twoFactorUserKey: (id: string) => `2fa-user:${id}`,
   TWO_FACTOR_USER_MAX_ATTEMPTS: 10,
@@ -102,6 +106,8 @@ beforeEach(() => {
     personErasureLogId: null,
   })
   svc.hasLivePendingPayment.mockResolvedValue(false)
+  billing.listLivePendingPayments.mockReset()
+  billing.listLivePendingPayments.mockResolvedValue([])
   svc.exportAccountData.mockResolvedValue({
     format: 'dhcb-account-export',
     userId: 'user-1',
@@ -172,8 +178,26 @@ describe('GET ?action=options', () => {
       twoFactorRequired: true,
       vipActive: true,
       planExpiresAt: exp.toISOString(),
+      pendingPayments: [],
     })
     expect(reauth.getReauthMethods).toHaveBeenCalledWith(expect.anything(), 'user-1')
+  })
+
+  it('còn đơn chờ sống ⇒ options liệt kê đơn (chỉ của CHÍNH phiên) để giao diện hiện nút huỷ', async () => {
+    const pending = {
+      id: '11111111-1111-4111-8111-111111111111',
+      paymentCode: 'DHCB7K2M9QRT',
+      amountVnd: 99_000,
+      plan: 'vip',
+      cycle: 'month',
+      createdAt: '2026-10-09T01:00:00.000Z',
+      expiresAt: '2026-10-09T01:30:00.000Z',
+      graceEndsAt: '2026-10-10T01:30:00.000Z',
+    }
+    billing.listLivePendingPayments.mockResolvedValue([pending])
+    const res = await handler(new Request(`${URL_BASE}?action=options&userId=user-2`))
+    expect(await json(res)).toMatchObject({ pendingPayments: [pending] })
+    expect(billing.listLivePendingPayments).toHaveBeenCalledWith(expect.anything(), 'user-1')
   })
 
   it('VIP đã hết hạn ⇒ vipActive=false', async () => {

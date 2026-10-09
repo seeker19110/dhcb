@@ -24,6 +24,7 @@ import { buildClearSessionCookie, readSessionCookie } from '@dhcb/core-auth/sess
 import { getTwoFactorStatus, hasStepUp } from '@dhcb/core-auth/twoFactor'
 import { getReauthMethods } from '@dhcb/core-auth/accountReauth'
 import { resolvePlan } from '@dhcb/core-billing/plan'
+import { listLivePendingPayments } from '@dhcb/core-billing/paymentCancel'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 import {
   AccountBodySchema,
@@ -126,14 +127,16 @@ export default async function handler(req: Request): Promise<Response> {
     if (new URL(req.url).searchParams.get('action') !== 'options') {
       return jsonResponse({ error: 'Thiếu action=options' }, 400, allHeaders)
     }
-    const [methods, twoFactor, vip] = await Promise.all([
+    const [methods, twoFactor, vip, pendingPayments] = await Promise.all([
       getReauthMethods(pool, userId),
       getTwoFactorStatus(pool, userId),
       readVipStatus(userId),
+      // Đơn chờ chặn xoá — giao diện hiện rõ từng đơn + nút tự huỷ (changelog 0546).
+      listLivePendingPayments(pool, userId),
     ])
     const twoFactorRequired =
       twoFactor.enabled && !(await hasStepUp(pool, userId, readSessionCookie(req)))
-    const body: AccountOptions = { methods, twoFactorRequired, ...vip }
+    const body: AccountOptions = { methods, twoFactorRequired, ...vip, pendingPayments }
     return jsonResponse(body, 200, allHeaders)
   }
 
