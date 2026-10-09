@@ -72,6 +72,10 @@ trung bình có trọng số, thẻ ôn tập, và trang chia sẻ tài liệu c
 
 ## Không làm
 
-- Tầng 8b (ảnh chụp 1440px/390px) và E2E a11y cho trang dự án khi chọn T3. Đợt này không đổi
-  giao diện, chỉ đổi dữ liệu và luồng chấm. Nên chạy trước khi merge.
-- `npm run build`, `npm run test:coverage` toàn bộ: CI chạy.
+- E2E a11y riêng cho trang dự án KHI ĐANG CHỌN T3: cổng `e2e/a11y*.spec.ts` quét
+  `/lap-trinh/du-an` ở dự án mặc định (T1); khung trang dùng chung một component cho cả ba dự
+  án, nên không viết thêm ca chọn T3.
+
+Tầng 8b ĐÃ LÀM ở phiên chính (bản đã gộp với T2): chụp `/lap-trinh/du-an` chọn T3 ở 1440px +
+390px, theme Blue sky + Xanh đêm — ba dự án đều mở, 5 chặng T3 hiện đúng tên, bước 1 mở, không
+tràn/đè. `npm run build` + `npm run test:coverage` chạy ở phiên chính trước khi mở PR.
