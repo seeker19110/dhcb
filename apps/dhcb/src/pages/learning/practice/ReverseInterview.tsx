@@ -144,6 +144,7 @@ export function ReverseInterview({
         512,
         'speaking',
         'grade',
+        'interview_feedback',
       )
       const ai = parseJson<InterviewFeedback>(raw)
       if (!ai) throw new Error('parse')

@@ -27,7 +27,7 @@ còn là dự phòng.
 
 - Không đổi prompt (`apps/dhcb/src/prompts/*`) — golden snapshot giữ nguyên.
 - Không thêm structured outputs (JSON schema) cho chấm điểm — đợt sau (cần schema riêng cho
-  từng loại bài chấm).
+  từng loại bài chấm). → Đã làm ở `docs/specs/2026-10-09-structured-outputs-cham-diem.md`.
 - Không đổi đếm lượt/hạn mức Free–VIP: `task` chỉ chọn model, KHÔNG đổi cột đếm lượt (`mode`).
 - Không đụng Gemini Live, Vision (giải đề qua ảnh), STT/TTS.
 

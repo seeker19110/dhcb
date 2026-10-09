@@ -17,6 +17,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { AnthropicRoute } from './aiConfig.js'
+import type { JsonSchema } from './gradingSchemas.js'
 import { parseAnthropicUsage, type AiTokenUsage } from './aiTokenUsage.js'
 
 type BetaMessageParam = Anthropic.Beta.Messages.BetaMessageParam
@@ -103,18 +104,27 @@ function getClient(apiKey: string, fetchImpl?: typeof fetch): Anthropic {
   return client
 }
 
-/** Dựng body request — tách riêng để test kiểm đúng tham số gửi đi mà không cần mạng. */
+/**
+ * Dựng body request — tách riêng để test kiểm đúng tham số gửi đi mà không cần mạng.
+ * `outputSchema` (tuỳ chọn): ép câu trả lời theo JSON Schema (structured outputs) — dùng cho
+ * lượt chấm điểm, xem gradingSchemas.ts.
+ */
 export function buildAnthropicRequest(
   route: AnthropicRoute,
   system: string,
   messages: unknown[],
+  outputSchema?: JsonSchema,
 ): BetaMessageCreateParams {
   const params: BetaMessageCreateParams = {
     model: route.model,
     max_tokens: route.maxTokens,
     messages: toAnthropicMessages(messages),
     // Thinking để mặc định (adaptive) — model mới không cho tắt hẳn; điều chỉnh bằng effort.
-    output_config: { effort: route.effort },
+    // `format`: API giải mã có ràng buộc → text trả về LUÔN là JSON đúng schema (trừ khi
+    // refusal/max_tokens — hai ca đó đã bị coi là lỗi ở callAnthropicText).
+    output_config: outputSchema
+      ? { effort: route.effort, format: { type: 'json_schema', schema: outputSchema } }
+      : { effort: route.effort },
     // Cache tự động phần đầu lặp lại (system prompt + lịch sử cũ) giữa các lượt của cùng phiên:
     // đọc từ cache chỉ tốn 10% giá token vào.
     cache_control: { type: 'ephemeral' },
@@ -146,17 +156,19 @@ export async function callAnthropicText(params: {
   route: AnthropicRoute
   system: string
   messages: unknown[]
+  /** Ép câu trả lời theo JSON Schema (structured outputs) — chỉ lượt chấm điểm dùng. */
+  outputSchema?: JsonSchema
   /** Chỉ dùng trong test: fetch giả thay cho mạng thật. */
   fetchImpl?: typeof fetch
 }): Promise<AnthropicTextResult> {
-  const { apiKey, route, system, messages, fetchImpl } = params
+  const { apiKey, route, system, messages, outputSchema, fetchImpl } = params
   const startedAt = Date.now()
   const latency = () => Date.now() - startedAt
 
   let response: Anthropic.Beta.Messages.BetaMessage
   try {
     response = await getClient(apiKey, fetchImpl).beta.messages.create(
-      buildAnthropicRequest(route, system, messages),
+      buildAnthropicRequest(route, system, messages, outputSchema),
       // `signal` là HẠN CHÓT TỔNG cho cả lần thử lại; `timeout` chỉ áp từng lần thử. Không có
       // signal, timeout + 1 lần thử lại có thể kéo gấp đôi và vượt mốc 60s của Nginx.
       { timeout: route.timeoutMs, signal: AbortSignal.timeout(route.timeoutMs) },

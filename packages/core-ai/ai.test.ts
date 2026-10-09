@@ -30,6 +30,7 @@ import { refundUsage } from '@dhcb/core-billing/usage'
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 import { callGemini } from './geminiApi.js'
 import { callAnthropicText, type AnthropicTextResult } from './anthropicClient.js'
+import { getGradingSchema } from './gradingSchemas.js'
 import { SYSTEM_GUARDRAIL } from './aiConfig.js'
 
 const mockedFetch = vi.mocked(fetchWithTimeout)
@@ -453,6 +454,31 @@ describe('handler /api/agent — nhánh Anthropic (không có Gemini/Groq)', () 
     expect(res.status).toBe(200)
     expect(vi.mocked(checkAndConsumeUsage)).toHaveBeenCalledWith('user-test', 'chat')
     expect(lastAnthropicModel()).toBe('claude-haiku-5-5')
+  })
+
+  it('output_schema hợp lệ → gửi Claude ĐÚNG schema của server; thiếu task vẫn suy ra chấm bài', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest({ messages: [], mode: 'chat', output_schema: 'chat_eval' }))
+    const call = mockedAnthropic.mock.calls[0]?.[0]
+    expect(call?.outputSchema).toEqual(getGradingSchema('chat_eval'))
+    expect(lastAnthropicModel()).toBe('claude-sonnet-5-5')
+  })
+
+  it.each([{ type: 'object', properties: {} }, 'evil_schema', '__proto__', 42])(
+    'output_schema lạ/schema thô (%p) → BỎ QUA, không ép format (client không gửi được schema tuỳ ý)',
+    async (output_schema) => {
+      mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+      const res = await handler(makeRequest({ messages: [], mode: 'chat', output_schema }))
+      expect(res.status).toBe(200)
+      expect(mockedAnthropic.mock.calls[0]?.[0].outputSchema).toBeUndefined()
+      expect(lastAnthropicModel()).toBe('claude-haiku-5-5')
+    },
+  )
+
+  it('không gửi output_schema → không ép format (lượt trò chuyện giữ text tự do)', async () => {
+    mockedAnthropic.mockResolvedValueOnce(ANTHROPIC_OK)
+    await handler(makeRequest())
+    expect(mockedAnthropic.mock.calls[0]?.[0].outputSchema).toBeUndefined()
   })
 
   it('client gửi `model` → server BỎ QUA, vẫn dùng model theo nhiệm vụ', async () => {

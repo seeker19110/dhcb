@@ -539,7 +539,7 @@ export default function Challenge() {
       }
 
       const sys = challengeFeedbackSystemPrompt(transcript, topic, dir)
-      const raw = await callClaude([], sys, 1024, 'chat', 'grade')
+      const raw = await callClaude([], sys, 1024, 'chat', 'grade', 'challenge_feedback')
       incrementUsage(uid, 'chatCount')
       throttle()
       const feedback = parseJson<ChallengeFeedback>(raw)

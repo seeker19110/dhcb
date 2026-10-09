@@ -3,6 +3,7 @@
 // Server chọn nhà cung cấp (Anthropic chính → Groq → Gemini dự phòng) và chọn MODEL theo
 // nhiệm vụ (`task`) — frontend không gửi tên model.
 
+import type { GradingSchemaName } from '@dhcb/core-ai/gradingSchemas'
 import { getAuthHeader } from '@core/authHeader'
 import { captureException } from './errorTracking'
 
@@ -18,6 +19,11 @@ export type CallMode = 'chat' | 'writing' | 'speaking'
 // (cần đúng → model mạnh hơn). Khớp CLIENT_AI_TASKS ở packages/core-ai/aiConfig.ts. Bỏ trống thì
 // server tự suy: mode 'writing' → 'grade', còn lại → 'converse'.
 export type CallTask = 'converse' | 'grade'
+
+// outputSchema: TÊN khuôn JSON của lượt chấm điểm (vd 'writing_eval'). Server tra schema thật ở
+// packages/core-ai/gradingSchemas.ts và bắt Claude trả JSON đúng khuôn (structured outputs).
+// Frontend vẫn tự kiểm JSON — nhà cung cấp dự phòng (Groq/Gemini) không bị ràng buộc schema.
+export type { GradingSchemaName }
 
 // Thông điệp chung khi phản hồi AI sai định dạng hoặc mạng lỗi — song ngữ (không cần biết
 // `dir` ở tầng này) để người học A1 vẫn hiểu cần làm gì tiếp, thay vì lỗi kỹ thuật tiếng Anh
@@ -40,6 +46,7 @@ export async function callClaude(
   maxTokens = 1024,
   mode: CallMode = 'chat',
   task?: CallTask,
+  outputSchema?: GradingSchemaName,
 ): Promise<string> {
   // /api/agent: lúc "npm run dev" được vite.config.ts proxy thẳng tới Anthropic (key đọc từ .env phía server);
   // lúc deploy lên Vercel, route này do api/claude.ts (serverless function) xử lý.
@@ -49,7 +56,14 @@ export async function callClaude(
     resp = await fetch('/api/agent', {
       method: 'POST',
       headers: { 'content-type': 'application/json', ...authHeader },
-      body: JSON.stringify({ max_tokens: maxTokens, system, messages, mode, task }),
+      body: JSON.stringify({
+        max_tokens: maxTokens,
+        system,
+        messages,
+        mode,
+        task,
+        output_schema: outputSchema,
+      }),
     })
   } catch (e) {
     return reportAndThrow(FRIENDLY_NETWORK_ERROR, e)
