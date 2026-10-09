@@ -100,7 +100,7 @@ export default function SocraticDiagnosticsCard() {
   return (
     <div className="bg-surface-card border border-violet-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-line-subtle">
+      <div className="flex items-start justify-between gap-3 sm:items-center pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
           <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-violet-600 to-purple-500 flex items-center justify-center shadow-lg">
             <HelpCircle className="w-5 h-5 text-[#fff]" />
@@ -127,8 +127,9 @@ export default function SocraticDiagnosticsCard() {
               setSessionGone(false)
               setErrorMsg(null)
             }}
-            className="p-1.5 text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center text-content-secondary hover:text-content hover:bg-surface-raised rounded-lg transition-colors"
             title="Đổi chủ đề"
+            aria-label="Đổi chủ đề"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -183,7 +184,7 @@ export default function SocraticDiagnosticsCard() {
                   onClick={() => setSelectedId(m.id)}
                   className={`w-full text-left p-4 rounded-xl cursor-pointer border transition duration-200 ${
                     isSelected
-                      ? 'bg-violet-950/40 border-violet-500 shadow-lg shadow-violet-500/10'
+                      ? 'bg-violet-950/40 theme-light:bg-violet-100 border-violet-500 shadow-lg shadow-violet-500/10'
                       : 'bg-surface-raised border-line-subtle hover:border-line-strong'
                   }`}
                 >
@@ -191,11 +192,11 @@ export default function SocraticDiagnosticsCard() {
                     {m.domain.replace(/_/g, ' ')}
                   </div>
                   <h4
-                    className={`text-sm font-semibold mb-1.5 ${isSelected ? 'text-[#fff]' : 'text-white'}`}
+                    className={`text-sm font-semibold mb-1.5 ${isSelected ? 'text-[#fff] theme-light:text-violet-950' : 'text-white'}`}
                   >
                     {m.title}
                   </h4>
-                  <div className="text-xs text-red-300 theme-light:text-red-900/90 font-mono bg-red-950/30 p-1.5 rounded border border-red-500/20 mb-2">
+                  <div className="text-xs text-red-300 theme-light:text-red-900 font-mono bg-red-950/30 theme-light:bg-red-100 p-1.5 rounded border border-red-500/20 mb-2">
                     ❌ &ldquo;{m.surfaceErrorPattern}&rdquo;
                   </div>
                   <p className="text-xs text-content-secondary line-clamp-2">
@@ -236,12 +237,12 @@ export default function SocraticDiagnosticsCard() {
             {activeSession.turns.map((turn, idx) => (
               <div key={idx} className="space-y-2">
                 {/* Socratic Question */}
-                <div className="p-3 rounded-xl bg-violet-950/40 border border-violet-500/30 text-xs text-violet-100 theme-light:text-violet-800 flex items-start gap-2.5">
+                <div className="p-3 rounded-xl bg-violet-950/40 theme-light:bg-violet-100 border border-violet-500/30 text-xs text-violet-100 theme-light:text-violet-950 flex items-start gap-2.5">
                   <div className="w-5 h-5 rounded-full bg-violet-500/20 text-violet-200 theme-light:text-violet-900 text-[0.6875rem] font-bold flex items-center justify-center shrink-0 mt-0.5">
                     Q{idx + 1}
                   </div>
                   <div>
-                    <div className="font-semibold text-violet-300 theme-light:text-violet-800 mb-0.5">
+                    <div className="font-semibold text-violet-300 theme-light:text-violet-900 mb-0.5">
                       Câu hỏi dẫn dắt:
                     </div>
                     <div>{turn.question}</div>
@@ -251,7 +252,7 @@ export default function SocraticDiagnosticsCard() {
                 {/* Learner Answer if submitted */}
                 {turn.learnerAnswer && (
                   <div className="p-3 rounded-xl bg-surface-raised border border-line-strong text-xs text-content ml-6 flex items-start gap-2">
-                    <span className="font-bold text-emerald-400 theme-light:text-emerald-900">
+                    <span className="font-bold text-emerald-300 theme-light:text-emerald-900">
                       Bạn:{' '}
                     </span>
                     <div>{turn.learnerAnswer}</div>
@@ -263,8 +264,8 @@ export default function SocraticDiagnosticsCard() {
                   <div
                     className={`p-2.5 rounded-lg text-xs ml-6 flex items-start gap-2 ${
                       turn.conceptUnderstood
-                        ? 'bg-emerald-950/30 border border-emerald-500/30 text-emerald-200 theme-light:text-emerald-900'
-                        : 'bg-amber-950/30 border border-amber-500/30 text-amber-200 theme-light:text-amber-900'
+                        ? 'bg-emerald-950/30 theme-light:bg-emerald-100 border border-emerald-500/30 text-emerald-200 theme-light:text-emerald-900'
+                        : 'bg-amber-950/30 theme-light:bg-amber-100 border border-amber-500/30 text-amber-200 theme-light:text-amber-900'
                     }`}
                   >
                     {turn.conceptUnderstood ? (
@@ -281,7 +282,7 @@ export default function SocraticDiagnosticsCard() {
 
           {/* Breakthrough achieved banner */}
           {activeSession.status === 'breakthrough_achieved' && (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/60 to-teal-950/60 border border-emerald-500/40 text-center space-y-2 animate-fadeIn">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/60 to-teal-950/60 theme-light:from-emerald-100 theme-light:to-teal-100 border border-emerald-500/40 text-center space-y-2 animate-fadeIn">
               <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 theme-light:text-emerald-900 mx-auto flex items-center justify-center">
                 <Award className="w-6 h-6" />
               </div>
@@ -304,7 +305,7 @@ export default function SocraticDiagnosticsCard() {
                 onChange={(e) => setLearnerAnswer(e.target.value)}
                 placeholder="Nhập câu trả lời / suy ngẫm của bạn..."
                 disabled={isSubmitting}
-                className="min-w-0 basis-full sm:basis-0 flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                className="min-w-0 basis-full sm:basis-0 flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder:text-content-muted focus:outline-none focus:border-violet-500 transition-colors"
               />
               <button
                 type="submit"
