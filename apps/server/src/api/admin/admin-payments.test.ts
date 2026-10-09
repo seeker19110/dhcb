@@ -95,10 +95,19 @@ describe('/api/admin-payments', () => {
     queryMock.mockResolvedValueOnce({ rows: [{ id: 'u99' }] })
     // 2) Đọc đơn thanh toán
     queryMock.mockResolvedValueOnce({
-      rows: [{ id: 'pay-1', status: 'pending', plan: 'vip', cycle: 'month' }],
+      rows: [
+        {
+          id: 'pay-1',
+          status: 'pending',
+          plan: 'vip',
+          cycle: 'month',
+          user_id: 'u99',
+          anonymized_at: null,
+        },
+      ],
     })
     // 3) Update trạng thái đơn
-    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({ rows: [], rowCount: 1 })
 
     const req = new Request('http://localhost/api/admin-payments', {
       method: 'POST',
@@ -160,6 +169,56 @@ describe('/api/admin-payments', () => {
     expect(res.status).toBe(400)
     const json = await res.json()
     expect(json.error).toContain('đã được ghi nhận')
+  })
+
+  // Rà bảo mật changelog 0533: đơn của tài khoản đã xoá (ẩn danh hoá) không được khớp tay —
+  // nếu không, admin gõ email bất kỳ là cấp VIP cho người KHÁC chủ đơn.
+  const manualMatch = () =>
+    new Request('http://localhost/api/admin-payments', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'manual-match',
+        paymentId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        email: 'buyer@example.com',
+      }),
+    })
+
+  it.each([
+    { label: 'user_id null + anonymized_at', user_id: null, anonymized_at: new Date() },
+    { label: 'chỉ anonymized_at (dữ liệu lệch)', user_id: 'u-old', anonymized_at: new Date() },
+    { label: 'chỉ user_id null', user_id: null, anonymized_at: null },
+  ])(
+    'POST manual-match: đơn đã ẩn danh ($label) → 400, KHÔNG update, KHÔNG cấp gói',
+    async ({ user_id, anonymized_at }) => {
+      vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
+      queryMock.mockResolvedValueOnce({ rows: [{ id: 'u99' }] })
+      queryMock.mockResolvedValueOnce({
+        rows: [{ status: 'expired', cycle: 'month', years: 1, user_id, anonymized_at }],
+      })
+      const res = await handler(manualMatch())
+      expect(res.status).toBe(400)
+      expect((await res.json()).error).toContain('đã bị xoá')
+      expect(grantPlanDays).not.toHaveBeenCalled()
+      const sqls = queryMock.mock.calls.map(([sql]) => String(sql))
+      expect(sqls.some((sql) => sql.includes('update public.payments'))).toBe(false)
+      expect(sqls[1]).toContain('anonymized_at')
+    },
+  )
+
+  it('POST manual-match: UPDATE không khớp dòng (lớp phòng thủ 2) → 409, KHÔNG cấp gói', async () => {
+    vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
+    queryMock.mockResolvedValueOnce({ rows: [{ id: 'u99' }] })
+    queryMock.mockResolvedValueOnce({
+      rows: [{ status: 'pending', cycle: 'month', years: 1, user_id: 'u1', anonymized_at: null }],
+    })
+    queryMock.mockResolvedValueOnce({ rows: [], rowCount: 0 })
+    const res = await handler(manualMatch())
+    expect(res.status).toBe(409)
+    expect(grantPlanDays).not.toHaveBeenCalled()
+    const updateSql = String(queryMock.mock.calls[2]?.[0])
+    expect(updateSql).toContain('user_id is not null')
+    expect(updateSql).toContain('anonymized_at is null')
   })
 
   it('OPTIONS → 204 (preflight CORS), không cần đăng nhập', async () => {
@@ -235,11 +294,22 @@ describe('manual-match — nguyên tử, đồng thời và retry', () => {
           })
           await previous
           stagedPaid = paid
-          return { rows: [{ status: stagedPaid ? 'paid' : 'pending', cycle, years }] }
+          return {
+            rows: [
+              {
+                status: stagedPaid ? 'paid' : 'pending',
+                cycle,
+                years,
+                user_id: 'u99',
+                anonymized_at: null,
+              },
+            ],
+          }
         }
         if (sql.startsWith('update public.payments')) {
           expect(unlock).toBeDefined()
           stagedPaid = true
+          return { rows: [], rowCount: 1 }
         }
         if (sql === 'commit') {
           paid = stagedPaid

@@ -11,6 +11,9 @@
       "path": "../core-billing"
     },
     {
+      "path": "../core-contracts"
+    },
+    {
       "path": "../core-db"
     },
     {

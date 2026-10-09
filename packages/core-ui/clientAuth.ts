@@ -267,6 +267,51 @@ export async function loginWithGoogle(): Promise<AppUser | null> {
   })
 }
 
+/**
+ * Lấy một access token Google MỚI qua popup GIS — KHÔNG đăng nhập, chỉ để XÁC MINH LẠI danh tính
+ * trước thao tác nhạy cảm (xoá tài khoản / xuất dữ liệu — changelog 0533). Server kiểm token phải
+ * thuộc đúng tài khoản Google đã liên kết và vừa được cấp (≤ 10 phút).
+ *
+ * `prompt: 'select_account'` buộc người dùng tương tác với popup Google, không im lặng cấp lại.
+ * Trả `null` khi người dùng đóng popup / từ chối; ném lỗi khi thiếu cấu hình hoặc popup bị chặn.
+ * Gọi `preloadGoogleIdentity()` sớm để lúc bấm nút không phải chờ tải script (mất User Activation).
+ */
+export async function requestGoogleAccessToken(): Promise<string | null> {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+  if (!clientId) throw new Error('Thiếu VITE_GOOGLE_CLIENT_ID')
+  if (!window.google?.accounts?.oauth2) await loadGoogleScript()
+
+  return new Promise((resolve, reject) => {
+    try {
+      const client = window.google!.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        callback: (resp) => resolve(resp.access_token ?? null),
+        error_callback: (err) => {
+          if (err?.type === 'popup_blocked_by_browser') {
+            reject(
+              new GoogleAuthError(
+                'popup_blocked',
+                'Trình duyệt đang chặn cửa sổ Google. Hãy cho phép popup rồi thử lại.',
+              ),
+            )
+            return
+          }
+          resolve(null)
+        },
+      })
+      client.requestAccessToken({ prompt: 'select_account' })
+    } catch (err) {
+      reject(err)
+    }
+  })
+}
+
+/** Tải sẵn script Google Identity Services (không mở popup). Lỗi tải được báo ở lần dùng thật. */
+export function preloadGoogleIdentity(): void {
+  void loadGoogleScript().catch(() => undefined)
+}
+
 // `state` của OAuth là token CHỐNG CSRF: kẻ tấn công đoán được nó thì ghép được phản hồi đăng
 // nhập của mình vào phiên của nạn nhân. Vì vậy phải lấy từ `crypto.getRandomValues` (nguồn mật
 // mã của trình duyệt), KHÔNG phải Math.random — V8 dùng xorshift128+, suy được trạng thái từ

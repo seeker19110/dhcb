@@ -12,7 +12,11 @@ import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { withTransaction } from '@dhcb/core-db/transaction'
 import { logSecurityEvent } from '@dhcb/core-auth/security'
-import { extractPaymentCode, verifySepayApiKey } from '@dhcb/core-billing/sepay'
+import {
+  extractPaymentCode,
+  SEPAY_LATE_GRACE_MS,
+  verifySepayApiKey,
+} from '@dhcb/core-billing/sepay'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 import { CYCLE_DAYS, type PayableCycle, type PayablePlan } from '@dhcb/core-billing/prices'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
@@ -25,6 +29,12 @@ const WebhookSchema = z.object({
   code: z.string().nullable().optional(),
   content: z.string().nullable().optional(),
 })
+
+type PaidRow = { user_id: string; plan: PayablePlan; cycle: PayableCycle; years: number }
+/** Kết quả transaction cấp gói: đã cấp · thua race (request khác xử lý rồi) · đơn vừa bị ẩn danh. */
+type WebhookOutcome = { kind: 'paid'; row: PaidRow } | { kind: 'raced' } | { kind: 'orphaned' }
+const RACED: WebhookOutcome = { kind: 'raced' }
+const ORPHANED: WebhookOutcome = { kind: 'orphaned' }
 
 function ok(headers: Record<string, string>) {
   return jsonResponse({ success: true }, 200, headers)
@@ -62,7 +72,7 @@ export default async function handler(req: Request): Promise<Response> {
   const pool = getPgPool()
   const { rows } = await pool.query<{
     id: string
-    user_id: string
+    user_id: string | null
     plan: PayablePlan
     cycle: PayableCycle
     amount_vnd: number
@@ -80,12 +90,25 @@ export default async function handler(req: Request): Promise<Response> {
   }
   if (payment.status === 'paid') return ok(headers) // đã xử lý — idempotent, không log lỗi
 
+  // Đơn của tài khoản ĐÃ XOÁ (ẩn danh hoá — migration 0088, changelog 0533): không còn ai để cấp
+  // gói. Ghi log để admin đối chiếu tay/hoàn tiền theo quy trình ngoài hệ thống, không cấp gì.
+  if (payment.user_id === null) {
+    logSecurityEvent('SEPAY_PAYMENT_ORPHANED', 'sepay', {
+      paymentId: payment.id,
+      txnId,
+      transferAmount,
+    })
+    return ok(headers)
+  }
+
   // Đơn quá hạn: UI hết hạn sau 30 phút nhưng trước đây server không kiểm — người dùng có thể
   // chuyển khoản NHIỀU THÁNG sau và vẫn được cấp gói với giá đã chốt lúc khuyến mãi (audit
   // 2026-08-24). Cho ân hạn 24h (chuyển khoản liên ngân hàng có thể chậm); quá nữa thì giữ
   // 'pending' để admin đối chiếu tay, KHÔNG tự cấp gói.
-  const LATE_GRACE_MS = 24 * 60 * 60 * 1000
-  if (payment.expires_at && Date.now() > new Date(payment.expires_at).getTime() + LATE_GRACE_MS) {
+  if (
+    payment.expires_at &&
+    Date.now() > new Date(payment.expires_at).getTime() + SEPAY_LATE_GRACE_MS
+  ) {
     logSecurityEvent('SEPAY_PAYMENT_LATE', 'sepay', {
       paymentId: payment.id,
       txnId,
@@ -115,37 +138,51 @@ export default async function handler(req: Request): Promise<Response> {
     // (SePay lặp lại tới 7 lần) sẽ bị chặn ngay ở nhánh `status === 'paid'` phía trên nên KHÔNG
     // tự phục hồi được (phát hiện khi trace luồng payment cho V2-00, xem
     // docs/architecture-v2/V2-00-CRITICAL-FLOWS.md risk register #1).
-    const won = await withTransaction(pool, async (client) => {
+    const won = await withTransaction(pool, async (client): Promise<WebhookOutcome> => {
       // WHERE status='pending' là chốt CHỐNG TRÙNG chính: 2 webhook song song cho cùng đơn chỉ
       // đúng 1 cái thấy rowCount=1 (Postgres tự khoá dòng khi UPDATE). UNIQUE trên
       // provider_txn_id là lớp chống trùng THỨ HAI cho ca hiếm hơn: cùng txnId khớp nhầm 2 đơn.
-      const { rowCount, rows: updated } = await client.query<{
-        user_id: string
-        plan: PayablePlan
-        cycle: PayableCycle
-        years: number
-      }>(
+      const { rowCount, rows: updated } = await client.query<PaidRow>(
         `update public.payments set status = 'paid', paid_at = now(), provider_txn_id = $2
-         where id = $1 and status = 'pending'
+         where id = $1 and status = 'pending' and user_id is not null
          returning user_id, plan, cycle, years`,
         [payment.id, txnId],
       )
       const row = updated[0]
-      if (!rowCount || !row) return null // race: request khác vừa xử lý xong
+      if (!rowCount || !row) {
+        // Không thắng UPDATE: hoặc request khác vừa trả xong (bình thường), hoặc đơn vừa bị ẩn danh
+        // vì chủ tài khoản xoá tài khoản giữa lúc SELECT ở trên và UPDATE này (changelog 0533).
+        // Ca sau là TIỀN ĐÃ VÀO mà không cấp được cho ai — phải để lại dấu vết cho admin.
+        const { rows: current } = await client.query<{ user_id: string | null }>(
+          'select user_id from public.payments where id = $1',
+          [payment.id],
+        )
+        return current[0]?.user_id === null ? ORPHANED : RACED
+      }
 
       // years > 1 CHỈ có ý nghĩa với cycle='year' (mua nhiều năm liền — xem api/checkout.ts).
       const grantDays = CYCLE_DAYS[row.cycle] * (row.cycle === 'year' ? Math.max(1, row.years) : 1)
       await grantPlanDays(row.user_id, row.plan, grantDays, new Date(), client)
       // Chuyển khoản chứng minh thanh toán, không chứng minh sở hữu hộp thư.
-      return row
+      return { kind: 'paid', row }
     })
-    if (!won) return ok(headers) // race: request khác vừa xử lý xong
+    if (won.kind === 'raced') return ok(headers) // request khác vừa xử lý xong
+    if (won.kind === 'orphaned') {
+      // Cùng tên sự kiện với nhánh user_id null ở trên để admin lọc một chỗ; chỉ id kỹ thuật, không PII.
+      logSecurityEvent('SEPAY_PAYMENT_ORPHANED', 'sepay', {
+        paymentId: payment.id,
+        txnId,
+        transferAmount,
+        stage: 'update',
+      })
+      return ok(headers)
+    }
 
     logSecurityEvent('SEPAY_PAYMENT_PAID', 'sepay', {
       paymentId: payment.id,
-      userId: won.user_id,
-      plan: won.plan,
-      cycle: won.cycle,
+      userId: won.row.user_id,
+      plan: won.row.plan,
+      cycle: won.row.cycle,
       txnId,
     })
   } catch (err) {

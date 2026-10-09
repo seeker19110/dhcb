@@ -22,6 +22,7 @@ import pronounceAssessHandler from './api/subjects/english/pronounce-assess.js'
 import authHandler from '@dhcb/core-auth/auth'
 import profileHandler from './api/core/profile.js'
 import twoFactorHandler from './api/core/two-factor.js'
+import accountHandler from './api/core/account.js'
 import intakeHandler from './api/personal/intake.js'
 import learnerIntentHandler from './api/personal/learner-intent.js'
 import adminIntakeStatsHandler from './api/admin/admin-intake-stats.js'
@@ -247,6 +248,7 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/auth', wrapEdge(authHandler))
   app.all('/api/profile', wrapEdge(profileHandler))
   app.all('/api/two-factor', wrapEdge(twoFactorHandler))
+  app.all('/api/account', wrapEdge(accountHandler))
   app.all('/api/intake', wrapEdge(intakeHandler))
   app.all('/api/learner-intent', wrapEdge(learnerIntentHandler))
   app.all('/api/admin-intake-stats', wrapEdge(adminIntakeStatsHandler))
