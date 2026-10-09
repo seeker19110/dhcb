@@ -33,7 +33,16 @@ import {
   type AccountErrorCode,
   type AccountOptions,
 } from '@dhcb/core-contracts/account'
-import { deleteAccount, exportAccountData } from '@dhcb/core-personal/accountErasureService'
+import {
+  deleteAccount,
+  exportAccountData,
+  hasLivePendingPayment,
+} from '@dhcb/core-personal/accountErasureService'
+import {
+  accountSubjectHash,
+  PENDING_PAYMENT_MESSAGE,
+  PendingPaymentError,
+} from '@dhcb/core-personal/accountErasureShared'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import {
@@ -76,6 +85,23 @@ async function readVipStatus(
   }
 }
 
+/**
+ * Mô tả lỗi AN TOÀN để ghi log: chỉ mã lỗi Postgres (`23503`…) hoặc tên lớp lỗi. KHÔNG ghi
+ * `err.message` — thông điệp lỗi Postgres có thể chứa giá trị khoá/email (`Key (email)=(…)`).
+ */
+export function safeErrorTag(err: unknown): string {
+  if (err && typeof err === 'object') {
+    const code = (err as { code?: unknown }).code
+    if (typeof code === 'string' && code) return code
+    if (err instanceof Error) return err.name
+  }
+  return typeof err
+}
+
+function pendingPaymentResponse(headers: Record<string, string>): Response {
+  return jsonResponse(errorBody(PENDING_PAYMENT_MESSAGE, 'PAYMENT_PENDING'), 409, headers)
+}
+
 function exportFilename(now: Date): string {
   return `dhcb-du-lieu-cua-toi-${now.toISOString().slice(0, 10)}.json`
 }
@@ -96,6 +122,9 @@ export default async function handler(req: Request): Promise<Response> {
   const auth = await validateAuth(req)
   if (!auth) return jsonResponse({ error: 'Unauthorized' }, 401, allHeaders)
   const userId = auth.userId
+  // Log bảo mật KHÔNG ghi userId trần (rà soát 0533): dùng mã băm một chiều — cùng giá trị với
+  // `subject_hash` của nhật ký xoá nên vẫn đối chiếu được khi điều tra.
+  const subject = accountSubjectHash(userId)
   const pool = getPgPool()
 
   // ── GET options ───────────────────────────────────────────────────────────
@@ -147,6 +176,9 @@ export default async function handler(req: Request): Promise<Response> {
         allHeaders,
       )
     }
+    // Báo SỚM (trước khi trừ lượt xác minh) nếu còn đơn chờ trả. Chỉ là UX — chốt thật nằm trong
+    // transaction của `deleteAccount` (kiểm lại sau khi khoá dòng users).
+    if (await hasLivePendingPayment(pool, userId)) return pendingPaymentResponse(allHeaders)
   }
 
   // ── Xác minh lại danh tính ─────────────────────────────────────────────────
@@ -157,7 +189,7 @@ export default async function handler(req: Request): Promise<Response> {
       ACCOUNT_REAUTH_WINDOW_MS,
     ))
   ) {
-    logSecurityEvent('ACCOUNT_REAUTH_THROTTLED', clientIp, { userId, action: body.action })
+    logSecurityEvent('ACCOUNT_REAUTH_THROTTLED', clientIp, { subject, action: body.action })
     return jsonResponse(
       errorBody('Thử xác minh quá nhiều lần — chờ 15 phút rồi thử lại.', 'RATE_LIMITED'),
       429,
@@ -168,7 +200,7 @@ export default async function handler(req: Request): Promise<Response> {
   const reauth = await verifyAccountReauth(pool, userId, body.reauth)
   if (!reauth.ok) {
     logSecurityEvent('ACCOUNT_REAUTH_FAILED', clientIp, {
-      userId,
+      subject,
       action: body.action,
       method: body.reauth.method,
       reason: reauth.reason,
@@ -215,7 +247,7 @@ export default async function handler(req: Request): Promise<Response> {
         TWO_FACTOR_USER_WINDOW_MS,
       ))
     ) {
-      logSecurityEvent('TWO_FACTOR_USER_THROTTLED', clientIp, { userId })
+      logSecurityEvent('TWO_FACTOR_USER_THROTTLED', clientIp, { subject })
       return jsonResponse(
         errorBody('Nhập sai mã quá nhiều lần — chờ 15 phút rồi thử lại.', 'RATE_LIMITED'),
         429,
@@ -238,7 +270,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (body.action === 'export') {
     // Lỗi CSDL ⇒ ném ⇒ wrapEdge trả 500 + Sentry; KHÔNG trả bản xuất thiếu.
     const data = await exportAccountData(pool, userId)
-    logSecurityEvent('ACCOUNT_EXPORTED', clientIp, { userId })
+    logSecurityEvent('ACCOUNT_EXPORTED', clientIp, { subject })
     return new Response(JSON.stringify(data, null, 2), {
       status: 200,
       headers: {
@@ -261,11 +293,10 @@ export default async function handler(req: Request): Promise<Response> {
         'Set-Cookie': buildClearSessionCookie(req.headers.get('host') ?? ''),
       })
     }
+    // Đơn chờ trả xuất hiện giữa lần kiểm sớm và transaction (đã rollback) ⇒ 409, không phải sự cố.
+    if (err instanceof PendingPaymentError) return pendingPaymentResponse(allHeaders)
     // Ghi dấu vết thất bại (đã rollback toàn bộ) rồi NÉM tiếp: wrapEdge trả 500 + Sentry.
-    logSecurityEvent('ACCOUNT_DELETE_FAILED', clientIp, {
-      userId,
-      message: err instanceof Error ? err.message : String(err),
-    })
+    logSecurityEvent('ACCOUNT_DELETE_FAILED', clientIp, { subject, error: safeErrorTag(err) })
     throw err
   }
 

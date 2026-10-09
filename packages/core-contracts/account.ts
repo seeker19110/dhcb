@@ -107,6 +107,8 @@ export const ACCOUNT_ERROR_CODES = [
   'STEP_UP_REQUIRED',
   'TWO_FACTOR_INVALID',
   'VIP_ACK_REQUIRED',
+  // Còn đơn thanh toán chờ trả — xoá lúc này sẽ làm mất tiền chuyển vào sau (rà soát 0533).
+  'PAYMENT_PENDING',
   'RATE_LIMITED',
 ] as const
 export type AccountErrorCode = (typeof ACCOUNT_ERROR_CODES)[number]

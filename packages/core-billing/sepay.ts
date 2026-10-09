@@ -21,6 +21,14 @@ import { randomInt, timingSafeEqual } from 'node:crypto'
 export const PAYMENT_CODE_PREFIX = 'DHCB'
 export const ACCEPTED_PAYMENT_PREFIXES = ['DHCB', 'ENVI'] as const
 
+/**
+ * Ân hạn sau `payments.expires_at` mà webhook VẪN tự cấp gói (chuyển khoản liên ngân hàng có thể
+ * chậm). Quá mốc này đơn giữ 'pending' để admin đối chiếu tay. Dùng chung ở 2 nơi phải khớp nhau:
+ * webhook SePay (cấp gói) và `deleteAccount` (từ chối xoá tài khoản khi đơn còn có thể được trả —
+ * changelog 0533 mục "Sau rà soát").
+ */
+export const SEPAY_LATE_GRACE_MS = 24 * 60 * 60 * 1000
+
 // Bảng ký tự KHÔNG chứa 0/O, 1/I/L — người dùng có thể phải GÕ TAY nội dung chuyển khoản khi
 // ứng dụng ngân hàng không cho sửa nội dung từ QR, nên tránh ký tự dễ đọc/gõ nhầm.
 const CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'

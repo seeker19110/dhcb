@@ -142,6 +142,34 @@ describe('AccountDataSection', () => {
     expect(onDeleted).not.toHaveBeenCalled()
   })
 
+  it('còn đơn thanh toán chờ (409 PAYMENT_PENDING) ⇒ hiện thông điệp server, không gọi onDeleted', async () => {
+    const onDeleted = await renderOpen()
+    setValue(inputByLabel('để xác nhận'), 'XOÁ TÀI KHOẢN')
+    setValue(inputsByLabel('Mật khẩu hiện tại')[1]!, 'dung')
+    const msg = 'Bạn còn đơn thanh toán đang chờ xử lý. Vui lòng đợi đơn hoàn tất hoặc hết hạn.'
+    api.deleteMyAccount.mockRejectedValueOnce(new AccountApiError(msg, 409, 'PAYMENT_PENDING'))
+    await act(async () => buttonByText('Xoá vĩnh viễn').click())
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(msg)
+    expect(onDeleted).not.toHaveBeenCalled()
+  })
+
+  it('PAYMENT_PENDING ở giao diện tiếng Anh (chiều B) ⇒ thông điệp tiếng Anh', async () => {
+    const onDeleted = vi.fn()
+    api.fetchAccountOptions.mockResolvedValue(BASE_OPTIONS)
+    await act(async () => root.render(<AccountDataSection isA={false} onDeleted={onDeleted} />))
+    await act(async () => buttonByText('Your data & account').click())
+    setValue(inputByLabel('to confirm'), 'DELETE MY ACCOUNT')
+    setValue(inputsByLabel('Current password')[1]!, 'right')
+    api.deleteMyAccount.mockRejectedValueOnce(
+      new AccountApiError('Bạn còn đơn thanh toán…', 409, 'PAYMENT_PENDING'),
+    )
+    await act(async () => buttonByText('Permanently delete account').click())
+    const alert = container.querySelector('[role="alert"]')?.textContent ?? ''
+    expect(alert).toMatch(/payment in progress/)
+    expect(alert).toMatch(/24 hours/)
+    expect(onDeleted).not.toHaveBeenCalled()
+  })
+
   it('server đòi 2FA (STEP_UP_REQUIRED) ⇒ hiện ô mã 2FA, gửi lại kèm mã', async () => {
     await renderOpen()
     setValue(inputsByLabel('Mật khẩu hiện tại')[0]!, 'mk')

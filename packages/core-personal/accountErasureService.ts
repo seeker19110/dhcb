@@ -18,11 +18,12 @@
 //   - Nhật ký xoá `platform.account_erasure_log` không chứa dữ liệu cá nhân (chỉ mã băm một chiều).
 //   - `userId` do nơi gọi suy từ PHIÊN đăng nhập, không bao giờ nhận từ client.
 
-import { createHash } from 'node:crypto'
 import type { Pool, PoolClient } from 'pg'
 import { withTransaction } from '@dhcb/core-db/transaction'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 import { decryptUserField } from '@dhcb/core-config/userDataCrypto'
+import { SEPAY_LATE_GRACE_MS } from '@dhcb/core-billing/sepay'
+import { accountSubjectHash, PendingPaymentError } from './accountErasureShared.js'
 import {
   assertIdent,
   assertOrderBy,
@@ -921,18 +922,9 @@ export interface DeleteAccountResult {
 
 // ─── Tiện ích ─────────────────────────────────────────────────────────────────
 
-/** Tiền tố miền: cùng một user_id băm cho mục đích khác sẽ ra giá trị khác, không nối chéo được. */
-const SUBJECT_HASH_DOMAIN = 'dhcb:account-erasure:v1:'
-
-/**
- * Mã băm một chiều đại diện người dùng trong nhật ký xoá. `user_id` là UUID ngẫu nhiên (122 bit)
- * nên không dò ngược được; KHÔNG băm email (entropy thấp, dò từ điển được).
- */
-export function accountSubjectHash(userId: string): string {
-  return createHash('sha256')
-    .update(SUBJECT_HASH_DOMAIN + userId)
-    .digest('hex')
-}
+// `accountSubjectHash` sống ở accountErasureShared.ts (handler cần nó cả khi test mock service);
+// re-export để nơi gọi cũ không đổi.
+export { accountSubjectHash }
 
 /** `extra_hour_enc` → `extra_hour`. */
 function decryptedKey(column: string): string {
@@ -1023,6 +1015,27 @@ export async function exportAccountData(pool: Pool, userId: string): Promise<Acc
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
 /**
+ * Đơn `pending` còn có thể được webhook SePay tự cấp gói: chưa quá `expires_at` + ân hạn
+ * `SEPAY_LATE_GRACE_MS` — ĐÚNG điều kiện webhook dùng (payment-webhook.ts). So bằng giờ của CSDL.
+ */
+const LIVE_PENDING_PAYMENT_SQL = `select 1 from public.payments
+   where user_id = $1 and status = 'pending'
+     and expires_at > now() - make_interval(secs => $2::double precision)
+   limit 1`
+
+/**
+ * Người dùng còn đơn chờ trả "sống" không. Nhận Pool hoặc PoolClient: handler gọi trước để báo
+ * sớm (không trừ lượt xác minh), `deleteAccount` gọi LẠI trong transaction — lần đó mới là chốt.
+ */
+export async function hasLivePendingPayment(
+  db: Pool | PoolClient,
+  userId: string,
+): Promise<boolean> {
+  const res = await db.query(LIVE_PENDING_PAYMENT_SQL, [userId, SEPAY_LATE_GRACE_MS / 1000])
+  return res.rows.length > 0
+}
+
+/**
  * Xoá tài khoản: mọi bảng trong `ACCOUNT_TABLES` (xoá hoặc ẩn danh hoá) + Personal OS + chính dòng
  * `public.users`, ghi nhật ký xoá — MỘT transaction.
  *
@@ -1040,6 +1053,10 @@ export async function deleteAccount(pool: Pool, userId: string): Promise<DeleteA
     )
     const user = userRes.rows[0]
     if (!user) throw new NotFoundError('Không tìm thấy tài khoản')
+
+    // Còn đơn chờ trả ⇒ TỪ CHỐI (rà soát 0533). Kiểm SAU khoá dòng users: checkout tạo đơn mới
+    // phải lấy `key share` trên dòng này nên bị chặn tới khi transaction xong — không lọt đơn mới.
+    if (await hasLivePendingPayment(client, userId)) throw new PendingPaymentError()
 
     const tableCounts: Record<string, TableCount> = {}
     let recordsDeleted = 0

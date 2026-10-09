@@ -38,6 +38,11 @@ interface ReauthDraft {
 }
 
 function errorMessage(err: unknown, isA: boolean): string {
+  // Còn đơn thanh toán chờ trả: server từ chối xoá (rà soát 0533). Có bản tiếng Anh riêng vì
+  // người học chiều B cần hiểu VÌ SAO chưa xoá được và phải làm gì tiếp.
+  if (err instanceof AccountApiError && err.code === 'PAYMENT_PENDING' && !isA) {
+    return 'You still have a payment in progress. Please wait until it completes or expires (up to 24 hours after the payment deadline), then try deleting your account again.'
+  }
   if (err instanceof Error && err.message) return err.message
   return isA ? 'Có lỗi xảy ra — thử lại sau.' : 'Something went wrong — please retry.'
 }

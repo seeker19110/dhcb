@@ -45,7 +45,11 @@ vi.mock('@dhcb/core-auth/twoFactor', () => tf)
 const reauth = vi.hoisted(() => ({ getReauthMethods: vi.fn(), verifyAccountReauth: vi.fn() }))
 vi.mock('@dhcb/core-auth/accountReauth', () => reauth)
 
-const svc = vi.hoisted(() => ({ deleteAccount: vi.fn(), exportAccountData: vi.fn() }))
+const svc = vi.hoisted(() => ({
+  deleteAccount: vi.fn(),
+  exportAccountData: vi.fn(),
+  hasLivePendingPayment: vi.fn(),
+}))
 vi.mock('@dhcb/core-personal/accountErasureService', () => svc)
 
 vi.mock('./two-factor.js', () => ({
@@ -55,9 +59,14 @@ vi.mock('./two-factor.js', () => ({
 }))
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 
-import handler, { accountReauthKey } from './account.js'
+import handler, { accountReauthKey, safeErrorTag } from './account.js'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { NotFoundError } from '@dhcb/core-errors/appError'
+import {
+  accountSubjectHash,
+  PENDING_PAYMENT_MESSAGE,
+  PendingPaymentError,
+} from '@dhcb/core-personal/accountErasureShared'
 
 const query = vi.fn()
 let profile: { plan: string | null; plan_expires_at: Date | null } = {
@@ -92,6 +101,7 @@ beforeEach(() => {
     recordsAnonymized: 2,
     personErasureLogId: null,
   })
+  svc.hasLivePendingPayment.mockResolvedValue(false)
   svc.exportAccountData.mockResolvedValue({
     format: 'dhcb-account-export',
     userId: 'user-1',
@@ -311,6 +321,95 @@ describe('POST delete — kết quả', () => {
     svc.deleteAccount.mockRejectedValue(new Error('db chết giữa chừng'))
     await expect(handler(post(DELETE_OK))).rejects.toThrow('db chết giữa chừng')
     expect(events.map((e) => e.type)).toContain('ACCOUNT_DELETE_FAILED')
+  })
+
+  it('ACCOUNT_DELETE_FAILED KHÔNG ghi err.message (có thể chứa email/khoá) — chỉ mã lỗi PG + mã băm', async () => {
+    const pgErr = Object.assign(
+      new Error('duplicate key value violates unique constraint — Key (email)=(a@b.vn)'),
+      { code: '23503' },
+    )
+    svc.deleteAccount.mockRejectedValue(pgErr)
+    await expect(handler(post(DELETE_OK))).rejects.toBe(pgErr)
+    const failed = events.find((e) => e.type === 'ACCOUNT_DELETE_FAILED')
+    expect(failed?.meta).toEqual({ subject: accountSubjectHash('user-1'), error: '23503' })
+    expect(JSON.stringify(failed?.meta)).not.toContain('a@b.vn')
+    expect(JSON.stringify(failed?.meta)).not.toContain('user-1')
+  })
+})
+
+describe('log bảo mật không chứa userId trần (rà soát 0533)', () => {
+  it('mọi sự kiện của luồng xác minh/xuất/2FA chỉ mang mã băm', async () => {
+    // Sinh đủ các sự kiện có định danh: REAUTH_FAILED, REAUTH_THROTTLED, TWO_FACTOR_USER_THROTTLED, EXPORTED.
+    reauth.verifyAccountReauth.mockResolvedValueOnce({ ok: false, reason: 'failed' })
+    await handler(post(EXPORT_OK))
+    counters.allow.set(accountReauthKey('user-1'), false)
+    await handler(post(EXPORT_OK))
+    counters.allow.clear()
+    tf.getTwoFactorStatus.mockResolvedValue({ enabled: true, pending: false, recoveryCodesLeft: 1 })
+    tf.hasStepUp.mockResolvedValue(false)
+    counters.allow.set('2fa-user:user-1', false)
+    await handler(post({ ...EXPORT_OK, twoFactorCode: '123456' }))
+    counters.allow.clear()
+    tf.getTwoFactorStatus.mockResolvedValue({
+      enabled: false,
+      pending: false,
+      recoveryCodesLeft: 0,
+    })
+    await handler(post(EXPORT_OK))
+
+    const types = events.map((e) => e.type)
+    for (const t of [
+      'ACCOUNT_REAUTH_FAILED',
+      'ACCOUNT_REAUTH_THROTTLED',
+      'TWO_FACTOR_USER_THROTTLED',
+      'ACCOUNT_EXPORTED',
+    ])
+      expect(types).toContain(t)
+    for (const e of events) {
+      expect(JSON.stringify(e.meta), e.type).not.toContain('user-1')
+      if (e.type !== 'AUTH_FAILURE')
+        expect(e.meta.subject, e.type).toBe(accountSubjectHash('user-1'))
+    }
+  })
+})
+
+describe('safeErrorTag', () => {
+  it('ưu tiên mã lỗi Postgres; không có mã thì tên lớp lỗi; không phải Error thì typeof', () => {
+    expect(safeErrorTag(Object.assign(new Error('Key (email)=(x@y.z)'), { code: '23505' }))).toBe(
+      '23505',
+    )
+    expect(safeErrorTag(new TypeError('bí mật'))).toBe('TypeError')
+    expect(safeErrorTag(Object.assign(new Error('x'), { code: '' }))).toBe('Error')
+    expect(safeErrorTag('chuỗi có email a@b.c')).toBe('string')
+    expect(safeErrorTag(null)).toBe('object')
+  })
+})
+
+describe('POST delete — còn đơn thanh toán chờ trả (rà soát 0533)', () => {
+  it('kiểm sớm thấy đơn chờ → 409 PAYMENT_PENDING, KHÔNG trừ lượt xác minh, không xoá', async () => {
+    svc.hasLivePendingPayment.mockResolvedValue(true)
+    const res = await handler(post(DELETE_OK))
+    expect(res.status).toBe(409)
+    expect(await json(res)).toEqual({ error: PENDING_PAYMENT_MESSAGE, code: 'PAYMENT_PENDING' })
+    expect(counters.consumed).toEqual([])
+    expect(reauth.verifyAccountReauth).not.toHaveBeenCalled()
+    expect(svc.deleteAccount).not.toHaveBeenCalled()
+  })
+
+  it('đơn chờ xuất hiện giữa kiểm sớm và transaction → deleteAccount ném PendingPaymentError → 409, không log FAILED, không xoá cookie', async () => {
+    svc.deleteAccount.mockRejectedValue(new PendingPaymentError())
+    const res = await handler(post(DELETE_OK))
+    expect(res.status).toBe(409)
+    expect((await json(res)).code).toBe('PAYMENT_PENDING')
+    expect(res.headers.get('Set-Cookie')).toBeNull()
+    expect(events.map((e) => e.type)).not.toContain('ACCOUNT_DELETE_FAILED')
+  })
+
+  it('xuất dữ liệu KHÔNG bị chặn bởi đơn chờ', async () => {
+    svc.hasLivePendingPayment.mockResolvedValue(true)
+    const res = await handler(post(EXPORT_OK))
+    expect(res.status).toBe(200)
+    expect(svc.hasLivePendingPayment).not.toHaveBeenCalled()
   })
 })
 

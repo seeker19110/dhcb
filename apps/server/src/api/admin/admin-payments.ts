@@ -126,22 +126,44 @@ export default async function handler(req: Request): Promise<Response> {
         status: string
         cycle: '10day' | 'month' | 'year'
         years: number
-      }>('select status, cycle, years from public.payments where id = $1 for update', [paymentId])
+        user_id: string | null
+        anonymized_at: Date | null
+      }>(
+        'select status, cycle, years, user_id, anonymized_at from public.payments where id = $1 for update',
+        [paymentId],
+      )
       const pay = rows[0]
       if (!pay) return { error: 'Không tìm thấy đơn thanh toán', status: 404 } as const
       if (pay.status === 'paid') {
         return { error: 'Đơn này đã được ghi nhận thanh toán từ trước', status: 400 } as const
       }
+      // Đơn của tài khoản ĐÃ XOÁ (ẩn danh hoá — changelog 0533): là chứng từ lưu trữ, không phải
+      // đơn chờ khớp. Khớp tay đơn này sẽ cấp VIP cho một người KHÁC chủ đơn — chặn hẳn.
+      if (pay.user_id === null || pay.anonymized_at !== null) {
+        return {
+          error:
+            'Đơn này thuộc tài khoản đã bị xoá (đã ẩn danh) — không khớp tay được. Nếu có tiền chuyển vào, xử lý hoàn tiền ngoài hệ thống.',
+          status: 400,
+        } as const
+      }
       const days =
         (CYCLE_DAYS[pay.cycle] ?? 30) * (pay.cycle === 'year' ? Math.max(1, pay.years ?? 1) : 1)
-      // Đơn gói cũ vẫn được cấp VIP; cấp quyền và ghi nhận thanh toán cùng commit/rollback.
-      await grantPlanDays(targetUserId, 'vip', days, new Date(), client)
-      await client.query(
+      // Ghi nhận đơn TRƯỚC, cấp gói SAU (cùng transaction): điều kiện trong WHERE là lớp phòng thủ
+      // thứ hai — đơn đã ẩn danh/đã paid thì rowCount=0 và KHÔNG cấp gì.
+      const updated = await client.query(
         `update public.payments
          set status = 'paid', paid_at = now(), provider_txn_id = $1
-         where id = $2`,
+         where id = $2 and status <> 'paid' and user_id is not null and anonymized_at is null`,
         [`MANUAL_${paymentId}`, paymentId],
       )
+      if (updated.rowCount !== 1) {
+        return {
+          error: 'Đơn đã đổi trạng thái — tải lại danh sách rồi thử lại',
+          status: 409,
+        } as const
+      }
+      // Đơn gói cũ vẫn được cấp VIP; cấp quyền và ghi nhận thanh toán cùng commit/rollback.
+      await grantPlanDays(targetUserId, 'vip', days, new Date(), client)
       return { days } as const
     })
     if ('error' in outcome) {

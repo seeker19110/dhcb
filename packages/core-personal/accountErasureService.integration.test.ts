@@ -19,7 +19,9 @@ import {
   accountSubjectHash,
   deleteAccount,
   exportAccountData,
+  hasLivePendingPayment,
 } from './accountErasureService.js'
+import { PendingPaymentError } from './accountErasureShared.js'
 
 const DATABASE_URL = process.env.DATABASE_URL
 // Khoá mã hoá giả cho test (trường tự do của personal.intake). Không đè khoá thật nếu đã có.
@@ -260,9 +262,11 @@ async function seedUser(pool: Pool, tag: string): Promise<Seeded> {
     `insert into public.password_resets (user_id, token_hash, expires_at) values ($1, $2, now()) returning id`,
     [u, `${SECRET_MARK}-prt-${rand()}`],
   )
+  // Đơn 'pending' đã quá hạn + ân hạn 24h (webhook không còn tự cấp được) ⇒ KHÔNG chặn xoá, bị ẩn
+  // danh thành 'expired'. Đơn còn trong ân hạn chặn xoá — ca riêng bên dưới (rà soát 0533).
   const paymentPendingId = await q(
     `insert into public.payments (user_id, plan, cycle, amount_vnd, payment_code, expires_at)
-     values ($1, 'vip', 'month', 99000, $2, now() + interval '30 minutes') returning id`,
+     values ($1, 'vip', 'month', 99000, $2, now() - interval '25 hours') returning id`,
     [u, `DHCB${rand()}`],
   )
   const paymentPaidId = await q(
@@ -605,6 +609,47 @@ describe.skipIf(!DATABASE_URL)('xoá tài khoản + xuất dữ liệu (Postgres
     })
     const pays = await pool.query('select 1 from public.payments where user_id = $1', [c.userId])
     expect(pays.rowCount).toBe(2)
+  })
+
+  // ── Rà soát 0533: còn đơn chờ trả ⇒ từ chối xoá ─────────────────────────────
+
+  it.each([
+    { label: 'chưa tới hạn (+30 phút)', offset: '30 minutes' },
+    { label: 'quá hạn nhưng còn trong ân hạn (−23 giờ)', offset: '-23 hours' },
+  ])(
+    'còn đơn pending $label ⇒ PendingPaymentError, KHÔNG đổi dữ liệu nào, không nhật ký',
+    async ({ offset }) => {
+      const g = await seedUser(pool, 'g')
+      cleanupUsers.push(g.userId, g.helperId)
+      const liveId = await pool.query<{ id: string }>(
+        `insert into public.payments (user_id, plan, cycle, amount_vnd, payment_code, expires_at)
+         values ($1, 'vip', 'month', 99000, $2, now() + $3::interval)
+         returning id`,
+        [g.userId, `DHCB${rand()}`, offset],
+      )
+      const before = await countByUser(pool, g.userId, g.email)
+
+      await expect(deleteAccount(pool, g.userId)).rejects.toBeInstanceOf(PendingPaymentError)
+
+      expect(await countByUser(pool, g.userId, g.email)).toEqual(before)
+      const pay = await pool.query<{ user_id: string | null; status: string }>(
+        'select user_id, status from public.payments where id = $1',
+        [liveId.rows[0]?.id],
+      )
+      expect(pay.rows[0]).toEqual({ user_id: g.userId, status: 'pending' })
+      const log = await pool.query(
+        'select 1 from platform.account_erasure_log where subject_hash = $1',
+        [accountSubjectHash(g.userId)],
+      )
+      expect(log.rowCount).toBe(0)
+      expect(await hasLivePendingPayment(pool, g.userId)).toBe(true)
+    },
+  )
+
+  it('hasLivePendingPayment: đơn paid/expired hoặc pending quá ân hạn ⇒ false', async () => {
+    const h = await seedUser(pool, 'h') // fixture: 1 paid + 1 pending quá hạn 25 giờ
+    cleanupUsers.push(h.userId, h.helperId)
+    expect(await hasLivePendingPayment(pool, h.userId)).toBe(false)
   })
 
   // ── AC4: lỗi giữa chừng ⇒ rollback toàn bộ ─────────────────────────────────

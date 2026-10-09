@@ -7,7 +7,9 @@
 
 import { createHash } from 'node:crypto'
 import { describe, it, expect, vi } from 'vitest'
-import { NotFoundError } from '@dhcb/core-errors/appError'
+import { ConflictError, NotFoundError } from '@dhcb/core-errors/appError'
+import { SEPAY_LATE_GRACE_MS } from '@dhcb/core-billing/sepay'
+import { PENDING_PAYMENT_MESSAGE, PendingPaymentError } from './accountErasureShared.js'
 import { encryptUserField } from '@dhcb/core-config/userDataCrypto'
 import {
   ACCOUNT_TABLES,
@@ -15,6 +17,7 @@ import {
   accountSubjectHash,
   deleteAccount,
   exportAccountData,
+  hasLivePendingPayment,
 } from './accountErasureService.js'
 import { PERSON_TABLES } from './personErasureService.js'
 
@@ -53,11 +56,12 @@ const none: QueryResult = { rows: [], rowCount: 0 }
 
 /** Trả lời "bình thường" cho luồng xoá: user có, Person có, mỗi câu xoá/ẩn danh chạm 2 dòng. */
 function happyDelete(
-  overrides: Partial<Record<'person' | 'userDelete' | 'log', QueryResult>> = {},
+  overrides: Partial<Record<'person' | 'userDelete' | 'log' | 'pendingPayment', QueryResult>> = {},
 ): Responder {
   return (sql) => {
     if (sql.startsWith('select id, email from public.users'))
       return one({ id: USER_ID, email: EMAIL })
+    if (sql.startsWith('select 1 from public.payments')) return overrides.pendingPayment ?? none
     if (sql.startsWith('select id from personal.persons where user_id'))
       return overrides.person ?? one({ id: PERSON_ID })
     if (sql.startsWith('select id from personal.persons where id')) return one({ id: PERSON_ID })
@@ -141,6 +145,9 @@ describe('deleteAccount', () => {
 
     expect(calls[0]?.sql).toBe('begin')
     expect(calls[1]?.sql).toBe('select id, email from public.users where id = $1 for update')
+    // Kiểm đơn chờ trả NGAY SAU khoá users (rà soát 0533), trước mọi câu xoá.
+    expect(calls[2]?.sql).toContain('select 1 from public.payments')
+    expect(calls[2]?.params).toEqual([USER_ID, SEPAY_LATE_GRACE_MS / 1000])
     expect(calls.at(-1)?.sql).toBe('commit')
     expect(client.release).toHaveBeenCalledOnce()
 
@@ -149,7 +156,7 @@ describe('deleteAccount', () => {
     // Thứ tự khai báo được giữ nguyên.
     // Ngay sau câu khoá là đúng N câu của ACCOUNT_TABLES, theo đúng thứ tự khai báo.
     ACCOUNT_TABLES.forEach((spec, i) => {
-      const sql = statements[2 + i] ?? ''
+      const sql = statements[3 + i] ?? ''
       expect(sql, spec.table).toContain(` ${spec.table} `)
       const where =
         spec.match === 'email' ? `lower(${spec.userColumn}) = lower($1)` : `${spec.userColumn} = $1`
@@ -241,6 +248,17 @@ describe('deleteAccount', () => {
     expect(calls.at(-1)?.sql).toBe('rollback')
   })
 
+  it('còn đơn pending chưa quá hạn + ân hạn ⇒ PendingPaymentError (409) + rollback, KHÔNG ẩn danh/xoá gì', async () => {
+    const { pool, calls } = makePool(happyDelete({ pendingPayment: one({ '?column?': 1 }) }))
+    const err = await deleteAccount(pool as never, USER_ID).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(PendingPaymentError)
+    expect(err).toBeInstanceOf(ConflictError)
+    expect((err as PendingPaymentError).status).toBe(409)
+    expect((err as Error).message).toBe(PENDING_PAYMENT_MESSAGE)
+    expect(calls.at(-1)?.sql).toBe('rollback')
+    expect(calls.some((c) => c.sql.startsWith('delete') || c.sql.startsWith('update'))).toBe(false)
+  })
+
   it('rowCount = null được tính là 0 (không NaN)', async () => {
     const base = happyDelete()
     const { pool } = makePool((sql, params) =>
@@ -251,6 +269,22 @@ describe('deleteAccount', () => {
     const res = await deleteAccount(pool as never, USER_ID)
     expect(res.tableCounts['public.daily_usage.user_id']).toEqual({ action: 'delete', rows: 0 })
     expect(Number.isFinite(res.recordsDeleted)).toBe(true)
+  })
+})
+
+describe('hasLivePendingPayment', () => {
+  it('điều kiện "còn hiệu lực" khớp webhook: pending + expires_at > now() − ân hạn; tham số là giây', async () => {
+    const query = vi.fn(async () => ({ rows: [] as unknown[], rowCount: 0 }))
+    expect(await hasLivePendingPayment({ query } as never, USER_ID)).toBe(false)
+    const [sql, params] = query.mock.calls[0] as unknown as [string, unknown[]]
+    expect(norm(sql)).toContain("status = 'pending'")
+    expect(norm(sql)).toContain('expires_at > now() - make_interval(secs => $2::double precision)')
+    expect(params).toEqual([USER_ID, 86_400])
+  })
+
+  it('có ≥ 1 dòng ⇒ true (kể cả khi driver trả rowCount null)', async () => {
+    const query = vi.fn(async () => ({ rows: [{}], rowCount: null }))
+    expect(await hasLivePendingPayment({ query } as never, USER_ID)).toBe(true)
   })
 })
 

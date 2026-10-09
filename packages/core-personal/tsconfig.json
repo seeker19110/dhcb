@@ -11,6 +11,9 @@
       "path": "../core-ai"
     },
     {
+      "path": "../core-billing"
+    },
+    {
       "path": "../core-domains"
     },
     {

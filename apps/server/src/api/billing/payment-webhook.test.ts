@@ -205,11 +205,55 @@ describe('/api/payment-webhook', () => {
     query
       .mockResolvedValueOnce({ rows: [PENDING_PAYMENT] })
       .mockResolvedValueOnce({ rowCount: 0, rows: [] }) // request khác đã thắng UPDATE trước
+      .mockResolvedValueOnce({ rows: [{ user_id: 'user-1' }] }) // đọc lại: đơn vẫn còn chủ
     const resp = await handler(
       makeRequest({ id: 999, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }),
     )
     expect(resp.status).toBe(200)
     expect(granted.calls).toEqual([])
+    // Thua race bình thường KHÔNG phải sự cố — không bắn cảnh báo mồ côi.
+    expect(vi.mocked(logSecurityEvent)).not.toHaveBeenCalledWith(
+      'SEPAY_PAYMENT_ORPHANED',
+      expect.anything(),
+      expect.anything(),
+    )
+  })
+
+  it('đơn bị ẩn danh GIỮA select và update (chủ vừa xoá tài khoản) → log ORPHANED, không cấp gói, không PII', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [PENDING_PAYMENT] })
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] }) // `and user_id is not null` chặn update
+      .mockResolvedValueOnce({ rows: [{ user_id: null }] }) // đọc lại: đơn đã mất chủ
+    const resp = await handler(
+      makeRequest({ id: 999, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }),
+    )
+    expect(resp.status).toBe(200)
+    expect(granted.calls).toEqual([])
+    expect(vi.mocked(logSecurityEvent)).toHaveBeenCalledWith('SEPAY_PAYMENT_ORPHANED', 'sepay', {
+      paymentId: PENDING_PAYMENT.id,
+      txnId: '999',
+      transferAmount: 40_000,
+      stage: 'update',
+    })
+    const [recheckSql] = query.mock.calls[2] as [string]
+    expect(recheckSql).toContain('select user_id from public.payments')
+  })
+
+  it('đơn biến mất giữa select và update (không đọc lại được dòng) → coi như race, không log mồ côi', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [PENDING_PAYMENT] })
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+    const resp = await handler(
+      makeRequest({ id: 999, transferType: 'in', transferAmount: 40_000, content: 'ENVI7K2M9QRT' }),
+    )
+    expect(resp.status).toBe(200)
+    expect(granted.calls).toEqual([])
+    expect(vi.mocked(logSecurityEvent)).not.toHaveBeenCalledWith(
+      'SEPAY_PAYMENT_ORPHANED',
+      expect.anything(),
+      expect.anything(),
+    )
   })
 
   it('hai webhook chạy đồng thời và retry → chỉ cấp một lần, không xác thực email', async () => {

@@ -145,3 +145,66 @@ Postgres 16 thật (cụm tạm cổng 5533), chạy toàn bộ migration tới 
 - **Đổi bề rộng khung nhìn:** đổi bề rộng qua mốc 1024px (xoay máy, chụp `fullPage`) làm `TwoPane`
   của trang cá nhân dựng lại cây con, khiến chữ đang gõ trong các mục bị mất. Lỗi có sẵn, ảnh hưởng mọi
   mục của trang; E2E đã tránh bằng ảnh không `fullPage`. Đề xuất sửa ở một đợt riêng.
+
+## Sau rà soát (bảo mật + CSDL, 2026-10-08)
+
+Sửa 4 phát hiện, mỗi điểm có test ca biên:
+
+1. **Admin khớp tay đơn đã ẩn danh (Medium).** `apps/server/src/api/admin/admin-payments.ts`:
+   - Câu `select … for update` đọc thêm `user_id` và `anonymized_at`. Đơn đã ẩn danh trả 400 kèm
+     thông điệp rõ, không update và không cấp gói. Trước đây đơn `expired` do `deleteAccount` ẩn danh
+     vẫn khớp tay được, tức là cấp VIP cho người khác chủ đơn.
+   - Lớp phòng thủ thứ hai: `update … and status <> 'paid' and user_id is not null and anonymized_at is null`
+     chạy TRƯỚC `grantPlanDays` (cùng transaction). `rowCount ≠ 1` trả 409 và không cấp gì.
+2. **Mất tiền khi xoá tài khoản lúc còn đơn đang chờ (Medium).**
+   - (a) `deleteAccount` kiểm, ngay sau `for update` trên `public.users`, xem người dùng còn đơn
+     `pending` "sống" không. "Sống" nghĩa là `expires_at > now() − 24 giờ`, đúng điều kiện webhook còn
+     tự cấp gói. Ân hạn 24 giờ nay là hằng dùng chung `SEPAY_LATE_GRACE_MS`
+     (`packages/core-billing/sepay.ts`), webhook và `deleteAccount` đọc cùng một chỗ. Còn đơn sống thì
+     ném `PendingPaymentError` (409); handler trả `PAYMENT_PENDING` với thông điệp tiếng Việt. Handler
+     cũng kiểm sớm trước khi trừ lượt xác minh, nhưng đó chỉ là UX; chốt thật nằm trong transaction.
+     Giao diện `AccountDataSection` hiện thông điệp server, ở chiều B có bản tiếng Anh. Xuất dữ liệu
+     không bị chặn.
+   - (b) Webhook, nhánh không thắng UPDATE: đọc lại `user_id`. Nếu đơn vừa bị ẩn danh thì log
+     `SEPAY_PAYMENT_ORPHANED` (`stage: 'update'`, chỉ id kỹ thuật, không PII). Thua race bình thường
+     thì không log.
+3. **PII trong log (Low).** `apps/server/src/api/core/account.ts`:
+   - Mọi `logSecurityEvent` thay `userId` bằng `subject = accountSubjectHash(userId)`, cùng giá trị
+     `subject_hash` của nhật ký xoá nên vẫn đối chiếu được.
+   - `ACCOUNT_DELETE_FAILED` chỉ ghi `safeErrorTag(err)`: mã lỗi Postgres, hoặc tên lớp lỗi nếu
+     không có mã. Không ghi `err.message`.
+   - `accountSubjectHash` và `PendingPaymentError` chuyển sang `packages/core-personal/accountErasureShared.ts`
+     (service re-export) để handler dùng được cả khi test mock service.
+4. **Migration 0088.**
+   - (a) Khoá ngoại tìm theo cột trong `pg_constraint` (không giả định tên). Migration drop mọi FK
+     trên `payments.user_id` có `confdeltype <> 'r'`, rồi chỉ thêm FK RESTRICT khi chưa có.
+   - (b) FK và CHECK thêm `not valid`, rồi `validate constraint` ở câu riêng (tên FK tra động).
+   - Phần ROLLBACK cập nhật cho khớp.
+
+**Bằng chứng** (Postgres 16 thật, cụm tạm cổng 5473, đã xoá sau khi chạy):
+
+- `npm run migrate:pg` áp đủ 91 migration. Chạy lại thì báo "không có gì mới". Chạy thẳng file 0088
+  thêm 2 lần bằng `psql -1`: exit 0, và OID của mọi ràng buộc trên `payments` không đổi (không
+  drop/add lại).
+- Hai ca biên chạy trong transaction rồi rollback:
+  - FK cascade và set null mang tên lạ: cả hai bị bỏ, còn đúng một `payments_user_id_fkey` RESTRICT
+    đã validate.
+  - FK RESTRICT sẵn có mang tên khác, chưa validate: migration không thêm FK nào và validate đúng FK đó.
+- `accountErasureService.integration.test.ts` 13/13. Ba ca mới: chặn đơn chưa tới hạn; chặn đơn quá
+  hạn nhưng còn trong ân hạn (cả hai không đổi dữ liệu nào, không ghi nhật ký); đơn quá ân hạn thì
+  không chặn. Fixture đổi đơn pending sang "quá hạn 25 giờ".
+- `npm run check:sql`: exit 0, PREPARE 494 câu, 1 câu được miễn sẵn có.
+- Vitest liên quan, typecheck, lint, prettier: xem báo cáo commit `fix(account)`.
+
+Ghi chú: `npm run migrate:pg` bọc CẢ FILE trong một transaction. Vì vậy tách `not valid`/`validate`
+không rút ngắn thời gian giữ khoá khi chạy qua runner; lợi ích trọn vẹn chỉ có khi chạy tay từng câu.
+`payments` nhỏ nên ảnh hưởng thực tế không đáng kể. Điểm này đã ghi trong comment migration.
+
+## Nợ/quyết định chờ
+
+- **Bộ đếm `account-reauth` trừ cả khi xác minh thành công.** Chấp nhận (5 lần/15 phút là đủ cho
+  dùng thật). Không sửa trong đợt này.
+- **Trial/`device_hash` bị xoá cùng tài khoản**, có thể mở lại đường "dùng thử → xoá → dùng thử lại".
+  Chờ chủ dự án quyết giữ mã băm thiết bị hay không.
+- **Đơn `pending` "sống" chặn xoá tối đa khoảng 24,5 giờ** (30 phút hạn + 24 giờ ân hạn). Người dùng
+  muốn xoá gấp phải chờ hoặc nhờ admin. Đây là đánh đổi có chủ ý để không mất tiền.
