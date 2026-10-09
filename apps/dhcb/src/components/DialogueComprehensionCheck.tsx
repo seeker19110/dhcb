@@ -6,12 +6,18 @@
 // không tốn lượt. Màn này CHE bản hội thoại (kèm bản dịch) trong lúc làm — nếu không, câu hỏi
 // nghĩa chỉ còn là việc dò dòng dịch ngay phía trên.
 //
+// SERVER CHẤM (đợt 0555 — docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md): đã đăng nhập
+// thì lượt nộp được gửi lên `/api/learning/evidence?action=cefr-dialogue`; server dựng lại đúng đề
+// từ seed, chấm, và CHỈ server ghi "đã học". Màn hiện kết quả theo phản hồi server; không tới được
+// server (mất mạng, hết phiên, lỗi…) thì vẫn cho xem kết quả chấm tại máy nhưng NÓI THẬT là chưa lưu.
+// Chưa đăng nhập: chấm tại máy, nói thật là cần đăng nhập để lưu.
+//
 // A11y: mỗi câu là một `fieldset role="radiogroup"` + `legend`, radio THẬT (phím mũi tên chạy sẵn);
 // phản hồi đúng/sai bằng CHỮ + biểu tượng, không chỉ bằng màu; sau khi nộp, focus chuyển tới khối
 // kết quả (`role="status"`) để trình đọc màn hình đọc điểm ngay.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, ChevronLeft, ClipboardCheck, RotateCcw, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, ClipboardCheck, RotateCcw, Send, XCircle } from 'lucide-react'
 import type { Dialogue } from '../data/dialogues'
 import type { AccentClasses } from '../lib/cefrAccent'
 import {
@@ -20,8 +26,9 @@ import {
   gradeComprehension,
   requiredCorrect,
   type ComprehensionDirection,
-  type ComprehensionResult,
 } from '../lib/dialogueComprehension'
+import { submitDialogueCheck, type DialogueCheckOutcome } from '../lib/dialogueCheckClient'
+import { MAX_DIALOGUE_ATTEMPT } from '@dhcb/core-contracts/cefrDialogueCheck'
 import { buttonClass } from '@core/buttonStyles'
 
 export interface DialogueComprehensionCheckProps {
@@ -30,12 +37,91 @@ export interface DialogueComprehensionCheckProps {
   ownerId: string
   isA: boolean
   accent: AccentClasses
-  /** Có lưu được tiến độ không (đã đăng nhập). Không thì nói thật là chưa lưu. */
+  /** Đã đăng nhập (server ghi được tiến độ). Không thì chấm tại máy và nói thật là chưa lưu. */
   canSave: boolean
-  /** Gọi ĐÚNG MỘT LẦN mỗi lượt đạt — nơi gọi ghi `markDialogueLearned`. */
-  onPassed: () => void
+  /**
+   * Gọi ĐÚNG MỘT LẦN mỗi lượt mà SERVER xác nhận đã ghi "đã học" (`saved: true`) — nơi gọi phản
+   * chiếu vào kho máy (`recordServerVerifiedDialogue`) và tính lại mục lục. Client không tự ghi.
+   */
+  onVerified: () => void
   /** Quay lại bản hội thoại. */
   onBack: () => void
+  /**
+   * Số lượt bắt đầu (seed). Mặc định NGẪU NHIÊN: server chỉ chấm mỗi lượt MỘT lần, nên mở lại màn
+   * này phải ra lượt mới chứ không quay về lượt 0 đã dùng. Test truyền số cố định.
+   */
+  initialAttempt?: number
+}
+
+/** Kết cục của lần nộp, gắn với lời nhắn hiện cho người học. */
+type Notice =
+  'saved' | 'server-not-passed' | 'guest' | Exclude<DialogueCheckOutcome['kind'], 'graded'>
+
+/** Kết quả đang hiện: từ server (nguồn sự thật) hoặc chấm tại máy (khi không lưu được). */
+interface ShownResult {
+  source: 'server' | 'local'
+  correct: number
+  total: number
+  required: number
+  passed: boolean
+  /** Theo thứ tự câu: đáp án đúng + đúng/sai của lựa chọn. */
+  items: { correctId: string; correct: boolean }[]
+  notice: Notice
+}
+
+/** Kết cục gửi lại được (lỗi tạm thời) — hiện nút "Gửi lại" với đúng các câu trả lời đó. */
+const RESENDABLE: ReadonlySet<Notice> = new Set(['offline', 'rate-limited', 'error'])
+
+/**
+ * Lời nhắn dưới điểm số — nói THẬT tình trạng lưu. "Đã học" chỉ được nói khi server xác nhận.
+ * Kết quả chấm tại máy luôn kèm "chưa lưu" và lý do + việc cần làm.
+ */
+function noticeText(r: ShownResult, isA: boolean): string {
+  const retryHint = isA
+    ? 'Xem lại hội thoại rồi làm lại — lượt sau câu hỏi sẽ khác.'
+    : 'Read the dialogue again, then retry — the questions will change.'
+  switch (r.notice) {
+    case 'saved':
+      return isA
+        ? 'Máy chủ đã chấm và ghi hội thoại này là ĐÃ HỌC.'
+        : 'Checked by the server — this dialogue is now marked as LEARNED.'
+    case 'server-not-passed':
+      return retryHint
+    case 'guest':
+      return r.passed
+        ? isA
+          ? 'Bạn đã đạt, nhưng cần đăng nhập để lưu tiến độ.'
+          : 'You passed, but you need to sign in to save progress.'
+        : retryHint
+    case 'offline':
+      return isA
+        ? 'Chưa lưu: mất kết nối nên máy chủ chưa chấm lượt này. Điểm trên là chấm tại máy. Kiểm tra mạng rồi bấm Gửi lại.'
+        : "Not saved: you're offline, so the server hasn't checked this attempt. The score above was checked on this device. Check your connection, then press Send again."
+    case 'rate-limited':
+      return isA
+        ? 'Chưa lưu: bạn nộp hơi nhanh. Đợi khoảng một phút rồi bấm Gửi lại.'
+        : 'Not saved: too many submissions. Wait about a minute, then press Send again.'
+    case 'error':
+      return isA
+        ? 'Chưa lưu: máy chủ đang gặp lỗi. Thử Gửi lại sau ít phút.'
+        : 'Not saved: the server ran into a problem. Try Send again in a few minutes.'
+    case 'auth':
+      return isA
+        ? 'Chưa lưu: phiên đăng nhập đã hết. Đăng nhập lại rồi làm lại bài.'
+        : 'Not saved: your session has expired. Sign in again, then retake the check.'
+    case 'attempt-used':
+      return isA
+        ? 'Chưa lưu: lượt này đã được nộp trước đó nên không chấm lại. Bấm Làm lại để có câu hỏi mới.'
+        : 'Not saved: this attempt was already submitted, so it cannot be checked again. Press Retry for new questions.'
+    case 'outdated':
+      return isA
+        ? 'Chưa lưu: nội dung hội thoại vừa được cập nhật. Tải lại trang rồi làm lại.'
+        : 'Not saved: this dialogue was just updated. Reload the page, then retake the check.'
+  }
+}
+
+function randomAttempt(): number {
+  return Math.floor(Math.random() * MAX_DIALOGUE_ATTEMPT)
 }
 
 export default function DialogueComprehensionCheck({
@@ -44,14 +130,18 @@ export default function DialogueComprehensionCheck({
   isA,
   accent,
   canSave,
-  onPassed,
+  onVerified,
   onBack,
+  initialAttempt,
 }: DialogueComprehensionCheckProps) {
   const dir: ComprehensionDirection = isA ? 'A' : 'B'
   // Số lần làm — đổi seed để "Làm lại" ra đề khác (khác câu làm đề + thứ tự phương án).
-  const [attempt, setAttempt] = useState(0)
+  const [attempt, setAttempt] = useState(() => initialAttempt ?? randomAttempt())
   const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [result, setResult] = useState<ComprehensionResult | null>(null)
+  const [result, setResult] = useState<ShownResult | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  // Lượt đang chờ server — để bỏ phản hồi đến muộn của lượt cũ (người học đã bấm Làm lại).
+  const pendingAttemptRef = useRef<number | null>(null)
   const resultRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
@@ -76,18 +166,85 @@ export default function DialogueComprehensionCheck({
     headingRef.current?.focus()
   }, [attempt])
 
+  /** Chấm tại máy — chỉ dùng khi KHÔNG có kết quả server (khách, hoặc không lưu được). */
+  function localResult(notice: Notice): ShownResult {
+    const g = gradeComprehension(questions, answers)
+    return {
+      source: 'local',
+      correct: g.correct,
+      total: g.total,
+      required: g.required,
+      passed: g.passed,
+      items: questions.map((q, i) => ({
+        correctId: q.correctId,
+        correct: g.items[i]?.correct ?? false,
+      })),
+      notice,
+    }
+  }
+
+  async function send() {
+    const sentAttempt = attempt
+    pendingAttemptRef.current = sentAttempt
+    setSubmitting(true)
+    const outcome = await submitDialogueCheck({
+      ownerId,
+      titleEn: dialogue.titleEn,
+      direction: dir,
+      attempt: sentAttempt,
+      answers: questions.flatMap((q) => {
+        const optionId = answers[q.id]
+        return optionId === undefined ? [] : [{ questionId: q.id, optionId }]
+      }),
+    })
+    // Đã bấm Làm lại / rời màn trong lúc chờ → phản hồi này không còn thuộc màn đang hiện.
+    if (pendingAttemptRef.current !== sentAttempt) return
+    pendingAttemptRef.current = null
+    setSubmitting(false)
+    if (outcome.kind !== 'graded') {
+      setResult(localResult(outcome.kind))
+      return
+    }
+    const r = outcome.result
+    const byId = new Map(r.items.map((it) => [it.questionId, it]))
+    setResult({
+      source: 'server',
+      correct: r.correct,
+      total: r.total,
+      required: r.required,
+      passed: r.passed,
+      items: questions.map((q) => {
+        const it = byId.get(q.id)
+        return { correctId: it?.correctId ?? q.correctId, correct: it?.correct ?? false }
+      }),
+      notice: r.passed && r.saved ? 'saved' : 'server-not-passed',
+    })
+    if (r.passed && r.saved) onVerified()
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (result || !answeredAll) return
-    const graded = gradeComprehension(questions, answers)
-    setResult(graded)
-    if (graded.passed) onPassed()
+    if (result || submitting || !answeredAll) return
+    if (!canSave) {
+      // Khách: không có tài khoản để server ghi — chấm tại máy và nói thật là chưa lưu.
+      setResult(localResult('guest'))
+      return
+    }
+    void send()
+  }
+
+  function resend() {
+    if (submitting) return
+    setResult(null)
+    void send()
   }
 
   function retry() {
+    pendingAttemptRef.current = null
+    setSubmitting(false)
     setAnswers({})
     setResult(null)
-    setAttempt((n) => n + 1)
+    setAttempt((n) => (n + 1) % MAX_DIALOGUE_ATTEMPT)
   }
 
   const backButton = (
@@ -148,6 +305,8 @@ export default function DialogueComprehensionCheck({
           {questions.map((q, qi) => {
             const legendId = `cq-${q.id}-legend`
             const item = result?.items[qi]
+            // Sau khi nộp: đáp án đúng lấy theo KẾT QUẢ ĐANG HIỆN (server nếu có).
+            const correctId = item?.correctId ?? q.correctId
             return (
               <li key={q.id} className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
                 {/* Viền nằm ở <li>, fieldset để trần: legend mặc định "ngồi" trên viền fieldset,
@@ -155,7 +314,7 @@ export default function DialogueComprehensionCheck({
                 <fieldset
                   role="radiogroup"
                   aria-labelledby={legendId}
-                  disabled={result !== null}
+                  disabled={result !== null || submitting}
                   className="m-0 min-w-0 border-0 p-0"
                 >
                   <legend id={legendId} className="float-left w-full p-0">
@@ -178,7 +337,7 @@ export default function DialogueComprehensionCheck({
                   <div className="clear-both space-y-2 pt-3">
                     {q.options.map((o) => {
                       const chosen = answers[q.id] === o.id
-                      const isCorrect = o.id === q.correctId
+                      const isCorrect = o.id === correctId
                       const showMark = result !== null && (chosen || isCorrect)
                       const border = !result
                         ? chosen
@@ -281,20 +440,31 @@ export default function DialogueComprehensionCheck({
           <div className="mt-4">
             <button
               type="submit"
-              disabled={!answeredAll}
+              disabled={!answeredAll || submitting}
               aria-describedby="cq-submit-hint"
+              aria-busy={submitting}
               className={buttonClass({ variant: 'primary', fullWidth: true })}
             >
-              {isA ? 'Nộp bài' : 'Submit'}
+              {submitting
+                ? isA
+                  ? 'Đang gửi để chấm…'
+                  : 'Sending for checking…'
+                : isA
+                  ? 'Nộp bài'
+                  : 'Submit'}
             </button>
             <p id="cq-submit-hint" className="mt-2 text-xs text-zinc-400 text-center">
-              {answeredAll
+              {submitting
                 ? isA
-                  ? 'Đã trả lời đủ — bấm Nộp bài để xem kết quả.'
-                  : 'All answered — submit to see your result.'
-                : isA
-                  ? `Trả lời đủ ${total} câu để nộp bài.`
-                  : `Answer all ${total} questions to submit.`}
+                  ? 'Máy chủ đang chấm bài của bạn.'
+                  : 'The server is checking your answers.'
+                : answeredAll
+                  ? isA
+                    ? 'Đã trả lời đủ — bấm Nộp bài để xem kết quả.'
+                    : 'All answered — submit to see your result.'
+                  : isA
+                    ? `Trả lời đủ ${total} câu để nộp bài.`
+                    : `Answer all ${total} questions to submit.`}
             </p>
           </div>
         )}
@@ -305,7 +475,7 @@ export default function DialogueComprehensionCheck({
             tabIndex={-1}
             role="status"
             className={`mt-4 rounded-xl border p-3 outline-none ${
-              result.passed ? 'border-emerald-500/60' : 'border-amber-500/60'
+              result.notice === 'saved' ? 'border-emerald-500/60' : 'border-amber-500/60'
             }`}
           >
             <p className="flex items-center gap-1.5 font-semibold text-zinc-100">
@@ -321,27 +491,27 @@ export default function DialogueComprehensionCheck({
                 />
               )}
               {isA
-                ? `Đúng ${result.correct}/${result.total} — ${result.passed ? 'đạt' : `chưa đạt (cần ${result.required})`}`
-                : `${result.correct}/${result.total} correct — ${result.passed ? 'passed' : `not yet (need ${result.required})`}`}
+                ? `Đúng ${result.correct}/${result.total} — ${result.passed ? 'đạt' : `chưa đạt (cần ${result.required})`}${result.source === 'local' ? ' · chưa lưu' : ''}`
+                : `${result.correct}/${result.total} correct — ${result.passed ? 'passed' : `not yet (need ${result.required})`}${result.source === 'local' ? ' · not saved' : ''}`}
             </p>
-            <p className="mt-1 text-sm text-zinc-300">
-              {result.passed
-                ? canSave
-                  ? isA
-                    ? 'Hội thoại này đã được ghi là ĐÃ HỌC.'
-                    : 'This dialogue is now marked as LEARNED.'
-                  : isA
-                    ? 'Bạn đã đạt, nhưng cần đăng nhập để lưu tiến độ.'
-                    : 'You passed, but you need to sign in to save progress.'
-                : isA
-                  ? 'Xem lại hội thoại rồi làm lại — lượt sau câu hỏi sẽ khác.'
-                  : 'Read the dialogue again, then retry — the questions will change.'}
-            </p>
+            <p className="mt-1 text-sm text-zinc-300">{noticeText(result, isA)}</p>
             <div className="mt-3 flex flex-wrap gap-2">
+              {RESENDABLE.has(result.notice) && (
+                <button
+                  type="button"
+                  onClick={resend}
+                  className={buttonClass({ variant: 'primary' })}
+                >
+                  <Send className="w-4 h-4" aria-hidden="true" />
+                  {isA ? 'Gửi lại' : 'Send again'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={retry}
-                className={buttonClass({ variant: result.passed ? 'outline' : 'primary' })}
+                className={buttonClass({
+                  variant: result.passed || RESENDABLE.has(result.notice) ? 'outline' : 'primary',
+                })}
               >
                 <RotateCcw className="w-4 h-4" aria-hidden="true" />
                 {isA ? 'Làm lại (câu hỏi mới)' : 'Retry (new questions)'}
@@ -349,7 +519,9 @@ export default function DialogueComprehensionCheck({
               <button
                 type="button"
                 onClick={onBack}
-                className={buttonClass({ variant: result.passed ? 'primary' : 'outline' })}
+                className={buttonClass({
+                  variant: result.notice === 'saved' ? 'primary' : 'outline',
+                })}
               >
                 <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 {isA ? 'Xem lại hội thoại' : 'Back to the dialogue'}

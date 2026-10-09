@@ -764,3 +764,58 @@ describe('CEFR chỉ cấp quyền từ sổ chấm thi máy chủ', () => {
     expect(JSON.parse((saved[1] as unknown[])[7] as string)).toEqual({})
   })
 })
+
+// ── Đợt 0555: "đã học" hội thoại CEFR chỉ do SERVER ghi (sau khi chấm lại) ──────────────────
+// Đặc tả docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §⑤.
+describe('POST /api/progress — bản "learned|…" do client tự đẩy bị lọc, bản cũ trong DB giữ nguyên', () => {
+  function dialoguesWritten(): string[] {
+    const call = findCall('insert into english.learning_progress')
+    // Tham số $6 = cefr_dialogues (xem thứ tự cột trong câu insert của handler).
+    return JSON.parse((call?.[1] as unknown[])[5] as string) as string[]
+  }
+
+  it('client khai "learned|…" mới → KHÔNG vào DB, bản "đã xem" vẫn vào', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return { rows: [EMPTY_PROGRESS_ROW] }
+      return { rows: [] }
+    })
+    const resp = await handler(
+      makeRequest({ cefrDialogues: ['a1-greetings:Hi', 'learned|a1-greetings:Hi'] }),
+    )
+    expect(resp.status).toBe(200)
+    expect(dialoguesWritten()).toEqual(['a1-greetings:Hi'])
+  })
+
+  it('bản "learned|…" ĐÃ CÓ trong DB (server ghi / dữ liệu cũ) → giữ nguyên, không hạ cấp', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return {
+          rows: [
+            {
+              ...EMPTY_PROGRESS_ROW,
+              cefr_dialogues: ['a1-greetings:Hi', 'learned|a1-greetings:Hi'],
+            },
+          ],
+        }
+      return { rows: [] }
+    })
+    const resp = await handler(makeRequest({ cefrDialogues: ['a1-greetings:Hi', 'b1-x:Yo'] }))
+    expect(resp.status).toBe(200)
+    expect(dialoguesWritten()).toEqual(['a1-greetings:Hi', 'learned|a1-greetings:Hi', 'b1-x:Yo'])
+  })
+
+  it('chỉ đẩy thêm "learned|…" → không tính là học thật, không cộng thưởng', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (sql.includes('select learned, hard, srs, cefr_grammar'))
+        return { rows: [{ ...EMPTY_PROGRESS_ROW, cefr_dialogues: ['a1-greetings:Hi'] }] }
+      return { rows: [] }
+    })
+    const resp = await handler(
+      makeRequest({ cefrDialogues: ['a1-greetings:Hi', 'learned|a1-greetings:Hi'] }),
+    )
+    expect(resp.status).toBe(200)
+    expect(findCall('grant_daily_bonus_rolling')).toBeFalsy()
+    expect(dialoguesWritten()).toEqual(['a1-greetings:Hi'])
+  })
+})

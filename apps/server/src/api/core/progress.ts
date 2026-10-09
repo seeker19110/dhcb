@@ -29,6 +29,7 @@ import { withTransaction } from '@dhcb/core-db/transaction'
 import { resolvePlan } from '@dhcb/core-billing/plan'
 import { computeUnlockedLevels } from '@dhcb/core-learner/cefrUnlock'
 import { SyncEnvelopeSchema } from '@dhcb/core-contracts/sync'
+import { isLearnedDialogueEntry } from '@dhcb/core-contracts/cefrDialogueCheck'
 import {
   mergeSrsMap,
   mergeByTimestamp,
@@ -242,7 +243,14 @@ export default async function handler(req: Request): Promise<Response> {
   if (!result.ok)
     return jsonResponse({ error: result.error.message }, result.error.status, allHeaders)
 
-  const d = result.data
+  // Đợt 0555: hội thoại "ĐÃ HỌC" (`learned|…`) chỉ do server ghi sau khi CHẤM LẠI kiểm tra hiểu
+  // (`/api/learning/evidence?action=cefr-dialogue`). Bản client tự đẩy lên bị LỌC BỎ ở đây — nếu
+  // không, sửa localStorage là "đã học" cả cấp. Bản đã có trong DB vẫn giữ nguyên (merge UNION với
+  // `existing` bên dưới), nên dữ liệu cũ không bao giờ bị hạ cấp. Bản "đã xem" giữ luật cũ.
+  const d = {
+    ...result.data,
+    cefrDialogues: result.data.cefrDialogues.filter((e) => !isLearnedDialogueEntry(e)),
+  }
   const sync = d.sync
 
   // S09-1 bước 2 — TRA BIÊN NHẬN TRƯỚC TRANSACTION. Có biên nhận nghĩa là request này đã được

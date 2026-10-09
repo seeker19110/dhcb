@@ -708,7 +708,8 @@ export function DialogueView({
     ownerId: string
     learned: boolean
     canSave: boolean
-    onPassed: () => void
+    /** Server đã chấm lại và ghi "đã học" (đợt 0555) — nơi gọi phản chiếu + tính lại mục lục. */
+    onVerified: () => void
   }
 }) {
   const [activeLine, setActiveLine] = useState<number | null>(null)
@@ -1144,7 +1145,7 @@ export function DialogueView({
         isA={isA}
         accent={accent}
         canSave={comprehension.canSave}
-        onPassed={comprehension.onPassed}
+        onVerified={comprehension.onVerified}
         onBack={() => setChecking(false)}
       />
     )

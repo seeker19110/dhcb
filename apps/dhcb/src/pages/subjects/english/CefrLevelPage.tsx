@@ -90,7 +90,7 @@ import {
   getViewedDialogues,
   getLearnedDialogues,
   markDialogueViewed,
-  markDialogueLearned,
+  recordServerVerifiedDialogue,
   dialogueKey,
   circleDoneCount,
   levelVocabCounts,
@@ -801,9 +801,10 @@ export default function CefrLevelPage() {
                 ownerId: dialogueOwner,
                 learned: learnedDialogues.has(dialogueKey(dialogueOwner, dialogue.titleEn)),
                 canSave: uid !== '',
-                // Đạt kiểm tra hiểu → ghi "ĐÃ HỌC" + tính lại tiến độ/mục lục.
-                onPassed: () => {
-                  if (uid) markDialogueLearned(uid, dialogueOwner, dialogue.titleEn)
+                // SERVER đã chấm lại và ghi "ĐÃ HỌC" (đợt 0555) → phản chiếu vào kho máy này +
+                // tính lại tiến độ/mục lục. Client không tự phong "đã học".
+                onVerified: () => {
+                  recordServerVerifiedDialogue(uid, dialogueOwner, dialogue.titleEn)
                   bump()
                 },
               }
