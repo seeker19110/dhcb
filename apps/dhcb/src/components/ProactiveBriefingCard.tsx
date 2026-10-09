@@ -21,7 +21,7 @@ export default function ProactiveBriefingCard() {
   const isMorning = briefing.type === 'morning'
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 via-zinc-900/60 to-purple-950/40 p-5 shadow-xl backdrop-blur-sm mb-6">
+    <div className="relative overflow-hidden rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/40 theme-light:from-indigo-50 via-zinc-900/60 to-purple-950/40 theme-light:to-purple-50 p-5 shadow-xl backdrop-blur-sm mb-6">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
@@ -41,7 +41,7 @@ export default function ProactiveBriefingCard() {
 
         <Link
           to="/ban-dong-hanh"
-          className="text-xs font-medium text-indigo-400 theme-light:text-indigo-800 hover:text-indigo-300 flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg bg-indigo-900/30 hover:bg-indigo-900/50 border border-indigo-500/20 transition"
+          className="text-xs font-medium text-indigo-400 theme-light:text-indigo-800 hover:text-indigo-300 flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg bg-indigo-900/30 theme-light:bg-indigo-50 hover:bg-indigo-900/50 theme-light:hover:bg-indigo-100 border border-indigo-500/20 transition"
         >
           Hội thoại
           <ChevronRight className="w-3.5 h-3.5" />

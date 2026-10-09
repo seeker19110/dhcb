@@ -155,7 +155,7 @@ export default function EnglishHome() {
         {/* ── TIÊU ĐỀ & TIẾP TỤC HỌC CEFR ── */}
         <section
           aria-label="Học tập trọng tâm"
-          className="glass rounded-3xl p-5 border border-emerald-500/30 bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-emerald-950/30 shadow-xl space-y-4"
+          className="glass rounded-3xl p-5 border border-emerald-500/30 bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-emerald-950/30 theme-light:to-emerald-50 shadow-xl space-y-4"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

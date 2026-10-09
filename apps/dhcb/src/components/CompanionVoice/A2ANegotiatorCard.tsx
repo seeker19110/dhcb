@@ -138,7 +138,7 @@ export const A2ANegotiatorCard: React.FC = () => {
                     {negotiations.map((neg) => (
                       <div
                         key={neg.id}
-                        className="bg-emerald-950/20 border border-emerald-800/40 rounded-xl p-3 flex items-center justify-between text-zinc-200"
+                        className="bg-emerald-950/20 theme-light:bg-emerald-50 border border-emerald-800/40 rounded-xl p-3 flex items-center justify-between text-zinc-200"
                       >
                         <div className="space-y-0.5">
                           <div className="font-semibold text-emerald-300 theme-light:text-emerald-900 flex items-center gap-1.5 text-xs">
@@ -181,7 +181,7 @@ export const A2ANegotiatorCard: React.FC = () => {
                         <div>
                           <div className="font-bold text-white text-xs flex items-center gap-1.5">
                             <span>{peer.peerDisplayName}</span>
-                            <span className="px-1.5 py-0.5 rounded text-[0.6875rem] font-bold bg-indigo-500/20 text-indigo-300 theme-light:text-indigo-800 border border-indigo-500/30">
+                            <span className="px-1.5 py-0.5 rounded text-[0.6875rem] font-bold bg-indigo-500/20 text-indigo-200 theme-light:text-indigo-800 border border-indigo-500/30">
                               {Math.round(peer.compatibilityScore * 100)}% Tương thích
                             </span>
                           </div>
@@ -217,7 +217,7 @@ export const A2ANegotiatorCard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-zinc-800/80 text-[0.6875rem] text-zinc-500 flex items-center gap-1.5">
+              <div className="pt-2 border-t border-zinc-800/80 text-[0.6875rem] text-content-secondary flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 theme-light:text-emerald-900 shrink-0" />
                 <span>
                   Giao thức A2A bảo vệ tuyệt đối lịch trình cá nhân bằng mật mã Zero-Knowledge.

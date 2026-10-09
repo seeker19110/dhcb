@@ -176,7 +176,7 @@ export default function MetacognitiveReflectionModal({
 
               {/* Socratic Prompt Card */}
               {prompt && (
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-950/40 to-emerald-950/30 border border-teal-500/30">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-950/40 theme-light:from-teal-50 to-emerald-950/30 theme-light:to-emerald-50 border border-teal-500/30">
                   <div className="flex items-center gap-2 text-teal-400 theme-light:text-teal-900 text-xs font-bold mb-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Chủ đề: {prompt.theme}</span>

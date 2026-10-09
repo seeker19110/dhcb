@@ -39,7 +39,7 @@ export default function OfflineStatusBanner() {
       <aside
         role="status"
         aria-live="polite"
-        className="bg-emerald-900/90 border-b border-emerald-700/60 text-emerald-100 theme-light:text-emerald-900 px-3 py-1.5 text-xs flex items-center justify-center gap-2 transition duration-300 animate-fadeIn"
+        className="bg-emerald-900/90 theme-light:bg-emerald-100 border-b border-emerald-700/60 text-emerald-100 theme-light:text-emerald-900 px-3 py-1.5 text-xs flex items-center justify-center gap-2 transition duration-300 animate-fadeIn"
       >
         <Wifi className="w-3.5 h-3.5 shrink-0 text-emerald-300 theme-light:text-emerald-900" />
         <span>Đã kết nối lại Internet — Đang đồng bộ tiến độ học...</span>
@@ -53,7 +53,7 @@ export default function OfflineStatusBanner() {
     <aside
       role="alert"
       aria-live="assertive"
-      className="bg-amber-950/90 border-b border-amber-800/60 text-amber-200 theme-light:text-amber-900 px-3 py-1.5 text-xs flex items-center justify-center gap-2 transition duration-300"
+      className="bg-amber-950/90 theme-light:bg-amber-100 border-b border-amber-800/60 text-amber-200 theme-light:text-amber-900 px-3 py-1.5 text-xs flex items-center justify-center gap-2 transition duration-300"
     >
       <WifiOff className="w-3.5 h-3.5 shrink-0 text-amber-400 theme-light:text-amber-900" />
       <span>Bạn đang ngoại tuyến — Vẫn có thể ôn tập từ vựng & bài học đã tải sẵn.</span>

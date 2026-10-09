@@ -186,7 +186,7 @@ export default function MicroDrillModal({
               </p>
             )}
             {isAnswered && (
-              <div className="rounded-xl bg-sky-950/30 border border-sky-500/30 p-3 flex flex-col gap-2 animate-fade-in">
+              <div className="rounded-xl bg-sky-950/30 theme-light:bg-sky-50 border border-sky-500/30 p-3 flex flex-col gap-2 animate-fade-in">
                 <p className="text-xs text-sky-200 theme-light:text-sky-900 font-medium">
                   💡 {currentDrill.explanationVi}
                 </p>

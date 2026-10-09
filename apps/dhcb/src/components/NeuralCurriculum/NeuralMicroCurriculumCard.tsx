@@ -61,7 +61,7 @@ export default function NeuralMicroCurriculumCard() {
   const activeModule = state.modules[0]
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-sky-500/30 bg-gradient-to-b from-sky-950/20 via-zinc-950 to-zinc-950 p-4 shadow-xl backdrop-blur-md">
+    <div className="flex flex-col gap-3 rounded-2xl border border-sky-500/30 bg-gradient-to-b from-sky-950/20 theme-light:from-sky-50 via-zinc-950 to-zinc-950 p-4 shadow-xl backdrop-blur-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-sky-500/20 text-sky-400 theme-light:text-sky-900 border border-sky-500/30 shadow-lg">
@@ -103,7 +103,7 @@ export default function NeuralMicroCurriculumCard() {
             type="button"
             disabled={generating}
             onClick={() => handleGenerate('Đàm phán hợp đồng & deal giá')}
-            className="text-[0.6875rem] font-medium text-sky-400 theme-light:text-sky-900 hover:text-sky-300 bg-sky-950/40 hover:bg-sky-900/40 px-2.5 py-1 rounded-lg border border-sky-500/30 transition flex items-center gap-1"
+            className="text-[0.6875rem] font-medium text-sky-400 theme-light:text-sky-900 hover:text-sky-300 bg-sky-950/40 theme-light:bg-sky-50 hover:bg-sky-900/40 theme-light:hover:bg-sky-100 px-2.5 py-1 rounded-lg border border-sky-500/30 transition flex items-center gap-1"
           >
             {generating ? (
               <Loader2 className="w-3 h-3 animate-spin" />

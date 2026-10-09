@@ -22,7 +22,7 @@ interface InteractiveCanvasViewportProps {
 
 const DEFAULT_THEME = {
   border: 'border-sky-500/40',
-  bg: 'bg-sky-950/40',
+  bg: 'bg-sky-950/40 theme-light:bg-sky-50',
   text: 'text-sky-400 theme-light:text-sky-900',
   glow: 'rgba(56, 189, 248, 0.2)',
 }
@@ -33,13 +33,13 @@ const DOMAIN_COLORS: Record<string, { border: string; bg: string; text: string; 
   learning: DEFAULT_THEME,
   work: {
     border: 'border-emerald-500/40',
-    bg: 'bg-emerald-950/40',
+    bg: 'bg-emerald-950/40 theme-light:bg-emerald-50',
     text: 'text-emerald-400 theme-light:text-emerald-900',
     glow: 'rgba(34, 197, 94, 0.2)',
   },
   general: {
     border: 'border-purple-500/40',
-    bg: 'bg-purple-950/40',
+    bg: 'bg-purple-950/40 theme-light:bg-purple-50',
     text: 'text-purple-400 theme-light:text-purple-800',
     glow: 'rgba(168, 85, 247, 0.2)',
   },
@@ -260,7 +260,7 @@ export default function InteractiveCanvasViewport({
                         e.stopPropagation()
                         onDeleteNode(node.id)
                       }}
-                      className="ml-1 p-0.5 text-rose-400 theme-light:text-rose-900 hover:bg-rose-950/60 rounded"
+                      className="ml-1 p-0.5 text-rose-400 theme-light:text-rose-900 hover:bg-rose-950/60 theme-light:hover:bg-rose-100 rounded"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

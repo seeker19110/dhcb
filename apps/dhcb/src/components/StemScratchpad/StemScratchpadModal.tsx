@@ -29,21 +29,22 @@ const HIEN_THI_KET_QUA: Record<
 > = {
   valid: {
     nhan: '✓ Hợp lệ',
-    khung: 'bg-emerald-950/20 border-emerald-500/30',
+    khung: 'bg-emerald-950/20 theme-light:bg-emerald-50 border-emerald-500/30',
     huyHieu: 'bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900',
-    phanHoi: 'bg-emerald-900/30 text-emerald-200 theme-light:text-emerald-900',
+    phanHoi:
+      'bg-emerald-900/30 theme-light:bg-emerald-100 text-emerald-200 theme-light:text-emerald-900',
   },
   invalid: {
     nhan: '✗ Cần chỉnh sửa',
-    khung: 'bg-rose-950/20 border-rose-500/30',
+    khung: 'bg-rose-950/20 theme-light:bg-rose-50 border-rose-500/30',
     huyHieu: 'bg-rose-500/20 text-rose-300 theme-light:text-rose-900',
-    phanHoi: 'bg-rose-900/30 text-rose-200 theme-light:text-rose-900',
+    phanHoi: 'bg-rose-900/30 theme-light:bg-rose-100 text-rose-200 theme-light:text-rose-900',
   },
   unverified: {
     nhan: '? Chưa tự kiểm được',
-    khung: 'bg-amber-950/20 border-amber-500/30',
+    khung: 'bg-amber-950/20 theme-light:bg-amber-50 border-amber-500/30',
     huyHieu: 'bg-amber-500/20 text-amber-300 theme-light:text-amber-900',
-    phanHoi: 'bg-amber-900/30 text-amber-200 theme-light:text-amber-900',
+    phanHoi: 'bg-amber-900/30 theme-light:bg-amber-100 text-amber-200 theme-light:text-amber-900',
   },
 }
 
@@ -149,7 +150,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
         className="relative w-full max-w-3xl max-h-[90dvh] flex flex-col rounded-3xl border border-teal-500/30 bg-zinc-950 text-white shadow-2xl overflow-hidden focus:outline-none"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-teal-950/40 via-emerald-950/20 to-zinc-950 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-teal-950/40 theme-light:from-teal-50 via-emerald-950/20 theme-light:via-emerald-50 to-zinc-950 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-xl">
               📐
@@ -198,7 +199,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
           </div>
 
           {/* Problem Statement Card */}
-          <div className="p-4 rounded-2xl bg-teal-950/20 border border-teal-500/20">
+          <div className="p-4 rounded-2xl bg-teal-950/20 theme-light:bg-teal-50 border border-teal-500/20">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-teal-300 theme-light:text-teal-900">Đề bài</h4>
               {problem?.isSolved && (
@@ -270,7 +271,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
 
           {/* Micro Hint Display */}
           {activeHint && (
-            <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 text-amber-200 theme-light:text-amber-900 text-xs animate-fade-in flex items-start gap-2">
+            <div className="p-3.5 rounded-2xl bg-amber-950/30 theme-light:bg-amber-50 border border-amber-500/30 text-amber-200 theme-light:text-amber-900 text-xs animate-fade-in flex items-start gap-2">
               <span className="text-base">💡</span>
               <div className="flex-1">
                 <span className="font-bold">Gợi ý từ AI Tutor: </span>

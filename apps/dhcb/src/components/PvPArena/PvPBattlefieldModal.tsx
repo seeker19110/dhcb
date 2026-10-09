@@ -174,7 +174,7 @@ export default function PvPBattlefieldModal({
         {/* Bảng Scoreboard Đối Đầu 2 Bên */}
         <div className="my-4 grid grid-cols-2 gap-3 relative">
           {/* Người chơi (Player 1) */}
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/30">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-indigo-950/40 theme-light:bg-indigo-50 border border-indigo-500/30">
             <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 text-2xl flex items-center justify-center border border-indigo-400/40 shrink-0">
               {match.player1.avatar}
             </div>
@@ -197,7 +197,7 @@ export default function PvPBattlefieldModal({
           </div>
 
           {/* Đối thủ (Player 2) — đấu trường chỉ có đối thủ AI, phải nói rõ (changelog 0482). */}
-          <div className="flex items-center justify-end gap-3 p-3 rounded-2xl bg-purple-950/40 border border-purple-500/30 text-right">
+          <div className="flex items-center justify-end gap-3 p-3 rounded-2xl bg-purple-950/40 theme-light:bg-purple-50 border border-purple-500/30 text-right">
             <div className="min-w-0 flex-1">
               {match.player2.isGhostBot && (
                 <div className="text-[0.6875rem] font-black text-purple-300 theme-light:text-purple-800">
@@ -308,10 +308,10 @@ export default function PvPBattlefieldModal({
                   if (roundResult) {
                     if (isCorrect) {
                       btnStyle =
-                        'bg-emerald-950/80 border-emerald-500 text-emerald-300 theme-light:text-emerald-900 shadow-lg shadow-emerald-500/20 font-bold'
+                        'bg-emerald-950/80 theme-light:bg-emerald-100 border-emerald-500 text-emerald-300 theme-light:text-emerald-900 shadow-lg shadow-emerald-500/20 font-bold'
                     } else if (isWrong) {
                       btnStyle =
-                        'bg-rose-950/80 border-rose-500 text-rose-300 theme-light:text-rose-900 font-bold'
+                        'bg-rose-950/80 theme-light:bg-rose-100 border-rose-500 text-rose-300 theme-light:text-rose-900 font-bold'
                     } else {
                       btnStyle = 'opacity-40 border-zinc-800 text-zinc-500'
                     }
