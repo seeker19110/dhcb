@@ -6,13 +6,19 @@ import {
   StemSubjectType,
   StemVariableTable,
 } from '@dhcb/core-contracts/stemScratchpad'
-import { checkMathStep, type MathStepCheck } from '@dhcb/core-grading/stepCheckMath'
+import {
+  checkMathStep,
+  describeMathStep,
+  type MathStepCheck,
+} from '@dhcb/core-grading/stepCheckMath'
 import { checkChemStep, type ChemStepCheck } from '@dhcb/core-grading/stepCheckChem'
 import {
   checkPhysicsStep,
   type DimensionMismatch,
   type PhysicsStepCheck,
 } from '@dhcb/core-grading/stepCheckPhysics'
+import { generateSocraticHint, type MicroHint } from './stemMicroHint.js'
+import { bangBienCuaDe } from './stemPhysicsVariables.js'
 
 /** Nói rõ bộ kiểm đọc được gì — để "chưa tự kiểm được" không mơ hồ. */
 const PHAM_VI_KIEM: Record<StemSubjectType, string> = {
@@ -28,26 +34,36 @@ const PHAM_VI_KIEM: Record<StemSubjectType, string> = {
   biology: 'Bộ kiểm chưa kiểm được bước giải môn Sinh học.',
 }
 
+/** Bước giữa được so với cái gì: phương trình của ĐỀ, hay bước 1 do chính người học viết. */
+type MocSo = 'de' | 'buoc1'
+
 /**
  * Kết luận của bộ kiểm toán → phản hồi cho người học. Trả `null` khi bộ kiểm không kết luận được
  * (để rơi xuống nhánh "chưa tự kiểm được"). Gợi ý theo lối Socratic: hỏi để người học tự tìm chỗ
  * sai, KHÔNG đưa nghiệm hay bước đúng.
+ *
+ * `moc = 'buoc1'` (changelog 0551): đề ngân hàng là lời văn, không có phương trình — bước 1 của
+ * người học làm mốc. Khi đó chỉ được nói "tương đương bước 1", KHÔNG được nói "khớp đề bài", và
+ * KHÔNG bao giờ là đáp số cuối (bước 1 có thể đã sai so với đề; đáp số chấm ở `submit_solution`).
  */
-function ketLuanToan(kq: MathStepCheck): ScratchpadStepValidation | null {
+function ketLuanToan(kq: MathStepCheck, moc: MocSo): ScratchpadStepValidation | null {
+  const tenMoc = moc === 'de' ? 'đề bài' : 'bước 1 của em'
   switch (kq.verdict) {
     case 'unsupported':
       return null
-    case 'equivalent':
+    case 'equivalent': {
+      const laDapSo = moc === 'de' && kq.isFinalAnswer
       return {
         isValid: true,
         status: 'valid',
         errorType: 'none',
-        feedback: kq.isFinalAnswer
+        feedback: laDapSo
           ? 'Tương đương đề bài và đã ở dạng đáp số: tập nghiệm khớp đúng tập nghiệm của đề.'
-          : 'Biến đổi tương đương: tập nghiệm (số thực) vẫn giữ nguyên so với đề bài.',
+          : `Biến đổi tương đương: tập nghiệm (số thực) vẫn giữ nguyên so với ${tenMoc}.`,
         confidence: 1,
-        isFinalAnswer: kq.isFinalAnswer,
+        isFinalAnswer: laDapSo,
       }
+    }
     case 'division_by_zero':
       return {
         isValid: false,
@@ -60,10 +76,10 @@ function ketLuanToan(kq: MathStepCheck): ScratchpadStepValidation | null {
     case 'changed': {
       const doi =
         kq.lost && kq.extra
-          ? 'Bước này làm ĐỔI tập nghiệm so với đề bài (vừa mất nghiệm của đề, vừa có nghiệm lạ).'
+          ? `Bước này làm ĐỔI tập nghiệm so với ${tenMoc} (vừa mất nghiệm, vừa có nghiệm lạ).`
           : kq.lost
-            ? 'Bước này làm MẤT nghiệm: có giá trị thoả đề bài nhưng không thoả bước này.'
-            : 'Bước này làm THÊM nghiệm lạ: có giá trị thoả bước này nhưng không thoả đề bài.'
+            ? `Bước này làm MẤT nghiệm: có giá trị thoả ${tenMoc} nhưng không thoả bước này.`
+            : `Bước này làm THÊM nghiệm lạ: có giá trị thoả bước này nhưng không thoả ${tenMoc}.`
       const goiY =
         kq.lost && kq.extra
           ? 'Thử kiểm lại từng vế: khi chuyển một hạng tử sang vế bên kia, dấu của nó đổi thế nào? ' +
@@ -204,7 +220,7 @@ function lyDoChuaKiemLi(kq: Extract<PhysicsStepCheck, { verdict: 'unsupported' }
 /**
  * Kết luận của bộ kiểm thứ nguyên → phản hồi. CHỈ lệch thứ nguyên đã chứng minh (và chia cho 0) mới
  * thành ✗. Khớp thứ nguyên là điều kiện CẦN, không đủ (`v = 2at` khớp mà vẫn sai) → không bao giờ ✓;
- * trả `null` để nơi gọi còn thử khớp đáp số đề mẫu rồi mới rơi về "chưa tự kiểm được".
+ * trả `null` để nơi gọi rơi về "chưa tự kiểm được" (`chuaKiemLi`).
  */
 function ketLuanLi(kq: PhysicsStepCheck): ScratchpadStepValidation | null {
   if (kq.verdict === 'mismatch') {
@@ -268,58 +284,17 @@ function chuaKiemLi(kq: PhysicsStepCheck): ScratchpadStepValidation {
   }
 }
 
-/**
- * Bảng thứ nguyên biến của các ĐỀ MẪU Vật lí mà giao diện tự dựng (khoá = `problemLatex` nguyên
- * văn). Đề có bảng `variables` riêng thì bảng đó thắng. Đề lạ không có ở đây → không đoán.
- */
-const BANG_BIEN_DE_MAU: Readonly<Record<string, StemVariableTable>> = {
-  'v = a \\cdot t': { v: 'm/s', a: 'm/s^2', t: 's' },
-  'v = v_0 + a \\cdot t': { v: 'm/s', v_0: 'm/s', a: 'm/s^2', t: 's' },
-}
-
 /** Điện tích có dấu: 0, +3, −2. */
 function kyHieuDien(q: number): string {
   return q > 0 ? `+${q}` : q < 0 ? `−${-q}` : '0'
 }
 
 /**
- * Đáp số ĐÃ BIẾT của các đề mẫu (modal STEM hiện chỉ dựng 3 đề cố định). Đây là kiểm tra THẬT duy
- * nhất mà bộ kiểm làm được: đáp số cuối khớp NGUYÊN VẸN với đáp số đúng. Trước 2026-10-02 server
- * so CHUỖI CON (`includes('x = 5')`) nên "x = 50" hay "H_2 + O_2 -> 2H_2O" (chưa cân bằng) vẫn được
- * gắn "ĐÃ GIẢI XONG" (changelog 0473). Đề vật lý cần khớp cả lời đề vì công thức `v = a·t` không
- * tự quyết định đáp số.
- */
-const DAP_SO_DE_MAU: ReadonlyArray<{
-  subject: StemSubjectType
-  problemLatex: string
-  problemStatement?: string
-  dapSo: readonly string[]
-}> = [
-  { subject: 'math', problemLatex: '2x + 5 = 15', dapSo: ['x=5'] },
-  {
-    subject: 'physics',
-    problemLatex: 'v = a \\cdot t',
-    problemStatement: 'Tính vận tốc sau 5s khi gia tốc a = 2m/s² từ trạng thái nghỉ:',
-    dapSo: ['v=10', 'v=10m/s'],
-  },
-  {
-    subject: 'chemistry',
-    problemLatex: 'H_2 + O_2 \\rightarrow H_2O',
-    dapSo: ['2H_2+O_2\\rightarrow2H_2O'],
-  },
-]
-
-/**
- * Phần đề bài bộ kiểm cần. Mọi trường đều tuỳ chọn: thiếu thì coi như đề lạ. `variables` là bảng
- * thứ nguyên biến của đề Vật lí (changelog 0552).
+ * Phần đề bài bộ kiểm cần. Mọi trường đều tuỳ chọn. Thiếu `problemLatex` (đề lời văn của ngân hàng
+ * đề, changelog 0551) thì bước 1 làm mốc cho Toán. `variables` là bảng thứ nguyên biến của đề Vật
+ * lí (changelog 0552).
  */
 type DeBai = { problemLatex?: string; problemStatement?: string; variables?: StemVariableTable }
-
-/** Bỏ khoảng trắng, thống nhất mũi tên phản ứng, chỉ giữ vế sau dấu suy ra cuối cùng. */
-function chuanHoaDapSo(latex: string): string {
-  const veCuoi = latex.split(/\\implies|\\Rightarrow/).pop() ?? latex
-  return veCuoi.replace(/\s+/g, '').replace(/->|→/g, '\\rightarrow')
-}
 
 export class StemScratchpadService {
   /**
@@ -332,6 +307,8 @@ export class StemScratchpadService {
     problemStatement: string
     problemLatex?: string
     variables?: StemVariableTable
+    /** Câu ngân hàng đề mà phiên này giải (changelog 0551) — chỉ server truyền. */
+    questionId?: string
   }): StemProblemState {
     const now = new Date().toISOString()
     const id = `prob-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
@@ -344,6 +321,7 @@ export class StemScratchpadService {
       problemStatement: params.problemStatement,
       problemLatex: params.problemLatex,
       ...(params.variables !== undefined ? { variables: params.variables } : {}),
+      ...(params.questionId === undefined ? {} : { questionId: params.questionId }),
       steps: [],
       isSolved: false,
       hintsUsed: 0,
@@ -393,11 +371,28 @@ export class StemScratchpadService {
     // hai mẫu lỗi gán cứng cũ (chỉ bắt đúng chuỗi `2x = 15 + 5` và `H_2 + O_2 -> H_2O`, kèm
     // "gợi ý" lộ luôn lời giải). Toán: so TẬP NGHIỆM với đề; Hoá: đếm nguyên tử + điện tích.
     if (subject === 'math') {
+      const deCoPhuongTrinh = deBai?.problemLatex !== undefined
       const moc = deBai?.problemLatex ?? previousSteps[0]?.latexInput
       const prev = previousSteps[previousSteps.length - 1]?.latexInput
       if (moc !== undefined) {
-        const ketQua = ketLuanToan(checkMathStep(trimmed, moc, prev))
+        const ketQua = ketLuanToan(
+          checkMathStep(trimmed, moc, prev),
+          deCoPhuongTrinh ? 'de' : 'buoc1',
+        )
         if (ketQua !== null) return ketQua
+      } else if (describeMathStep(trimmed) !== null) {
+        // Đề lời văn (ngân hàng đề) + đây là bước 1: bộ kiểm ĐỌC được nhưng không có gì để so.
+        // Nói rõ vai trò "mốc" thay vì câu chung "chưa đọc được" (vốn sai sự thật ở đây).
+        return {
+          isValid: true,
+          status: 'unverified',
+          errorType: 'none',
+          feedback:
+            'Đề này không cho sẵn phương trình, nên bước 1 là MỐC: các bước sau sẽ được so với ' +
+            'nó. Bước này có khớp dữ kiện của đề không thì hệ thống chưa tự kiểm được — hãy tự ' +
+            'đối chiếu từng con số với đề.',
+          confidence: 0,
+        }
       }
     }
 
@@ -407,34 +402,12 @@ export class StemScratchpadService {
     }
 
     // Vật lí (changelog 0552, docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md): kiểm THỨ NGUYÊN
-    // theo bảng biến của đề. Lệch đã chứng minh → ✗; còn lại thử đáp số đề mẫu rồi mới "chưa kiểm".
+    // theo bảng biến của đề. Chỉ lệch đã chứng minh (hoặc chia cho 0) mới ✗; khớp thứ nguyên là
+    // điều kiện cần → "chưa tự kiểm được". Đáp số đề mẫu viết cứng đã gỡ ở changelog 0551 — "giải
+    // xong" của bài ngân hàng đi qua `submit_solution`.
     if (subject === 'physics') {
-      const bangBien = deBai?.variables ?? BANG_BIEN_DE_MAU[deBai?.problemLatex ?? '']
-      const kq = checkPhysicsStep(trimmed, bangBien)
-      const ketQua = ketLuanLi(kq)
-      if (ketQua !== null) return ketQua
-      if (deBai && StemScratchpadService.khopDapSo(subject, deBai, trimmed)) {
-        return {
-          isValid: true,
-          status: 'valid',
-          errorType: 'none',
-          feedback: 'Đúng đáp số của đề bài.',
-          confidence: 1,
-          isFinalAnswer: true,
-        }
-      }
-      return chuaKiemLi(kq)
-    }
-
-    if (deBai && StemScratchpadService.khopDapSo(subject, deBai, trimmed)) {
-      return {
-        isValid: true,
-        status: 'valid',
-        errorType: 'none',
-        feedback: 'Đúng đáp số của đề bài.',
-        confidence: 1,
-        isFinalAnswer: true,
-      }
+      const kq = checkPhysicsStep(trimmed, bangBienCuaDe(deBai))
+      return ketLuanLi(kq) ?? chuaKiemLi(kq)
     }
 
     // Bộ kiểm không kết luận được KHÔNG có nghĩa là bước đúng. Trước 2026-10-02 nhánh này trả
@@ -453,42 +426,11 @@ export class StemScratchpadService {
     }
   }
 
-  /** `true` khi `latexInput` là ĐÚNG đáp số đã biết của đề mẫu (so nguyên vẹn, không so chuỗi con). */
-  static khopDapSo(subject: StemSubjectType, deBai: DeBai, latexInput: string): boolean {
-    const de = DAP_SO_DE_MAU.find(
-      (d) =>
-        d.subject === subject &&
-        d.problemLatex === deBai.problemLatex &&
-        (d.problemStatement === undefined || d.problemStatement === deBai.problemStatement),
-    )
-    return de !== undefined && de.dapSo.includes(chuanHoaDapSo(latexInput))
-  }
-
   /**
-   * Sinh gợi ý thông minh cho bước tiếp theo (Next Step Micro-Hint)
+   * Gợi ý cho bước tiếp theo — CÂU HỎI Socratic theo loại bước/lỗi, không chứa nghiệm hay đáp
+   * số (changelog 0551; trước đó với bước `2x = 10` hàm này trả thẳng `x = \frac{10}{2} = 5`).
    */
-  static generateMicroHint(problem: StemProblemState): {
-    hintText: string
-    suggestedFormula?: string
-  } {
-    if (problem.steps.length === 0) {
-      return {
-        hintText:
-          'Bắt đầu bằng việc xác định biến số cần tìm và cô lập các hạng tử chứa biến về một vế.',
-        suggestedFormula: problem.problemLatex,
-      }
-    }
-
-    const lastStep = problem.steps[problem.steps.length - 1]
-    if (lastStep && lastStep.latexInput.includes('2x = 10')) {
-      return {
-        hintText: 'Chia cả hai vế cho hệ số của x (tức là chia cho 2) để tìm nghiệm x.',
-        suggestedFormula: 'x = \\frac{10}{2} = 5',
-      }
-    }
-
-    return {
-      hintText: 'Rút gọn biểu thức và kiểm tra lại điều kiện xác định của bài toán.',
-    }
+  static generateMicroHint(problem: StemProblemState): MicroHint {
+    return generateSocraticHint(problem)
   }
 }

@@ -1,7 +1,7 @@
 // Ca biên của bộ kiểm bước giải phương trình một ẩn (đặc tả docs/specs/2026-10-09-kiem-buoc-giai-stem.md §8).
 // Luật bất biến: chỉ `equivalent` khi CHỨNG MINH được; không đọc được thì `unsupported`, không đoán.
 import { describe, it, expect } from 'vitest'
-import { checkMathStep } from './stepCheckMath.js'
+import { checkMathStep, describeMathStep } from './stepCheckMath.js'
 
 const verdict = (step: string, anchor: string, previous?: string) =>
   checkMathStep(step, anchor, previous).verdict
@@ -230,5 +230,51 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
     const b = checkMathStep('x = 1', 'x^3 - x = 0')
     expect(a).toEqual(b)
     expect(a).toMatchObject({ verdict: 'changed', lost: true })
+  })
+})
+
+// changelog 0551 — hình dạng bước cho gợi ý Socratic: chỉ đặc điểm hình thức, không nghiệm.
+describe('describeMathStep', () => {
+  it('nhận đúng từng đặc điểm', () => {
+    expect(describeMathStep('2x + 5 - 5 = 15 - 5')).toMatchObject({
+      hasLikeTerms: true,
+      constantBesideVariable: true,
+      degree: 1,
+      isAnswerForm: false,
+    })
+    expect(describeMathStep('2x = 10')).toMatchObject({
+      coefficientNotOne: true,
+      hasLikeTerms: false,
+      constantBesideVariable: false,
+    })
+    expect(describeMathStep('\\frac{x}{3} = 2')?.coefficientNotOne).toBe(true)
+    expect(describeMathStep('x = 5')).toMatchObject({
+      isAnswerForm: true,
+      coefficientNotOne: false,
+    })
+    expect(describeMathStep('3x - 6 = 2x + 1')?.variableOnBothSides).toBe(true)
+    expect(describeMathStep('3(x - 2) = 7')?.hasExpandableProduct).toBe(true)
+    expect(describeMathStep('(x - 1)^2 = 4')?.hasExpandableProduct).toBe(true)
+    expect(describeMathStep('x^2 - 5x + 6 = 0')).toMatchObject({ degree: 2, hasLikeTerms: false })
+    expect(describeMathStep('2x^2 + 3x^2 = 5')?.hasLikeTerms).toBe(true)
+    expect(describeMathStep('\\frac{1}{x - 1} = 2')?.hasVariableDenominator).toBe(true)
+    expect(describeMathStep('x = x')?.degree).toBe(0)
+  })
+
+  it('lấy mệnh đề cuối sau ⇒', () => {
+    expect(describeMathStep('2x = 10 \\implies x = 5')?.isAnswerForm).toBe(true)
+  })
+
+  it('ngoài phạm vi → null (không đoán)', () => {
+    for (const s of [
+      '\\sqrt{x} = 5',
+      'x + y = 5',
+      'x = 2 hoặc x = 3',
+      '2x',
+      'a = b = c',
+      'x = 1/0',
+    ]) {
+      expect(describeMathStep(s), s).toBeNull()
+    }
   })
 })

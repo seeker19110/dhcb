@@ -3,6 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from './stem-scratchpad.js'
 import * as security from '@dhcb/core-auth/security'
 import { getFeatureState } from '@dhcb/core-db/featureState'
+import {
+  StemBankQuestionPublicSchema,
+  StemMicroHintSchema,
+  SubmitSolutionResultSchema,
+} from '@dhcb/core-contracts/stemScratchpad'
+import { buildStemQuestionBank } from '@dhcb/core-ai/stemQuestionBank'
+import { MATH_LESSONS } from '@dhcb/subject-math/lessons'
+import { PHYSICS_LESSONS } from '@dhcb/subject-physics/lessons'
+import { CHEM_LESSONS } from '@dhcb/subject-chemistry/lessons'
 
 // Handler đã chuyển state sang platform.feature_state — mock bằng Map in-memory (hành vi giống
 // hệt Map cấp module cũ: state sống suốt file test), theo đúng khuôn pvp-arena.test.ts.
@@ -29,20 +38,14 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(res.status).toBe(401)
   })
 
-  it('returns sample problems on GET with 200', async () => {
+  it('GET không có action → 400 (3 "bài mẫu" viết cứng đã gỡ ở changelog 0551)', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValueOnce({
       userId: '11111111-1111-4111-8111-111111111111',
     })
-
-    const req = new Request('http://localhost/api/stem-scratchpad', {
-      method: 'GET',
-    })
-
-    const res = await handler(req)
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.success).toBe(true)
-    expect(data.problems.length).toBeGreaterThan(0)
+    const res = await handler(
+      new Request('http://localhost/api/stem-scratchpad', { method: 'GET' }),
+    )
+    expect(res.status).toBe(400)
   })
 
   it('creates problem and validates algebraic step on POST', async () => {
@@ -237,20 +240,44 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(badMethod.status).toBe(405)
   })
 
-  it('get_questions lọc theo ngân hàng câu hỏi nâng cao', async () => {
+  it('get_questions: lọc theo môn/lớp/nhánh, KHÔNG trả đáp án hay lời giải', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValue({
       userId: '11111111-1111-4111-8111-111111111111',
     })
     const res = await handler(
       new Request(
-        'http://localhost/api/stem-scratchpad?action=get_questions&subject=math&grade=12&difficulty=easy&limit=5',
+        'http://localhost/api/stem-scratchpad?action=get_questions&subject=math&grade=12&track=core&limit=5',
         { method: 'GET' },
       ),
     )
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.success).toBe(true)
-    expect(Array.isArray(data.questions)).toBe(true)
+    expect(data.questions.length).toBeGreaterThan(0)
+    expect(data.questions.length).toBeLessThanOrEqual(5)
+    expect(data.total).toBeGreaterThanOrEqual(data.questions.length)
+    for (const q of data.questions) {
+      expect(q.subject).toBe('math')
+      expect(q.grade).toBe('12')
+      expect(q.track).toBe('core')
+      expect(q).not.toHaveProperty('answer')
+      expect(q).not.toHaveProperty('explain')
+      expect(StemBankQuestionPublicSchema.safeParse(q).success).toBe(true)
+    }
+  })
+
+  it('get_questions: tham số lọc sai kiểu → 400 (không âm thầm bỏ qua)', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    for (const qs of ['subject=van', 'grade=13', 'track=de', 'limit=0', 'limit=abc']) {
+      const res = await handler(
+        new Request(`http://localhost/api/stem-scratchpad?action=get_questions&${qs}`, {
+          method: 'GET',
+        }),
+      )
+      expect(res.status, qs).toBe(400)
+    }
   })
 
   it('submit_solution: problem not found trả 404', async () => {
@@ -267,49 +294,7 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(res.status).toBe(404)
   })
 
-  it('submit_solution: đã isSolved sẵn thì trả isSolved true', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValue({
-      userId: '11111111-1111-4111-8111-111111111111',
-    })
-
-    // Tạo bài rồi giải đúng bằng validate_step để isSolved=true
-    const createRes = await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=create_problem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: 'math',
-          title: 'Phương trình',
-          problemStatement: '2x + 5 = 15',
-          // Đề mẫu có đáp số đã biết — chỉ đề như vậy mới "giải xong" được (changelog 0473).
-          problemLatex: '2x + 5 = 15',
-        }),
-      }),
-    )
-    const { problem } = await createRes.json()
-
-    await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: problem.id, latexInput: 'x = 5' }),
-      }),
-    )
-
-    const submitRes = await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: problem.id, finalAnswer: 'x=5' }),
-      }),
-    )
-    expect(submitRes.status).toBe(200)
-    const submitData = await submitRes.json()
-    expect(submitData.success).toBe(true)
-    expect(submitData.isSolved).toBe(true)
-  })
-
-  it('submit_solution: chưa giải và không khớp câu hỏi trong ngân hàng → isSolved false', async () => {
+  it('submit_solution: bài KHÔNG thuộc ngân hàng đề → 409 NO_ANSWER_KEY (không đoán đúng/sai)', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValue({
       userId: '11111111-1111-4111-8111-111111111111',
     })
@@ -319,7 +304,7 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subject: 'math',
-          title: 'Phương trình chưa giải',
+          title: 'Phương trình tự nhập',
           problemStatement: '3x = 9',
         }),
       }),
@@ -330,12 +315,11 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: problem.id, finalAnswer: 'chưa chắc' }),
+        body: JSON.stringify({ problemId: problem.id, finalAnswer: '3' }),
       }),
     )
-    expect(submitRes.status).toBe(200)
-    const submitData = await submitRes.json()
-    expect(submitData.isSolved).toBe(false)
+    expect(submitRes.status).toBe(409)
+    expect((await submitRes.json()).error).toBe('NO_ANSWER_KEY')
   })
 
   it("cắt bớt bài khi có bản ghi thiếu updatedAt (nhánh fallback ?? '')", async () => {
@@ -406,88 +390,117 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     expect(res.status).toBe(404)
   })
 
-  it('submit_solution: khớp câu trả lời với ngân hàng câu hỏi (question tồn tại, đáp án đúng)', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValue({
-      userId: '11111111-1111-4111-8111-111111111111',
-    })
-    // Gán problemId trùng với id thật trong ngân hàng câu hỏi qua validate_step (fallback tạo bài
-    // rồi ép prob.id = problemId truyền vào) để submit_solution tìm thấy question tương ứng.
-    await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: 'math-10-1', latexInput: 'chưa xong' }),
-      }),
+  describe('ngân hàng đề thật + submit_solution (changelog 0551)', () => {
+    const BANK = buildStemQuestionBank([
+      { subject: 'math', lessons: MATH_LESSONS },
+      { subject: 'physics', lessons: PHYSICS_LESSONS },
+      { subject: 'chemistry', lessons: CHEM_LESSONS },
+    ])
+    // Câu Toán đáp số nguyên ≥ 2, không đơn vị; câu Lí có đơn vị bắt buộc.
+    const toan = BANK.find(
+      (q) =>
+        q.subject === 'math' &&
+        q.answer.kind === 'numeric' &&
+        q.answer.unit === undefined &&
+        Number.isInteger(q.answer.value) &&
+        q.answer.value >= 2,
     )
+    const ly = BANK.find((q) => q.subject === 'physics' && q.needsUnit)
+    const giaTri = toan?.answer.kind === 'numeric' ? toan.answer.value : Number.NaN
 
-    const res = await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Đáp án ngân hàng là "S_{2} = 0"; học sinh viết "x = 0" — so theo đáp số, không theo chữ.
-        body: JSON.stringify({ problemId: 'math-10-1', finalAnswer: 'x = 0' }),
-      }),
-    )
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.isSolved).toBe(true)
-    expect(data.solutionPreview).toBeDefined()
-  })
-
-  it('submit_solution: so ĐÁP SỐ, không so chuỗi con (changelog 0539)', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValue({
-      userId: '11111111-1111-4111-8111-111111111111',
-    })
-    // math-10-3 có đáp án "S_{4} = 20".
-    await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: 'math-10-3', latexInput: 'chưa xong' }),
-      }),
-    )
-    const submit = async (finalAnswer: unknown) => {
+    const post = async (action: string, body: unknown) => {
       const res = await handler(
-        new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
+        new Request(`http://localhost/api/stem-scratchpad?action=${action}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ problemId: 'math-10-3', finalAnswer }),
+          body: JSON.stringify(body),
         }),
       )
       return { status: res.status, data: await res.json() }
     }
-    // Chuỗi con cũ: "S_{4} = 20 sai" chứa nguyên 10 ký tự đầu đáp án → từng được tính là đúng.
-    expect((await submit('S_{4} = 20 sai')).data.isSolved).toBe(false)
-    expect((await submit('120')).data.isSolved).toBe(false)
-    expect((await submit(20)).status).toBe(400)
-    // "20,0" (dấu phẩy thập phân) đúng về giá trị → giải xong.
-    expect((await submit('x = 20,0')).data.isSolved).toBe(true)
-  })
 
-  it('submit_solution: khớp ngân hàng câu hỏi nhưng đáp án SAI → isSolved false', async () => {
-    vi.spyOn(security, 'validateAuth').mockResolvedValue({
-      userId: '11111111-1111-4111-8111-111111111111',
+    beforeEach(() => {
+      vi.spyOn(security, 'validateAuth').mockResolvedValue({
+        userId: '11111111-1111-4111-8111-111111111111',
+      })
     })
-    await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: 'math-10-2', latexInput: 'chưa xong' }),
-      }),
-    )
 
-    const res = await handler(
-      new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: 'math-10-2', finalAnswer: 'đáp án hoàn toàn sai' }),
-      }),
-    )
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.isSolved).toBe(false)
-    // Nộp sai KHÔNG được nhận lời giải — nếu không, nộp bừa là cách xem đáp án.
-    expect(data).not.toHaveProperty('solutionPreview')
+    it('create_problem từ questionId: đề/môn do SERVER tra, gắn questionId', async () => {
+      expect(toan).toBeDefined()
+      const { status, data } = await post('create_problem', {
+        questionId: toan?.id,
+        // Client cố gửi đề khác — phải bị bỏ qua.
+        problemStatement: 'đề giả',
+        subject: 'physics',
+      })
+      expect(status).toBe(200)
+      expect(data.problem.questionId).toBe(toan?.id)
+      expect(data.problem.subject).toBe('math')
+      expect(data.problem.problemStatement).toBe(toan?.problemStatement)
+      expect(data.problem).not.toHaveProperty('problemLatex')
+
+      expect((await post('create_problem', { questionId: 'khong-co' })).status).toBe(404)
+      expect((await post('create_problem', { questionId: '' })).status).toBe(400)
+      expect((await post('create_problem', { questionId: 42 })).status).toBe(400)
+    })
+
+    it('nộp ĐÚNG → isSolved + lời giải của bài học; so theo giá trị, không so chuỗi con', async () => {
+      const { data } = await post('create_problem', { questionId: toan?.id })
+      const id = data.problem.id
+
+      // Chuỗi con: "1" + đáp số (vd "18" chứa "8") phải SAI.
+      const sai = await post('submit_solution', { problemId: id, finalAnswer: `1${giaTri}` })
+      expect(sai.status).toBe(200)
+      expect(sai.data).toMatchObject({ isSolved: false, correct: false })
+      expect(sai.data).not.toHaveProperty('explanation')
+
+      expect((await post('submit_solution', { problemId: id, finalAnswer: giaTri })).status).toBe(
+        400,
+      )
+
+      const dung = await post('submit_solution', { problemId: id, finalAnswer: `x = ${giaTri},0` })
+      expect(dung.data).toMatchObject({ isSolved: true, correct: true })
+      expect(dung.data.explanation).toBe(toan?.explain)
+      expect(SubmitSolutionResultSchema.safeParse(dung.data).success).toBe(true)
+
+      // Đã xong rồi, nộp sai lần nữa: bài vẫn xong, lần nộp này vẫn báo sai.
+      const lai = await post('submit_solution', { problemId: id, finalAnswer: 'abc' })
+      expect(lai.data).toMatchObject({ isSolved: true, correct: false })
+    })
+
+    it('Vật lí: thiếu đơn vị → chưa xong, có mã lý do', async () => {
+      expect(ly).toBeDefined()
+      const { data } = await post('create_problem', { questionId: ly?.id })
+      const r = await post('submit_solution', { problemId: data.problem.id, finalAnswer: '123456' })
+      expect(r.data.isSolved).toBe(false)
+      expect(r.data.reason).toBe('MISSING_UNIT')
+    })
+
+    it('CHẶN HỒI QUY: đặt problemId = id câu ngân hàng qua validate_step KHÔNG tự chọn được câu để chấm', async () => {
+      // Trước 0551 server tra câu theo problemId do client gửi — client đặt problemId trùng id câu
+      // là "mượn" được đáp án câu đó để chấm.
+      await post('validate_step', { problemId: toan?.id, latexInput: 'chưa xong' })
+      const r = await post('submit_solution', { problemId: toan?.id, finalAnswer: `${giaTri}` })
+      expect(r.status).toBe(409)
+    })
+
+    it('validate_step trên bài ngân hàng: bước đúng so với bước 1 KHÔNG làm bài "giải xong"', async () => {
+      const { data } = await post('create_problem', { questionId: toan?.id })
+      const id = data.problem.id
+      await post('validate_step', { problemId: id, latexInput: `x = ${giaTri} + 0` })
+      const r = await post('validate_step', { problemId: id, latexInput: `x = ${giaTri}` })
+      expect(r.data.validation.status).toBe('valid')
+      expect(r.data.validation.isFinalAnswer).toBe(false)
+      expect(r.data.isSolved).toBe(false)
+    })
+
+    it('get_hint trên bài ngân hàng trả câu hỏi kèm bậc, đúng hợp đồng', async () => {
+      const { data } = await post('create_problem', { questionId: toan?.id })
+      const r = await post('get_hint', { problemId: data.problem.id })
+      expect(r.status).toBe(200)
+      expect(StemMicroHintSchema.safeParse(r.data.hint).success).toBe(true)
+      expect(r.data.hintsUsed).toBe(1)
+    })
   })
 
   it('cắt bớt bài cũ nhất khi vượt trần MAX_PROBLEMS (30 bài/người)', async () => {

@@ -1196,21 +1196,24 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
   bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
   còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
-- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`] Bảng nháp STEM
-  (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên (`0552`).** `0547` (đặc tả
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`] Bảng nháp
+  STEM (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên.** `0547` (đặc tả
   `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
   NGHIỆM THỰC với đề, chính xác (đa thức hữu tỉ BigInt + Sturm, giữ điều kiện xác định) → `✓ Hợp lệ`
   / `✗ Đổi nghiệm` (mất/thêm nghiệm) / `✗ Chia cho 0`; Hoá — đếm nguyên tử + điện tích, bắt đổi chất
   → `✗ Lệch nguyên tử` / `✗ Lệch điện tích` / `✗ Đổi chất`; còn lại `? Chưa tự kiểm được` kèm câu
-  nói rõ phạm vi. "Giải xong" cần `isFinalAnswer`. **Còn lại:** (1) Vật lí — ĐÃ kiểm thứ nguyên từng
-  bước ở `0552` (`stepCheckPhysics.ts`, đặc tả `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md`):
-  lệch đã chứng minh → `✗ Lệch thứ nguyên`, khớp vẫn là "?" (điều kiện cần); CÒN THIẾU bảng
-  `variables` cho đề Vật lí của ngân hàng đề (chưa khai → "chưa tự kiểm được") và giao diện chưa gửi
-  `variables` khi tạo đề; (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất
-  phương trình, nhiều ẩn, dấu chia `:`; (3) `generateMicroHint` còn đưa thẳng `x = 5` cho đề mẫu (trái
-  Socratic); (4) ngân hàng đề STEM vẫn là dữ liệu mẫu `S_{n} = …` và giao diện chưa gọi
-  `submit_solution` (`0539`); (5) ở 390px hàng nhập của bảng nháp chật (nút "Gợi ý" bị ép xuống 2
-  dòng, sát mép) — có từ trước, thấy ở ảnh 8b `0547`.
+  nói rõ phạm vi. "Giải xong" cần `isFinalAnswer`. `0552` (đặc tả
+  `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md`): Vật lí kiểm THỨ NGUYÊN từng bước
+  (`stepCheckPhysics.ts`) — lệch đã chứng minh → `✗ Lệch thứ nguyên`, khớp vẫn là "?" (điều kiện
+  cần). `0551` (đặc tả `docs/specs/2026-10-09-stem-goi-y-socratic-va-nop-loi-giai.md`): gợi ý là câu
+  hỏi Socratic ba bậc theo bộ kiểm Toán · Hoá · Vật lí (không còn lộ `x = 5`, có test bất biến);
+  ngân hàng đề THẬT 272 câu từ bài học Toán · Lí · Hoá thay dữ liệu mẫu `S_{n} = …`; nút "Nộp lời
+  giải" gọi `submit_solution` (chấm theo `questionId` do server gán); hàng nhập 390px hết chật.
+  **Còn lại:** (1) Vật lí — đề ngân hàng chưa khai bảng `variables` (chưa khai → "chưa tự kiểm
+  được") và giao diện chưa gửi `variables` khi tạo đề; chưa kiểm vector/chiều, đạo hàm/tích phân;
+  (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất phương trình, nhiều ẩn, dấu chia `:`; (3) đề
+  ngân hàng là lời văn nên bước Toán chỉ so được với bước 1 của người học (chưa có phương trình đề
+  để làm mốc); 272 câu đều là bài `draft` chưa duyệt chuyên môn.
 - 🟡 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` —
   HẠ MỨC từ 🔴 sau changelog `0512`, 2026-10-07] Phần WCAG 2.2 A/AA của audit ĐÃ ĐÓNG.** U1–U9 +
   đợt minor (#1222–#1255) đóng 8 critical + major/minor. Đo lại bằng máy trên `main` `e3afc29`

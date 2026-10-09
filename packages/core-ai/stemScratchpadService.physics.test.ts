@@ -3,9 +3,10 @@
 import { describe, expect, it } from 'vitest'
 import { nhanKetQuaBuoc } from '@dhcb/core-contracts/stemScratchpad'
 import { StemScratchpadService } from './stemScratchpadService.js'
-import { STEM_QUESTION_BANK } from './stemQuestionBank.js'
+import { PHYSICS_LESSONS } from '@dhcb/subject-physics/lessons'
+import { buildStemQuestionBank } from './stemQuestionBank.js'
 
-/** Đề mẫu Vật lí mà modal tự dựng — bảng biến lấy từ BANG_BIEN_DE_MAU. */
+/** Đề mẫu Vật lí (client gửi qua `create_problem` có `problemLatex`) — bảng biến lấy từ `stemPhysicsVariables.ts` (BANG_BIEN_DE_MAU). */
 const DE_MAU = {
   problemLatex: 'v = a \\cdot t',
   problemStatement: 'Tính vận tốc sau 5s khi gia tốc a = 2m/s² từ trạng thái nghỉ:',
@@ -53,10 +54,12 @@ describe('StemScratchpadService.validateStep — Vật lí (thứ nguyên)', () 
     expect(r.suggestedCorrection).toMatch(/\?/)
   })
 
-  it('đáp số đề mẫu vẫn "giải xong"; đáp số sai thứ nguyên thì ✗ trước khi so đáp số', () => {
-    const dung = kiem('v = 10 m/s', DE_MAU)
-    expect(dung.status).toBe('valid')
-    expect(dung.isFinalAnswer).toBe(true)
+  it('đáp số sai thứ nguyên → ✗ ngay; đáp số khớp thứ nguyên vẫn chỉ "chưa tự kiểm được"', () => {
+    // Đáp số đề mẫu viết cứng (`khopDapSo`) đã gỡ ở changelog 0551: "giải xong" của bài ngân hàng
+    // đi qua `submit_solution`, bộ kiểm bước không tự gắn `isFinalAnswer` cho Vật lí.
+    const khop = kiem('v = 10 m/s', DE_MAU)
+    expect(khop.status).toBe('unverified')
+    expect(khop.isFinalAnswer).toBeUndefined()
     const saiDonVi = kiem('v = 10\\,\\text{s}', DE_MAU)
     expect(saiDonVi.status).toBe('invalid')
     expect(saiDonVi.errorType).toBe('dimension_mismatch')
@@ -89,19 +92,16 @@ describe('StemScratchpadService.validateStep — Vật lí (thứ nguyên)', () 
     expect((r.suggestedCorrection ?? '').length).toBeLessThanOrEqual(500)
   })
 
-  it('quét ngân hàng đề STEM: đề Vật lí chưa khai bảng biến → "chưa tự kiểm được", không ✓/✗', () => {
-    const deLi = STEM_QUESTION_BANK.filter((q) => q.subject === 'physics')
+  it('quét ngân hàng đề THẬT: đề Vật lí chưa khai bảng biến → "chưa tự kiểm được", không ✓/✗', () => {
+    // Ngân hàng (changelog 0551) là đề lời văn từ bài học, chưa có `variables` (nợ mở) — bộ kiểm
+    // không được đoán thứ nguyên theo tên ký hiệu, kể cả với bước lệch rõ như `v = a t^2`.
+    const deLi = buildStemQuestionBank([{ subject: 'physics', lessons: PHYSICS_LESSONS }])
     expect(deLi.length).toBeGreaterThan(0)
     for (const q of deLi) {
-      const deBai: { problemLatex: string; variables?: Record<string, string> } = {
-        problemLatex: q.problemLatex,
-      }
-      const bang = (q as { variables?: Record<string, string> }).variables
-      if (bang !== undefined) deBai.variables = bang
-      const r = kiem(q.problemLatex, deBai)
-      // Chính đề bài không bao giờ bị tự chấm "lệch"; chưa khai bảng thì không kết luận gì.
+      const r = kiem('v = a t^2', { problemStatement: q.problemStatement })
       expect(r.errorType).not.toBe('dimension_mismatch')
-      if (bang === undefined) expect(r.status).toBe('unverified')
+      expect(r.status).toBe('unverified')
+      expect(r.feedback).toContain('chưa khai bảng thứ nguyên')
     }
   })
 })

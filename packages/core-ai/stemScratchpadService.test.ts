@@ -150,7 +150,7 @@ describe('StemScratchpadService', () => {
     expect(r.feedback).toContain('bước TRƯỚC')
   })
 
-  it('đáp số khớp đáp số đã biết của đề mẫu → valid; gần giống thì không bao giờ valid', () => {
+  it('đề có phương trình: x = 5 là đáp số; gần giống thì không bao giờ valid', () => {
     const toan = { problemLatex: '2x + 5 = 15', problemStatement: 'bất kỳ' }
     expect(StemScratchpadService.validateStep('math', 'x = 5', [], toan).status).toBe('valid')
     expect(
@@ -160,38 +160,39 @@ describe('StemScratchpadService', () => {
       expect(StemScratchpadService.validateStep('math', gan, [], toan).status).toBe('invalid')
     }
     expect(StemScratchpadService.validateStep('math', 'y = 5', [], toan).status).toBe('unverified')
-
-    const hoa = { problemLatex: 'H_2 + O_2 \\rightarrow H_2O' }
-    expect(StemScratchpadService.khopDapSo('chemistry', hoa, '2H_2 + O_2 -> 2H_2O')).toBe(true)
-    expect(StemScratchpadService.khopDapSo('chemistry', hoa, '2H_2 + O_2 → 2H_2O')).toBe(true)
-    // Chưa cân bằng (4 H bên phải, 2 H bên trái) — trước đây vẫn được tính "giải xong".
-    expect(StemScratchpadService.khopDapSo('chemistry', hoa, 'H_2 + O_2 -> 2H_2O')).toBe(false)
-
-    // Đề vật lý: công thức v = a·t không tự quyết định đáp số → phải khớp cả lời đề.
-    const ly = {
+    // Vật lí: đề mẫu viết cứng (v = a·t) đã gỡ ở changelog 0551 — bước Lí luôn "chưa tự kiểm được".
+    const ly = StemScratchpadService.validateStep('physics', 'v = 10 m/s', [], {
       problemLatex: 'v = a \\cdot t',
-      problemStatement: 'Tính vận tốc sau 5s khi gia tốc a = 2m/s² từ trạng thái nghỉ:',
-    }
-    expect(StemScratchpadService.khopDapSo('physics', ly, 'v = 10 m/s')).toBe(true)
-    const lyDung = StemScratchpadService.validateStep('physics', 'v = 10 m/s', [], ly)
-    expect(lyDung.status).toBe('valid')
-    expect(lyDung.isFinalAnswer).toBe(true)
-    expect(
-      StemScratchpadService.khopDapSo(
-        'physics',
-        { ...ly, problemStatement: 'a = 3, t = 4' },
-        'v = 10',
-      ),
-    ).toBe(false)
+    })
+    expect(ly.status).toBe('unverified')
+  })
 
-    // Sai môn hoặc đề lạ → không có đáp số để so → không bao giờ valid.
-    expect(StemScratchpadService.khopDapSo('physics', toan, 'x = 5')).toBe(false)
-    expect(StemScratchpadService.khopDapSo('math', { problemLatex: '3x = 30' }, 'x = 5')).toBe(
-      false,
+  // changelog 0551: đề NGÂN HÀNG là lời văn (không có problemLatex) → bước 1 là mốc. Không được
+  // nói "khớp đề bài", và không bao giờ là đáp số cuối (bước 1 có thể đã sai so với đề).
+  it('đề lời văn: bước 1 là MỐC, các bước sau so với bước 1, không bao giờ isFinalAnswer', () => {
+    const dau = StemScratchpadService.validateStep('math', '2x + 5 = 15', [])
+    expect(dau.status).toBe('unverified')
+    expect(dau.feedback).toContain('MỐC')
+    expect(dau.feedback).not.toContain('chưa đọc căn')
+
+    const prev = [{ stepNumber: 1, latexInput: '2x + 5 = 15', createdAt: new Date().toISOString() }]
+    const cuoi = StemScratchpadService.validateStep('math', 'x = 5', prev)
+    expect(cuoi.status).toBe('valid')
+    expect(cuoi.isFinalAnswer).toBe(false)
+    expect(cuoi.feedback).toContain('bước 1 của em')
+    expect(cuoi.feedback).not.toContain('đề bài')
+
+    const sai = StemScratchpadService.validateStep('math', 'x = 50', prev)
+    expect(sai.status).toBe('invalid')
+    expect(sai.feedback).toContain('bước 1 của em')
+
+    // Bước 1 không đọc được (căn) → vẫn câu "chưa tự kiểm được" theo phạm vi.
+    expect(StemScratchpadService.validateStep('math', '\\sqrt{x} = 5', []).feedback).toContain(
+      'MỘT ẩn',
     )
   })
 
-  it('generates micro hints for problem resolution', () => {
+  it('generateMicroHint trả CÂU HỎI kèm bậc, không còn suggestedFormula lộ lời giải', () => {
     const prob = StemScratchpadService.createProblemSession({
       personId: '11111111-1111-4111-8111-111111111111',
       subject: 'math',
@@ -201,7 +202,8 @@ describe('StemScratchpadService', () => {
     })
 
     const initialHint = StemScratchpadService.generateMicroHint(prob)
-    expect(initialHint.hintText).toBeDefined()
+    expect(initialHint.level).toBe(1)
+    expect(initialHint.hintText).toContain('?')
 
     prob.steps.push({
       stepNumber: 1,
@@ -210,6 +212,26 @@ describe('StemScratchpadService', () => {
     })
 
     const nextHint = StemScratchpadService.generateMicroHint(prob)
-    expect(nextHint.suggestedFormula).toContain('x =')
+    expect(nextHint).not.toHaveProperty('suggestedFormula')
+    expect(nextHint.hintText).not.toMatch(/x\s*=\s*5|\\frac|chia cho 2/)
+    expect(nextHint.level).toBe(2)
+  })
+
+  it('createProblemSession gắn questionId khi mở từ ngân hàng đề', () => {
+    const prob = StemScratchpadService.createProblemSession({
+      personId: '11111111-1111-4111-8111-111111111111',
+      subject: 'physics',
+      title: 'Bài',
+      problemStatement: 'Đề',
+      questionId: 'ly10-c2-b5-q1',
+    })
+    expect(prob.questionId).toBe('ly10-c2-b5-q1')
+    const khong = StemScratchpadService.createProblemSession({
+      personId: '11111111-1111-4111-8111-111111111111',
+      subject: 'math',
+      title: 'Bài',
+      problemStatement: 'Đề',
+    })
+    expect(khong).not.toHaveProperty('questionId')
   })
 })

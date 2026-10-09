@@ -7,10 +7,11 @@ description: 'Kỹ năng Nghiệp vụ Khoa học STEM & Suy luận Logic Đa b�
 
 Quy chuẩn cho bài học, bài tập và phản hồi môn STEM (Toán · Lý · Hoá · Sinh) trong Đồng Hành.
 
-> **Đối chiếu mã ngày 2026-10-09 (changelog 0547, 0552).** Trước 0547 skill ghi đúng rằng mã KHÔNG
-> có bộ kiểm bước — và chính việc từng tin nhầm điều đó làm bảng nháp khen mọi bước là đúng (changelog
-> 0473). Từ 0547 có bộ kiểm THẬT cho Toán một ẩn + PTHH; từ 0552 có kiểm THỨ NGUYÊN Vật lí (§2); mọi
-> dạng khác vẫn là "chưa tự kiểm được".
+> **Đối chiếu mã ngày 2026-10-09 (changelog 0547, 0551, 0552).** Trước 0547 skill ghi đúng rằng mã
+> KHÔNG có bộ kiểm bước — và chính việc từng tin nhầm điều đó làm bảng nháp khen mọi bước là đúng
+> (changelog 0473). Từ 0547 có bộ kiểm THẬT cho Toán một ẩn + PTHH; từ 0552 có kiểm THỨ NGUYÊN Vật lí
+> (§2); từ 0551 gợi ý Socratic dùng chính kết quả các bộ kiểm đó; mọi dạng khác vẫn là "chưa tự kiểm
+> được".
 > App **không render LaTeX**. Khi skill và mã lệch nhau, **MÃ thắng**.
 
 ---
@@ -53,11 +54,18 @@ giao diện `apps/dhcb/src/components/StemScratchpad/`). Đặc tả:
   hồ (g, c, G…); `k`, `h`, `e`, `R` đề phải khai. Ra: lệch CHỨNG MINH được → `invalid`,
   `dimension_mismatch` (`✗ Lệch thứ nguyên`); lệch chỉ khi coi số trần là hệ số (`v = 2t` lối SGK
   "đơn vị ghi sau", `½at`) → `unverified` hỏi lại; **khớp thứ nguyên → vẫn `unverified`** (điều kiện
-  cần, không đủ — `v = 2at` khớp mà sai). Đáp số đề mẫu vẫn qua `khopDapSo`. Đặc tả
+  cần, không đủ — `v = 2at` khớp mà sai). Đáp số đề mẫu viết cứng (`khopDapSo`) đã gỡ ở 0551. Đặc tả
   `docs/specs/2026-10-09-kiem-thu-nguyen-vat-li.md` §6 (quy ước "số trần").
 - **Sinh:** CHƯA kiểm bước.
 - **"Giải xong"** chỉ khi `status: 'valid'` VÀ `isFinalAnswer: true` (`x = 5` tương đương đề; PTHH cân
   bằng tối giản, đúng chất của đề). Bước giữa `valid` (vd `2x = 10`) KHÔNG làm bài xong.
+- **Ngân hàng đề (changelog 0551):** `packages/core-ai/stemQuestionBank.ts` dựng từ câu "Tự kiểm
+  tra" THẬT của bài học Toán · Lí · Hoá (nguyên văn đề + `AnswerSpec` + lời giải; bỏ trắc nghiệm và
+  câu "Nhập 1 nếu…") — 272 câu ngày 2026-10-09. Hàm thuần nhận danh sách bài học (gói `core-*` không
+  import `subject-*`); handler truyền vào. Client chỉ thấy bản công khai (`toPublicStemQuestion`,
+  không đáp án). Đề ngân hàng là lời văn, KHÔNG có `problemLatex` → với Toán, **bước 1 là mốc**:
+  bước sau so với bước 1 ("so với bước 1 của em"), không bao giờ `isFinalAnswer`; bài ngân hàng chỉ
+  "giải xong" qua `submit_solution`.
 - Nhãn hiển thị qua `nhanKetQuaBuoc()` (`packages/core-contracts/stemScratchpad.ts`): `✓ Hợp lệ` ·
   `✗ Đổi nghiệm|Chia cho 0|Lệch nguyên tử|Lệch điện tích|Đổi chất|Lệch thứ nguyên` ·
   `? Chưa tự kiểm được` — luôn
@@ -75,9 +83,12 @@ hay bước đúng.
 - bảng `variables` cho đề Vật lí của ngân hàng đề; kiểm vector/chiều, đạo hàm/tích phân;
 - hệ số phân số trong PTHH (`1/2 O_2`).
 
-**Đáp số cuối của `submit_solution`** (đề ngân hàng) chấm qua `gradeFinalAnswer`
-(`packages/core-grading/finalAnswer.ts`, changelog 0539): bỏ "x =", thống nhất `,`/`.`, dung sai
-tương đối 0,1%, đơn vị phải cùng thứ nguyên — tái dùng `gradeAnswer`, KHÔNG so chuỗi con.
+**Đáp số cuối của `submit_solution`** (đề ngân hàng) chấm theo câu gắn với phiên
+(`prob.questionId`, server gán lúc `create_problem { questionId }` — KHÔNG theo id client gửi):
+`gradeAnswer(finalValueText(…), AnswerSpec của bài học)` (changelog 0551; `finalValueText` ở
+`packages/core-grading/finalAnswer.ts` bỏ "x =", vỏ LaTeX) — cùng dung sai/đơn vị/phân số như trang
+bài học, KHÔNG so chuỗi con. Trả `correct` + `reason`; lời giải chỉ trả khi đã giải đúng. Phiên
+không thuộc ngân hàng → 409 `NO_ANSWER_KEY`.
 
 ---
 
@@ -91,10 +102,14 @@ tương đối 0,1%, đơn vị phải cùng thứ nguyên — tái dùng `grade
     vế").
   - **Bậc 3 — chỉ đúng chỗ sai:** nêu điểm tính nhầm cụ thể ("Dòng 2, nhân hai vế với −1 thì chiều
     bất phương trình phải đổi").
-- Thực tế hiện tại: `generateMicroHint` của bảng nháp chỉ có gợi ý soạn sẵn cho đề mẫu (và gợi ý
-  cho bước `2x = 10` còn đưa thẳng `x = 5` — nợ, changelog 0547). Phản hồi của bộ kiểm bước (§2)
-  đã theo lối câu hỏi. Gợi ý theo
-  ba bậc ở trên là chuẩn cho **prompt AI** và cho nội dung viết tay.
+- Thực tế hiện tại (changelog 0551): `generateMicroHint` → `generateSocraticHint`
+  (`packages/core-ai/stemMicroHint.ts`) trả `{ hintText, level }`, luôn là câu hỏi: chưa có bước →
+  bậc 1; bước hợp lệ → bậc 2 theo hình dạng bước (`describeMathStep` trong `stepCheckMath.ts`: còn
+  hạng tử gộp được, còn ngoặc, ẩn hai vế, mẫu chứa ẩn, hệ số khác 1); bước sai → bậc 3 theo kết luận
+  của bộ kiểm (mất nghiệm, nghiệm lạ do bỏ ĐKXĐ, chia cho 0, nguyên tố đang lệch, lệch thứ nguyên
+  Vật lí — bảng biến chung ở `packages/core-ai/stemPhysicsVariables.ts`…). Bất biến "gợi ý
+  không chứa nghiệm" canh bằng `stemMicroHint.test.ts` (nghiệm lấy bằng chính bộ kiểm). Gợi ý ba bậc
+  cũng là chuẩn cho **prompt AI** và nội dung viết tay.
 
 ---
 

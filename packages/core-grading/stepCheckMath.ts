@@ -457,6 +457,133 @@ export function checkMathStep(step: string, anchor: string, previous?: string): 
   }
 }
 
+// ── Hình dạng một bước (cho gợi ý Socratic — changelog 0551) ────────────────
+
+/**
+ * Mô tả CẤU TRÚC của một phương trình một ẩn — để gợi ý hỏi đúng chỗ ("hai vế còn hạng tử nào
+ * gộp được?") mà KHÔNG phải giải hộ. Chỉ là đặc điểm hình thức, không chứa nghiệm hay hệ số.
+ */
+export type MathStepShape = {
+  /** Có mẫu số chứa ẩn → phương trình có điều kiện xác định (ĐKXĐ). */
+  hasVariableDenominator: boolean
+  /** Ẩn có mặt ở CẢ hai vế. */
+  variableOnBothSides: boolean
+  /** Một vế còn ≥ 2 hạng tử cùng loại (hai hằng số, hoặc hai hạng tử cùng bậc của ẩn). */
+  hasLikeTerms: boolean
+  /** Còn tích/luỹ thừa của một tổng có chứa ẩn — phá ngoặc được, vd `2(x + 3)`. */
+  hasExpandableProduct: boolean
+  /** Vế chứa ẩn còn kèm hạng tử tự do, vế kia không có ẩn (dạng ax + b = c). */
+  constantBesideVariable: boolean
+  /** Dạng `a·x = b` với a ≠ 1: chỉ còn bước làm cho ẩn đứng một mình. */
+  coefficientNotOne: boolean
+  /** Bậc của ẩn sau khi chuyển hết về một vế (0 khi không còn ẩn). */
+  degree: number
+  /** Đã ở dạng đáp số `ẩn = hằng số`. */
+  isAnswerForm: boolean
+}
+
+/** Tách một vế thành các hạng tử cộng/trừ (bỏ dấu, chỉ giữ hình dạng). */
+function additiveTerms(node: ExprNode): ExprNode[] {
+  if (node.type === 'binary' && (node.op === '+' || node.op === '-')) {
+    return [...additiveTerms(node.left), ...additiveTerms(node.right)]
+  }
+  if (node.type === 'unary') return additiveTerms(node.arg)
+  return [node]
+}
+
+const hasVar = (node: ExprNode): boolean => {
+  const s = new Set<string>()
+  collectVars(node, s)
+  return s.size > 0
+}
+
+/** Có nhân/luỹ thừa một TỔNG chứa ẩn không (`2(x+3)`, `(x-1)^2`). */
+function hasProductOfSum(node: ExprNode): boolean {
+  if (node.type === 'binary') {
+    if (node.op === '*' || node.op === '^') {
+      const isSumWithVar = (n: ExprNode) =>
+        n.type === 'binary' && (n.op === '+' || n.op === '-') && hasVar(n)
+      if (isSumWithVar(node.left) || isSumWithVar(node.right)) return true
+    }
+    return hasProductOfSum(node.left) || hasProductOfSum(node.right)
+  }
+  if (node.type === 'unary' || node.type === 'call') return hasProductOfSum(node.arg)
+  return false
+}
+
+/** Bậc của một hạng tử là đơn thức (`3x²`); không phải đơn thức (có mẫu chứa ẩn…) → null. */
+function monomialDegree(term: ExprNode, variable: string): number | null {
+  const fn = toRatFn(term, variable, [])
+  if (!isConstant(fn.den)) return null
+  const nonZero = fn.num.filter((c) => c.n !== 0n).length
+  return nonZero === 1 ? fn.num.length - 1 : null
+}
+
+/** Hai hạng tử cùng loại trên một vế: hai hằng số, hoặc hai đơn thức cùng bậc. */
+function sideHasLikeTerms(terms: readonly ExprNode[], variable: string | null): boolean {
+  const seen = new Set<number>()
+  for (const t of terms) {
+    const deg = hasVar(t) ? (variable === null ? null : monomialDegree(t, variable)) : 0
+    if (deg === null) continue
+    if (seen.has(deg)) return true
+    seen.add(deg)
+  }
+  return false
+}
+
+/**
+ * Đặc điểm hình thức của MỆNH ĐỀ CUỐI trong bước (sau dấu ⇒ cuối). `null` khi không đọc được,
+ * có "hoặc", có nhiều hơn hai vế, nhiều ẩn hoặc ngoài phạm vi — khi đó gợi ý dùng câu chung.
+ */
+export function describeMathStep(step: string): MathStepShape | null {
+  const parts = step.split(IMPLIES)
+  const last = parts[parts.length - 1]?.trim() ?? ''
+  const result = guarded((): MathStepShape | null => {
+    const stmt = parseStatement(last)
+    if (stmt.length !== 1) return null
+    const clause = stmt[0]
+    if (clause === undefined || clause.length !== 2) return null
+    const vars = statementVars([stmt])
+    if (vars.size > 1) return null
+    const variable = vars.size === 1 ? ([...vars][0] ?? null) : null
+    if (variable !== null && !/^[a-zA-Z]$/.test(variable)) return null
+
+    const [left, right] = clause as [ExprNode, ExprNode]
+    const domain: Poly[] = []
+    const l = toRatFn(left, variable, domain)
+    const r = toRatFn(right, variable, domain)
+    const diff = polySub(polyMul(l.num, r.den), polyMul(r.num, l.den))
+
+    const leftTerms = additiveTerms(left)
+    const rightTerms = additiveTerms(right)
+    const leftHasVar = hasVar(left)
+    const rightHasVar = hasVar(right)
+    const varSideTerms = leftHasVar && !rightHasVar ? leftTerms : rightTerms
+    const singleVarSide = leftHasVar !== rightHasVar
+    const onlyTerm = varSideTerms.length === 1 ? varSideTerms[0] : undefined
+    const otherSide = leftHasVar ? right : left
+
+    return {
+      hasVariableDenominator: domain.length > 0,
+      variableOnBothSides: leftHasVar && rightHasVar,
+      hasLikeTerms: sideHasLikeTerms(leftTerms, variable) || sideHasLikeTerms(rightTerms, variable),
+      hasExpandableProduct: hasProductOfSum(left) || hasProductOfSum(right),
+      constantBesideVariable: singleVarSide && varSideTerms.some((t) => !hasVar(t)),
+      coefficientNotOne:
+        singleVarSide &&
+        variable !== null &&
+        onlyTerm !== undefined &&
+        additiveTerms(otherSide).length === 1 &&
+        !(onlyTerm.type === 'var') &&
+        monomialDegree(onlyTerm, variable) === 1,
+      degree: isZeroPoly(diff) ? 0 : diff.length - 1,
+      isAnswerForm: isAnswerForm(stmt, variable),
+    }
+  })
+  if (result === null || result === 'div0' || 'verdict' in result) return null
+  return result
+}
+
 /** Bước này có cùng tập nghiệm với bước liền trước không (để chỉ đúng chỗ lỗi bắt đầu). */
 function sameSetAsPrevious(
   stepSet: SolutionSet,

@@ -2,15 +2,45 @@
 import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import { StemScratchpadService } from '@dhcb/core-ai/stemScratchpadService'
+import { z } from 'zod'
 import {
-  StemProblemState,
-  StemSubjectType,
+  StemSubjectTypeSchema,
   StemVariableTableSchema,
+  type StemProblemState,
+  type SubmitSolutionResult,
 } from '@dhcb/core-contracts/stemScratchpad'
-import { filterStemQuestions, getStemQuestionById } from '@dhcb/core-ai/stemQuestionBank'
-import type { StemQuestion } from '@dhcb/core-ai/stemQuestionBank'
+import {
+  buildStemQuestionBank,
+  filterStemQuestions,
+  getStemQuestionById,
+  toPublicStemQuestion,
+} from '@dhcb/core-ai/stemQuestionBank'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
-import { gradeFinalAnswer } from '@dhcb/core-grading/finalAnswer'
+import { finalValueText } from '@dhcb/core-grading/finalAnswer'
+import { gradeAnswer } from '@dhcb/core-grading/index'
+import { MATH_LESSONS } from '@dhcb/subject-math/lessons'
+import { PHYSICS_LESSONS } from '@dhcb/subject-physics/lessons'
+import { CHEM_LESSONS } from '@dhcb/subject-chemistry/lessons'
+
+// Ngân hàng đề THẬT (changelog 0551): các câu "Tự kiểm tra" có đáp án máy chấm được của bài học
+// Toán · Lí · Hoá. Dựng MỘT lần khi nạp module (hàm thuần, vài trăm câu). Sinh học chưa có trong
+// bảng nháp (giao diện không có tab, bộ kiểm bước chưa hỗ trợ) nên không đưa vào.
+const BANK = buildStemQuestionBank([
+  { subject: 'math', lessons: MATH_LESSONS },
+  { subject: 'physics', lessons: PHYSICS_LESSONS },
+  { subject: 'chemistry', lessons: CHEM_LESSONS },
+])
+
+/** Tham số lọc của `get_questions` — sai kiểu thì 400, không âm thầm bỏ qua. */
+const GetQuestionsQuerySchema = z.object({
+  subject: StemSubjectTypeSchema.optional(),
+  grade: z.enum(['10', '11', '12']).optional(),
+  track: z.enum(['core', 'advanced']).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(20),
+})
+
+/** Mở phiên giải một câu của ngân hàng: client CHỈ gửi id, đề/môn do server tra. */
+const CreateFromBankSchema = z.object({ questionId: z.string().min(1).max(100) })
 
 // [2026-08-24] Trước đây các bài đang làm dở nằm trong `new Map` cấp module — mất khi restart,
 // VỠ trong PM2 cluster 3 instance, và Map khoá theo problemId TOÀN CỤC nên ai biết id cũng đọc
@@ -70,49 +100,25 @@ export default async function handler(req: Request): Promise<Response> {
       return jsonResponse({ success: true, problem: prob }, 200)
     }
 
-    // Lọc ngân hàng câu hỏi nâng cao
+    // Lọc ngân hàng đề — chỉ trả trường CÔNG KHAI (không đáp án, không lời giải).
     if (action === 'get_questions') {
-      const subject = url.searchParams.get('subject') as StemQuestion['subject'] | null
-      const gradeStr = url.searchParams.get('grade')
-      const difficulty = url.searchParams.get('difficulty') as StemQuestion['difficulty'] | null
-      const limitStr = url.searchParams.get('limit')
-
-      const questions = filterStemQuestions({
-        subject: subject ?? undefined,
-        grade: gradeStr ? (parseInt(gradeStr) as 10 | 11 | 12) : undefined,
-        difficulty: difficulty ?? undefined,
-        limit: limitStr ? parseInt(limitStr) : 20,
+      const q = GetQuestionsQuerySchema.safeParse({
+        subject: url.searchParams.get('subject') ?? undefined,
+        grade: url.searchParams.get('grade') ?? undefined,
+        track: url.searchParams.get('track') ?? undefined,
+        limit: url.searchParams.get('limit') ?? undefined,
       })
-      return jsonResponse({ success: true, questions, total: questions.length }, 200)
+      if (!q.success) {
+        return jsonResponse({ error: 'Tham số lọc không hợp lệ' }, 400)
+      }
+      const all = filterStemQuestions(BANK, { ...q.data, limit: undefined })
+      const questions = all.slice(0, q.data.limit).map(toPublicStemQuestion)
+      return jsonResponse({ success: true, questions, total: all.length }, 200)
     }
 
-    // Trả về danh sách bài tập STEM mẫu
-    const sampleProblems = [
-      {
-        id: 'math-linear-1',
-        subject: 'math' as StemSubjectType,
-        title: 'Phương trình bậc nhất 1 ẩn',
-        problemStatement: 'Giải phương trình: 2x + 5 = 15',
-        problemLatex: '2x + 5 = 15',
-      },
-      {
-        id: 'chem-redox-1',
-        subject: 'chemistry' as StemSubjectType,
-        title: 'Cân bằng phản ứng Oxy hóa - Khử',
-        problemStatement: 'Cân bằng phản ứng tạo nước từ Hydro và Oxi:',
-        problemLatex: 'H_2 + O_2 \\rightarrow H_2O',
-      },
-      {
-        id: 'phys-motion-1',
-        subject: 'physics' as StemSubjectType,
-        title: 'Phương trình chuyển động thẳng đều',
-        problemStatement:
-          'Một vật chuyển động từ trạng thái nghỉ với gia tốc a = 2m/s². Tính vận tốc v sau t = 5s:',
-        problemLatex: 'v = v_0 + a \\cdot t',
-      },
-    ]
-
-    return jsonResponse({ success: true, problems: sampleProblems }, 200)
+    // Trước changelog 0551 nhánh này trả 3 "bài mẫu" viết cứng (2x + 5 = 15…). Bảng nháp nay chỉ
+    // dùng ngân hàng đề thật (`action=get_questions`).
+    return jsonResponse({ error: 'Invalid action parameter' }, 400)
   }
 
   if (req.method === 'POST') {
@@ -120,6 +126,23 @@ export default async function handler(req: Request): Promise<Response> {
       const body = await req.json()
 
       if (action === 'create_problem') {
+        // Mở phiên từ NGÂN HÀNG ĐỀ: đề, môn, tiêu đề lấy ở server — không tin client.
+        if (body && typeof body === 'object' && 'questionId' in body) {
+          const parsed = CreateFromBankSchema.safeParse(body)
+          if (!parsed.success) return jsonResponse({ error: 'questionId không hợp lệ' }, 400)
+          const question = getStemQuestionById(BANK, parsed.data.questionId)
+          if (!question) return jsonResponse({ error: 'Question not found' }, 404)
+          const prob = StemScratchpadService.createProblemSession({
+            personId,
+            subject: question.subject,
+            title: question.lessonTitle,
+            problemStatement: question.problemStatement,
+            questionId: question.id,
+          })
+          await saveProblem(personId, await readProblems(personId), prob)
+          return jsonResponse({ success: true, problem: prob }, 200)
+        }
+
         const { subject, title, problemStatement, problemLatex } = body
         if (!subject || !title || !problemStatement) {
           return jsonResponse({ error: 'Missing required problem fields' }, 400)
@@ -231,25 +254,36 @@ export default async function handler(req: Request): Promise<Response> {
         if (typeof finalAnswer !== 'string') {
           return jsonResponse({ error: 'Missing finalAnswer' }, 400)
         }
-        // So ĐÁP SỐ đã chuẩn hoá với đáp án ngân hàng đề qua engine chấm dùng chung
-        // (@dhcb/core-grading): bỏ "x =", thống nhất `,`/`.`, dung sai nhỏ, đơn vị phải khớp.
-        // Trước changelog 0539 so CHUỖI CON với 10 ký tự đầu đáp án — "15" khớp "5".
-        const question = getStemQuestionById(problemId)
-        const isCorrect =
-          question !== undefined && gradeFinalAnswer(finalAnswer, question.solutionLatex).correct
-        prob.isSolved = prob.isSolved || isCorrect
+        // Chấm theo câu NGÂN HÀNG gắn với phiên (`prob.questionId` — do server gán lúc mở phiên).
+        // Trước changelog 0551 tra `getStemQuestionById(problemId)`: id phiên (`prob-…`) không bao
+        // giờ trùng id câu, nên nút nộp không thể chấm đúng cho phiên thật; còn client đặt
+        // problemId = id câu thì tự chọn được câu để chấm.
+        const question =
+          prob.questionId === undefined ? undefined : getStemQuestionById(BANK, prob.questionId)
+        if (!question) {
+          return jsonResponse(
+            {
+              error: 'NO_ANSWER_KEY',
+              message: 'Bài này không thuộc ngân hàng đề nên chưa có đáp án để chấm.',
+            },
+            409,
+          )
+        }
+        // Đáp án của BÀI HỌC (`AnswerSpec`) qua engine chấm dùng chung: dung sai, đơn vị/thứ
+        // nguyên, phân số, công thức hoá — y như trang bài học. `finalValueText` bỏ "x =", vỏ LaTeX.
+        const ketQua = gradeAnswer(finalValueText(finalAnswer), question.answer)
+        prob.isSolved = prob.isSolved || ketQua.correct
         prob.updatedAt = new Date().toISOString()
         await saveProblem(personId, book, prob)
-        // Chỉ hé lời giải khi bài ĐÃ giải đúng — trước đây nộp đại một đáp số sai cũng nhận về
-        // 100 ký tự đầu lời giải, biến nút "nộp" thành nút "xem đáp án".
-        return jsonResponse(
-          {
-            success: true,
-            isSolved: prob.isSolved,
-            ...(prob.isSolved ? { solutionPreview: question?.solutionLatex?.slice(0, 100) } : {}),
-          },
-          200,
-        )
+        // Chỉ hé lời giải khi bài ĐÃ giải đúng — nếu không, nộp bừa thành nút "xem đáp án".
+        const result: SubmitSolutionResult = {
+          success: true,
+          isSolved: prob.isSolved,
+          correct: ketQua.correct,
+          reason: ketQua.reason,
+          ...(prob.isSolved ? { explanation: question.explain } : {}),
+        }
+        return jsonResponse(result, 200)
       }
 
       return jsonResponse({ error: 'Invalid action parameter' }, 400)

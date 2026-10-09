@@ -114,6 +114,12 @@ export const StemProblemStateSchema = z.object({
   problemLatex: z.string().max(1000).optional(),
   /** Bảng thứ nguyên biến (chỉ đề Vật lí dùng) — xem `StemVariableTableSchema`. */
   variables: StemVariableTableSchema.optional(),
+  /**
+   * Thêm 2026-10-09 (changelog 0551): id câu trong NGÂN HÀNG ĐỀ mà phiên này đang giải. Chỉ server
+   * gán (từ `create_problem` có `questionId`) — `submit_solution` chấm đáp số theo câu này, không
+   * theo id phiên do client gửi.
+   */
+  questionId: z.string().min(1).max(100).optional(),
   steps: z.array(ScratchpadStepSchema),
   isSolved: z.boolean(),
   hintsUsed: z.number().int().min(0).default(0),
@@ -121,3 +127,92 @@ export const StemProblemStateSchema = z.object({
   updatedAt: IsoDateTimeSchema,
 })
 export type StemProblemState = z.infer<typeof StemProblemStateSchema>
+
+// ── Ngân hàng đề + gợi ý + nộp lời giải (changelog 0551) ─────────────────────
+// Đặc tả: docs/specs/2026-10-09-stem-goi-y-socratic-va-nop-loi-giai.md §③.
+
+/**
+ * Một câu của ngân hàng đề như CLIENT được thấy: KHÔNG có đáp án, KHÔNG có lời giải (chỉ trả
+ * lời giải sau khi đã nộp đúng). Đề lấy nguyên văn từ `checkQuestions` của bài học STEM.
+ */
+export const StemBankQuestionPublicSchema = z
+  .object({
+    id: z.string().min(1).max(100),
+    subject: StemSubjectTypeSchema,
+    grade: z.enum(['10', '11', '12']),
+    lessonId: z.string().min(1).max(100),
+    lessonTitle: z.string().min(1).max(200),
+    topic: z.string().min(1).max(200),
+    track: z.enum(['core', 'advanced']),
+    problemStatement: z.string().min(1).max(800),
+    /** Đáp số phải kèm đơn vị (đề Vật lí có đơn vị bắt buộc) — để người học biết cách ghi. */
+    needsUnit: z.boolean(),
+    /** Đáp số dạng phân số (vd `1/3`). */
+    expectsFraction: z.boolean(),
+    /** `draft` = chưa có giáo viên đọc lại — giao diện PHẢI nói ra. */
+    reviewStatus: z.enum(['draft', 'reviewed']),
+  })
+  .strict()
+export type StemBankQuestionPublic = z.infer<typeof StemBankQuestionPublicSchema>
+
+/** Gợi ý Socratic: luôn là câu hỏi; `level` theo ba bậc của skill STEM §3. */
+export const StemMicroHintSchema = z
+  .object({
+    hintText: z.string().min(1).max(500),
+    level: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  })
+  .strict()
+export type StemMicroHint = z.infer<typeof StemMicroHintSchema>
+
+/**
+ * Mã lý do khi chấm đáp số cuối — trùng `ReasonCode` của `@dhcb/core-grading` (không import để
+ * gói hợp đồng không phụ thuộc engine chấm).
+ */
+export const SubmitReasonSchema = z.enum([
+  'CORRECT',
+  'CORRECT_LOOSE',
+  'WRONG_VALUE',
+  'WRONG_UNIT',
+  'MISSING_UNIT',
+  'WRONG_DIMENSION',
+  'NOT_SIMPLIFIED',
+  'SIGN_ERROR',
+  'UNBALANCED_ATOMS',
+  'UNBALANCED_CHARGE',
+  'WRONG_SUBSTANCES',
+  'PARSE_ERROR',
+  'EMPTY',
+])
+export type SubmitReason = z.infer<typeof SubmitReasonSchema>
+
+/** Kết quả `submit_solution`. `explanation` (lời giải của bài học) CHỈ có khi đã giải đúng. */
+export const SubmitSolutionResultSchema = z
+  .object({
+    success: z.literal(true),
+    isSolved: z.boolean(),
+    /** Lần nộp NÀY đúng hay sai (bài có thể đã xong từ trước). */
+    correct: z.boolean(),
+    reason: SubmitReasonSchema,
+    explanation: z.string().max(1000).optional(),
+  })
+  .strict()
+export type SubmitSolutionResult = z.infer<typeof SubmitSolutionResultSchema>
+
+/** Câu nhắc theo mã lý do khi nộp SAI — chỉ ra LOẠI sai, không bao giờ nêu đáp số đúng. */
+export const NHAC_KHI_NOP_SAI: Record<SubmitReason, string> = {
+  CORRECT: 'Đúng đáp số.',
+  CORRECT_LOOSE: 'Đúng đáp số (lệch nhẹ do làm tròn — xem lại bước làm tròn).',
+  WRONG_VALUE: 'Chưa đúng. Rà lại từng bước: em đã dùng đủ dữ kiện của đề chưa?',
+  WRONG_UNIT: 'Con số có vẻ ổn nhưng đơn vị chưa đúng — đề hỏi đại lượng gì, đơn vị của nó là gì?',
+  MISSING_UNIT: 'Đáp số cần kèm đơn vị. Em ghi thêm đơn vị rồi nộp lại nhé.',
+  WRONG_DIMENSION:
+    'Đơn vị em ghi là của một đại lượng khác. Đề đang hỏi đại lượng nào (vận tốc, lực, năng lượng…)?',
+  NOT_SIMPLIFIED: 'Phân số chưa tối giản — tử và mẫu còn ước chung nào không?',
+  SIGN_ERROR: 'Gần đúng rồi — xem lại DẤU của kết quả.',
+  UNBALANCED_ATOMS: 'Phương trình chưa cân bằng số nguyên tử.',
+  UNBALANCED_CHARGE: 'Phương trình chưa cân bằng điện tích.',
+  WRONG_SUBSTANCES: 'Các chất khác với đề — chỉ được đổi hệ số.',
+  PARSE_ERROR:
+    'Chưa đọc được đáp số. Hãy ghi một con số (có thể kèm đơn vị), phân số dạng a/b, hoặc công thức hoá học.',
+  EMPTY: 'Em chưa ghi đáp số.',
+}

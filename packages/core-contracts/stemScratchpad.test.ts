@@ -8,6 +8,11 @@ import {
   ScratchpadStepValidationSchema,
   ketQuaBuoc,
   nhanKetQuaBuoc,
+  NHAC_KHI_NOP_SAI,
+  StemBankQuestionPublicSchema,
+  StemMicroHintSchema,
+  SubmitReasonSchema,
+  SubmitSolutionResultSchema,
   type ScratchpadStepValidation,
 } from './stemScratchpad.js'
 
@@ -141,5 +146,67 @@ describe('STEM Scratchpad Contracts', () => {
     }
     expect(StemProblemStateSchema.safeParse(de).success).toBe(true)
     expect(StemProblemStateSchema.safeParse({ ...de, variables: { v: 'm/s' } }).success).toBe(true)
+  })
+})
+
+// changelog 0551 — ngân hàng đề + gợi ý + nộp lời giải.
+describe('hợp đồng ngân hàng đề / gợi ý / nộp lời giải', () => {
+  const cau = {
+    id: 'toan10-c1-b2-q1',
+    subject: 'math',
+    grade: '10',
+    lessonId: 'toan10-c1-b2',
+    lessonTitle: 'Tập hợp',
+    topic: 'Mệnh đề',
+    track: 'core',
+    problemStatement: 'Đề',
+    needsUnit: false,
+    expectsFraction: false,
+    reviewStatus: 'draft',
+  }
+
+  it('câu công khai .strict(): thêm đáp án/lời giải là bị từ chối', () => {
+    expect(StemBankQuestionPublicSchema.safeParse(cau).success).toBe(true)
+    expect(
+      StemBankQuestionPublicSchema.safeParse({ ...cau, answer: { kind: 'numeric' } }).success,
+    ).toBe(false)
+    expect(StemBankQuestionPublicSchema.safeParse({ ...cau, explain: 'x' }).success).toBe(false)
+  })
+
+  it('gợi ý chỉ có ba bậc, không còn suggestedFormula', () => {
+    expect(StemMicroHintSchema.safeParse({ hintText: 'Ẩn là gì?', level: 2 }).success).toBe(true)
+    expect(StemMicroHintSchema.safeParse({ hintText: 'x', level: 4 }).success).toBe(false)
+    expect(
+      StemMicroHintSchema.safeParse({ hintText: 'x', level: 1, suggestedFormula: 'x = 5' }).success,
+    ).toBe(false)
+  })
+
+  it('kết quả nộp: lời giải tuỳ chọn, mã lý do trong danh sách', () => {
+    const ok = { success: true, isSolved: false, correct: false, reason: 'WRONG_VALUE' }
+    expect(SubmitSolutionResultSchema.safeParse(ok).success).toBe(true)
+    expect(SubmitSolutionResultSchema.safeParse({ ...ok, reason: 'LẠ' }).success).toBe(false)
+  })
+
+  it('mọi mã lý do đều có câu nhắc, câu nhắc khi SAI không chứa chữ số (không lộ đáp số)', () => {
+    for (const r of SubmitReasonSchema.options) {
+      expect(NHAC_KHI_NOP_SAI[r].length).toBeGreaterThan(0)
+      expect(NHAC_KHI_NOP_SAI[r]).not.toMatch(/\d/)
+    }
+  })
+
+  it('phiên có thể mang questionId (bản ghi cũ không có vẫn hợp lệ)', () => {
+    const base = {
+      id: 'p',
+      personId: '11111111-1111-4111-8111-111111111111',
+      subject: 'math',
+      title: 't',
+      problemStatement: 's',
+      steps: [],
+      isSolved: false,
+      createdAt: '2026-10-09T00:00:00.000Z',
+      updatedAt: '2026-10-09T00:00:00.000Z',
+    }
+    expect(StemProblemStateSchema.safeParse(base).success).toBe(true)
+    expect(StemProblemStateSchema.parse({ ...base, questionId: 'q' }).questionId).toBe('q')
   })
 })
