@@ -372,6 +372,24 @@ function isAnswerForm(statement: Statement, variable: string | null): boolean {
   })
 }
 
+/**
+ * Độ sâu ngoặc tối đa bộ kiểm chịu đọc. Bộ phân tích và các hàm duyệt cây đều ĐỆ QUY: chuỗi lồng
+ * hàng chục nghìn ngoặc làm tràn ngăn xếp (`RangeError`) — trước rà soát bảo mật 0551 lỗi đó lọt
+ * ra thành 500. Bài phổ thông không bao giờ lồng quá vài tầng, nên 100 vẫn thừa rộng.
+ */
+const MAX_NESTING = 100
+
+/** Độ sâu ngoặc lớn nhất của chuỗi — `( [ {` cùng tính. Đếm vòng lặp, không đệ quy. */
+function nestingDepth(text: string): number {
+  let depth = 0
+  let max = 0
+  for (const ch of text) {
+    if (ch === '(' || ch === '[' || ch === '{') max = Math.max(max, ++depth)
+    else if (ch === ')' || ch === ']' || ch === '}') depth = Math.max(0, depth - 1)
+  }
+  return max
+}
+
 /** Chạy `fn`, đổi các lỗi nội bộ thành kết luận "không kiểm được"/"chia cho 0". */
 function guarded<T>(fn: () => T): T | Extract<MathStepCheck, { verdict: 'unsupported' }> | 'div0' {
   try {
@@ -393,6 +411,21 @@ function guarded<T>(fn: () => T): T | Extract<MathStepCheck, { verdict: 'unsuppo
  * @param previous bước liền trước (tuỳ chọn) — chỉ để nói lỗi đến từ bước này hay bước trước.
  */
 export function checkMathStep(step: string, anchor: string, previous?: string): MathStepCheck {
+  if (nestingDepth(step) > MAX_NESTING) return { verdict: 'unsupported', reason: 'too_complex' }
+  if (nestingDepth(anchor) > MAX_NESTING) {
+    return { verdict: 'unsupported', reason: 'anchor_unsupported' }
+  }
+  // Các hàm duyệt cây (tìm ẩn, so tập nghiệm) cũng đệ quy và chạy NGOÀI `guarded`: chuỗi
+  // `1+1+…+1` vài chục nghìn hạng tử không có ngoặc vẫn làm tràn ngăn xếp → bắt ở đây.
+  try {
+    return checkMathStepUnsafe(step, anchor, previous)
+  } catch (err) {
+    if (err instanceof RangeError) return { verdict: 'unsupported', reason: 'too_complex' }
+    throw err
+  }
+}
+
+function checkMathStepUnsafe(step: string, anchor: string, previous?: string): MathStepCheck {
   const anchorStmt = guarded(() => parseStatement(anchor))
   if (anchorStmt === 'div0' || 'verdict' in anchorStmt) {
     return { verdict: 'unsupported', reason: 'anchor_unsupported' }
@@ -536,6 +569,16 @@ function sideHasLikeTerms(terms: readonly ExprNode[], variable: string | null): 
  * có "hoặc", có nhiều hơn hai vế, nhiều ẩn hoặc ngoài phạm vi — khi đó gợi ý dùng câu chung.
  */
 export function describeMathStep(step: string): MathStepShape | null {
+  if (nestingDepth(step) > MAX_NESTING) return null
+  try {
+    return describeMathStepUnsafe(step)
+  } catch (err) {
+    if (err instanceof RangeError) return null
+    throw err
+  }
+}
+
+function describeMathStepUnsafe(step: string): MathStepShape | null {
   const parts = step.split(IMPLIES)
   const last = parts[parts.length - 1]?.trim() ?? ''
   const result = guarded((): MathStepShape | null => {

@@ -30,6 +30,7 @@ function deBai(
     steps: steps.map((latexInput, i) => ({ stepNumber: i + 1, latexInput, createdAt: NGAY })),
     isSolved: false,
     hintsUsed: 0,
+    wrongSubmits: 0,
     createdAt: NGAY,
     updatedAt: NGAY,
   }

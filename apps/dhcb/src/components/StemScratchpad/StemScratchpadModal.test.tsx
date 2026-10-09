@@ -12,7 +12,13 @@ import type {
 import StemScratchpadModal from './StemScratchpadModal'
 import * as api from '../../lib/stemScratchpadApi.js'
 
-vi.mock('../../lib/stemScratchpadApi.js', () => ({
+vi.mock('../../lib/stemScratchpadApi.js', async () => ({
+  // Lớp lỗi THẬT (giao diện dùng `instanceof` để biết câu nào hiện được cho người học).
+  StemApiError: (
+    await vi.importActual<typeof import('../../lib/stemScratchpadApi.js')>(
+      '../../lib/stemScratchpadApi.js',
+    )
+  ).StemApiError,
   fetchStemQuestionsApi: vi.fn(),
   createStemProblemFromBankApi: vi.fn(),
   validateStemStepApi: vi.fn(),
@@ -46,6 +52,7 @@ const phien = (questionId: string, extra: Partial<StemProblemState> = {}): StemP
   steps: [],
   isSolved: false,
   hintsUsed: 0,
+  wrongSubmits: 0,
   createdAt: '2026-10-09T00:00:00.000Z',
   updatedAt: '2026-10-09T00:00:00.000Z',
   ...extra,
@@ -143,9 +150,10 @@ describe('StemScratchpadModal', () => {
     expect(chu()).toContain('Đang chấm…')
     expect(api.submitStemSolutionApi).toHaveBeenCalledWith('prob-q1', '18')
     await act(async () =>
-      traKetQua({ success: true, isSolved: false, correct: false, reason: 'WRONG_VALUE' }),
+      traKetQua({ success: true, isSolved: false, correct: false, attemptsLeft: 4 }),
     )
     expect(chu()).toContain('✗ Chưa đúng')
+    expect(chu()).toContain('Còn 4 lần nộp cho đề này.')
     expect(chu()).not.toContain('ĐÃ GIẢI XONG')
 
     vi.mocked(api.submitStemSolutionApi).mockResolvedValueOnce({
@@ -153,6 +161,7 @@ describe('StemScratchpadModal', () => {
       isSolved: true,
       correct: true,
       reason: 'CORRECT',
+      attemptsLeft: 4,
       explanation: 'Dùng công thức n(A ∪ B).',
     })
     await go(oNhap('Đáp số cuối'), '8')
@@ -162,6 +171,36 @@ describe('StemScratchpadModal', () => {
     expect(chu()).toContain('ĐÃ GIẢI XONG')
     expect(oNhap('Đáp số cuối').disabled).toBe(true)
     expect(nut(/Gợi ý/).disabled).toBe(true)
+  })
+
+  it('nộp sai hết lượt → khoá ô nộp; 409 từ server → hiện đúng câu của server', async () => {
+    await mo()
+    vi.mocked(api.submitStemSolutionApi).mockResolvedValueOnce({
+      success: true,
+      isSolved: false,
+      correct: false,
+      attemptsLeft: 0,
+    })
+    await go(oNhap('Đáp số cuối'), '9')
+    await bam(nut(/Nộp lời giải/))
+    expect(chu()).toContain('Đã hết lượt nộp cho đề này')
+    expect(oNhap('Đáp số cuối').disabled).toBe(true)
+
+    // Mở đề khác → phiên mới, ô nộp mở lại; server trả 409 → câu của server, không phải "kết nối".
+    await bam(nut(/Đề khác/))
+    vi.mocked(api.submitStemSolutionApi).mockRejectedValueOnce(
+      new api.StemApiError(
+        409,
+        'Em đã nộp sai quá 5 lần cho đề này — xem lại các bước rồi mở đề khác nhé.',
+        {
+          forLearner: true,
+        },
+      ),
+    )
+    await go(oNhap('Đáp số cuối'), '9')
+    await bam(nut(/Nộp lời giải/))
+    expect(chu()).toContain('Em đã nộp sai quá 5 lần')
+    expect(chu()).not.toContain('kiểm tra kết nối')
   })
 
   it('nộp lỗi mạng → báo lỗi, không đánh dấu xong', async () => {

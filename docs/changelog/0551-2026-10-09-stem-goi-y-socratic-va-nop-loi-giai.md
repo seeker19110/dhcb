@@ -127,5 +127,43 @@ scripts/changelog.test.ts scripts/skills-mirror.test.ts` + hai test design của
   bất phương trình, nhiều ẩn, `:`.
 - Đề ngân hàng là lời văn → bước Toán chỉ so được với bước 1 của người học.
 - 272 câu đều từ bài `draft` (chưa giáo viên duyệt) — giao diện đã nói ra.
-- `submit_solution` không giới hạn số lần nộp (giống phần "Tự kiểm tra" của trang bài học; không tốn
-  AI) — đoán dò đáp số nguyên nhỏ là có thể.
+- ~~`submit_solution` không giới hạn số lần nộp~~ — đã vá, xem "Sau rà soát" mục 1. Còn lại: mỗi phiên
+  5 lần sai, nhưng mở phiên mới cho cùng câu là được 5 lần nữa (trong trần 60 yêu cầu/phút) — đủ
+  chặn script dò nhanh, chưa chặn người kiên nhẫn dò tay đáp số nguyên nhỏ.
+
+## Sau rà soát (bảo mật độc lập trên `75960a69`, không có mục Cao)
+
+1. **[Thấp–Trung] `submit_solution` là oracle dò đáp số.** Không giới hạn số lần, và mã lý do
+   `MISSING_UNIT`/`WRONG_UNIT`/`WRONG_DIMENSION`/`SIGN_ERROR` cho biết đáp án có đơn vị gì, độ lớn
+   đã đúng chưa. Sửa: (a) bộ đếm `checkRateLimit(userId, 60, 'stem-scratchpad')` cho MỌI action
+   POST (hằng `STEM_POST_PER_MINUTE`), vượt → 429 + `logSecurityEvent('RATE_LIMIT_EXCEEDED')`;
+   (b) trường `wrongSubmits` trong `StemProblemStateSchema` (`.default(0)`, bản ghi cũ đọc thành 0);
+   đủ `MAX_WRONG_SUBMITS` = 5 lần sai thì phiên đó trả 409 `TOO_MANY_WRONG_SUBMITS` "Em đã nộp sai
+   quá 5 lần cho đề này — xem lại các bước rồi mở đề khác nhé." — chỉ khoá PHIÊN, không khoá tài
+   khoản; lỗi cách ghi (`PARSE_ERROR`/`EMPTY`) không trừ lượt; (c) hợp đồng chỉ còn
+   `PublicSubmitReasonSchema` (`CORRECT`, `CORRECT_LOOSE`, `PARSE_ERROR`, `EMPTY`) — sai giá trị/đơn
+   vị/dấu chỉ trả `correct: false` + `attemptsLeft`, giao diện hiện câu chung `NHAC_NOP_SAI_CHUNG`
+   và "Còn N lần nộp", hết lượt thì khoá ô; 409/429 hiện đúng câu của server (`StemApiError`).
+2. **[Thấp] `get_hint`** đi chung bộ đếm ở mục 1 — test 429 phủ cả bốn action POST.
+3. **[Thấp, có sẵn] `create_problem` tự do và `validate_step` không qua Zod** — body `null` ném
+   TypeError (500), chuỗi dài vô hạn vào JSONB. Nay mọi action POST qua Zod; giới hạn lấy lại từ
+   chính hợp đồng (`StemProblemStateSchema.pick`, `ScratchpadStepSchema.pick`) nên thứ được lưu luôn
+   hợp lệ với hợp đồng: title ≤ 200, problemStatement ≤ 2000, problemLatex ≤ 1000, latexInput/
+   explanation ≤ 1000, finalAnswer ≤ 200. **Lệch brief có chủ đích:** brief gợi ý 4000 cho đề;
+   hợp đồng trạng thái đã đặt 2000/1000 — lấy theo hợp đồng để phiên lưu xuống không bao giờ trái
+   schema của chính nó.
+4. **[Thấp, có sẵn] Tra phiên dính khoá prototype.** `book['constructor']` trả hàm `Object` nên lọt
+   kiểm "không tìm thấy". Nay qua `findProblem` (`typeof === 'string'` + `Object.hasOwn`) ở cả bốn
+   chỗ (GET, `validate_step`, `get_hint`, `submit_solution`) → 404. Kèm: `validate_step` có
+   `problemId` mà không thấy phiên → 404 (trước đây tạo phiên MỚI mang đúng id client chọn).
+5. **[Thấp, có sẵn] `checkMathStep`/`describeMathStep` để lọt `RangeError`** (30000 ngoặc lồng → 500).
+   Sửa: chặn trước bằng `nestingDepth > MAX_NESTING` (100, đếm vòng lặp, không đệ quy) → `too_complex`
+   (mốc → `anchor_unsupported`, `describeMathStep` → `null`); thêm lưới `try/catch RangeError` bọc
+   cả hàm vì khi rà lại thấy chuỗi `1+1+…+1` 30000 hạng tử KHÔNG ngoặc vẫn tràn ngăn xếp ở bước duyệt
+   cây nằm ngoài `guarded`. Ở API, độ dài ≤ 1000 (mục 3) đã chặn cả hai ca trước khi tới bộ kiểm.
+
+**Bằng chứng sau rà soát:** test mới — server: 429 cho cả 4 action + log; body `null`/`42` → 400;
+5 trường quá dài → 400; `constructor`/`toString`/`__proto__`/`hasOwnProperty` → 404 ở 4 chỗ tra; 5 lần
+sai → 409, lỗi cách ghi không trừ lượt, phiên mới nộp đúng được; thiếu đơn vị không còn `reason`.
+Hợp đồng: mã lộ đơn vị bị schema từ chối, `wrongSubmits` mặc định 0. Toán: 30000 ngoặc và chuỗi
+cộng dài → `too_complex`, không ném. Giao diện: hết lượt khoá ô, 409 hiện câu server.

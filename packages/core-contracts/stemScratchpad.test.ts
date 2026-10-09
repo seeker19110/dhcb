@@ -8,7 +8,11 @@ import {
   ScratchpadStepValidationSchema,
   ketQuaBuoc,
   nhanKetQuaBuoc,
-  NHAC_KHI_NOP_SAI,
+  MAX_WRONG_SUBMITS,
+  NHAC_KHI_NOP,
+  NHAC_NOP_SAI_CHUNG,
+  PublicSubmitReasonSchema,
+  publicSubmitReason,
   StemBankQuestionPublicSchema,
   StemMicroHintSchema,
   SubmitReasonSchema,
@@ -181,17 +185,52 @@ describe('hợp đồng ngân hàng đề / gợi ý / nộp lời giải', () =
     ).toBe(false)
   })
 
-  it('kết quả nộp: lời giải tuỳ chọn, mã lý do trong danh sách', () => {
-    const ok = { success: true, isSolved: false, correct: false, reason: 'WRONG_VALUE' }
+  it('kết quả nộp: lời giải tuỳ chọn; CHỈ mã công khai, mã chi tiết đơn vị bị từ chối', () => {
+    const ok = { success: true, isSolved: false, correct: false, attemptsLeft: 3 }
     expect(SubmitSolutionResultSchema.safeParse(ok).success).toBe(true)
-    expect(SubmitSolutionResultSchema.safeParse({ ...ok, reason: 'LẠ' }).success).toBe(false)
+    expect(SubmitSolutionResultSchema.safeParse({ ...ok, reason: 'PARSE_ERROR' }).success).toBe(
+      true,
+    )
+    // Rà soát bảo mật 0551: các mã lộ thông tin đáp án không còn được phép trong hợp đồng.
+    for (const lo of ['MISSING_UNIT', 'WRONG_UNIT', 'WRONG_DIMENSION', 'SIGN_ERROR', 'LẠ']) {
+      expect(SubmitSolutionResultSchema.safeParse({ ...ok, reason: lo }).success, lo).toBe(false)
+    }
+    expect(
+      SubmitSolutionResultSchema.safeParse({ ...ok, attemptsLeft: MAX_WRONG_SUBMITS + 1 }).success,
+    ).toBe(false)
   })
 
-  it('mọi mã lý do đều có câu nhắc, câu nhắc khi SAI không chứa chữ số (không lộ đáp số)', () => {
+  it('publicSubmitReason: chỉ giữ CORRECT/CORRECT_LOOSE/PARSE_ERROR/EMPTY, còn lại ẩn', () => {
     for (const r of SubmitReasonSchema.options) {
-      expect(NHAC_KHI_NOP_SAI[r].length).toBeGreaterThan(0)
-      expect(NHAC_KHI_NOP_SAI[r]).not.toMatch(/\d/)
+      const pub = publicSubmitReason(r)
+      if (PublicSubmitReasonSchema.safeParse(r).success) expect(pub).toBe(r)
+      else expect(pub, r).toBeUndefined()
     }
+  })
+
+  it('câu nhắc khi nộp không chứa chữ số (không lộ đáp số)', () => {
+    for (const r of PublicSubmitReasonSchema.options) {
+      expect(NHAC_KHI_NOP[r].length).toBeGreaterThan(0)
+      expect(NHAC_KHI_NOP[r]).not.toMatch(/\d/)
+    }
+    expect(NHAC_NOP_SAI_CHUNG).not.toMatch(/\d/)
+  })
+
+  it('wrongSubmits: bản ghi cũ không có trường → mặc định 0; số âm bị từ chối', () => {
+    const cu = {
+      id: 'p',
+      personId: '11111111-1111-4111-8111-111111111111',
+      subject: 'math',
+      title: 't',
+      problemStatement: 's',
+      steps: [],
+      isSolved: false,
+      createdAt: '2026-10-09T00:00:00.000Z',
+      updatedAt: '2026-10-09T00:00:00.000Z',
+    }
+    const r = StemProblemStateSchema.safeParse(cu)
+    expect(r.success && r.data.wrongSubmits).toBe(0)
+    expect(StemProblemStateSchema.safeParse({ ...cu, wrongSubmits: -1 }).success).toBe(false)
   })
 
   it('phiên có thể mang questionId (bản ghi cũ không có vẫn hợp lệ)', () => {

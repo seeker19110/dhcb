@@ -95,22 +95,27 @@ POST /api/stem-scratchpad?action=submit_solution  { problemId: string, finalAnsw
 get_questions   → { success: true, questions: StemBankQuestionPublic[], total: number } // KHÔNG answer/explain
 create_problem  → { success: true, problem: StemProblemState & { questionId?: string } }
 get_hint        → { success: true, hint: { hintText: string; level: 1 | 2 | 3 }, hintsUsed: number }
-submit_solution → { success: true, isSolved: boolean, correct: boolean, reason: SubmitReason,
-                    explanation?: string /* chỉ khi isSolved */ }
+submit_solution → { success: true, isSolved: boolean, correct: boolean,
+                    reason?: PublicSubmitReason /* sau rà soát: chỉ CORRECT|CORRECT_LOOSE|PARSE_ERROR|EMPTY */,
+                    attemptsLeft: number, explanation?: string /* chỉ khi isSolved */ }
 ```
 
 **Ca lỗi (là một phần hợp đồng, không phải phụ lục):**
 
-| Tình huống                                             | Mã lỗi | Hành vi mong đợi                                       |
-| ------------------------------------------------------ | ------ | ------------------------------------------------------ |
-| `get_questions` tham số sai (môn lạ, lớp 13, limit)    | 400    | "Tham số lọc không hợp lệ", không âm thầm bỏ qua       |
-| GET không `action`, không `problemId`                  | 400    | "Invalid action parameter" (3 bài mẫu viết cứng đã gỡ) |
-| `create_problem` `questionId` rỗng / không chuỗi       | 400    | không tạo phiên                                        |
-| `create_problem` `questionId` không có trong ngân hàng | 404    | không tạo phiên                                        |
-| `submit_solution` phiên không thuộc ngân hàng đề       | 409    | `NO_ANSWER_KEY` — không đoán đúng/sai                  |
-| `submit_solution` `finalAnswer` không phải chuỗi       | 400    | như `0539`                                             |
-| Nộp sai                                                | 200    | `correct:false` + `reason`, KHÔNG có `explanation`     |
-| Lỗi mạng ở client                                      | —      | `role="alert"` + cách xử lý, không đánh dấu xong       |
+| Tình huống                                             | Mã lỗi | Hành vi mong đợi                                                                                           |
+| ------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------- |
+| `get_questions` tham số sai (môn lạ, lớp 13, limit)    | 400    | "Tham số lọc không hợp lệ", không âm thầm bỏ qua                                                           |
+| GET không `action`, không `problemId`                  | 400    | "Invalid action parameter" (3 bài mẫu viết cứng đã gỡ)                                                     |
+| `create_problem` `questionId` rỗng / không chuỗi       | 400    | không tạo phiên                                                                                            |
+| `create_problem` `questionId` không có trong ngân hàng | 404    | không tạo phiên                                                                                            |
+| `submit_solution` phiên không thuộc ngân hàng đề       | 409    | `NO_ANSWER_KEY` — không đoán đúng/sai                                                                      |
+| `submit_solution` `finalAnswer` không phải chuỗi       | 400    | như `0539`                                                                                                 |
+| Nộp sai                                                | 200    | `correct:false` + `attemptsLeft`, KHÔNG `explanation`; `reason` chỉ khi lỗi cách ghi (sau rà soát bảo mật) |
+| Nộp sai đủ `MAX_WRONG_SUBMITS` (5) trong một phiên     | 409    | `TOO_MANY_WRONG_SUBMITS`, câu tiếng Việt; chỉ khoá phiên                                                   |
+| Quá 60 yêu cầu POST/phút/người                         | 429    | `logSecurityEvent('RATE_LIMIT_EXCEEDED')`                                                                  |
+| Body POST không phải object / chuỗi quá dài            | 400    | Zod, giới hạn theo hợp đồng trạng thái                                                                     |
+| `problemId` là khoá prototype (`constructor`…)         | 404    | tra bằng `Object.hasOwn`                                                                                   |
+| Lỗi mạng ở client                                      | —      | `role="alert"` + cách xử lý, không đánh dấu xong                                                           |
 
 ## ④ Tiêu chí chấp nhận
 

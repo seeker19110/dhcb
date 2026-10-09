@@ -5,6 +5,7 @@ import * as security from '@dhcb/core-auth/security'
 import { getFeatureState } from '@dhcb/core-db/featureState'
 import {
   StemBankQuestionPublicSchema,
+  MAX_WRONG_SUBMITS,
   StemMicroHintSchema,
   SubmitSolutionResultSchema,
 } from '@dhcb/core-contracts/stemScratchpad'
@@ -26,6 +27,9 @@ vi.mock('@dhcb/core-db/featureState', () => ({
 describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    // Bộ đếm lượt thật dùng chung một khoá cho cả file (cùng userId) — cho qua mặc định; ca 429
+    // có test riêng bên dưới.
+    vi.spyOn(security, 'checkRateLimit').mockResolvedValue(true)
   })
 
   it('rejects unauthorized requests with 401', async () => {
@@ -384,7 +388,8 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        // Có `finalAnswer` hợp lệ (thiếu thì 400 từ Zod) nhưng không có problemId → 404.
+        body: JSON.stringify({ finalAnswer: '1' }),
       }),
     )
     expect(res.status).toBe(404)
@@ -468,20 +473,55 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       expect(lai.data).toMatchObject({ isSolved: true, correct: false })
     })
 
-    it('Vật lí: thiếu đơn vị → chưa xong, có mã lý do', async () => {
+    it('Vật lí: thiếu đơn vị → chưa xong, KHÔNG lộ mã MISSING_UNIT (rà soát bảo mật 0551)', async () => {
       expect(ly).toBeDefined()
       const { data } = await post('create_problem', { questionId: ly?.id })
       const r = await post('submit_solution', { problemId: data.problem.id, finalAnswer: '123456' })
       expect(r.data.isSolved).toBe(false)
-      expect(r.data.reason).toBe('MISSING_UNIT')
+      expect(r.data.correct).toBe(false)
+      // Mã chi tiết (thiếu/sai đơn vị, sai dấu…) cho biết đáp án có đơn vị/độ lớn đã đúng → ẩn.
+      expect(r.data).not.toHaveProperty('reason')
+      expect(r.data.attemptsLeft).toBe(MAX_WRONG_SUBMITS - 1)
+      expect(SubmitSolutionResultSchema.safeParse(r.data).success).toBe(true)
+    })
+
+    it(`nộp SAI quá ${MAX_WRONG_SUBMITS} lần → 409 cho PHIÊN đó; lỗi cách ghi không tính; phiên mới vẫn nộp được`, async () => {
+      const { data } = await post('create_problem', { questionId: toan?.id })
+      const id = data.problem.id
+      // Lỗi cách ghi (PARSE_ERROR) có mã công khai và KHÔNG trừ lượt.
+      const ghiLoi = await post('submit_solution', { problemId: id, finalAnswer: 'abc' })
+      expect(ghiLoi.data).toMatchObject({ correct: false, reason: 'PARSE_ERROR' })
+      expect(ghiLoi.data.attemptsLeft).toBe(MAX_WRONG_SUBMITS)
+      for (let i = 1; i <= MAX_WRONG_SUBMITS; i++) {
+        const r = await post('submit_solution', { problemId: id, finalAnswer: `${giaTri + 1000}` })
+        expect(r.status).toBe(200)
+        expect(r.data).not.toHaveProperty('reason')
+        expect(r.data.attemptsLeft).toBe(MAX_WRONG_SUBMITS - i)
+      }
+      // Hết lượt: kể cả nộp ĐÚNG cũng không được chấm nữa (không còn là oracle).
+      const chan = await post('submit_solution', { problemId: id, finalAnswer: `${giaTri}` })
+      expect(chan.status).toBe(409)
+      expect(chan.data.error).toBe('TOO_MANY_WRONG_SUBMITS')
+      expect(chan.data.message).toContain(`quá ${MAX_WRONG_SUBMITS} lần`)
+      expect(chan.data.message).toContain('mở đề khác')
+      // Chỉ khoá phiên đó: mở lại cùng câu (phiên mới) vẫn nộp được.
+      const moi = await post('create_problem', { questionId: toan?.id })
+      const lai = await post('submit_solution', {
+        problemId: moi.data.problem.id,
+        finalAnswer: `${giaTri}`,
+      })
+      expect(lai.data).toMatchObject({ correct: true, isSolved: true })
     })
 
     it('CHẶN HỒI QUY: đặt problemId = id câu ngân hàng qua validate_step KHÔNG tự chọn được câu để chấm', async () => {
       // Trước 0551 server tra câu theo problemId do client gửi — client đặt problemId trùng id câu
       // là "mượn" được đáp án câu đó để chấm.
-      await post('validate_step', { problemId: toan?.id, latexInput: 'chưa xong' })
+      // Từ rà soát bảo mật 0551: id phiên không tồn tại → 404, server không còn tạo phiên mang id
+      // do client chọn.
+      const buoc = await post('validate_step', { problemId: toan?.id, latexInput: 'chưa xong' })
+      expect(buoc.status).toBe(404)
       const r = await post('submit_solution', { problemId: toan?.id, finalAnswer: `${giaTri}` })
-      expect(r.status).toBe(409)
+      expect(r.status).toBe(404)
     })
 
     it('validate_step trên bài ngân hàng: bước đúng so với bước 1 KHÔNG làm bài "giải xong"', async () => {
@@ -624,5 +664,86 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
     // Khớp thứ nguyên chỉ là điều kiện CẦN → không bao giờ ✓, không làm bài "giải xong".
     expect(khop.validation.status).toBe('unverified')
     expect(khop.isSolved).toBe(false)
+  })
+  describe('rà soát bảo mật 0551: rate limit, Zod, khoá prototype', () => {
+    const USER = '11111111-1111-4111-8111-111111111111'
+    const goi = (action: string, body: string) =>
+      handler(
+        new Request(`http://localhost/api/stem-scratchpad?action=${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+        }),
+      )
+
+    beforeEach(() => {
+      vi.spyOn(security, 'validateAuth').mockResolvedValue({ userId: USER })
+    })
+
+    it('vượt trần yêu cầu/phút → 429 cho MỌI action POST (kể cả get_hint), có log bảo mật', async () => {
+      const gioiHan = vi.spyOn(security, 'checkRateLimit').mockResolvedValue(false)
+      const log = vi.spyOn(security, 'logSecurityEvent').mockImplementation(() => {})
+      for (const action of ['submit_solution', 'get_hint', 'validate_step', 'create_problem']) {
+        const res = await goi(action, JSON.stringify({ problemId: 'x', finalAnswer: '1' }))
+        expect(res.status, action).toBe(429)
+      }
+      expect(gioiHan).toHaveBeenCalledWith(USER, expect.any(Number), 'stem-scratchpad')
+      expect(log).toHaveBeenCalledWith(
+        'RATE_LIMIT_EXCEEDED',
+        expect.any(String),
+        expect.objectContaining({ path: '/api/stem-scratchpad' }),
+      )
+    })
+
+    it('body null / không phải object → 400 (trước đây TypeError → 500)', async () => {
+      for (const action of ['create_problem', 'validate_step', 'get_hint', 'submit_solution']) {
+        expect((await goi(action, 'null')).status, action).toBe(400)
+        expect((await goi(action, '42')).status, action).toBe(400)
+      }
+    })
+
+    it('chuỗi quá dài → 400, không lưu', async () => {
+      const dai = 'x'.repeat(5000)
+      const tao = (extra: Record<string, unknown>) =>
+        goi(
+          'create_problem',
+          JSON.stringify({ subject: 'math', title: 'Đề', problemStatement: 'Giải', ...extra }),
+        )
+      expect((await tao({ title: dai })).status).toBe(400)
+      expect((await tao({ problemStatement: dai })).status).toBe(400)
+      expect((await tao({ problemLatex: dai })).status).toBe(400)
+      expect((await tao({ subject: 'sinh-hoc-gia' })).status).toBe(400)
+      expect((await goi('validate_step', JSON.stringify({ latexInput: dai }))).status).toBe(400)
+      expect(
+        (await goi('validate_step', JSON.stringify({ latexInput: 'x = 1', explanation: dai })))
+          .status,
+      ).toBe(400)
+      expect(
+        (await goi('submit_solution', JSON.stringify({ problemId: 'p', finalAnswer: dai }))).status,
+      ).toBe(400)
+    })
+
+    it("problemId 'constructor'/'toString'/'__proto__' → 404 ở mọi nơi tra phiên", async () => {
+      for (const problemId of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+        const get = await handler(
+          new Request(`http://localhost/api/stem-scratchpad?problemId=${problemId}`, {
+            method: 'GET',
+          }),
+        )
+        expect(get.status, problemId).toBe(404)
+        expect((await goi('get_hint', JSON.stringify({ problemId }))).status).toBe(404)
+        expect(
+          (await goi('submit_solution', JSON.stringify({ problemId, finalAnswer: '1' }))).status,
+        ).toBe(404)
+        expect(
+          (await goi('validate_step', JSON.stringify({ problemId, latexInput: 'x = 1' }))).status,
+        ).toBe(404)
+      }
+    })
+
+    it('bước lồng 30000 ngoặc → bị chặn ở độ dài (400), không 500', async () => {
+      const sau = `x = ${'('.repeat(30000)}1${')'.repeat(30000)}`
+      expect((await goi('validate_step', JSON.stringify({ latexInput: sau }))).status).toBe(400)
+    })
   })
 })

@@ -4,7 +4,8 @@ import { useDialogBehavior } from '../useDialogBehavior'
 import {
   ketQuaBuoc,
   nhanKetQuaBuoc,
-  NHAC_KHI_NOP_SAI,
+  NHAC_KHI_NOP,
+  NHAC_NOP_SAI_CHUNG,
   type ScratchpadStep,
   type StemBankQuestionPublic,
   type StemMicroHint,
@@ -17,6 +18,7 @@ import {
   createStemProblemFromBankApi,
   fetchStemQuestionsApi,
   getStemHintApi,
+  StemApiError,
   submitStemSolutionApi,
   validateStemStepApi,
 } from '../../lib/stemScratchpadApi.js'
@@ -74,7 +76,8 @@ type TrangThaiNop =
   | { kind: 'idle' }
   | { kind: 'submitting' }
   | { kind: 'done'; result: SubmitSolutionResult }
-  | { kind: 'error' }
+  /** `message` = câu server viết cho người học (409 nộp sai quá số lần, 429); thiếu = lỗi mạng. */
+  | { kind: 'error'; message?: string }
 
 export default function StemScratchpadModal({ onClose }: StemScratchpadModalProps) {
   // 6 hành vi a11y bắt buộc của hộp thoại.
@@ -214,13 +217,19 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
       const result = await submitStemSolutionApi(problem.id, dapSo.trim())
       setNop({ kind: 'done', result })
       if (result.isSolved) setProblem({ ...problem, isSolved: true })
-    } catch {
-      setNop({ kind: 'error' })
+    } catch (err) {
+      setNop(
+        err instanceof StemApiError && err.forLearner
+          ? { kind: 'error', message: err.message }
+          : { kind: 'error' },
+      )
     }
   }
 
   const buocCuoi = problem?.steps[problem.steps.length - 1]
   const daXong = problem?.isSolved === true
+  // Hết lượt nộp sai cho phiên đề này (server cũng chặn — đây chỉ để khoá nút cho rõ).
+  const hetLuotNop = !daXong && nop.kind === 'done' && nop.result.attemptsLeft === 0
   const tongCau = taiDe.kind === 'ready' ? taiDe.questions.length : 0
 
   // Portal ra document.body: hộp thoại nằm trong khung studio — tổ tiên có `transform` hoặc
@@ -465,12 +474,12 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                   value={dapSo}
                   onChange={(e) => setDapSo(e.target.value)}
                   aria-describedby={answerHelpId}
-                  disabled={daXong || nop.kind === 'submitting'}
+                  disabled={daXong || hetLuotNop || nop.kind === 'submitting'}
                   className="w-full sm:flex-1 min-h-11 px-4 rounded-2xl bg-zinc-900 border border-white/10 focus:border-teal-500 focus:outline-none text-sm text-white placeholder-zinc-500 disabled:opacity-50"
                 />
                 <button
                   type="submit"
-                  disabled={daXong || !dapSo.trim() || nop.kind === 'submitting'}
+                  disabled={daXong || hetLuotNop || !dapSo.trim() || nop.kind === 'submitting'}
                   className={`${NUT_CO_BAN} bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-md`}
                 >
                   {nop.kind === 'submitting' ? 'Đang chấm…' : 'Nộp lời giải'}
@@ -478,7 +487,7 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
               </div>
               {nop.kind === 'error' && (
                 <p role="alert" className="text-xs text-rose-300 theme-light:text-rose-900">
-                  Chưa nộp được — kiểm tra kết nối rồi thử lại.
+                  {nop.message ?? 'Chưa nộp được — kiểm tra kết nối rồi thử lại.'}
                 </p>
               )}
               {nop.kind === 'done' && (
@@ -491,8 +500,17 @@ export default function StemScratchpadModal({ onClose }: StemScratchpadModalProp
                     }
                   >
                     {nop.result.correct ? '✓ ' : '✗ '}
-                    {NHAC_KHI_NOP_SAI[nop.result.reason]}
+                    {nop.result.reason !== undefined
+                      ? NHAC_KHI_NOP[nop.result.reason]
+                      : NHAC_NOP_SAI_CHUNG}
                   </p>
+                  {!nop.result.correct && !daXong && (
+                    <p className="text-zinc-300">
+                      {nop.result.attemptsLeft > 0
+                        ? `Còn ${nop.result.attemptsLeft} lần nộp cho đề này.`
+                        : 'Đã hết lượt nộp cho đề này — xem lại các bước rồi mở đề khác nhé.'}
+                    </p>
+                  )}
                   {nop.result.explanation && (
                     <p className="text-zinc-300">
                       <span className="font-bold">Lời giải của bài học: </span>

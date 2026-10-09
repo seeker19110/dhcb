@@ -123,6 +123,12 @@ export const StemProblemStateSchema = z.object({
   steps: z.array(ScratchpadStepSchema),
   isSolved: z.boolean(),
   hintsUsed: z.number().int().min(0).default(0),
+  /**
+   * Số lần `submit_solution` chấm SAI trong phiên này (thêm sau rà soát bảo mật 0551). Đủ
+   * `MAX_WRONG_SUBMITS` thì server từ chối nộp tiếp cho phiên đó — chặn dò đáp số. `.default(0)`
+   * để bản ghi cũ (chưa có trường) vẫn đọc được.
+   */
+  wrongSubmits: z.number().int().min(0).default(0),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 })
@@ -185,6 +191,25 @@ export const SubmitReasonSchema = z.enum([
 ])
 export type SubmitReason = z.infer<typeof SubmitReasonSchema>
 
+/**
+ * Mã lý do ĐƯỢC PHÉP trả cho client (sau rà soát bảo mật 0551). Các mã còn lại của
+ * `SubmitReasonSchema` (WRONG_UNIT, MISSING_UNIT, WRONG_DIMENSION, SIGN_ERROR, NOT_SIMPLIFIED…) nói
+ * quá nhiều về đáp án — vd MISSING_UNIT cho biết đáp án có đơn vị, SIGN_ERROR cho biết độ lớn đã
+ * đúng — nên khi nộp SAI server chỉ trả `correct: false` + câu chung. Hai mã giữ lại khi sai
+ * (PARSE_ERROR, EMPTY) chỉ nói về CÁCH GHI của người học, không lộ gì về đáp án.
+ */
+export const PublicSubmitReasonSchema = z.enum(['CORRECT', 'CORRECT_LOOSE', 'PARSE_ERROR', 'EMPTY'])
+export type PublicSubmitReason = z.infer<typeof PublicSubmitReasonSchema>
+
+/** Mã lý do của engine chấm → mã được phép trả client (`undefined` = chỉ báo sai chung). */
+export function publicSubmitReason(reason: SubmitReason): PublicSubmitReason | undefined {
+  const r = PublicSubmitReasonSchema.safeParse(reason)
+  return r.success ? r.data : undefined
+}
+
+/** Số lần nộp SAI tối đa cho MỘT phiên đề, quá thì server trả 409 (chặn dò đáp số). */
+export const MAX_WRONG_SUBMITS = 5
+
 /** Kết quả `submit_solution`. `explanation` (lời giải của bài học) CHỈ có khi đã giải đúng. */
 export const SubmitSolutionResultSchema = z
   .object({
@@ -192,27 +217,24 @@ export const SubmitSolutionResultSchema = z
     isSolved: z.boolean(),
     /** Lần nộp NÀY đúng hay sai (bài có thể đã xong từ trước). */
     correct: z.boolean(),
-    reason: SubmitReasonSchema,
+    /** Chỉ có khi đúng, hoặc khi lỗi nằm ở cách ghi (PARSE_ERROR/EMPTY). */
+    reason: PublicSubmitReasonSchema.optional(),
+    /** Còn bao nhiêu lần được nộp sai trong phiên này. */
+    attemptsLeft: z.number().int().min(0).max(MAX_WRONG_SUBMITS),
     explanation: z.string().max(1000).optional(),
   })
   .strict()
 export type SubmitSolutionResult = z.infer<typeof SubmitSolutionResultSchema>
 
-/** Câu nhắc theo mã lý do khi nộp SAI — chỉ ra LOẠI sai, không bao giờ nêu đáp số đúng. */
-export const NHAC_KHI_NOP_SAI: Record<SubmitReason, string> = {
+/** Câu nhắc theo mã lý do công khai — không bao giờ nêu đáp số hay đơn vị của đáp án. */
+export const NHAC_KHI_NOP: Record<PublicSubmitReason, string> = {
   CORRECT: 'Đúng đáp số.',
   CORRECT_LOOSE: 'Đúng đáp số (lệch nhẹ do làm tròn — xem lại bước làm tròn).',
-  WRONG_VALUE: 'Chưa đúng. Rà lại từng bước: em đã dùng đủ dữ kiện của đề chưa?',
-  WRONG_UNIT: 'Con số có vẻ ổn nhưng đơn vị chưa đúng — đề hỏi đại lượng gì, đơn vị của nó là gì?',
-  MISSING_UNIT: 'Đáp số cần kèm đơn vị. Em ghi thêm đơn vị rồi nộp lại nhé.',
-  WRONG_DIMENSION:
-    'Đơn vị em ghi là của một đại lượng khác. Đề đang hỏi đại lượng nào (vận tốc, lực, năng lượng…)?',
-  NOT_SIMPLIFIED: 'Phân số chưa tối giản — tử và mẫu còn ước chung nào không?',
-  SIGN_ERROR: 'Gần đúng rồi — xem lại DẤU của kết quả.',
-  UNBALANCED_ATOMS: 'Phương trình chưa cân bằng số nguyên tử.',
-  UNBALANCED_CHARGE: 'Phương trình chưa cân bằng điện tích.',
-  WRONG_SUBSTANCES: 'Các chất khác với đề — chỉ được đổi hệ số.',
   PARSE_ERROR:
     'Chưa đọc được đáp số. Hãy ghi một con số (có thể kèm đơn vị), phân số dạng a/b, hoặc công thức hoá học.',
   EMPTY: 'Em chưa ghi đáp số.',
 }
+
+/** Câu chung khi nộp SAI (không có `reason`) — không nói sai ở giá trị, dấu hay đơn vị. */
+export const NHAC_NOP_SAI_CHUNG =
+  'Chưa đúng. Rà lại từng bước: em đã dùng đủ dữ kiện của đề chưa, phép tính và đơn vị có khớp với điều đề hỏi không?'

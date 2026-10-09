@@ -87,8 +87,11 @@ hay bước đúng.
 (`prob.questionId`, server gán lúc `create_problem { questionId }` — KHÔNG theo id client gửi):
 `gradeAnswer(finalValueText(…), AnswerSpec của bài học)` (changelog 0551; `finalValueText` ở
 `packages/core-grading/finalAnswer.ts` bỏ "x =", vỏ LaTeX) — cùng dung sai/đơn vị/phân số như trang
-bài học, KHÔNG so chuỗi con. Trả `correct` + `reason`; lời giải chỉ trả khi đã giải đúng. Phiên
-không thuộc ngân hàng → 409 `NO_ANSWER_KEY`.
+bài học, KHÔNG so chuỗi con. Trả `correct` + `attemptsLeft`; `reason` CHỈ là mã công khai
+(`PublicSubmitReasonSchema`: đúng, hoặc lỗi cách ghi PARSE_ERROR/EMPTY) — mã chi tiết đơn vị/dấu lộ
+đáp án nên không trả khi sai. Lời giải chỉ trả khi đã giải đúng. Phiên không thuộc ngân hàng → 409
+`NO_ANSWER_KEY`; sai đủ `MAX_WRONG_SUBMITS` (5) → 409 `TOO_MANY_WRONG_SUBMITS` cho phiên đó; mọi
+POST qua `checkRateLimit` 60/phút/người (rà soát bảo mật 0551).
 
 ---
 

@@ -325,6 +325,7 @@ export class StemScratchpadService {
       steps: [],
       isSolved: false,
       hintsUsed: 0,
+      wrongSubmits: 0,
       createdAt: now,
       updatedAt: now,
     }

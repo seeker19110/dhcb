@@ -105,7 +105,31 @@ export async function submitStemSolutionApi(
 ): Promise<SubmitSolutionResult> {
   const res = await postJson('submit_solution', { problemId, finalAnswer })
   if (!res.ok) {
-    throw new Error(`Lỗi nộp lời giải: ${res.status}`)
+    // 409 (nộp sai quá số lần cho phép) và 429 (quá nhiều yêu cầu) có câu tiếng Việt cho người học
+    // — chuyển nguyên câu đó lên giao diện thay vì "kiểm tra kết nối" (sai sự thật ở đây).
+    const loi = ServerErrorSchema.safeParse(await res.json().catch(() => null))
+    const message = loi.success ? (loi.data.message ?? loi.data.error) : undefined
+    throw new StemApiError(res.status, message ?? `Lỗi nộp lời giải: ${res.status}`, {
+      forLearner: res.status === 409 || res.status === 429,
+    })
   }
   return SubmitSolutionResultSchema.parse(await res.json())
+}
+
+/** Phần thân lỗi server trả về (chỉ đọc chữ; mọi trường đều tuỳ chọn). */
+const ServerErrorSchema = z.object({
+  error: z.string().max(200).optional(),
+  message: z.string().max(500).optional(),
+})
+
+/** Lỗi gọi API bảng nháp. `forLearner` = câu `message` đã viết cho người học, hiện được nguyên văn. */
+export class StemApiError extends Error {
+  readonly status: number
+  readonly forLearner: boolean
+  constructor(status: number, message: string, opts: { forLearner: boolean }) {
+    super(message)
+    this.name = 'StemApiError'
+    this.status = status
+    this.forLearner = opts.forLearner
+  }
 }

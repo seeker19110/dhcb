@@ -1,11 +1,19 @@
 // api/stem-scratchpad.ts — REST handler cho Platform V5 STEM Interactive Scratchpad.
-import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
-import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
+import { jsonResponse, badJsonOrInternalError, getClientIp } from '@dhcb/core-http/http'
+import {
+  validateAuth,
+  getCorsHeaders,
+  checkRateLimit,
+  logSecurityEvent,
+} from '@dhcb/core-auth/security'
 import { StemScratchpadService } from '@dhcb/core-ai/stemScratchpadService'
 import { z } from 'zod'
 import {
+  MAX_WRONG_SUBMITS,
   StemSubjectTypeSchema,
-  StemVariableTableSchema,
+  ScratchpadStepSchema,
+  StemProblemStateSchema,
+  publicSubmitReason,
   type StemProblemState,
   type SubmitSolutionResult,
 } from '@dhcb/core-contracts/stemScratchpad'
@@ -42,6 +50,43 @@ const GetQuestionsQuerySchema = z.object({
 /** Mở phiên giải một câu của ngân hàng: client CHỈ gửi id, đề/môn do server tra. */
 const CreateFromBankSchema = z.object({ questionId: z.string().min(1).max(100) })
 
+// ── Validate body POST (sau rà soát bảo mật 0551) ─────────────────────────────
+// Trước đây `create_problem` tự do và `validate_step` đọc thẳng `body.x` — body `null` ném
+// TypeError (500), chuỗi dài vô hạn được lưu vào JSONB. Nay mọi action qua Zod; giới hạn độ dài
+// lấy lại từ chính hợp đồng trạng thái (`StemProblemStateSchema`, `ScratchpadStepSchema`) để thứ
+// được lưu luôn hợp lệ với hợp đồng.
+
+/** Id phiên do server sinh (`prob-…`); tuỳ chọn — thiếu thì nơi gọi tự xử (404 hoặc tạo phiên). */
+const ProblemIdSchema = z.string().min(1).max(100).optional()
+
+/** Mở phiên với đề TỰ DO (không thuộc ngân hàng) — vd đề Vật lí kèm bảng thứ nguyên (0552). */
+const CreateFreeSchema = StemProblemStateSchema.pick({
+  subject: true,
+  title: true,
+  problemStatement: true,
+  problemLatex: true,
+  variables: true,
+})
+
+const ValidateStepBodySchema = ScratchpadStepSchema.pick({
+  latexInput: true,
+  explanation: true,
+}).extend({ problemId: ProblemIdSchema })
+
+const ProblemRefSchema = z.object({ problemId: ProblemIdSchema })
+
+const SubmitBodySchema = z.object({
+  problemId: ProblemIdSchema,
+  finalAnswer: z.string().max(200),
+})
+
+/**
+ * Trần yêu cầu POST mỗi người mỗi phút cho bảng nháp (kiểm bước, gợi ý, nộp). Một người giải bài
+ * thật gửi vài bước/phút; 60 đủ rộng cho người gõ nhanh nhưng chặn script dò đáp số qua
+ * `submit_solution` và spam `get_hint`.
+ */
+const STEM_POST_PER_MINUTE = 60
+
 // [2026-08-24] Trước đây các bài đang làm dở nằm trong `new Map` cấp module — mất khi restart,
 // VỠ trong PM2 cluster 3 instance, và Map khoá theo problemId TOÀN CỤC nên ai biết id cũng đọc
 // /sửa được bài của người khác. Nay lưu ở platform.feature_state THEO USER: vừa bền, vừa khép
@@ -54,7 +99,22 @@ type ProblemBook = Record<string, StemProblemState>
 
 async function readProblems(userId: string): Promise<ProblemBook> {
   const state = await getFeatureState<ProblemBook>(userId, FEATURE)
-  return state && typeof state === 'object' ? state : {}
+  if (!state || typeof state !== 'object') return {}
+  // Bản ghi trước rà soát bảo mật 0551 chưa có `wrongSubmits` — coi như 0 (khớp `.default(0)`).
+  for (const prob of Object.values(state)) {
+    if (typeof prob.wrongSubmits !== 'number') prob.wrongSubmits = 0
+  }
+  return state
+}
+
+/**
+ * Tra phiên theo id do client gửi. CHỈ khoá RIÊNG của sổ: `book['constructor']` trên object
+ * thường trả về hàm `Object` (không phải undefined), nên trước đây `problemId: 'constructor'` lọt
+ * qua kiểm "không tìm thấy" rồi vỡ ở bước sau (500).
+ */
+function findProblem(book: ProblemBook, problemId: unknown): StemProblemState | undefined {
+  if (typeof problemId !== 'string' || !Object.hasOwn(book, problemId)) return undefined
+  return book[problemId]
 }
 
 // Ghi lại một bài, cắt bớt bài cũ nhất nếu vượt trần (theo updatedAt).
@@ -93,7 +153,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'GET') {
     const problemId = url.searchParams.get('problemId')
     if (problemId) {
-      const prob = (await readProblems(personId))[problemId]
+      const prob = findProblem(await readProblems(personId), problemId)
       if (!prob) {
         return jsonResponse({ error: 'Problem not found' }, 404)
       }
@@ -122,8 +182,17 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   if (req.method === 'POST') {
+    // Một bộ đếm cho MỌI action POST (kiểm bước, gợi ý, nộp) theo người dùng — chặn dò đáp số và
+    // spam gợi ý (rà soát bảo mật 0551).
+    if (!(await checkRateLimit(personId, STEM_POST_PER_MINUTE, 'stem-scratchpad'))) {
+      logSecurityEvent('RATE_LIMIT_EXCEEDED', getClientIp(req), {
+        path: '/api/stem-scratchpad',
+        action,
+      })
+      return jsonResponse({ error: 'Quá nhiều yêu cầu — thử lại sau 1 phút' }, 429)
+    }
     try {
-      const body = await req.json()
+      const body: unknown = await req.json()
 
       if (action === 'create_problem') {
         // Mở phiên từ NGÂN HÀNG ĐỀ: đề, môn, tiêu đề lấy ở server — không tin client.
@@ -143,39 +212,39 @@ export default async function handler(req: Request): Promise<Response> {
           return jsonResponse({ success: true, problem: prob }, 200)
         }
 
-        const { subject, title, problemStatement, problemLatex } = body
-        if (!subject || !title || !problemStatement) {
-          return jsonResponse({ error: 'Missing required problem fields' }, 400)
+        // Đề tự do: môn/tiêu đề/đề/bảng thứ nguyên biến (0552) đều qua Zod — thiếu, sai kiểu, quá
+        // dài hay bảng biến hỏng đều 400.
+        const parsed = CreateFreeSchema.safeParse(body)
+        if (!parsed.success) {
+          return jsonResponse({ error: 'Missing or invalid problem fields' }, 400)
         }
-        // Bảng thứ nguyên biến (đề Vật lí, changelog 0552) — dữ liệu ngoài nên validate bằng Zod.
-        const variables =
-          body.variables === undefined
-            ? undefined
-            : StemVariableTableSchema.safeParse(body.variables)
-        if (variables !== undefined && !variables.success) {
-          return jsonResponse({ error: 'Invalid variables table' }, 400)
-        }
-
+        const { subject, title, problemStatement, problemLatex, variables } = parsed.data
         const prob = StemScratchpadService.createProblemSession({
           personId,
           subject,
           title,
           problemStatement,
-          problemLatex,
-          ...(variables?.success ? { variables: variables.data } : {}),
+          ...(problemLatex === undefined ? {} : { problemLatex }),
+          ...(variables === undefined ? {} : { variables }),
         })
         await saveProblem(personId, await readProblems(personId), prob)
         return jsonResponse({ success: true, problem: prob }, 200)
       }
 
       if (action === 'validate_step') {
-        const { problemId, latexInput, explanation } = body
-        if (!latexInput) {
-          return jsonResponse({ error: 'Missing latexInput' }, 400)
+        const parsed = ValidateStepBodySchema.safeParse(body)
+        if (!parsed.success) {
+          return jsonResponse({ error: 'Missing or invalid latexInput' }, 400)
         }
+        const { problemId, latexInput, explanation } = parsed.data
 
         const book = await readProblems(personId)
-        let prob = problemId ? book[problemId] : undefined
+        let prob = findProblem(book, problemId)
+        // Có gửi id mà không thấy phiên → 404. Trước đây server tạo phiên MỚI mang đúng id client
+        // chọn (vd trùng id câu ngân hàng) — không còn lý do giữ đường đó.
+        if (!prob && problemId !== undefined) {
+          return jsonResponse({ error: 'Problem not found' }, 404)
+        }
         if (!prob) {
           prob = StemScratchpadService.createProblemSession({
             personId,
@@ -186,7 +255,6 @@ export default async function handler(req: Request): Promise<Response> {
             // và khen "tương đương đề bài" một cách vô nghĩa. Không có đề thì bước đầu là mốc so
             // cho các bước sau, còn bản thân nó "chưa tự kiểm được".
           })
-          if (problemId) prob.id = problemId
           book[prob.id] = prob
         }
 
@@ -229,9 +297,10 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'get_hint') {
-        const { problemId } = body
+        const parsed = ProblemRefSchema.safeParse(body)
+        if (!parsed.success) return jsonResponse({ error: 'Invalid problemId' }, 400)
         const book = await readProblems(personId)
-        const prob = problemId ? book[problemId] : undefined
+        const prob = findProblem(book, parsed.data.problemId)
         if (!prob) {
           return jsonResponse({ error: 'Problem not found' }, 404)
         }
@@ -245,14 +314,15 @@ export default async function handler(req: Request): Promise<Response> {
       }
 
       if (action === 'submit_solution') {
-        const { problemId, finalAnswer } = body
+        const parsed = SubmitBodySchema.safeParse(body)
+        if (!parsed.success) {
+          return jsonResponse({ error: 'Missing or invalid finalAnswer' }, 400)
+        }
+        const { problemId, finalAnswer } = parsed.data
         const book = await readProblems(personId)
-        const prob = problemId ? book[problemId] : undefined
+        const prob = findProblem(book, problemId)
         if (!prob) {
           return jsonResponse({ error: 'Problem not found' }, 404)
-        }
-        if (typeof finalAnswer !== 'string') {
-          return jsonResponse({ error: 'Missing finalAnswer' }, 400)
         }
         // Chấm theo câu NGÂN HÀNG gắn với phiên (`prob.questionId` — do server gán lúc mở phiên).
         // Trước changelog 0551 tra `getStemQuestionById(problemId)`: id phiên (`prob-…`) không bao
@@ -271,7 +341,24 @@ export default async function handler(req: Request): Promise<Response> {
         }
         // Đáp án của BÀI HỌC (`AnswerSpec`) qua engine chấm dùng chung: dung sai, đơn vị/thứ
         // nguyên, phân số, công thức hoá — y như trang bài học. `finalValueText` bỏ "x =", vỏ LaTeX.
+        // Chặn dò đáp số (rà soát bảo mật 0551): phiên chưa giải mà đã nộp sai đủ trần thì thôi
+        // chấm. Chỉ khoá PHIÊN đề này — mở đề khác (phiên mới) vẫn nộp được.
+        if (!prob.isSolved && prob.wrongSubmits >= MAX_WRONG_SUBMITS) {
+          return jsonResponse(
+            {
+              error: 'TOO_MANY_WRONG_SUBMITS',
+              message: `Em đã nộp sai quá ${MAX_WRONG_SUBMITS} lần cho đề này — xem lại các bước rồi mở đề khác nhé.`,
+            },
+            409,
+          )
+        }
         const ketQua = gradeAnswer(finalValueText(finalAnswer), question.answer)
+        // Mã công khai: chỉ CORRECT/CORRECT_LOOSE, hoặc lỗi ở CÁCH GHI (PARSE_ERROR/EMPTY). Mã chi
+        // tiết (thiếu/sai đơn vị, sai dấu…) lộ thông tin về đáp án nên không trả khi sai.
+        const reason = publicSubmitReason(ketQua.reason)
+        // Lỗi cách ghi không lộ gì về đáp án nên không tính vào số lần nộp sai.
+        const loiCachGhi = reason === 'PARSE_ERROR' || reason === 'EMPTY'
+        if (!ketQua.correct && !loiCachGhi && !prob.isSolved) prob.wrongSubmits += 1
         prob.isSolved = prob.isSolved || ketQua.correct
         prob.updatedAt = new Date().toISOString()
         await saveProblem(personId, book, prob)
@@ -280,7 +367,8 @@ export default async function handler(req: Request): Promise<Response> {
           success: true,
           isSolved: prob.isSolved,
           correct: ketQua.correct,
-          reason: ketQua.reason,
+          ...(reason === undefined ? {} : { reason }),
+          attemptsLeft: Math.max(0, MAX_WRONG_SUBMITS - prob.wrongSubmits),
           ...(prob.isSolved ? { explanation: question.explain } : {}),
         }
         return jsonResponse(result, 200)

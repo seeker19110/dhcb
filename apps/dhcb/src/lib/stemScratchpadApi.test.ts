@@ -5,6 +5,7 @@ import {
   fetchStemQuestionsApi,
   getStemHintApi,
   submitStemSolutionApi,
+  StemApiError,
   validateStemStepApi,
 } from './stemScratchpadApi.js'
 
@@ -32,6 +33,7 @@ const PHIEN = {
   steps: [],
   isSolved: false,
   hintsUsed: 0,
+  wrongSubmits: 0,
   createdAt: '2026-10-09T00:00:00.000Z',
   updatedAt: '2026-10-09T00:00:00.000Z',
 }
@@ -109,7 +111,7 @@ describe('stemScratchpadApi Client', () => {
   })
 
   it('nộp lời giải: trả kết quả đã validate; lỗi mạng/409 thì ném', async () => {
-    const kq = { success: true, isSolved: false, correct: false, reason: 'WRONG_VALUE' }
+    const kq = { success: true, isSolved: false, correct: false, attemptsLeft: 4 }
     const spy = traVe(kq)
     expect(await submitStemSolutionApi('prob-1', '18')).toEqual(kq)
     expect(JSON.parse(String(spy.mock.calls[0]?.[1]?.body))).toEqual({
@@ -118,5 +120,24 @@ describe('stemScratchpadApi Client', () => {
     })
     traVe({}, false, 409)
     await expect(submitStemSolutionApi('prob-1', '8')).rejects.toThrow('Lỗi nộp lời giải: 409')
+  })
+
+  it('nộp lời giải: 409/429 mang câu của server cho người học (StemApiError.forLearner)', async () => {
+    traVe({ error: 'TOO_MANY_WRONG_SUBMITS', message: 'Em đã nộp sai quá nhiều lần' }, false, 409)
+    const loi = await submitStemSolutionApi('prob-1', '8').catch((e: unknown) => e)
+    expect(loi).toBeInstanceOf(StemApiError)
+    expect(loi).toMatchObject({ status: 409, forLearner: true })
+    expect((loi as Error).message).toBe('Em đã nộp sai quá nhiều lần')
+
+    traVe({ error: 'Quá nhiều yêu cầu — thử lại sau 1 phút' }, false, 429)
+    await expect(submitStemSolutionApi('prob-1', '8')).rejects.toMatchObject({
+      status: 429,
+      forLearner: true,
+      message: 'Quá nhiều yêu cầu — thử lại sau 1 phút',
+    })
+
+    // Lỗi máy chủ: không phải câu cho người học (giao diện nói "kiểm tra kết nối").
+    traVe({ error: 'boom' }, false, 500)
+    await expect(submitStemSolutionApi('prob-1', '8')).rejects.toMatchObject({ forLearner: false })
   })
 })
