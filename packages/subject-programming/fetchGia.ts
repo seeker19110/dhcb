@@ -12,11 +12,13 @@
 import { THOI_TIET_63_TINH, type TinhThoiTiet } from './weatherData.js'
 import { MENU_CUA_HANG, type MonCuaHang } from './shopData.js'
 import { SO_QUY_LOP, type GiaoDichQuy } from './fundData.js'
+import { TAI_LIEU_CHIA_SE, type TaiLieuChiaSe } from './hocTapData.js'
 
-/** API mẫu nào phục vụ lượt chạy: bài học P3-U7 (thời tiết), dự án T1 (menu quán) hay dự án
- *  T2 (sổ quỹ lớp). Khai ở đây (không phải fetchPrelude) để trang dự án dùng được mà không kéo
- *  linkedom vào bundle; fetchPrelude re-export lại cho các nơi đang import từ đó. */
-export type FetchApi = 'thoi-tiet' | 'cua-hang' | 'quy-lop'
+/** API mẫu nào phục vụ lượt chạy: bài học P3-U7 (thời tiết), dự án T1 (menu quán), dự án
+ *  T2 (sổ quỹ lớp) hay dự án T3 (kho tài liệu chia sẻ). Khai ở đây (không phải fetchPrelude)
+ *  để trang dự án dùng được mà không kéo linkedom vào bundle; fetchPrelude re-export lại cho
+ *  các nơi đang import từ đó. */
+export type FetchApi = 'thoi-tiet' | 'cua-hang' | 'quy-lop' | 'tai-lieu'
 
 /** Hình dạng Response rút gọn mà fetch giả trả về — đủ cho những gì bài học dạy. */
 export interface ResponseGia {
@@ -112,12 +114,18 @@ export function taoFetchQuyLop(data: GiaoDichQuy[]): (url: string) => Promise<Re
   return taoFetchBang(data as unknown as BanGhi[], '/api/quy', 'ma', 'ma')
 }
 
+/** Fetch giả của DỰ ÁN TRỤC T3 chặng P3: kho tài liệu chia sẻ (`/api/tai-lieu?ten=<tên>`). */
+export function taoFetchTaiLieu(data: TaiLieuChiaSe[]): (url: string) => Promise<ResponseGia> {
+  return taoFetchBang(data as unknown as BanGhi[], '/api/tai-lieu', 'ten', 'ten')
+}
+
 /** Fetch giả theo API — MỘT chỗ rẽ nhánh duy nhất, bộ chạy Worker và bộ chấm server cùng gọi
- *  (trước đây mỗi nơi tự viết `api === 'cua-hang' ? … : …`, thêm API thứ ba là dễ sót một nơi
+ *  (trước đây mỗi nơi tự viết `api === 'cua-hang' ? … : …`, thêm API mới là dễ sót một nơi
  *  và lặng lẽ rơi về API thời tiết). */
 export function taoFetchTheoApi(api: FetchApi): (url: string) => Promise<ResponseGia> {
   if (api === 'cua-hang') return taoFetchCuaHang(MENU_CUA_HANG)
   if (api === 'quy-lop') return taoFetchQuyLop(SO_QUY_LOP)
+  if (api === 'tai-lieu') return taoFetchTaiLieu(TAI_LIEU_CHIA_SE)
   return taoFetchGia(THOI_TIET_63_TINH)
 }
 
@@ -152,9 +160,13 @@ export const FETCH_SHIM_CUA_HANG_JS = taoShim(MENU_CUA_HANG, '/api/menu', 'mon',
 /** Shim cho dự án trục T2 chặng P3 (API sổ quỹ lớp). */
 export const FETCH_SHIM_QUY_LOP_JS = taoShim(SO_QUY_LOP, '/api/quy', 'ma', 'ma')
 
+/** Shim cho dự án trục T3 chặng P3 (API kho tài liệu chia sẻ). */
+export const FETCH_SHIM_TAI_LIEU_JS = taoShim(TAI_LIEU_CHIA_SE, '/api/tai-lieu', 'ten', 'ten')
+
 /** Shim theo API — trang dự án tra theo API của dự án đang chọn (projectTracks.ts). */
 export const FETCH_SHIM_THEO_API: Readonly<Record<FetchApi, string>> = {
   'thoi-tiet': FETCH_SHIM_JS,
   'cua-hang': FETCH_SHIM_CUA_HANG_JS,
   'quy-lop': FETCH_SHIM_QUY_LOP_JS,
+  'tai-lieu': FETCH_SHIM_TAI_LIEU_JS,
 }

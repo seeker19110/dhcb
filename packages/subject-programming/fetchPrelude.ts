@@ -8,7 +8,8 @@
 //
 // PR-L8: dự án trục chặng P3 cũng cần fetch, nhưng gọi API MENU CỬA HÀNG của chính dự án chứ
 // không phải API thời tiết của bài học — nên chayBaiFetch() nhận thêm tham số `api` chọn bộ
-// dữ liệu. Hai bộ đi qua CÙNG một hàm giả lập (taoFetchBang), không đẻ nhánh hành vi riêng.
+// dữ liệu. Mọi bộ đi qua CÙNG một hàm giả lập (taoFetchBang), không đẻ nhánh hành vi riêng.
+// Dự án T3 thêm API kho tài liệu (`tai-lieu`); bảng chọn nằm ở taoFetchTheoApi (fetchGia.ts).
 //
 // Fetch giả lập nằm ở fetchGia.ts (file này chỉ import, KHÔNG chứa) — chủ ý: trang bài học
 // cần FETCH_SHIM_JS cho khung xem trang, mà file này kéo theo linkedom (~94KB gzip); tách ra
@@ -26,10 +27,12 @@ export {
   taoFetchGia,
   taoFetchCuaHang,
   taoFetchQuyLop,
+  taoFetchTaiLieu,
   taoFetchTheoApi,
   FETCH_SHIM_JS,
   FETCH_SHIM_CUA_HANG_JS,
   FETCH_SHIM_QUY_LOP_JS,
+  FETCH_SHIM_TAI_LIEU_JS,
   type FetchApi,
   type ResponseGia,
 } from './fetchGia.js'

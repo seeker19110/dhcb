@@ -75,6 +75,7 @@ const TRACK_INFO: readonly ProjectTrackInfo[] = [
     productNoun: 'sổ học tập',
     mainFile: T3_PROJECT_MAIN_FILE,
     starterCode: T3_PROJECT_STARTER_CODE,
+    fetchApi: 'tai-lieu',
   },
 ]
 

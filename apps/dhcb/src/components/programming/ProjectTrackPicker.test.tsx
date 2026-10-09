@@ -30,10 +30,14 @@ function labelOf(input: HTMLInputElement): string {
   return container.querySelector(`label[for="${input.id}"]`)?.textContent ?? ''
 }
 
-/** Bộ dữ liệu giả: T2 đã mở — để kiểm luồng chọn sang dự án khác trước khi có nội dung thật. */
-const WITH_T2_OPEN: ProjectTrack[] = PROJECT_TRACKS.map((t) =>
-  t.id === 'T2' ? { ...t, available: true } : t,
-)
+/**
+ * Bộ dữ liệu giả CỐ ĐỊNH: T1 + T2 mở, T3 chưa mở — kiểm luồng chọn và luồng chặn dự án chưa mở mà
+ * KHÔNG phụ thuộc dự án nào đã có nội dung thật (T3 có bước từ đợt nội dung 2026-10-09).
+ */
+const WITH_T2_OPEN: ProjectTrack[] = PROJECT_TRACKS.map((t) => ({
+  ...t,
+  available: t.id !== 'T3',
+}))
 
 describe('ProjectTrackPicker', () => {
   it('nhóm radio gốc có legend, đủ 3 dự án đúng thứ tự, đúng ô đang chọn', () => {
@@ -60,7 +64,7 @@ describe('ProjectTrackPicker', () => {
     }
   })
 
-  it('trạng thái hôm nay (T2/T3 chưa có bước): chỉ chọn được T1', () => {
+  it('dữ liệu thật: chỉ chọn được đúng các dự án đang mở, luôn có T1', () => {
     act(() =>
       root.render(<ProjectTrackPicker tracks={PROJECT_TRACKS} value="T1" onChange={vi.fn()} />),
     )
