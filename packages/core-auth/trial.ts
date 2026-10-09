@@ -12,7 +12,9 @@
 //     tồn tại) KHÔNG được cấp thêm.
 //
 // Luật: mỗi TÀI KHOẢN được nhận đúng MỘT lần, mãi mãi — không phụ thuộc email hiện tại, đổi
-// email sau đó KHÔNG được nhận thêm.
+// email sau đó KHÔNG được nhận thêm. Xoá tài khoản rồi đăng ký lại cùng email (kể cả biến thể
+// "+nhãn"/dấu chấm Gmail) cũng KHÔNG nhận lại trong 12 tháng — sổ chống lạm dụng
+// `packages/core-billing/erasedBenefitLedger.ts` (changelog 0545).
 //
 // Cấp gói đi qua grantPlanDays() dùng chung (api/_lib/planGrant.ts) nên tự động thừa hưởng
 // mọi nguyên tắc ở đó: không hạ cấp người đang VIP, không làm mất hạn đang còn, không đụng
@@ -20,6 +22,8 @@
 
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
+import { isBenefitBlocked } from '@dhcb/core-billing/erasedBenefitLedger'
+import { logSecurityEvent } from './security.js'
 
 /** Số ngày Pro tặng cho tài khoản mới. Đổi ở ĐÚNG một chỗ này. */
 export const SIGNUP_TRIAL_DAYS = 14
@@ -38,6 +42,13 @@ export const SIGNUP_TRIAL_DAYS = 14
 export async function grantSignupTrial(userId: string): Promise<boolean> {
   try {
     const pool = getPgPool()
+
+    // Sổ chống lạm dụng (0545): email này thuộc một tài khoản ĐÃ XOÁ từng nhận dùng thử (trong 12
+    // tháng) ⇒ không cấp lại. Người dùng vẫn đăng ký/đăng nhập bình thường. Log không chứa PII.
+    if (await isBenefitBlocked(pool, userId, 'signup_trial')) {
+      logSecurityEvent('SIGNUP_TRIAL_REPEAT_AFTER_ERASURE', 'system', { benefit: 'signup_trial' })
+      return false
+    }
 
     // Giành quyền nhận quà. `where profiles.signup_trial_granted_at is null` áp cho cả nhánh
     // UPDATE của on-conflict → hàng đã có dấu thì không cập nhật, rowCount = 0.

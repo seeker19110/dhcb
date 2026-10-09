@@ -751,3 +751,26 @@ phủ. Danh sách lớp phủ còn render tại chỗ (chưa portal):
   `apps/dhcb/src/components/Modal.tsx`.
 - `e2e/studio-modal-overlay.spec.ts` mở hộp thoại ở hai studio, đo lớp phủ phải trùng khít cửa
   sổ ở 1440px và 390px (đã kiểm: mã cũ đỏ với `y = 147`).
+
+## 19. Playwright `reuseExistingServer` dùng NHẦM dev server của worktree khác → ảnh "sau" không có thay đổi
+
+**Ngày/PR:** 2026-10-09, đợt `0545` (sổ chống lạm dụng sau xoá tài khoản). Lộ ra ở Tầng 8b: ảnh
+"sau" của `AccountDataSection` KHÔNG có dòng vừa thêm, dù mã đã sửa và unit test xanh.
+
+**Khuôn lỗi:** `playwright.config.ts` cố định cổng `5179` và đặt
+`reuseExistingServer: !process.env.CI`. Ở máy có NHIỀU worktree/tác nhân chạy song song, một tác
+nhân khác đang giữ dev server cổng 5179 từ worktree CỦA NÓ ⇒ Playwright thấy cổng đã sống, không
+khởi động server của worktree mình, chụp/kiểm mã của nhánh khác. Test vẫn xanh (trang vẫn chạy),
+ảnh trông "đúng" nhưng là ảnh của mã khác — xanh giả và ảnh giả. Lần chụp "trước" cũng có thể
+dính, nên so trước/sau không còn nghĩa.
+
+**Cách rà:** thay đổi giao diện không thấy trong ảnh/test E2E dù mã đã đổi → kiểm server đang
+phục vụ là của ai: log `[WebServer]` có in đường dẫn worktree của MÌNH không (không có dòng nào =
+đã dùng lại server sẵn có); `ss -ltnp | grep 5179` xem tiến trình giữ cổng chạy từ thư mục nào.
+Spec chụp ảnh nên `expect` chính chữ/phần tử vừa thêm hiện ra trước khi chụp — thiếu là đỏ ngay.
+
+**Cổng chốt chặn:** CHƯA có cổng tự động (không đổi `playwright.config.ts` trong đợt này). Quy
+ước khi nhiều tác nhân chạy song song: chạy Playwright bằng cấu hình tạm có cổng riêng +
+`reuseExistingServer: false` (`--config <tạm>`), xoá file tạm trước khi commit, và trong spec chụp
+ảnh luôn `expect(...).toBeVisible()` phần tử MỚI. Đề xuất đợt riêng: cho `playwright.config.ts`
+đọc cổng từ biến môi trường (vd `E2E_PORT`) để mỗi worktree tự chọn cổng.

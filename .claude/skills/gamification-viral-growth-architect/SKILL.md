@@ -73,6 +73,9 @@ Câu hỏi lấy từ ngân hàng theo chế độ, xáo thứ tự.
   transaction.
 - Điều kiện đủ do server tự kiểm; có trần số lần thưởng cho người mời; mỗi người chỉ được mời một
   lần; mã mời 6 ký tự sinh bằng `randomInt`.
+- Xoá tài khoản rồi đăng ký lại KHÔNG nhận lại thưởng giới thiệu/dùng thử trong 12 tháng (sổ HMAC
+  `packages/core-billing/erasedBenefitLedger.ts`, changelog 0545); người mời xoá tài khoản thì
+  `referrals.referrer_id` thành null, dòng của người được mời ở lại.
 - **CHƯA CÓ:** lộ trình mốc 1/3/5/10 bạn, huy hiệu, khung avatar, danh hiệu.
 
 ---

@@ -137,7 +137,7 @@ Postgres 16 thật (cụm tạm cổng 5533), chạy toàn bộ migration tới 
 
 ## Rủi ro còn lại
 
-- **Giới thiệu:** xoá `referrals` (cả `device_hash`) có thể mở lại đường lạm dụng "giới thiệu → xoá → giới thiệu lại".
+- **Giới thiệu:** xoá `referrals` (cả `device_hash`) có thể mở lại đường lạm dụng "giới thiệu → xoá → giới thiệu lại". ✅ Đã xử lý ở `0545` (sổ chống lạm dụng + `referrer_id` ẩn danh thay vì xoá dòng).
 - **Suất founder:** suất founder có thể được giải phóng sau khi xoá.
 - **Kết nối đang mở:** WebSocket/chat đang mở có thể còn sống tới khi kết nối kiểm lại phiên.
 - **Backup và log:** bản backup và log hệ thống không bị xoá; chúng hết hạn theo vòng đời backup.
@@ -205,6 +205,6 @@ không rút ngắn thời gian giữ khoá khi chạy qua runner; lợi ích tr�
 - **Bộ đếm `account-reauth` trừ cả khi xác minh thành công.** Chấp nhận (5 lần/15 phút là đủ cho
   dùng thật). Không sửa trong đợt này.
 - **Trial/`device_hash` bị xoá cùng tài khoản**, có thể mở lại đường "dùng thử → xoá → dùng thử lại".
-  Chờ chủ dự án quyết giữ mã băm thiết bị hay không.
+  Chờ chủ dự án quyết giữ mã băm thiết bị hay không. ✅ Đã quyết + làm ở `0545`.
 - **Đơn `pending` "sống" chặn xoá tối đa khoảng 24,5 giờ** (30 phút hạn + 24 giờ ân hạn). Người dùng
   muốn xoá gấp phải chờ hoặc nhờ admin. Đây là đánh đổi có chủ ý để không mất tiền.

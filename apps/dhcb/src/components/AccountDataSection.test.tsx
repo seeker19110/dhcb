@@ -85,6 +85,12 @@ afterEach(() => {
 })
 
 describe('AccountDataSection', () => {
+  it('nói rõ trước khi xoá: giữ mã băm email/thiết bị 12 tháng để chống lạm dụng ưu đãi (0545)', async () => {
+    await renderOpen()
+    const items = Array.from(container.querySelectorAll('li')).map((li) => li.textContent ?? '')
+    expect(items.some((t) => /mã băm của email và thiết bị trong 12 tháng/.test(t))).toBe(true)
+  })
+
   it('đóng mặc định; mở ra mới tải tuỳ chọn; lỗi tải có nút Thử lại', async () => {
     api.fetchAccountOptions.mockRejectedValueOnce(new Error('mạng'))
     await act(async () => root.render(<AccountDataSection isA onDeleted={vi.fn()} />))

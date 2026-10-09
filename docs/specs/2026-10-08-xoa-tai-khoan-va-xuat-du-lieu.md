@@ -194,7 +194,7 @@ type AccountExport = {
 `public.daily_usage` · `public.email_reminders` · `public.email_verifications` ·
 `public.entitlements` · `public.exam_plans` · `public.free_daily_credit` · `public.friendships`
 (a + b) · `public.identities` · `public.password_resets` · `public.push_subscriptions` ·
-`public.quest_claims` · `public.referrals` (referrer + referee) · `public.sessions` ·
+`public.quest_claims` · `public.referrals` (referee) · `public.sessions` ·
 `public.sync_conflicts` · `public.sync_receipts` · `public.user_2fa` ·
 `public.user_2fa_recovery_codes` · `public.user_feedback` · `public.weekly_ai_credit` ·
 `public.profiles` · Personal OS (`personal.persons` + 21 bảng, qua `personErasureService`) ·
@@ -211,10 +211,15 @@ type AccountExport = {
 | `public.companion_invites.used_by`                | `null`                                                                                                                         | mã mời thuộc về người học khác                                                                                                                  |
 | `public.stem_lesson_reviews.user_id`              | `user_id=null`, `nguoi_duyet='đã xoá #<id>'` (khi có)                                                                          | hồ sơ duyệt nội dung bài học (không phải dữ liệu học của người dùng)                                                                            |
 | `public.feature_status_checks.triggered_by_email` | `null` (khớp email, không phân biệt hoa thường)                                                                                | nhật ký kiểm tra hệ thống của admin                                                                                                             |
+| `public.referrals.referrer_id`                    | `null` (0545)                                                                                                                  | dòng là của người ĐƯỢC mời: giữ để không "được mời lại" nhận thưởng lần hai                                                                     |
 
 Tài khoản thanh toán KHÔNG lưu email/tên trong `payments` (đã rà cột) — danh tính chỉ nằm ở
 `user_id`. Chọn `null` thay vì mã băm vì mã băm `user_id` vẫn cho người giữ `user_id` cũ (log,
 backup) nối lại đơn với người — ẩn danh mạnh hơn, mà kế toán không cần nối đơn với người.
+
+**Sổ chống lạm dụng (bổ sung 2026-10-09, `0545`):** trong CÙNG transaction xoá, ghi mã băm HMAC
+email/thiết bị + quyền lợi một-lần đã hưởng vào `platform.erased_benefit_ledger` (giữ 12 tháng) —
+xem `docs/specs/2026-10-09-so-chong-lam-dung-sau-xoa-tai-khoan.md`.
 
 **GIỮ NGUYÊN có lý do:** `public.vip_whitelist` (danh sách email do ADMIN nhập để cấp VIP — dữ
 liệu quản trị, admin gỡ ở `/admin`; xoá tự động sẽ đổi quyết định của admin) ·

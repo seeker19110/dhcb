@@ -417,6 +417,12 @@ export default function AccountDataSection({
                       : 'Payment records are kept for accounting law but stripped of anything that identifies you.'}
                   </li>
                   <li>
+                    {/* Sổ chống lạm dụng (changelog 0545) — nói thật, không hứa "ẩn danh tuyệt đối". */}
+                    {isA
+                      ? 'Để chống lạm dụng ưu đãi (dùng thử, mời bạn), chúng tôi giữ mã băm của email và thiết bị trong 12 tháng. Mã băm không chứa email hay tên của bạn, không gắn với tài khoản nào, và chỉ dùng để chặn nhận lại ưu đãi khi đăng ký lại.'
+                      : 'To prevent offer abuse (free trial, invites), we keep a hash of your email and device for 12 months. The hash contains no email or name, is not linked to any account, and is only used to stop the same offers being claimed again on sign-up.'}
+                  </li>
+                  <li>
                     {isA
                       ? 'Tin bạn đã gửi trong cuộc trò chuyện chung được thay bằng "[đã xoá]"; tin của người khác giữ nguyên.'
                       : 'Messages you sent in shared chats are replaced with "[deleted]"; other people’s messages stay.'}

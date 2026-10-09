@@ -13,6 +13,7 @@ import {
 } from '@dhcb/core-auth/security'
 import { isAdminUser } from '@dhcb/core-auth/adminAuth'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { readLedgerKey } from '@dhcb/core-billing/erasedBenefitLedger'
 
 export interface DeepHealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy'
@@ -44,7 +45,23 @@ export interface DeepHealthCheckResult {
       latencyMs?: number
       error?: string
     }
+    /**
+     * Sổ chống lạm dụng sau xoá tài khoản (changelog 0545). Tắt (thiếu/sai khoá) là fail-OPEN:
+     * xoá rồi đăng ký lại nhận lại ưu đãi. KHÔNG làm hệ thống degraded — chỉ để vận hành thấy.
+     * Nằm ở phần chi tiết chỉ admin xem: công bố "chống lạm dụng đang tắt" ra ngoài là mời lạm dụng.
+     */
+    erasedBenefitLedger: {
+      status: 'enabled' | 'disabled'
+      reason?: 'missing' | 'invalid'
+    }
   }
+}
+
+function ledgerHealth(): DeepHealthCheckResult['checks']['erasedBenefitLedger'] {
+  const state = readLedgerKey()
+  return state.status === 'ok'
+    ? { status: 'enabled' }
+    : { status: 'disabled', reason: state.status }
 }
 
 export async function checkSystemHealth(): Promise<{
@@ -74,6 +91,7 @@ export async function checkSystemHealth(): Promise<{
         status: 'down',
         type: process.env.REDIS_URL ? 'redis' : 'in-memory',
       },
+      erasedBenefitLedger: ledgerHealth(),
     },
   }
 

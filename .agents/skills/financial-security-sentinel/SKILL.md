@@ -69,6 +69,11 @@ dòng cũ trong DB được đọc thành `vip` tới hết `plan_expires_at`. G
    **cả hai** bên, cấp qua `grantPlanDays` trong cùng transaction, khoá theo thứ tự cố định để
    tránh deadlock. Điều kiện đủ và trần số lần thưởng của người mời do server tự kiểm — đọc file
    trước khi đổi. Mỗi người chỉ được mời một lần.
+   - **Sổ chống lạm dụng sau xoá tài khoản** (`packages/core-billing/erasedBenefitLedger.ts`,
+     changelog 0545): xoá tài khoản ghi HMAC email/thiết bị + quyền lợi đã hưởng vào
+     `platform.erased_benefit_ledger` (12 tháng, không user_id/plaintext). Cấp dùng thử
+     (`packages/core-auth/trial.ts`) và thưởng giới thiệu tra sổ trước; trần người mời cộng lượt
+     của tài khoản cũ cùng email. Thiếu `ERASED_BENEFIT_LEDGER_KEY` ⇒ sổ tắt, KHÔNG chặn xoá.
    - **CHƯA CÓ:** lộ trình mốc 1/3/5/10 bạn và danh hiệu.
 2. **Nhiệm vụ (`apps/server/src/api/_lib/quests.ts`):** 4 nhiệm vụ, xếp theo độ tin cậy xác minh.
    "Chia sẻ công khai" và "Học liên tiếp N ngày" **đã tắt thưởng VIP** (thưởng 0 ngày) vì client

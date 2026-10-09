@@ -22,10 +22,20 @@ import {
   hasLivePendingPayment,
 } from './accountErasureService.js'
 import { PendingPaymentError } from './accountErasureShared.js'
+import {
+  ERASED_BENEFIT_LEDGER_KEY_ENV,
+  erasedBenefitUnits,
+  isBenefitBlocked,
+  ledgerSubjectHash,
+  purgeExpiredErasedBenefits,
+} from '@dhcb/core-billing/erasedBenefitLedger'
 
 const DATABASE_URL = process.env.DATABASE_URL
 // Khoá mã hoá giả cho test (trường tự do của personal.intake). Không đè khoá thật nếu đã có.
 process.env.USER_DATA_MASTER_KEY ??= Buffer.alloc(32, 7).toString('base64')
+// Khoá sổ chống lạm dụng (0545) giả cho test — bật sổ cho MỌI ca xoá trong file này.
+process.env[ERASED_BENEFIT_LEDGER_KEY_ENV] ??= Buffer.alloc(32, 11).toString('base64')
+const LEDGER_KEY = Buffer.from(process.env[ERASED_BENEFIT_LEDGER_KEY_ENV] ?? '', 'base64')
 
 /** Chuỗi bí mật có dấu hiệu nhận ra được — bản xuất TUYỆT ĐỐI không được chứa chúng. */
 const SECRET_MARK = 'SECRET-0533'
@@ -710,6 +720,136 @@ describe.skipIf(!DATABASE_URL)('xoá tài khoản + xuất dữ liệu (Postgres
       [accountSubjectHash(e.userId)],
     )
     expect(log.rowCount).toBe(1)
+  })
+
+  // ── 0545: sổ chống lạm dụng quyền lợi một-lần ──────────────────────────────
+
+  it('0545: xoá ghi sổ mã băm (không PII); đăng ký lại cùng hộp thư/thiết bị bị chặn; người được mời của người xoá giữ dòng', async () => {
+    const r = rand()
+    const email = `Acct.0545.${r}+promo@gmail.com`
+    const x = await insertUser(pool, email)
+    const helper = await insertUser(pool, `acct-0545-helper-${r}@example.test`)
+    const invited = await insertUser(pool, `acct-0545-invited-${r}@example.test`)
+    cleanupUsers.push(helper, invited)
+    const deviceX = randomBytes(32).toString('hex')
+    const deviceInvited = randomBytes(32).toString('hex')
+    await pool.query(
+      `insert into public.profiles (id, signup_trial_granted_at) values ($1, now())`,
+      [x],
+    )
+    // X là người ĐƯỢC MỜI đã được thưởng (thiết bị deviceX) + người MỜI đã được thưởng một lượt.
+    await pool.query(
+      `insert into public.referrals (referrer_id, referee_id, device_hash, rewarded_at)
+       values ($1, $2, $3, now()), ($2, $4, $5, now())`,
+      [helper, x, deviceX, invited, deviceInvited],
+    )
+
+    // Trần của người MỜI X (helper) trước khi X xoá: 1 lượt đã thưởng (dòng referee_id = X).
+    const helperCap = async (): Promise<number> => {
+      const live = await pool.query<{ n: number }>(
+        `select count(*)::int as n from public.referrals
+          where referrer_id = $1 and rewarded_at is not null`,
+        [helper],
+      )
+      return (live.rows[0]?.n ?? 0) + (await erasedBenefitUnits(pool, helper, 'referral_referrer'))
+    }
+    expect(await helperCap()).toBe(1)
+
+    await deleteAccount(pool, x)
+
+    // Rà soát 0545 mục 1: dòng referee_id = X đã xoá, nhưng sổ bù đúng 1 đơn vị cho email người
+    // mời ⇒ trần MAX_REWARDED_REFERRALS của người mời KHÔNG tụt.
+    expect(await helperCap()).toBe(1)
+    const helperHash = ledgerSubjectHash(LEDGER_KEY, 'email', `acct-0545-helper-${r}@example.test`)
+
+    const emailHash = ledgerSubjectHash(LEDGER_KEY, 'email', `acct0545${r}@gmail.com`)
+    const deviceHash = ledgerSubjectHash(LEDGER_KEY, 'device', deviceX)
+    const { rows } = await pool.query<Record<string, unknown>>(
+      `select * from platform.erased_benefit_ledger where subject_hash = any($1::text[])
+       order by benefit, subject_kind`,
+      [[emailHash, deviceHash]],
+    )
+    expect(rows.map((row) => [row.benefit, row.subject_kind, row.units])).toEqual([
+      ['referral_referee', 'device', 1],
+      ['referral_referee', 'email', 1],
+      ['referral_referrer', 'email', 1],
+      ['signup_trial', 'email', 1],
+    ])
+    // Sổ không chứa gì ngoài mã băm/loại/số/thời điểm: không user_id, email hay thiết bị trần.
+    expect(Object.keys(rows[0] ?? {}).sort()).toEqual(
+      ['benefit', 'created_at', 'id', 'subject_hash', 'subject_kind', 'units'].sort(),
+    )
+    const json = JSON.stringify(rows).toLowerCase()
+    for (const raw of [x, email.toLowerCase(), deviceX]) expect(json).not.toContain(raw)
+
+    // Người được mời của X: giữ dòng (không "được mời lại"), chỉ gỡ người mời; thiết bị vẫn chặn.
+    const kept = await pool.query<{ referrer_id: string | null; device_hash: string }>(
+      'select referrer_id, device_hash from public.referrals where referee_id = $1',
+      [invited],
+    )
+    expect(kept.rows).toEqual([{ referrer_id: null, device_hash: deviceInvited }])
+
+    // Đăng ký lại cùng hộp thư Gmail (biến thể hoa/thường, không dấu chấm, googlemail.com).
+    const again = await insertUser(pool, `ACCT0545${r}@googlemail.com`)
+    const stranger = await insertUser(pool, `acct-0545-other-${r}@gmail.com`)
+    cleanupUsers.push(again, stranger)
+    expect(await isBenefitBlocked(pool, again, 'signup_trial')).toBe(true)
+    expect(await isBenefitBlocked(pool, again, 'referral_referee')).toBe(true)
+    expect(await erasedBenefitUnits(pool, again, 'referral_referrer')).toBe(1)
+    // Người lạ: không bị chặn — trừ khi dùng đúng thiết bị đã hưởng thưởng của X.
+    expect(await isBenefitBlocked(pool, stranger, 'signup_trial')).toBe(false)
+    expect(await isBenefitBlocked(pool, stranger, 'referral_referee')).toBe(false)
+    expect(await isBenefitBlocked(pool, stranger, 'referral_referee', [deviceX])).toBe(true)
+
+    await pool.query('delete from platform.erased_benefit_ledger where subject_hash = any($1)', [
+      [emailHash, deviceHash, helperHash],
+    ])
+  })
+
+  it('0545: bản ghi quá 12 tháng không còn hiệu lực và bị job dọn xoá; bản ghi trong hạn ở lại', async () => {
+    const r = rand()
+    const oldUser = await insertUser(pool, `acct-0545-old-${r}@example.test`)
+    const newUser = await insertUser(pool, `acct-0545-new-${r}@example.test`)
+    cleanupUsers.push(oldUser, newUser)
+    const oldHash = ledgerSubjectHash(LEDGER_KEY, 'email', `acct-0545-old-${r}@example.test`)
+    const newHash = ledgerSubjectHash(LEDGER_KEY, 'email', `acct-0545-new-${r}@example.test`)
+    await pool.query(
+      `insert into platform.erased_benefit_ledger (subject_kind, subject_hash, benefit, created_at)
+       values ('email', $1, 'signup_trial', now() - interval '12 months 1 day'),
+              ('email', $2, 'signup_trial', now() - interval '11 months')`,
+      [oldHash, newHash],
+    )
+    expect(await isBenefitBlocked(pool, oldUser, 'signup_trial')).toBe(false)
+    expect(await isBenefitBlocked(pool, newUser, 'signup_trial')).toBe(true)
+
+    const { deleted } = await purgeExpiredErasedBenefits(pool)
+    expect(deleted).toBeGreaterThanOrEqual(1)
+    const left = await pool.query<{ subject_hash: string }>(
+      'select subject_hash from platform.erased_benefit_ledger where subject_hash = any($1)',
+      [[oldHash, newHash]],
+    )
+    expect(left.rows.map((row) => row.subject_hash)).toEqual([newHash])
+    await pool.query('delete from platform.erased_benefit_ledger where subject_hash = $1', [
+      newHash,
+    ])
+  })
+
+  it('0545: ràng buộc sổ chặn mã băm sai định dạng / quyền lợi lạ / số đơn vị ≤ 0', async () => {
+    const good = 'f'.repeat(64)
+    for (const [kind, hash, benefit, units] of [
+      ['email', 'khong-phai-hex', 'signup_trial', 1],
+      ['phone', good, 'signup_trial', 1],
+      ['email', good, 'tang-qua', 1],
+      ['email', good, 'signup_trial', 0],
+    ] as const) {
+      await expect(
+        pool.query(
+          `insert into platform.erased_benefit_ledger (subject_kind, subject_hash, benefit, units)
+           values ($1, $2, $3, $4)`,
+          [kind, hash, benefit, units],
+        ),
+      ).rejects.toMatchObject({ code: '23514' })
+    }
   })
 
   it('người dùng chưa có Person vẫn xoá được (Personal OS là tuỳ chọn)', async () => {

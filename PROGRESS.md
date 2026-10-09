@@ -767,6 +767,14 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-10-09 · sổ chống lạm dụng sau xoá tài khoản, changelog `0545`] Đặt khoá
+  `ERASED_BENEFIT_LEDGER_KEY` trên VPS TRƯỚC khi deploy:**
+  `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` → thêm vào
+  `/var/www/dhcb/.env` → `pm2 reload dhcb`. Kiểm: log khởi động KHÔNG có dòng
+  `❌ [erased-benefit-ledger]`. Thiếu khoá thì sổ tắt (xoá rồi đăng ký lại sẽ nhận lại dùng thử), xoá
+  tài khoản vẫn chạy. Cất khoá cùng chỗ các khoá khác của `.env` (backup env lên R2), KHÔNG chung
+  với bản dump CSDL.
+
 - **[2026-10-08 · seed giọng ElevenLabs, PR #1270, changelog `0517`] Nghe thử giọng điệu rồi mới seed
   lớn** (phiên AI không có key và seed tốn tiền thật): (1) điền `ELEVENLABS_API_KEY` vào `.env` trên
   VPS; (2) `npm run eleven:tone-sample` (~400 credit) rồi nghe 8 file mp3 — nếu model ĐỌC THẲNG chữ
@@ -1156,9 +1164,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   (`/api/account`, đặc tả `docs/specs/2026-10-08-xoa-tai-khoan-va-xuat-du-lieu.md`): mọi bảng có cột
   người dùng khai trong `ACCOUNT_TABLES` (test tích hợp đối chiếu `information_schema`), xác minh lại
   bằng mật khẩu/Google + 2FA, chứng từ thanh toán ẨN DANH chứ không xoá (migration `0088`), chặn xoá
-  khi còn đơn chờ trả. **Còn chờ chủ dự án quyết (ghi ở `0533`):** (a) xoá rồi đăng ký lại cùng email
-  có nhận lại trial không — hiện `trial_granted_at`/`device_hash` bị xoá theo tài khoản; giữ mã băm
-  chống lạm dụng là quyết định sản phẩm + pháp lý; (b) một đơn chờ trả có thể chặn xoá tới ~24,5 giờ
+  khi còn đơn chờ trả. (a) ✅ **xoá rồi đăng ký lại KHÔNG nhận lại dùng thử/thưởng giới thiệu**
+  (`0545`, đặc tả `docs/specs/2026-10-09-so-chong-lam-dung-sau-xoa-tai-khoan.md`): sổ
+  `platform.erased_benefit_ledger` (migration `0089`) giữ 12 tháng mã băm HMAC email/thiết bị +
+  quyền lợi đã hưởng, không user_id/plaintext; người mời xoá thì `referrals.referrer_id` → null.
+  **Việc tay trước khi deploy:** đặt `ERASED_BENEFIT_LEDGER_KEY` trên VPS (thiếu ⇒ sổ tắt, log lỗi
+  lúc khởi động, xoá vẫn chạy). **Còn chờ chủ dự án quyết (ghi ở `0533`):** (b) một đơn chờ trả có thể chặn xoá tới ~24,5 giờ
   (hạn đơn + ân hạn webhook). (2) ✅ `/api/persons?action=full_erase` nay đòi xác minh lại
   (mật khẩu/Google + 2FA) qua cổng dùng chung với `/api/account` (`api/_lib/reauthGate.ts`, cùng
   hạn mức lượt thử), `0541` — chưa có giao diện nào gọi endpoint này; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
