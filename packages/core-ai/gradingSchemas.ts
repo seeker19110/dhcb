@@ -10,10 +10,14 @@
 // thô — schema lạ có thể đòi biên dịch tốn kém hoặc gây 400 cho mọi lượt.
 //
 // Mỗi schema phải khớp ĐÚNG khuôn JSON mà prompt tương ứng ở `apps/dhcb/src/prompts/` mô tả
-// và kiểu dữ liệu giao diện đang đọc (test `gradingSchemas.test.ts` canh). Giới hạn của API:
+// và kiểu dữ liệu giao diện đang đọc (test `apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` canh). Giới hạn của API:
 // mọi object phải `additionalProperties: false`; KHÔNG hỗ trợ minimum/maximum/minLength… nên
 // thang điểm ghi ở `description` và giao diện vẫn tự kiểm số (lớp phòng thủ thứ hai, cũng là
 // lớp duy nhất khi rơi xuống Groq/Gemini dự phòng — hai bên đó không bị ràng buộc schema).
+import { arr, num, obj, str, type JsonSchema } from './jsonSchema.js'
+
+// Kiểu + trình dựng dùng chung (Action Canvas cũng dùng) — xem jsonSchema.ts.
+export type { JsonSchema } from './jsonSchema.js'
 
 export const GRADING_SCHEMA_NAMES = [
   'writing_eval',
@@ -28,34 +32,6 @@ export type GradingSchemaName = (typeof GRADING_SCHEMA_NAMES)[number]
 export function isGradingSchemaName(v: unknown): v is GradingSchemaName {
   return typeof v === 'string' && (GRADING_SCHEMA_NAMES as readonly string[]).includes(v)
 }
-
-/** Một nút JSON Schema (chỉ phần con mà structured outputs hỗ trợ và file này dùng tới). */
-export type JsonSchema =
-  | { type: 'string'; description?: string }
-  | { type: 'number'; description?: string }
-  | { type: 'array'; items: JsonSchema; description?: string }
-  | {
-      type: 'object'
-      properties: Record<string, JsonSchema>
-      required: string[]
-      additionalProperties: false
-      description?: string
-    }
-
-// ── Trình dựng nhỏ: mọi khoá đều BẮT BUỘC (giao diện đọc hết, thiếu khoá = lỗi định dạng) ──
-// `description` chỉ gắn khi có — khỏi để khoá `undefined` lơ lửng trong schema.
-const withDescription = <T extends JsonSchema>(node: T, description?: string): T =>
-  description === undefined ? node : { ...node, description }
-const str = (description?: string): JsonSchema => withDescription({ type: 'string' }, description)
-const num = (description: string): JsonSchema => withDescription({ type: 'number' }, description)
-const arr = (items: JsonSchema, description?: string): JsonSchema =>
-  withDescription({ type: 'array', items }, description)
-const obj = (properties: Record<string, JsonSchema>): JsonSchema => ({
-  type: 'object',
-  properties,
-  required: Object.keys(properties),
-  additionalProperties: false,
-})
 
 const BAND = 'Band 0–9 (bước 0.5).'
 const OVERALL = 'Trung bình các tiêu chí, làm tròn tới 0.5.'

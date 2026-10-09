@@ -769,7 +769,7 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 ### A. CÒN PHẢI LÀM
 
 - **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`, PR #1315 · structured
-  outputs chấm điểm, changelog `0569`, PR #1316] Bốn việc trên VPS sau khi deploy** (phiên AI không có key
+  outputs chấm điểm + Action Canvas, changelog `0569`/`0570`, PR #1316] Năm việc trên VPS sau khi deploy** (phiên AI không có key
   Anthropic thật):
   1. Kiểm `ANTHROPIC_API_KEY` trong `/var/www/dhcb/.env` còn hiệu lực + tài khoản còn credit
      (`console.anthropic.com` › Billing). Từ đợt này Claude chạy MỌI lượt chat/chấm bài → hết credit
@@ -783,6 +783,9 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
      nay gửi JSON Schema — `packages/core-ai/gradingSchemas.ts`): điểm hiện đúng và counter
      `ai_anthropic_status_400` ở `/admin` không tăng. Có 400 → lượt đó đã rơi sang Groq; báo lại
      để gỡ schema gây lỗi.
+  5. Action Canvas cũng gửi JSON Schema (changelog `0570`): chạy `npm run eval:action-canvas` rồi
+     so với lần đo trước (bắt buộc vì đợt này sửa `goalDecomposition.ts`), và tạo thử 1 kế hoạch
+     ở `/action-canvas`.
 
 - **[2026-10-09 · sổ chống lạm dụng sau xoá tài khoản, changelog `0545`] Đặt khoá
   `ERASED_BENEFIT_LEDGER_KEY` trên VPS TRƯỚC khi deploy:**
@@ -947,7 +950,9 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `eval:tutor` cho model mới — việc tay ở mục A. **Lượt chấm điểm dùng structured outputs** (changelog
   `0569`): client gửi TÊN khuôn JSON (`output_schema`), server giữ schema ở
   `packages/core-ai/gradingSchemas.ts`; sửa khoá JSON trong prompt chấm thì PHẢI sửa schema
-  (`apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` canh).
+  (`apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` canh). Action Canvas cũng vậy (changelog
+  `0570`): schema `GOAL_DECOMPOSITION_JSON_SCHEMA` nằm cạnh khuôn Zod; góp ý code giữ văn xuôi,
+  KHÔNG áp schema (chờ chủ dự án quyết có thiết kế lại sang JSON không).
 
 - **[2026-09-05] 🔑 QUYẾT ĐỊNH QUAN TRỌNG — thêm Tầng 8b "NHÌN trang thật bằng ảnh chụp" vào
   `docs/framework/QUY-TRINH-AUDIT.md`, BẮT BUỘC với mọi đợt việc chạm giao diện** (người dùng

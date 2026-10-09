@@ -4,6 +4,7 @@
 // khung mẫu giả vờ là AI. AI và CSDL đều giả lập — không gọi API thật.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ActionCanvasStateSchema } from '@dhcb/core-contracts/actionCanvas'
+import { GOAL_DECOMPOSITION_JSON_SCHEMA } from '@dhcb/core-personal/goalDecomposition'
 
 const USER = '11111111-1111-4111-8111-111111111111'
 const DAY = '2026-10-09'
@@ -128,9 +129,15 @@ describe('synthesize — đường thành công', () => {
 
     // Đúng 1 lời gọi model, có trần token, nhãn chi phí riêng.
     expect(generate).toHaveBeenCalledTimes(1)
-    const call = generate.mock.calls[0]![0] as { maxTokens: number; mode: string }
+    const call = generate.mock.calls[0]![0] as {
+      maxTokens: number
+      mode: string
+      outputSchema?: unknown
+    }
     expect(call.maxTokens).toBeLessThanOrEqual(1500)
     expect(call.mode).toBe('action_canvas')
+    // Claude bị ép đúng khuôn JSON phân rã mục tiêu (structured outputs).
+    expect(call.outputSchema).toEqual(GOAL_DECOMPOSITION_JSON_SCHEMA)
   })
 
   it('canvasId UUID của client được giữ; id lạ → id mặc định', async () => {

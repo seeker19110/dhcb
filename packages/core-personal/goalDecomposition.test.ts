@@ -3,9 +3,14 @@
 // quá số bước, miền đã xoá, link chèn do prompt injection…).
 import { describe, expect, it } from 'vitest'
 import { ActionCanvasStateSchema } from '@dhcb/core-contracts/actionCanvas'
+import { schemaKeys, schemaViolations } from '@dhcb/core-ai/jsonSchema'
+import { GOAL_DECOMPOSITION_SYSTEM } from './actionCanvasPrompt.js'
 import {
   AI_PROPOSAL_TAG,
   buildProposalCanvas,
+  GOAL_DECOMPOSITION_JSON_SCHEMA,
+  GoalDecompositionSchema,
+  STEP_DOMAINS,
   longestDependencyDepth,
   MAX_DEPTH,
   MAX_STEPS,
@@ -211,5 +216,33 @@ describe('buildProposalCanvas', () => {
     const c = buildProposalCanvas({ ...ids, goal: 'a'.repeat(300), steps: steps(), newId })
     expect(c.title.length).toBeLessThanOrEqual(200)
     expect(ActionCanvasStateSchema.safeParse(c).success).toBe(true)
+  })
+})
+
+// Schema gửi Claude (structured outputs) phải khớp CẢ khuôn Zod lẫn khuôn ghi trong prompt — lệch
+// thì Claude bị ép theo khuôn cũ và Zod từ chối MỌI lượt (người dùng chỉ thấy "AI trả sai").
+describe('GOAL_DECOMPOSITION_JSON_SCHEMA — hợp đồng với Zod và prompt', () => {
+  const stepZodKeys = Object.keys(GoalDecompositionSchema.shape.steps.element.shape)
+
+  it('tập khoá = khoá Zod (steps + mọi khoá của một bước)', () => {
+    expect(schemaKeys(GOAL_DECOMPOSITION_JSON_SCHEMA)).toEqual(new Set(['steps', ...stepZodKeys]))
+  })
+
+  it('tập khoá = khoá trong khuôn JSON mẫu của prompt', () => {
+    const template = /\{"steps":.*\}/.exec(GOAL_DECOMPOSITION_SYSTEM)?.[0] ?? ''
+    const promptKeys = new Set([...template.matchAll(/"([A-Za-z]+)":/g)].map((m) => m[1]!))
+    expect(schemaKeys(GOAL_DECOMPOSITION_JSON_SCHEMA)).toEqual(promptKeys)
+  })
+
+  it('miền chỉ nhận đúng các giá trị Zod nhận', () => {
+    const steps = GOAL_DECOMPOSITION_JSON_SCHEMA
+    const step = steps.type === 'object' ? steps.properties.steps : undefined
+    const item = step?.type === 'array' ? step.items : undefined
+    const domain = item?.type === 'object' ? item.properties.domain : undefined
+    expect(domain).toMatchObject({ type: 'string', enum: [...STEP_DOMAINS] })
+  })
+
+  it('API chấp nhận được (additionalProperties:false, required đủ, không từ khoá cấm)', () => {
+    expect(schemaViolations(GOAL_DECOMPOSITION_JSON_SCHEMA)).toEqual([])
   })
 })

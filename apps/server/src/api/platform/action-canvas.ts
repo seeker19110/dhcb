@@ -18,6 +18,7 @@ import { UuidSchema } from '@dhcb/core-contracts/shared'
 import { ActionCanvasService } from '@dhcb/core-personal/actionCanvasService'
 import {
   buildProposalCanvas,
+  GOAL_DECOMPOSITION_JSON_SCHEMA,
   GOAL_MAX,
   GOAL_MIN,
   parseGoalDecomposition,
@@ -156,6 +157,9 @@ async function handleSynthesize(
       maxTokens: prompt.maxTokens,
       mode: GOAL_DECOMPOSITION_COST_MODE,
       task: 'action_canvas',
+      // Claude bị ép đúng khuôn JSON; parseGoalDecomposition bên dưới vẫn kiểm đủ (trần độ dài,
+      // DAG, link…) và là lớp duy nhất khi rơi xuống Groq/Gemini.
+      outputSchema: GOAL_DECOMPOSITION_JSON_SCHEMA,
     })
     if (raw === null) {
       await refundUsage(personId, 'chat', chargedDay)

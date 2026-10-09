@@ -4,6 +4,7 @@
 // đúng provider đã trả lời.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import type { AnthropicTextResult } from './anthropicClient.js'
+import { arr, obj, str } from './jsonSchema.js'
 
 const mocks = vi.hoisted(() => ({
   callGroqChatWithKeyPool: vi.fn(),
@@ -98,6 +99,19 @@ describe('generateChatText — chuỗi dự phòng', () => {
     mocks.callAnthropicText.mockResolvedValue(anthropicOk('ok'))
     await generateChatText({ ...PARAMS, task })
     expect(mocks.callAnthropicText.mock.calls[0]?.[0].route.model).toBe(model)
+  })
+
+  it('outputSchema chuyển nguyên cho Claude; không truyền thì không ép format', async () => {
+    process.env.ANTHROPIC_API_KEY = 'a'
+    mocks.callAnthropicText.mockResolvedValue(anthropicOk('{}'))
+    const outputSchema = obj({ steps: arr(str()) })
+    await generateChatText({ ...PARAMS, outputSchema })
+    await generateChatText(PARAMS)
+    const calls = mocks.callAnthropicText.mock.calls as unknown as Array<
+      [{ outputSchema?: unknown }]
+    >
+    expect(calls[0]?.[0].outputSchema).toEqual(outputSchema)
+    expect(calls[1]?.[0].outputSchema).toBeUndefined()
   })
 
   it('Anthropic lỗi mạng / lỗi HTTP / bị cắt / bị từ chối → sang Groq', async () => {
