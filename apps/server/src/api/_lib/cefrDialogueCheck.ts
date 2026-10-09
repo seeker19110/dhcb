@@ -1,19 +1,25 @@
-// api/_lib/cefrDialogueCheck.ts — SERVER CHẤM LẠI kiểm tra hiểu hội thoại CEFR (đợt 0555).
+// api/_lib/cefrDialogueCheck.ts — SERVER CẤP LƯỢT và CHẤM LẠI kiểm tra hiểu hội thoại CEFR
+// (đợt 0555 chấm lại; đợt 0558 seed do server cấp, không trả đáp án câu sai).
 //
-// POST /api/learning/evidence?action=cefr-dialogue   body = DialogueCheckInputSchema
-//   → dựng LẠI đề từ `dialogues.json` + seed bằng cùng `buildComprehensionQuiz` của giao diện,
-//     chấm, đạt thì ghi "learned|<owner>:<titleEn>" vào `english.learning_progress.cefr_dialogues`
-//     (cột đã có, hợp nhất UNION — không migration), trả DialogueCheckResult.
+// POST /api/learning/evidence?action=cefr-dialogue-start   body = DialogueStartInputSchema
+//   → ký token lượt (HMAC, TTL), suy SEED ẨN từ chữ ký, dựng đề từ `dialogues.json` + seed bằng
+//     cùng `buildComprehensionQuiz` của giao diện, trả token + đề ĐÃ BỎ ĐÁP ÁN.
+// POST /api/learning/evidence?action=cefr-dialogue         body = DialogueCheckInputSchema
+//   → verify token, suy lại đúng seed, dựng lại đề, chấm, đạt thì ghi "learned|<owner>:<titleEn>"
+//     vào `english.learning_progress.cefr_dialogues` (UNION — không migration), trả kết quả
+//     KHÔNG có `correctId`; `explanation` chỉ kèm câu đúng.
 //
-// Đặc tả: docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §③–⑤
+// Đặc tả: docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md §③–⑤ và
+// docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md.
 //
-// BA LỚP CHỐNG GIAN LẬN / DÒ ĐÁP ÁN:
+// BỐN LỚP CHỐNG GIAN LẬN / DÒ ĐÁP ÁN:
 //   1. Client không gửi được đúng/sai/điểm (schema `.strict()`), server tự chấm.
-//   2. Giới hạn theo TÀI KHOẢN: tối đa MAX_SUBMITS_PER_MIN lượt nộp/phút (thêm vào giới hạn theo IP
-//      chung của handler).
-//   3. MỖI LƯỢT (seed) CHỈ CHẤM MỘT LẦN: đáp án đúng chỉ trả về SAU khi lượt đã bị "tiêu" — nộp
-//      bừa để xem đáp án rồi nộp lại đúng lượt đó sẽ nhận 409 ATTEMPT_USED. Lượt sau (Làm lại) là
-//      đề khác.
+//   2. Seed không bao giờ rời server: client cầm token mờ, đáp án không tính được từ dữ liệu công
+//      khai + mã nguồn. Token gắn `userId`, có hạn, chữ ký so timing-safe.
+//   3. Giới hạn theo TÀI KHOẢN: MAX_STARTS_PER_MIN lượt mở + MAX_SUBMITS_PER_MIN lượt nộp mỗi phút
+//      (thêm vào giới hạn theo IP chung của handler).
+//   4. MỖI LƯỢT (token) CHỈ CHẤM MỘT LẦN; câu sai không trả đáp án đúng, nên nộp bừa chỉ biết
+//      "phương án này sai" của riêng đề đó.
 // Không log PII: không ghi titleEn/đáp án/userId ra log; khoá bộ đếm dùng băm SHA-256.
 import { createHash } from 'node:crypto'
 import type { Pool } from 'pg'
@@ -22,6 +28,12 @@ import {
   resetCounterChecked,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
+import {
+  SigningKeyUnavailableError,
+  hiddenSeedFor,
+  signAttemptToken,
+  verifyAttemptToken,
+} from '@dhcb/core-auth/attemptToken'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, internalErrorResponse, getClientIp } from '@dhcb/core-http/http'
 import { withTransaction } from '@dhcb/core-db/transaction'
@@ -29,35 +41,44 @@ import { vnDateStr } from '@dhcb/core-db/date'
 import { FREE_WEEKLY_BONUS_PER_DAY } from '@dhcb/core-billing/usage'
 import {
   DialogueCheckInputSchema,
+  DialogueStartInputSchema,
   dialogueKey,
   learnedDialogueEntry,
   type DialogueCheckErrorCode,
   type DialogueCheckResult,
+  type DialogueStartResult,
 } from '@dhcb/core-contracts/cefrDialogueCheck'
 import {
-  comprehensionSeed,
+  buildComprehensionQuiz,
   regradeComprehension,
+  toPublicComprehensionQuestion,
 } from '@dhcb/subject-english/dialogueComprehension'
 import { findCefrDialogue } from '@dhcb/subject-english/dialogueData'
 
-/** Trần số lượt nộp mỗi phút của MỘT tài khoản (người thật làm 3 câu mất cả phút). */
+/** Trần số lượt MỞ mỗi phút của MỘT tài khoản (Thử lại/Làm lại vài lần là chuyện thường). */
+export const MAX_STARTS_PER_MIN = 12
+/** Trần số lượt NỘP mỗi phút của MỘT tài khoản (người thật làm 3 câu mất cả phút). */
 export const MAX_SUBMITS_PER_MIN = 6
 /** Cửa sổ của giới hạn theo tài khoản. */
 const RATE_WINDOW_MS = 60_000
-/** Lượt đã chấm bị "khoá" trong bao lâu — đủ dài để không nộp lại được cùng đề trong ngày. */
+/** Token lượt làm có hiệu lực bao lâu kể từ lúc mở — rộng rãi cho người đọc lại hội thoại. */
+export const ATTEMPT_TTL_MS = 60 * 60 * 1000
+/** Lượt đã chấm bị "khoá" trong bao lâu — phải ≥ TTL để token còn hạn không nộp lại được. */
 const ATTEMPT_LOCK_MS = 24 * 60 * 60 * 1000
+/** Không gian khoá của token loại này (tách khỏi mọi loại lượt khác dùng chung khoá gốc). */
+export const ATTEMPT_SCOPE = 'cefr-dialogue'
 
-/** Khoá bộ đếm "lượt đã chấm" — băm để không đưa tên hội thoại/userId thô vào Redis/log. */
-export function attemptLockKey(
-  userId: string,
-  ownerId: string,
-  titleEn: string,
-  direction: 'A' | 'B',
-  attempt: number,
-): string {
-  const h = createHash('sha256')
-    .update(JSON.stringify([userId, ownerId, titleEn, direction, attempt]))
-    .digest('hex')
+/** Nội dung ký trong token — nhận diện lượt; seed KHÔNG nằm trong đây. */
+interface AttemptClaims {
+  u: string
+  o: string
+  t: string
+  d: 'A' | 'B'
+}
+
+/** Khoá bộ đếm "lượt đã chấm" — băm chữ ký để không đưa gì của token thô vào Redis/log. */
+export function attemptLockKey(signature: string): string {
+  const h = createHash('sha256').update(signature).digest('hex')
   return `cefr-dialogue-attempt:${h}`
 }
 
@@ -83,6 +104,22 @@ function fail(
   headers: Record<string, string>,
 ): Response {
   return jsonResponse({ error, code }, status, headers)
+}
+
+function rateLimited(req: Request, which: 'start' | 'submit', headers: Record<string, string>) {
+  logSecurityEvent('RATE_LIMIT_EXCEEDED', getClientIp(req), {
+    path: `/api/learning/evidence#cefr-dialogue${which === 'start' ? '-start' : ''}`,
+  })
+  return jsonResponse(
+    {
+      error:
+        which === 'start'
+          ? 'Bạn mở bài hơi nhanh — đợi một phút rồi thử lại'
+          : 'Bạn nộp hơi nhanh — đợi một phút rồi thử lại',
+    },
+    429,
+    { ...headers, 'Retry-After': '60' },
+  )
 }
 
 /**
@@ -125,9 +162,104 @@ async function saveLearned(
   })
 }
 
+/** Server có đang giữ bản "đã học" của hội thoại này không (đọc nhẹ, không khoá dòng). */
+async function isLearned(
+  pool: Pool,
+  userId: string,
+  ownerId: string,
+  titleEn: string,
+): Promise<boolean> {
+  try {
+    const { rows } = await pool.query<{ learned: boolean }>(
+      `select coalesce(cefr_dialogues @> $2::jsonb, false) as learned
+         from english.learning_progress where user_id = $1`,
+      [userId, JSON.stringify([learnedDialogueEntry(ownerId, titleEn)])],
+    )
+    return rows[0]?.learned ?? false
+  } catch (err: unknown) {
+    // Chỉ là thông tin phụ của 409 — đọc lỗi thì nói "chưa rõ" (false), không làm hỏng phản hồi.
+    console.warn('[cefr-dialogue-check] không đọc được trạng thái đã học:', err)
+    return false
+  }
+}
+
 /**
- * Xử lý action `cefr-dialogue`. Nơi gọi (handler `/api/learning/evidence`) đã kiểm phương thức
- * POST, giới hạn theo IP và `validateAuth` — `userId` ở đây LUÔN lấy từ token.
+ * MỞ LƯỢT (action `cefr-dialogue-start`). Nơi gọi đã kiểm POST, giới hạn theo IP và
+ * `validateAuth` — `userId` LUÔN lấy từ token đăng nhập và được ký vào token lượt.
+ */
+export async function handleCefrDialogueStart(
+  req: Request,
+  userId: string,
+  headers: Record<string, string>,
+): Promise<Response> {
+  const rate = await consumeWindowCounterStatus(
+    `cefr-dialogue-start:${userId}`,
+    MAX_STARTS_PER_MIN,
+    RATE_WINDOW_MS,
+  )
+  if (rate === 'unavailable') return unavailable(headers)
+  if (rate === 'exhausted') return rateLimited(req, 'start', headers)
+
+  const parsed = await readJsonBody(req)
+  if (!parsed.ok) return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
+  const validated = validateBody(DialogueStartInputSchema, parsed.raw)
+  if (!validated.ok) {
+    return jsonResponse({ error: validated.error.message }, validated.error.status, headers)
+  }
+  const input = validated.data
+  const dialogue = findCefrDialogue(input.ownerId, input.titleEn)
+  if (!dialogue) return fail('CONTENT_NOT_FOUND', 'Không tìm thấy hội thoại này', 400, headers)
+
+  const claims: AttemptClaims = {
+    u: userId,
+    o: input.ownerId,
+    t: input.titleEn,
+    d: input.direction,
+  }
+  let signed: ReturnType<typeof signAttemptToken>
+  try {
+    signed = signAttemptToken(ATTEMPT_SCOPE, { ...claims }, ATTEMPT_TTL_MS)
+  } catch (err: unknown) {
+    if (err instanceof SigningKeyUnavailableError) {
+      // Thiếu khoá ở production là lỗi cấu hình — nói cho vận hành, fail-closed với người học.
+      console.error('[cefr-dialogue-start]', err.message)
+      return unavailable(headers)
+    }
+    return internalErrorResponse(err, headers, 'cefr-dialogue-start')
+  }
+  const verified = verifyAttemptToken(ATTEMPT_SCOPE, signed.token)
+  if (!verified.ok) {
+    // Vừa ký xong mà không verify được là lỗi lập trình, không phải lỗi người dùng.
+    return internalErrorResponse(
+      new Error('token vừa ký không verify được'),
+      headers,
+      'cefr-dialogue-start',
+    )
+  }
+  const seed = hiddenSeedFor(ATTEMPT_SCOPE, verified.signature)
+  const questions = buildComprehensionQuiz(dialogue, input.direction, seed)
+  if (questions.length === 0) {
+    return fail('NO_QUIZ', 'Hội thoại này chưa kiểm tra được', 400, headers)
+  }
+  const body: DialogueStartResult = {
+    token: signed.token,
+    expiresAt: signed.expiresAt,
+    questions: questions.map(toPublicComprehensionQuestion),
+  }
+  return jsonResponse(body, 200, headers)
+}
+
+/** Đọc claims từ payload token đã verify; token của loại khác/đời khác → `null`. */
+function readClaims(payload: Record<string, unknown>): AttemptClaims | null {
+  const { u, o, t, d } = payload
+  if (typeof u !== 'string' || typeof o !== 'string' || typeof t !== 'string') return null
+  if (d !== 'A' && d !== 'B') return null
+  return { u, o, t, d }
+}
+
+/**
+ * NỘP LƯỢT (action `cefr-dialogue`). Nơi gọi (handler `/api/learning/evidence`) đã kiểm phương
+ * thức POST, giới hạn theo IP và `validateAuth` — `userId` ở đây LUÔN lấy từ token đăng nhập.
  */
 export async function handleCefrDialogueCheck(
   req: Request,
@@ -141,15 +273,7 @@ export async function handleCefrDialogueCheck(
     RATE_WINDOW_MS,
   )
   if (rate === 'unavailable') return unavailable(headers)
-  if (rate === 'exhausted') {
-    logSecurityEvent('RATE_LIMIT_EXCEEDED', getClientIp(req), {
-      path: '/api/learning/evidence#cefr-dialogue',
-    })
-    return jsonResponse({ error: 'Bạn nộp hơi nhanh — đợi một phút rồi thử lại' }, 429, {
-      ...headers,
-      'Retry-After': '60',
-    })
-  }
+  if (rate === 'exhausted') return rateLimited(req, 'submit', headers)
 
   const parsed = await readJsonBody(req)
   if (!parsed.ok) return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
@@ -159,13 +283,44 @@ export async function handleCefrDialogueCheck(
   }
   const input = validated.data
 
-  const dialogue = findCefrDialogue(input.ownerId, input.titleEn)
+  // Verify token: chữ ký trước, hạn sau; rồi mới đối chiếu chủ sở hữu.
+  let verified: ReturnType<typeof verifyAttemptToken>
+  try {
+    verified = verifyAttemptToken(ATTEMPT_SCOPE, input.token)
+  } catch (err: unknown) {
+    if (err instanceof SigningKeyUnavailableError) {
+      // Khoá bị gỡ/đổi sai sau khi đã cấp token — lỗi cấu hình, nói cho vận hành, 503 với người học.
+      console.error('[cefr-dialogue-check]', err.message)
+      return unavailable(headers)
+    }
+    return internalErrorResponse(err, headers, 'cefr-dialogue-check')
+  }
+  const claims = verified.ok ? readClaims(verified.payload) : null
+  if (!verified.ok || !claims || claims.u !== userId) {
+    // Chữ ký sai / token của người khác là dấu hiệu can thiệp — ghi sự kiện an ninh (không PII:
+    // chỉ lý do). Hết hạn là chuyện thường, không log.
+    const reason = !verified.ok ? verified.reason : !claims ? 'bad-claims' : 'wrong-user'
+    if (reason !== 'expired') {
+      logSecurityEvent('ATTEMPT_TOKEN_REJECTED', getClientIp(req), {
+        path: '/api/learning/evidence#cefr-dialogue',
+        reason,
+      })
+    }
+    return fail(
+      'ATTEMPT_EXPIRED',
+      'Lượt này đã hết hạn hoặc không hợp lệ — bấm Làm lại để có câu hỏi mới',
+      409,
+      headers,
+    )
+  }
+
+  const dialogue = findCefrDialogue(claims.o, claims.t)
   if (!dialogue) return fail('CONTENT_NOT_FOUND', 'Không tìm thấy hội thoại này', 400, headers)
 
   const graded = regradeComprehension(
     dialogue,
-    input.direction,
-    comprehensionSeed(input.ownerId, input.titleEn, input.direction, input.attempt),
+    claims.d,
+    hiddenSeedFor(ATTEMPT_SCOPE, verified.signature),
     input.answers,
   )
   if (!graded.ok) {
@@ -179,20 +334,19 @@ export async function handleCefrDialogueCheck(
         )
   }
 
-  // Tiêu lượt NGAY TRƯỚC khi trả đáp án: lượt nào đã chấm thì không nộp lại được nữa.
-  const lockKey = attemptLockKey(
-    userId,
-    input.ownerId,
-    input.titleEn,
-    input.direction,
-    input.attempt,
-  )
+  // Tiêu lượt NGAY TRƯỚC khi trả kết quả: lượt nào đã chấm thì không nộp lại được nữa.
+  const lockKey = attemptLockKey(verified.signature)
   const lock = await consumeWindowCounterStatus(lockKey, 1, ATTEMPT_LOCK_MS)
   if (lock === 'unavailable') return unavailable(headers)
   if (lock === 'exhausted') {
-    return fail(
-      'ATTEMPT_USED',
-      'Lượt này đã được nộp — bấm Làm lại để có câu hỏi mới',
+    // Phản hồi lần trước có thể đã rơi trên đường về SAU khi server ghi "đã học" (mất mạng đúng lúc
+    // trả kết quả). Trả kèm `saved` để màn nói thật "bài này ĐÃ được ghi" thay vì bắt làm lại.
+    return jsonResponse(
+      {
+        error: 'Lượt này đã được nộp — bấm Làm lại để có câu hỏi mới',
+        code: 'ATTEMPT_USED' satisfies DialogueCheckErrorCode,
+        saved: await isLearned(pool, userId, claims.o, claims.t),
+      },
       409,
       headers,
     )
@@ -203,7 +357,7 @@ export async function handleCefrDialogueCheck(
   if (result.passed) {
     let newlyLearned: boolean
     try {
-      newlyLearned = await saveLearned(pool, userId, input.ownerId, input.titleEn)
+      newlyLearned = await saveLearned(pool, userId, claims.o, claims.t)
     } catch (err: unknown) {
       // Chưa ghi được → TRẢ LẠI lượt để người học gửi lại đúng bài đó, không mất công làm.
       if (!(await resetCounterChecked(lockKey))) {
@@ -238,12 +392,16 @@ export async function handleCefrDialogueCheck(
     required: result.required,
     passed: result.passed,
     saved,
-    items: questions.map((q, i) => ({
-      questionId: q.id,
-      chosenId: result.items[i]?.chosenId ?? null,
-      correctId: q.correctId,
-      correct: result.items[i]?.correct ?? false,
-    })),
+    items: questions.map((q, i) => {
+      const correct = result.items[i]?.correct ?? false
+      return {
+        questionId: q.id,
+        chosenId: result.items[i]?.chosenId ?? null,
+        correct,
+        // Giải thích CHỈ cho câu đúng — câu sai không lộ đáp án (đặc tả 0558 §③).
+        ...(correct ? { explanation: q.explanation } : {}),
+      }
+    }),
   }
   return jsonResponse(body, 200, headers)
 }

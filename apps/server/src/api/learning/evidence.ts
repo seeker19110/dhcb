@@ -8,8 +8,10 @@
 // GET  …&include=attempts → thêm { attempts: CompletionEvidence[] } — 200 lượt nộp MỚI NHẤT của
 //      môn đó, kèm `items` (đúng/sai từng câu). Sổ lỗi STEM (S12-2) dựng từ đây chứ KHÔNG có
 //      bảng lỗi thứ hai; `answers.raw` (chữ người học gõ) KHÔNG trả về — sổ lỗi không cần nó.
-// POST /api/learning/evidence?action=cefr-dialogue — kiểm tra hiểu hội thoại CEFR, server chấm
-//      LẠI từ seed (đợt 0555, docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md).
+// POST /api/learning/evidence?action=cefr-dialogue-start — MỞ lượt kiểm tra hiểu hội thoại CEFR:
+//      server cấp token + đề đã bỏ đáp án (đợt 0558, docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md).
+// POST /api/learning/evidence?action=cefr-dialogue — nộp lượt, server chấm LẠI từ seed ẩn trong
+//      token (đợt 0555 + 0558, docs/specs/2026-10-09-hoi-thoai-cefr-server-cham-lai.md).
 //
 // Đặc tả: docs/specs/2026-09-15-learning-ux-s11-completion-evidence.md §③.4
 // Bảng: platform.completion_evidence + platform.completion_state (migration 0081).
@@ -43,8 +45,11 @@ import { getPhysicsLesson } from '@dhcb/subject-physics/lessons'
 import { getChemLesson } from '@dhcb/subject-chemistry/lessons'
 import { getBiologyLesson } from '@dhcb/subject-biology/lessons'
 import { rewardReferralIfEligible } from '../_lib/referral.js'
-import { handleCefrDialogueCheck } from '../_lib/cefrDialogueCheck.js'
-import { CEFR_DIALOGUE_ACTION } from '@dhcb/core-contracts/cefrDialogueCheck'
+import { handleCefrDialogueCheck, handleCefrDialogueStart } from '../_lib/cefrDialogueCheck.js'
+import {
+  CEFR_DIALOGUE_ACTION,
+  CEFR_DIALOGUE_START_ACTION,
+} from '@dhcb/core-contracts/cefrDialogueCheck'
 
 /** Bài học STEM có đủ hai mặt việc này cần: chấm (`checkQuestions.answer`) và băm nội dung. */
 type BaiStem = StemLessonLike & NoiDungCanDuyet
@@ -217,6 +222,10 @@ export default async function handler(req: Request): Promise<Response> {
     // Đợt 0555: kiểm tra hiểu hội thoại CEFR — cùng endpoint "bằng chứng", hợp đồng riêng (lưu vào
     // `cefr_dialogues`, không vào bảng completion_* của STEM). Xem _lib/cefrDialogueCheck.ts.
     const action = new URL(req.url).searchParams.get('action')
+    if (action === CEFR_DIALOGUE_START_ACTION) {
+      // Đợt 0558: server cấp token lượt + đề đã bỏ đáp án (seed không rời server).
+      return await handleCefrDialogueStart(req, auth.userId, headers)
+    }
     if (action === CEFR_DIALOGUE_ACTION) {
       return await handleCefrDialogueCheck(req, pool, auth.userId, headers)
     }

@@ -1140,6 +1140,9 @@ export function DialogueView({
   if (checking && comprehension) {
     return (
       <DialogueComprehensionCheck
+        // Đổi hội thoại / chiều / trạng thái đăng nhập giữa chừng = màn mới hoàn toàn (đề, câu trả
+        // lời, kết quả đều thuộc lượt cũ) — React dựng lại thay vì để state cũ dính sang đề mới.
+        key={`${comprehension.ownerId}|${dialogue.titleEn}|${isA}|${comprehension.canSave}`}
         dialogue={dialogue}
         ownerId={comprehension.ownerId}
         isA={isA}
