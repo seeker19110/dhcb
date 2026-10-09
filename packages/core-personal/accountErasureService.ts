@@ -24,6 +24,7 @@ import { NotFoundError } from '@dhcb/core-errors/appError'
 import { decryptUserField } from '@dhcb/core-config/userDataCrypto'
 import { SEPAY_LATE_GRACE_MS } from '@dhcb/core-billing/sepay'
 import { accountSubjectHash, PendingPaymentError } from './accountErasureShared.js'
+import { recordErasedBenefitsForAccount } from './accountErasureLedger.js'
 import {
   assertIdent,
   assertOrderBy,
@@ -688,10 +689,12 @@ export const ACCOUNT_TABLES = [
   },
   {
     // Giới thiệu bạn: `device_hash` (dấu vân tay thiết bị) và id người kia không xuất.
+    // Người MỜI xoá tài khoản ⇒ chỉ gỡ `referrer_id` (0545): dòng là dữ liệu của người được mời,
+    // giữ lại để họ không "được mời lại" nhận thưởng lần hai và `device_hash` vẫn chặn cày thưởng.
     table: 'public.referrals',
     userColumn: 'referrer_id',
     match: 'user_id',
-    erase: DELETE,
+    erase: { kind: 'anonymize', setSql: 'referrer_id = null' },
     exportKey: 'referralsMade',
     columns: ['id', 'rewarded_at', 'created_at'],
     orderBy: 'created_at, id',
@@ -1057,6 +1060,10 @@ export async function deleteAccount(pool: Pool, userId: string): Promise<DeleteA
     // Còn đơn chờ trả ⇒ TỪ CHỐI (rà soát 0533). Kiểm SAU khoá dòng users: checkout tạo đơn mới
     // phải lấy `key share` trên dòng này nên bị chặn tới khi transaction xong — không lọt đơn mới.
     if (await hasLivePendingPayment(client, userId)) throw new PendingPaymentError()
+
+    // Sổ chống lạm dụng (0545): ghi mã băm HMAC email/thiết bị + quyền lợi một-lần đã hưởng, TRƯỚC
+    // khi xoá dấu dùng thử/giới thiệu. Cùng transaction ⇒ xoá lỗi thì sổ cũng rollback.
+    await recordErasedBenefitsForAccount(client, userId)
 
     const tableCounts: Record<string, TableCount> = {}
     let recordsDeleted = 0

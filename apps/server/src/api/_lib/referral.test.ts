@@ -6,12 +6,21 @@
 //  5. Đã thưởng rồi → không thưởng lần 2 (chống race + gọi lặp).
 //  6. Thiết bị đã được thưởng lượt khác → không thưởng, nhưng KHÔNG khoá tài khoản.
 //  7. Vượt trần 10 lượt → người MỜI hết được thưởng, người ĐƯỢC MỜI vẫn được.
+//  8. Sổ chống lạm dụng (0545): người được mời trùng tài khoản đã xoá từng được thưởng → không
+//     thưởng; lượt thưởng của tài khoản cũ cùng email tính vào trần người mời; người mời đã xoá
+//     (referrer_id null) → chỉ người được mời nhận.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Pool, Client, type PoolClient } from 'pg'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
-vi.mock('@dhcb/core-auth/security', () => ({ logSecurityEvent: () => {} }))
+const security = vi.hoisted(() => ({ logSecurityEvent: vi.fn() }))
+vi.mock('@dhcb/core-auth/security', () => security)
+const ledger = vi.hoisted(() => ({
+  isBenefitBlocked: vi.fn<(...args: unknown[]) => Promise<boolean>>(),
+  erasedBenefitUnits: vi.fn<(...args: unknown[]) => Promise<number>>(),
+}))
+vi.mock('@dhcb/core-billing/erasedBenefitLedger', () => ledger)
 const granted: { calls: { userId: string; days: number }[] } = { calls: [] }
 vi.mock('@dhcb/core-billing/planGrant', () => ({
   grantPlanDays: vi.fn(async (userId: string, _plan: string, days: number) => {
@@ -39,6 +48,9 @@ beforeEach(() => {
   query.mockResolvedValue({ rows: [], rowCount: 0 })
   mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
   granted.calls = []
+  security.logSecurityEvent.mockReset()
+  ledger.isBenefitBlocked.mockReset().mockResolvedValue(false)
+  ledger.erasedBenefitUnits.mockReset().mockResolvedValue(0)
 })
 
 describe('claimReferral', () => {
@@ -78,7 +90,11 @@ describe('claimReferral', () => {
 
 // Fake DB giữ khoá tới commit/rollback, cô lập thay đổi để kiểm nguyên tử và race thật sự.
 describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng thời', () => {
-  type Referral = { referrer_id: string; device_hash: string | null; rewarded_at: Date | null }
+  type Referral = {
+    referrer_id: string | null
+    device_hash: string | null
+    rewarded_at: Date | null
+  }
   const referrals = new Map<string, Referral>()
   const balances = new Map<string, number>()
   const locks = new Map<string, Promise<void>>()
@@ -310,6 +326,46 @@ describe('rewardReferralIfEligible — bằng chứng, nguyên tử và đồng 
     expect(balances.get('u1')).toBe(REFERRAL_REWARD_DAYS)
     expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
     expect(balances.get('u3')).toBe(REFERRAL_REWARD_DAYS)
+  })
+
+  it('0545: người được mời trùng tài khoản đã xoá từng được thưởng ⇒ không thưởng ai, log không PII', async () => {
+    referrals.get('u2')!.device_hash = 'dev-u2'
+    ledger.isBenefitBlocked.mockResolvedValue(true)
+    await rewardReferralIfEligible('u2')
+    expect(balances.size).toBe(0)
+    expect(referrals.get('u2')?.rewarded_at).toBeNull()
+    const [db, userId, benefit, devices] = ledger.isBenefitBlocked.mock.calls[0] ?? []
+    expect(clients).toContain(db) // tra trong CHÍNH transaction thưởng
+    expect([userId, benefit, devices]).toEqual(['u2', 'referral_referee', ['dev-u2']])
+    expect(security.logSecurityEvent).toHaveBeenCalledWith(
+      'REFERRAL_REPEAT_AFTER_ERASURE',
+      'system',
+      { benefit: 'referral_referee' },
+    )
+  })
+
+  it('0545: lượt thưởng của tài khoản cũ cùng email tính vào trần ⇒ người mời không được thêm', async () => {
+    referrals.set('old-0', { referrer_id: 'u1', device_hash: null, rewarded_at: new Date() })
+    ledger.erasedBenefitUnits.mockResolvedValue(MAX_REWARDED_REFERRALS - 1)
+    await rewardReferralIfEligible('u2')
+    expect(balances.get('u1')).toBeUndefined()
+    expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
+    expect(ledger.erasedBenefitUnits.mock.calls[0]?.slice(1)).toEqual(['u1', 'referral_referrer'])
+  })
+
+  it('0545: dưới trần sau khi cộng sổ ⇒ người mời vẫn được thưởng', async () => {
+    ledger.erasedBenefitUnits.mockResolvedValue(MAX_REWARDED_REFERRALS - 1)
+    await rewardReferralIfEligible('u2')
+    expect(balances.get('u1')).toBe(REFERRAL_REWARD_DAYS)
+    expect(balances.get('u2')).toBe(REFERRAL_REWARD_DAYS)
+  })
+
+  it('0545: người mời đã xoá tài khoản (referrer_id null) ⇒ chỉ người được mời nhận', async () => {
+    referrals.get('u2')!.referrer_id = null
+    await rewardReferralIfEligible('u2')
+    expect([...balances]).toEqual([['u2', REFERRAL_REWARD_DAYS]])
+    expect(referrals.get('u2')?.rewarded_at).toBeInstanceOf(Date)
+    expect(ledger.erasedBenefitUnits).not.toHaveBeenCalled()
   })
 
   it('mời chéo khóa profile cùng thứ tự ID và hoàn thành cả hai giao dịch', async () => {

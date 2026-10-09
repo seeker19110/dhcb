@@ -13,6 +13,14 @@ vi.mock('@dhcb/core-billing/planGrant', () => ({
   },
 }))
 
+// Sổ chống lạm dụng (0545) — logic tra đã test riêng ở core-billing/erasedBenefitLedger.test.ts.
+const ledger = vi.hoisted(() => ({
+  isBenefitBlocked: vi.fn<(...args: unknown[]) => Promise<boolean>>(),
+}))
+vi.mock('@dhcb/core-billing/erasedBenefitLedger', () => ledger)
+const security = vi.hoisted(() => ({ logSecurityEvent: vi.fn() }))
+vi.mock('./security.js', () => security)
+
 import { grantSignupTrial, SIGNUP_TRIAL_DAYS } from './trial.js'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 
@@ -23,6 +31,8 @@ beforeEach(() => {
   query.mockReset()
   mockedGetPool.mockReturnValue({ query } as unknown as ReturnType<typeof getPgPool>)
   granted.calls = []
+  ledger.isBenefitBlocked.mockReset().mockResolvedValue(false)
+  security.logSecurityEvent.mockReset()
 })
 
 describe('grantSignupTrial', () => {
@@ -51,5 +61,26 @@ describe('grantSignupTrial', () => {
     await grantSignupTrial('u1')
     const sql = query.mock.calls[0]?.[0] as string
     expect(sql).toContain('signup_trial_granted_at')
+  })
+
+  it('0545: email trùng tài khoản đã xoá từng nhận dùng thử ⇒ KHÔNG cấp, không giành dấu, log không PII', async () => {
+    ledger.isBenefitBlocked.mockResolvedValueOnce(true)
+    expect(await grantSignupTrial('u1')).toBe(false)
+    expect(granted.calls).toEqual([])
+    expect(query).not.toHaveBeenCalled()
+    expect(ledger.isBenefitBlocked.mock.calls[0]?.slice(1)).toEqual(['u1', 'signup_trial'])
+    expect(security.logSecurityEvent).toHaveBeenCalledWith(
+      'SIGNUP_TRIAL_REPEAT_AFTER_ERASURE',
+      'system',
+      { benefit: 'signup_trial' },
+    )
+  })
+
+  it('0545: tra sổ lỗi ⇒ false, không ném (không phá đăng ký)', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    ledger.isBenefitBlocked.mockRejectedValueOnce(new Error('db down'))
+    expect(await grantSignupTrial('u1')).toBe(false)
+    expect(granted.calls).toEqual([])
+    spy.mockRestore()
   })
 })

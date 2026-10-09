@@ -8,6 +8,7 @@ import { withTransaction } from '@dhcb/core-db/transaction'
 import { readVerifiedCefrExams } from './cefrAssessment.js'
 import { grantPlanDays } from '@dhcb/core-billing/planGrant'
 import { logSecurityEvent } from '@dhcb/core-auth/security'
+import { erasedBenefitUnits, isBenefitBlocked } from '@dhcb/core-billing/erasedBenefitLedger'
 
 // Số ngày Pro thưởng cho MỖI BÊN khi 1 lượt mời thành công (Bạn A và Bạn B đều nhận 7 ngày).
 export const REFERRAL_REWARD_DAYS = 7
@@ -142,7 +143,8 @@ export async function rewardReferralIfEligible(refereeId: string): Promise<void>
 
       // Khoá lượt mời trước khi kiểm rewarded_at: retry/song song chỉ một giao dịch được cấp.
       const { rows } = await client.query<{
-        referrer_id: string
+        // null = người mời đã xoá tài khoản (0545: chỉ gỡ danh tính, giữ dòng của người được mời).
+        referrer_id: string | null
         device_hash: string | null
         rewarded_at: Date | null
       }>(
@@ -171,18 +173,35 @@ export async function rewardReferralIfEligible(refereeId: string): Promise<void>
         }
       }
 
-      await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
-        `referral:referrer:${referrerId}`,
-      ])
-      const { rows: countRows } = await client.query<{ count: string }>(
-        `select count(*) as count from public.referrals
-         where referrer_id = $1 and rewarded_at is not null`,
-        [referrerId],
-      )
-      const rewardedCount = Number(countRows[0]?.count ?? 0)
-      // Giữ chính sách: vượt trần người mời thì người được mời vẫn nhận phần của mình.
-      const recipients =
-        rewardedCount < MAX_REWARDED_REFERRALS ? [referrerId, refereeId] : [refereeId]
+      // Sổ chống lạm dụng (0545): người được mời trùng email/thiết bị với một tài khoản ĐÃ XOÁ
+      // từng được thưởng giới thiệu ⇒ không thưởng ai (cùng cách xử lý thiết bị dùng lại ở trên).
+      // Log không chứa PII (không id, không email).
+      const refereeDevices = referral.device_hash ? [referral.device_hash] : []
+      if (await isBenefitBlocked(client, refereeId, 'referral_referee', refereeDevices)) {
+        logSecurityEvent('REFERRAL_REPEAT_AFTER_ERASURE', 'system', { benefit: 'referral_referee' })
+        return
+      }
+
+      // Giữ chính sách: vượt trần người mời (hoặc người mời đã xoá tài khoản) thì người được mời
+      // vẫn nhận phần của mình.
+      const recipients = [refereeId]
+      let rewardedCount = 0
+      if (referrerId) {
+        await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `referral:referrer:${referrerId}`,
+        ])
+        const { rows: countRows } = await client.query<{ count: string }>(
+          `select count(*) as count from public.referrals
+           where referrer_id = $1 and rewarded_at is not null`,
+          [referrerId],
+        )
+        // Cộng số lượt đã được thưởng của tài khoản cũ cùng email (đã xoá trong 12 tháng) ⇒ xoá rồi
+        // đăng ký lại không làm mới trần MAX_REWARDED_REFERRALS.
+        rewardedCount =
+          Number(countRows[0]?.count ?? 0) +
+          (await erasedBenefitUnits(client, referrerId, 'referral_referrer'))
+        if (rewardedCount < MAX_REWARDED_REFERRALS) recipients.push(referrerId)
+      }
       const now = new Date()
       // grantPlanDays giữ khoá profile tới cuối transaction; thứ tự ổn định tránh deadlock
       // khi hai người mời chéo nhau. Cả hai lần cấp đều dùng CHÍNH PoolClient này.
@@ -193,7 +212,7 @@ export async function rewardReferralIfEligible(refereeId: string): Promise<void>
         'update public.referrals set rewarded_at = now() where referee_id = $1 and rewarded_at is null',
         [refereeId],
       )
-      if (rewardedCount >= MAX_REWARDED_REFERRALS) {
+      if (referrerId && rewardedCount >= MAX_REWARDED_REFERRALS) {
         logSecurityEvent('REFERRAL_CAP_REACHED', 'system', { referrerId, rewardedCount })
       }
     })

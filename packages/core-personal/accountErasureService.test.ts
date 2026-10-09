@@ -6,7 +6,7 @@
 // trong job `unit` của CI: transaction, thứ tự, uỷ Personal OS, không nuốt lỗi, đếm, nhật ký.
 
 import { createHash } from 'node:crypto'
-import { describe, it, expect, vi } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { ConflictError, NotFoundError } from '@dhcb/core-errors/appError'
 import { SEPAY_LATE_GRACE_MS } from '@dhcb/core-billing/sepay'
 import { PENDING_PAYMENT_MESSAGE, PendingPaymentError } from './accountErasureShared.js'
@@ -20,6 +20,7 @@ import {
   hasLivePendingPayment,
 } from './accountErasureService.js'
 import { PERSON_TABLES } from './personErasureService.js'
+import { ERASED_BENEFIT_LEDGER_KEY_ENV } from '@dhcb/core-billing/erasedBenefitLedger'
 
 process.env.USER_DATA_MASTER_KEY ??= Buffer.alloc(32, 5).toString('base64')
 
@@ -269,6 +270,71 @@ describe('deleteAccount', () => {
     const res = await deleteAccount(pool as never, USER_ID)
     expect(res.tableCounts['public.daily_usage.user_id']).toEqual({ action: 'delete', rows: 0 })
     expect(Number.isFinite(res.recordsDeleted)).toBe(true)
+  })
+})
+
+describe('deleteAccount — sổ chống lạm dụng (0545)', () => {
+  const FACTS_ROW = {
+    emails: [EMAIL],
+    signup_trial_taken: true,
+    referee_device_hashes: ['b'.repeat(64)],
+    referee_rewarded: true,
+    referrer_rewarded_count: 2,
+  }
+  function withLedger(fail = false): Responder {
+    const base = happyDelete()
+    return (sql, params) => {
+      if (sql.startsWith('select array( select email from public.users')) return one(FACTS_ROW)
+      if (sql.startsWith('insert into platform.erased_benefit_ledger')) {
+        if (fail) throw new Error('sổ hỏng')
+        return { rows: [], rowCount: 4 }
+      }
+      return base(sql, params)
+    }
+  }
+
+  afterEach(() => {
+    delete process.env[ERASED_BENEFIT_LEDGER_KEY_ENV]
+  })
+
+  it('có khoá: đọc sự thật + ghi sổ NGAY sau kiểm đơn chờ, TRƯỚC mọi câu xoá; tham số không chứa PII', async () => {
+    process.env[ERASED_BENEFIT_LEDGER_KEY_ENV] = Buffer.alloc(32, 3).toString('base64')
+    const { pool, calls } = makePool(withLedger())
+    await deleteAccount(pool as never, USER_ID)
+    expect(calls[3]?.sql).toMatch(/^select array\( select email from public\.users/)
+    expect(calls[3]?.params).toEqual([USER_ID])
+    expect(calls[4]?.sql).toMatch(/^insert into platform\.erased_benefit_ledger/)
+    expect(calls[5]?.sql).toContain(` ${ACCOUNT_TABLES[0].table} `)
+    const params = JSON.stringify(calls[4]?.params)
+    expect(params).not.toContain(EMAIL)
+    expect(params).not.toContain(USER_ID)
+    expect(params).not.toContain('b'.repeat(64))
+    expect(calls.at(-1)?.sql).toBe('commit')
+  })
+
+  it('ghi sổ lỗi ⇒ NÉM + rollback, không xoá gì (không nuốt lỗi)', async () => {
+    process.env[ERASED_BENEFIT_LEDGER_KEY_ENV] = Buffer.alloc(32, 3).toString('base64')
+    const { pool, calls } = makePool(withLedger(true))
+    await expect(deleteAccount(pool as never, USER_ID)).rejects.toThrow('sổ hỏng')
+    expect(calls.at(-1)?.sql).toBe('rollback')
+    expect(calls.some((c) => c.sql.startsWith('delete'))).toBe(false)
+  })
+
+  it('thiếu khoá: KHÔNG đọc/ghi sổ, xoá vẫn chạy trọn vẹn', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { pool, calls } = makePool(withLedger())
+    await deleteAccount(pool as never, USER_ID)
+    expect(calls.some((c) => c.sql.includes('erased_benefit_ledger'))).toBe(false)
+    expect(calls.some((c) => c.sql.startsWith('select array('))).toBe(false)
+    expect(calls.at(-1)?.sql).toBe('commit')
+    spy.mockRestore()
+  })
+
+  it('người mời xoá tài khoản: referrals.referrer_id chỉ ẩn danh (giữ dòng của người được mời)', () => {
+    const spec = ACCOUNT_TABLES.find(
+      (s) => s.table === 'public.referrals' && s.userColumn === 'referrer_id',
+    )
+    expect(spec?.erase).toEqual({ kind: 'anonymize', setSql: 'referrer_id = null' })
   })
 })
 
