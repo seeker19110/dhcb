@@ -564,7 +564,10 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
     `principal-s3`. Ghi lại cho đợt sau: nối một chặng vào lộ trình `principal-ai` thì **bắt buộc
     soạn quiz** trong `stageQuizzes.ts` — đặc tả không liệt kê điểm chạm này, cổng
     `ProgrammingPathPage.test.tsx` mới bắt được.
-  - **mathforcode S3/S4 mỏng** (2 unit/chặng thay vì 4 như các hướng khác).
+  - ~~**mathforcode S3/S4 mỏng** (2 unit/chặng thay vì 4 như các hướng khác).~~ — **ĐÃ TRẢ
+    2026-10-09** (`docs/changelog/0570-*.md`): thêm `p6-u290…u293`, 8 bài; `mathforcode-s3` =
+    `p6-u158, u159, u290, u291`, `s4` = `p6-u160, u161, u292, u293`, mỗi module đủ 2 bài; cổng
+    `mathforcodeS34ExtraLessons.test.ts`.
   - 5 hướng đã đủ 4 chặng, dùng làm khuôn mẫu: web, devops, ai, architecture, backend.
     Vì `details/` đã có sẵn nội dung chi tiết (module/objective/practice/selfCheck/doneSignals)
     cho toàn bộ 56 chặng, việc còn thiếu là "dịch từ đặc tả sang bài học chấm được", không phải
