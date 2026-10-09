@@ -97,7 +97,11 @@ const batchDone = (isA: boolean) => (
     onStartQuiz={() => undefined}
   />
 )
-const unitSection = (dialogues: Dialogue[] | undefined) => (
+const unitSection = (
+  dialogues: Dialogue[] | undefined,
+  viewed: Set<string> = new Set(),
+  learnedDlg: Set<string> = new Set(),
+) => (
   <UnitSection
     unit={UNIT}
     index={0}
@@ -106,7 +110,8 @@ const unitSection = (dialogues: Dialogue[] | undefined) => (
     circleById={{}}
     learned={new Set()}
     doneGrammar={new Set()}
-    viewedDialogues={new Set()}
+    viewedDialogues={viewed}
+    learnedDialogues={learnedDlg}
     dialogues={dialogues}
     lessonStartIndex={0}
     onOpenLesson={() => undefined}
@@ -176,5 +181,22 @@ describe('UnitSection — hội thoại do trang cấp truyền xuống', () => 
     await render(unitSection(undefined))
     expect(container.textContent).not.toContain('Chào hỏi')
     expect(getDialogues).not.toHaveBeenCalled()
+  })
+
+  // Đặc tả docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md — nhãn CHỮ ba trạng thái.
+  it('nhãn trạng thái bằng chữ: chưa xem → đã xem (vẫn hiện, chưa xong) → đã học (ẩn vào mục đã xong)', async () => {
+    const key = `${UNIT.id}:${DIALOGUE.titleEn}`
+    await render(unitSection([DIALOGUE]))
+    expect(container.textContent).toContain('Chưa xem')
+    await act(async () => root.unmount())
+    container.remove()
+    await render(unitSection([DIALOGUE], new Set([key])))
+    expect(container.textContent).toContain('Chào hỏi')
+    expect(container.textContent).toContain('Đã xem · chưa kiểm tra hiểu')
+    await act(async () => root.unmount())
+    container.remove()
+    await render(unitSection([DIALOGUE], new Set([key]), new Set([key])))
+    // Unit chỉ có hội thoại này → đã học hết → unit thu gọn "Hoàn thành".
+    expect(container.textContent).toContain('Hoàn thành')
   })
 })

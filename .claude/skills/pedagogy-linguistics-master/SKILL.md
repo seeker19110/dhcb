@@ -59,6 +59,15 @@ Prompt gửi AI nằm ở `apps/dhcb/src/prompts/`. Sửa prompt → xem diff go
 
 Logic thuần, có test ca biên — giữ tính chất đó khi sửa.
 
+### A2. Hội thoại CEFR: "đã xem" ≠ "đã học" — ĐANG CÓ (2026-10-09)
+
+Mở hội thoại chỉ ghi **đã xem** (`markDialogueViewed`). **Đã học** cần đạt kiểm tra hiểu 3 câu
+tất định, không tốn lượt AI (`apps/dhcb/src/lib/dialogueComprehension.ts`, màn
+`apps/dhcb/src/components/DialogueComprehensionCheck.tsx`): nghĩa của một dòng · câu nói ngay sau ·
+ai nói — đáp án luôn kiểm ngược được từ dữ liệu, đúng ≥ 2/3 mới ghi `markDialogueLearned`. Hai
+chiều: A đề tiếng Anh/hỏi tiếng Việt, B đề tiếng Việt/hỏi tiếng Anh. Đặc tả:
+`docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md`. Đừng tính "đã xem" là hoàn thành.
+
 ### B. CHƯA CÓ — đừng mô tả hay thiết kế như đã có
 
 - Khảo thí thích ứng theo **IRT 3PL / ước lượng EAP / chọn câu theo thông tin Fisher**, kèm các con

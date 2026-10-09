@@ -38,17 +38,27 @@ const LOP_STEM_MAC_DINH = '10'
 const BAC_LAP_TRINH_MAC_DINH = 'p1'
 
 async function theTiengAnh(uid: string): Promise<SubjectProgressCard | undefined> {
-  const [{ loadCefr }, { loadFoundation }, outline, cefrProgress, vocab, exam, today, storage] =
-    await Promise.all([
-      import('../data/cefrLoader'),
-      import('../data/curriculumLoader'),
-      import('./outline/cefrOutline'),
-      import('./cefrProgress'),
-      import('./vocab'),
-      import('./cefrExam'),
-      import('./today/englishNext'),
-      import('./storage'),
-    ])
+  const [
+    { loadCefr },
+    { loadFoundation },
+    { getDialogueTitlesByUnit },
+    outline,
+    cefrProgress,
+    vocab,
+    exam,
+    today,
+    storage,
+  ] = await Promise.all([
+    import('../data/cefrLoader'),
+    import('../data/curriculumLoader'),
+    import('../data/dialoguesLoader'),
+    import('./outline/cefrOutline'),
+    import('./cefrProgress'),
+    import('./vocab'),
+    import('./cefrExam'),
+    import('./today/englishNext'),
+    import('./storage'),
+  ])
   const [levels, circles] = await Promise.all([loadCefr(), loadFoundation()])
   const capDau = levels[0]
   if (!capDau) return undefined
@@ -80,10 +90,17 @@ async function theTiengAnh(uid: string): Promise<SubjectProgressCard | undefined
 
   const chiSo = levels.findIndex((l) => l.id === level.id)
   const capTruoc = chiSo > 0 ? levels[chiSo - 1]?.id : undefined
+  // Tên hội thoại từng unit — để "Hội thoại" chỉ tính XONG khi đã học hết (đặc tả 2026-10-09).
+  // Tải lỗi thì bỏ qua: adapter khi đó không khẳng định "đã học hết", thẻ vẫn hiện.
+  const dialogueTitlesByUnit = await getDialogueTitlesByUnit(level.units.map((u) => u.id)).catch(
+    () => undefined,
+  )
   const cay: Outline = outline.buildCefrOutline(level, {
     learned,
     doneGrammar,
     viewedDialogues: cefrProgress.getViewedDialogues(uid),
+    learnedDialogues: cefrProgress.getLearnedDialogues(uid),
+    ...(dialogueTitlesByUnit ? { dialogueTitlesByUnit } : {}),
     circles: new Map(circles.map((c) => [c.id, c])),
     lockedMap,
     ...(capTruoc ? { prevLevelId: capTruoc } : {}),

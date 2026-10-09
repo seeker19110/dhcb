@@ -10,8 +10,11 @@ import {
   unmarkGrammarDone,
   isGrammarDone,
   getViewedDialogues,
+  getLearnedDialogues,
   markDialogueViewed,
+  markDialogueLearned,
   dialogueKey,
+  DIALOGUE_LEARNED_PREFIX,
   circleDoneCount,
   unitVocabCounts,
   levelVocabCounts,
@@ -113,6 +116,41 @@ describe('hội thoại đã xem', () => {
     markDialogueViewed('u1', 'a1-greetings', 'Morning greeting')
     expect(getViewedDialogues('u1').size).toBe(1)
     expect(vi.mocked(pushProgress)).toHaveBeenCalledTimes(1)
+  })
+})
+
+// Đặc tả docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md
+describe('hội thoại đã học (đạt kiểm tra hiểu)', () => {
+  it('dữ liệu CŨ chỉ có "đã xem" → vẫn là đã xem, KHÔNG tự thành đã học', () => {
+    localStorage.setItem('et_cefr_dialogue_u1', JSON.stringify(['a1-greetings:Meeting in class']))
+    expect(getViewedDialogues('u1').has('a1-greetings:Meeting in class')).toBe(true)
+    expect(getLearnedDialogues('u1').size).toBe(0)
+  })
+
+  it('markDialogueLearned ghi cả "đã xem" lẫn "đã học", cùng một kho (đồng bộ chung)', () => {
+    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
+    const key = dialogueKey('a1-greetings', 'Meeting in class')
+    expect(getLearnedDialogues('u1')).toEqual(new Set([key]))
+    // Bản ghi có tiền tố KHÔNG lẫn vào tập "đã xem" (mục lục đếm theo khoá unit).
+    expect(getViewedDialogues('u1')).toEqual(new Set([key]))
+    const raw = JSON.parse(localStorage.getItem('et_cefr_dialogue_u1') ?? '[]') as string[]
+    expect(raw.sort()).toEqual([key, `${DIALOGUE_LEARNED_PREFIX}${key}`].sort())
+    expect(getLearnedDialogues('u2').size).toBe(0)
+  })
+
+  it('ghi lại lần nữa → idempotent, không đẩy đồng bộ thừa', async () => {
+    const { pushProgress } = await import('./progressSync')
+    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
+    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
+    expect(vi.mocked(pushProgress)).toHaveBeenCalledTimes(1)
+  })
+
+  it('đã xem trước rồi mới học → vẫn ghi (và đẩy) bản "đã học"', async () => {
+    const { pushProgress } = await import('./progressSync')
+    markDialogueViewed('u1', 'a1-greetings', 'Meeting in class')
+    markDialogueLearned('u1', 'a1-greetings', 'Meeting in class')
+    expect(getLearnedDialogues('u1').size).toBe(1)
+    expect(vi.mocked(pushProgress)).toHaveBeenCalledTimes(2)
   })
 })
 

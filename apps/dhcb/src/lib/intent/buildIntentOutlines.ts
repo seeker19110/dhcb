@@ -24,21 +24,34 @@ const PROGRAMMING_START_LEVEL = 'p1'
 const DEFAULT_STEM_GRADE = '10'
 
 async function cayTiengAnh(uid: string): Promise<Outline | undefined> {
-  const [{ loadCefr }, { loadFoundation }, { buildCefrOutline }, cefrProgress, vocab] =
-    await Promise.all([
-      import('../../data/cefrLoader'),
-      import('../../data/curriculumLoader'),
-      import('../outline/cefrOutline'),
-      import('../cefrProgress'),
-      import('../vocab'),
-    ])
+  const [
+    { loadCefr },
+    { loadFoundation },
+    { getDialogueTitlesByUnit },
+    { buildCefrOutline },
+    cefrProgress,
+    vocab,
+  ] = await Promise.all([
+    import('../../data/cefrLoader'),
+    import('../../data/curriculumLoader'),
+    import('../../data/dialoguesLoader'),
+    import('../outline/cefrOutline'),
+    import('../cefrProgress'),
+    import('../vocab'),
+  ])
   const [levels, circles] = await Promise.all([loadCefr(), loadFoundation()])
   const level = levels.find((l) => l.id === ENGLISH_START_LEVEL)
   if (!level) return undefined
+  // Tải tên hội thoại lỗi thì bỏ qua — adapter không khẳng định "đã học hết" khi không biết tổng.
+  const dialogueTitlesByUnit = await getDialogueTitlesByUnit(level.units.map((u) => u.id)).catch(
+    () => undefined,
+  )
   return buildCefrOutline(level, {
     learned: vocab.getLearnedWords(uid),
     doneGrammar: cefrProgress.getDoneGrammar(uid),
     viewedDialogues: cefrProgress.getViewedDialogues(uid),
+    learnedDialogues: cefrProgress.getLearnedDialogues(uid),
+    ...(dialogueTitlesByUnit ? { dialogueTitlesByUnit } : {}),
     circles: new Map(circles.map((c) => [c.id, c])),
     // Chỉ dựng cấp A1 — cấp này luôn mở cho mọi người, kể cả khách. Các cấp sau do SERVER
     // cưỡng chế (migration 0077) và không được dựng ở đây, nên bản đồ khoá chỉ cần một dòng.

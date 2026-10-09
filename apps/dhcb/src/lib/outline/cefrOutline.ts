@@ -16,7 +16,7 @@
 import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
 import type { CefrLevel, CefrUnit } from '../../data/cefrTypes'
 import type { Circle } from '../../data/curriculumTypes'
-import { circleDoneCount } from '../cefrProgress'
+import { circleDoneCount, dialogueKey } from '../cefrProgress'
 import { duongDanLoTrinh } from '../englishRoutes'
 
 const SUBJECT_ID = 'english'
@@ -28,6 +28,13 @@ export interface CefrOutlineCtx {
   doneGrammar: ReadonlySet<string>
   /** Khoá hội thoại đã xem: `dialogueKey(ownerId, titleEn)` (`et_cefr_dialogue_<uid>`). */
   viewedDialogues: ReadonlySet<string>
+  /** Khoá hội thoại ĐÃ HỌC (đạt kiểm tra hiểu) — `getLearnedDialogues`, cùng khuôn khoá. */
+  learnedDialogues: ReadonlySet<string>
+  /**
+   * `titleEn` các hội thoại của từng unit (từ `dialogues.json`). Có thì đếm đúng "đã học x/N";
+   * vắng (đang tải / tải lỗi) thì adapter KHÔNG khẳng định "đã học hết" vì không biết N.
+   */
+  dialogueTitlesByUnit?: ReadonlyMap<string, readonly string[]>
   /** Vòng từ vựng theo id (từ `loadFoundation()`). */
   circles: ReadonlyMap<string, Circle>
   /** Khoá cấp — SERVER là nguồn sự thật (`computeLockedMapFromServer`), adapter không tự tính. */
@@ -205,20 +212,59 @@ function hoatDongCuaUnit(
     )
   }
 
-  // ③ Hội thoại: MỘT hoạt động cho cả unit. Danh sách hội thoại nạp bất đồng bộ nên adapter
-  // không đếm được tổng — "đã xem" là khi có ít nhất một hội thoại của unit được ghi nhận
-  // (khoá có dạng `<unitId>:<titleEn>`).
-  const daXem = [...ctx.viewedDialogues].some((key) => key.startsWith(`${unit.id}:`))
-  nodes.push(
-    nen(
-      'dialogue',
-      unit.id,
-      'Hội thoại',
-      daXem
-        ? { progress: 'completed', evidenceSource: 'english.cefrDialogue' }
-        : { progress: 'not-started' },
-    ),
-  )
+  // ③ Hội thoại: MỘT hoạt động cho cả unit, ba trạng thái (đặc tả
+  // docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md):
+  //   chưa xem → not-started · đã xem (chưa đạt kiểm tra hiểu) → in-progress · đã học → completed.
+  // "Đã xem" KHÔNG còn là "xong" — mở hội thoại không chứng minh người học hiểu.
+  const { hint: chuPhuHoiThoai, ...tienDoHoiThoai } = tienDoHoiThoaiCuaUnit(unit.id, ctx)
+  nodes.push(nen('dialogue', unit.id, 'Hội thoại', tienDoHoiThoai, chuPhuHoiThoai))
 
   return nodes
+}
+
+/** Tiến độ + chữ phụ của nút "Hội thoại" một unit. Chữ phụ là CHỮ, không phụ thuộc màu/biểu tượng. */
+export function tienDoHoiThoaiCuaUnit(
+  unitId: string,
+  ctx: Pick<CefrOutlineCtx, 'viewedDialogues' | 'learnedDialogues' | 'dialogueTitlesByUnit'>,
+): Pick<OutlineNode, 'progress' | 'evidenceSource'> & { hint: string } {
+  const titles = ctx.dialogueTitlesByUnit?.get(unitId)
+  if (titles) {
+    const tong = titles.length
+    if (tong === 0) return { progress: 'not-started', hint: 'Phần này chưa có hội thoại' }
+    const keys = titles.map((t) => dialogueKey(unitId, t))
+    const daHoc = keys.filter((k) => ctx.learnedDialogues.has(k)).length
+    const daXem = keys.filter(
+      (k) => ctx.viewedDialogues.has(k) || ctx.learnedDialogues.has(k),
+    ).length
+    if (daHoc === tong) {
+      return {
+        progress: 'completed',
+        evidenceSource: 'english.cefrDialogueLearned',
+        hint: tong === 1 ? 'Đã học' : `Đã học ${tong}/${tong}`,
+      }
+    }
+    if (daXem > 0) {
+      return {
+        progress: 'in-progress',
+        evidenceSource: daHoc > 0 ? 'english.cefrDialogueLearned' : 'english.cefrDialogue',
+        hint: `Đã xem ${daXem}/${tong} · đã học ${daHoc}/${tong}`,
+      }
+    }
+    return { progress: 'not-started', hint: 'Chưa xem' }
+  }
+  // Chưa biết tổng số hội thoại của unit → chỉ nói điều chắc chắn, không bao giờ "đã học hết".
+  const tienTo = `${unitId}:`
+  const coHoc = [...ctx.learnedDialogues].some((k) => k.startsWith(tienTo))
+  if (coHoc) {
+    return {
+      progress: 'in-progress',
+      evidenceSource: 'english.cefrDialogueLearned',
+      hint: 'Có hội thoại đã học',
+    }
+  }
+  const coXem = [...ctx.viewedDialogues].some((k) => k.startsWith(tienTo))
+  if (coXem) {
+    return { progress: 'in-progress', evidenceSource: 'english.cefrDialogue', hint: 'Đã xem' }
+  }
+  return { progress: 'not-started', hint: 'Chưa xem' }
 }

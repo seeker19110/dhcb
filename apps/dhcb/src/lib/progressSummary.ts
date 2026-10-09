@@ -85,6 +85,7 @@ const NHAN_NGUON: Readonly<Record<string, string>> = {
   'english.vocab': 'theo vòng từ đã thuộc',
   'english.cefrGrammar': 'theo bài ngữ pháp đã học',
   'english.cefrDialogue': 'theo hội thoại đã xem',
+  'english.cefrDialogueLearned': 'theo hội thoại đã đạt kiểm tra hiểu',
   'programming.progress': 'theo bài đã đạt test',
   'stem.evidence': 'theo bài đã đạt test',
   'stem.evidence.local': 'theo bài đã đạt test (trên thiết bị này)',

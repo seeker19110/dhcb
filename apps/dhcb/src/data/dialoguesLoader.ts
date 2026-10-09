@@ -56,3 +56,15 @@ export async function getDialogues(id: string): Promise<Dialogue[]> {
 export async function getAllDialogues(): Promise<Record<string, Dialogue[]>> {
   return loadDialogues()
 }
+
+/**
+ * `titleEn` các hội thoại của từng unit/vòng — để mục lục đếm đúng "đã học x/N" (đặc tả
+ * docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md). Id không có hội thoại → mảng rỗng.
+ * Lỗi tải ném ra cho nơi gọi tự quyết (mục lục thì bỏ qua và không khẳng định "đã học hết").
+ */
+export async function getDialogueTitlesByUnit(
+  ids: readonly string[],
+): Promise<Map<string, string[]>> {
+  const data = await loadDialogues()
+  return new Map(ids.map((id) => [id, (data[id] ?? []).map((d) => d.titleEn)]))
+}

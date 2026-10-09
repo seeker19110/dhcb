@@ -14,6 +14,8 @@ const m = vi.hoisted(() => ({
   computeLockedMapFromServer: vi.fn(() => ({})),
   getDoneGrammar: vi.fn(() => []),
   getViewedDialogues: vi.fn(() => []),
+  getLearnedDialogues: vi.fn(() => []),
+  getDialogueTitlesByUnit: vi.fn(async () => new Map()),
   getLearnedWords: vi.fn(() => []),
   getPassedExamLevels: vi.fn(() => []),
   englishNext: vi.fn(() => ({ levelId: undefined })),
@@ -42,7 +44,9 @@ vi.mock('./cefrProgress', () => ({
   computeLockedMapFromServer: m.computeLockedMapFromServer,
   getDoneGrammar: m.getDoneGrammar,
   getViewedDialogues: m.getViewedDialogues,
+  getLearnedDialogues: m.getLearnedDialogues,
 }))
+vi.mock('../data/dialoguesLoader', () => ({ getDialogueTitlesByUnit: m.getDialogueTitlesByUnit }))
 vi.mock('./vocab', () => ({ getLearnedWords: m.getLearnedWords }))
 vi.mock('./cefrExam', () => ({ getPassedExamLevels: m.getPassedExamLevels }))
 vi.mock('./today/englishNext', () => ({
@@ -68,8 +72,8 @@ vi.mock('./progressSummary', () => ({ summarizeOutline: m.summarizeOutline }))
 import { buildSubjectProgressBoard } from './subjectProgressBoard'
 
 const LEVELS = [
-  { id: 'A1', title: 'A1' },
-  { id: 'A2', title: 'A2' },
+  { id: 'A1', title: 'A1', units: [] },
+  { id: 'A2', title: 'A2', units: [] },
 ]
 
 beforeEach(() => {
