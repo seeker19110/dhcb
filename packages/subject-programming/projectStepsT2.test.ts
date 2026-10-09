@@ -10,12 +10,24 @@
 //  3. CHỐNG TEST DỄ DÃI: sửa code tham chiếu thành một lỗi người mới hay mắc thì PHẢI rớt.
 //  4. Bước web (html/dom/sql/fetch) chấm bằng ĐÚNG engine thật — xem phần chặng P3.
 import { describe, expect, it } from 'vitest'
+import { Window } from 'happy-dom'
+import initSqlJs from 'sql.js'
+import { createRequire } from 'node:module'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { ProjectStepSchema, getProjectStages, getStepLanguage } from './projectSteps.js'
 import { T2_P1_PROJECT_STEPS, T2_P2_PROJECT_STEPS, T2_PROJECT_STAGES } from './projectStepsT2.js'
+import { T2_P3_PROJECT_STEPS, T2_SQL_SO_QUY } from './projectStepsT2P3.js'
+import { getProjectTrack } from './projectTracks.js'
+import { moTaCayDom, type ElementLike } from './htmlPrelude.js'
+import { chayBaiDom } from './domPrelude.js'
+import { chayBaiFetch, FETCH_SHIM_QUY_LOP_JS } from './fetchPrelude.js'
+import { chayBaiFetchServer } from './domFetchServerPrelude.js'
+import { SQL_SEED } from './sqlDataset.js'
+import { formatSqlResults, type SqlResultTable } from './sqlPrelude.js'
+import { SO_QUY_LOP } from './fundData.js'
 import { PROGRAMMING_LEVELS } from './curriculum.js'
 import { fileCuaLan, laLanPython, noiCodeTheoLan, type PythonLane } from './pyLanes.js'
 import { allTestsPassed, gradeTestCase, type TestCaseResult } from './grading.js'
@@ -275,6 +287,174 @@ describe.skipIf(!hasPython)('T2 chặng P2 — check thật sự BẮT LỖI (ch
     const ketQua = chamPython(s5, s5.referenceCode, {}, s4.checks, false)
     expect(allTestsPassed(ketQua), JSON.stringify(ketQua.filter((r) => !r.passed))).toBe(true)
   })
+})
+
+// ── Chặng P3 — chấm bằng ĐÚNG engine của từng ngôn ngữ (khuôn projectStepsP3.test.ts) ──────
+const require = createRequire(import.meta.url)
+const SQL = await initSqlJs({ locateFile: () => require.resolve('sql.js/dist/sql-wasm.wasm') })
+
+interface RunOutcome {
+  output: string
+  error?: string
+}
+
+function runHtml(html: string): RunOutcome {
+  const win = new Window()
+  try {
+    win.document.write(html)
+    return { output: moTaCayDom(win.document.documentElement as unknown as ElementLike) }
+  } catch (err) {
+    return { output: '', error: (err as Error).message }
+  } finally {
+    win.close()
+  }
+}
+
+/** SQL: nạp bộ dữ liệu RIÊNG của ca (datasetSql) như trang dự án làm; không có thì SQL_SEED. */
+function runSql(sql: string, datasetSql: string | undefined): RunOutcome {
+  const db = new SQL.Database()
+  try {
+    db.run(datasetSql ?? SQL_SEED)
+    return { output: formatSqlResults(db.exec(sql) as SqlResultTable[]) }
+  } catch (err) {
+    return { output: '', error: (err as Error).message }
+  } finally {
+    db.close()
+  }
+}
+
+/** Bảng rẽ nhánh DUY NHẤT của cổng — API fetch lấy theo đúng khai báo của dự án T2, y như
+ *  trang dự án (projectTracks.ts), nên cổng và sản phẩm không thể lệch nhau. */
+async function runWeb(
+  step: ProjectStep,
+  code: string,
+  c: ProjectStep['checks'][number],
+): Promise<RunOutcome> {
+  const lang = getStepLanguage(step)
+  if (lang === 'html') return runHtml(code)
+  if (lang === 'sql') return runSql(code, c.datasetSql)
+  if (lang === 'dom') return chayBaiDom(step.domHtml!, code, c.stdinLines)
+  if (lang === 'fetch') {
+    return chayBaiFetch(step.domHtml!, code, c.stdinLines, getProjectTrack('T2').fetchApi)
+  }
+  throw new Error(`Bước ${step.id}: chặng P3 không dùng ngôn ngữ '${lang}'`)
+}
+
+async function chamWeb(step: ProjectStep, code: string): Promise<TestCaseResult[]> {
+  const out: TestCaseResult[] = []
+  for (const c of step.checks) {
+    const r = await runWeb(step, code, c)
+    out.push(gradeTestCase(c, r.output, r.error))
+  }
+  return out
+}
+
+function moTaRot(results: TestCaseResult[]): string {
+  return results
+    .filter((r) => !r.passed)
+    .map((r) => `[${r.label}] ${r.error ? `LỖI: ${r.error}` : `output: ${r.actual ?? '(ẩn)'}`}`)
+    .join(' | ')
+}
+
+describe('T2 chặng P3 — Trang minh bạch quỹ', () => {
+  it('đủ 5 bước html → html/CSS → dom → sql → fetch, mỗi bước một file làm việc', () => {
+    expect(T2_P3_PROJECT_STEPS.map((s) => `${s.id}:${getStepLanguage(s)}`)).toEqual([
+      't2-p3-s1:html',
+      't2-p3-s2:html',
+      't2-p3-s3:dom',
+      't2-p3-s4:sql',
+      't2-p3-s5:fetch',
+    ])
+    for (const s of T2_P3_PROJECT_STEPS) expect(s.files).toHaveLength(1)
+  })
+
+  it('bước SQL: MỌI ca chấm khai bộ dữ liệu sổ quỹ (không rơi về CSDL quán của T1)', () => {
+    const sql = buoc(T2_P3_PROJECT_STEPS, 't2-p3-s4')
+    for (const c of sql.checks) expect(c.datasetSql, c.label).toBeDefined()
+    // Có ít nhất hai bộ số khác nhau — chống câu truy vấn gõ cứng kết quả.
+    expect(new Set(sql.checks.map((c) => c.datasetSql)).size).toBeGreaterThanOrEqual(2)
+  })
+
+  it('dự án T2 khai API giả "quy-lop"; sổ trên API khớp số liệu chấm của bước fetch', () => {
+    expect(getProjectTrack('T2').fetchApi).toBe('quy-lop')
+    const thu = SO_QUY_LOP.filter((g) => g.loai === 'thu').reduce((a, g) => a + g.so_tien, 0)
+    const chi = SO_QUY_LOP.filter((g) => g.loai === 'chi').reduce((a, g) => a + g.so_tien, 0)
+    const s5 = buoc(T2_P3_PROJECT_STEPS, 't2-p3-s5')
+    const mongDoi = s5.checks.map((c) => c.expected)
+    expect(mongDoi).toContain(`p id="tong-thu" "Tong thu: ${thu}"`)
+    expect(mongDoi).toContain(`p id="tong-chi" "Tong chi: ${chi}"`)
+    expect(mongDoi).toContain(`p id="so-du" "So du: ${thu - chi}"`)
+  })
+
+  it('kiểm số học bước SQL: tính lại báo cáo kỳ tháng 11 từ chính bộ dữ liệu', () => {
+    const db = new SQL.Database()
+    try {
+      db.run(T2_SQL_SO_QUY)
+      const dong = db.exec(
+        'SELECT h.ten, k.ngay, k.so_tien FROM khoan_chi k JOIN hang_muc h ON h.id = k.hang_muc_id',
+      )[0]!.values as [string, string, number][]
+      const tong = new Map<string, number>()
+      for (const [ten, ngay, tien] of dong) {
+        if (ngay.startsWith('2026-11-')) tong.set(ten, (tong.get(ten) ?? 0) + tien)
+      }
+      const bang = [...tong].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      const mongDoi = ['hang_muc | tong_chi', ...bang.map(([t, v]) => `${t} | ${v}`)].join('\n')
+      const caAn = buoc(T2_P3_PROJECT_STEPS, 't2-p3-s4').checks.find(
+        (c) => c.match === 'exact' && c.datasetSql === T2_SQL_SO_QUY,
+      )
+      expect(caAn?.expected).toBe(mongDoi)
+    } finally {
+      db.close()
+    }
+  })
+
+  it('FETCH_SHIM_QUY_LOP_JS tự chứa — khung xem trang (iframe) gọi được API sổ quỹ', async () => {
+    const chay = new Function(
+      FETCH_SHIM_QUY_LOP_JS + '\nreturn fetch("/api/quy?ma=c02")',
+    ) as () => Promise<{
+      status: number
+      json(): Promise<unknown>
+    }>
+    const res = await chay()
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({ ma: 'C02', so_tien: 300000 })
+  })
+})
+
+describe('code mẫu chặng P3 của T2 chạy THẬT và đạt hết milestone check', () => {
+  it.each(T2_P3_PROJECT_STEPS)('$id — $title', async (step) => {
+    const results = await chamWeb(step, step.referenceCode)
+    expect(allTestsPassed(results), `Bước ${step.id}: ${moTaRot(results)}`).toBe(true)
+  })
+
+  it('t2-p3-s5 — bộ chấm SERVER (node:vm) cho cùng kết quả với bộ chạy Worker', async () => {
+    const step = buoc(T2_P3_PROJECT_STEPS, 't2-p3-s5')
+    for (const c of step.checks) {
+      const r = await chayBaiFetchServer(step.domHtml!, step.referenceCode, c.stdinLines, 'quy-lop')
+      expect(gradeTestCase(c, r.output, r.error).passed, c.label).toBe(true)
+    }
+  })
+})
+
+describe('T2 chặng P3 — check thật sự BẮT LỖI (chống test dễ dãi)', () => {
+  const rot = async (id: string, tu: string, thanh: string) => {
+    const step = buoc(T2_P3_PROJECT_STEPS, id)
+    const ketQua = await chamWeb(step, dotBien(step.referenceCode, tu, thanh))
+    expect(allTestsPassed(ketQua)).toBe(false)
+  }
+
+  it('s1: tiêu đề cột dùng td thay vì th thì rớt', () =>
+    rot('t2-p3-s1', '<th>Noi dung</th>', '<td>Noi dung</td>'))
+  it('s2: bảng không co theo màn hình (bỏ width: 100%) thì rớt', () =>
+    rot('t2-p3-s2', 'border-collapse: collapse; width: 100%;', 'border-collapse: collapse;'))
+  it('s3: chặn cả khoản chi bằng đúng số dư (>= thay vì >) thì rớt', () =>
+    rot('t2-p3-s3', 'if (khoan.soTien > soDu)', 'if (khoan.soTien >= soDu)'))
+  it('s3: quên chặn số âm thì rớt', () => rot('t2-p3-s3', ' || soTien <= 0', ''))
+  it('s4: quên lọc kỳ thì rớt', () =>
+    rot('t2-p3-s4', "WHERE kc.ngay >= '2026-11-01' AND kc.ngay < '2026-12-01'\n", ''))
+  it('s4: sai ranh giới đầu kỳ (> thay vì >=) thì rớt', () =>
+    rot('t2-p3-s4', "kc.ngay >= '2026-11-01'", "kc.ngay > '2026-11-01'"))
+  it('s5: không xử lý 404 thì rớt', () => rot('t2-p3-s5', 'if (!res.ok) {', 'if (false) {'))
 })
 
 // Mọi bước Python của T2 đi qua cổng chung lessonsPython.test.ts; ở đây chỉ chặn trường hợp

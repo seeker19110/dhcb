@@ -24,6 +24,10 @@
 //    cổng `codemap -- cycles` chặn CI).
 import { TestCaseSchema, type ProgrammingTestCase } from './lessonTypes.js'
 import type { ProjectStage, ProjectStep } from './projectStepTypes.js'
+// Chặng dài tách file riêng theo khuôn T1 — mỗi file chỉ import KIỂU xuống projectStepTypes.ts.
+import { T2_P3_PROJECT_STEPS } from './projectStepsT2P3.js'
+
+export { T2_P3_PROJECT_STEPS } from './projectStepsT2P3.js'
 
 /** File làm việc chính của T2 từ chặng P1 (lưu ở server dưới tên `t2--quy_lop.py`). */
 export const T2_PROJECT_MAIN_FILE = 'quy_lop.py'
@@ -794,7 +798,6 @@ print(f"So moi: {thu} {chi} {len(theo)}")`,
     ],
   },
 ]
-export const T2_P3_PROJECT_STEPS: ProjectStep[] = []
 export const T2_P4_PROJECT_STEPS: ProjectStep[] = []
 export const T2_P5_PROJECT_STEPS: ProjectStep[] = []
 
