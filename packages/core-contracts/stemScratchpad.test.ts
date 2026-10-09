@@ -6,6 +6,8 @@ import {
   StemProblemStateSchema,
   ScratchpadStepValidationSchema,
   ketQuaBuoc,
+  nhanKetQuaBuoc,
+  type ScratchpadStepValidation,
 } from './stemScratchpad.js'
 
 describe('STEM Scratchpad Contracts', () => {
@@ -94,5 +96,28 @@ describe('STEM Scratchpad Contracts', () => {
       ).toBe(false)
       expect(ScratchpadStepValidationSchema.safeParse({ ...goc, isValid: true }).success).toBe(true)
     })
+  })
+
+  it('nhanKetQuaBuoc: luôn có ký hiệu + chữ, nhãn ✗ cụ thể theo loại lỗi (changelog 0547)', () => {
+    const base = { feedback: 'x', confidence: 1 } as const
+    expect(nhanKetQuaBuoc(undefined)).toBe('? Chưa tự kiểm được')
+    expect(nhanKetQuaBuoc({ ...base, isValid: true, status: 'valid', errorType: 'none' })).toBe(
+      '✓ Hợp lệ',
+    )
+    expect(
+      nhanKetQuaBuoc({ ...base, isValid: true, status: 'unverified', errorType: 'none' }),
+    ).toBe('? Chưa tự kiểm được')
+    const loi = (errorType: ScratchpadStepValidation['errorType']) =>
+      nhanKetQuaBuoc({ ...base, isValid: false, status: 'invalid', errorType })
+    expect(loi('changed_solutions')).toBe('✗ Đổi nghiệm')
+    expect(loi('unbalanced_equation')).toBe('✗ Lệch nguyên tử')
+    expect(loi('unbalanced_charge')).toBe('✗ Lệch điện tích')
+    expect(loi('substance_changed')).toBe('✗ Đổi chất')
+    expect(loi('division_by_zero')).toBe('✗ Chia cho 0')
+    expect(loi('logic_gap')).toBe('✗ Cần chỉnh sửa')
+    // Bước cũ (trước 0473) không có status → không bao giờ thành ✓.
+    expect(nhanKetQuaBuoc({ ...base, isValid: true, errorType: 'none' })).toBe(
+      '? Chưa tự kiểm được',
+    )
   })
 })

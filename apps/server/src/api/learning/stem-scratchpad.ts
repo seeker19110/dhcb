@@ -146,7 +146,9 @@ export default async function handler(req: Request): Promise<Response> {
             subject: 'math',
             title: 'Bài tập STEM',
             problemStatement: 'Giải phương trình',
-            problemLatex: latexInput,
+            // KHÔNG lấy chính bước này làm "đề": bộ kiểm (changelog 0547) sẽ so bước với chính nó
+            // và khen "tương đương đề bài" một cách vô nghĩa. Không có đề thì bước đầu là mốc so
+            // cho các bước sau, còn bản thân nó "chưa tự kiểm được".
           })
           if (problemId) prob.id = problemId
           book[prob.id] = prob
@@ -169,8 +171,9 @@ export default async function handler(req: Request): Promise<Response> {
         prob.steps.push(newStep)
 
         // Chỉ "giải xong" khi bộ kiểm khẳng định đúng đáp số. Trước 2026-10-02 so chuỗi con nên
-        // "x = 50" cũng được tính là xong (changelog 0473).
-        if (validation.status === 'valid') {
+        // "x = 50" cũng được tính là xong (changelog 0473). Từ changelog 0547 bước GIỮA cũng có
+        // thể `valid` (biến đổi tương đương), nên phải có thêm cờ `isFinalAnswer`.
+        if (validation.status === 'valid' && validation.isFinalAnswer === true) {
           prob.isSolved = true
         }
 

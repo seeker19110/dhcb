@@ -1173,13 +1173,18 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
   bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
   còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
-- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`] Bảng nháp STEM (Companion › Thử thách)
-  chưa kiểm được bước giải ở giữa.** Lỗi 🔴 cũ (chấm MỌI bước là "đúng", "ĐÃ GIẢI XONG" bằng so
-  chuỗi con) đã sửa: bước không kiểm được nay hiện "? Chưa tự kiểm được"; chỉ đáp số cuối khớp
-  nguyên vẹn đáp số của 3 đề mẫu mới là "✓ Hợp lệ". **Còn lại:** (1) muốn kiểm bước giữa thì cần
-  bộ giải ký hiệu (thay nghiệm vào hai vế, đếm nguyên tử) — tính năng mới, cần đặc tả. (Đã xử lý ở
-  `0539`: `submit_solution` thôi so chuỗi con, nay chấm đáp số đã chuẩn hoá qua `@dhcb/core-grading`
-  — `gradeFinalAnswer`. Ngân hàng đề STEM vẫn là dữ liệu mẫu `S_{n} = …` và giao diện chưa gọi.)
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`] Bảng nháp STEM
+  (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, còn Vật lí.** `0547` (đặc tả
+  `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
+  NGHIỆM THỰC với đề, chính xác (đa thức hữu tỉ BigInt + Sturm, giữ điều kiện xác định) → `✓ Hợp lệ`
+  / `✗ Đổi nghiệm` (mất/thêm nghiệm) / `✗ Chia cho 0`; Hoá — đếm nguyên tử + điện tích, bắt đổi chất
+  → `✗ Lệch nguyên tử` / `✗ Lệch điện tích` / `✗ Đổi chất`; còn lại `? Chưa tự kiểm được` kèm câu
+  nói rõ phạm vi. "Giải xong" cần `isFinalAnswer`. **Còn lại:** (1) Vật lí — kiểm thứ nguyên từng
+  bước (cần gán thứ nguyên cho biến theo đề); (2) Toán ngoài phạm vi: căn, lượng giác, log, π, bất
+  phương trình, nhiều ẩn, dấu chia `:`; (3) `generateMicroHint` còn đưa thẳng `x = 5` cho đề mẫu (trái
+  Socratic); (4) ngân hàng đề STEM vẫn là dữ liệu mẫu `S_{n} = …` và giao diện chưa gọi
+  `submit_solution` (`0539`); (5) ở 390px hàng nhập của bảng nháp chật (nút "Gợi ý" bị ép xuống 2
+  dòng, sát mép) — có từ trước, thấy ở ảnh 8b `0547`.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0475`] "Tổng hợp đa miền" (Life Synthesis) chờ
   dữ liệu thật.** Lỗi 🔴 cũ (studio "Tổng kết" hiện điểm "phân tích cuộc sống" BỊA — 88/92/85 —
   giống nhau cho mọi người dùng) đã gỡ: tab không còn, `/api/life-synthesis` trả 501 kèm lời giải
