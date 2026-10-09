@@ -49,9 +49,12 @@ describe('buildCefrOutline — dữ liệu cefr.json thật', () => {
     }
   })
 
-  it('mỗi unit có đúng ① vòng từ vựng ② bài ngữ pháp ③ MỘT hội thoại, đúng thứ tự', () => {
+  it('mỗi unit có đúng ① vòng từ vựng ② bài ngữ pháp ③ MỘT hội thoại (nếu có), đúng thứ tự', () => {
     const level = levels.find((l) => l.id === 'A1')!
-    const outline = buildCefrOutline(level, ctxRong())
+    const outline = buildCefrOutline(level, {
+      ...ctxRong(),
+      dialogueTitlesByUnit: new Map(level.units.map((u) => [u.id, ['One']])),
+    })
     for (const unit of level.units) {
       const con = outline.nodes.filter((n) => n.parentId === `chapter:${unit.id}`)
       const soVong = unit.vocabCircleIds.filter((id) => circles.has(id)).length
@@ -127,13 +130,14 @@ describe('buildCefrOutline — dữ liệu cefr.json thật', () => {
     const outline = buildCefrOutline(level, {
       ...ctxRong(),
       viewedDialogues: new Set([`${unit.id}:Hello there`]),
+      dialogueTitlesByUnit: new Map([[unit.id, ['Hello there']]]),
     })
     expect(
       outline.nodes.find((n) => n.nodeId === `activity:${unit.id}:dialogue:${unit.id}`),
     ).toMatchObject({
       progress: 'in-progress',
       evidenceSource: 'english.cefrDialogue',
-      hint: 'Đã xem',
+      hint: 'Đã xem 1/1 · đã học 0/1',
     })
     OutlineSchema.parse(outline)
   })
@@ -168,30 +172,61 @@ describe('buildCefrOutline — dữ liệu cefr.json thật', () => {
     })
   })
 
-  it('hội thoại: unit không có hội thoại nào → chưa học + nói rõ bằng chữ', () => {
+  it('hội thoại: unit KHÔNG có hội thoại → không sinh nút, số hoạt động giảm đúng 1', () => {
+    const level = levels.find((l) => l.id === 'A1')!
+    const [coHoiThoai, khongHoiThoai] = level.units
+    const outline = buildCefrOutline(level, {
+      ...ctxRong(),
+      dialogueTitlesByUnit: new Map([
+        [coHoiThoai!.id, ['One']],
+        [khongHoiThoai!.id, []],
+      ]),
+    })
+    const conCua = (id: string) => outline.nodes.filter((n) => n.parentId === `chapter:${id}`)
+    const dem = (id: string) => conCua(id).filter((n) => n.nodeId.split(':')[2] === 'dialogue')
+    expect(dem(coHoiThoai!.id)).toHaveLength(1)
+    expect(dem(khongHoiThoai!.id)).toHaveLength(0)
+    const soVong = (u: typeof coHoiThoai) =>
+      u!.vocabCircleIds.filter((id) => circles.has(id)).length
+    expect(conCua(khongHoiThoai!.id)).toHaveLength(
+      soVong(khongHoiThoai) + khongHoiThoai!.grammar.length,
+    )
+    // Chữ "N hoạt động" của unit đếm đúng số nút thật.
+    const chuong = (id: string) => outline.nodes.find((n) => n.nodeId === `chapter:${id}`)
+    expect(chuong(khongHoiThoai!.id)!.hint).toBe(`${conCua(khongHoiThoai!.id).length} hoạt động`)
+    expect(chuong(coHoiThoai!.id)!.hint).toBe(`${conCua(coHoiThoai!.id).length} hoạt động`)
+    OutlineSchema.parse(outline)
+  })
+
+  it('hội thoại: unit không có hội thoại → tienDoHoiThoaiCuaUnit trả undefined (không nút)', () => {
     expect(
       tienDoHoiThoaiCuaUnit('u', {
         viewedDialogues: new Set(),
         learnedDialogues: new Set(),
         dialogueTitlesByUnit: new Map([['u', []]]),
       }),
-    ).toEqual({ progress: 'not-started', hint: 'Phần này chưa có hội thoại' })
+    ).toBeUndefined()
   })
 
-  it('hội thoại: CHƯA biết tổng (đang tải) → có bài đã học cũng chỉ là đang học, không khẳng định xong', () => {
-    expect(
-      tienDoHoiThoaiCuaUnit('u', {
-        viewedDialogues: new Set(),
-        learnedDialogues: new Set(['u:One']),
-      }),
-    ).toEqual({
-      progress: 'in-progress',
-      evidenceSource: 'english.cefrDialogueLearned',
-      hint: 'Có hội thoại đã học',
+  it('hội thoại: CHƯA biết tổng (đang tải/lỗi) → không nút, không bao giờ completed', () => {
+    for (const ctx of [
+      { viewedDialogues: new Set<string>(), learnedDialogues: new Set<string>() },
+      { viewedDialogues: new Set(['u:One']), learnedDialogues: new Set(['u:One']) },
+      {
+        viewedDialogues: new Set<string>(),
+        learnedDialogues: new Set<string>(),
+        dialogueTitlesByUnit: new Map<string, readonly string[]>(), // có map nhưng thiếu unit
+      },
+    ]) {
+      expect(tienDoHoiThoaiCuaUnit('u', ctx)).toBeUndefined()
+    }
+    const level = levels.find((l) => l.id === 'A1')!
+    const outline = buildCefrOutline(level, {
+      ...ctxRong(),
+      learnedDialogues: new Set(level.units.map((u) => `${u.id}:One`)),
     })
-    expect(
-      tienDoHoiThoaiCuaUnit('u', { viewedDialogues: new Set(), learnedDialogues: new Set() }),
-    ).toEqual({ progress: 'not-started', hint: 'Chưa xem' })
+    expect(outline.nodes.some((n) => n.nodeId.split(':')[2] === 'dialogue')).toBe(false)
+    expect(outline.nodes.some((n) => n.progress === 'completed')).toBe(false)
   })
 
   it('cấp KHOÁ: đọc bản đồ khoá của server, hoạt động không có href', () => {

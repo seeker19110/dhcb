@@ -6,7 +6,8 @@
 //   ① Từ vựng — mỗi vòng (`vocabCircleIds`) một hoạt động
 //   ② Ngữ pháp — mỗi `GrammarLesson` một hoạt động (unit không có ngữ pháp thì KHÔNG sinh nút
 //      rỗng: B2 có 43 unit nhưng chỉ 14 bài ngữ pháp)
-//   ③ Hội thoại — MỘT hoạt động cho cả unit
+//   ③ Hội thoại — MỘT hoạt động cho cả unit, CHỈ khi unit thật sự có hội thoại (162/197 unit
+//      không có: không sinh nút rỗng; chưa biết thì ẩn tới khi dữ liệu tải xong)
 //
 // Ở `apps/` vì dữ liệu cấp (`data/cefrTypes`) và tiến độ (`lib/cefrProgress`) sống trong app;
 // `packages/` không được import `apps/`.
@@ -32,7 +33,8 @@ export interface CefrOutlineCtx {
   learnedDialogues: ReadonlySet<string>
   /**
    * `titleEn` các hội thoại của từng unit (từ `dialogues.json`). Có thì đếm đúng "đã học x/N";
-   * vắng (đang tải / tải lỗi) thì adapter KHÔNG khẳng định "đã học hết" vì không biết N.
+   * unit có mục rỗng → không có nút hội thoại. Vắng (đang tải / tải lỗi) → cũng KHÔNG sinh nút
+   * (không biết N, không khẳng định "đã học hết", không đẻ mẫu số ảo).
    */
   dialogueTitlesByUnit?: ReadonlyMap<string, readonly string[]>
   /** Vòng từ vựng theo id (từ `loadFoundation()`). */
@@ -216,55 +218,50 @@ function hoatDongCuaUnit(
   // docs/specs/2026-10-09-hoi-thoai-cefr-bang-chung-da-hoc.md):
   //   chưa xem → not-started · đã xem (chưa đạt kiểm tra hiểu) → in-progress · đã học → completed.
   // "Đã xem" KHÔNG còn là "xong" — mở hội thoại không chứng minh người học hiểu.
-  const { hint: chuPhuHoiThoai, ...tienDoHoiThoai } = tienDoHoiThoaiCuaUnit(unit.id, ctx)
-  nodes.push(nen('dialogue', unit.id, 'Hội thoại', tienDoHoiThoai, chuPhuHoiThoai))
+  // Unit KHÔNG có hội thoại (hoặc chưa biết có hay không) thì KHÔNG sinh nút: nút bấm vào không
+  // có gì, lại làm mẫu số "N hoạt động" và tiến độ cấp/môn ảo (changelog 0554).
+  const hoiThoai = tienDoHoiThoaiCuaUnit(unit.id, ctx)
+  if (hoiThoai) {
+    const { hint: chuPhuHoiThoai, ...tienDoHoiThoai } = hoiThoai
+    nodes.push(nen('dialogue', unit.id, 'Hội thoại', tienDoHoiThoai, chuPhuHoiThoai))
+  }
 
   return nodes
 }
 
-/** Tiến độ + chữ phụ của nút "Hội thoại" một unit. Chữ phụ là CHỮ, không phụ thuộc màu/biểu tượng. */
+/**
+ * Tiến độ + chữ phụ của nút "Hội thoại" một unit. Chữ phụ là CHỮ, không phụ thuộc màu/biểu tượng.
+ *
+ * Trả `undefined` = unit này KHÔNG có nút hội thoại:
+ *  - đã biết unit không có hội thoại nào (`dialogueTitlesByUnit` có mục rỗng);
+ *  - CHƯA biết (dữ liệu hội thoại đang tải / tải lỗi → `dialogueTitlesByUnit` vắng hoặc thiếu
+ *    unit). Chọn ẨN tới khi biết thay vì hiện tạm: hiện tạm rồi rút lại sẽ làm mẫu số "N hoạt
+ *    động" và % tiến độ nhảy xuống ở 162/197 unit; ẩn rồi hiện thêm ở 35 unit chỉ làm mẫu số
+ *    tăng đúng sự thật, không bao giờ khẳng định "xong" khi chưa biết tổng.
+ */
 export function tienDoHoiThoaiCuaUnit(
   unitId: string,
   ctx: Pick<CefrOutlineCtx, 'viewedDialogues' | 'learnedDialogues' | 'dialogueTitlesByUnit'>,
-): Pick<OutlineNode, 'progress' | 'evidenceSource'> & { hint: string } {
+): (Pick<OutlineNode, 'progress' | 'evidenceSource'> & { hint: string }) | undefined {
   const titles = ctx.dialogueTitlesByUnit?.get(unitId)
-  if (titles) {
-    const tong = titles.length
-    if (tong === 0) return { progress: 'not-started', hint: 'Phần này chưa có hội thoại' }
-    const keys = titles.map((t) => dialogueKey(unitId, t))
-    const daHoc = keys.filter((k) => ctx.learnedDialogues.has(k)).length
-    const daXem = keys.filter(
-      (k) => ctx.viewedDialogues.has(k) || ctx.learnedDialogues.has(k),
-    ).length
-    if (daHoc === tong) {
-      return {
-        progress: 'completed',
-        evidenceSource: 'english.cefrDialogueLearned',
-        hint: tong === 1 ? 'Đã học' : `Đã học ${tong}/${tong}`,
-      }
+  if (!titles || titles.length === 0) return undefined
+  const tong = titles.length
+  const keys = titles.map((t) => dialogueKey(unitId, t))
+  const daHoc = keys.filter((k) => ctx.learnedDialogues.has(k)).length
+  const daXem = keys.filter((k) => ctx.viewedDialogues.has(k) || ctx.learnedDialogues.has(k)).length
+  if (daHoc === tong) {
+    return {
+      progress: 'completed',
+      evidenceSource: 'english.cefrDialogueLearned',
+      hint: tong === 1 ? 'Đã học' : `Đã học ${tong}/${tong}`,
     }
-    if (daXem > 0) {
-      return {
-        progress: 'in-progress',
-        evidenceSource: daHoc > 0 ? 'english.cefrDialogueLearned' : 'english.cefrDialogue',
-        hint: `Đã xem ${daXem}/${tong} · đã học ${daHoc}/${tong}`,
-      }
-    }
-    return { progress: 'not-started', hint: 'Chưa xem' }
   }
-  // Chưa biết tổng số hội thoại của unit → chỉ nói điều chắc chắn, không bao giờ "đã học hết".
-  const tienTo = `${unitId}:`
-  const coHoc = [...ctx.learnedDialogues].some((k) => k.startsWith(tienTo))
-  if (coHoc) {
+  if (daXem > 0) {
     return {
       progress: 'in-progress',
-      evidenceSource: 'english.cefrDialogueLearned',
-      hint: 'Có hội thoại đã học',
+      evidenceSource: daHoc > 0 ? 'english.cefrDialogueLearned' : 'english.cefrDialogue',
+      hint: `Đã xem ${daXem}/${tong} · đã học ${daHoc}/${tong}`,
     }
-  }
-  const coXem = [...ctx.viewedDialogues].some((k) => k.startsWith(tienTo))
-  if (coXem) {
-    return { progress: 'in-progress', evidenceSource: 'english.cefrDialogue', hint: 'Đã xem' }
   }
   return { progress: 'not-started', hint: 'Chưa xem' }
 }
