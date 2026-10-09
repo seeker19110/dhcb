@@ -154,7 +154,7 @@ export const T2_P1_PROJECT_STEPS: ProjectStep[] = [
     unitId: 'p1-u3',
     requirement:
       'Giữ nguyên ba dòng của bước 1, hỏi thêm số bạn ĐÃ đóng, rồi in tiếp:\nDa thu: <so ban da dong × 50000>\nCon thieu: <so ban chua dong × 50000>\nTi le da dong: <phan tram>%\n\nTỉ lệ là số bạn đã đóng chia sĩ số nhân 100, LÀM TRÒN tới số nguyên gần nhất (24/36 bạn là 66,67% → in 67%, không phải 66%).',
-    hint: 'Số bạn chưa đóng = si_so - da_dong. Làm tròn bằng round(...): round(66.67) cho 67, còn int(66.67) chỉ cắt bỏ phần lẻ thành 66 — sai với cách lớp bạn đọc số.',
+    hint: 'Số bạn chưa đóng = si_so - da_dong. Làm tròn bằng round(...): round(66.67) cho 67, còn int(66.67) chỉ cắt bỏ phần lẻ thành 66 — báo cáo cho cả lớp mà làm tròn sai là mất lòng tin.',
     referenceCode: P1_S2_CODE,
     checks: [
       tc(['10A1', '40', '30'], 'Da thu: 1500000', '30 bạn đã đóng = 1.500.000 đồng'),
