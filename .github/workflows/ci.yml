@@ -203,7 +203,10 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgres:16
+        # Bản sao Docker Official Image trên ECR Public, KHÔNG phải Docker Hub: runner GitHub kéo
+        # ẩn danh từ Docker Hub bị chặn `toomanyrequests` (2026-10-09, PR #1321 đỏ hai lần liền
+        # dù không đụng SQL). Cùng image `postgres:16`, chỉ khác nơi kéo.
+        image: public.ecr.aws/docker/library/postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
