@@ -1,6 +1,6 @@
 # 0558 — Hội thoại CEFR: seed do SERVER cấp (token HMAC), không trả đáp án câu sai (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `feat(cefr)`
+- **Ngày:** 2026-10-09 · **PR:** #1303 · **Loại:** `feat(cefr)`
 - **Nguồn:** nợ 🟡 `PROGRESS.md` "[rà soát bảo mật changelog `0555`] Kiểm tra hiểu hội thoại CEFR
   chưa chống người đọc mã có chủ ý" — chủ dự án chốt "làm mục 1 seed HMAC". Đặc tả
   `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md` (Approved for implementation).
