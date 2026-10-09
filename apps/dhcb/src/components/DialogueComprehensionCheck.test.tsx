@@ -532,6 +532,10 @@ describe('DialogueComprehensionCheck — trần lượt nộp sai', () => {
     expect(nut('Gửi lại')).toBeUndefined()
     expect(nut('Làm lại')).toBeUndefined()
     expect(onVerified).not.toHaveBeenCalled()
+    // Không còn nút nộp → câu hỏi phải khoá, không để radio bấm đổi được.
+    const groups = [...container.querySelectorAll<HTMLFieldSetElement>('[role="radiogroup"]')]
+    expect(groups.length).toBeGreaterThan(0)
+    expect(groups.every((g) => g.disabled)).toBe(true)
   })
 
   it('chiều B: câu chữ tiếng Anh, số ít "1 try left today"', async () => {

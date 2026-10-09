@@ -63,6 +63,30 @@ bình 25,3 %; con số "~16–26 %" ở đặc tả cũ ước sai) — vét c�
   đọc hội thoại, không làm đoán mò bất khả. Muốn mạnh hơn phải đổi đề (thêm câu/phương án).
 - Mục (1) — tra đáp án từ `dialogues.json` — vẫn mở, chờ chủ dự án quyết.
 
+## Tầng 8b — nhìn trang thật (ảnh chụp, đã xem từng ảnh)
+
+Trang thật `/goc-hoc-tap/english/lo-trinh/a1?unit=a1-greetings&hd=dialogue:…` (dev server Vite,
+đăng nhập giả bằng `e2e/helpers/auth.ts`, API `cefr-dialogue-start`/`cefr-dialogue` mock bằng
+`page.route` với đề thật dựng từ `dialogues.json`). 1440px + 390px × `blue-sky` + `dark-blue`, mỗi
+ca một ảnh toàn trang + một ảnh khung nhìn sau khi cuộn tới khối kết quả + một ảnh riêng khối kết
+quả (60 ảnh; spec/config/ảnh tạm đã xoá):
+
+| Ca                                    | Chiều | Thấy trong ảnh                                                                                       |
+| ------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------- |
+| (a) nộp không đạt, `attemptsLeft = 3` | A, B  | "Còn 3 lượt thử hôm nay." / "3 tries left today."; nút Làm lại (chính) + Xem lại hội thoại           |
+| (b1) không đạt ở lượt thứ 5 (`= 0`)   | A     | "Đúng 1/3 — chưa đạt (cần 2)" + "Bạn đã thử sai 5 lần hôm nay…"; CHỈ nút "Xem lại hội thoại" (chính) |
+| (b2) 409 `ATTEMPT_CAP` lúc nộp        | A     | "Chưa chấm được lượt này" + lời nhắn hết lượt; CHỈ nút "Xem lại hội thoại", không Gửi lại/Làm lại    |
+| (c) 409 `ATTEMPT_CAP` lúc mở lượt     | A     | "Hôm nay đã hết lượt thử hội thoại này" + lời nhắn; CHỈ nút "Xem lại hội thoại", không có đề         |
+
+- Không tràn ngang ở cả 20 tổ hợp (spec tạm kiểm `scrollWidth ≤ bề rộng` trước khi chụp); chữ xuống
+  dòng gọn ở 390px; tương phản chữ/nút đọc rõ ở cả hai theme. Danh sách nút trong khối kết quả đọc
+  bằng máy khớp bảng trên ở mọi tổ hợp.
+- **Đã sửa:** ca (b2) — các câu hỏi vẫn bấm đổi được dù không còn nút nộp nào (gợi ý sai thao tác).
+  Nay hết lượt thì khoá câu hỏi (`locked` gồm `outOfTries`, fieldset `disabled`); test màn thêm câu
+  kiểm mọi radiogroup bị khoá; chụp lại (b2) ở 390 cả hai theme — ô chọn đã xám.
+- Ghi nhận, KHÔNG thuộc đợt này: thẻ nổi "Đang đồng bộ dữ liệu (1 mục)…" hiện ở môi trường mock (hàng
+  đợi đồng bộ "đã xem" không có backend thật) — có từ trước, không liên quan trần lượt sai.
+
 ## Bằng chứng
 
 Xem mô tả PR: typecheck/lint/prettier/check:specs + vitest liên quan.

@@ -239,7 +239,7 @@ attemptsLeft?: number // 0..5, CHỈ khi passed === false
 4. Khoá `^cefr-dialogue-fail:[0-9a-f]{64}$`, không chứa userId/owner/tên; chiều B dùng chung khoá A.
 5. Bộ đếm không sẵn sàng → 503 ở cả hai bước, không trả kết quả; hồi phục thì gửi lại đúng token.
 6. Giao diện: "Còn N lượt thử hôm nay" (B: "N tries left today", số ít "1 try"); hết lượt → không
-   nút Làm lại/Thử lại/Gửi lại, chỉ "Xem lại hội thoại".
+   nút Làm lại/Thử lại/Gửi lại, chỉ "Xem lại hội thoại"; câu hỏi khoá (fieldset `disabled`).
 
 ## ⑦ Quy ước dự án liên quan
 

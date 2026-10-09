@@ -528,8 +528,10 @@ export default function DialogueComprehensionCheck({
 
   const total = questions.length
   const need = requiredCorrect(total)
-  const locked = result !== null || submitting
   const outOfTries = isOutOfTries(result, failure)
+  // Hết lượt hôm nay thì cũng khoá câu hỏi: không còn nút nộp nào, để radio bấm được là gợi ý sai
+  // (thấy ở ảnh Tầng 8b đợt 0559 — 409 ATTEMPT_CAP lúc nộp).
+  const locked = result !== null || submitting || outOfTries
 
   return (
     <div className="animate-fade-in space-y-3">
