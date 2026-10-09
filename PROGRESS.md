@@ -513,9 +513,9 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
   TRAPS.md mục 4.) **Nợ còn lại:** nội dung chưa ai có chuyên môn đọc lại; chuẩn sư phạm mới rà trên phần bài trọng
   điểm, chưa quét hết 294 bài. Chi tiết: `docs/changelog/0295-2026-09-13-hoan-thien-4-mon-stem.md`.
 - ✅ **[ĐÃ TRẢ 2026-10-09, changelog `0568`] Toán đã đủ 24/24 chương chuẩn** (12 C5 nay có cả
-  đường thẳng và góc trong không gian) **và Sinh đã có nhánh HSG** (9 bài, chương 91–93). **Còn
-  mỏng** (đo 2026-10-09, mỗi chương chỉ 1 bài): Toán 10C2/10C3/10C9/11C2/11C7/11C9/12C6, Hoá
-  10C4–C6, Sinh 12C5/12C7/12C9 — đợt 2/4 của lượt soạn nốt bài.
+  đường thẳng và góc trong không gian) **và Sinh đã có nhánh HSG** (9 bài, chương 91–93).
+  ✅ **[changelog `0569`] Không còn chương Toán nào chỉ 1 bài** (+13 bài, Toán 68 bài). Hoá 10C4–C6
+  và Sinh 12C5/C7/C9 chỉ 1 bài là ĐÚNG số bài SGK (đánh số theo bài SGK), không phải thiếu.
 - **[2026-09-21 · CẬP NHẬT cùng ngày, PR đặc tả — `docs/changelog/0396-2026-09-21-dac-ta-19-chang-p6-con-thieu.md`] P6 (Lập trình,
   14 hướng chuyên sâu) — lệch lớn giữa "đã đặc tả" và "đã có bài học thật".**
   **Phần KẾ HOẠCH đã khép: đủ 56/56 chặng có đặc tả.** 19 chặng thiếu nay đều có đặc tả triển
