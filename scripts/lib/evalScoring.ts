@@ -253,6 +253,50 @@ export function scoreOne(mode: EvalMode, fixture: Fixture, rawText: string): Eva
   }
 }
 
+// ─── Bản ghi NGUYÊN VĂN 1 câu (cờ --dump) ──────────────────────────────────────
+// Bảng tổng chỉ nói "FP" — không nói AI đã VIẾT GÌ. Thiếu nguyên văn thì không phân biệt được
+// "khen đặt nhầm vào dòng ✅" với "sửa oan câu đúng", hai lỗi cần cách sửa khác nhau
+// (phát hiện 2026-10-09: Haiku 5.5 có FP-rate 48% ở các câu như "Hello").
+export interface DumpRecord {
+  run: number
+  mode: EvalMode
+  id: string
+  kind: FixtureKind
+  dir: 'A' | 'B'
+  input: string
+  outcome: Outcome | 'ERROR'
+  feedback: string // phần sau ✅ (chat) hoặc khoá feedback (speaking) — đúng thứ UI hiện ra
+  raw: string // nguyên văn AI trả về; rỗng khi lỗi provider
+  error?: string
+}
+
+export function buildDumpRecord(
+  run: number,
+  mode: EvalMode,
+  fixture: Fixture,
+  rawText: string | null,
+  error?: string,
+): DumpRecord {
+  const base = {
+    run,
+    mode,
+    id: fixture.id,
+    kind: fixture.kind,
+    dir: fixture.dir,
+    input: fixture.input,
+  }
+  if (rawText === null) {
+    return { ...base, outcome: 'ERROR', feedback: '', raw: '', error: error ?? 'unknown' }
+  }
+  const r = scoreOne(mode, fixture, rawText)
+  return {
+    ...base,
+    outcome: r.outcome,
+    feedback: extractFeedback(mode, rawText).feedback,
+    raw: rawText,
+  }
+}
+
 export interface Summary {
   scored: number // số câu chấm được (không tính câu provider lỗi)
   providerErrors: number

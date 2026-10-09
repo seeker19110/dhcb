@@ -785,10 +785,15 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
      (`console.anthropic.com` › Billing). Từ đợt này Claude chạy MỌI lượt chat/chấm bài → hết credit
      là rơi hết về Groq/Gemini.
   2. Đặt ngưỡng cảnh báo chi phí, vd `AI_DAILY_BUDGET_USD=5` → `pm2 reload dhcb` (log ERROR khi vượt).
-  3. Chạy `npm run eval:tutor -- --runs 3` (nay đo Haiku 5.5) rồi so với
-     `docs/research/eval-tutor-baseline.md`; recall/precision tụt thì đổi model qua
-     `ANTHROPIC_FAST_MODEL`, không cần sửa code. Sau vài ngày, đối chiếu thẻ "chi phí theo token
-     thật" ở `/admin` với ước tính và chỉnh `AI_COST_*_USD`.
+  3. ~~Chạy `npm run eval:tutor -- --runs 3`~~ **ĐÃ CHẠY 2026-10-09 (Haiku 5.5, 180 câu): recall
+     99.2% ± 0.8 nhưng FP-rate 48.3% ± 6.7** (baseline cũ 5.6%) — 19 câu đúng bị đánh dấu ở cả 3
+     lượt, kể cả `Hello`. Nghi Haiku viết lời khen vào dòng `✅` thay vì để trống; hậu quả thật ở
+     Chat: hiện khung cam "sửa lỗi" và ghi câu ĐÚNG vào sổ lỗi cá nhân (`Chat.tsx` `addMistake`).
+     **Việc tiếp:** sau khi deploy changelog `0575`, chạy
+     `npm run eval:tutor -- --group clean --dump /tmp/eval-dump.jsonl` rồi gửi các dòng
+     `"outcome":"FP"` để sửa prompt chat. **CHƯA được `--write-baseline`** (sẽ chốt FP 48% làm chuẩn).
+     Sau vài ngày, đối chiếu thẻ "chi phí theo token thật" ở `/admin` với ước tính và chỉnh
+     `AI_COST_*_USD`.
   4. Chấm thử 1 bài ở mỗi màn Writing · Speaking · Chat · Challenge · Reverse Interview (lượt chấm
      nay gửi JSON Schema — `packages/core-ai/gradingSchemas.ts`): điểm hiện đúng và counter
      `ai_anthropic_status_400` ở `/admin` không tăng. Có 400 → lượt đó đã rơi sang Groq; báo lại
@@ -1819,7 +1824,8 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   đúng/ca biên 18 → 60, mọi loại lỗi ≥ 8 câu, thêm chiều B với 4 loại lỗi riêng), mỗi câu có bản
   sửa + giải thích + nguồn đối chiếu, cổng tĩnh `scripts/evalTutorFixtures.test.ts` canh; thêm
   `--runs N` (trung bình ± SD + Wilson 95%) và `--group`. **Còn nợ — việc tay chủ dự án:** chạy
-  `npm run eval:tutor -- --runs 3 --write-baseline` với key AI thật để có baseline cho bộ 180 câu
+  `npm run eval:tutor -- --runs 3 --write-baseline` với key AI thật để có baseline cho bộ 180 câu,
+  **SAU KHI** sửa xong FP-rate 48% của Haiku 5.5 (mục A, việc VPS số 3)
   (số 2026-08-26 chỉ còn đúng với bộ 62 câu cũ; `--limit 62` tái hiện bộ đó). Xong việc này mới đóng
   hẳn nợ.
 
