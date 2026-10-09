@@ -417,13 +417,44 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemId: 'math-10-1', finalAnswer: 'S_{2} = 0 chính xác' }),
+        // Đáp án ngân hàng là "S_{2} = 0"; học sinh viết "x = 0" — so theo đáp số, không theo chữ.
+        body: JSON.stringify({ problemId: 'math-10-1', finalAnswer: 'x = 0' }),
       }),
     )
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.isSolved).toBe(true)
     expect(data.solutionPreview).toBeDefined()
+  })
+
+  it('submit_solution: so ĐÁP SỐ, không so chuỗi con (changelog 0539)', async () => {
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({
+      userId: '11111111-1111-4111-8111-111111111111',
+    })
+    // math-10-3 có đáp án "S_{4} = 20".
+    await handler(
+      new Request('http://localhost/api/stem-scratchpad?action=validate_step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problemId: 'math-10-3', latexInput: 'chưa xong' }),
+      }),
+    )
+    const submit = async (finalAnswer: unknown) => {
+      const res = await handler(
+        new Request('http://localhost/api/stem-scratchpad?action=submit_solution', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemId: 'math-10-3', finalAnswer }),
+        }),
+      )
+      return { status: res.status, data: await res.json() }
+    }
+    // Chuỗi con cũ: "S_{4} = 20 sai" chứa nguyên 10 ký tự đầu đáp án → từng được tính là đúng.
+    expect((await submit('S_{4} = 20 sai')).data.isSolved).toBe(false)
+    expect((await submit('120')).data.isSolved).toBe(false)
+    expect((await submit(20)).status).toBe(400)
+    // "20,0" (dấu phẩy thập phân) đúng về giá trị → giải xong.
+    expect((await submit('x = 20,0')).data.isSolved).toBe(true)
   })
 
   it('submit_solution: khớp ngân hàng câu hỏi nhưng đáp án SAI → isSolved false', async () => {

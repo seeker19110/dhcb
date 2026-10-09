@@ -7,11 +7,23 @@ import {
   fetchMetacognitiveSummary,
   submitMetacognitiveReflectionApi,
 } from '../../lib/metacognitiveReflectionApi.js'
-import type {
-  SocraticDailyPrompt,
-  MetacognitiveReflection,
-  MetacognitiveSummary,
+import {
+  COGNITIVE_BIAS_LABELS,
+  type SocraticDailyPrompt,
+  type MetacognitiveReflection,
+  type MetacognitiveSummary,
 } from '@dhcb/core-contracts/metacognitiveReflection'
+
+/**
+ * Bẫy tư duy để HIỂN THỊ. Server đã lọc bẫy "none" giữ chỗ của bản ghi cũ, nhưng giao diện vẫn
+ * lọc lại và bù `triggerPhrases` — để bản client mới không vỡ nếu gặp server cũ (rollback) hay
+ * phản hồi cũ còn trong bộ nhớ đệm.
+ */
+function shownTraps(r: MetacognitiveReflection) {
+  return (r.identifiedBiases ?? [])
+    .filter((b) => b.biasType !== 'none')
+    .map((b) => ({ ...b, triggerPhrases: b.triggerPhrases ?? [] }))
+}
 
 interface MetacognitiveReflectionModalProps {
   initialPrompt?: SocraticDailyPrompt | null
@@ -89,7 +101,7 @@ export default function MetacognitiveReflectionModal({
                 Nhật ký phản tỉnh Socratic & điểm mù nhận thức
               </h2>
               <p className="text-xs text-zinc-400">
-                Phân tích Metacognitive Awareness Index (MAI) và giải trừ thiên kiến
+                Viết ra suy nghĩ của bạn, nhận lại câu hỏi để tự soi tiếp
               </p>
             </div>
           </div>
@@ -207,10 +219,10 @@ export default function MetacognitiveReflectionModal({
                   className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white font-bold text-sm shadow-lg transition transform active:scale-95 disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSubmitting ? (
-                    <span>Đang phân tích nhận thức...</span>
+                    <span>Đang đọc bài viết...</span>
                   ) : (
                     <>
-                      <span>Khám phá Điểm Mù AI</span>
+                      <span>Nhận câu hỏi gợi mở</span>
                       <Sparkles className="w-4 h-4" />
                     </>
                   )}
@@ -220,30 +232,35 @@ export default function MetacognitiveReflectionModal({
               {/* Analysis Result */}
               {currentReflection && (
                 <div className="p-5 rounded-2xl bg-zinc-900/90 border border-teal-500/40 space-y-4 animate-fadeIn">
-                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                  {/* Luật số 1 (changelog 0539): phản hồi ĐỊNH TÍNH — không con số chấm người viết. */}
+                  <div className="border-b border-zinc-800 pb-3 space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">🌟</span>
-                      <h4 className="font-bold text-sm text-white">Kết quả phân tích nhận thức</h4>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs">
-                      <span className="px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 theme-light:text-teal-900 border border-teal-500/30 font-bold">
-                        MAI: {currentReflection.metacognitiveIndex}/100
+                      <span className="text-xl" aria-hidden="true">
+                        🌟
                       </span>
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 theme-light:text-emerald-900 border border-emerald-500/30 font-bold">
-                        Growth Mindset: {currentReflection.growthMindsetScore}/100
-                      </span>
+                      <h4 className="font-bold text-sm text-white">
+                        Phản hồi cho bài viết của bạn
+                      </h4>
                     </div>
+                    <p className="text-xs text-zinc-400">
+                      Gợi ý dưới đây dựa trên những cụm từ trong bài viết — để bạn tự hỏi lại, không
+                      phải một lời chẩn đoán.
+                    </p>
                   </div>
 
-                  {/* Biases */}
-                  {currentReflection.identifiedBiases.length > 0 && (
+                  {/* Bẫy tư duy có thể đang hiện diện */}
+                  {shownTraps(currentReflection).length === 0 ? (
+                    <p className="text-xs text-zinc-300">
+                      Lần này chưa thấy dấu hiệu bẫy tư duy quen thuộc nào trong bài viết.
+                    </p>
+                  ) : (
                     <div className="space-y-2">
                       <span className="text-xs font-bold text-zinc-400 flex items-center gap-1.5">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-400 theme-light:text-amber-900" />
-                        Thiên kiến & Điểm mù nhận diện:
+                        Có thể bạn đang mắc bẫy tư duy:
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {currentReflection.identifiedBiases.map((b, i) => (
+                        {shownTraps(currentReflection).map((b, i) => (
                           <div
                             key={i}
                             className="p-3 rounded-xl bg-zinc-950 border border-amber-500/30 space-y-1.5"
@@ -252,9 +269,11 @@ export default function MetacognitiveReflectionModal({
                               {b.biasName}
                             </div>
                             <p className="text-xs text-zinc-300">{b.explanation}</p>
-                            <div className="p-2 rounded-lg bg-zinc-900 border border-amber-500/20 text-[0.6875rem] text-amber-200 theme-light:text-amber-900/90">
-                              💡 <strong>Gợi ý giải trừ:</strong> {b.antidotePrompt}
-                            </div>
+                            {b.triggerPhrases.length > 0 && (
+                              <p className="text-[0.6875rem] text-zinc-400">
+                                Vì bạn viết: {b.triggerPhrases.map((t) => `“${t}”`).join(', ')}
+                              </p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -285,7 +304,7 @@ export default function MetacognitiveReflectionModal({
                   <div className="p-3 rounded-xl bg-zinc-950 border border-teal-500/30 text-xs space-y-1.5">
                     <span className="font-bold text-teal-400 theme-light:text-teal-900 flex items-center gap-1.5">
                       <ChevronRight className="w-3.5 h-3.5" />
-                      Gợi mở suy ngẫm tiếp theo:
+                      Câu hỏi để bạn suy ngẫm tiếp:
                     </span>
                     {currentReflection.socraticFollowUps.map((fu, i) => (
                       <p key={i} className="text-zinc-300 pl-4 border-l-2 border-teal-500/30">
@@ -300,25 +319,21 @@ export default function MetacognitiveReflectionModal({
             /* History Tab */
             <div className="space-y-4">
               {summary && (
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-teal-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-teal-500/30 flex flex-wrap items-start gap-x-8 gap-y-3 text-xs">
                   <div>
-                    <div className="text-zinc-400">Chỉ số Tự nhận thức (MAI) trung bình</div>
-                    <div className="text-lg font-bold text-teal-400 theme-light:text-teal-900">
-                      {summary.overallAwarenessIndex}/100
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-zinc-400">Xu hướng tư duy</div>
-                    <div className="font-bold text-emerald-400 theme-light:text-emerald-900 uppercase">
-                      {summary.mindsetTrend}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-zinc-400">Tổng số phiên</div>
+                    <div className="text-zinc-400">Đã phản tỉnh</div>
                     <div className="font-bold text-zinc-100">
                       {summary.totalReflectionsCount} phiên
                     </div>
                   </div>
+                  {summary.topDetectedBiases.length > 0 && (
+                    <div className="min-w-0">
+                      <div className="text-zinc-400">Bẫy tư duy bạn hay nhắc tới</div>
+                      <div className="font-bold text-zinc-100">
+                        {summary.topDetectedBiases.map((t) => COGNITIVE_BIAS_LABELS[t]).join(' · ')}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -341,15 +356,14 @@ export default function MetacognitiveReflectionModal({
                       </span>
                     </div>
                     <p className="text-xs text-zinc-300 line-clamp-2">{h.userReflection}</p>
-                    <div className="flex items-center gap-2 pt-1 text-[0.6875rem] text-zinc-400">
-                      <span>
-                        MAI: <strong className="text-white">{h.metacognitiveIndex}</strong>
-                      </span>
-                      <span>•</span>
-                      <span>
-                        Mindset: <strong className="text-white">{h.growthMindsetScore}</strong>
-                      </span>
-                    </div>
+                    {shownTraps(h).length > 0 && (
+                      <p className="pt-1 text-[0.6875rem] text-zinc-400">
+                        Bẫy tư duy gợi ý:{' '}
+                        {shownTraps(h)
+                          .map((b) => COGNITIVE_BIAS_LABELS[b.biasType])
+                          .join(' · ')}
+                      </p>
+                    )}
                   </div>
                 ))
               )}

@@ -4,10 +4,29 @@
 import { jsonResponse } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import { MetacognitiveReflectionService } from '@dhcb/core-personal/metacognitiveReflectionService'
-import { MetacognitiveReflection } from '@dhcb/core-contracts/metacognitiveReflection'
+import {
+  SubmitReflectionRequestSchema,
+  toPublicReflection,
+  type MetacognitiveReflection,
+  type StoredMetacognitiveReflection,
+} from '@dhcb/core-contracts/metacognitiveReflection'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
 
 const FEATURE = 'metacognitive_reflection'
+
+/** Bản ghi THÔ trong CSDL — bản cũ còn hai số giả "MAI"/"Growth Mindset" (changelog 0539). */
+async function readStored(personId: string): Promise<StoredMetacognitiveReflection[]> {
+  const list = await getFeatureState<StoredMetacognitiveReflection[]>(personId, FEATURE)
+  return Array.isArray(list) ? list : []
+}
+
+/**
+ * Danh sách trả cho client: chiếu qua `toPublicReflection` (danh sách trắng) để số giả của bản ghi
+ * cũ không bao giờ rời server. Dữ liệu trong CSDL giữ nguyên — chỉ thôi đọc trường đó.
+ */
+async function readPublic(personId: string): Promise<MetacognitiveReflection[]> {
+  return (await readStored(personId)).map(toPublicReflection)
+}
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
@@ -49,13 +68,12 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     if (action === 'summary') {
-      const list = (await getFeatureState<MetacognitiveReflection[]>(personId, FEATURE)) || []
+      const list = await readPublic(personId)
       const summary = MetacognitiveReflectionService.summarizeReflections(list)
       return jsonResponse({ success: true, summary, reflections: list }, 200)
     }
 
-    const list = (await getFeatureState<MetacognitiveReflection[]>(personId, FEATURE)) || []
-    return jsonResponse({ success: true, reflections: list }, 200)
+    return jsonResponse({ success: true, reflections: await readPublic(personId) }, 200)
   }
 
   if (req.method === 'POST') {
@@ -63,20 +81,16 @@ export default async function handler(req: Request): Promise<Response> {
       const body = await req.json()
 
       if (action === 'submit_reflection') {
-        const { title, domain, reflectionPrompt, userReflection } = body
-        if (!reflectionPrompt || !userReflection) {
+        const parsed = SubmitReflectionRequestSchema.safeParse(body)
+        if (!parsed.success) {
           return jsonResponse({ error: 'Missing required reflection fields' }, 400)
         }
 
-        const analysis = MetacognitiveReflectionService.analyzeReflection(personId, {
-          title,
-          domain: domain || 'learning',
-          reflectionPrompt,
-          userReflection,
-        })
+        const analysis = MetacognitiveReflectionService.analyzeReflection(personId, parsed.data)
 
-        const currentList =
-          (await getFeatureState<MetacognitiveReflection[]>(personId, FEATURE)) || []
+        // Ghi lại NGUYÊN danh sách thô (bản ghi cũ giữ mọi trường của nó — không xoá dữ liệu thật),
+        // chỉ thêm bản ghi mới (không còn trường điểm) lên đầu.
+        const currentList = await readStored(personId)
         currentList.unshift(analysis)
         await setFeatureState(personId, FEATURE, currentList)
 
