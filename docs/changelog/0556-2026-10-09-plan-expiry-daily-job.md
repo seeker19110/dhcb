@@ -1,6 +1,6 @@
 # 0556 — Job hạ gói hết hạn chuyển sang khuôn `startDailyJob` (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (chưa tạo — commit trên nhánh worktree) · **Loại:** `refactor(server)`
+- **Ngày:** 2026-10-09 · **PR:** #1299 · **Loại:** `refactor(server)`
 - **Nguồn:** mục "Sau rà soát" của `0545` — `startPlanExpiryScheduler` cùng khuôn cũ với hai job
   dọn đã chuyển, để đợt riêng vì chạm billing.
 
