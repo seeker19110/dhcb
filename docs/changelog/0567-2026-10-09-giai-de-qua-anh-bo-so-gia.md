@@ -1,6 +1,6 @@
 # 0567 — Giải đề qua ảnh: bỏ độ tin cậy và số token bịa
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `fix(ai)`
+- **Ngày:** 2026-10-09 · **PR:** #1312 · **Loại:** `fix(ai)`
 - **Nguồn:** nợ nhỏ còn sót sau changelog `0563` (gỡ scaffolding giả): "vision `confidence: 0.98`
   hardcoded".
 
