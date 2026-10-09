@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Activity, Sparkles, Layers, TrendingUp } from 'lucide-react'
-import type {
-  L1PhonemeTarget,
-  ArticulatoryGuide,
-  PhoneticAnalysisReport,
-} from '@dhcb/core-contracts/articulatoryPhonetics'
-import { buttonClass } from '@core/buttonStyles'
+import { Activity, Layers } from 'lucide-react'
+import type { L1PhonemeTarget, ArticulatoryGuide } from '@dhcb/core-contracts/articulatoryPhonetics'
+
+// Thẻ CHỈ hướng dẫn khẩu hình (mặt cắt miệng + mẹo đặt lưỡi) cho âm người Việt hay nhầm.
+// Trước changelog 0563 thẻ có nút "Kiểm tra Phát âm": không ghi âm gì, client gửi điểm
+// `Math.random()`, server sinh đường pitch "của bạn" = pitch mẫu + nhiễu ngẫu nhiên rồi hiện
+// "Khớp N%" như kết quả đo — đã gỡ theo khuôn 0484 (không hiện số khi chưa đo được).
 
 const PHONEME_OPTIONS: { target: L1PhonemeTarget; label: string; sample: string }[] = [
   { target: 'TH_VOICELESS', label: '/θ/ (th- vô thanh)', sample: 'think, thought, path' },
@@ -21,8 +21,6 @@ const PHONEME_OPTIONS: { target: L1PhonemeTarget; label: string; sample: string 
 export default function ArticulatoryPhoneticsVisualizer() {
   const [selectedPhoneme, setSelectedPhoneme] = useState<L1PhonemeTarget>('TH_VOICELESS')
   const [guide, setGuide] = useState<ArticulatoryGuide | null>(null)
-  const [report, setReport] = useState<PhoneticAnalysisReport | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false)
 
   useEffect(() => {
     async function loadGuide() {
@@ -40,31 +38,6 @@ export default function ArticulatoryPhoneticsVisualizer() {
     }
     loadGuide()
   }, [selectedPhoneme])
-
-  const handleTestPhonetics = async () => {
-    setIsAnalyzing(true)
-    try {
-      const res = await fetch('/api/articulatory-phonetics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          targetWord:
-            PHONEME_OPTIONS.find((p) => p.target === selectedPhoneme)?.sample.split(',')[0] ||
-            'think',
-          targetPhoneme: selectedPhoneme,
-          scoreEstimate: Math.floor(Math.random() * 15) + 85,
-        }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setReport(data.report)
-      }
-    } catch (err) {
-      console.error('Failed to run phonetics analysis', err)
-    } finally {
-      setIsAnalyzing(false)
-    }
-  }
 
   // Helper để vẽ đường cong giải phẫu lưỡi theo vị trí
   const getTonguePath = (pos: string) => {
@@ -87,7 +60,7 @@ export default function ArticulatoryPhoneticsVisualizer() {
   return (
     <div className="bg-surface-card border border-teal-500/30 rounded-2xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden transition duration-300">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-line-subtle">
+      <div className="pb-4 border-b border-line-subtle">
         <div className="flex min-w-0 items-center gap-3">
           <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 flex items-center justify-center shadow-lg">
             <Activity className="w-5 h-5 text-[#fff]" />
@@ -95,29 +68,18 @@ export default function ArticulatoryPhoneticsVisualizer() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h3 className="text-base font-bold text-white tracking-wide">
-                3D Articulatory Phonetics & Pitch Alignment
+                3D Articulatory Phonetics
               </h3>
               <span className="text-[0.6875rem] px-2 py-0.5 font-bold uppercase rounded-full bg-teal-500/20 text-teal-300 theme-light:text-teal-900 border border-teal-500/30">
                 L1 Special Care
               </span>
             </div>
             <p className="text-xs text-content-secondary">
-              Giải phẫu âm vị học 3D vòm họng & đối sánh đường cong ngữ điệu F0
+              Mặt cắt khẩu hình và mẹo đặt lưỡi cho âm người Việt hay nhầm — không ghi âm, không
+              chấm điểm
             </p>
           </div>
         </div>
-
-        <button
-          onClick={handleTestPhonetics}
-          disabled={isAnalyzing}
-          className={buttonClass({
-            variant: 'primary',
-            className: 'self-start sm:self-auto shrink-0',
-          })}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{isAnalyzing ? 'Đang phân tích...' : 'Kiểm tra Phát âm'}</span>
-        </button>
       </div>
 
       {/* Phoneme selector badges */}
@@ -129,7 +91,6 @@ export default function ArticulatoryPhoneticsVisualizer() {
               key={item.target}
               onClick={() => {
                 setSelectedPhoneme(item.target)
-                setReport(null)
               }}
               aria-pressed={isSelected}
               className={`tap-44-y px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition border ${
@@ -215,6 +176,10 @@ export default function ArticulatoryPhoneticsVisualizer() {
 
           {/* Col 2: Step-by-Step Anatomical Tips & L1 Trap */}
           <div className="lg:col-span-7 space-y-3">
+            <p className="text-xs text-content-secondary">
+              <span className="font-semibold text-content">Từ ví dụ: </span>
+              {PHONEME_OPTIONS.find((p) => p.target === selectedPhoneme)?.sample}
+            </p>
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 theme-light:text-amber-900">
               <span className="font-bold text-amber-300 theme-light:text-amber-900">
                 ⚠️ Lỗi kinh điển người Việt hay mắc:{' '}
@@ -238,50 +203,6 @@ export default function ArticulatoryPhoneticsVisualizer() {
                 ))}
               </ul>
             </div>
-
-            {/* Pitch Contour Result Section if generated */}
-            {report && (
-              <div className="p-3.5 rounded-xl bg-teal-950/40 theme-light:bg-teal-50 border border-teal-500/40 space-y-2 animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-teal-200 theme-light:text-teal-900">
-                    <TrendingUp className="w-4 h-4 text-teal-400 theme-light:text-teal-900" />
-                    <span>Đường cong Ngữ điệu F0 (Pitch Contour):</span>
-                  </div>
-                  <span className="text-xs font-bold text-emerald-300 theme-light:text-emerald-900 bg-emerald-400/10 px-2 py-0.5 rounded">
-                    Khớp {report.pitchContour.alignmentScore}%
-                  </span>
-                </div>
-
-                {/* Simulated Pitch Chart — chú giải nằm DƯỚI biểu đồ, không đè lên đường cong
-                    (chữ đè lên nét vẽ thì nền không xác định, axe không đo được — changelog 0544). */}
-                <div className="h-16 w-full bg-surface-raised rounded-lg p-2 flex items-center overflow-hidden border border-line-subtle">
-                  {/* Native curve */}
-                  <svg className="w-full h-full" viewBox="0 0 300 50">
-                    <path
-                      d="M 10,35 Q 100,10 200,20 T 290,40"
-                      fill="none"
-                      stroke="#64748b"
-                      strokeWidth="2"
-                      strokeDasharray="4 2"
-                    />
-                    <path
-                      d="M 10,38 Q 100,12 200,18 T 290,36"
-                      fill="none"
-                      stroke="#2dd4bf"
-                      strokeWidth="2.5"
-                    />
-                  </svg>
-                </div>
-                <div className="text-right text-[0.6875rem] text-content-secondary">
-                  <span>--- Bản xứ</span> |{' '}
-                  <span className="text-teal-300 theme-light:text-teal-900">― Của bạn</span>
-                </div>
-
-                <p className="text-[0.6875rem] text-content-secondary italic">
-                  💡 {report.pitchContour.coachingAdvice}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       )}

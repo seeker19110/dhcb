@@ -6,9 +6,17 @@ import * as usage from '@dhcb/core-billing/usage'
 import * as visionSolverService from '@dhcb/core-ai/visionSolverService'
 import { AppError } from '@dhcb/core-errors/appError'
 
+const VALID_BODY = JSON.stringify({
+  imageBase64:
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  subjectId: 'mathematics',
+  gradeLevel: 'grade_12',
+})
+
 describe('POST /api/vision-solve', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
     vi.spyOn(security, 'checkRateLimit').mockResolvedValue(true)
     // Mặc định cho qua đếm lượt — test riêng ở dưới sẽ ghi đè khi cần kiểm nhánh 429/lỗi.
     vi.spyOn(usage, 'checkAndConsumeUsage').mockResolvedValue({
@@ -47,27 +55,44 @@ describe('POST /api/vision-solve', () => {
     expect(res.status).toBe(400)
   })
 
-  it('successfully solves problem from image', async () => {
+  it('trả lời giải khi service giải được', async () => {
     vi.spyOn(security, 'validateAuth').mockResolvedValue({
       userId: 'user-1',
+    })
+    vi.spyOn(visionSolverService, 'solveProblemWithVision').mockResolvedValueOnce({
+      problemText: 'Giải 2x + 4 = 0',
+      steps: [{ title: 'Bước 1', detail: '2x = -4' }],
+      finalAnswer: 'x = -2',
+      confidence: 0.98,
+      tokenUsed: 300,
     })
     const req = new Request('http://localhost/api/vision-solve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64:
-          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-        subjectId: 'mathematics',
-        gradeLevel: 'grade_12',
-      }),
+      body: VALID_BODY,
     })
     const res = await handler(req)
     expect(res.status).toBe(200)
 
     const data = await res.json()
-    expect(data.problemText).toBeTruthy()
-    expect(data.steps.length).toBeGreaterThan(0)
-    expect(data.finalAnswer).toBeTruthy()
+    expect(data.finalAnswer).toBe('x = -2')
+    expect(usage.refundUsage).not.toHaveBeenCalled()
+  })
+
+  it('thiếu GEMINI_API_KEY ⇒ 503 + HOÀN lượt, không trả lời giải giả (changelog 0563)', async () => {
+    vi.stubEnv('GEMINI_API_KEY', '')
+    vi.spyOn(security, 'validateAuth').mockResolvedValue({ userId: 'user-1' })
+    const req = new Request('http://localhost/api/vision-solve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: VALID_BODY,
+    })
+    const res = await handler(req)
+    expect(res.status).toBe(503)
+    const data = await res.json()
+    expect(data.error.code).toBe('vision_unavailable')
+    expect(data.finalAnswer).toBeUndefined()
+    expect(usage.refundUsage).toHaveBeenCalledWith('user-1', 'chat', '2026-09-05')
   })
 
   it('trả 429 khi vượt rate limit', async () => {

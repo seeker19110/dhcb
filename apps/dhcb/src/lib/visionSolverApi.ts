@@ -9,9 +9,27 @@ export async function solveProblemImage(request: VisionSolveRequest): Promise<Vi
   })
 
   if (!resp.ok) {
-    const data = await resp.json().catch(() => ({}))
-    throw new Error(data.error || `Lỗi giải bài tập qua hình ảnh (${resp.status})`)
+    const data: unknown = await resp.json().catch(() => ({}))
+    throw new Error(readErrorMessage(data) ?? `Lỗi giải bài tập qua hình ảnh (${resp.status})`)
   }
 
   return resp.json()
+}
+
+/**
+ * Server trả lỗi theo hai khuôn: `{error: 'chuỗi'}` (handler cũ) và `{error: {message, code}}`
+ * (`AppError`, vd 503 khi server chưa cấu hình key AI). Đọc được cả hai, tránh hiện "[object Object]".
+ */
+function readErrorMessage(data: unknown): string | undefined {
+  if (typeof data !== 'object' || data === null || !('error' in data)) return undefined
+  const err = data.error
+  if (typeof err === 'string') return err
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof err.message === 'string'
+  )
+    return err.message
+  return undefined
 }

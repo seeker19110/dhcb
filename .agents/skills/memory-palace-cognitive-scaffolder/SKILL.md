@@ -36,6 +36,10 @@ giao diện `apps/dhcb/src/components/MemoryPalace/` (`MemoryPalaceCard`,
   `stem_laboratory` (công thức) · `zen_garden` (tĩnh tâm).
 - Điểm neo sinh từ mẫu theo chủ đề; id phòng/điểm neo dùng `randomUUID()` — đừng quay lại id dựa
   trên thời gian (từng trùng id khi tạo cùng mili-giây).
+- **Độ bền ghi nhớ (`retentionStrength`)** khởi điểm `INITIAL_RETENTION_STRENGTH = 0` và CHỈ đổi
+  qua ôn thật (`verifyLocusRecall`: đúng +15, sai −5, kẹp [0, 100]). Trước changelog 0563 nó là
+  `70 + random(25)` hiển thị như số đo — đừng quay lại. Giao diện hiện "Chưa ôn" khi điểm neo chưa
+  có `lastRecalledAt`, chỉ hiện "%" sau lần ôn đầu.
 - Giao diện là thẻ + danh sách điểm neo. **CHƯA CÓ** không gian 3D/isometric.
 
 ---

@@ -1832,5 +1832,11 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   `GEMINI_API_KEY` thật (sandbox không có key) — trước khi dùng thật cần: (1) thêm
   `GEMINI_API_KEY` vào `.env`, (2) xác nhận model Live khả dụng qua `GEMINI_LIVE_MODEL` (mặc định
   `gemini-2.0-flash-exp`, Google hay đổi tên/khả dụng model Live), (3) thử 1 phiên thật qua
-  `/ws/gemini-live`, (4) audit lại các file "V6.x/V7.0" khác cùng thời điểm với `cf44362` xem có
-  scaffolding giả tương tự không (chưa rà — người dùng đã được báo, quyết định xử lý riêng sau).
+  `/ws/gemini-live`, (4) ✅ **ĐÃ RÀ ở changelog `0563`** các file "V6.x/V7.0" cùng thời điểm
+  `cf44362`: gỡ `/api/co-learning-audio` + service + hợp đồng (0 client từ #628/#644, Map phòng
+  không TTL) và `scripts/stress-test.ts` (mọi request 401 vẫn tính là thành công); sửa 3 chỗ số
+  giả (độ bền Cung điện trí nhớ `random`, Vision Solver trả lời giải bịa khi thiếu key mà vẫn trừ
+  lượt, "Khớp N%" pitch ngẫu nhiên ở thẻ khẩu hình). **Chờ chủ dự án quyết:** Gemini Live
+  (`/api/gemini-live`, `/ws/gemini-live`) là mã thật nhưng CHƯA có client nào trong `apps/` —
+  giữ / gỡ / xây client; dòng VIP "Nói chuyện trực tiếp với gia sư bằng giọng (đang thử nghiệm)"
+  ở `UpgradeSection.tsx` đang quảng cáo đúng tính năng chưa có client đó.

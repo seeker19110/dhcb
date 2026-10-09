@@ -62,7 +62,13 @@ khẩu hình và các lab luyện phát âm.
   `packages/core-ai/pronunciationHints.ts`, hàm thuần chạy ở giao diện): chỉ ra âm người Việt hay
   nhầm trong câu mẫu (ma trận lỗi L1) + mẹo đặt lưỡi, **không con số**. `/api/acoustic-phonetics`
   trả 501.
+- **"Pitch Alignment" ĐÃ GỠ (changelog 0563).** `ArticulatoryPhoneticsVisualizer` từng có nút
+  "Kiểm tra Phát âm": không ghi âm, client gửi điểm `Math.random()`, server sinh đường pitch "của
+  bạn" = pitch mẫu + nhiễu ngẫu nhiên rồi hiện "Khớp N%". Nay thẻ chỉ còn mặt cắt khẩu hình + mẹo
+  đặt lưỡi; POST `/api/articulatory-phonetics` trả 501 `PITCH_ANALYSIS_UNAVAILABLE`, hợp đồng bỏ
+  `PitchContourData`/`PhoneticAnalysisReport`.
 - Chấm phát âm thật cần forced alignment trên âm thanh (CTC/GOP đúng nghĩa) — việc lớn, cần đặc tả.
+  Đo ngữ điệu thật cũng vậy (ghi âm + trích F0) — không thêm lại "% khớp" khi chưa đo.
 
 ---
 

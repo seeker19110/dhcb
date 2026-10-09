@@ -72,13 +72,19 @@ const CARDS: InteractiveCard[] = [
   {
     card: 'Phát âm 3D',
     studio: 'Thử thách',
-    title: '3D Articulatory Phonetics & Pitch Alignment',
+    title: '3D Articulatory Phonetics',
     states: [
       {
-        name: 'kết quả đường cong F0',
+        // Nút "Kiểm tra Phát âm" + kết quả đường cong F0 (số giả) đã gỡ ở changelog 0563 — trạng
+        // thái sau tương tác còn lại là đổi âm vị đang chọn rồi hướng dẫn khẩu hình hiện ra.
+        name: 'chọn âm khác (thẻ đang chọn + hướng dẫn)',
         enter: async (page) => {
-          await page.getByRole('button', { name: /Kiểm tra Phát âm/ }).click()
-          await expect(page.getByText(MOCK_TEXT.phoneticAdvice, { exact: false })).toBeVisible()
+          const tab = page.getByRole('button', { name: /th- hữu thanh/ })
+          await tab.click()
+          await expect(tab).toHaveAttribute('aria-pressed', 'true')
+          await expect(
+            page.getByText(MOCK_TEXT.articulatoryMistake, { exact: false }),
+          ).toBeVisible()
         },
       },
     ],

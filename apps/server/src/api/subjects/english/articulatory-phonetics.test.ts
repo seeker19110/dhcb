@@ -13,16 +13,7 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
-vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({}) }))
-
-const getOrCreatePerson = vi.fn()
-vi.mock('@dhcb/core-personal/personService', () => ({
-  getOrCreatePerson: (...a: unknown[]) => getOrCreatePerson(...a),
-}))
-
 import handler from './articulatory-phonetics.js'
-
-const PERSON = '11111111-1111-4111-8111-111111111111'
 
 function req(method: string, body?: unknown, searchParams?: string) {
   const url = searchParams
@@ -41,7 +32,6 @@ describe('api/articulatory-phonetics', () => {
     vi.clearAllMocks()
     authState.user = { userId: 'user-1' }
     rateLimitOk = true
-    getOrCreatePerson.mockResolvedValue({ id: PERSON })
   })
 
   it('handles GET guides list and specific phoneme guide', async () => {
@@ -56,19 +46,15 @@ describe('api/articulatory-phonetics', () => {
     expect(singleData.guide.ipaSymbol).toBe('/θ/')
   })
 
-  it('handles POST phonetics and pitch analysis report', async () => {
+  it('POST trả 501 PITCH_ANALYSIS_UNAVAILABLE, không có điểm/đường pitch (changelog 0563)', async () => {
     const res = await handler(
-      req('POST', {
-        targetWord: 'think',
-        targetPhoneme: 'TH_VOICELESS',
-        scoreEstimate: 91,
-      }),
+      req('POST', { targetWord: 'think', targetPhoneme: 'TH_VOICELESS', scoreEstimate: 91 }),
     )
-    expect(res.status).toBe(200)
+    expect(res.status).toBe(501)
     const data = await res.json()
-    expect(data.report).toBeDefined()
-    expect(data.report.overallPhoneticScore).toBe(91)
-    expect(data.report.pitchContour).toBeDefined()
+    expect(data.error).toBe('PITCH_ANALYSIS_UNAVAILABLE')
+    expect(data.report).toBeUndefined()
+    expect(JSON.stringify(data)).not.toMatch(/alignmentScore|pitchContour|overallPhoneticScore/)
   })
 
   it('returns 401 when unauthorized', async () => {
@@ -88,14 +74,14 @@ describe('api/articulatory-phonetics', () => {
     expect(res.status).toBe(429)
   })
 
-  it('returns 400 on invalid POST body', async () => {
+  it('POST body hỏng vẫn 501 (không còn đọc body)', async () => {
     const badReq = new Request('http://localhost/api/articulatory-phonetics', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: 'bad-json{',
     })
     const res = await handler(badReq)
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(501)
   })
 
   it('returns 405 for unsupported method like PUT', async () => {
@@ -103,9 +89,8 @@ describe('api/articulatory-phonetics', () => {
     expect(res.status).toBe(405)
   })
 
-  it('handles unexpected internal error with 500', async () => {
-    getOrCreatePerson.mockRejectedValueOnce(new Error('DB failure'))
-    const res = await handler(req('GET'))
-    expect(res.status).toBe(500)
+  it('GET với phoneme không hợp lệ ⇒ 400', async () => {
+    const res = await handler(req('GET', undefined, 'phoneme=KHONG_CO'))
+    expect(res.status).toBe(400)
   })
 })

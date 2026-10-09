@@ -1,4 +1,5 @@
 // packages/core-ai/visionSolverService.ts — V2 Flagship Multimodal Vision STEM Solver Service.
+import { AppError } from '@dhcb/core-errors/appError'
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 import type {
   VisionSolveRequest,
@@ -7,6 +8,39 @@ import type {
 } from '@dhcb/core-contracts/visionSolver'
 
 const VISION_TIMEOUT_MS = 35_000
+
+/**
+ * Server chưa cấu hình `GEMINI_API_KEY` ⇒ KHÔNG giải được. Trước 0563 nhánh này trả một lời
+ * giải bịa (nhánh "giả lập" với `confidence: 0.95`, "Đáp số đã được xác minh chính xác.") trong
+ * khi handler đã trừ lượt — người học mất lượt để nhận kết quả giả. Nay ném lỗi 503 có tên để
+ * handler hoàn lượt và báo thật.
+ */
+export class VisionSolverUnavailableError extends AppError {
+  constructor() {
+    super(
+      'Tính năng giải bài qua ảnh tạm thời chưa sẵn sàng — thử lại sau.',
+      503,
+      'vision_unavailable',
+    )
+    this.name = 'VisionSolverUnavailableError'
+  }
+}
+
+/**
+ * AI trả về văn bản KHÔNG đúng khuôn JSON lời giải ⇒ không có lời giải đáng tin. Trước 0563 nhánh
+ * này ghép 3 "bước giải" mẫu cố định (`f(x) = 0`, công thức nghiệm bậc hai) kèm "Đáp số đã được
+ * xác minh chính xác." — cũng là kết quả bịa. Nay ném 502 để handler hoàn lượt.
+ */
+export class VisionSolverBadOutputError extends AppError {
+  constructor() {
+    super(
+      'Không đọc được lời giải từ ảnh — hãy chụp rõ đề bài rồi thử lại.',
+      502,
+      'vision_bad_output',
+    )
+    this.name = 'VisionSolverBadOutputError'
+  }
+}
 
 export interface GeminiVisionPart {
   text?: string
@@ -30,13 +64,12 @@ export function cleanBase64(raw: string): { data: string; mimeType: string } {
 }
 
 /**
- * Parses structured solution JSON from AI text response or falls back to robust step parser.
+ * Đọc lời giải dạng JSON từ văn bản AI trả về. Trả `null` khi văn bản không đúng khuôn — nơi gọi
+ * phải coi đó là LỖI, không được bịa bước giải thay thế.
  */
 export function parseVisionSolutionText(
   aiText: string,
-  subjectId: string,
-): { problemText: string; steps: VisionSolvedStep[]; finalAnswer: string } {
-  // Try parsing JSON block if returned
+): { problemText: string; steps: VisionSolvedStep[]; finalAnswer: string } | null {
   const jsonMatch = aiText.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
   const targetStr = jsonMatch && jsonMatch[1] ? jsonMatch[1] : aiText.trim()
 
@@ -59,37 +92,14 @@ export function parseVisionSolutionText(
       }
     }
   } catch {
-    // Fallback text parsing
+    // Không phải JSON hợp lệ — rơi xuống trả null.
   }
-
-  // Generate structured steps from subject template
-  const defaultSteps: VisionSolvedStep[] = [
-    {
-      title: 'Bước 1: Nhận diện giả thiết & Phương trình',
-      detail: `Trích xuất đề bài môn ${subjectId} từ hình ảnh và xác định đại lượng cần tính.`,
-      formula: 'f(x) = 0',
-    },
-    {
-      title: 'Bước 2: Thực hiện biến đổi toán/khoa học',
-      detail: 'Áp dụng định lý cốt lõi và các bước biến đổi chi tiết.',
-      formula: 'x = \\frac{-b \\pm \\sqrt{\\Delta}}{2a}',
-    },
-    {
-      title: 'Bước 3: Kiểm tra điều kiện & Kết luận',
-      detail: 'Đối chiếu điều kiện xác định và đưa ra đáp số chuẩn xác.',
-    },
-  ]
-
-  return {
-    problemText:
-      aiText.length > 0 ? aiText.slice(0, 300) : `Bài tập ${subjectId} từ hình ảnh tải lên`,
-    steps: defaultSteps,
-    finalAnswer: 'Đáp số đã được xác minh chính xác.',
-  }
+  return null
 }
 
 /**
- * Executes multimodal vision problem solving using Google Gemini 2.0 Flash or local simulation.
+ * Giải bài tập trong ảnh bằng Gemini Vision. Thiếu key ⇒ `VisionSolverUnavailableError` (503);
+ * AI trả sai khuôn ⇒ `VisionSolverBadOutputError` (502). Không có nhánh giả lập.
  */
 export async function solveProblemWithVision(
   request: VisionSolveRequest,
@@ -103,15 +113,7 @@ export async function solveProblemWithVision(
   const { data, mimeType } = cleanBase64(request.imageBase64)
 
   if (!effectiveKey) {
-    // Mock simulation for test/local environments
-    const fallbackParsed = parseVisionSolutionText('', request.subjectId)
-    return {
-      problemText: `[Ảnh đề bài môn ${request.subjectId}]: ${request.userPrompt || 'Giải bài tập trong ảnh'}`,
-      steps: fallbackParsed.steps,
-      finalAnswer: fallbackParsed.finalAnswer,
-      confidence: 0.95,
-      tokenUsed: 280,
-    }
+    throw new VisionSolverUnavailableError()
   }
 
   const prompt = `Bạn là Chuyên gia Trợ lý Sư phạm STEM hàng đầu Việt Nam. 
@@ -172,7 +174,8 @@ Hãy đọc kỹ hình ảnh bài tập môn ${request.subjectId} (Cấp độ: 
   }
 
   const responseText = jsonResp.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  const parsed = parseVisionSolutionText(responseText, request.subjectId)
+  const parsed = parseVisionSolutionText(responseText)
+  if (!parsed) throw new VisionSolverBadOutputError()
 
   return {
     problemText: parsed.problemText,

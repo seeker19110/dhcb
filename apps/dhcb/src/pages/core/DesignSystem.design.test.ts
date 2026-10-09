@@ -128,7 +128,6 @@ describe('Nút CTA đặc không còn tự ghép màu lệch accent (M17 đợt 
     'components/studyTabs/TodayLesson.tsx',
     'components/CefrLessonViews.tsx',
     'components/ExamQuestionCard.tsx',
-    'components/CompanionVoice/ArticulatoryPhoneticsVisualizer.tsx',
     'components/CompanionVoice/ScenarioHolodeckCard.tsx',
     'components/CompanionVoice/PronunciationHintsCard.tsx',
     'components/CompanionVoice/A2ANegotiatorCard.tsx',

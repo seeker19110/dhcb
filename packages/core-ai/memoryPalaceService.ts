@@ -7,6 +7,17 @@ import {
   LocusRecallResult,
 } from '@dhcb/core-contracts/memoryPalace'
 
+/**
+ * Độ bền ghi nhớ của một điểm neo VỪA TẠO, chưa ôn lần nào. Trước 0563 giá trị này là
+ * `70 + random(25)` — một con số bịa hiển thị như kết quả đo. Nay khởi điểm 0 và CHỈ tăng/giảm
+ * qua ôn tập thật (`verifyLocusRecall`); giao diện nhìn `lastRecalledAt` để hiện "Chưa ôn".
+ */
+export const INITIAL_RETENTION_STRENGTH = 0
+/** Biên độ cộng/trừ độ bền sau mỗi lần ôn (đúng/sai). */
+const RECALL_GAIN = 15
+const RECALL_PENALTY = 5
+const MAX_RETENTION = 100
+
 export class MemoryPalaceService {
   /**
    * Tạo phòng cung điện trí nhớ theo chủ đề với các điểm neo loci mặc định và câu chuyện mnemonics.
@@ -151,7 +162,7 @@ export class MemoryPalaceService {
           keyConcept: concept.keyConcept,
           mnemonicStory: concept.mnemonicStory,
           category: concept.category,
-          retentionStrength: 70 + Math.floor(Math.random() * 25),
+          retentionStrength: INITIAL_RETENTION_STRENGTH,
           mastered: false,
         })
       }
@@ -204,7 +215,15 @@ export class MemoryPalaceService {
       100,
       Math.round(similarityRatio * 80 + (normalizedUser.length > 10 ? 20 : 0)),
     )
-    const strengthenedRetention = Math.min(100, locus.retentionStrength + (isAccurate ? 15 : -5))
+    // Kẹp trong [0, 100]: từ khởi điểm 0, trả lời sai lần đầu không được rơi xuống -5
+    // (hợp đồng `retentionStrength` là min(0) — giá trị âm làm hỏng lần đọc sau).
+    const strengthenedRetention = Math.max(
+      0,
+      Math.min(
+        MAX_RETENTION,
+        locus.retentionStrength + (isAccurate ? RECALL_GAIN : -RECALL_PENALTY),
+      ),
+    )
 
     const nextDate = new Date()
     nextDate.setDate(nextDate.getDate() + (isAccurate ? 7 : 1))
