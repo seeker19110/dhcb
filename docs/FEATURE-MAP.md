@@ -6,13 +6,9 @@ Nguồn: `apps/dhcb/src/App.tsx` (route giao diện) + `apps/server/src/routes.t
 Dùng để **đối chiếu chéo tính năng** trong audit toàn diện (Nhóm 12): một tính năng có màn hình
 mà không có API, hoặc có API mà không màn hình nào gọi, là dấu hiệu việc làm dở dang.
 
-Tổng: **104 route giao diện** · **111 endpoint API**.
+Tổng: **128 route giao diện** · **113 endpoint API**.
 
 ## Route giao diện theo trụ
-
-### `/:subjectId` — 1 route
-
-- `/:subjectId`
 
 ### `/(gốc)` — 1 route
 
@@ -44,7 +40,7 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/bai-hoc` — 1 route
 
-- `/bai-hoc`
+- `/bai-hoc/*`
 
 ### `/ban-be` — 1 route
 
@@ -54,9 +50,10 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/ban-dong-hanh`
 
-### `/bat-dau` — 1 route
+### `/bat-dau` — 2 route
 
 - `/bat-dau`
+- `/bat-dau/doi-song`
 
 ### `/cai-dat` — 1 route
 
@@ -69,7 +66,7 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/cau-thong-dung` — 1 route
 
-- `/cau-thong-dung`
+- `/cau-thong-dung/*`
 
 ### `/companion` — 1 route
 
@@ -99,13 +96,58 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/dong-hanh`
 
-### `/english` — 1 route
+### `/english` — 2 route
 
 - `/english`
+- `/english/*`
+
+### `/ghi-chu` — 2 route
+
+- `/ghi-chu`
+- `/ghi-chu/kanban`
 
 ### `/gioi-thieu` — 1 route
 
 - `/gioi-thieu`
+
+### `/goc-hoc-tap` — 36 route
+
+- `/goc-hoc-tap`
+- `/goc-hoc-tap/:subjectId`
+- `/goc-hoc-tap/:subjectId/bai-hoc`
+- `/goc-hoc-tap/:subjectId/bai-hoc/:lessonSlug`
+- `/goc-hoc-tap/:subjectId/on-tap`
+- `/goc-hoc-tap/english`
+- `/goc-hoc-tap/english/bai-hoc`
+- `/goc-hoc-tap/english/cau-thong-dung`
+- `/goc-hoc-tap/english/lo-trinh`
+- `/goc-hoc-tap/english/lo-trinh/:levelId`
+- `/goc-hoc-tap/english/luyen-nghe`
+- `/goc-hoc-tap/english/luyen-noi`
+- `/goc-hoc-tap/english/luyen-viet`
+- `/goc-hoc-tap/english/on-thi`
+- `/goc-hoc-tap/english/so-tay-loi-sai`
+- `/goc-hoc-tap/english/thu-thach`
+- `/goc-hoc-tap/english/tro-truyen`
+- `/goc-hoc-tap/english/truyen`
+- `/goc-hoc-tap/english/truyen/:id`
+- `/goc-hoc-tap/english/tu-dien`
+- `/goc-hoc-tap/english/tu-dien/:word`
+- `/goc-hoc-tap/on-tap`
+- `/goc-hoc-tap/programming`
+- `/goc-hoc-tap/programming/bac/:levelId`
+- `/goc-hoc-tap/programming/bai-hoc/:lessonId`
+- `/goc-hoc-tap/programming/chay-thu`
+- `/goc-hoc-tap/programming/du-an`
+- `/goc-hoc-tap/programming/gioi-thieu`
+- `/goc-hoc-tap/programming/huong`
+- `/goc-hoc-tap/programming/huong/:specId`
+- `/goc-hoc-tap/programming/huong/:specId/:stageId`
+- `/goc-hoc-tap/programming/khoa-hoc/:courseId`
+- `/goc-hoc-tap/programming/lo-trinh/:pathId`
+- `/goc-hoc-tap/programming/lo-trinh/:pathId/chan-doan`
+- `/goc-hoc-tap/programming/lo-trinh/:pathId/chang/:stageId`
+- `/goc-hoc-tap/programming/on-tap`
 
 ### `/hoc-cong-viec` — 1 route
 
@@ -122,15 +164,16 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/hoc-mon-hoc` — 2 route
 
 - `/hoc-mon-hoc`
-- `/hoc-mon-hoc/:subjectId`
+- `/hoc-mon-hoc/*`
 
 ### `/hoc-su-nghiep` — 1 route
 
 - `/hoc-su-nghiep`
 
-### `/hoc-tieng-anh` — 1 route
+### `/hoc-tieng-anh` — 2 route
 
 - `/hoc-tieng-anh`
+- `/hoc-tieng-anh/*`
 
 ### `/ket-ban` — 1 route
 
@@ -140,23 +183,9 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/khoi-nghiep`
 
-### `/lap-trinh` — 15 route
+### `/lap-trinh` — 1 route
 
-- `/lap-trinh`
-- `/lap-trinh/:levelId`
-- `/lap-trinh/bai-hoc/:lessonId`
-- `/lap-trinh/chay-thu`
-- `/lap-trinh/du-an`
-- `/lap-trinh/gioi-thieu`
-- `/lap-trinh/huong`
-- `/lap-trinh/huong/:specId`
-- `/lap-trinh/huong/:specId/:stageId`
-- `/lap-trinh/khoa-hoc/:courseId`
-- `/lap-trinh/khoa/:courseId`
-- `/lap-trinh/lo-trinh/:pathId`
-- `/lap-trinh/lo-trinh/:pathId/chan-doan`
-- `/lap-trinh/lo-trinh/:pathId/chang/:stageId`
-- `/lap-trinh/on-tap`
+- `/lap-trinh/*`
 
 ### `/learn-vietnamese` — 1 route
 
@@ -176,10 +205,9 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/life-graph`
 
-### `/lo-trinh-hoc` — 2 route
+### `/lo-trinh-hoc` — 1 route
 
-- `/lo-trinh-hoc`
-- `/lo-trinh-hoc/:levelId`
+- `/lo-trinh-hoc/*`
 
 ### `/login` — 1 route
 
@@ -187,11 +215,11 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/luyen-nghe` — 1 route
 
-- `/luyen-nghe`
+- `/luyen-nghe/*`
 
 ### `/luyen-noi` — 1 route
 
-- `/luyen-noi`
+- `/luyen-noi/*`
 
 ### `/luyen-tap` — 1 route
 
@@ -199,17 +227,16 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/luyen-viet` — 1 route
 
-- `/luyen-viet`
+- `/luyen-viet/*`
 
 ### `/mo-phong` — 1 route
 
 - `/mo-phong`
 
-### `/mon-hoc` — 3 route
+### `/mon-hoc` — 2 route
 
 - `/mon-hoc`
-- `/mon-hoc/:subjectId`
-- `/mon-hoc/programming`
+- `/mon-hoc/*`
 
 ### `/nang-cap` — 1 route
 
@@ -226,7 +253,7 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/on-thi` — 1 route
 
-- `/on-thi`
+- `/on-thi/*`
 
 ### `/onboarding` — 1 route
 
@@ -235,7 +262,7 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/phong-hoc` — 2 route
 
 - `/phong-hoc`
-- `/phong-hoc/:subjectId`
+- `/phong-hoc/*`
 
 ### `/phong-luyen-tap` — 1 route
 
@@ -263,7 +290,7 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/so-tay-loi-sai` — 1 route
 
-- `/so-tay-loi-sai`
+- `/so-tay-loi-sai/*`
 
 ### `/startup` — 2 route
 
@@ -285,19 +312,20 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/subjects` — 2 route
 
 - `/subjects`
-- `/subjects/:subjectId`
+- `/subjects/*`
 
 ### `/thu-thach` — 1 route
 
-- `/thu-thach`
+- `/thu-thach/*`
 
 ### `/tien-do` — 1 route
 
 - `/tien-do`
 
-### `/tieng-anh` — 1 route
+### `/tieng-anh` — 2 route
 
 - `/tieng-anh`
+- `/tieng-anh/*`
 
 ### `/tin-nhan` — 1 route
 
@@ -313,20 +341,19 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 ### `/tro-truyen` — 1 route
 
-- `/tro-truyen`
+- `/tro-truyen/*`
 
-### `/truyen-song-ngu` — 2 route
+### `/truyen-song-ngu` — 1 route
 
-- `/truyen-song-ngu`
-- `/truyen-song-ngu/:id`
+- `/truyen-song-ngu/*`
 
 ### `/tu-dien` — 1 route
 
-- `/tu-dien`
+- `/tu-dien/*`
 
 ### `/tu-vung` — 1 route
 
-- `/tu-vung/:word`
+- `/tu-vung/*`
 
 ### `/ung-dung-thuc-te` — 1 route
 
@@ -350,6 +377,10 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/api/a2a` — 1 endpoint
 
 - `/api/a2a`
+
+### `/api/account` — 1 endpoint
+
+- `/api/account`
 
 ### `/api/achievements` — 1 endpoint
 
@@ -406,6 +437,10 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/api/admin-settings` — 1 endpoint
 
 - `/api/admin-settings`
+
+### `/api/admin-stem-review` — 1 endpoint
+
+- `/api/admin-stem-review`
 
 ### `/api/admin-system-control` — 1 endpoint
 
@@ -471,13 +506,9 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/api/avatar-visemes`
 
-### `/api/career` — 1 endpoint
+### `/api/cefr-assessment` — 1 endpoint
 
-- `/api/career`
-
-### `/api/career-interview` — 1 endpoint
-
-- `/api/career-interview`
+- `/api/cefr-assessment`
 
 ### `/api/challenge` — 1 endpoint
 
@@ -563,13 +594,17 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 
 - `/api/leaderboard`
 
+### `/api/learner-intent` — 1 endpoint
+
+- `/api/learner-intent`
+
+### `/api/learning` — 1 endpoint
+
+- `/api/learning/evidence`
+
 ### `/api/learning-read-model` — 1 endpoint
 
 - `/api/learning-read-model`
-
-### `/api/life` — 1 endpoint
-
-- `/api/life`
 
 ### `/api/life-goals` — 1 endpoint
 
@@ -614,6 +649,10 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/api/neuro-affective` — 1 endpoint
 
 - `/api/neuro-affective`
+
+### `/api/payment-cancel` — 1 endpoint
+
+- `/api/payment-cancel`
 
 ### `/api/payment-history` — 1 endpoint
 
@@ -713,10 +752,6 @@ Tổng: **104 route giao diện** · **111 endpoint API**.
 ### `/api/socratic-diagnostics` — 1 endpoint
 
 - `/api/socratic-diagnostics`
-
-### `/api/startup` — 1 endpoint
-
-- `/api/startup`
 
 ### `/api/stem-scratchpad` — 1 endpoint
 

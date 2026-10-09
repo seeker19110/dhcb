@@ -11,9 +11,66 @@ import path from 'node:path'
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..')
 
-/** Mọi `path="..."` khai trong cây route của app chính. */
-export function extractRoutes(appSource: string): string[] {
-  const found = [...appSource.matchAll(/path="([^"]+)"/g)].map((m) => m[1] as string)
+/** Giá trị đã biết của các hằng/hàm/mảng mà `App.tsx` dùng để ghép `path` (nạp từ mã thật). */
+export interface RouteConstants {
+  /** Hằng chuỗi hoặc hàm không tham số: `PROGRAMMING_PREFIX`, `duongDanMonTiengAnh()`. */
+  scalars: Record<string, string>
+  /** Mảng đường dẫn được `.map()` ra từng `<Route>`: `LEGACY_NOTES_PATHS`… */
+  lists: Record<string, readonly string[]>
+}
+
+const NO_CONSTANTS: RouteConstants = { scalars: {}, lists: {} }
+
+/** Thay `${NAME}` / `${NAME()}` trong khuôn template bằng giá trị đã biết; không biết → null. */
+function fillTemplate(tpl: string, vars: Record<string, string>): string | null {
+  let unknown = false
+  const out = tpl.replace(/\$\{\s*(\w+)(\(\))?\s*\}/g, (_m, name: string) => {
+    const v = vars[name]
+    if (v === undefined) unknown = true
+    return v ?? ''
+  })
+  return unknown ? null : out
+}
+
+/** Rút giá trị từ MỘT thuộc tính path: `"x"` · `{`tpl`}` · `{NAME}` · `{NAME()}`. */
+function resolvePathAttr(expr: string, vars: Record<string, string>): string | null {
+  const lit = /^"([^"]+)"$/.exec(expr)
+  if (lit) return lit[1] as string
+  const tpl = /^\{`([^`]+)`\}$/.exec(expr)
+  if (tpl) return fillTemplate(tpl[1] as string, vars)
+  const ref = /^\{\s*(\w+)(\(\))?\s*\}$/.exec(expr)
+  if (ref) return vars[ref[1] as string] ?? null
+  return null
+}
+
+const PATH_ATTR = /\bpath=("[^"]+"|\{`[^`]+`\}|\{\s*\w+(?:\(\))?\s*\})/g
+
+/**
+ * Mọi route khai trong cây `<Routes>` của app chính. Hiểu ba dạng khai: `path="/x"`,
+ * `path={`${PREFIX}/x`}` / `path={PREFIX}` (hằng đã biết) và vòng
+ * `{DANH_SACH.map((p) => <Route path={p} …/>)}` (mảng đã biết). Dạng động không giải được → bỏ qua.
+ */
+export function extractRoutes(appSource: string, consts: RouteConstants = NO_CONSTANTS): string[] {
+  const found: string[] = []
+  // Vòng .map(): cắt thân tới `))}` kế tiếp, thay biến vòng bằng từng phần tử của mảng.
+  const mapBlocks = [...appSource.matchAll(/\{(\w+)\.map\(\((\w+)\) =>[\s\S]*?\)\)\}/g)]
+  for (const m of mapBlocks) {
+    const list = consts.lists[m[1] as string]
+    if (!list) continue
+    for (const item of list) {
+      const vars = { ...consts.scalars, [m[2] as string]: item }
+      for (const a of m[0].matchAll(PATH_ATTR)) {
+        const r = resolvePathAttr(a[1] as string, vars)
+        if (r) found.push(r)
+      }
+    }
+  }
+  // Phần còn lại (ngoài các vòng .map()).
+  const rest = mapBlocks.reduce((src, m) => src.replace(m[0], ''), appSource)
+  for (const a of rest.matchAll(PATH_ATTR)) {
+    const r = resolvePathAttr(a[1] as string, consts.scalars)
+    if (r) found.push(r)
+  }
   return [...new Set(found)].sort()
 }
 
@@ -72,12 +129,40 @@ function render(routes: string[], apis: string[]): string {
   return lines.join('\n')
 }
 
-function main(): void {
+/** Nạp giá trị thật của các hằng route từ mã nguồn app (không chép tay → không lệch). */
+async function loadRouteConstants(): Promise<RouteConstants> {
+  const hosts = await import('../apps/dhcb/src/lib/subjectsHost')
+  const nav = await import('../apps/dhcb/src/lib/navPaths')
+  const { SUBJECTS_ON_APP_HOST } = await import('@dhcb/core-learner/subjectHome')
+  const { ENGLISH_PREFIX } = await import('../apps/dhcb/src/lib/englishRoutes')
+  return {
+    scalars: {
+      // programmingRoutes.ts kéo theo alias `@core/…` mà tsconfig.api.json không có → lấy qua bảng môn.
+      PROGRAMMING_PREFIX: SUBJECTS_ON_APP_HOST.programming as string,
+      ENGLISH_PREFIX,
+      SUBJECTS_PREFIX: hosts.SUBJECTS_PREFIX,
+      duongDanMonTiengAnh: hosts.duongDanMonTiengAnh(),
+    },
+    lists: {
+      LEGACY_NOTES_PATHS: nav.LEGACY_NOTES_PATHS,
+      REMOVED_DOMAIN_PATHS: nav.REMOVED_DOMAIN_PATHS,
+      LEGACY_ENGLISH_PREFIXES: hosts.LEGACY_ENGLISH_PREFIXES,
+      LEGACY_SUBJECTS_PREFIXES: hosts.LEGACY_SUBJECTS_PREFIXES,
+    },
+  }
+}
+
+/** Nội dung `docs/FEATURE-MAP.md` đúng theo mã nguồn hiện tại (test canh file khớp hàm này). */
+export async function buildFeatureMap(): Promise<string> {
   const app = readFileSync(path.join(REPO_ROOT, 'apps/dhcb/src/App.tsx'), 'utf8')
   const routes = readFileSync(path.join(REPO_ROOT, 'apps/server/src/routes.ts'), 'utf8')
+  return render(extractRoutes(app, await loadRouteConstants()), extractApiPaths(routes))
+}
+
+async function main(): Promise<void> {
   const out = path.join(REPO_ROOT, 'docs/FEATURE-MAP.md')
-  writeFileSync(out, render(extractRoutes(app), extractApiPaths(routes)), 'utf8')
+  writeFileSync(out, await buildFeatureMap(), 'utf8')
   console.log(`Đã ghi ${out}`)
 }
 
-if (process.argv[1] && import.meta.url.endsWith(path.basename(process.argv[1]))) main()
+if (process.argv[1] && import.meta.url.endsWith(path.basename(process.argv[1]))) void main()
