@@ -1,6 +1,6 @@
 # 0550 — "Tổng hợp 30 ngày" của Bạn Đồng Hành dựng từ dữ liệu thật (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (chưa tạo — commit trên nhánh worktree `feat/life-synthesis-that`)
+- **Ngày:** 2026-10-09 · **PR:** #1298
   · **Loại:** `feat(companion)`
 - **Đặc tả:** `docs/specs/2026-10-09-tong-hop-da-mien-du-lieu-that.md` (Approved for implementation
   — chủ dự án duyệt hướng "chất lượng cao nhất" 2026-10-09).
