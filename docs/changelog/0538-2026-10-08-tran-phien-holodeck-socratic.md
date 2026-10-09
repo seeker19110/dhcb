@@ -50,6 +50,17 @@ nuốt mọi lỗi bằng `console.error` — người học bấm "Gửi" mà k
    chung `CompanionVoice/PracticeSessionAlert.tsx` (`role="alert"` + nút **"Bắt đầu lại"** mở
    phiên mới cùng kịch bản/chủ đề). Phiên chết thì khoá ô nhập; lỗi gửi thì trả lại câu vừa gõ.
    Thẻ Socratic hết im lặng: lỗi bắt đầu/gửi phản tư hiện lên thẻ.
+5. **Danh sách chủ đề thẻ Socratic qua `useCatalogList`** (như Holodeck): kiểm Zod bằng
+   `MentalModelMisconceptionSchema`, trạng thái tải (`role="status"`) / lỗi (`LoadError` +
+   "Thử lại") / rỗng tách bạch — trước đây lỗi tải chỉ `console.error`, thân thẻ trống trơn. Thêm ca
+   hợp đồng server↔client vào `useCatalogList.contract.test.ts`.
+6. **Tầng 8b (1440px + 390px, theme Blue sky, API mock bằng Playwright route):** chụp hai thẻ ở
+   trạng thái bình thường, danh mục, và phiên hết hạn (alert + "Bắt đầu lại"). Khung lỗi mới hiển
+   thị đúng ở cả hai bề rộng (nút xuống hàng ở 390px, chữ không tràn). **Ảnh lộ một lỗi bố cục CŨ:**
+   ở 390px, hàng ô nhập + nút ("Gửi"/"Kết thúc", "Gửi phản tư") tràn khỏi mép phải thẻ vì `<input>`
+   giữ `min-width` mặc định. Đã vá cả hai thẻ: form `flex-wrap`, ô nhập `min-w-0 basis-full
+sm:basis-0 flex-1` — màn hẹp ô nhập một hàng, nút xuống hàng dưới; 1440px không đổi. Chụp lại
+   sau vá: hết tràn.
 
 ## Bằng chứng
 
@@ -69,6 +80,9 @@ nuốt mọi lỗi bằng `console.error` — người học bấm "Gửi" mà k
   `StudioLabs`/`StudioCognitive`/`Companion` và các test của chúng — đã chạy lại
   `routes.csrf.test.ts`, `CompanionStudios.test.tsx`, `Companion.voice.test.tsx`,
   `useCatalogList.contract.test.ts`: xanh.
+- `CompanionVoice/SocraticDiagnosticsCard.test.tsx` (4 ca: đang tải, 500 → lỗi + Thử lại thành
+  công, sai hợp đồng → lỗi, rỗng → "Chưa có chủ đề", không phải lỗi).
+- `npm run codemap -- cycles`: không có chu trình import mới.
 - Cổng: `rm -rf packages/*/dist dist dist-server && npm run typecheck` · `npm run lint` ·
   `npx prettier --check` (file đổi) · vitest các file liên quan + `scripts/changelog.test.ts`.
 
@@ -78,5 +92,5 @@ nuốt mọi lỗi bằng `console.error` — người học bấm "Gửi" mà k
   lại" thay vì kẹt. Chạy nhiều tiến trình (cluster) thì phiên không chia sẻ; hiện VPS chạy một
   tiến trình nên chưa cần Redis.
 - Ước lượng RAM ca xấu nhất mỗi service ~320 MB (2 000 phiên × 40 lượt × 2 KB); phiên thật < 10 KB.
-- Danh sách chủ đề của thẻ Socratic (GET catalog) vẫn nuốt lỗi tải bằng `console.error` — nên đổi
-  sang `useCatalogList` như Holodeck (ngoài phạm vi đợt này).
+- Ảnh 8b còn thấy (CŨ, không thuộc đợt này): ô câu hỏi tím của thẻ Socratic ở theme sáng có chữ
+  tím trên nền tím đậm — nên đối chiếu với cổng a11y AAA; ở 390px nút "Đổi chủ đề" đứng lẻ một hàng.

@@ -443,15 +443,16 @@ export default function ScenarioHolodeckCard() {
           )}
 
           {/* Turn Input Form */}
+          {/* Màn hẹp: ô nhập một hàng, nút xuống hàng dưới (ảnh Tầng 8b 0538: nút tràn khỏi thẻ ở 390px). */}
           {activeSession.status === 'active' && !sessionGone && (
-            <form onSubmit={handleSendTurn} className="flex gap-2">
+            <form onSubmit={handleSendTurn} className="flex flex-wrap gap-2">
               <input
                 type="text"
                 value={userUtterance}
                 onChange={(e) => setUserUtterance(e.target.value)}
                 placeholder="Nhập câu trả lời hoặc phản biện bằng tiếng Anh..."
                 disabled={isLoading}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="min-w-0 basis-full sm:basis-0 flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               <button
                 type="submit"

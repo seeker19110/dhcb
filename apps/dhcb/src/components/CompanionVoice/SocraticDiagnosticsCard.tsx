@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   HelpCircle,
   Sparkles,
@@ -8,17 +8,26 @@ import {
   ArrowRight,
   RotateCcw,
 } from 'lucide-react'
-import type {
-  MentalModelMisconception,
-  CognitiveBreakthroughRecord,
+import {
+  MentalModelMisconceptionSchema,
+  type CognitiveBreakthroughRecord,
 } from '@dhcb/core-contracts/socraticDiagnostics'
 import { buttonClass } from '@core/buttonStyles'
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 import { isSessionGone, practiceErrorFromResponse } from '../../lib/practiceSessionError'
 import PracticeSessionAlert from './PracticeSessionAlert'
+import LoadError from '../LoadError'
+import { useCatalogList } from '../../lib/useCatalogList'
 
 export default function SocraticDiagnosticsCard() {
-  const [misconceptions, setMisconceptions] = useState<MentalModelMisconception[]>([])
+  // Danh sách chủ đề: trạng thái tải/lỗi/rỗng tách bạch, kiểm Zod (trước đây lỗi tải chỉ
+  // `console.error` nên thân thẻ trống trơn — cùng khuôn Holodeck, changelog 0538).
+  const { state: catalog, retry: retryCatalog } = useCatalogList(
+    '/api/socratic-diagnostics',
+    'misconceptions',
+    MentalModelMisconceptionSchema,
+  )
+  const misconceptions = catalog.status === 'ready' ? catalog.items : []
   const [selectedId, setSelectedId] = useState<string>('present_perfect_past_confusion')
   const [activeSession, setActiveSession] = useState<CognitiveBreakthroughRecord | null>(null)
   const [learnerAnswer, setLearnerAnswer] = useState<string>('')
@@ -32,23 +41,6 @@ export default function SocraticDiagnosticsCard() {
     if (isSessionGone(err)) setSessionGone(true)
     setErrorMsg(thongDiepLoiThanThien(err, fallback))
   }
-
-  useEffect(() => {
-    async function loadMisconceptions() {
-      try {
-        const res = await fetch('/api/socratic-diagnostics')
-        if (res.ok) {
-          const data = await res.json()
-          if (data.misconceptions) {
-            setMisconceptions(data.misconceptions)
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load misconceptions', err)
-      }
-    }
-    loadMisconceptions()
-  }, [])
 
   const currentTopic =
     misconceptions.find((m) => m.id === (activeSession?.misconceptionId || selectedId)) ||
@@ -155,8 +147,28 @@ export default function SocraticDiagnosticsCard() {
         />
       )}
 
+      {!activeSession && catalog.status === 'loading' && (
+        <p role="status" className="mt-4 text-xs text-content-secondary">
+          Đang tải chủ đề…
+        </p>
+      )}
+      {!activeSession && catalog.status === 'error' && (
+        <div className="mt-4">
+          <LoadError
+            message={catalog.message}
+            hint="Tiến độ học của bạn không bị ảnh hưởng — chỉ danh sách chủ đề chưa tải được."
+            onRetry={retryCatalog}
+          />
+        </div>
+      )}
+      {!activeSession && catalog.status === 'ready' && misconceptions.length === 0 && (
+        <p className="mt-4 text-xs text-content-secondary">
+          Chưa có chủ đề chẩn đoán nào. Hãy quay lại sau.
+        </p>
+      )}
+
       {/* State 1: Select Diagnostic Topic */}
-      {!activeSession && (
+      {!activeSession && misconceptions.length > 0 && (
         <div className="mt-4 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {misconceptions.map((m) => {
@@ -283,15 +295,16 @@ export default function SocraticDiagnosticsCard() {
           )}
 
           {/* Answer Input Form */}
+          {/* Màn hẹp: ô nhập một hàng, nút xuống hàng dưới (ảnh Tầng 8b 0538: nút tràn khỏi thẻ ở 390px). */}
           {activeSession.status === 'in_progress' && !sessionGone && (
-            <form onSubmit={handleSubmitAnswer} className="flex gap-2">
+            <form onSubmit={handleSubmitAnswer} className="flex flex-wrap gap-2">
               <input
                 type="text"
                 value={learnerAnswer}
                 onChange={(e) => setLearnerAnswer(e.target.value)}
                 placeholder="Nhập câu trả lời / suy ngẫm của bạn..."
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                className="min-w-0 basis-full sm:basis-0 flex-1 px-4 py-2.5 rounded-xl bg-surface-raised border border-line-strong text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
               />
               <button
                 type="submit"
