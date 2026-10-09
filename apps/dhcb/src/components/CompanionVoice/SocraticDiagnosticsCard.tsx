@@ -233,7 +233,14 @@ export default function SocraticDiagnosticsCard() {
       {/* State 2: Active Socratic Inquiry Session */}
       {activeSession && (
         <div className="mt-4 space-y-4">
-          <div className="max-h-72 overflow-y-auto space-y-3 p-3.5 rounded-xl bg-surface-raised border border-line-subtle">
+          {/* Vùng cuộn nhận focus bàn phím (WCAG 2.1.1) — cùng khuôn Holodeck, changelog 0544. */}
+          <div
+            role="region"
+            aria-label="Diễn biến đối thoại Socratic"
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- vùng cuộn cần Tab tới được
+            tabIndex={0}
+            className="max-h-72 overflow-y-auto space-y-3 p-3.5 rounded-xl bg-surface-raised border border-line-subtle"
+          >
             {activeSession.turns.map((turn, idx) => (
               <div key={idx} className="space-y-2">
                 {/* Socratic Question */}

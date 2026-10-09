@@ -327,8 +327,15 @@ export default function ScenarioHolodeckCard() {
             })}
           </div>
 
-          {/* Turn stream */}
-          <div className="max-h-72 overflow-y-auto space-y-3 p-3 rounded-xl bg-surface-raised border border-line-subtle">
+          {/* Turn stream — vùng cuộn phải nhận focus để cuộn bằng bàn phím (WCAG 2.1.1, axe
+              `scrollable-region-focusable`; lộ ra khi quét trạng thái sau tương tác, changelog 0544). */}
+          <div
+            role="region"
+            aria-label="Diễn biến hội thoại"
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- vùng cuộn cần Tab tới được
+            tabIndex={0}
+            className="max-h-72 overflow-y-auto space-y-3 p-3 rounded-xl bg-surface-raised border border-line-subtle"
+          >
             {activeSession.turns.map((turn: HolodeckTurn, idx: number) => {
               const isUser = turn.speakerType === 'user'
               const speakerPersona = currentScenario?.personas.find((p) => p.id === turn.personaId)
