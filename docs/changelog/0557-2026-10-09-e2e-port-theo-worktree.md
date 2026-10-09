@@ -1,6 +1,6 @@
 # 0557 — Playwright đọc cổng từ `E2E_PORT` để mỗi worktree tự chọn cổng (2026-10-09)
 
-- **Ngày:** 2026-10-09 · **PR:** (chưa tạo — commit trên nhánh worktree) · **Loại:** `chore(e2e)`
+- **Ngày:** 2026-10-09 · **PR:** #1300 · **Loại:** `chore(e2e)`
 - **Nguồn:** nợ ghi ở `TRAPS.md` mục 19 (nhiều tác nhân chạy Playwright song song dùng chung cổng
   5179 ⇒ server của worktree khác phục vụ, ảnh/test chụp nhầm mã).
 
