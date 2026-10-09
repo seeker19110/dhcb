@@ -1,6 +1,6 @@
 # 0566 — Cổng commit chạy ở đúng cây đang commit (kể cả git worktree)
 
-- **Ngày:** 2026-10-09 · **PR:** (điền sau khi tạo) · **Loại:** `fix(hooks)`
+- **Ngày:** 2026-10-09 · **PR:** #1311 · **Loại:** `fix(hooks)`
 - **Nguồn:** đề xuất trong báo cáo tổng sau đợt 0565; chủ dự án duyệt sửa hook ("sửa hook
   pre-commit như đề xuất"). `.claude/hooks/pre-commit-gate.sh` là file cổng được bảo vệ
   (`config-protection.sh` từ chối lần chạm đầu — đã báo người dùng lý do trước khi thử lại).
