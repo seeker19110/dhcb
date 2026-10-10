@@ -1,4 +1,4 @@
-# 0575 — `eval:tutor --dump`: lưu nguyên văn câu trả lời để đọc vì sao câu đúng bị đánh dấu lỗi
+# 0576 — `eval:tutor --dump`: lưu nguyên văn câu trả lời để đọc vì sao câu đúng bị đánh dấu lỗi
 
 - **Ngày:** 2026-10-09 · **PR:** #1325 · **Loại:** `chore(eval)`
 - **Nguồn:** chủ dự án chạy `npm run eval:tutor -- --runs 3` trên VPS sau khi Claude thành AI

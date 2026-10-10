@@ -789,7 +789,7 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
      99.2% ± 0.8 nhưng FP-rate 48.3% ± 6.7** (baseline cũ 5.6%) — 19 câu đúng bị đánh dấu ở cả 3
      lượt, kể cả `Hello`. Nghi Haiku viết lời khen vào dòng `✅` thay vì để trống; hậu quả thật ở
      Chat: hiện khung cam "sửa lỗi" và ghi câu ĐÚNG vào sổ lỗi cá nhân (`Chat.tsx` `addMistake`).
-     **Việc tiếp:** sau khi deploy changelog `0575` (PR #1325), chạy
+     **Việc tiếp:** sau khi deploy changelog `0576` (PR #1325), chạy
      `npm run eval:tutor -- --group clean --dump /tmp/eval-dump.jsonl` rồi gửi các dòng
      `"outcome":"FP"` để sửa prompt chat. **CHƯA được `--write-baseline`** (sẽ chốt FP 48% làm chuẩn).
      Sau vài ngày, đối chiếu thẻ "chi phí theo token thật" ở `/admin` với ước tính và chỉnh
