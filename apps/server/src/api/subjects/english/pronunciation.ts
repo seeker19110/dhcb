@@ -195,7 +195,10 @@ export default async function handler(req: Request): Promise<Response> {
   ) {
     void pool
       .query(
-        'update english.pronunciations set last_accessed_at = now() where word = $1 and voice = $2 and lang = $3',
+        // Chỉ ghi khi mốc cũ hơn 1 ngày — cùng lý do TOUCH_TTS_CACHE_SQL (audit 2026-10-10, E2.4).
+        `update english.pronunciations set last_accessed_at = now()
+          where word = $1 and voice = $2 and lang = $3
+            and (last_accessed_at is null or last_accessed_at < now() - interval '1 day')`,
         [word, voice, lang],
       )
       .catch((err: unknown) => console.warn('[pronunciation] cập nhật last_accessed_at lỗi:', err))

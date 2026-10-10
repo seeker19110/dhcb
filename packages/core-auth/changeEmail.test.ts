@@ -10,8 +10,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: vi.fn() }))
 const passwordState: { valid: boolean } = { valid: true }
+// Ghi lại thứ tự "băm mật khẩu" so với các câu SQL — kiểm việc băm KHÔNG chạy khi đang giữ khoá.
+const order = vi.hoisted(() => [] as string[])
 vi.mock('./authService.js', () => ({
-  verifyPassword: async () => passwordState.valid,
+  verifyPassword: async () => {
+    order.push('verifyPassword')
+    return passwordState.valid
+  },
 }))
 vi.mock('./emailVerification.js', () => ({
   sendVerificationCode: async () => ({ ok: true, mail: 'sent' }),
@@ -37,6 +42,7 @@ beforeEach(() => {
   client.query.mockClear()
   client.release.mockClear()
   query.mockResolvedValue({ rows: [] })
+  order.length = 0
   mockedGetPool.mockReturnValue({ query, connect: async () => client } as unknown as ReturnType<
     typeof getPgPool
   >)
@@ -78,22 +84,45 @@ describe('changeEmail', () => {
   })
 
   it('tài khoản Google-only → cho đổi dù không có mật khẩu', async () => {
-    query.mockResolvedValueOnce({ rows: [googleOnly] })
+    query.mockResolvedValueOnce({ rows: [googleOnly] }) // đọc trước (ngoài transaction)
+    query.mockResolvedValueOnce({ rows: [googleOnly] }) // đọc lại có khoá
     const r = await changeEmail('u1', 'moi@b.com', null)
     expect(r).toEqual({ ok: true, mail: 'sent' })
   })
 
   it('email đã có người khác dùng → báo email_taken', async () => {
     query
-      .mockResolvedValueOnce({ rows: [withPassword] })
-      .mockRejectedValueOnce(Object.assign(new Error('dup'), { code: '23505' }))
+      .mockResolvedValueOnce({ rows: [withPassword] }) // đọc trước
+      .mockResolvedValueOnce({ rows: [withPassword] }) // đọc lại có khoá
+      .mockRejectedValueOnce(Object.assign(new Error('dup'), { code: '23505' })) // update
     expect(await changeEmail('u1', 'trung@b.com', 'pw')).toEqual({
       ok: false,
       reason: 'email_taken',
     })
   })
 
+  it('băm mật khẩu TRƯỚC khi giữ khoá dòng users (E2.7)', async () => {
+    query.mockImplementation(async (sql: string) => {
+      order.push(sql.includes('for update') ? 'lock' : 'sql')
+      return { rows: [withPassword] }
+    })
+    await changeEmail('u1', 'moi@b.com', 'pw')
+    expect(order.indexOf('verifyPassword')).toBeLessThan(order.indexOf('lock'))
+  })
+
+  it('mật khẩu bị đổi giữa lúc kiểm và lúc khoá → từ chối, KHÔNG đổi email', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [withPassword] })
+      .mockResolvedValueOnce({ rows: [{ ...withPassword, password_hash: 'hash-moi' }] })
+    expect(await changeEmail('u1', 'moi@b.com', 'pw')).toEqual({
+      ok: false,
+      reason: 'wrong_password',
+    })
+    expect(query.mock.calls.some((c) => String(c[0]).includes('update public.users'))).toBe(false)
+  })
+
   it('đổi thành công → ĐẶT LẠI email_verified và XOÁ mã cũ', async () => {
+    query.mockResolvedValueOnce({ rows: [withPassword] })
     query.mockResolvedValueOnce({ rows: [withPassword] })
     const r = await changeEmail('u1', 'MOI@b.com', 'pw')
     expect(r).toEqual({ ok: true, mail: 'sent' })

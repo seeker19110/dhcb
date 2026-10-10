@@ -20,7 +20,8 @@ vi.mock('@dhcb/core-auth/security', () => ({
 // Thưởng "mời bạn" — mock để kiểm chính xác NGƯỠNG nào kích hoạt thưởng, không chạy logic thật.
 vi.mock('../_lib/referral.js', () => ({ rewardReferralIfEligible: vi.fn(async () => {}) }))
 
-import handler from './history.js'
+import handler, { HISTORY_PULL_LIMIT, LEARN_COUNT_DAILY_CAP } from './history.js'
+import { addDays, vnDateStr } from '@dhcb/core-db/date'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { rewardReferralIfEligible } from '../_lib/referral'
 
@@ -110,12 +111,61 @@ describe('/api/history', () => {
 
   it('POST learn-day chỉ ghi learn_count', async () => {
     const resp = await handler(
-      makeRequest('POST', { action: 'learn-day', day: '2026-07-19', learnCount: 5 }),
+      makeRequest('POST', { action: 'learn-day', day: vnDateStr(), learnCount: 5 }),
     )
     expect(resp.status).toBe(200)
     const [sql] = query.mock.calls[0] as [string]
     expect(sql).toContain('learn_count')
     expect(sql).not.toMatch(/chat_count|writing_count|speaking_count|stt_count|pronounce_count/)
+  })
+
+  // Chống gian lận điểm giải đấu (audit 2026-10-10, E2.1).
+  describe('learn-day chống gian lận', () => {
+    it('kẹp trần mỗi ngày — client khai 10.000 chỉ ghi được trần', async () => {
+      const resp = await handler(
+        makeRequest('POST', { action: 'learn-day', day: vnDateStr(), learnCount: 10_000 }),
+      )
+      expect(resp.status).toBe(200)
+      const [, params] = query.mock.calls[0] as [string, unknown[]]
+      expect(params).toEqual(['user-1', vnDateStr(), LEARN_COUNT_DAILY_CAP])
+      expect(LEARN_COUNT_DAILY_CAP).toBe(300)
+    })
+
+    it('chỉ TĂNG trong ngày (greatest) — request cũ đến muộn không kéo số xuống', async () => {
+      await handler(makeRequest('POST', { action: 'learn-day', day: vnDateStr(), learnCount: 3 }))
+      const [sql] = query.mock.calls[0] as [string]
+      expect(sql).toContain('greatest(coalesce(daily_usage.learn_count, 0), excluded.learn_count)')
+    })
+
+    it('hôm qua (giờ VN) vẫn nhận — máy offline qua nửa đêm', async () => {
+      const day = addDays(vnDateStr(), -1)
+      const resp = await handler(makeRequest('POST', { action: 'learn-day', day, learnCount: 7 }))
+      expect(resp.status).toBe(200)
+    })
+
+    it.each([
+      ['hai ngày trước', -2],
+      ['ngày mai', 1],
+      ['một năm trước', -365],
+    ])('%s → 400, không ghi', async (_label, offset) => {
+      const day = addDays(vnDateStr(), offset)
+      const resp = await handler(makeRequest('POST', { action: 'learn-day', day, learnCount: 7 }))
+      expect(resp.status).toBe(400)
+      expect(query).not.toHaveBeenCalled()
+    })
+  })
+
+  it('GET giới hạn số phiên mỗi loại (không trả toàn bộ lịch sử kèm nội dung)', async () => {
+    await handler(makeRequest('GET'))
+    const sessionQueries = query.mock.calls.filter(([sql]) =>
+      /chat_sessions|writing_submissions|speaking_sessions/.test(sql as string),
+    ) as [string, unknown[]][]
+    expect(sessionQueries).toHaveLength(3)
+    for (const [sql, params] of sessionQueries) {
+      expect(sql).toMatch(/limit \$2/)
+      expect(params[1]).toBe(HISTORY_PULL_LIMIT)
+    }
+    expect(HISTORY_PULL_LIMIT).toBe(200)
   })
 
   it('POST body sai (mode lạ / thiếu field) → 400, không query', async () => {

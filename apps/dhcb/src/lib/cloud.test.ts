@@ -160,6 +160,36 @@ describe('pullUserData', () => {
     expect(JSON.parse(localStorage.getItem('et_usage_u1_2026-08-02') as string)).toEqual(usage[1])
   })
 
+  it('server chỉ trả phiên gần nhất → GỘP theo id với bản trên máy, không xoá phiên cũ', async () => {
+    const CUR = { ...CHAT, createdAt: 2_000 }
+    const OLD = { ...CHAT, id: 'old-only-local', createdAt: 1_000 }
+    const STALE = { ...CUR, situation: 'bản cũ trên máy' }
+    localStorage.setItem('et_chat_u1', JSON.stringify([STALE, OLD]))
+    const NEWER = { ...CHAT, id: 'newer', createdAt: 3_000 }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ chat: [CUR, NEWER], writing: [], speaking: [] }), {
+            status: 200,
+          }),
+      ),
+    )
+    await pullUserData('u1')
+    // Server thắng khi trùng id; phiên chỉ có trên máy được giữ; xếp mới → cũ.
+    expect(JSON.parse(localStorage.getItem('et_chat_u1') as string)).toEqual([NEWER, CUR, OLD])
+  })
+
+  it('localStorage hỏng (không phải mảng JSON) → dùng bản server', async () => {
+    localStorage.setItem('et_chat_u1', '{hỏng')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ chat: [CHAT] }), { status: 200 })),
+    )
+    await pullUserData('u1')
+    expect(JSON.parse(localStorage.getItem('et_chat_u1') as string)).toEqual([CHAT])
+  })
+
   it('HTTP lỗi → không ghi gì, không ném lỗi', async () => {
     vi.stubGlobal(
       'fetch',

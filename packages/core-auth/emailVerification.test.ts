@@ -205,7 +205,12 @@ function lockedEmailPool() {
   let failDelete = false
   const commands: string[] = []
   const pool = {
-    query: async () => {
+    // Chỉ cho đúng MỘT câu ngoài transaction: changeEmail đọc trước (không khoá) để băm mật khẩu
+    // ngoài lúc giữ khoá (audit 2026-10-10, E2.7) — rồi đọc LẠI có khoá trong transaction.
+    // Mọi câu khác ngoài transaction vẫn là lỗi.
+    query: async (sql: string) => {
+      if (sql === 'select email, password_hash from public.users where id = $1')
+        return { rows: [{ ...state.user }], rowCount: 1 }
       throw new Error('Nghiệp vụ phải dùng client trong transaction')
     },
     connect: async () => {
