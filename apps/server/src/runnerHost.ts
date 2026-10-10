@@ -25,6 +25,13 @@ export function parseRunnerHostnames(raw: string | undefined): string[] {
     .filter(Boolean)
 }
 
+/** Origin `https://<host>` của mọi host runner — cho `frame-src` của CSP app. */
+export function runnerOriginsFromEnv(
+  raw: string | undefined = process.env.RUNNER_HOSTNAME,
+): string[] {
+  return parseRunnerHostnames(raw).map((host) => `https://${host}`)
+}
+
 // Tên file: không bắt đầu bằng dấu chấm, không có `/` → không lọt ra ngoài thư mục, không chạm
 // file ẩn. express.static vẫn tự chặn `..`, đây là lớp thứ hai.
 const FILE = '[A-Za-z0-9_-][A-Za-z0-9._-]*'

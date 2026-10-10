@@ -172,8 +172,8 @@ và `Cache-Control` như asset hiện nay. **Không** đặt `X-Frame-Options` (
 - Không đổi logic chấm, không đổi `CodeRunResult`, không đổi nội dung bài học, không đụng 8 runner
   giả lập ở mục 1.3.
 - Không chạy code trên server (ADR-0014 là hướng riêng).
-- Không gỡ các SDK đăng nhập chưa dùng khỏi `script-src` trong đợt này, trừ khi chủ dự án chọn
-  ở Q4.
+- ~~Không gỡ các SDK đăng nhập chưa dùng khỏi `script-src`~~ — chủ dự án chọn gỡ ở Q4: R3 gỡ
+  khỏi CẢ CSP đang enforce lẫn CSP chặt.
 
 ## ② Điểm chạm
 
@@ -200,8 +200,13 @@ và `Cache-Control` như asset hiện nay. **Không** đặt `X-Frame-Options` (
 | Thêm | `apps/server/src/routes.csp.test.ts`                                 | R2    | `frame-src` của app có origin runner                                                                           |
 | Thêm | `e2e/code-runner-origin.spec.ts`                                     | R2    | Chứng minh code chạy ở origin runner + ca âm + vòng lặp vô hạn                                                 |
 | Sửa  | `playwright.config.ts`                                               | R2    | Runner chạy ở origin thứ hai: app `localhost`, runner `127.0.0.1` (khác origin, khác site)                     |
-| Sửa  | `apps/server/src/routes.ts`                                          | R3    | CSP chặt theo Host; băm script theme từ `index.html`; `Report-Only` theo cờ                                    |
-| Sửa  | `apps/dhcb/src/main.tsx`                                             | R3    | `z.config({ jitless: true })`                                                                                  |
+| Thêm | `apps/server/src/strictCsp.ts`                                       | R3    | CSP chặt: băm mọi script inline chạy được của `index.html` lúc khởi động, báo cáo về Sentry, `CSP_MODE`        |
+| Thêm | `apps/server/src/strictCsp.test.ts`                                  | R3    | Băm đúng chuẩn trình duyệt (vector MDN), suy endpoint Sentry từ DSN, không còn `unsafe-*` trong `script-src`   |
+| Sửa  | `apps/server/src/server.ts`                                          | R3    | Header `Content-Security-Policy-Report-Only` + `Reporting-Endpoints` theo Host (app/hub băm riêng)             |
+| Sửa  | `apps/server/src/routes.ts`                                          | R3    | CSP đang enforce bỏ 3 SDK đăng nhập (Q4); `frame-src` runner lấy từ `RUNNER_HOSTNAME`                          |
+| Sửa  | `apps/server/src/runnerHost.ts`                                      | R3    | `runnerOriginsFromEnv()` dùng chung cho cả hai CSP                                                             |
+| Thêm | `apps/dhcb/src/lib/zodJitless.ts`                                    | R3    | `config({ jitless: true })` của `zod/mini` — zod không thử `new Function` nữa                                  |
+| Sửa  | `apps/dhcb/src/main.tsx`                                             | R3    | Import `zodJitless` ĐẦU TIÊN, trước mọi schema                                                                 |
 
 **Ảnh hưởng lan ra:** chạy `npm run codemap -- impact` cho `codeRunner.ts`, `HtmlPreview.tsx`,
 `routes.ts`, `staticApps.ts` lúc thi hành và dán vào PR. Đã biết: 3 trang Lập trình + 9 file E2E
@@ -319,8 +324,14 @@ rm -rf packages/*/dist dist dist-server && npm run typecheck && npm run lint && 
 | R0   | DNS `run` (proxied, Cloudflare) + mở rộng chứng chỉ (`certbot --expand -d run.donghanhcungban.org`) + `server_name`                    | **Chủ dự án (tay)**     | Xoá bản ghi DNS                                                   |
 | R1   | Runner entry + Express/Nginx theo Host + CSP runner. App CHƯA dùng (biến chưa đặt)                                                     | AI                      | Revert PR                                                         |
 | R2   | Bridge + `HtmlPreview`, bật bằng `VITE_CODE_RUNNER_ORIGIN` lúc build; E2E hai origin                                                   | AI                      | Bỏ biến build → quay về Worker trong trang                        |
-| R3   | CSP chặt cho app + hub ở chế độ **Report-Only** (song song với CSP cũ đang enforce), báo về Sentry                                     | AI                      | Tắt cờ Report-Only                                                |
+| R3   | CSP chặt cho app + hub ở chế độ **Report-Only** (song song với CSP cũ đang enforce), báo về Sentry                                     | AI                      | `CSP_MODE=legacy` tắt header Report-Only (không cần build)        |
 | R4   | Sau thời gian ở Q3 không có vi phạm thật: đổi CSP chặt sang enforce, bỏ CSP cũ; build production bắt buộc có `VITE_CODE_RUNNER_ORIGIN` | AI, **chủ dự án duyệt** | Biến môi trường `CSP_MODE=legacy` quay lại CSP cũ không cần build |
+
+**Ghi chú thi hành R3 (2026-10-10):** đồng hồ 7 ngày của Q3 chỉ bắt đầu khi production ĐÃ đặt
+`VITE_CODE_RUNNER_ORIGIN`. Trước đó code học viên vẫn chạy bằng Worker ở origin app; file Worker
+cũng nhận header Report-Only (Worker có CSP riêng theo response của chính nó), nên mỗi lượt chạy
+JS/Python sẽ sinh báo cáo `unsafe-eval`/`wasm-unsafe-eval` về Sentry. Đó là vi phạm ĐÚNG như dự
+kiến, không phải vi phạm thật.
 
 ## 6. Rủi ro
 

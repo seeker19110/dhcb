@@ -1,3 +1,5 @@
+// ĐẦU TIÊN: tắt phép thử JIT của zod trước mọi lượt kiểm dữ liệu (xem lib/zodJitless.ts).
+import './lib/zodJitless'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 // Font Inter tự host (variable font, chỉ 1 file/subset) thay vì tải qua Google Fonts —
