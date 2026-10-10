@@ -6,6 +6,9 @@ import type { Response as ExpressResponse } from 'express'
 import {
   HSTS_VALUE,
   PERMISSIONS_POLICY,
+  X_XSS_PROTECTION_VALUE,
+  CORP_VALUE,
+  COOP_VALUE,
   isTrustedMutation,
   getCorsHeaders,
 } from '@dhcb/core-auth/security'
@@ -160,6 +163,9 @@ export function applyCommonSecurityHeaders(res: ExpressResponse): void {
   res.setHeader('Strict-Transport-Security', HSTS_VALUE)
   res.setHeader('X-Frame-Options', 'SAMEORIGIN')
   res.setHeader('Permissions-Policy', PERMISSIONS_POLICY)
+  res.setHeader('X-XSS-Protection', X_XSS_PROTECTION_VALUE)
+  res.setHeader('Cross-Origin-Resource-Policy', CORP_VALUE)
+  res.setHeader('Cross-Origin-Opener-Policy', COOP_VALUE)
 }
 
 // ── Bọc Edge Function handler thành Express route ────────────────────────────

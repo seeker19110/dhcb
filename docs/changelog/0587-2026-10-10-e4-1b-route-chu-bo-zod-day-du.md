@@ -17,8 +17,8 @@ import gì; hợp đồng và server giữ nguyên, file cũ re-export nên ~m�
 1. **Tách hàm thuần khỏi file hợp đồng** (không zod, không import gì):
    - `packages/core-contracts/todayItemId.ts` — `todayItemId` + `TODAY_ITEM_KINDS` (nguồn duy nhất,
      `TodayItemSchema.kind` dựng enum từ mảng này). `todayPlan.ts` re-export.
-   - `packages/core-contracts/outlineLeaf.ts` — `isOutlineLeaf` (chỉ import KIỂU từ `outline.ts`).
-     `outline.ts` import lại để dùng trong `superRefine` + re-export.
+   - `packages/core-contracts/outlineLeaf.ts` — `isOutlineLeaf` + kiểu `OutlineKind` (không import gì,
+     kể cả kiểu từ `outline.ts` — thành chu trình import, CI job `audit` chặn). `outline.ts` import lại để dùng trong `superRefine` + re-export.
    - `packages/core-contracts/cefrDialogueKey.ts` — `DIALOGUE_LEARNED_PREFIX`, `dialogueKey`,
      `learnedDialogueEntry`, `isLearnedDialogueEntry`. `cefrDialogueCheck.ts` re-export.
    - 8 nơi trên đường trang chủ đổi import sang file mới (`englishNext`, `programmingNext`,
