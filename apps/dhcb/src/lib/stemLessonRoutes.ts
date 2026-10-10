@@ -10,6 +10,7 @@ import { MATH_LOADER } from '@dhcb/subject-math/lessonsLoader'
 import { PHYSICS_LOADER } from '@dhcb/subject-physics/lessonsLoader'
 import { CHEM_LOADER } from '@dhcb/subject-chemistry/lessonsLoader'
 import { BIOLOGY_LOADER } from '@dhcb/subject-biology/lessonsLoader'
+import { sapLop } from './stemContinue'
 
 export interface StemSubject {
   id: StemSubjectId
@@ -18,33 +19,40 @@ export interface StemSubject {
   loader: StemLessonLoader<StemLessonLike>
   /** Các lớp môn này có bài, theo thứ tự hiển thị. */
   grades: string[]
+  /** Lớp chọn sẵn khi mở danh sách bài, và lớp bắt đầu của người chưa học bài nào. Luôn nằm
+   *  trong `grades`. */
+  defaultGrade: string
+}
+
+/** Lớp mặc định của bốn môn: cấp 3 là nơi bốn môn cùng có bài. */
+const LOP_MAC_DINH = '10'
+
+/** Các lớp đã có ít nhất một bài chương trình chuẩn, tăng dần theo SỐ ("6" < "10"). Suy từ
+ *  chỉ mục bài chứ không ghi cứng: Toán mở lớp 6–9 theo từng PR nội dung, và mỗi lớp chỉ hiện ra
+ *  khi đã có bài — không bao giờ có nút "Lớp 7" dẫn tới danh sách trống. */
+export function lopCoBai(index: readonly { grade: string; track: string }[]): string[] {
+  return sapLop([...new Set(index.filter((s) => s.track === 'core').map((s) => s.grade))])
+}
+
+/** Lớp mặc định nếu môn có bài ở lớp đó, ngược lại là lớp đầu tiên có bài. */
+export function chonLopMacDinh(grades: readonly string[]): string {
+  return grades.includes(LOP_MAC_DINH) ? LOP_MAC_DINH : (grades[0] ?? LOP_MAC_DINH)
+}
+
+function monStem(
+  id: StemSubjectId,
+  label: string,
+  loader: StemLessonLoader<StemLessonLike>,
+): StemSubject {
+  const grades = lopCoBai(loader.index)
+  return { id, label, loader, grades, defaultGrade: chonLopMacDinh(grades) }
 }
 
 export const STEM_SUBJECTS: Record<StemSubjectId, StemSubject> = {
-  mathematics: {
-    id: 'mathematics',
-    label: 'Toán',
-    loader: MATH_LOADER as StemLessonLoader<StemLessonLike>,
-    grades: ['10', '11', '12'],
-  },
-  physics: {
-    id: 'physics',
-    label: 'Vật lí',
-    loader: PHYSICS_LOADER as StemLessonLoader<StemLessonLike>,
-    grades: ['10', '11', '12'],
-  },
-  chemistry: {
-    id: 'chemistry',
-    label: 'Hoá học',
-    loader: CHEM_LOADER as StemLessonLoader<StemLessonLike>,
-    grades: ['10', '11', '12'],
-  },
-  biology: {
-    id: 'biology',
-    label: 'Sinh học',
-    loader: BIOLOGY_LOADER as StemLessonLoader<StemLessonLike>,
-    grades: ['10', '11', '12'],
-  },
+  mathematics: monStem('mathematics', 'Toán', MATH_LOADER as StemLessonLoader<StemLessonLike>),
+  physics: monStem('physics', 'Vật lí', PHYSICS_LOADER as StemLessonLoader<StemLessonLike>),
+  chemistry: monStem('chemistry', 'Hoá học', CHEM_LOADER as StemLessonLoader<StemLessonLike>),
+  biology: monStem('biology', 'Sinh học', BIOLOGY_LOADER as StemLessonLoader<StemLessonLike>),
 }
 
 /** Môn này có bài học theo khuôn STEM không (dùng để quyết định có hiện nút "Bài học"). */

@@ -16,7 +16,11 @@ const MON: Array<{ id: StemSubjectId; label: string; loader: StemLessonLoader<St
   { id: 'chemistry', label: 'Hoá học', loader: CHEM_LOADER as StemLessonLoader<StemLessonLike> },
   { id: 'biology', label: 'Sinh học', loader: BIOLOGY_LOADER as StemLessonLoader<StemLessonLike> },
 ]
-const GRADES = ['10', '11', '12']
+// Lớp suy từ CHỈ MỤC, không ghi cứng: Toán có cả lớp 6–9 (docs/specs/2026-10-10-toan-thcs-6-9.md),
+// và bản ghi cứng 10–12 cũ sẽ lặng lẽ bỏ sót bài của lớp mới mà vẫn xanh nếu không đếm tổng.
+const lopCua = (m: (typeof MON)[number]): string[] => [
+  ...new Set(m.loader.index.map((s) => s.grade)),
+]
 
 const ctxCua = (m: (typeof MON)[number]): StemOutlineCtx => ({
   loader: m.loader,
@@ -30,9 +34,9 @@ const la = (nodes: readonly OutlineNode[]) => nodes.filter((n) => n.kind === 'le
 describe('buildStemOutline — dữ liệu thật bốn môn', () => {
   for (const m of MON) {
     it(`${m.label}: không rớt bài nào và cây hợp lệ`, () => {
-      const cay = GRADES.map((g) => buildStemOutline(m.id, g, ctxCua(m))).filter(
-        (o) => o !== undefined,
-      )
+      const cay = lopCua(m)
+        .map((g) => buildStemOutline(m.id, g, ctxCua(m)))
+        .filter((o) => o !== undefined)
       expect(cay.length).toBeGreaterThan(0)
       for (const outline of cay) OutlineSchema.parse(outline)
 
@@ -61,7 +65,7 @@ describe('buildStemOutline — dữ liệu thật bốn môn', () => {
   it('gom chương theo SỐ chương, không theo tiêu đề chương (bẫy Hoá)', () => {
     // Hoá có nhiều chương trùng tiêu đề; số nút chapter phải bằng số `chapterNumber` khác nhau.
     const chem = MON[2]!
-    for (const grade of GRADES) {
+    for (const grade of lopCua(chem)) {
       const outline = buildStemOutline('chemistry', grade, ctxCua(chem))
       if (!outline) continue
       const soChuongThat = new Set(chem.loader.listCoreByGrade(grade).map((l) => l.chapterNumber))

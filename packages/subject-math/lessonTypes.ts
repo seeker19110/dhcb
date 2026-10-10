@@ -12,7 +12,9 @@ import {
   LessonTrackSchema,
 } from '@dhcb/core-contracts/lessonAnimation'
 
-export const MATH_GRADES = ['10', '11', '12'] as const
+// Lớp 6–9 (THCS) mở từ 2026-10-10 — docs/specs/2026-10-10-toan-thcs-6-9.md. Thứ tự là thứ tự
+// HIỂN THỊ (tăng dần theo số), không phải thứ tự chuỗi ('10' < '6' nếu so chuỗi).
+export const MATH_GRADES = ['6', '7', '8', '9', '10', '11', '12'] as const
 export type MathGrade = (typeof MATH_GRADES)[number]
 
 export const MathAnswerSpecSchema = z.union([
@@ -69,7 +71,7 @@ export const MathCheckQuestionSchema = z
 
 export const MathLessonSchema = z
   .object({
-    id: z.string().regex(/^toan(10|11|12)-c\d+-b\d+$/),
+    id: z.string().regex(/^toan([6-9]|1[0-2])-c\d+-b\d+$/),
     grade: z.enum(MATH_GRADES),
     chapterNumber: z.number().int().positive(),
     chapterTitle: z.string().min(1).max(200),

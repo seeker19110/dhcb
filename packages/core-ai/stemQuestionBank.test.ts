@@ -105,6 +105,27 @@ describe('Ngân hàng đề STEM (dựng từ bài học thật)', () => {
     expect(nho.map((q) => q.id)).toEqual(['toan10-c1-b1-q3'])
   })
 
+  it('chỉ nhận bài lớp 10–12: bài Toán THCS không lọt vào bảng nháp của học sinh cấp 3', () => {
+    const cau = [
+      { prompt: 'Tính 2 + 3.', answer: { kind: 'numeric', value: 5 }, explain: 'e' },
+    ] as const
+    const bai = (id: string, grade: string): StemLessonSource => ({
+      id,
+      grade,
+      chapterTitle: 'C',
+      title: 'T',
+      track: 'core',
+      reviewStatus: 'draft',
+      checkQuestions: cau,
+    })
+    const nho = buildStemQuestionBank([
+      { subject: 'math', lessons: [bai('toan6-c1-b1', '6'), bai('toan10-c1-b1', '10')] },
+    ])
+    expect(nho.map((q) => q.id)).toEqual(['toan10-c1-b1-q1'])
+    // Và trên dữ liệu thật: không câu nào của ngân hàng thuộc lớp ngoài 10–12.
+    expect(BANK.every((q) => ['10', '11', '12'].includes(q.grade))).toBe(true)
+  })
+
   it('MÁY CHẤM ĐƯỢC: đáp án chuẩn của từng câu được gradeAnswer chấm đúng', () => {
     let soCauDaKiem = 0
     for (const q of BANK) {
