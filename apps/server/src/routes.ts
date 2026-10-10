@@ -13,6 +13,7 @@ import {
   getCorsHeaders,
 } from '@dhcb/core-auth/security'
 import { captureServerException } from './api/_lib/sentry.js'
+import { parseRunnerHostnames } from './runnerHost.js'
 import { isAppError } from '@dhcb/core-errors/appError'
 
 import ttsHandler from '@dhcb/core-ai/tts'
@@ -148,8 +149,17 @@ import geminiLiveHandler from './api/platform/gemini-live.js'
 // (loadAppleScript()). https://alcdn.msauth.net: tải MSAL.js (đăng nhập Microsoft,
 // loadMicrosoftScript()). Cả 3 mở popup (window mới), KHÔNG nhúng iframe trong trang như
 // Google One Tap, nên KHÔNG cần thêm vào frame-src.
-export const CSP_HEADER =
-  "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://accounts.google.com https://connect.facebook.net https://appleid.cdn-apple.com https://alcdn.msauth.net; style-src 'self' 'unsafe-inline' https://accounts.google.com; font-src 'self' data:; img-src 'self' data: https:; media-src 'self' blob: https:; connect-src 'self' https:; frame-src https://accounts.google.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+// frame-src thêm origin trang chạy code học viên (`run.…`, RUNNER_HOSTNAME — xem runnerHost.ts):
+// app nhúng runner bằng iframe ẩn (lib/runnerBridge.ts) và khung xem trang bài DOM
+// (HtmlPreview → preview.html). Thiếu thì CSP chặn iframe, không bài code nào chạy được.
+export function buildAppCsp(runnerOrigins: readonly string[]): string {
+  const frameSrc = ['https://accounts.google.com', ...runnerOrigins].join(' ')
+  return `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://accounts.google.com https://connect.facebook.net https://appleid.cdn-apple.com https://alcdn.msauth.net; style-src 'self' 'unsafe-inline' https://accounts.google.com; font-src 'self' data:; img-src 'self' data: https:; media-src 'self' blob: https:; connect-src 'self' https:; frame-src ${frameSrc}; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`
+}
+
+export const CSP_HEADER = buildAppCsp(
+  parseRunnerHostnames(process.env.RUNNER_HOSTNAME).map((host) => `https://${host}`),
+)
 
 // Header bảo mật đính vào MỌI response — API, static và health dùng chung đúng một nguồn.
 // Trước đây 3 chỗ tự gọi setHeader riêng nên HSTS/Permissions-Policy chỉ có ở response API,

@@ -8,7 +8,7 @@
 // nhất của TypeScript là chặn TRƯỚC khi chạy, nên học viên phải thấy đúng cảnh đó.
 import type { CodeRunResult } from './codeRunResult'
 import { getAuthHeader } from '@core/authHeader'
-import { runJavaScript } from './jsRunner'
+import { runSandboxedLane } from './runnerBridge'
 import { dinhDangKetQuaTs, TIEU_DE_LOI } from '@dhcb/subject-programming/tsPrelude'
 
 export interface TsRunOptions {
@@ -78,13 +78,18 @@ async function chay(
     return { output, timedOut: false, durationMs: Date.now() - batDau }
   }
 
-  const chay = await runJavaScript(ketQua.js, {
-    ...(options.stdinLines ? { stdinLines: options.stdinLines } : {}),
+  // JS sinh ra chạy đúng làn JavaScript (ở runner `run.…` nếu đã cấu hình — xem runnerBridge.ts).
+  const chay = await runSandboxedLane(
+    {
+      lane: 'javascript',
+      code: ketQua.js,
+      ...(options.stdinLines ? { stdinLines: options.stdinLines } : {}),
+    },
     // Output của bước chạy phải đi kèm tiêu đề để khớp với thứ cổng CI dựng ra.
-    ...(options.onOutput
+    options.onOutput
       ? { onOutput: (text: string) => options.onOutput?.(dinhDangKetQuaTs([], text)) }
-      : {}),
-  })
+      : {},
+  )
   return {
     ...chay,
     output: dinhDangKetQuaTs([], chay.output),

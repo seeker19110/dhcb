@@ -1,7 +1,7 @@
 // ProgrammingPlayground — trang "Chạy thử Python" của môn Lập trình (PR-L2).
 // Python chạy NGAY TRONG TRÌNH DUYỆT (Pyodide WASM trong Web Worker, tự host —
-// xem lib/pythonRunner.ts). Kèm 10 bài mẫu bậc P1 để vọc trước khi bài học đầy đủ
-// (khuôn 8 bước) vào ở PR-L3/L4.
+// xem lib/pythonRunner.ts; production chạy trong runner `run.…`, xem lib/runnerBridge.ts).
+// Kèm 10 bài mẫu bậc P1 để vọc trước khi bài học đầy đủ (khuôn 8 bước) vào ở PR-L3/L4.
 import { MAIN_CONTENT_ID } from '@core/PageShell'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -10,7 +10,7 @@ import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
 import { PROGRAMMING_PREFIX } from '../../../lib/programmingRoutes'
 import CodeEditor from '../../../components/CodeEditor'
-import { runPython, resetPythonWorker } from '../../../lib/pythonRunner'
+import { runSandboxedLane, resetSandboxedLanes } from '../../../lib/runnerBridge'
 import { P1_SAMPLES } from '@dhcb/subject-programming/samplesP1'
 import { buttonClass } from '@core/buttonStyles'
 
@@ -32,7 +32,7 @@ export default function ProgrammingPlayground() {
   const runningRef = useRef(false)
 
   // Rời trang thì huỷ worker cho nhẹ máy (vào lại sẽ tải lại môi trường khi cần).
-  useEffect(() => () => resetPythonWorker(), [])
+  useEffect(() => () => resetSandboxedLanes(), [])
 
   const pickSample = (id: string) => {
     const sample = P1_SAMPLES.find((s) => s.id === id)
@@ -54,11 +54,10 @@ export default function ProgrammingPlayground() {
       .split('\n')
       .map((l) => l.trim())
       .filter((l) => l.length > 0)
-    const result = await runPython(code, {
-      stdinLines,
-      onOutput: setOutput,
-      onLoading: () => setRunState('loading-env'),
-    })
+    const result = await runSandboxedLane(
+      { lane: 'python', code, stdinLines },
+      { onOutput: setOutput, onLoading: () => setRunState('loading-env') },
+    )
     setOutput(result.output)
     if (result.error) setError(result.error)
     setRunState('done')
@@ -66,7 +65,7 @@ export default function ProgrammingPlayground() {
   }
 
   const handleStop = () => {
-    resetPythonWorker()
+    resetSandboxedLanes()
     setError('Đã dừng chương trình theo yêu cầu.')
     setRunState('done')
     runningRef.current = false
