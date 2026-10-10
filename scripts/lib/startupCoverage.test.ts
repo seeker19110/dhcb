@@ -17,6 +17,18 @@ describe('startupScripts', () => {
       'js/vendor-core-Y2.js',
     ])
   })
+
+  it('đọc cả danh sách file trong script INLINE (khuôn dựng sẵn trang chủ khách, changelog 0584)', () => {
+    // Đúng hình dạng `deferBootScriptsWhilePrerendered` sinh ra: không còn thẻ src/modulepreload.
+    const deferred = `<html><head><script>(function(e,t,n,r){/*…*/})("/js/index-AbC.js",["/js/rolldown-runtime-X1.js","/js/vendor-core-Y2.js"],"data-guest-prerender",2000)</script>
+<script type="application/ld+json">{"url":"https://x/js/khong-phai-file.js"}</script>
+<link rel="stylesheet" href="/assets/index-Z3.css"></head></html>`
+    expect(startupScripts(deferred)).toEqual([
+      'js/index-AbC.js',
+      'js/rolldown-runtime-X1.js',
+      'js/vendor-core-Y2.js',
+    ])
+  })
 })
 
 describe('globToRegExp', () => {

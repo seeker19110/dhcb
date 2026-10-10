@@ -1,7 +1,8 @@
 # Đặc tả: Tách runtime chạy code học viên sang tên miền con — gỡ `'unsafe-inline'`/`'unsafe-eval'` khỏi CSP trang chính
 
-> Ngày: 2026-10-10 · **Trạng thái:** Draft — chờ chủ dự án duyệt 4 câu hỏi ở mục 8.
-> **Chưa được code** cho tới khi trạng thái là "Approved for implementation".
+> Ngày: 2026-10-10 · **Trạng thái:** Approved for implementation — chủ dự án chốt cả 4 câu hỏi
+> mục 8 theo đề xuất (2026-10-10). Thi hành theo từng bước R1→R4 ở mục 5; R4 (bật CSP chặt
+> thật) vẫn cần chủ dự án duyệt lại sau 7 ngày Report-Only.
 
 **Nền:** máy quét bảo mật báo `content-security-policy` yếu (changelog `0588`). `script-src` của
 trang chính (`apps/server/src/routes.ts#CSP_HEADER`) còn `'unsafe-inline'` + `'unsafe-eval'`, nên
@@ -171,21 +172,31 @@ và `Cache-Control` như asset hiện nay. **Không** đặt `X-Frame-Options` (
 
 ## ② Điểm chạm
 
-| Việc | Đường dẫn file                                               | Ghi chú                                                                                    |
-| ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Thêm | `apps/dhcb/runner.html` + `apps/dhcb/src/runner/main.ts`     | Nhận `{type:'run', lane, id, …}`, gọi lại đúng runner Worker hiện có, trả message cũ       |
-| Thêm | `apps/dhcb/preview.html` + `apps/dhcb/src/runner/preview.ts` | Nhận `{html, script}`, `document.open/write`                                               |
-| Thêm | `apps/dhcb/src/lib/runnerBridge.ts` (+ test)                 | Iframe lười, hàng đợi lượt chạy, watchdog nạp lại iframe khi runner im quá timeout + 5s    |
-| Thêm | `apps/dhcb/src/lib/runnerProtocol.ts`                        | Kiểu message dùng chung hai phía + hàm kiểm `event.origin`                                 |
-| Sửa  | `apps/dhcb/src/lib/codeRunner.ts`                            | Chọn bridge khi có runner origin                                                           |
-| Sửa  | `apps/dhcb/src/components/HtmlPreview.tsx`                   | `srcDoc` → `src` runner + postMessage                                                      |
-| Sửa  | `apps/dhcb/vite.config.ts`                                   | `build.rollupOptions.input` thêm 2 entry; `/pyodide`, `/sqljs` vẫn copy như nay            |
-| Sửa  | `apps/server/src/staticApps.ts` (+ test)                     | Host runner → chỉ static, không SPA fallback ngoài 2 trang                                 |
-| Sửa  | `apps/server/src/routes.ts` (+ test)                         | CSP theo Host; băm từ `index.html`; chặn `/api` cho host runner; `Report-Only` theo cờ     |
-| Sửa  | `nginx/en-vi.conf`                                           | `server_name` + xoá Cookie cho host runner                                                 |
-| Sửa  | `apps/dhcb/src/main.tsx`                                     | `z.config({ jitless: true })`                                                              |
-| Thêm | `e2e/code-runner-origin.spec.ts`                             | Ca âm (mục ④) + không vi phạm CSP                                                          |
-| Sửa  | `playwright.config.ts`                                       | Runner chạy ở origin thứ hai: app `localhost`, runner `127.0.0.1` (khác origin, khác site) |
+| Việc | Đường dẫn file                                 | Bước  | Ghi chú                                                                                                        |
+| ---- | ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
+| Thêm | `apps/dhcb/runner.html`                        | R1    | Entry thứ hai của bản build; chỉ nạp `src/runner/main.ts`                                                      |
+| Thêm | `apps/dhcb/src/runner/main.ts`                 | R1    | Nối `runnerHost.ts` với `window` thật                                                                          |
+| Thêm | `apps/dhcb/src/runner/runnerHost.ts` (+ test)  | R1    | Lõi runner: 3 lớp chặn tin nhắn lạ, gọi đúng các làn Worker hiện có                                            |
+| Thêm | `apps/dhcb/preview.html`                       | R1    | Script inline (không module — origin mờ sẽ bị CORS chặn module) đọc trang từ fragment URL rồi `document.write` |
+| Thêm | `apps/dhcb/src/lib/workerLanes.ts`             | R1    | Một điểm điều phối 5 làn Worker, dùng chung cho app (khi chưa bật runner) và runner                            |
+| Thêm | `apps/dhcb/src/lib/runnerProtocol.ts` (+ test) | R1    | Hợp đồng message (zod/mini) + `parseRunnerOrigin`                                                              |
+| Sửa  | `apps/dhcb/src/lib/codeRunner.ts`              | R1/R2 | R1: đi qua `workerLanes.ts`. R2: chọn bridge khi có runner origin                                              |
+| Sửa  | `apps/dhcb/vite.config.ts`                     | R1    | `build.rollupOptions.input` thêm 2 entry; `/pyodide`, `/sqljs` vẫn copy như nay                                |
+| Thêm | `apps/server/src/runnerHost.ts` (+ test)       | R1    | Host runner → danh sách trắng file tĩnh + CSP riêng, 404 mọi thứ khác; host app chặn 2 trang runner            |
+| Sửa  | `apps/server/src/server.ts`                    | R1    | Gắn middleware runner TRƯỚC `/api`                                                                             |
+| Sửa  | `packages/core-auth/security.ts`               | R1    | Xuất `allowedOrigins()` để dựng `frame-ancestors` của runner                                                   |
+| Sửa  | `nginx/en-vi.conf`                             | R1    | Block 4 cho host runner: mọi request qua Express, xoá Cookie                                                   |
+| Sửa  | `apps/dhcb/src/components/HtmlPreview.tsx`     | R2    | `srcDoc` → `src` = `<runner>/preview.html#<base64url>`, `sandbox="allow-scripts"`                              |
+| Sửa  | `playwright.config.ts`                         | R2    | Runner chạy ở origin thứ hai: app `localhost`, runner `127.0.0.1` (khác origin, khác site)                     |
+| Sửa  | `apps/server/src/routes.ts`                    | R3    | CSP chặt theo Host; băm script theme từ `index.html`; `Report-Only` theo cờ                                    |
+| Sửa  | `apps/dhcb/src/main.tsx`                       | R3    | `z.config({ jitless: true })`                                                                                  |
+
+File sẽ TẠO ở bước sau (chưa nằm trong bảng vì `npm run check:specs` kiểm mọi đường dẫn trong
+bảng của đặc tả đã duyệt phải tồn tại — PR tạo ra file nào thì dời dòng đó lên bảng):
+
+- R2 — `apps/dhcb/src/lib/runnerBridge.ts` (+ test): iframe lười, chờ `hello` 10s, watchdog huỷ
+  iframe khi runner im quá timeout + 5s.
+- R2 — `e2e/code-runner-origin.spec.ts`: các ca âm ở mục ④ + không vi phạm CSP.
 
 **Ảnh hưởng lan ra:** chạy `npm run codemap -- impact` cho `codeRunner.ts`, `HtmlPreview.tsx`,
 `routes.ts`, `staticApps.ts` lúc thi hành và dán vào PR. Đã biết: 3 trang Lập trình + 9 file E2E
@@ -194,36 +205,43 @@ nằm NGOÀI JS khởi động của app (`scripts/check-startup-coverage.ts`).
 
 ## ③ Hợp đồng dữ liệu
 
+Nguồn sự thật là `apps/dhcb/src/lib/runnerProtocol.ts` (đã sửa lúc thi hành R1 cho khớp mã
+thật — bản nháp ban đầu tách `stdout/done/error/timeout` thành nhiều loại sự kiện; nay runner trả
+nguyên `CodeRunResult` các làn vẫn trả, để kết quả chấm bài giống hệt trước/sau tách).
+
 **App → runner** (`targetOrigin` = runner origin, không bao giờ `'*'`):
 
 ```ts
-type RunnerRequest =
-  | {
-      type: 'run'
-      id: string
-      lane: 'javascript' | 'python' | 'sql' | 'dom' | 'fetch'
-      code: string
-      stdinLines?: string[]
-      files?: Record<string, string>
-      domHtml?: string
-      fetchApi?: FetchApi
-      datasetSql?: string
-      timeoutMs: number
-    }
-  | { type: 'reset'; lane: RunnerRequest['lane'] }
+type WorkerLaneRequest =
+  | { lane: 'javascript'; code: string; stdinLines?: string[] }
+  | { lane: 'dom'; code: string; html: string; hanhDong?: string[] }
+  | { lane: 'fetch'; code: string; html: string; hanhDong?: string[]; api?: FetchApi }
+  | { lane: 'sql'; code: string; seed?: string }
+  | { lane: 'python'; code: string; stdinLines?: string[]; files?: Record<string, string> }
+
+type RunnerRequest = { type: 'run'; id: string; req: WorkerLaneRequest } | { type: 'reset' }
 ```
 
-**Runner → app** (`targetOrigin` = origin cha đã được duyệt lúc `hello`):
+Trần kích thước: code ≤ 500 000 ký tự, đầu ra ≤ 2 000 000 ký tự, danh sách ≤ 1 000 phần tử.
+Thời hạn chạy (`timeoutMs`) KHÔNG đi qua message — mỗi làn tự giữ hằng số của nó như hôm nay.
+
+**Runner → app** (`targetOrigin` = origin cha khai ở `?parent=`):
 
 ```ts
 type RunnerEvent =
   | { type: 'hello'; protocol: 1 } // runner sẵn sàng
-  | { type: 'loading' | 'ready'; id: string }
-  | { type: 'stdout'; id: string; text: string }
-  | { type: 'done'; id: string; durationMs: number }
-  | { type: 'error'; id: string; message: string }
-  | { type: 'timeout'; id: string }
+  | { type: 'loading'; id: string } // đang tải runtime (Pyodide/sql.js) lần đầu
+  | { type: 'output'; id: string; text: string } // đầu ra phát dần
+  | { type: 'result'; id: string; result: CodeRunResult } // { output, error?, timedOut, durationMs }
 ```
+
+Trang runner được mở bằng `https://run.…/runner.html?parent=<origin app>`; nó chỉ nhận tin từ
+`window.parent` có đúng origin đó (và CSP `frame-ancestors` của host runner bảo đảm chỉ origin app
+nhúng được). **Trang xem trước HTML không dùng postMessage:** trang của học viên đi trong fragment
+URL (`preview.html#<base64url UTF-8>` — fragment không gửi lên server), iframe tạo lại (React
+`key`) mỗi khi nội dung đổi. Lý do: iframe preview có origin mờ (`sandbox` không
+`allow-same-origin`), muốn postMessage tới nó thì phải dùng `targetOrigin '*'` — trái bất biến ở
+mục ⑤.
 
 Cả hai phía validate bằng `zod/mini`; message sai hình thì bỏ và ghi `console.warn`.
 
@@ -316,7 +334,7 @@ rm -rf packages/*/dist dist dist-server && npm run typecheck && npm run lint && 
 0 đồng nếu dùng tên miền con: chứng chỉ Let's Encrypt và DNS Cloudflare đều miễn phí, chạy chung
 VPS và tiến trình. Domain riêng (Q2) thì ~10–15 USD/năm.
 
-## 8. Câu hỏi cho chủ dự án (chốt xong mới đổi sang "Approved for implementation")
+## 8. Câu hỏi cho chủ dự án — ĐÃ CHỐT 2026-10-10: cả 4 câu theo đề xuất
 
 | #   | Câu hỏi                                                           | Đề xuất                                                                                                                              |
 | --- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
