@@ -287,13 +287,15 @@ else:
     print(f"Trang cong khai: {c['url']} | cong={c['cong']}")
     print(f"SECRET_KEY: da dat ({len(c['khoa'])} ky tu)")     # chỉ in ĐỘ DÀI, không in khoá`,
     checks: [
+      // Khoá GIẢ cho đề bài (không phải bí mật thật) — gitleaks rule generic-api-key bắt nhầm
+      // chuỗi `SECRET_KEY=...`, nên mỗi dòng mang `gitleaks:allow` (tiền lệ: core-ui/guestId.ts).
       tc(
-        ['1', 'SECRET_KEY=so-hoc-tap-bi-mat-2026'],
+        ['1', 'SECRET_KEY=so-hoc-tap-bi-mat-2026'], // gitleaks:allow
         'Trang cong khai: http://localhost:8000 | cong=8000',
         'Chỉ có biến bắt buộc — cổng và địa chỉ dùng mặc định máy mình',
       ),
       tc(
-        ['1', 'SECRET_KEY=so-hoc-tap-bi-mat-2026'],
+        ['1', 'SECRET_KEY=so-hoc-tap-bi-mat-2026'], // gitleaks:allow
         'SECRET_KEY: da dat (22 ky tu)',
         'Báo đã đặt khoá bằng ĐỘ DÀI, không in khoá',
       ),
@@ -301,14 +303,14 @@ else:
         [
           '3',
           'PORT=10000',
-          'SECRET_KEY=so-hoc-tap-bi-mat-2026',
+          'SECRET_KEY=so-hoc-tap-bi-mat-2026', // gitleaks:allow
           'PUBLIC_URL=https://so-hoc-tap.vn',
         ],
         'Trang cong khai: https://so-hoc-tap.vn | cong=10000',
         'Môi trường máy chủ: cổng và địa chỉ do nền tảng đặt',
       ),
       tc(
-        ['2', 'SECRET_KEY=so-hoc-tap-bi-mat-2026', 'PUBLIC_URL=http://so-hoc-tap.vn'],
+        ['2', 'SECRET_KEY=so-hoc-tap-bi-mat-2026', 'PUBLIC_URL=http://so-hoc-tap.vn'], // gitleaks:allow
         'Loi cau hinh: PUBLIC_URL phai dung https: http://so-hoc-tap.vn',
         'Địa chỉ công khai không https → dừng ngay lúc khởi động',
       ),
@@ -324,7 +326,7 @@ else:
         true,
       ),
       tc(
-        ['2', 'PORT=70000', 'SECRET_KEY=so-hoc-tap-bi-mat-2026'],
+        ['2', 'PORT=70000', 'SECRET_KEY=so-hoc-tap-bi-mat-2026'], // gitleaks:allow
         'Loi cau hinh: PORT khong hop le: 70000',
         'Ca ẩn: kiểm KHOẢNG cổng chứ không chỉ kiểm kiểu',
         true,
