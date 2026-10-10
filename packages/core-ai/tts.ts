@@ -198,6 +198,12 @@ async function hashText(text: string): Promise<string> {
     .slice(0, 32)
 }
 
+// Đánh dấu "vừa được dùng" cho dòng cache — CHỈ ghi khi mốc cũ hơn 1 ngày (audit 2026-10-10,
+// E2.4). Trước đây MỖI lượt trúng cache là một câu UPDATE (một lần ghi WAL + dòng chết chờ
+// VACUUM) cho một cột chỉ dùng để thống kê theo ngày; độ phân giải 1 ngày là đủ.
+export const TOUCH_TTS_CACHE_SQL = `update public.tts_cache set last_accessed_at = now()
+  where hash = $1 and (last_accessed_at is null or last_accessed_at < now() - interval '1 day')`
+
 export default async function handler(req: Request): Promise<Response> {
   const corsHeaders = getCorsHeaders(req)
   const allHeaders = { ...corsHeaders, ...SECURITY_HEADERS }
@@ -305,7 +311,7 @@ export default async function handler(req: Request): Promise<Response> {
     // chỉ xoá orphan qua --clean-orphans, xem docs/migration-thoat-ly-supabase.md mục 3.3).
     // Không chặn response.
     void pool
-      .query('update public.tts_cache set last_accessed_at = now() where hash = $1', [textHash])
+      .query(TOUCH_TTS_CACHE_SQL, [textHash])
       .catch((err: unknown) => console.warn('[tts] cập nhật last_accessed_at lỗi:', err))
     recordTtsCacheEvent(pool, { lang, voice, hit: true })
     // iv của CHÍNH bản ghi này (null với bản ghi trước migration 0038 → rơi về iv suy từ hash).
@@ -336,7 +342,7 @@ export default async function handler(req: Request): Promise<Response> {
   const claim = await claimTtsGeneration(pool, textHash)
   if (claim.role === 'cached') {
     void pool
-      .query('update public.tts_cache set last_accessed_at = now() where hash = $1', [textHash])
+      .query(TOUCH_TTS_CACHE_SQL, [textHash])
       .catch((err: unknown) => console.warn('[tts] cập nhật last_accessed_at lỗi:', err))
     // Vẫn tính là HIT: request này KHÔNG gọi API TTS (một request khác đã sinh xong hộ).
     recordTtsCacheEvent(pool, { lang, voice, hit: true })

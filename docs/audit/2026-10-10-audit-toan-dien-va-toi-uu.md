@@ -153,6 +153,9 @@ Mỗi đợt một PR nhỏ. Thứ tự đề xuất theo giá trị/rủi ro.
 
 ### E2 — Nghiệp vụ & SQL (cần quyết định của chủ dự án)
 
+> **✅ ĐÃ LÀM mục 1–7 ở `docs/changelog/0582-2026-10-10-e2-nghiep-vu-sql.md`** (2026-10-10). Chủ dự
+> án chốt: trần `learn-day` 300/ngày; `/api/history` kéo 200 phiên gần nhất mỗi loại.
+
 1. **CAO — gian lận giải đấu.** `apps/server/src/api/core/history.ts:213-218` (`learn-day`):
    `learn_count = excluded.learn_count` ghi đè bằng số client gửi (≤ 10.000) cho ngày tuỳ ý; điểm
    giải đấu = `learn_count` ⇒ một request là vượt mọi người học thật. Đề xuất: `greatest(...)`,

@@ -21,6 +21,7 @@
 
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { withTransaction } from '@dhcb/core-db/transaction'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -163,11 +164,16 @@ export default async function handler(req: Request): Promise<Response> {
   if (!validated.ok)
     return jsonResponse({ error: validated.error.message }, validated.error.status, headers)
 
-  for (const m of validated.data.mistakes) {
-    // greatest()/least() bỏ qua NULL trong Postgres, nên last_reviewed_at chưa ôn bao giờ ở một
-    // phía không xoá mất mốc ôn của phía kia.
-    await pool.query(
-      `insert into english.mistakes
+  // Một transaction cho cả lô (audit 2026-10-10, E2.3): trước đây tới 500 upsert tuần tự mỗi câu
+  // tự commit — chậm (mỗi commit một lần ghi đĩa) và đứt giữa chừng thì lô nửa vời. Vẫn upsert
+  // TỪNG dòng chứ không gộp một câu `unnest`: một lô có thể chứa hai thẻ cùng dedupe_key, mà
+  // `on conflict do update` trong MỘT câu không được chạm cùng một hàng hai lần.
+  await withTransaction(pool, async (client) => {
+    for (const m of validated.data.mistakes) {
+      // greatest()/least() bỏ qua NULL trong Postgres, nên last_reviewed_at chưa ôn bao giờ ở một
+      // phía không xoá mất mốc ôn của phía kia.
+      await client.query(
+        `insert into english.mistakes
          (id, user_id, dedupe_key, wrong, corrected, explanation, source, dir, count,
           created_at, last_reviewed_at, review_count, attempt_id, content_id, subject_id)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, to_timestamp($10 / 1000.0),
@@ -190,34 +196,35 @@ export default async function handler(req: Request): Promise<Response> {
          content_id       = coalesce(excluded.content_id, english.mistakes.content_id),
          subject_id       = coalesce(excluded.subject_id, english.mistakes.subject_id),
          updated_at       = now()`,
-      [
-        m.id,
-        auth.userId,
-        dedupeKey(m.wrong, m.corrected),
-        m.wrong,
-        m.corrected,
-        m.explanation,
-        m.source,
-        m.dir,
-        m.count,
-        m.createdAt,
-        m.lastReviewedAt,
-        m.reviewCount,
-        uuidHoacNull(m.attemptId),
-        m.contentId ?? null,
-        m.subjectId ?? null,
-      ],
-    )
-  }
+        [
+          m.id,
+          auth.userId,
+          dedupeKey(m.wrong, m.corrected),
+          m.wrong,
+          m.corrected,
+          m.explanation,
+          m.source,
+          m.dir,
+          m.count,
+          m.createdAt,
+          m.lastReviewedAt,
+          m.reviewCount,
+          uuidHoacNull(m.attemptId),
+          m.contentId ?? null,
+          m.subjectId ?? null,
+        ],
+      )
+    }
 
-  // Cắt bớt phần vượt trần: bỏ thẻ CŨ nhất & ít lặp nhất trước (đúng luật client).
-  await pool.query(
-    `delete from english.mistakes
+    // Cắt bớt phần vượt trần: bỏ thẻ CŨ nhất & ít lặp nhất trước (đúng luật client).
+    await client.query(
+      `delete from english.mistakes
       where user_id = $1
         and id not in (select id from english.mistakes where user_id = $1
                         order by count desc, created_at desc limit ${MAX_MISTAKES})`,
-    [auth.userId],
-  )
+      [auth.userId],
+    )
+  })
 
   const { rows } = await pool.query<MistakeRow>(SELECT_ALL, [auth.userId])
   return jsonResponse({ mistakes: rows.map(rowToMistake) }, 200, headers)

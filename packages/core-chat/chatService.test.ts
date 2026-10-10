@@ -45,13 +45,44 @@ describe('createOrGetDmRoom', () => {
     expect(mockQuery).not.toHaveBeenCalled()
   })
 
-  it('đã bạn bè, chưa có phòng → tạo phòng mới', async () => {
+  it('đã bạn bè, chưa có phòng → khoá theo cặp, kiểm lại, rồi tạo phòng mới', async () => {
     areFriendsMock.mockResolvedValue(true)
     mockQuery
       .mockResolvedValueOnce({ rows: [] }) // tìm phòng có sẵn: không có
+      .mockResolvedValueOnce({ rows: [] }) // pg_advisory_xact_lock
+      .mockResolvedValueOnce({ rows: [] }) // kiểm lại trong khoá: vẫn không có
       .mockResolvedValueOnce({ rows: [{ id: 'room-1' }] }) // insert room
       .mockResolvedValueOnce({ rows: [] }) // insert members
     expect(await createOrGetDmRoom('u1', 'u2')).toEqual({ ok: true, roomId: 'room-1' })
+    const [lockSql, lockParams] = mockQuery.mock.calls[1] as [string, unknown[]]
+    expect(lockSql).toContain('pg_advisory_xact_lock')
+    expect(lockParams).toEqual(['chat-dm:u1:u2'])
+  })
+
+  it('khoá theo CẶP không phụ thuộc thứ tự — u2 mở với u1 cũng dùng cùng khoá', async () => {
+    areFriendsMock.mockResolvedValue(true)
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ id: 'room-1' }] })
+    await createOrGetDmRoom('u2', 'u1')
+    expect((mockQuery.mock.calls[1] as [string, unknown[]])[1]).toEqual(['chat-dm:u1:u2'])
+  })
+
+  it('request song song đã tạo phòng trong lúc chờ khoá → trả phòng đó, KHÔNG tạo thêm (E2.6)', async () => {
+    areFriendsMock.mockResolvedValue(true)
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // đường nhanh: chưa có
+      .mockResolvedValueOnce({ rows: [] }) // chờ được khoá
+      .mockResolvedValueOnce({ rows: [{ room_id: 'room-by-other-request' }] }) // kiểm lại: đã có
+    expect(await createOrGetDmRoom('u1', 'u2')).toEqual({
+      ok: true,
+      roomId: 'room-by-other-request',
+    })
+    expect(
+      mockQuery.mock.calls.some(([sql]) => String(sql).includes('insert into chat.rooms')),
+    ).toBe(false)
   })
 
   it('đã bạn bè, ĐÃ có phòng → trả lại phòng cũ, không tạo mới', async () => {

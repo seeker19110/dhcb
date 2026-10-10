@@ -59,7 +59,7 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: () => {},
 }))
 
-import handler from './tts.js'
+import handler, { TOUCH_TTS_CACHE_SQL } from './tts.js'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { generateAudioFromGoogle, generateStudioAudioFromGoogle } from './googleTts.js'
 import { generateAudioFromElevenLabs } from './elevenLabsTts.js'
@@ -183,6 +183,21 @@ describe('handler /api/tts — cache HIT', () => {
     expect(data.cached).toBe(true)
     expect(data.audio_url).toBe('https://cdn.test/cached.mp3')
     expect(mockedGenGoogle).not.toHaveBeenCalled()
+  })
+
+  it('trúng cache chỉ đánh dấu last_accessed_at khi mốc cũ hơn 1 ngày (E2.4)', async () => {
+    const seen: string[] = []
+    mockedGetPool.mockReturnValue(
+      makePool(async (sql) => {
+        seen.push(sql)
+        if (sql.includes('select audio_url, viseme_timeline, iv from public.tts_cache where'))
+          return { rows: [{ audio_url: 'https://cdn.test/cached.mp3', viseme_timeline: null }] }
+        return { rows: [] }
+      }) as never,
+    )
+    await handler(makeRequest())
+    expect(seen).toContain(TOUCH_TTS_CACHE_SQL)
+    expect(TOUCH_TTS_CACHE_SQL).toContain("last_accessed_at < now() - interval '1 day'")
   })
 })
 

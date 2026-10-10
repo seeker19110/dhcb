@@ -7,7 +7,12 @@
 // hardcode "Nguyen Hoang Long, Elena Vu…" cho mọi user).
 import { jsonResponse, badJsonOrInternalError } from '@dhcb/core-http/http'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
-import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
+import {
+  getFeatureState,
+  setFeatureState,
+  tryAcquireFeatureLock,
+  releaseFeatureLock,
+} from '@dhcb/core-db/featureState'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import {
   createPvPMatch,
@@ -27,6 +32,11 @@ import {
 
 const PROFILE_FEATURE = 'pvp_profile'
 const MATCH_FEATURE = 'pvp_match'
+// Khoá chống hai `submit_round` song song (audit 2026-10-10, E2.5): bản cũ đọc trận → tính → ghi,
+// nên hai request cùng lúc ở vòng cuối đều thấy trận chưa xong và CỘNG ELO HAI LẦN. TTL ngắn —
+// một lượt chỉ là vài câu SQL; tiến trình chết giữa chừng thì khoá tự hết hạn.
+const SUBMIT_LOCK = 'pvp_submit_lock'
+const SUBMIT_LOCK_TTL_SECONDS = 10
 
 // Phần hồ sơ được LƯU (không gồm các trường suy ra được như rankTier/name — tính lúc đọc).
 interface StoredPvPProfile {
@@ -192,84 +202,22 @@ export default async function handler(req: Request): Promise<Response> {
           return jsonResponse({ error: 'Missing required parameters' }, 400)
         }
 
-        let match = await getFeatureState<PvPMatchState>(userId, MATCH_FEATURE)
-        if (!match || match.matchId !== matchId || match.status === 'completed') {
-          return jsonResponse({ error: 'Match not found or expired' }, 404)
+        const lockToken = await tryAcquireFeatureLock(userId, SUBMIT_LOCK, SUBMIT_LOCK_TTL_SECONDS)
+        if (!lockToken) {
+          return jsonResponse({ error: 'Lượt trước đang được xử lý — thử lại sau giây lát' }, 409)
         }
-
-        const currentQ = match.questions[roundIndex]
-        if (!currentQ) {
-          return jsonResponse({ error: 'Invalid roundIndex' }, 400)
+        try {
+          return await submitRound(userId, {
+            matchId,
+            roundIndex,
+            selectedOption,
+            responseTimeMs,
+          })
+        } finally {
+          await releaseFeatureLock(userId, SUBMIT_LOCK, lockToken).catch((err: unknown) =>
+            console.warn('[pvp-arena] nhả khoá lỗi (khoá tự hết hạn):', err),
+          )
         }
-
-        const isCorrect = selectedOption === currentQ.correctIndex
-        // Hệ số nhân dùng chuỗi đúng liên tiếp TRONG TRẬN của chính người chơi — KHÔNG dùng
-        // `match.player1.winStreak` (chuỗi THẮNG TRẬN của cả sự nghiệp, người mới luôn = 0).
-        // Trước đây người chơi nhận hệ số 1,0 còn Ghost nhận 1,2 vì được truyền cứng streak = 1,
-        // nên người mới trả lời đúng 100% và nhanh hơn vẫn thua 2,25% số trận (audit F2).
-        const p1Streak = trailingCorrectStreak(match.actions, match.player1.id)
-        const p1Points = calculatePoints(
-          isCorrect,
-          responseTimeMs,
-          currentQ.timeLimitSec,
-          isCorrect ? p1Streak + 1 : 0,
-        )
-
-        const p1Action: PvPRoundAction = {
-          roundIndex,
-          playerId: match.player1.id,
-          selectedOption,
-          responseTimeMs,
-          isCorrect,
-          pointsEarned: p1Points,
-        }
-
-        // Mô phỏng lượt của đối thủ Ghost Rival — cũng dùng chuỗi TRONG TRẬN của chính nó,
-        // để hai bên chịu đúng một luật tính điểm.
-        const p2Action = simulateGhostAction(
-          currentQ,
-          match.player2,
-          roundIndex,
-          trailingCorrectStreak(match.actions, match.player2.id),
-        )
-
-        match.scores.player1Score += p1Points
-        match.scores.player2Score += p2Action.pointsEarned
-        match.actions.push(p1Action, p2Action)
-        match.currentRound = roundIndex + 1
-
-        let isMatchCompleted = false
-        if (match.currentRound >= match.totalRounds) {
-          match = finalizePvPMatch(match)
-          isMatchCompleted = true
-
-          // Cập nhật hồ sơ THẬT sau trận: Elo (K=32), số trận, thắng, chuỗi thắng.
-          const stored = await loadProfile(userId)
-          const won = match.winnerId === userId
-          const updated: StoredPvPProfile = {
-            ...stored,
-            eloRating: Math.max(0, stored.eloRating + (match.eloChanges?.player1Delta ?? 0)),
-            totalMatches: stored.totalMatches + 1,
-            wins: stored.wins + (won ? 1 : 0),
-            winStreak: won ? stored.winStreak + 1 : 0,
-          }
-          await setFeatureState(userId, PROFILE_FEATURE, updated)
-        } else {
-          match.updatedAt = new Date().toISOString()
-        }
-
-        await setFeatureState(userId, MATCH_FEATURE, match)
-
-        return jsonResponse(
-          {
-            success: true,
-            p1Action,
-            p2Action,
-            match,
-            isMatchCompleted,
-          },
-          200,
-        )
       }
 
       return jsonResponse({ error: 'Invalid action parameter' }, 400)
@@ -279,4 +227,101 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   return jsonResponse({ error: 'Method not allowed' }, 405)
+}
+
+// Lấy thẳng từ body JSON (chưa qua schema — giữ hành vi cũ); roundIndex được ép khớp
+// `match.currentRound` bằng so sánh `!==` nên giá trị không phải số đều bị từ chối.
+interface SubmitRoundInput {
+  matchId: string
+  roundIndex: number
+  selectedOption: number
+  responseTimeMs: number
+}
+
+// Một lượt trả lời — CHỈ gọi khi đang giữ SUBMIT_LOCK của người chơi này.
+async function submitRound(userId: string, input: SubmitRoundInput): Promise<Response> {
+  const { matchId, roundIndex, selectedOption, responseTimeMs } = input
+  let match = await getFeatureState<PvPMatchState>(userId, MATCH_FEATURE)
+  if (!match || match.matchId !== matchId || match.status === 'completed') {
+    return jsonResponse({ error: 'Match not found or expired' }, 404)
+  }
+
+  // Chỉ nhận ĐÚNG vòng hiện tại: bản cũ nhận roundIndex tuỳ ý nên gửi lại vòng đã chơi
+  // (hoặc nhảy cóc) vẫn được cộng điểm và đẩy currentRound đi lung tung.
+  if (roundIndex !== match.currentRound) {
+    return jsonResponse({ error: 'Invalid roundIndex' }, 400)
+  }
+  const currentQ = match.questions[roundIndex]
+  if (!currentQ) {
+    return jsonResponse({ error: 'Invalid roundIndex' }, 400)
+  }
+
+  const isCorrect = selectedOption === currentQ.correctIndex
+  // Hệ số nhân dùng chuỗi đúng liên tiếp TRONG TRẬN của chính người chơi — KHÔNG dùng
+  // `match.player1.winStreak` (chuỗi THẮNG TRẬN của cả sự nghiệp, người mới luôn = 0).
+  // Trước đây người chơi nhận hệ số 1,0 còn Ghost nhận 1,2 vì được truyền cứng streak = 1,
+  // nên người mới trả lời đúng 100% và nhanh hơn vẫn thua 2,25% số trận (audit F2).
+  const p1Streak = trailingCorrectStreak(match.actions, match.player1.id)
+  const p1Points = calculatePoints(
+    isCorrect,
+    responseTimeMs,
+    currentQ.timeLimitSec,
+    isCorrect ? p1Streak + 1 : 0,
+  )
+
+  const p1Action: PvPRoundAction = {
+    roundIndex,
+    playerId: match.player1.id,
+    selectedOption,
+    responseTimeMs,
+    isCorrect,
+    pointsEarned: p1Points,
+  }
+
+  // Mô phỏng lượt của đối thủ Ghost Rival — cũng dùng chuỗi TRONG TRẬN của chính nó,
+  // để hai bên chịu đúng một luật tính điểm.
+  const p2Action = simulateGhostAction(
+    currentQ,
+    match.player2,
+    roundIndex,
+    trailingCorrectStreak(match.actions, match.player2.id),
+  )
+
+  match.scores.player1Score += p1Points
+  match.scores.player2Score += p2Action.pointsEarned
+  match.actions.push(p1Action, p2Action)
+  match.currentRound = roundIndex + 1
+
+  let isMatchCompleted = false
+  if (match.currentRound >= match.totalRounds) {
+    match = finalizePvPMatch(match)
+    isMatchCompleted = true
+
+    // Cập nhật hồ sơ THẬT sau trận: Elo (K=32), số trận, thắng, chuỗi thắng.
+    const stored = await loadProfile(userId)
+    const won = match.winnerId === userId
+    const updated: StoredPvPProfile = {
+      ...stored,
+      eloRating: Math.max(0, stored.eloRating + (match.eloChanges?.player1Delta ?? 0)),
+      totalMatches: stored.totalMatches + 1,
+      wins: stored.wins + (won ? 1 : 0),
+      winStreak: won ? stored.winStreak + 1 : 0,
+    }
+    await setFeatureState(userId, PROFILE_FEATURE, updated)
+  } else {
+    match.updatedAt = new Date().toISOString()
+  }
+
+  await setFeatureState(userId, MATCH_FEATURE, match)
+
+  return jsonResponse(
+    {
+      success: true,
+      p1Action,
+      p2Action,
+      match,
+      isMatchCompleted,
+    },
+    200,
+  )
 }

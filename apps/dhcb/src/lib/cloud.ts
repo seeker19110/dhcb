@@ -23,6 +23,29 @@ const K = {
   usage: (uid: string, date: string) => `et_usage_${uid}_${date}`,
 }
 
+function getLocalArray<T>(key: string): T[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? '[]')
+    return Array.isArray(parsed) ? (parsed as T[]) : []
+  } catch {
+    return []
+  }
+}
+
+// Server chỉ trả N phiên GẦN NHẤT mỗi loại (HISTORY_PULL_LIMIT ở apps/server/src/api/core/history.ts,
+// audit 2026-10-10 E2.2) ⇒ KHÔNG ghi đè thẳng: bản server thắng khi trùng id, phiên cũ hơn chỉ còn
+// trên máy này được giữ lại, rồi xếp mới → cũ như server.
+export function mergeHistory<T extends { id: string }>(
+  server: T[],
+  local: T[],
+  timeOf: (item: T) => number,
+): T[] {
+  const serverIds = new Set(server.map((item) => item.id))
+  return [...server, ...local.filter((item) => item && !serverIds.has(item.id))].sort(
+    (a, b) => timeOf(b) - timeOf(a),
+  )
+}
+
 function setLocal<T>(key: string, val: T) {
   try {
     localStorage.setItem(key, JSON.stringify(val))
@@ -102,7 +125,7 @@ export function pushLearnDay(_userId: string, day: string, learnCount: number) {
   firePost({ action: 'learn-day', day, learnCount }, 'learn day')
 }
 
-// ── PULL: kéo toàn bộ dữ liệu của user về ghi vào localStorage ────────────────
+// ── PULL: kéo dữ liệu của user về gộp vào localStorage ─────────────────────────
 // Gọi khi đăng nhập / mở trang. Lỗi mạng sẽ bị nuốt (vẫn dùng được bản local cũ).
 export async function pullUserData(userId: string): Promise<void> {
   // Khách vãng lai không có dữ liệu trên server — bỏ qua để khỏi bắn request 401 vô ích.
@@ -126,9 +149,26 @@ export async function pullUserData(userId: string): Promise<void> {
     return
   }
 
-  if (Array.isArray(data.chat)) setLocal(K.chat(userId), data.chat)
-  if (Array.isArray(data.writing)) setLocal(K.writing(userId), data.writing)
-  if (Array.isArray(data.speaking)) setLocal(K.speaking(userId), data.speaking)
+  const byCreatedAt = (s: { createdAt: number }) => s.createdAt
+  if (Array.isArray(data.chat))
+    setLocal(
+      K.chat(userId),
+      mergeHistory(data.chat, getLocalArray<ChatSession>(K.chat(userId)), byCreatedAt),
+    )
+  if (Array.isArray(data.writing))
+    setLocal(
+      K.writing(userId),
+      mergeHistory(
+        data.writing,
+        getLocalArray<WritingSubmission>(K.writing(userId)),
+        (s) => s.submittedAt,
+      ),
+    )
+  if (Array.isArray(data.speaking))
+    setLocal(
+      K.speaking(userId),
+      mergeHistory(data.speaking, getLocalArray<SpeakingSession>(K.speaking(userId)), byCreatedAt),
+    )
   if (Array.isArray(data.usage)) {
     // Lưu từng ngày vào localStorage để getStreak() tính đúng streak nhiều ngày
     // (server trả tối đa 365 ngày gần nhất, đủ cho chuỗi 1 năm).

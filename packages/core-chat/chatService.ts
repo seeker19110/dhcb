@@ -11,6 +11,15 @@ import type { ChatMessage, RoomSummary } from '@dhcb/core-contracts/chat'
 export type CreateDmRoomResult =
   { ok: true; roomId: string } | { ok: false; reason: 'not_friends' | 'self_chat' }
 
+// Phòng DM hiện có: room không phải group, có ĐÚNG 2 thành viên là 2 user này.
+const FIND_DM_ROOM_SQL = `select r.id as room_id
+     from chat.rooms r
+     where r.is_group = false
+       and (select count(*) from chat.room_members m where m.room_id = r.id) = 2
+       and exists (select 1 from chat.room_members m where m.room_id = r.id and m.user_id = $1)
+       and exists (select 1 from chat.room_members m where m.room_id = r.id and m.user_id = $2)
+     limit 1`
+
 /** Tạo (hoặc lấy lại) phòng DM giữa 2 user — CHỈ cho phép giữa bạn bè (xem migration 0053). */
 export async function createOrGetDmRoom(
   userIdA: string,
@@ -20,20 +29,26 @@ export async function createOrGetDmRoom(
   if (!(await areFriends(userIdA, userIdB))) return { ok: false, reason: 'not_friends' }
 
   const pool = getPgPool()
-  // Phòng DM hiện có: room không phải group, có ĐÚNG 2 thành viên là 2 user này.
-  const { rows: existing } = await pool.query<{ room_id: string }>(
-    `select r.id as room_id
-     from chat.rooms r
-     where r.is_group = false
-       and (select count(*) from chat.room_members m where m.room_id = r.id) = 2
-       and exists (select 1 from chat.room_members m where m.room_id = r.id and m.user_id = $1)
-       and exists (select 1 from chat.room_members m where m.room_id = r.id and m.user_id = $2)
-     limit 1`,
-    [userIdA, userIdB],
-  )
+  // Đường nhanh: phần lớn lần gọi là mở lại phòng đã có — không cần transaction/khoá.
+  const { rows: existing } = await pool.query<{ room_id: string }>(FIND_DM_ROOM_SQL, [
+    userIdA,
+    userIdB,
+  ])
   if (existing[0]) return { ok: true, roomId: existing[0].room_id }
 
   const roomId = await withTransaction(pool, async (client) => {
+    // Kiểm-rồi-chèn không có ràng buộc UNIQUE ⇒ hai request cùng lúc (hai người cùng bấm "Nhắn
+    // tin", hay bấm đúp) đều thấy "chưa có" và tạo HAI phòng (audit 2026-10-10, E2.6). Khoá
+    // advisory theo CẶP (thứ tự a/b không quan trọng) trong transaction, rồi kiểm LẠI: request
+    // thứ hai chờ request đầu commit rồi thấy phòng đã có. Khoá tự nhả khi transaction kết thúc.
+    const pairKey = `chat-dm:${[userIdA, userIdB].sort().join(':')}`
+    await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [pairKey])
+    const { rows: again } = await client.query<{ room_id: string }>(FIND_DM_ROOM_SQL, [
+      userIdA,
+      userIdB,
+    ])
+    if (again[0]) return again[0].room_id
+
     const { rows } = await client.query<{ id: string }>(
       'insert into chat.rooms (is_group, created_by) values (false, $1) returning id',
       [userIdA],

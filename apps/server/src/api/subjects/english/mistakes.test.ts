@@ -12,7 +12,19 @@ vi.mock('@dhcb/core-auth/security', () => ({
 }))
 
 const query = vi.hoisted(() => vi.fn())
-vi.mock('@dhcb/core-db/pgPool', () => ({ getPgPool: () => ({ query }) }))
+// Transaction (E2.3): begin/commit/rollback đi qua client riêng, mọi câu nghiệp vụ vẫn ghi vào
+// `query` để chỉ số calls[...] của các test giữ nguyên.
+const txControl = vi.hoisted(() => vi.fn())
+vi.mock('@dhcb/core-db/pgPool', () => ({
+  getPgPool: () => ({
+    query,
+    connect: async () => ({
+      query: (sql: string, params?: unknown[]) =>
+        /^(begin|commit|rollback)$/.test(sql) ? txControl(sql) : query(sql, params),
+      release: () => {},
+    }),
+  }),
+}))
 
 import handler from './mistakes.js'
 
@@ -111,6 +123,21 @@ describe('api/mistakes', () => {
     // dedupe_key phải khớp luật norm() của client: thường hoá + gộp khoảng trắng.
     expect(upsert[1]![2]).toBe('i go to school yesterday→i went to school yesterday')
     expect(upsert[1]![1]).toBe('user-1')
+  })
+
+  it('POST chạy cả lô trong MỘT transaction; một dòng lỗi → rollback, không cắt tỉa (E2.3)', async () => {
+    query.mockResolvedValueOnce({ rows: [] }) // dòng 1 ok
+    query.mockRejectedValueOnce(new Error('db down')) // dòng 2 lỗi
+    await expect(
+      handler(req('POST', '', { mistakes: [SAMPLE, { ...SAMPLE, wrong: 'khác' }] })),
+    ).rejects.toThrow('db down')
+    expect(txControl.mock.calls.map(([sql]) => sql)).toEqual(['begin', 'rollback'])
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('delete from'))).toBe(false)
+  })
+
+  it('POST thành công → begin … commit', async () => {
+    await handler(req('POST', '', { mistakes: [SAMPLE] }))
+    expect(txControl.mock.calls.map(([sql]) => sql)).toEqual(['begin', 'commit'])
   })
 
   it('POST merge keeps the larger count instead of adding them up', async () => {

@@ -16,6 +16,17 @@ vi.mock('@dhcb/core-db/featureState', () => ({
   setFeatureState: vi.fn(async (u: string, f: string, st: unknown) => {
     store.set(u + '|' + f, st)
   }),
+  // Khoá giống Postgres thật ở chỗ quan trọng: đang có người giữ thì lần giữ thứ hai trả null.
+  tryAcquireFeatureLock: vi.fn(async (u: string, f: string) => {
+    if (store.has(u + '|' + f)) return null
+    const token = `tok-${Math.random()}`
+    store.set(u + '|' + f, { t: token })
+    return token
+  }),
+  releaseFeatureLock: vi.fn(async (u: string, f: string, token: string) => {
+    if ((store.get(u + '|' + f) as { t?: string } | undefined)?.t === token)
+      store.delete(u + '|' + f)
+  }),
 }))
 
 // pgPool: truy vấn leaderboard đọc từ store; truy vấn tên trả tên test. Ghi lại câu SQL đã chạy
@@ -407,5 +418,60 @@ describe('leaderboardName', () => {
     expect(leaderboardName(null, 2)).toBe('Học viên #2')
     expect(leaderboardName(undefined, 5)).toBe('Học viên #5')
     expect(leaderboardName('   ', 7)).toBe('Học viên #7')
+  })
+
+  // ── Audit 2026-10-10, E2.5: chống cộng Elo hai lần + ép đúng vòng ──
+  describe('submit_round chống đua & gửi lại', () => {
+    const submit = (matchId: string, roundIndex: number, selectedOption: number) =>
+      handler(
+        new Request('http://localhost/api/pvp-arena?action=submit_round', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ matchId, roundIndex, selectedOption, responseTimeMs: 800 }),
+        }),
+      )
+    const newMatch = async () => {
+      store.clear()
+      const res = await handler(
+        new Request('http://localhost/api/pvp-arena?action=matchmake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        }),
+      )
+      return (await res.json()).match as {
+        matchId: string
+        totalRounds: number
+        questions: { correctIndex: number }[]
+      }
+    }
+
+    it('gửi lại vòng ĐÃ chơi hoặc nhảy cóc → 400, điểm không đổi', async () => {
+      const match = await newMatch()
+      expect((await submit(match.matchId, 0, match.questions[0]!.correctIndex)).status).toBe(200)
+      const before = JSON.stringify(store.get('u-test-123|pvp_match'))
+      expect((await submit(match.matchId, 0, match.questions[0]!.correctIndex)).status).toBe(400)
+      expect((await submit(match.matchId, 2, match.questions[2]!.correctIndex)).status).toBe(400)
+      expect(JSON.stringify(store.get('u-test-123|pvp_match'))).toBe(before)
+    })
+
+    it('hai request SONG SONG ở vòng cuối → một 200 + một 409, Elo chỉ cộng MỘT lần', async () => {
+      const match = await newMatch()
+      const last = match.totalRounds - 1
+      for (let i = 0; i < last; i++)
+        await submit(match.matchId, i, match.questions[i]!.correctIndex)
+      const answer = match.questions[last]!.correctIndex
+      const statuses = (
+        await Promise.all([
+          submit(match.matchId, last, answer),
+          submit(match.matchId, last, answer),
+        ])
+      ).map((r) => r.status)
+      expect(statuses.sort()).toEqual([200, 409])
+      const profile = store.get('u-test-123|pvp_profile') as { totalMatches: number }
+      expect(profile.totalMatches).toBe(1)
+      // Khoá đã được nhả — lượt sau (trận đã xong) trả 404 chứ không kẹt 409.
+      expect((await submit(match.matchId, last, answer)).status).toBe(404)
+    })
   })
 })
