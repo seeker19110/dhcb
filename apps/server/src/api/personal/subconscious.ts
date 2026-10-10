@@ -13,7 +13,7 @@ import {
   getLatestSubconsciousThought,
 } from '@dhcb/core-personal/subconsciousService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -59,6 +59,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (isAppError(err)) {
       return jsonResponse(toErrorBody(err), err.status, headers)
     }
+    logInternalError(err, 'subconscious')
     return jsonResponse({ error: 'Internal Server Error' }, 500, headers)
   }
 }

@@ -26,6 +26,14 @@ listen_port = 6432
 ; advisory lock giữ xuyên nhiều query...). ĐỪNG đổi sang "session" trừ khi đã rà kỹ code.
 pool_mode = transaction
 
+; App gửi statement_timeout + idle_in_transaction_session_timeout trong gói khởi tạo kết nối
+; (packages/core-db/pgPool.ts#poolTimeoutsFromEnv, audit 2026-10-10). PgBouncer mặc định TỪ CHỐI
+; tham số lạ ("unsupported startup parameter") ⇒ app không kết nối được. Khi bật PgBouncer: bỏ
+; qua hai tham số ở đây VÀ đặt lại ngưỡng ở phía Postgres để không mất timeout, vd
+;   ALTER ROLE dhcb_app SET statement_timeout = '60s';
+;   ALTER ROLE dhcb_app SET idle_in_transaction_session_timeout = '60s';
+ignore_startup_parameters = statement_timeout,idle_in_transaction_session_timeout
+
 ; Tổng số kết nối "ảo" PgBouncer nhận từ mọi client (app) cùng lúc — đặt cao vì đây là hàng đợi
 ; rẻ, không phải kết nối thật tới Postgres.
 max_client_conn = 2000

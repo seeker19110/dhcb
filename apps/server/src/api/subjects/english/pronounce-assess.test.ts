@@ -93,6 +93,10 @@ describe('handler /api/pronounce-assess', () => {
     const res = await handler(makeRequest())
     expect(res.status).toBe(500)
     expect(mockedRefund).toHaveBeenCalledWith('user-test', 'pronounce', '2026-08-12')
+    // Lỗi Azure chỉ ở log server; client vẫn nhận `fallback` để chuyển sang chấm cục bộ.
+    const body = (await res.json()) as { error: string; fallback: boolean }
+    expect(body.fallback).toBe(true)
+    expect(body.error).not.toContain('oops')
   })
 
   it('thiếu referenceText → 400, không trừ lượt', async () => {

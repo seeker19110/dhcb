@@ -115,14 +115,18 @@ export async function notifyOfflinePeers(
             )
             sent++
           } catch (err: unknown) {
-            if (
-              err &&
-              typeof err === 'object' &&
-              'statusCode' in err &&
-              (err.statusCode === 410 || err.statusCode === 404)
-            ) {
+            const status =
+              err && typeof err === 'object' && 'statusCode' in err ? err.statusCode : undefined
+            if (status === 410 || status === 404) {
               expiredEndpoints.push(sub.endpoint)
+              return
             }
+            // Lỗi khác (VAPID sai, dịch vụ push 5xx/429, mạng) trước đây bị nuốt im lặng (audit
+            // 2026-10-10, E1.8). Không log endpoint — đó là định danh thiết bị người dùng.
+            console.warn(
+              '[chatPush] gửi push lỗi:',
+              status ?? (err instanceof Error ? err.message : String(err)),
+            )
           }
         }),
       )

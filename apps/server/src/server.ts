@@ -223,9 +223,9 @@ function startReminderScheduler() {
     if (hasPushConfig) {
       void sendReminders(hour)
         .then((r) => {
-          if (r.sent || r.skipped)
+          if (r.sent || r.skipped || r.failed)
             console.log(
-              `[reminder:push] ${hour}h UTC → gửi ${r.sent}, bỏ qua ${r.skipped} (đã học)`,
+              `[reminder:push] ${hour}h UTC → gửi ${r.sent}, bỏ qua ${r.skipped} (đã học), lỗi ${r.failed}`,
             )
         })
         .catch((err) => {

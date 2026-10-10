@@ -15,7 +15,7 @@ import {
 } from '@dhcb/core-personal/neuroAffectiveService'
 import { ActiveShieldSchema } from '@dhcb/core-contracts/neuroAffective'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 import { readJsonBody } from '@dhcb/core-http/validation'
 
 export default async function handler(req: Request): Promise<Response> {
@@ -68,6 +68,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (isAppError(err)) {
       return jsonResponse(toErrorBody(err), err.status, headers)
     }
+    logInternalError(err, 'neuro-affective')
     return jsonResponse({ error: 'Lỗi xử lý trạng thái nhịp sinh học' }, 500, headers)
   }
 }

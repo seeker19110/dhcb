@@ -3,6 +3,7 @@
 
 import { isIPv6 } from 'node:net'
 import { Redis } from 'ioredis'
+import { ServiceUnavailableError } from '@dhcb/core-errors/appError'
 import { validateSessionToken } from './authService.js'
 import { readSessionCookie } from './sessionCookie.js'
 
@@ -583,9 +584,18 @@ export async function validateAuth(req: Request): Promise<{ userId: string } | n
 
   try {
     return await validateSessionToken(token)
-  } catch {
-    return null
+  } catch (err) {
+    // CSDL lỗi ≠ "chưa đăng nhập" (audit 2026-10-10, E1.5). Bản cũ trả null ⇒ handler trả 401 ⇒
+    // client xoá phiên (packages/core-ui/clientAuth.ts chỉ xoá khi 401): một lần CSDL chập chờn
+    // là đăng xuất mọi người đang dùng, và không để lại dòng log nào. Nay ném 503 — adapter
+    // (apps/server/src/routes.ts#wrapEdge) hoặc handler tự bắt AppError trả đúng mã cho client.
+    console.error('[auth] Không kiểm được phiên đăng nhập (CSDL lỗi):', describeError(err))
+    throw new ServiceUnavailableError()
   }
+}
+
+function describeError(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }
 
 // ── Content-Type Validation ───────────────────────────────────────────────────

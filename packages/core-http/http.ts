@@ -20,9 +20,16 @@ export function internalErrorResponse(
   headers: Record<string, string> = {},
   context = '',
 ): Response {
-  const message = err instanceof Error ? err.message : String(err)
-  console.error(`[500]${context ? ` ${context}` : ''} ${message}`)
+  logInternalError(err, context)
   return jsonResponse({ error: 'Internal server error' }, 500, headers)
+}
+
+// Chỉ phần LOG của internalErrorResponse — cho handler muốn giữ câu báo lỗi tiếng Việt / mã 503
+// riêng của mình nhưng vẫn phải để lại dấu vết ở server (audit 2026-10-10, E1.4: tám handler
+// bắt lỗi rồi trả 500/503 mà không ghi một dòng log nào, Sentry/PM2 không thấy gì).
+export function logInternalError(err: unknown, context = '', status = 500): void {
+  const message = err instanceof Error ? err.message : String(err)
+  console.error(`[${status}]${context ? ` ${context}` : ''} ${message}`)
 }
 
 // Dùng cho khối `try` bọc CẢ `await req.json()` LẪN phần xử lý (CSDL, AI…). Trước 2026-10-08

@@ -1,7 +1,7 @@
 // Máy chủ sở hữu câu hỏi, chấm bài và ghi tiến độ; không nhận nguyên state từ client.
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
-import { jsonResponse } from '@dhcb/core-http/http'
+import { jsonResponse, logInternalError } from '@dhcb/core-http/http'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { validateAuth, getCorsHeaders } from '@dhcb/core-auth/security'
 import {
@@ -127,7 +127,8 @@ export default async function handler(req: Request): Promise<Response> {
       )
       return jsonResponse({ success: true, ...result, state }, 200, headers)
     })
-  } catch {
+  } catch (err) {
+    logInternalError(err, 'neural-curriculum', 503)
     return jsonResponse({ error: 'Không thể lưu bài luyện. Vui lòng thử lại.' }, 503, headers)
   }
 }

@@ -10,6 +10,7 @@ import {
   getCorsHeaders,
 } from '@dhcb/core-auth/security'
 import { captureServerException } from './api/_lib/sentry.js'
+import { isAppError } from '@dhcb/core-errors/appError'
 
 import ttsHandler from '@dhcb/core-ai/tts'
 import aiHandler from '@dhcb/core-ai/ai'
@@ -202,9 +203,17 @@ export function wrapEdge(handler: (req: Request) => Promise<Response>) {
 
       res.send(await webRes.text())
     } catch (err) {
-      console.error('[server] Lỗi handler:', err)
-      captureServerException(err, { path: req.originalUrl, method: req.method })
-      res.status(500).json({ error: 'Internal server error' })
+      // Lỗi nghiệp vụ có kiểu (AppError) lọt ra khỏi handler — trả ĐÚNG mã của nó thay vì gộp
+      // thành 500 (audit 2026-10-10, E1.5): `validateAuth` ném 503 khi CSDL không kiểm được
+      // phiên, và client phải nhận 503 (giữ phiên) chứ không phải 401/500. Body giữ hình dạng
+      // `{error: 'chuỗi', code}` như nhánh 403 ở trên — handler cũ đọc `error` là chuỗi.
+      // AppError 4xx là lỗi người dùng đã lường trước — không đẩy lên Sentry.
+      if (!isAppError(err) || err.status >= 500) {
+        console.error('[server] Lỗi handler:', err)
+        captureServerException(err, { path: req.originalUrl, method: req.method })
+      }
+      if (isAppError(err)) res.status(err.status).json({ error: err.message, code: err.code })
+      else res.status(500).json({ error: 'Internal server error' })
     }
   }
 }

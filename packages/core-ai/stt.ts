@@ -24,7 +24,7 @@ import {
 import { resolveActor } from '@dhcb/core-auth/guest'
 import { checkAndConsumeActorUsage, refundActorUsage } from '@dhcb/core-auth/actorUsage'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 import { base64ToBytes } from '@dhcb/core-db/base64'
 
 // Giới hạn dung lượng base64 (~8MB chuỗi ≈ ~6MB audio thật, đủ cho ~1–2 phút nói).
@@ -125,8 +125,11 @@ export default async function handler(req: Request): Promise<Response> {
   } catch (err) {
     // Provider STT lỗi → người dùng không nhận được kết quả: hoàn lại lượt vừa trừ.
     await refundActorUsage(actor, 'stt', gate.day, clientIp)
+    // Thông điệp của provider (Groq/OpenAI) có thể kèm id tài khoản, hạn mức, URL nội bộ — chỉ
+    // ghi ở server, client nhận câu chung (audit 2026-10-10, E1.8).
+    logInternalError(err, 'stt')
     return jsonResponse(
-      { error: `Không nhận diện được giọng nói: ${(err as Error).message}` },
+      { error: 'Không nhận diện được giọng nói — bạn thử lại sau ít giây nhé.' },
       500,
       allHeaders,
     )

@@ -12,6 +12,11 @@
 
 import { callGroqChatWithKeyPool } from './chatProviders.js'
 import { callAnthropicText } from './anthropicClient.js'
+import {
+  describeAnthropicFailure,
+  describeChatCallFailure,
+  describeThrown,
+} from './providerFailure.js'
 import { callGemini } from './geminiApi.js'
 import { GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, getAnthropicRoute, type AiTask } from './aiConfig.js'
 import { recordAiTokenUsage, type AiTokenUsage } from './aiTokenUsage.js'
@@ -49,7 +54,10 @@ export async function generateChatText(params: {
       void recordAiTokenUsage({ provider: 'anthropic', model: res.model, mode, usage: res.usage })
     }
     if (res.kind === 'success') return res.text
-    // thất bại → thử provider kế tiếp
+    // Thất bại → thử provider kế tiếp. PHẢI ghi log: trước 2026-10-10 nhánh này im lặng, Claude
+    // hỏng (key bị thu hồi, hết credit) thì app lặng lẽ chạy bằng Groq — đổi chất lượng lẫn chi
+    // phí mà không ai biết (audit 2026-10-10, E1).
+    console.warn(`[chatFallback:${mode}] Anthropic ${describeAnthropicFailure(res)}`)
   }
 
   if (process.env.GROQ_API_KEY) {
@@ -59,8 +67,12 @@ export async function generateChatText(params: {
         void recordAiTokenUsage({ provider: 'groq', model: res.model, mode, usage: res.usage })
         return res.text.trim()
       }
-    } catch {
+      console.warn(
+        `[chatFallback:${mode}] Groq ${res.kind === 'success' ? 'trả text rỗng' : describeChatCallFailure(res)}`,
+      )
+    } catch (err) {
       // thử provider kế tiếp
+      console.warn(`[chatFallback:${mode}] Groq lỗi: ${describeThrown(err)}`)
     }
   }
 
@@ -82,8 +94,10 @@ export async function generateChatText(params: {
       // Gemini đã tính tiền token ngay khi trả body hợp lệ, kể cả khi text rỗng → ghi trước.
       void recordAiTokenUsage({ provider: 'gemini', model: GEMINI_CHAT_MODEL, mode, usage })
       if (text && text.trim()) return text.trim()
-    } catch {
+      console.warn(`[chatFallback:${mode}] Gemini trả text rỗng`)
+    } catch (err) {
       // hết provider
+      console.warn(`[chatFallback:${mode}] Gemini lỗi: ${describeThrown(err)}`)
     }
   }
 
