@@ -5,7 +5,7 @@
 
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
-import { invalidateSettingsCache } from '@dhcb/core-db/settings'
+import { invalidateSettingsEverywhere } from '../_lib/settingsSync.js'
 import {
   validateAuth,
   getCorsHeaders,
@@ -70,9 +70,9 @@ export default async function handler(req: Request): Promise<Response> {
       console.error('[admin-system-control] app_settings id=1 không tồn tại — cầu dao chưa đổi')
       return jsonResponse({ error: 'Chưa đổi được cầu dao — thử lại sau' }, 500, allHeaders)
     }
-    // Xoá cache 30s của TIẾN TRÌNH NÀY để cầu dao có hiệu lực ngay. Các tiến trình PM2 khác vẫn
-    // có thể dùng giá trị cũ tối đa 30s (TTL của getAppSettings) — giới hạn đã biết.
-    invalidateSettingsCache()
+    // Xoá cache 30s ở tiến trình này NGAY + phát tin qua Redis để các tiến trình PM2 khác cũng
+    // xoá — cầu dao có hiệu lực ở cả cụm, không đợi hết TTL (xem settingsSync.ts).
+    invalidateSettingsEverywhere()
 
     logSecurityEvent('CIRCUIT_BREAKER_TOGGLED', clientIp, {
       adminUserId: auth.userId,
