@@ -793,6 +793,13 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
 
 ### A. CÒN PHẢI LÀM
 
+- **[2026-10-10 · rà cảnh báo header/TLS của máy quét, changelog `0588`] Siết TLS ở dashboard
+  Cloudflare** (code không sửa được — máy quét đo ở biên Cloudflare): **SSL/TLS → Edge
+  Certificates** → Minimum TLS Version **TLS 1.2** · TLS 1.3 **On** · Cipher suites **Modern** (nếu
+  gói cho chỉnh). Hết các mục Protocols/BEAST/Lucky 13. Các bước + lệnh `openssl` kiểm lại:
+  `docs/cloudflare-setup.md` Bước 6. Sau khi deploy PR này, chạy lại máy quét: X-XSS-Protection,
+  COOP, CORP phải hết; COEP + CSP `unsafe-inline/eval` còn lại CÓ CHỦ ĐÍCH (lý do ở `0588`).
+
 - **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`, PR #1315 · structured
   outputs chấm điểm + Action Canvas, changelog `0569`/`0570`, PR #1316 · #1318] Năm việc trên VPS sau khi deploy** (phiên AI không có key
   Anthropic thật):

@@ -57,6 +57,35 @@ KHÔNG chọn "Flexible" (sẽ làm mất mã hóa đoạn Cloudflare→VPS).
   URL khớp `*donghanhcungban.org/api/*` → **Cache Level: Bypass** (API luôn
   cần dữ liệu mới + xác thực, không được cache).
 
+### Bước 6 — Siết TLS ở biên Cloudflare (BẮT BUỘC từ 2026-10-10)
+
+Máy quét bảo mật nhìn vào **biên Cloudflare** (DNS trỏ về Cloudflare), KHÔNG nhìn Nginx trên VPS.
+Các mục "SSL/TLS - Protocols", "BEAST", "Lucky 13" là do biên còn nhận TLS 1.0/1.1 và bộ mã
+CBC — cài đặt ở dashboard, code trong repo không sửa được:
+
+- **SSL/TLS → Edge Certificates → Minimum TLS Version** → chọn **TLS 1.2** (bỏ TLS 1.0/1.1 ⇒ hết
+  BEAST — lỗi chỉ có ở TLS 1.0).
+- Cùng trang → **TLS 1.3** → **On**.
+- Cùng trang → **Cipher suites** (nếu gói tài khoản cho chỉnh): chọn mức **Modern** (chỉ bộ mã
+  AEAD — GCM/ChaCha20) ⇒ hết **Lucky 13** (tấn công nhắm vào bộ mã CBC). Nếu mục này bị khoá theo
+  gói thì Lucky 13 còn ở mức cảnh báo thấp: trình duyệt hiện đại tự chọn GCM/ChaCha20 trước.
+- **DROWN** chỉ là "hint": lỗi thật cần SSLv2, mà cả Cloudflare lẫn Nginx (Certbot
+  `options-ssl-nginx.conf` chỉ bật TLSv1.2 + TLSv1.3) đều không có. Giữ nguyên miễn là KHÔNG máy
+  nào khác dùng chung chứng chỉ/khoá này mà còn bật SSLv2.
+
+Kiểm lại sau khi đổi (từ máy bất kỳ có `openssl`, KHÔNG qua proxy):
+
+```bash
+# Phải THẤT BẠI (handshake failure / no protocols):
+openssl s_client -connect en-vi.donghanhcungban.org:443 -servername en-vi.donghanhcungban.org -tls1_1 </dev/null
+# Phải THÀNH CÔNG:
+openssl s_client -connect en-vi.donghanhcungban.org:443 -servername en-vi.donghanhcungban.org -tls1_2 </dev/null
+```
+
+Nginx trên VPS (đoạn Cloudflare → VPS): kiểm `grep -E 'ssl_protocols|ssl_ciphers'
+/etc/letsencrypt/options-ssl-nginx.conf` — phải chỉ có `TLSv1.2 TLSv1.3` và bộ mã ECDHE-…-GCM /
+CHACHA20.
+
 ## Việc AI/bạn làm trên VPS (sau khi Bước 1–4 xong)
 
 Repo đã có sẵn `scripts/update-cloudflare-ips.sh` (sinh danh sách IP Cloudflare

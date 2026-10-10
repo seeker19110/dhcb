@@ -104,6 +104,26 @@ export const HSTS_VALUE = 'max-age=63072000; includeSubDomains; preload'
 export const PERMISSIONS_POLICY =
   'accelerometer=(), autoplay=(self), camera=(self), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(self), payment=(), usb=()'
 
+// X-XSS-Protection: '0' = TẮT bộ lọc XSS cũ của trình duyệt (khuyến nghị OWASP). Bộ lọc này đã
+// bị gỡ khỏi Chrome/Edge/Firefox, và ở trình duyệt cũ còn giữ nó thì chính nó từng là lỗ rò dữ
+// liệu (XS-Leak). Trước đây bỏ hẳn header nên máy quét bảo mật báo "thiếu" — khai rõ '0' để nói
+// "cố ý tắt", việc chặn XSS là của CSP (rà header 2026-10-10).
+export const X_XSS_PROTECTION_VALUE = '0'
+
+// Cross-Origin-Resource-Policy: chỉ trang CÙNG SITE (*.donghanhcungban.org) được nhúng response
+// của server bằng <img>/<script>/… (no-cors). `same-site` chứ không `same-origin`: hub (www) và
+// app (en-vi) là hai origin cùng site. Không ảnh hưởng fetch có CORS. File tĩnh /js/, /assets/
+// do Nginx phục vụ thẳng nên không mang header này (rà header 2026-10-10).
+export const CORP_VALUE = 'same-site'
+
+// Cross-Origin-Opener-Policy: tách cửa sổ trang mình khỏi cửa sổ trang lạ (chống XS-Leak /
+// tabnabbing qua `window.opener`). `same-origin-allow-popups` chứ không `same-origin`: đăng nhập
+// Google mở POPUP (GIS token client) và cần giữ liên lạc với popup — Google khuyến nghị đúng giá
+// trị này. CẢNH BÁO khi bật lại đăng nhập Microsoft (`loginWithMicrosoft`, MSAL `loginPopup` —
+// hiện KHÔNG nút nào gọi): popup MSAL quay về CHÍNH origin này, mang COOP này là mất liên lạc với
+// trang mở nó → phải cho MSAL một redirect URI riêng không có COOP (rà header 2026-10-10).
+export const COOP_VALUE = 'same-origin-allow-popups'
+
 // Các header bảo mật chuẩn — luôn đính kèm vào mọi response từ server.
 export const SECURITY_HEADERS: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
@@ -111,7 +131,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
   // hiện đại, trình duyệt ưu tiên hơn X-Frame-Options). Để DENY ở đây là TỰ MÂU THUẪN với
   // chính CSP mình gửi kèm. Thống nhất một giá trị, khớp CSP (audit 2026-08-25, F4).
   'X-Frame-Options': 'SAMEORIGIN',
-  // X-XSS-Protection đã deprecated — trình duyệt hiện đại không cần, bỏ đi tránh warning
+  'X-XSS-Protection': X_XSS_PROTECTION_VALUE,
+  'Cross-Origin-Resource-Policy': CORP_VALUE,
+  'Cross-Origin-Opener-Policy': COOP_VALUE,
   'Strict-Transport-Security': HSTS_VALUE,
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': PERMISSIONS_POLICY,

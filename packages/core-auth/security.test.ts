@@ -386,6 +386,9 @@ describe('SECURITY_HEADERS', () => {
       'Referrer-Policy',
       'Permissions-Policy',
       'Cache-Control',
+      'X-XSS-Protection',
+      'Cross-Origin-Resource-Policy',
+      'Cross-Origin-Opener-Policy',
     ]) {
       expect(SECURITY_HEADERS[name], `thiếu header ${name}`).toBeTruthy()
     }
@@ -393,6 +396,15 @@ describe('SECURITY_HEADERS', () => {
 
   it('X-Frame-Options khớp `frame-ancestors self` của CSP, không tự mâu thuẫn', () => {
     expect(SECURITY_HEADERS['X-Frame-Options']).toBe('SAMEORIGIN')
+  })
+
+  it("X-XSS-Protection là '0' (tắt bộ lọc cũ — OWASP), CORP là same-site (hub + app cùng site)", () => {
+    expect(SECURITY_HEADERS['X-XSS-Protection']).toBe('0')
+    expect(SECURITY_HEADERS['Cross-Origin-Resource-Policy']).toBe('same-site')
+  })
+
+  it('COOP giữ được popup đăng nhập Google (KHÔNG same-origin — sẽ cắt liên lạc với popup)', () => {
+    expect(SECURITY_HEADERS['Cross-Origin-Opener-Policy']).toBe('same-origin-allow-popups')
   })
 
   it('HSTS dùng chung đúng một giá trị', () => {
