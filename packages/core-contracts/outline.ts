@@ -11,12 +11,9 @@
 // Cây là dữ liệu PHẲNG (mảng nút + `parentId`) chứ không lồng nhau: dễ tìm kiếm, dễ tính
 // bài trước/bài sau, dễ so sánh trong test, và không phải đệ quy khi tuần tự hoá.
 import { z } from 'zod'
-import { isOutlineLeaf } from './outlineLeaf.js'
+import { isOutlineLeaf, type OutlineKind } from './outlineLeaf.js'
 
-export { isOutlineLeaf } from './outlineLeaf.js'
-
-/** Vai trò của một nút trong cây. `lesson`/`activity` là LÁ (bấm vào là học). */
-export type OutlineKind = 'level' | 'chapter' | 'lesson' | 'activity'
+export { isOutlineLeaf, type OutlineKind } from './outlineLeaf.js'
 
 /** Người học có vào được nút này không. Nguồn sự thật là luật khoá của từng môn. */
 export type OutlineAvailability = 'available' | 'locked'
