@@ -69,6 +69,15 @@ describe('math lessons', () => {
     // KHÔNG ĐƯỢC THỦNG THÊM: khi một chương đã có ≥1 bài, xoá hết bài của chương đó phải bị chặn.
     const daCoChuong = new Set(MATH_LESSONS.map((l) => `${l.grade}-c${l.chapterNumber}`))
     const CHUONG_DA_CO_LUC_KHOA = [
+      '6-c1',
+      '6-c2',
+      '6-c3',
+      '6-c4',
+      '6-c5',
+      '6-c6',
+      '6-c7',
+      '6-c8',
+      '6-c9',
       '10-c1',
       '10-c2',
       '10-c3',

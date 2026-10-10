@@ -19,7 +19,7 @@ import { useStemCompletionState } from '../../lib/useStemCompletionState'
 export default function StemLessonList() {
   const { subjectId } = useParams<{ subjectId: string }>()
   const subject = getStemSubject(subjectId)
-  const [grade, setGrade] = useState<string>(subject?.grades[0] ?? '10')
+  const [grade, setGrade] = useState<string>(subject?.defaultGrade ?? '10')
   const [nhanh, setNhanh] = useState<'core' | 'advanced'>('core')
 
   usePageTitle(subject ? `Bài học môn ${subject.label}` : 'Bài học')

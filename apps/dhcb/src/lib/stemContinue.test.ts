@@ -19,6 +19,23 @@ describe('pickStemContinue', () => {
     expect(idBai(r)).toBe('a1')
   })
 
+  it('chưa học gì + có lớp mặc định → bắt đầu ở lớp mặc định, không phải lớp thấp nhất', () => {
+    const coThcs = new Map([['6', [bai('t1')]], ...LOP])
+    const r = pickStemContinue(coThcs, new Map(), '10')
+    expect(r).toMatchObject({ kind: 'next', grade: '10', fresh: true })
+    expect(idBai(r)).toBe('a1')
+    // Lớp mặc định không có bài → quay về lớp thấp nhất, không trả 'empty'.
+    expect(pickStemContinue(coThcs, null, '9')).toMatchObject({ kind: 'next', grade: '6' })
+  })
+
+  it('đã có bằng chứng học thì lớp học gần nhất thắng lớp mặc định', () => {
+    const coThcs = new Map([['6', [bai('t1'), bai('t2')]], ...LOP])
+    const p = tienDo([['t1', row('completed', '2026-10-01T00:00:00Z')]])
+    const r = pickStemContinue(coThcs, p, '10')
+    expect(r).toMatchObject({ kind: 'next', grade: '6', fresh: false })
+    expect(idBai(r)).toBe('t2')
+  })
+
   it('tiến độ null/undefined được xử như rỗng, không ném lỗi', () => {
     expect(pickStemContinue(LOP, null)).toMatchObject({ kind: 'next', grade: '10' })
     expect(pickStemContinue(LOP, undefined)).toMatchObject({ kind: 'next', grade: '10' })

@@ -6,7 +6,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   STEM_SUBJECTS,
+  chonLopMacDinh,
   duongDanBaiHoc,
+  lopCoBai,
   duongDanDanhSachBai,
   getStemSubject,
   maBaiTuUrl,
@@ -65,6 +67,37 @@ describe('stemLessonRoutes', () => {
       const capDo = new Set(STEM_SUBJECTS[id].loader.listAdvanced().map((s) => s.advancedTier))
       for (const cap of ['hsg-truong', 'hsg-tinh', 'hsg-quoc-gia']) {
         expect(capDo.has(cap as never), `môn ${id} thiếu chuyên đề cấp ${cap}`).toBe(true)
+      }
+    }
+  })
+
+  it('lớp của môn suy từ chỉ mục: chỉ lớp có bài chuẩn, xếp theo SỐ chứ không theo chuỗi', () => {
+    const chiMuc = [
+      { grade: '10', track: 'core' },
+      { grade: '6', track: 'core' },
+      { grade: '6', track: 'core' },
+      { grade: '12', track: 'core' },
+      // Chuyên đề HSG không tạo ra một nút lớp riêng.
+      { grade: '9', track: 'advanced' },
+    ]
+    expect(lopCoBai(chiMuc)).toEqual(['6', '10', '12'])
+    expect(lopCoBai([])).toEqual([])
+  })
+
+  it('lớp mặc định giữ lớp 10 khi có, nếu không thì lấy lớp đầu tiên có bài', () => {
+    expect(chonLopMacDinh(['6', '7', '10', '11'])).toBe('10')
+    expect(chonLopMacDinh(['6', '7'])).toBe('6')
+    expect(chonLopMacDinh([])).toBe('10')
+  })
+
+  it('mỗi môn: lớp mặc định nằm trong danh sách lớp, và mọi lớp khai báo đều có bài', () => {
+    for (const subject of Object.values(STEM_SUBJECTS)) {
+      expect(subject.grades, `môn ${subject.label}`).toContain(subject.defaultGrade)
+      for (const g of subject.grades) {
+        expect(
+          subject.loader.listCoreByGrade(g).length,
+          `môn ${subject.label} hiện nút lớp ${g} nhưng lớp đó không có bài`,
+        ).toBeGreaterThan(0)
       }
     }
   })

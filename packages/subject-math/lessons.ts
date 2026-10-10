@@ -1,5 +1,14 @@
 // lessons.ts — Registry BÀI HỌC môn Toán (gộp từ các file theo chương) + hàm tra cứu.
-import type { MathLesson } from './lessonTypes.js'
+import type { MathGrade, MathLesson } from './lessonTypes.js'
+import { TOAN6_C1_LESSONS } from './lessons/toan6c1.js'
+import { TOAN6_C2_LESSONS } from './lessons/toan6c2.js'
+import { TOAN6_C3_LESSONS } from './lessons/toan6c3.js'
+import { TOAN6_C4_LESSONS } from './lessons/toan6c4.js'
+import { TOAN6_C5_LESSONS } from './lessons/toan6c5.js'
+import { TOAN6_C6_LESSONS } from './lessons/toan6c6.js'
+import { TOAN6_C7_LESSONS } from './lessons/toan6c7.js'
+import { TOAN6_C8_LESSONS } from './lessons/toan6c8.js'
+import { TOAN6_C9_LESSONS } from './lessons/toan6c9.js'
 import { TOAN10_C1_LESSONS } from './lessons/toan10c1.js'
 import { TOAN10_C2_LESSONS } from './lessons/toan10c2.js'
 import { TOAN10_C3_LESSONS } from './lessons/toan10c3.js'
@@ -29,6 +38,16 @@ import { TOAN12_C6_LESSONS } from './lessons/toan12c6.js'
 import { TOAN12_C20_LESSONS } from './lessons/toan12c20.js'
 
 export const MATH_LESSONS: MathLesson[] = [
+  // THCS — Toán 6 (docs/specs/2026-10-10-toan-thcs-6-9.md).
+  ...TOAN6_C1_LESSONS,
+  ...TOAN6_C2_LESSONS,
+  ...TOAN6_C3_LESSONS,
+  ...TOAN6_C4_LESSONS,
+  ...TOAN6_C5_LESSONS,
+  ...TOAN6_C6_LESSONS,
+  ...TOAN6_C7_LESSONS,
+  ...TOAN6_C8_LESSONS,
+  ...TOAN6_C9_LESSONS,
   ...TOAN10_C1_LESSONS,
   ...TOAN10_C2_LESSONS,
   ...TOAN10_C3_LESSONS,
@@ -65,7 +84,7 @@ export function getMathLesson(id: string): MathLesson | undefined {
   return lessonMap.get(id)
 }
 
-export function listMathLessonsByGrade(grade: '10' | '11' | '12'): MathLesson[] {
+export function listMathLessonsByGrade(grade: MathGrade): MathLesson[] {
   return MATH_LESSONS.filter((l) => l.grade === grade).sort((a, b) =>
     a.chapterNumber !== b.chapterNumber
       ? a.chapterNumber - b.chapterNumber

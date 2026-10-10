@@ -69,12 +69,17 @@ export function lopHocGanNhat(
 export function pickStemContinue(
   lessonsByGrade: ReadonlyMap<string, readonly StemContinueLesson[]>,
   progress: StemContinueProgress | null | undefined,
+  /** Lớp bắt đầu khi CHƯA có bằng chứng học nào. Toán có cả lớp 6–9 nhưng người học hiện có
+   *  phần lớn ở cấp 3, nên người mới vẫn bắt đầu ở lớp 10 như trước khi mở THCS. Vắng mặt hoặc
+   *  lớp đó không có bài → lớp thấp nhất. */
+  defaultGrade?: string,
 ): StemContinuePick {
   const grades = sapLop([...lessonsByGrade.keys()].filter((g) => lessonsByGrade.get(g)?.length))
   if (grades.length === 0) return { kind: 'empty' }
 
   const recent = lopHocGanNhat(lessonsByGrade, progress)
-  const start = recent !== undefined ? Math.max(0, grades.indexOf(recent)) : 0
+  const startGrade = recent ?? defaultGrade
+  const start = startGrade !== undefined ? Math.max(0, grades.indexOf(startGrade)) : 0
   // Thứ tự duyệt: từ lớp mặc định lên cao, rồi vòng về các lớp thấp hơn.
   const order = [...grades.slice(start), ...grades.slice(0, start)]
 

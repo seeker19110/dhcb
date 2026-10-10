@@ -23,7 +23,11 @@ export default function StemContinueBlock({ subject }: { subject: StemSubject })
     const theoLop = new Map<string, readonly StemContinueLesson[]>(
       subject.grades.map((g) => [g, subject.loader.listCoreByGrade(g)]),
     )
-    return pickStemContinue(theoLop, tienDo.stateStatus === 'ready' ? tienDo.state : null)
+    return pickStemContinue(
+      theoLop,
+      tienDo.stateStatus === 'ready' ? tienDo.state : null,
+      subject.defaultGrade,
+    )
   }, [subject, tienDo.state, tienDo.stateStatus])
 
   if (pick.kind === 'empty') return null

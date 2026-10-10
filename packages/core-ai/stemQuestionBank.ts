@@ -25,7 +25,8 @@ import type {
 /** Phần bài học STEM mà ngân hàng đề cần — khớp `MathLesson`/`PhysicsLesson`/`ChemLesson`. */
 export interface StemLessonSource {
   readonly id: string
-  readonly grade: '10' | '11' | '12'
+  /** Mọi lớp bài học có (Toán có cả 6–9); ngân hàng chỉ nhận lớp `LOP_NGAN_HANG`. */
+  readonly grade: string
   readonly chapterTitle: string
   readonly title: string
   readonly track: 'core' | 'advanced'
@@ -55,6 +56,16 @@ export interface StemQuestion extends StemBankQuestionPublic {
   variables?: StemVariableTable
 }
 
+/** Lớp ngân hàng đề phục vụ. Bảng nháp (Companion › Thử thách) là chỗ luyện đề THPT; bài Toán
+ *  THCS (lớp 6–9, docs/specs/2026-10-10-toan-thcs-6-9.md) KHÔNG vào đây: client lấy đề không lọc
+ *  lớp và cắt theo `limit`, nên trộn lớp 6 vào sẽ đẩy đề lớp 6 lên đầu cho học sinh cấp 3. */
+const LOP_NGAN_HANG = ['10', '11', '12'] as const
+type LopNganHang = (typeof LOP_NGAN_HANG)[number]
+
+function laLopNganHang(grade: string): grade is LopNganHang {
+  return (LOP_NGAN_HANG as readonly string[]).includes(grade)
+}
+
 /** Câu đúng/sai mã hoá thành số ("Nhập 1 nếu ĐÚNG, nhập 0 nếu SAI") — không có phép tính để nháp. */
 const CAU_MA_HOA_DUNG_SAI = /nhập\s+\d+\s+nếu/i
 
@@ -80,6 +91,8 @@ export function buildStemQuestionBank(
   const bank: StemQuestion[] = []
   for (const { subject, lessons } of sources) {
     for (const lesson of lessons) {
+      const grade = lesson.grade
+      if (!laLopNganHang(grade)) continue
       lesson.checkQuestions.forEach((q, index) => {
         const answer = q.answer
         if (answer.kind === 'choice') return
@@ -87,7 +100,7 @@ export function buildStemQuestionBank(
         bank.push({
           id: stemQuestionId(lesson.id, index),
           subject,
-          grade: lesson.grade,
+          grade,
           lessonId: lesson.id,
           lessonTitle: lesson.title,
           topic: lesson.chapterTitle,
