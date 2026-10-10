@@ -114,7 +114,9 @@ Chỉ lộ ra khi mở bản build bằng Chromium và đọc `<link rel="module
 Từ nay đo JS khởi động bằng cách cộng MỌI file `index.html` tải ngay (xem E5).
 
 **Mặt trái:** trang chủ vẫn dùng hợp đồng zod đầy đủ nên `vendor-zod` vẫn tải song song chunk
-`Home` khi vào `/` (tổng zod trên `/` +2,6 kB so với trước). Cách bỏ hẳn: E4.1b.
+`Home` khi vào `/` (tổng zod trên `/` +2,6 kB so với trước). Cách bỏ hẳn: E4.1b — **ĐÃ LÀM ở
+`docs/changelog/0587-2026-10-10-e4-1b-route-chu-bo-zod-day-du.md`** (route `/` không còn tải
+`vendor-zod`).
 
 ## E. Phát hiện CHƯA sửa — đề xuất chia đợt (chờ duyệt)
 
@@ -186,9 +188,10 @@ Bảng lớn nên dùng `create index concurrently` — phải kiểm runner có
 ### E4 — Frontend: bundle tiếp, DRY, bug nhỏ
 
 > **✅ ĐÃ LÀM ở `docs/changelog/0584-2026-10-10-e4-frontend-bundle-dry-bug.md`** (2026-10-10), trừ
-> **1b** (`zod/mini` cho hợp đồng trang chủ — HOÃN: đo thật là 10 file + `versionedObject` dùng
-> chung 38 hợp đồng, lợi ~12 kB gzip trên một route lười), 3 helper fetch-kèm-auth và 5 bản bỏ dấu
-> có luật khác nhau có chủ đích — lý do từng mục ở changelog.
+> 3 helper fetch-kèm-auth và 5 bản bỏ dấu có luật khác nhau có chủ đích — lý do ở changelog.
+> **1b ĐÃ LÀM ở `docs/changelog/0587-2026-10-10-e4-1b-route-chu-bo-zod-day-du.md`** theo cách rẻ
+> hơn đề xuất dưới đây: trang chủ chỉ dùng HÀM THUẦN nằm chung file với schema, nên tách hàm ra
+> file không import zod — không phải đổi hợp đồng nào sang `zod/mini`.
 
 1. Bundle: `main.tsx:10` import cả `lib/tts.ts` (+`voiceTiers`, `audioCache`) chỉ để lấy
    `unlockAudio` — tách module nhỏ (giữ mở khoá âm thanh đồng bộ trong cử chỉ người dùng, iOS).

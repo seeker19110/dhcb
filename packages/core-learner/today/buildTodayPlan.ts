@@ -11,12 +11,8 @@
 //  3. THỨ TỰ CỐ ĐỊNH, KHÔNG XOAY VÒNG: phiên dở mới nhất → bài kế tiếp của môn có bằng chứng mới
 //     nhất → ôn tập → chọn môn. Hoà thì theo `TIE_BREAK_ORDER` (Anh đứng CUỐI để không thành mặc
 //     định ngầm) — kết quả không phụ thuộc thứ tự mảng đầu vào.
-import {
-  todayItemId,
-  type ResumePoint,
-  type TodayItem,
-  type TodayPlan,
-} from '@dhcb/core-contracts/todayPlan'
+import type { ResumePoint, TodayItem, TodayPlan } from '@dhcb/core-contracts/todayPlan'
+import { todayItemId } from '@dhcb/core-contracts/todayItemId'
 
 /** Số mục phụ tối đa (§7 Q6). Nhiều hơn thì thẻ thành danh sách và CTA chính mất trọng tâm. */
 export const MAX_SECONDARY = 2

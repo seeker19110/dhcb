@@ -21,7 +21,7 @@ import {
   DIALOGUE_LEARNED_PREFIX,
   dialogueKey,
   learnedDialogueEntry,
-} from '@dhcb/core-contracts/cefrDialogueCheck'
+} from '@dhcb/core-contracts/cefrDialogueKey'
 import { pushProgress } from './progressSync'
 import { addGrammarToSRS } from './srs'
 import { readLocalArray } from './localJson'

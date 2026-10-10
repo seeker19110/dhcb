@@ -6,7 +6,8 @@
 // thêm môn mới chỉ là thêm một adapter, không phải sửa resolver.
 //
 // THUẦN và ĐỒNG BỘ: mọi dữ liệu (cấp CEFR, vòng từ vựng, từ đã học…) do nơi gọi truyền vào.
-import { todayItemId, type TodayItem } from '@dhcb/core-contracts/todayPlan'
+import type { TodayItem } from '@dhcb/core-contracts/todayPlan'
+import { todayItemId } from '@dhcb/core-contracts/todayItemId'
 import type { CefrLevel } from '../../data/cefr'
 import type { Circle } from '../../data/curriculum'
 import { circleDoneCount, findNextStep } from '../cefrProgress'

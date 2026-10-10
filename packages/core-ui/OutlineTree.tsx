@@ -18,7 +18,7 @@
 import { Check, Circle, CircleDashed, ChevronDown, ChevronRight, Lock, Minus } from 'lucide-react'
 import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
-import { isOutlineLeaf } from '@dhcb/core-contracts/outline'
+import { isOutlineLeaf } from '@dhcb/core-contracts/outlineLeaf'
 import {
   ancestorChapterIds,
   ancestorChapterIdsOfNode,

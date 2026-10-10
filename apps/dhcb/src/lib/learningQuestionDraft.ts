@@ -15,7 +15,9 @@
 //     tường minh.
 //  3. NHÁP LÀ THỨ TẠM. sessionStorage (riêng từng tab, tự mất khi đóng tab) + hạn 30 phút. Không
 //     bao giờ đưa câu hỏi vào URL, log hay localStorage lâu dài — đó là chữ riêng tư của người học.
-import { z } from 'zod'
+// `zod/mini` thay bản đầy đủ (audit 2026-10-10, E4.1b): file này nằm trên route `/` (thanh hỏi
+// AI ở trang chủ) — bản đầy đủ là thêm ~12 kB gzip chỉ để kiểm một bản nháp sessionStorage.
+import * as z from 'zod/mini'
 
 /** Khớp `message.max(2000)` ở `apps/server/src/api/personal/companion.ts`. */
 export const MAX_QUESTION_LENGTH = 2000
@@ -31,17 +33,17 @@ export const DRAFT_TARGETS = ['companion'] as const
 
 const ownerSchema = z.object({
   kind: z.enum(['guest', 'account']),
-  id: z.string().min(1),
+  id: z.string().check(z.minLength(1)),
 })
 
 const draftSchema = z.object({
   version: z.literal(1),
-  id: z.string().min(1),
-  question: z.string().min(1).max(MAX_QUESTION_LENGTH),
+  id: z.string().check(z.minLength(1)),
+  question: z.string().check(z.minLength(1), z.maxLength(MAX_QUESTION_LENGTH)),
   source: z.literal('home'),
   owner: ownerSchema,
   target: z.enum(DRAFT_TARGETS),
-  createdAt: z.number().int().positive(),
+  createdAt: z.int().check(z.positive()),
 })
 
 export type DraftOwner = z.infer<typeof ownerSchema>

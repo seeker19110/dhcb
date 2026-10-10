@@ -14,7 +14,9 @@
 //     Bản ghi hỏng trả `invalid` và KHÔNG xoá ngầm (tab khác có thể là bản app mới hơn).
 //  4. KHÔNG BAO GIỜ CẮT NHÁP CỦA NGƯỜI HỌC. Quá dài thì BÁO (`too-large`), bản cũ giữ nguyên.
 //  5. THỜI GIAN LUÔN TRUYỀN VÀO (`now`) để test không phụ thuộc đồng hồ máy.
-import { z } from 'zod'
+// `zod/mini` thay bản đầy đủ (audit 2026-10-10, E4.1b): file này nằm trên route `/` (qua
+// `useTodayPlan`) — bản đầy đủ là thêm ~12 kB gzip chỉ để kiểm một bản ghi localStorage.
+import * as z from 'zod/mini'
 import { LEARNING_SESSION_PREFIX } from './storageKeyPrefixes'
 import { fnv1a32 } from '@dhcb/core-contracts/seededRandom'
 
@@ -29,7 +31,7 @@ export { LEARNING_SESSION_PREFIX }
 
 const ownerSchema = z.object({
   kind: z.enum(['guest', 'account']),
-  id: z.string().min(1),
+  id: z.string().check(z.minLength(1)),
 })
 
 export type SessionOwner = z.infer<typeof ownerSchema>
@@ -37,18 +39,18 @@ export type SessionOwner = z.infer<typeof ownerSchema>
 export const LearningSessionSchema = z
   .object({
     version: z.literal(1),
-    subjectId: z.string().min(1),
-    courseId: z.string().min(1).optional(),
-    contentId: z.string().min(1),
-    contentVersion: z.string().min(1),
+    subjectId: z.string().check(z.minLength(1)),
+    courseId: z.optional(z.string().check(z.minLength(1))),
+    contentId: z.string().check(z.minLength(1)),
+    contentVersion: z.string().check(z.minLength(1)),
     owner: ownerSchema,
-    stepIndex: z.number().int().nonnegative(),
-    stepLabel: z.string().max(60).optional(),
+    stepIndex: z.int().check(z.nonnegative()),
+    stepLabel: z.optional(z.string().check(z.maxLength(60))),
     draft: z.unknown(),
-    startedAt: z.number().int().positive(),
-    updatedAt: z.number().int().positive(),
+    startedAt: z.int().check(z.positive()),
+    updatedAt: z.int().check(z.positive()),
   })
-  .refine((s) => s.updatedAt >= s.startedAt, { message: 'updatedAt < startedAt' })
+  .check(z.refine((s) => s.updatedAt >= s.startedAt, { message: 'updatedAt < startedAt' }))
 
 export type LearningSession = z.infer<typeof LearningSessionSchema>
 
