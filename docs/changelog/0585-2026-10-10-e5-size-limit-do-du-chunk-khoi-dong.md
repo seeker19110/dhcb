@@ -27,6 +27,6 @@ còn `localJson` mới xuất hiện. Đợt 0580 cũng từng dính đúng ki�
 | Kiểm                                                     | Kết quả                                                   |
 | -------------------------------------------------------- | --------------------------------------------------------- |
 | `npm run size` trước (4 glob)                            | Initial JS 131,98 / 160 kB brotli                         |
-| `npm run size` sau (9 glob = đủ 9 file `index.html` tải) | **135,59 / 160 kB** (84,7%) ✅ · ✅ 9 file đều được đếm   |
+| `npm run size` sau (9 glob = đủ 9 file `index.html` tải) | **135,68 / 160 kB** (84,8%) ✅ · ✅ 9 file đều được đếm   |
 | Bỏ tạm glob `localJson` rồi chạy phép kiểm               | ❌ thoát mã 1, in `dist/js/localJson-*.js` (đã khôi phục) |
-| `npm run budget`                                         | đọc được mục mới: còn 24,41 kB                            |
+| `npm run budget`                                         | đọc được mục mới: còn 24,32 kB                            |
