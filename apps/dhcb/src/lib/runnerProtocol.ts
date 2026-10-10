@@ -106,3 +106,19 @@ export function parseRunnerOrigin(raw: string | undefined): string | null {
     return null
   }
 }
+
+/**
+ * Mã hoá trang HTML của học viên cho `preview.html#<payload>`: UTF-8 → base64url (không `=`).
+ * Đi trong fragment URL nên không bao giờ gửi lên server; `preview.html` giải mã ngược lại đúng
+ * công thức này (script inline ở đó — test runnerProtocol.test.ts canh hai chiều khớp nhau).
+ */
+export function encodePreviewPayload(page: string): string {
+  const bytes = new TextEncoder().encode(page)
+  let binary = ''
+  // Theo khúc: String.fromCharCode(...mảng lớn) vượt giới hạn số tham số của hàm.
+  const CHUNK = 0x8000
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}

@@ -5,7 +5,7 @@
 // if/else về ngôn ngữ ra các trang.
 import type { ProgrammingLesson } from '@dhcb/subject-programming/lessonTypes'
 import type { CodeRunResult } from './codeRunResult'
-import { runWorkerLane, resetWorkerLanes } from './workerLanes'
+import { runSandboxedLane, resetSandboxedLanes } from './runnerBridge'
 import { runHtml } from './htmlRunner'
 import { runGit } from './gitRunner'
 import { runBash } from './bashRunner'
@@ -54,13 +54,14 @@ export function runLessonCode(
   options: LessonRunOptions = {},
 ): Promise<CodeRunResult> {
   // Callback tiến độ đi riêng với yêu cầu (yêu cầu phải là dữ liệu thuần — xem workerLanes.ts).
+  // Làn Worker đi qua runnerBridge: chạy ở origin runner `run.…` nếu đã cấu hình.
   const callbacks = {
     ...(options.onOutput ? { onOutput: options.onOutput } : {}),
     ...(options.onLoading ? { onLoading: options.onLoading } : {}),
   }
   if (language === 'javascript') {
     const { stdinLines } = options
-    return runWorkerLane(
+    return runSandboxedLane(
       { lane: 'javascript', code, ...(stdinLines ? { stdinLines } : {}) },
       callbacks,
     )
@@ -78,7 +79,7 @@ export function runLessonCode(
     }
     const chung = { code, html: domHtml, ...(stdinLines ? { hanhDong: stdinLines } : {}) }
     // Bài 'fetch' = bài DOM cộng fetch giả lập — worker riêng, cùng khuôn chạy.
-    return runWorkerLane(
+    return runSandboxedLane(
       language === 'fetch'
         ? { lane: 'fetch', ...chung, ...(fetchApi ? { api: fetchApi } : {}) }
         : { lane: 'dom', ...chung },
@@ -146,7 +147,7 @@ export function runLessonCode(
     // SQL không có input(): dữ liệu đã nằm sẵn trong CSDL mẫu (sqlDataset.ts). Ca chấm nào
     // khai datasetSql thì lượt đó nạp bộ dữ liệu riêng của nó — đúng luật cổng CI đang dùng.
     const { datasetSql } = options
-    return runWorkerLane(
+    return runSandboxedLane(
       { lane: 'sql', code, ...(datasetSql ? { seed: datasetSql } : {}) },
       callbacks,
     )
@@ -159,7 +160,7 @@ export function runLessonCode(
   const files =
     Object.keys(laneFiles).length > 0 ? { ...laneFiles, ...(options.files ?? {}) } : options.files
   const { stdinLines } = options
-  return runWorkerLane(
+  return runSandboxedLane(
     {
       lane: 'python',
       code: noiCodeTheoLan(lane, code),
@@ -172,5 +173,5 @@ export function runLessonCode(
 
 /** Dọn mọi môi trường đã nạp — gọi khi rời trang bài học. */
 export function resetLessonRunners(): void {
-  resetWorkerLanes()
+  resetSandboxedLanes()
 }

@@ -15,6 +15,9 @@ interface ImportMetaEnv {
   // khác dùng ké sẽ tính tiền vào tài khoản mình. Thiếu key thì app tự chuyển sang danh sách
   // khoảng cách + nút mở Google Maps (xem components/location/LiveMap.tsx).
   readonly VITE_GOOGLE_MAPS_API_KEY: string
+  // Origin trang chạy code học viên (vd `https://run.donghanhcungban.org`). Trống = chạy code
+  // bằng Worker ngay trong trang app (dev/test). Xem lib/runnerBridge.ts.
+  readonly VITE_CODE_RUNNER_ORIGIN?: string
 }
 
 interface ImportMeta {

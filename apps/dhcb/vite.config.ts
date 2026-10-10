@@ -138,10 +138,29 @@ const VENDOR_CORE_PACKAGES = [
   'set-cookie-parser',
 ]
 
+/** `https://host[:port]` đúng dạng origin — cùng luật với parseRunnerOrigin (runnerProtocol.ts). */
+function isExactOrigin(raw: string): boolean {
+  try {
+    const url = new URL(raw)
+    return (url.protocol === 'https:' || url.protocol === 'http:') && url.origin === raw
+  } catch {
+    return false
+  }
+}
+
 export default defineConfig(({ mode }) => {
   // Đọc các biến môi trường server-only trực tiếp từ file .env (Node) —
   // các biến này KHÔNG có tiền tố VITE_ nên sẽ không bị Vite đóng gói vào file JS gửi cho browser.
   const env = loadEnv(mode, repoRoot, '')
+
+  // Origin trang chạy code học viên (lib/runnerBridge.ts). Sai dạng thì app lặng lẽ quay về chạy
+  // code ngay trong trang — dừng build ở đây để cấu hình sai không trôi lên production.
+  const runnerOrigin = env.VITE_CODE_RUNNER_ORIGIN
+  if (runnerOrigin && !isExactOrigin(runnerOrigin)) {
+    throw new Error(
+      `VITE_CODE_RUNNER_ORIGIN="${runnerOrigin}" không phải một origin (dạng https://run.vi-du.org, không có / cuối hay đường dẫn).`,
+    )
+  }
 
   // api/*.ts đọc key bằng process.env.X (giống lúc chạy thật trên Vercel, nơi Vercel tự inject
   // Environment Variables vào process.env). Lúc "npm run dev", .env KHÔNG tự nạp vào process.env

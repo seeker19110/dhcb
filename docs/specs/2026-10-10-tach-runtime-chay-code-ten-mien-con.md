@@ -85,10 +85,15 @@ en-vi.donghanhcungban.org (app, CSP chặt)          run.donghanhcungban.org (ru
   postMessage tới iframe runner. Iframe runner được tạo LƯỜI ở lượt chạy đầu tiên, dùng chung cho
   mọi lượt sau.
 - **Đường lui**: thiếu `VITE_CODE_RUNNER_ORIGIN` lúc build thì dùng Worker trong trang như hôm nay.
-  Điều này giữ dev và unit test chạy như cũ. Production BẮT BUỘC có biến này: test cấu hình chặn
-  build production thiếu biến.
-- **`HtmlPreview`**: bỏ `srcDoc`, đổi sang `<iframe src="${runner}/preview.html" sandbox="allow-scripts">`
-  rồi gửi `{html, script}` qua postMessage. Trang `preview.html` dựng nội dung bằng
+  Điều này giữ dev và unit test chạy như cũ. Biến sai dạng thì build dừng với lỗi rõ.
+  **Điều chỉnh lúc thi hành R2 (2026-10-10):** việc "build production BẮT BUỘC có biến" dời sang
+  R4. Lý do: biến chỉ đặt được SAU việc tay R0 (DNS + chứng chỉ); ép từ R2 thì hoặc deploy gãy,
+  hoặc phải đặt biến trước khi `run.` sống ⇒ mọi bài code báo lỗi. Tới R4 (bỏ `'unsafe-eval'`
+  khỏi app) thì Worker trong trang không còn chạy được dưới CSP mới, lúc đó mới bắt buộc.
+- **`HtmlPreview`** (bài DOM, có script): bỏ `srcDoc`, đổi sang
+  `<iframe src="${runner}/preview.html#<trang>" sandbox="allow-scripts">` — trang đi trong fragment
+  URL (mục ③), không postMessage. Trang TĨNH (bài HTML/CSS) giữ `srcDoc` + `sandbox=""` vì không
+  có script nào cần CSP cho phép. Trang `preview.html` dựng nội dung bằng
   `document.open()/write()` dưới CSP riêng của runner, nơi được phép `'unsafe-inline'`. Iframe giữ
   sandbox KHÔNG có `allow-same-origin`, nên script học viên mang origin ẩn danh.
 
@@ -172,31 +177,31 @@ và `Cache-Control` như asset hiện nay. **Không** đặt `X-Frame-Options` (
 
 ## ② Điểm chạm
 
-| Việc | Đường dẫn file                                 | Bước  | Ghi chú                                                                                                        |
-| ---- | ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
-| Thêm | `apps/dhcb/runner.html`                        | R1    | Entry thứ hai của bản build; chỉ nạp `src/runner/main.ts`                                                      |
-| Thêm | `apps/dhcb/src/runner/main.ts`                 | R1    | Nối `runnerHost.ts` với `window` thật                                                                          |
-| Thêm | `apps/dhcb/src/runner/runnerHost.ts` (+ test)  | R1    | Lõi runner: 3 lớp chặn tin nhắn lạ, gọi đúng các làn Worker hiện có                                            |
-| Thêm | `apps/dhcb/preview.html`                       | R1    | Script inline (không module — origin mờ sẽ bị CORS chặn module) đọc trang từ fragment URL rồi `document.write` |
-| Thêm | `apps/dhcb/src/lib/workerLanes.ts`             | R1    | Một điểm điều phối 5 làn Worker, dùng chung cho app (khi chưa bật runner) và runner                            |
-| Thêm | `apps/dhcb/src/lib/runnerProtocol.ts` (+ test) | R1    | Hợp đồng message (zod/mini) + `parseRunnerOrigin`                                                              |
-| Sửa  | `apps/dhcb/src/lib/codeRunner.ts`              | R1/R2 | R1: đi qua `workerLanes.ts`. R2: chọn bridge khi có runner origin                                              |
-| Sửa  | `apps/dhcb/vite.config.ts`                     | R1    | `build.rollupOptions.input` thêm 2 entry; `/pyodide`, `/sqljs` vẫn copy như nay                                |
-| Thêm | `apps/server/src/runnerHost.ts` (+ test)       | R1    | Host runner → danh sách trắng file tĩnh + CSP riêng, 404 mọi thứ khác; host app chặn 2 trang runner            |
-| Sửa  | `apps/server/src/server.ts`                    | R1    | Gắn middleware runner TRƯỚC `/api`                                                                             |
-| Sửa  | `packages/core-auth/security.ts`               | R1    | Xuất `allowedOrigins()` để dựng `frame-ancestors` của runner                                                   |
-| Sửa  | `nginx/en-vi.conf`                             | R1    | Block 4 cho host runner: mọi request qua Express, xoá Cookie                                                   |
-| Sửa  | `apps/dhcb/src/components/HtmlPreview.tsx`     | R2    | `srcDoc` → `src` = `<runner>/preview.html#<base64url>`, `sandbox="allow-scripts"`                              |
-| Sửa  | `playwright.config.ts`                         | R2    | Runner chạy ở origin thứ hai: app `localhost`, runner `127.0.0.1` (khác origin, khác site)                     |
-| Sửa  | `apps/server/src/routes.ts`                    | R3    | CSP chặt theo Host; băm script theme từ `index.html`; `Report-Only` theo cờ                                    |
-| Sửa  | `apps/dhcb/src/main.tsx`                       | R3    | `z.config({ jitless: true })`                                                                                  |
-
-File sẽ TẠO ở bước sau (chưa nằm trong bảng vì `npm run check:specs` kiểm mọi đường dẫn trong
-bảng của đặc tả đã duyệt phải tồn tại — PR tạo ra file nào thì dời dòng đó lên bảng):
-
-- R2 — `apps/dhcb/src/lib/runnerBridge.ts` (+ test): iframe lười, chờ `hello` 10s, watchdog huỷ
-  iframe khi runner im quá timeout + 5s.
-- R2 — `e2e/code-runner-origin.spec.ts`: các ca âm ở mục ④ + không vi phạm CSP.
+| Việc | Đường dẫn file                                                       | Bước  | Ghi chú                                                                                                        |
+| ---- | -------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
+| Thêm | `apps/dhcb/runner.html`                                              | R1    | Entry thứ hai của bản build; chỉ nạp `src/runner/main.ts`                                                      |
+| Thêm | `apps/dhcb/src/runner/main.ts`                                       | R1    | Nối `runnerHost.ts` với `window` thật                                                                          |
+| Thêm | `apps/dhcb/src/runner/runnerHost.ts` (+ test)                        | R1    | Lõi runner: 3 lớp chặn tin nhắn lạ, gọi đúng các làn Worker hiện có                                            |
+| Thêm | `apps/dhcb/preview.html`                                             | R1    | Script inline (không module — origin mờ sẽ bị CORS chặn module) đọc trang từ fragment URL rồi `document.write` |
+| Thêm | `apps/dhcb/src/lib/workerLanes.ts`                                   | R1    | Một điểm điều phối 5 làn Worker, dùng chung cho app (khi chưa bật runner) và runner                            |
+| Thêm | `apps/dhcb/src/lib/runnerProtocol.ts` (+ test)                       | R1    | Hợp đồng message (zod/mini) + `parseRunnerOrigin`                                                              |
+| Sửa  | `apps/dhcb/src/lib/codeRunner.ts`                                    | R1/R2 | R1: đi qua `workerLanes.ts`. R2: chọn bridge khi có runner origin                                              |
+| Sửa  | `apps/dhcb/vite.config.ts`                                           | R1    | `build.rollupOptions.input` thêm 2 entry; `/pyodide`, `/sqljs` vẫn copy như nay                                |
+| Thêm | `apps/server/src/runnerHost.ts` (+ test)                             | R1    | Host runner → danh sách trắng file tĩnh + CSP riêng, 404 mọi thứ khác; host app chặn 2 trang runner            |
+| Sửa  | `apps/server/src/server.ts`                                          | R1    | Gắn middleware runner TRƯỚC `/api`                                                                             |
+| Sửa  | `packages/core-auth/security.ts`                                     | R1    | Xuất `allowedOrigins()` để dựng `frame-ancestors` của runner                                                   |
+| Sửa  | `nginx/en-vi.conf`                                                   | R1    | Block 4 cho host runner: mọi request qua Express, xoá Cookie                                                   |
+| Sửa  | `apps/dhcb/src/components/HtmlPreview.tsx`                           | R2    | `srcDoc` → `src` = `<runner>/preview.html#<base64url>`, `sandbox="allow-scripts"`                              |
+| Thêm | `apps/dhcb/src/lib/runnerBridge.ts`                                  | R2    | Iframe runner lười, chờ `hello` 10s, watchdog 15s (180s khi đang tải Pyodide); `runSandboxedLane()`            |
+| Thêm | `apps/dhcb/src/lib/runnerBridge.test.ts`                             | R2    | Hợp đồng bridge + không bao giờ `targetOrigin '*'`                                                             |
+| Thêm | `apps/dhcb/src/components/HtmlPreview.test.tsx`                      | R2    | Khẳng định giá trị `sandbox` (bất biến mục ⑤)                                                                  |
+| Sửa  | `apps/dhcb/src/lib/tsRunner.ts`                                      | R2    | JS sinh ra đi qua `runSandboxedLane`                                                                           |
+| Sửa  | `apps/dhcb/src/pages/subjects/programming/ProgrammingPlayground.tsx` | R2    | Trang Chạy thử Python đi qua `runSandboxedLane` (trước đây gọi thẳng `runPython`)                              |
+| Thêm | `apps/server/src/routes.csp.test.ts`                                 | R2    | `frame-src` của app có origin runner                                                                           |
+| Thêm | `e2e/code-runner-origin.spec.ts`                                     | R2    | Chứng minh code chạy ở origin runner + ca âm + vòng lặp vô hạn                                                 |
+| Sửa  | `playwright.config.ts`                                               | R2    | Runner chạy ở origin thứ hai: app `localhost`, runner `127.0.0.1` (khác origin, khác site)                     |
+| Sửa  | `apps/server/src/routes.ts`                                          | R3    | CSP chặt theo Host; băm script theme từ `index.html`; `Report-Only` theo cờ                                    |
+| Sửa  | `apps/dhcb/src/main.tsx`                                             | R3    | `z.config({ jitless: true })`                                                                                  |
 
 **Ảnh hưởng lan ra:** chạy `npm run codemap -- impact` cho `codeRunner.ts`, `HtmlPreview.tsx`,
 `routes.ts`, `staticApps.ts` lúc thi hành và dán vào PR. Đã biết: 3 trang Lập trình + 9 file E2E
@@ -309,13 +314,13 @@ rm -rf packages/*/dist dist dist-server && npm run typecheck && npm run lint && 
 
 ## 5. Thứ tự triển khai (mỗi bước một PR, có đường lui)
 
-| Bước | Việc                                                                                                                | Ai                      | Đường lui                                                         |
-| ---- | ------------------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
-| R0   | DNS `run` (proxied, Cloudflare) + mở rộng chứng chỉ (`certbot --expand -d run.donghanhcungban.org`) + `server_name` | **Chủ dự án (tay)**     | Xoá bản ghi DNS                                                   |
-| R1   | Runner entry + Express/Nginx theo Host + CSP runner. App CHƯA dùng (biến chưa đặt)                                  | AI                      | Revert PR                                                         |
-| R2   | Bridge + `HtmlPreview`, bật bằng `VITE_CODE_RUNNER_ORIGIN` lúc build; E2E hai origin                                | AI                      | Bỏ biến build → quay về Worker trong trang                        |
-| R3   | CSP chặt cho app + hub ở chế độ **Report-Only** (song song với CSP cũ đang enforce), báo về Sentry                  | AI                      | Tắt cờ Report-Only                                                |
-| R4   | Sau thời gian ở Q3 không có vi phạm thật: đổi CSP chặt sang enforce, bỏ CSP cũ                                      | AI, **chủ dự án duyệt** | Biến môi trường `CSP_MODE=legacy` quay lại CSP cũ không cần build |
+| Bước | Việc                                                                                                                                   | Ai                      | Đường lui                                                         |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| R0   | DNS `run` (proxied, Cloudflare) + mở rộng chứng chỉ (`certbot --expand -d run.donghanhcungban.org`) + `server_name`                    | **Chủ dự án (tay)**     | Xoá bản ghi DNS                                                   |
+| R1   | Runner entry + Express/Nginx theo Host + CSP runner. App CHƯA dùng (biến chưa đặt)                                                     | AI                      | Revert PR                                                         |
+| R2   | Bridge + `HtmlPreview`, bật bằng `VITE_CODE_RUNNER_ORIGIN` lúc build; E2E hai origin                                                   | AI                      | Bỏ biến build → quay về Worker trong trang                        |
+| R3   | CSP chặt cho app + hub ở chế độ **Report-Only** (song song với CSP cũ đang enforce), báo về Sentry                                     | AI                      | Tắt cờ Report-Only                                                |
+| R4   | Sau thời gian ở Q3 không có vi phạm thật: đổi CSP chặt sang enforce, bỏ CSP cũ; build production bắt buộc có `VITE_CODE_RUNNER_ORIGIN` | AI, **chủ dự án duyệt** | Biến môi trường `CSP_MODE=legacy` quay lại CSP cũ không cần build |
 
 ## 6. Rủi ro
 

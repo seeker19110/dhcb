@@ -9,6 +9,10 @@ const { port: PORT, reuseExistingServer: reuseLocalServer } = resolveE2ePort(
   !!process.env.CI,
 )
 const baseURL = `http://localhost:${PORT}`
+// Code học viên chạy ở origin THỨ HAI như production (`run.…`): cùng dev server nhưng qua
+// 127.0.0.1 — khác origin VÀ khác site với `localhost`, nên E2E chứng minh được cách ly thật
+// (đặc tả docs/specs/2026-10-10-tach-runtime-chay-code-ten-mien-con.md, lib/runnerBridge.ts).
+export const RUNNER_ORIGIN = `http://127.0.0.1:${PORT}`
 
 // Dùng Chromium cài sẵn của môi trường nếu có (KHÔNG chạy "playwright install");
 // nếu không (vd. CI tự cài browser), để trống cho Playwright tự tìm bản của nó.
@@ -47,9 +51,16 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --port ${PORT} --strictPort`,
-    url: baseURL,
+    // `--host 127.0.0.1`: runner chạy ở origin 127.0.0.1, nên server PHẢI nghe trên IPv4. Mặc định
+    // Vite nghe `localhost` — trên máy CI `localhost` phân giải ra `::1` nên 127.0.0.1 bị từ chối
+    // kết nối (đỏ CI ở PR #1346). App vẫn mở bằng `localhost`: trình duyệt thử `::1` rồi tự
+    // chuyển sang 127.0.0.1.
+    command: `npm run dev -- --port ${PORT} --strictPort --host 127.0.0.1`,
+    // Kiểm sẵn sàng qua đúng địa chỉ server nghe (xem `--host` ở trên).
+    url: RUNNER_ORIGIN,
     timeout: 120_000,
     reuseExistingServer: reuseLocalServer,
+    // `E2E_RUNNER_ORIGIN=''` chạy lại suite ở đường lui (Worker trong trang, như dev).
+    env: { VITE_CODE_RUNNER_ORIGIN: process.env.E2E_RUNNER_ORIGIN ?? RUNNER_ORIGIN },
   },
 })

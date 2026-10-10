@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { parseRunnerEvent, parseRunnerOrigin, parseRunnerRequest } from './runnerProtocol'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import {
+  encodePreviewPayload,
+  parseRunnerEvent,
+  parseRunnerOrigin,
+  parseRunnerRequest,
+} from './runnerProtocol'
 
 describe('parseRunnerRequest', () => {
   it('nhận đủ 5 làn hợp lệ', () => {
@@ -83,5 +90,36 @@ describe('parseRunnerOrigin', () => {
     ]) {
       expect(parseRunnerOrigin(raw)).toBeNull()
     }
+  })
+})
+
+describe('encodePreviewPayload ↔ preview.html', () => {
+  // Giải mã y như script inline của apps/dhcb/preview.html — test dưới khẳng định file đó vẫn
+  // dùng đúng công thức này, nên hai phía không thể trôi khỏi nhau.
+  const decodeLikePreview = (payload: string) => {
+    const binary = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    return new TextDecoder().decode(bytes)
+  }
+
+  it('khứ hồi đúng tiếng Việt, emoji, ký tự base64 đặc biệt, trang lớn', () => {
+    for (const page of [
+      '<h1>Xin chào — Đà Nẵng 🌧️</h1>',
+      '<p>??>>~~</p>',
+      '<script>a+b/c</script>',
+      'x'.repeat(200_000) + 'ế',
+    ]) {
+      const payload = encodePreviewPayload(page)
+      expect(payload).toMatch(/^[A-Za-z0-9_-]*$/) // an toàn trong fragment URL, không '='
+      expect(decodeLikePreview(payload)).toBe(page)
+    }
+  })
+
+  it('preview.html vẫn giải mã theo đúng công thức trên', () => {
+    const html = readFileSync(join(__dirname, '..', '..', 'preview.html'), 'utf8')
+    expect(html).toContain("atob(payload.replace(/-/g, '+').replace(/_/g, '/'))")
+    expect(html).toContain('new TextDecoder().decode(bytes)')
+    expect(html).toContain('if (window.parent === window) return')
   })
 })
