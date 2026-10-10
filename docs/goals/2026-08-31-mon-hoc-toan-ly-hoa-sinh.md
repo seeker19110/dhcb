@@ -58,7 +58,7 @@
 | M3/S2 | Vật lí 11 (26 bài)                                                                                                                               | M3/S1          | DONE        | `docs/changelog/0215-*.md`, 26/26 bài Vật lí 11 xong                                    |
 | M3/S3 | Vật lí 12 (25 bài)                                                                                                                               | M3/S2          | DONE        | `docs/changelog/0216-*.md`, 25/25 bài Vật lí 12 xong                                    |
 | M4    | Sinh 10-12 (PA B, SRS)                                                                                                                           | M3 xong        | IN_PROGRESS |                                                                                         |
-| M5    | Toán 1-12 (đợt riêng, khối lượng lớn nhất)                                                                                                       | song song được | IN_PROGRESS | THCS: đặc tả `docs/specs/2026-10-10-toan-thcs-6-9.md`; Toán 6 xong (`0576`)             |
+| M5    | Toán 1-12 (đợt riêng, khối lượng lớn nhất)                                                                                                       | song song được | IN_PROGRESS | THCS: đặc tả `docs/specs/2026-10-10-toan-thcs-6-9.md`; Toán 6 xong (`0577`)             |
 
 ## 4. Risk register
 
