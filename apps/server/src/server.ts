@@ -20,7 +20,9 @@ import { initSentryServer, captureServerException, flushServerSentry } from './a
 import { installProcessSafetyNet } from './processSafetyNet.js'
 import { registerApiRoutes, applyCommonSecurityHeaders } from './routes.js'
 import { parseHubHostnames, resolveDistDir } from './staticApps.js'
+import { createRunnerHostMiddleware, parseRunnerHostnames } from './runnerHost.js'
 import {
+  allowedOrigins,
   warnIfClusterWithoutRedis,
   reportRedisStatusAtStartup,
   warmUpRedis,
@@ -70,6 +72,21 @@ app.disable('x-powered-by')
 // Bật gzip/brotli compression — giảm kích thước response 70% cho Mobile
 // threshold: chỉ nén khi response > 1KB (tránh overhead cho response nhỏ)
 app.use(compression({ threshold: 1024 }))
+
+// ── Host chạy code học viên (run.…) — đặt TRƯỚC /api để host này không bao giờ chạm API ──
+// Host runner chỉ phục vụ danh sách trắng file tĩnh với CSP riêng; host khác bị chặn
+// runner.html/preview.html. Đặc tả docs/specs/2026-10-10-tach-runtime-chay-code-ten-mien-con.md.
+// Tự tính đường dẫn dist (appDistDir khai báo bên dưới, chưa dùng được ở đây).
+app.use(
+  createRunnerHostMiddleware({
+    runnerHostnames: parseRunnerHostnames(process.env.RUNNER_HOSTNAME),
+    frameAncestors: allowedOrigins(),
+    serveStatic: express.static(path.join(process.cwd(), 'dist'), {
+      maxAge: '1y',
+      setHeaders: staticCacheHeaders,
+    }),
+  }),
+)
 
 // Toàn bộ route API (parser đặc biệt + JSON 64kb + ~100 endpoint) — xem routes.ts (PR-S3).
 registerApiRoutes(app)

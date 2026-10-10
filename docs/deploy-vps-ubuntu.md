@@ -478,6 +478,11 @@ sudo certbot --nginx -d en-vi.donghanhcungban.com
 sudo certbot renew --dry-run
 ```
 
+**Tên miền con chạy code `run.donghanhcungban.org` (2026-10-10):** chứng chỉ phải phủ thêm host
+này (block 4 trong `nginx/en-vi.conf`) — `sudo certbot --nginx -d run.donghanhcungban.org --expand`.
+Thứ tự đầy đủ (DNS trước, rồi chứng chỉ, rồi nạp Nginx) + cách kiểm: `docs/cloudflare-setup.md`
+Bước 7.
+
 **⚠️ Lưu ý:** Certbot sẽ tự sửa file Nginx để thêm SSL certificate, nhưng sẽ **bỏ đi** `http2` từ dòng `listen`. Sau khi Certbot chạy xong, phải thêm lại `http2`:
 
 ```bash

@@ -114,6 +114,8 @@ function guestHomePrerenderPlugin(): Plugin {
       // 'post': chạy sau khi Vite đã chèn thẻ <script>/<link> của bản build — cần để hoãn nạp JS.
       order: 'post',
       handler(html, ctx) {
+        // Chỉ trang app chính — runner.html/preview.html (origin chạy code) không có trang chủ khách.
+        if (path.basename(ctx.filename) !== 'index.html') return html
         const withPrerender = injectGuestPrerender(
           html,
           readFileSync(GUEST_PRERENDER_FILE, 'utf8'),
@@ -230,9 +232,24 @@ export default defineConfig(({ mode }) => {
       sourcemap: 'hidden',
       // Tree-shaking: loại bỏ code không dùng
       rollupOptions: {
+        // Ba trang: app chính + hai trang của origin chạy code `run.…` (đặc tả
+        // docs/specs/2026-10-10-tach-runtime-chay-code-ten-mien-con.md). Hai trang sau dùng chung
+        // chunk worker với app nhưng KHÔNG nằm trên đường khởi động của app.
+        input: {
+          index: path.join(appDir, 'index.html'),
+          runner: path.join(appDir, 'runner.html'),
+          preview: path.join(appDir, 'preview.html'),
+        },
         output: {
           // Chiến lược chunk thông minh: nhóm vendor theo tính năng, tránh duplicate code
           manualChunks(id) {
+            // Polyfill modulepreload của Vite: khi chỉ có MỘT entry nó nằm luôn trong chunk index;
+            // từ khi thêm entry runner/preview (origin chạy code `run.…`) rolldown tách nó thành
+            // chunk riêng → thêm một file vào đường khởi động của app. Gom vào vendor-misc (chunk
+            // khởi động vốn đã có và đã được size-limit đếm) để tập file khởi động không đổi.
+            if (id.includes('modulepreload-polyfill')) {
+              return 'vendor-misc'
+            }
             // Nhóm riêng: prompt gửi AI (`src/prompts/index.ts`) — chỉ các trang lười (Chat,
             // Writing, Speaking, Lessons…) import, KHÔNG nạp lúc khởi động. Nếu để Rollup tự
             // đặt tên, chunk lấy tên file facade là `index-<hash>.js` và bị glob

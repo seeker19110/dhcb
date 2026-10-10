@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Khung XEM TRANG cho bài DOM ở origin riêng `run.…` (thay iframe `srcdoc` — `srcdoc` thừa kế
+         CSP của app nên buộc app giữ 'unsafe-inline'). App nhúng trang này với
+         sandbox="allow-scripts" (origin ẩn danh) và gửi nguyên trang của học viên trong phần `#`
+         của URL (base64url của UTF-8): phần `#` không bao giờ đi lên server. Script dưới đây là
+         script THUẦN viết tay, cố ý không qua bundler — trong khung có origin ẩn danh, module
+         script tải từ /js/ sẽ bị chặn CORS. -->
+    <meta name="robots" content="noindex" />
+    <title>Xem trước trang</title>
+  </head>
+  <body>
+    <script>
+      ;(function () {
+        // Mở thẳng ở tab riêng (không nằm trong khung) thì KHÔNG dựng gì: chặn việc dùng trang
+        // này để hiện nội dung tuỳ ý dưới tên miền của dự án qua một đường link soạn sẵn.
+        if (window.parent === window) return
+        var payload = window.location.hash.slice(1)
+        if (!payload) return
+        try {
+          var binary = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+          var bytes = new Uint8Array(binary.length)
+          for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+          var page = new TextDecoder().decode(bytes)
+          document.open()
+          document.write(page)
+          document.close()
+        } catch (e) {
+          document.body.textContent = 'Không hiển thị được trang.'
+        }
+      })()
+    </script>
+  </body>
+</html>

@@ -6,13 +6,24 @@
 // `vendor-zod` được `modulepreload` mà size-limit không đếm. Phép kiểm này đọc `dist/index.html`
 // thật và báo mọi file JS tải ngay mà không glob nào khớp.
 
-/** Mọi file JS trình duyệt tải ngay khi mở trang: `<script type="module" src>` + `modulepreload`. */
+/**
+ * Mọi file JS trình duyệt tải ngay khi mở trang: `<script type="module" src>` + `modulepreload` +
+ * đường dẫn `/js/*.js` nằm trong script INLINE.
+ *
+ * Phần inline là bắt buộc: từ changelog 0584, khi trang chủ khách có bản HTML dựng sẵn, Vite KHÔNG
+ * còn để thẻ `<script src>`/`modulepreload` trong `dist/index.html` — `deferBootScriptsWhilePrerendered`
+ * (apps/dhcb/src/lib/guestPrerender.ts) thay chúng bằng MỘT script inline mang danh sách file. Đọc
+ * mỗi thẻ thì phép kiểm thấy "0 file" và xanh giả (phát hiện 2026-10-10, changelog 0591).
+ */
 export function startupScripts(html: string): string[] {
   const out = new Set<string>()
   for (const m of html.matchAll(/<script\b[^>]*\bsrc="([^"]+\.js)"/g)) out.add(m[1]!)
   for (const m of html.matchAll(/<link\b[^>]*\brel="modulepreload"[^>]*>/g)) {
     const href = /\bhref="([^"]+\.js)"/.exec(m[0])
     if (href) out.add(href[1]!)
+  }
+  for (const m of html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)) {
+    for (const p of m[1]!.matchAll(/["'](\/js\/[^"']+\.js)["']/g)) out.add(p[1]!)
   }
   return [...out].map((p) => p.replace(/^\//, '')).sort()
 }

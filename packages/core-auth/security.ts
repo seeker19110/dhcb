@@ -24,7 +24,9 @@ function isProduction(): boolean {
   return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
 }
 
-function allowedOrigins(): string[] | null {
+/** Danh sách origin app được phép; `null` ở dev (khi đó chỉ localhost). Trang runner dùng nó
+ * dựng `frame-ancestors` (docs/specs/2026-10-10-tach-runtime-chay-code-ten-mien-con.md). */
+export function allowedOrigins(): string[] | null {
   if (process.env.ALLOWED_ORIGINS !== undefined) {
     return process.env.ALLOWED_ORIGINS.split(',')
       .map((s) => s.trim())

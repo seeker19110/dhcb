@@ -5,9 +5,7 @@
 // if/else về ngôn ngữ ra các trang.
 import type { ProgrammingLesson } from '@dhcb/subject-programming/lessonTypes'
 import type { CodeRunResult } from './codeRunResult'
-import { runPython, resetPythonWorker } from './pythonRunner'
-import { runJavaScript, resetJsWorker } from './jsRunner'
-import { runSql, resetSqlWorker } from './sqlRunner'
+import { runWorkerLane, resetWorkerLanes } from './workerLanes'
 import { runHtml } from './htmlRunner'
 import { runGit } from './gitRunner'
 import { runBash } from './bashRunner'
@@ -16,8 +14,6 @@ import { runVibe } from './vibeRunner'
 import { runOpenclaw } from './openclawRunner'
 import { runSwift } from './swiftRunner'
 import { runKotlin } from './kotlinRunner'
-import { runDom, resetDomWorker } from './domRunner'
-import { runFetchLesson, resetFetchWorker } from './fetchRunner'
 import { runTypeScript } from './tsRunner'
 import type { FetchApi } from '@dhcb/subject-programming/fetchPrelude'
 import { laLanPython, fileCuaLan, noiCodeTheoLan } from '@dhcb/subject-programming/pyLanes'
@@ -57,15 +53,20 @@ export function runLessonCode(
   code: string,
   options: LessonRunOptions = {},
 ): Promise<CodeRunResult> {
+  // Callback tiến độ đi riêng với yêu cầu (yêu cầu phải là dữ liệu thuần — xem workerLanes.ts).
+  const callbacks = {
+    ...(options.onOutput ? { onOutput: options.onOutput } : {}),
+    ...(options.onLoading ? { onLoading: options.onLoading } : {}),
+  }
   if (language === 'javascript') {
-    const { stdinLines, onOutput } = options
-    return runJavaScript(code, {
-      ...(stdinLines ? { stdinLines } : {}),
-      ...(onOutput ? { onOutput } : {}),
-    })
+    const { stdinLines } = options
+    return runWorkerLane(
+      { lane: 'javascript', code, ...(stdinLines ? { stdinLines } : {}) },
+      callbacks,
+    )
   }
   if (language === 'dom' || language === 'fetch') {
-    const { stdinLines, onOutput, domHtml, fetchApi } = options
+    const { stdinLines, domHtml, fetchApi } = options
     if (!domHtml) {
       // Bài 'dom' không có trang thì không chấm được — nói thẳng thay vì chạy ra kết quả rỗng.
       return Promise.resolve({
@@ -75,15 +76,14 @@ export function runLessonCode(
         durationMs: 0,
       })
     }
-    const chung = {
-      html: domHtml,
-      ...(stdinLines ? { hanhDong: stdinLines } : {}),
-      ...(onOutput ? { onOutput } : {}),
-    }
+    const chung = { code, html: domHtml, ...(stdinLines ? { hanhDong: stdinLines } : {}) }
     // Bài 'fetch' = bài DOM cộng fetch giả lập — worker riêng, cùng khuôn chạy.
-    return language === 'fetch'
-      ? runFetchLesson(code, { ...chung, ...(fetchApi ? { api: fetchApi } : {}) })
-      : runDom(code, chung)
+    return runWorkerLane(
+      language === 'fetch'
+        ? { lane: 'fetch', ...chung, ...(fetchApi ? { api: fetchApi } : {}) }
+        : { lane: 'dom', ...chung },
+      { ...(options.onOutput ? { onOutput: options.onOutput } : {}) },
+    )
   }
   if (language === 'git') {
     // Bài Git/dòng lệnh: "code" là DANH SÁCH LỆNH học viên gõ; `stdinLines` mang lệnh dựng
@@ -145,12 +145,11 @@ export function runLessonCode(
   if (language === 'sql') {
     // SQL không có input(): dữ liệu đã nằm sẵn trong CSDL mẫu (sqlDataset.ts). Ca chấm nào
     // khai datasetSql thì lượt đó nạp bộ dữ liệu riêng của nó — đúng luật cổng CI đang dùng.
-    const { onOutput, onLoading, datasetSql } = options
-    return runSql(code, {
-      ...(onOutput ? { onOutput } : {}),
-      ...(onLoading ? { onLoading } : {}),
-      ...(datasetSql ? { seed: datasetSql } : {}),
-    })
+    const { datasetSql } = options
+    return runWorkerLane(
+      { lane: 'sql', code, ...(datasetSql ? { seed: datasetSql } : {}) },
+      callbacks,
+    )
   }
   // Còn lại là các LÀN chạy bằng engine Python. Làn mở rộng của bậc P4 (pytest…) chỉ khác
   // Python thuần ở mấy module ghi sẵn vào workspace + phần nối cuối — khai báo ở pyLanes.ts,
@@ -159,17 +158,19 @@ export function runLessonCode(
   const laneFiles = fileCuaLan(lane)
   const files =
     Object.keys(laneFiles).length > 0 ? { ...laneFiles, ...(options.files ?? {}) } : options.files
-  return runPython(noiCodeTheoLan(lane, code), {
-    ...options,
-    ...(files ? { files } : {}),
-  })
+  const { stdinLines } = options
+  return runWorkerLane(
+    {
+      lane: 'python',
+      code: noiCodeTheoLan(lane, code),
+      ...(stdinLines ? { stdinLines } : {}),
+      ...(files ? { files } : {}),
+    },
+    callbacks,
+  )
 }
 
 /** Dọn mọi môi trường đã nạp — gọi khi rời trang bài học. */
 export function resetLessonRunners(): void {
-  resetPythonWorker()
-  resetJsWorker()
-  resetSqlWorker()
-  resetDomWorker()
-  resetFetchWorker()
+  resetWorkerLanes()
 }

@@ -86,6 +86,28 @@ Nginx trên VPS (đoạn Cloudflare → VPS): kiểm `grep -E 'ssl_protocols|ssl
 /etc/letsencrypt/options-ssl-nginx.conf` — phải chỉ có `TLSv1.2 TLSv1.3` và bộ mã ECDHE-…-GCM /
 CHACHA20.
 
+### Bước 7 — Tên miền con chạy code `run.donghanhcungban.org` (từ 2026-10-10)
+
+Code học viên (JavaScript/Python/SQL/xem trước HTML) sẽ chạy ở origin riêng `run.` để không đọc
+được phiên đăng nhập của app — đặc tả `docs/specs/2026-10-10-tach-runtime-chay-code-ten-mien-con.md`.
+Việc tay, làm MỘT lần, TRƯỚC khi bật biến `VITE_CODE_RUNNER_ORIGIN` (đợt R2):
+
+1. **DNS → Add record**: loại **A**, tên **`run`**, trỏ cùng IP VPS như `en-vi`, **Proxy: bật
+   (đám mây cam)**.
+2. Trên VPS, mở rộng chứng chỉ cho tên mới rồi nạp lại Nginx (`nginx/en-vi.conf` đã có block 4
+   cho host này):
+
+   ```bash
+   sudo certbot --nginx -d run.donghanhcungban.org --expand
+   sudo cp nginx/en-vi.conf /etc/nginx/sites-available/en-vi
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+3. Kiểm: `curl -sI https://run.donghanhcungban.org/runner.html` → `200` có
+   `content-security-policy: … frame-ancestors https://…` và KHÔNG có `x-frame-options`;
+   `curl -sI https://run.donghanhcungban.org/api/health` → `404`;
+   `curl -sI https://en-vi.donghanhcungban.org/runner.html` → `404`.
+
 ## Việc AI/bạn làm trên VPS (sau khi Bước 1–4 xong)
 
 Repo đã có sẵn `scripts/update-cloudflare-ips.sh` (sinh danh sách IP Cloudflare
