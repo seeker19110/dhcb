@@ -10,6 +10,7 @@ import {
   classifyOutcome,
   typeHit,
   scoreOne,
+  buildDumpRecord,
   summarize,
   parseFixtures,
   ERROR_TYPES,
@@ -205,5 +206,46 @@ describe('golden set thật (eval-tutor-fixtures.json)', () => {
   it('có cả câu đúng và ca biên (đo bịa lỗi)', () => {
     expect(fixtures.some((f) => f.kind === 'correct')).toBe(true)
     expect(fixtures.some((f) => f.kind === 'edge')).toBe(true)
+  })
+})
+
+describe('buildDumpRecord (cờ --dump)', () => {
+  const ok: Fixture = {
+    id: 'edge-01',
+    input: 'Hello',
+    kind: 'edge',
+    expectedErrors: [],
+    level: 'beginner',
+    dir: 'A',
+  }
+
+  it('giữ nguyên văn + phần ✅ đúng như UI thấy → đọc được VÌ SAO một câu là FP', () => {
+    const raw = '💬 Hi there! How are you?\n✅ Nhận xét: Câu chào rất tự nhiên!'
+    expect(buildDumpRecord(2, 'chat', ok, raw)).toEqual({
+      run: 2,
+      mode: 'chat',
+      id: 'edge-01',
+      kind: 'edge',
+      dir: 'A',
+      input: 'Hello',
+      outcome: 'FP',
+      feedback: 'Câu chào rất tự nhiên!',
+      raw,
+    })
+  })
+
+  it('outcome trùng scoreOne (không có hai cách chấm lệch nhau)', () => {
+    const raw = '💬 Hi there!'
+    expect(buildDumpRecord(1, 'chat', ok, raw).outcome).toBe(scoreOne('chat', ok, raw).outcome)
+    expect(buildDumpRecord(1, 'chat', ok, raw).outcome).toBe('TN')
+  })
+
+  it('lỗi provider → outcome ERROR, raw rỗng, giữ thông báo lỗi', () => {
+    expect(buildDumpRecord(1, 'speaking', ok, null, 'HTTP 429')).toMatchObject({
+      outcome: 'ERROR',
+      feedback: '',
+      raw: '',
+      error: 'HTTP 429',
+    })
   })
 })

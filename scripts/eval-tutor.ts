@@ -20,6 +20,8 @@
 //   npm run eval:tutor -- --runs 3              # chạy 3 lượt → trung bình ± SD + khoảng Wilson 95%
 //   npm run eval:tutor -- --group clean         # chỉ một nhóm: loại lỗi (vd tense) | error | correct |
 //                                               #   edge | clean (đúng+ca biên) | A | B
+//   npm run eval:tutor -- --dump eval-dump.jsonl  # lưu NGUYÊN VĂN từng câu trả lời (1 dòng JSON/câu)
+//                                               #   để đọc vì sao một câu bị FP/FN
 //
 // Golden set = scripts/eval-tutor-fixtures.json (62 câu cũ, chiều A) + scripts/eval-tutor-fixtures-extra.json
 // (bộ mở rộng, cả hai chiều). `--limit 62` (không kèm --group) tái hiện đúng bộ 62 câu của baseline cũ.
@@ -27,7 +29,7 @@
 // QUY TRÌNH (CLAUDE.md §8): mọi PR đổi prompt (src/prompts) hoặc model (aiConfig) PHẢI chạy lại
 // eval và dán bảng so sánh với baseline vào mô tả PR.
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import * as path from 'node:path'
 import * as dotenv from 'dotenv'
@@ -45,6 +47,7 @@ import { callAnthropicText } from '@dhcb/core-ai/anthropicClient'
 import {
   parseFixtures,
   parseRichFixtures,
+  buildDumpRecord,
   scoreOne,
   summarize,
   ERROR_TYPES,
@@ -89,6 +92,9 @@ const MAX_RETRY_429 = Number(argVal('--max-retry-429', '5'))
 const WRITE_BASELINE = args.includes('--write-baseline')
 const RUNS_ARG = argVal('--runs', '1')
 const GROUP_ARG = argVal('--group', '')
+// Đường dẫn file JSONL ghi nguyên văn câu trả lời; rỗng = không ghi. Đường dẫn tương đối tính
+// từ thư mục đang đứng (cwd), như mọi công cụ dòng lệnh.
+const DUMP_PATH = argVal('--dump', '')
 // Ngưỡng tối thiểu số câu chấm được (không lỗi provider) để cho phép ghi baseline.
 const NGUONG_TOI_THIEU = 0.8
 
@@ -242,19 +248,25 @@ function systemFor(mode: EvalMode, fx: Fixture): string {
   return SYSTEM_GUARDRAIL + base
 }
 
-async function runMode(mode: EvalMode, fixtures: Fixture[]): Promise<EvalResult[]> {
+// Ghi 1 dòng JSONL ngay sau mỗi câu (không đợi cuối lượt) → chạy dở bị ngắt vẫn giữ được phần đã có.
+function dumpLine(...args: Parameters<typeof buildDumpRecord>): void {
+  if (DUMP_PATH) appendFileSync(DUMP_PATH, JSON.stringify(buildDumpRecord(...args)) + '\n')
+}
+
+async function runMode(mode: EvalMode, fixtures: Fixture[], run = 1): Promise<EvalResult[]> {
   const out: EvalResult[] = []
   process.stderr.write(`\n▶ Chế độ ${mode} — ${fixtures.length} câu\n`)
   for (let i = 0; i < fixtures.length; i++) {
     const fx = fixtures[i]!
     process.stderr.write(`  ${String(i + 1).padStart(2)}/${fixtures.length} ${fx.id} … `)
+    // Chỉ lời gọi provider nằm trong try: lỗi ghi file dump KHÔNG được bị đếm nhầm thành lỗi
+    // provider (sẽ đẩy thêm một kết quả thứ hai cho cùng câu và làm sai số liệu).
+    let text: string | null = null
     try {
-      const text = await callProvider(systemFor(mode, fx), fx.input)
-      const r = scoreOne(mode, fx, text)
-      out.push(r)
-      process.stderr.write(`${r.outcome}${r.jsonValid === false ? ' (JSON hỏng)' : ''}\n`)
+      text = await callProvider(systemFor(mode, fx), fx.input)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
+      dumpLine(run, mode, fx, null, msg)
       out.push({
         id: fx.id,
         kind: fx.kind,
@@ -267,6 +279,12 @@ async function runMode(mode: EvalMode, fixtures: Fixture[]): Promise<EvalResult[
         providerError: msg,
       })
       process.stderr.write(`LỖI: ${msg}\n`)
+    }
+    if (text !== null) {
+      const r = scoreOne(mode, fx, text)
+      out.push(r)
+      process.stderr.write(`${r.outcome}${r.jsonValid === false ? ' (JSON hỏng)' : ''}\n`)
+      dumpLine(run, mode, fx, text)
     }
     if (DELAY_MS > 0 && i < fixtures.length - 1) await sleep(DELAY_MS)
   }
@@ -481,7 +499,7 @@ async function mainMultiRun(
     const perRun: EvalResult[][] = []
     for (let i = 1; i <= runs; i++) {
       process.stderr.write(`\n■ Lượt ${i}/${runs} (${mode})`)
-      perRun.push(await runMode(mode, fixtures))
+      perRun.push(await runMode(mode, fixtures, i))
     }
     sections.push({ mode, runs: perRun })
   }
@@ -525,12 +543,17 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
+  // Xoá file dump cũ — tránh lẫn kết quả hai lần chạy khác nhau trong cùng một file.
+  if (DUMP_PATH) writeFileSync(DUMP_PATH, '')
+
   const modes: EvalMode[] = MODE_ARG === 'both' ? ['chat', 'speaking'] : [MODE_ARG as EvalMode]
   process.stderr.write(
     `Provider: ${providerLabel()} · ${fixtures.length} câu · delay ${DELAY_MS}ms` +
       `${group ? ` · nhóm ${group}` : ''}` +
       `${runs > 1 ? ` · ${runs} lượt (≈ ${fixtures.length * runs * modes.length} lời gọi AI)` : ''}\n`,
   )
+  if (DUMP_PATH)
+    process.stderr.write(`Ghi nguyên văn câu trả lời vào: ${path.resolve(DUMP_PATH)}\n`)
 
   if (runs > 1) {
     await mainMultiRun(runs, group, fixtures, modes)
