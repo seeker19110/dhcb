@@ -1,6 +1,6 @@
 # 0575 — gitleaks: đánh dấu khoá giả trong đề P5 s4 của dự án T3
 
-- **Ngày:** 2026-10-09 · **PR:** (xem mô tả PR) · **Loại:** `fix(programming)`
+- **Ngày:** 2026-10-09 · **PR:** #1324 (+ một PR nối tiếp bỏ chuỗi khoá khỏi changelog này) · **Loại:** `fix(programming)`
 - **Nối tiếp:** changelog `0573` (PR #1323).
 
 ## Vấn đề
@@ -30,9 +30,8 @@ vẫn mang 5 dòng chưa đánh dấu và lần quét `push` lên `main` sẽ đ
 phải kiểm lại nội dung trên `main` (`git show origin/main:<file>`), đừng tin rằng commit đã kịp
 vào.
 
-Bẫy thứ hai, cùng PR: bản đầu của chính changelog này trích nguyên chuỗi khoá giả, nên gitleaks
-lại báo 1 dòng ở commit `67bb1f17`. Đã thay bằng mô tả không chứa giá trị. Check `gitleaks` của
-PR vẫn đỏ vì nó quét từng commit của PR, kể cả `67bb1f17` (repo cấm force push nên không viết
-lại được lịch sử), và vì khoảng quét kéo cả commit `40a096a` của `main` vào, do nhánh được dùng
-lại. Check này không bắt buộc. Squash commit lên `main` chỉ mang nội dung cuối, đã quét sạch.
-Luật rút ra: khi viết tài liệu về một chuỗi bị bộ quét bí mật bắt nhầm, không chép chuỗi đó vào.
+Bẫy thứ hai: bản đầu của chính changelog này trích nguyên chuỗi khoá giả, nên gitleaks báo thêm
+1 dòng. Bản bỏ chuỗi đó lại đến SAU lúc #1324 tự merge, tức mắc lần nữa đúng bẫy ở trên, nên phải
+đưa vào `main` bằng một PR nối tiếp. Luật rút ra: (1) khi viết tài liệu về một chuỗi bị bộ
+quét bí mật bắt nhầm, không chép chuỗi đó vào; (2) chạy `gitleaks git` trên ĐÚNG các commit của
+PR (không chỉ `gitleaks dir` trên một file) rồi mới mở PR có auto-merge.
