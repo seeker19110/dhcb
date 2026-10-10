@@ -144,8 +144,12 @@ describe('/api/hub-stats', () => {
     expect(data.userName).toBe('john.doe')
 
     // DB throw error in try block
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.mocked(getUserById).mockRejectedValueOnce(new Error('DB failure'))
     const respFail = await handler(new Request('http://localhost/api/hub-stats'))
+    // Lỗi phải được ghi log, không nuốt im lặng.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[hub-stats]'), expect.any(Error))
+    warn.mockRestore()
     expect(respFail.status).toBe(200)
     const dataFail = (await respFail.json()) as Record<string, unknown>
     expect(dataFail.loggedIn).toBe(true)

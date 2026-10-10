@@ -409,7 +409,7 @@ export default async function handler(req: Request): Promise<Response> {
       if (!guestGate.ok) {
         logSecurityEvent('USAGE_LIMIT', clientIp, { path: '/api/tts', stage: 'generate' })
         return jsonResponse(
-          { error: guestGate.message, guestTrialExhausted: true },
+          { error: guestGate.message, guestTrialExhausted: guestGate.unavailable !== true },
           429,
           allHeaders,
         )

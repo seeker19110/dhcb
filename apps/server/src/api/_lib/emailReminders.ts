@@ -17,7 +17,10 @@ const DEFAULT_WEEKLY_GOAL = 5
 
 export interface EmailReminderResult {
   sent: number
+  /** Không gửi vì lý do bình thường: hết hạn mức mail ngày, địa chỉ bị máy chủ nhận từ chối. */
   skipped: number
+  /** Gửi HỎNG vì hạ tầng (SMTP lỗi/chưa cấu hình) — tách khỏi `skipped` để log thấy được. */
+  failed: number
 }
 
 export async function sendEmailReminders(): Promise<EmailReminderResult> {
@@ -42,7 +45,7 @@ export async function sendEmailReminders(): Promise<EmailReminderResult> {
   const activeUserIds = activeRows.map((r) => r.user_id).filter((uid) => !studiedUserIds.has(uid))
 
   if (activeUserIds.length === 0) {
-    return { sent: 0, skipped: 0 }
+    return { sent: 0, skipped: 0, failed: 0 }
   }
 
   // 3. Lọc bỏ các user đã có Web Push subscription (họ đã nhận push rồi, không gửi email trùng)
@@ -54,7 +57,7 @@ export async function sendEmailReminders(): Promise<EmailReminderResult> {
   const targetUserIds = activeUserIds.filter((uid) => !usersWithPush.has(uid))
 
   if (targetUserIds.length === 0) {
-    return { sent: 0, skipped: 0 }
+    return { sent: 0, skipped: 0, failed: 0 }
   }
 
   // 4. Lọc tiếp theo cooldown 3 ngày của email reminder
@@ -67,7 +70,7 @@ export async function sendEmailReminders(): Promise<EmailReminderResult> {
   const finalUserIds = targetUserIds.filter((uid) => !usersInCooldown.has(uid))
 
   if (finalUserIds.length === 0) {
-    return { sent: 0, skipped: 0 }
+    return { sent: 0, skipped: 0, failed: 0 }
   }
 
   // 5. Đọc thông tin email + dữ liệu tiến độ để cá nhân hóa nội dung email
@@ -76,7 +79,7 @@ export async function sendEmailReminders(): Promise<EmailReminderResult> {
     [finalUserIds],
   )
   if (userEmails.length === 0) {
-    return { sent: 0, skipped: 0 }
+    return { sent: 0, skipped: 0, failed: 0 }
   }
 
   const userEmailMap = new Map(userEmails.map((u) => [u.id, u.email]))
@@ -127,6 +130,7 @@ export async function sendEmailReminders(): Promise<EmailReminderResult> {
 
   let sent = 0
   let skipped = 0
+  let failed = 0
   const nowMs = Date.now()
 
   for (const uid of finalVerifiedUserIds) {
@@ -178,17 +182,24 @@ export async function sendEmailReminders(): Promise<EmailReminderResult> {
 
     if (mailResult.status === 'sent') {
       sent++
-      // Cập nhật mốc thời gian đã gửi email nhắc nhở
-      await pool.query(
-        `insert into public.email_reminders (user_id, last_sent_at)
-         values ($1, now())
-         on conflict (user_id) do update set last_sent_at = now()`,
-        [uid],
-      )
+      // Cập nhật mốc thời gian đã gửi email nhắc nhở. Lỗi CSDL ở đây KHÔNG được dừng cả vòng
+      // (audit 2026-10-10, E1.9): thư đã đi rồi, người sau vẫn phải được nhắc — chỉ ghi log.
+      try {
+        await pool.query(
+          `insert into public.email_reminders (user_id, last_sent_at)
+           values ($1, now())
+           on conflict (user_id) do update set last_sent_at = now()`,
+          [uid],
+        )
+      } catch (err) {
+        console.error('[reminder:email] đã gửi nhưng không ghi được mốc cooldown:', uid, err)
+      }
+    } else if (mailResult.status === 'error' || mailResult.status === 'not_configured') {
+      failed++
     } else {
       skipped++
     }
   }
 
-  return { sent, skipped }
+  return { sent, skipped, failed }
 }

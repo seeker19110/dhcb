@@ -113,7 +113,7 @@ describe('GET /api/usage-summary', () => {
     query.mockRejectedValue(new Error('db down'))
     const res = await handler(new Request('http://localhost/api/usage-summary'))
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ plan: 'free', freeWeeklyCredit: null, freeWeeklyCap: 0 })
+    expect(await res.json()).toEqual({ plan: null, freeWeeklyCredit: null, freeWeeklyCap: 0 })
   })
 })
 
@@ -137,7 +137,7 @@ it.each(['NaN', '-1', '1.5', '9007199254740992'])(
     query.mockResolvedValue({ rows: [{ used }] })
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const res = await handler(new Request('http://localhost/api/usage-summary'))
-    expect(await res.json()).toEqual({ plan: 'free', freeWeeklyCredit: null, freeWeeklyCap: 0 })
+    expect(await res.json()).toEqual({ plan: null, freeWeeklyCredit: null, freeWeeklyCap: 0 })
     warn.mockRestore()
   },
 )

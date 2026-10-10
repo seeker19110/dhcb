@@ -479,7 +479,7 @@ export async function executeAutomatedAction(
   let retryCount = 0
   let executionResult: unknown = null
   let errorMessage: string | null = null
-  let status: 'success' | 'failed' | 'compensated' = 'success'
+  let status: 'success' | 'failed' = 'success'
   let compensationResult: unknown = null
 
   // Validate tool input if registered
@@ -517,19 +517,14 @@ export async function executeAutomatedAction(
     }
   }
 
-  // 6. Handle compensation if failed
+  // 6. Bù trừ khi thất bại — CHƯA có executor bù trừ thật (audit 2026-10-10, E1.9): trước đây
+  // nhánh này tự ghi `reverted: true` + status 'compensated' mà không hoàn tác gì, biên nhận BẤT
+  // BIẾN ghi sai sự thật. Nay ghi đúng: còn 'failed', bù trừ chưa chạy (`reverted: false`).
   if (status === 'failed' && grant.compensation) {
-    try {
-      compensationResult = {
-        compensatedTool: grant.compensation.toolId,
-        reverted: true,
-        compensatedAt: new Date().toISOString(),
-      }
-      status = 'compensated'
-    } catch (compErr) {
-      errorMessage = `Execution failed: ${errorMessage}; Compensation failed: ${
-        compErr instanceof Error ? compErr.message : String(compErr)
-      }`
+    compensationResult = {
+      compensatedTool: grant.compensation.toolId,
+      reverted: false,
+      reason: 'not_implemented',
     }
   }
 

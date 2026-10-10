@@ -174,13 +174,13 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-10-10] Sửa theo audit toàn diện** ([báo cáo](docs/audit/2026-10-10-audit-toan-dien-va-toi-uu.md),
   `docs/changelog/0580-*.md`). Đợt đầu (JS khởi động −15,9 kB, chunk trang xếp lớp 2,95 MB → 11 kB) đã
-  làm. **E1 lỗi im lặng server ĐÃ LÀM** (mục 1–8, `docs/changelog/0581-*.md`; mục 9 mức thấp
-  còn mở). **E2 nghiệp vụ/SQL ĐÃ LÀM** (`0582`: trần `learn-day` 300/ngày, lịch sử 200/loại, đua
+  làm. **E1 lỗi im lặng server ĐÃ LÀM** (mục 1–8 ở `docs/changelog/0581-*.md`, mục 9 mức thấp ở
+  `0586`). **E2 nghiệp vụ/SQL ĐÃ LÀM** (`0582`: trần `learn-day` 300/ngày, lịch sử 200/loại, đua
   Elo PvP/phòng DM). **E3 ĐÃ LÀM** (`0583`: migration `0091`
   chỉ mục + job dọn phiên/mã hết hạn + `analytics_events` giữ 365 ngày). **E4 frontend ĐÃ LÀM**
   (`0584`: JS khởi động −3,5 kB, trang chặng 542 → 17 kB, gộp FNV/mulberry32/ngày VN/đọc
   localStorage, sửa 2 bug; **E4.1b `zod/mini` cho hợp đồng trang chủ HOÃN** — đo thật là 10 file
-  - `versionedObject` của 38 hợp đồng, lý do ở `0584`). **E5 ĐÃ LÀM** (`0585`: `.size-limit.json` đếm đủ chunk `modulepreload`, 135,68/160 kB + phép kiểm `scripts/check-startup-coverage.ts` trong `npm run size`). Cả 5 đợt audit đã xong; còn mở: E1 mục 9 (mức thấp), E4.1b (hoãn có lý do).
+  - `versionedObject` của 38 hợp đồng, lý do ở `0584`). **E5 ĐÃ LÀM** (`0585`: `.size-limit.json` đếm đủ chunk `modulepreload`, 135,68/160 kB + phép kiểm `scripts/check-startup-coverage.ts` trong `npm run size`). Cả 5 đợt audit đã xong; còn mở: E4.1b (hoãn có lý do).
 
 - **[2026-10-09] Dự án trục T2/T3 môn Lập trình** — hạ tầng xong (changelog `0571`, đặc tả
   `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md`): chọn dự án, mã bước

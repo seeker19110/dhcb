@@ -589,15 +589,17 @@ describe('automationService - executeAutomatedAction', () => {
     expect(res.receipt.status).toBe('success')
   })
 
-  it('handles execution failure and records compensation when configured', async () => {
-    const pool = mockPool(async (sql) => {
+  it('handles execution failure: compensation configured but NOT faked as reverted', async () => {
+    let insertParams: unknown[] = []
+    const pool = mockPool(async (sql, params) => {
       if (sql.includes('insert into personal.action_receipts')) {
+        insertParams = params ?? []
         return {
           rows: [
             receiptRow({
-              status: 'compensated',
+              status: 'failed',
               error_message: 'Remote error',
-              compensation_result: { reverted: true },
+              compensation_result: { reverted: false, reason: 'not_implemented' },
             }),
           ],
         }
@@ -644,7 +646,14 @@ describe('automationService - executeAutomatedAction', () => {
       },
     })
 
-    expect(res.receipt.status).toBe('compensated')
+    expect(res.receipt.status).toBe('failed')
+    // Biên nhận bất biến không được ghi "đã hoàn tác" khi chưa có executor bù trừ thật.
+    expect(insertParams[9]).toBe('failed')
+    expect(JSON.parse(String(insertParams[13]))).toEqual({
+      compensatedTool: 'learning.update_goal',
+      reverted: false,
+      reason: 'not_implemented',
+    })
   })
 
   it('handles execution failure without compensation', async () => {

@@ -37,7 +37,8 @@ export async function checkAndConsumeActorUsage(
   const gate = await checkAndConsumeGuestTrial(actor.guestKey, ip)
   return gate.ok
     ? { ok: true, day: '' }
-    : { ok: false, message: gate.message ?? '', guestTrialExhausted: true }
+    : // Không đếm được (Redis) ≠ hết lượt: không mời đăng ký khi khách chưa dùng lượt nào.
+      { ok: false, message: gate.message ?? '', guestTrialExhausted: gate.unavailable !== true }
 }
 
 /** Hoàn lại lượt vừa trừ khi nhà cung cấp AI lỗi. Nuốt lỗi — không bao giờ làm vỡ luồng trả lỗi. */

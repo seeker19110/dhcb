@@ -407,9 +407,11 @@ describe('verifyFacebookAccessToken', () => {
   it('token hợp lệ, đúng app_id, có email → trả thông tin user', async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({ data: { is_valid: true, app_id: 'fbapp' } }),
       } as Response)
       .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({ id: 'fb1', email: 'x@y.com', name: 'X' }),
       } as Response)
     const result = await verifyFacebookAccessToken('atok')
@@ -418,6 +420,7 @@ describe('verifyFacebookAccessToken', () => {
 
   it('debug_token báo is_valid=false → null', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ data: { is_valid: false, app_id: 'fbapp' } }),
     } as Response)
     expect(await verifyFacebookAccessToken('atok')).toBeNull()
@@ -425,6 +428,7 @@ describe('verifyFacebookAccessToken', () => {
 
   it('app_id KHÔNG khớp (token của app Facebook khác) → null', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ data: { is_valid: true, app_id: 'app-khac' } }),
     } as Response)
     expect(await verifyFacebookAccessToken('atok')).toBeNull()
@@ -433,10 +437,32 @@ describe('verifyFacebookAccessToken', () => {
   it('user không cấp quyền email → null (users.email NOT NULL)', async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({ data: { is_valid: true, app_id: 'fbapp' } }),
       } as Response)
-      .mockResolvedValueOnce({ json: async () => ({ id: 'fb1' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'fb1' }) } as Response)
     expect(await verifyFacebookAccessToken('atok')).toBeNull()
+  })
+
+  it('Facebook trả 5xx ở debug_token → null + LOG (nhà cung cấp sập, không im lặng)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 503 } as Response)
+    expect(await verifyFacebookAccessToken('atok')).toBeNull()
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Facebook debug_token trả HTTP 503'))
+    warn.mockRestore()
+  })
+
+  it('Facebook trả 4xx ở /me (token sai) → null, KHÔNG log cho đỡ nhiễu', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { is_valid: true, app_id: 'fbapp' } }),
+      } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 400 } as Response)
+    expect(await verifyFacebookAccessToken('atok')).toBeNull()
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 
   it('thiếu FACEBOOK_APP_ID/SECRET → null, không throw ra ngoài', async () => {
@@ -816,9 +842,13 @@ describe('verifyFacebookAccessToken — nhánh còn thiếu (Đợt 2 coverage 2
   it('me.name thiếu → dùng phần trước @ của email', async () => {
     vi.mocked(fetch)
       .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({ data: { is_valid: true, app_id: 'fbapp' } }),
       } as Response)
-      .mockResolvedValueOnce({ json: async () => ({ id: 'fb2', email: 'z@y.com' }) } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'fb2', email: 'z@y.com' }),
+      } as Response)
     const result = await verifyFacebookAccessToken('atok')
     expect(result?.name).toBe('z')
   })
@@ -995,6 +1025,23 @@ describe('inspectGoogleAccessToken', () => {
     expect((await inspectGoogleAccessToken('atok'))?.expiresInSec).toBeNull()
     mockGoogle({ aud: 'gclient', expires_in: 'abc' })
     expect((await inspectGoogleAccessToken('atok'))?.expiresInSec).toBeNull()
+  })
+
+  it('Google trả 5xx/429 → null + LOG; 4xx (token sai) → null, không log', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 502 } as Response)
+    expect(await inspectGoogleAccessToken('atok')).toBeNull()
+    expect(warn).toHaveBeenLastCalledWith(expect.stringContaining('Google tokeninfo trả HTTP 502'))
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ aud: 'gclient' }) } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 429 } as Response)
+    expect(await inspectGoogleAccessToken('atok')).toBeNull()
+    expect(warn).toHaveBeenLastCalledWith(expect.stringContaining('Google userinfo trả HTTP 429'))
+    warn.mockClear()
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 400 } as Response)
+    expect(await inspectGoogleAccessToken('atok')).toBeNull()
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 
   it('verifyGoogleAccessToken giữ nguyên hình dạng cũ (không lộ expiresInSec)', async () => {
