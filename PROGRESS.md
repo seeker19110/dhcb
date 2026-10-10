@@ -801,13 +801,16 @@ life}`, contract + `careerInterviewService`/`compassionateCoachPrompt`/
   COOP, CORP phải hết; COEP + CSP `unsafe-inline/eval` còn lại CÓ CHỦ ĐÍCH (lý do ở `0588`). Gỡ CSP inline/eval bằng cách tách runtime chạy code sang `run.donghanhcungban.org` — đặc tả
   `docs/specs/2026-10-10-tach-runtime-chay-code-ten-mien-con.md` ĐÃ DUYỆT (Q1–Q4 theo đề xuất);
   R1 (trang runner + host Express/Nginx, changelog `0591`, PR #1345) + R2 (app gửi code sang
-  runner, changelog `0592`) xong — app CHỈ dùng runner khi build có `VITE_CODE_RUNNER_ORIGIN`.
+  runner, changelog `0592`, PR #1346) + R3 (CSP chặt dạng Report-Only báo về Sentry, gỡ 3 SDK
+  đăng nhập thừa, changelog `0593`) xong — app CHỈ dùng runner khi build có `VITE_CODE_RUNNER_ORIGIN`.
   **Việc tay, ĐÚNG THỨ TỰ:** (1) R0: DNS `run` (A, proxied) + `sudo certbot --nginx -d
 run.donghanhcungban.org --expand` + chép `nginx/en-vi.conf` + reload — lệnh kiểm:
   `docs/cloudflare-setup.md` Bước 7; (2) chỉ khi `curl -sI https://run.donghanhcungban.org/runner.html`
   ra 200: thêm `VITE_CODE_RUNNER_ORIGIN=https://run.donghanhcungban.org` vào `.env` trên VPS rồi
-  deploy lại (build lại); (3) thử tay một bài Python + một bài DOM "Xem trang chạy". Tiếp theo:
-  R3 (CSP chặt Report-Only 7 ngày) → R4 (bật thật + bắt buộc biến, chủ dự án duyệt).
+  deploy lại (build lại); (3) thử tay một bài Python + một bài DOM "Xem trang chạy"; (4) từ ngày
+  bước (2) xong, đếm 7 ngày Report-Only: xem Sentry › Issues lọc `csp` — trước bước (2) mọi lượt
+  chạy code đều báo `unsafe-eval` (ĐÚNG dự kiến, Worker còn ở origin app). Tiếp theo: R4 (bật
+  CSP chặt thật + bắt buộc biến, chủ dự án duyệt sau 7 ngày không có vi phạm thật).
 
 - **[2026-10-09 · Claude là AI chính, model theo nhiệm vụ, changelog `0568`, PR #1315 · structured
   outputs chấm điểm + Action Canvas, changelog `0569`/`0570`, PR #1316 · #1318] Năm việc trên VPS sau khi deploy** (phiên AI không có key

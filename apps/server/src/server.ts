@@ -20,7 +20,18 @@ import { initSentryServer, captureServerException, flushServerSentry } from './a
 import { installProcessSafetyNet } from './processSafetyNet.js'
 import { registerApiRoutes, applyCommonSecurityHeaders } from './routes.js'
 import { parseHubHostnames, resolveDistDir } from './staticApps.js'
-import { createRunnerHostMiddleware, parseRunnerHostnames } from './runnerHost.js'
+import {
+  createRunnerHostMiddleware,
+  parseRunnerHostnames,
+  runnerOriginsFromEnv,
+} from './runnerHost.js'
+import {
+  buildStrictCsp,
+  inlineScriptHashesOfBuild,
+  parseCspMode,
+  reportingEndpointsHeader,
+  sentryCspReportUri,
+} from './strictCsp.js'
 import {
   allowedOrigins,
   warnIfClusterWithoutRedis,
@@ -103,6 +114,7 @@ app.use((req, res, next) => {
   // Chỉ apply cho non-API routes để tránh double headers
   if (!req.path.startsWith('/api/')) {
     applyCommonSecurityHeaders(res)
+    applyStrictCspReportOnly(req.hostname, res)
   }
   next()
 })
@@ -157,6 +169,32 @@ const HUB_HOSTNAMES = parseHubHostnames(process.env.HUB_HOSTNAME)
 
 function distDirForHost(hostname: string | undefined): string {
   return resolveDistDir({ hostname, hubHostnames: HUB_HOSTNAMES, appDistDir, hubDistDir })
+}
+
+// ── CSP CHẶT dạng Report-Only (bước R3, apps/server/src/strictCsp.ts) ──────────────────────
+// Chạy SONG SONG CSP cũ đang enforce: trình duyệt chỉ BÁO vi phạm (về Sentry), không chặn gì.
+// Băm script inline tính MỘT lần lúc khởi động từ đúng index.html mà host đó được phục vụ (app
+// và hub khác nhau). `CSP_MODE=legacy` tắt hẳn header này mà không cần build lại.
+const CSP_MODE = parseCspMode(process.env.CSP_MODE)
+const cspReportUri = sentryCspReportUri(process.env.SENTRY_DSN)
+const cspReportingEndpoints = reportingEndpointsHeader(cspReportUri)
+const strictCspByDistDir = new Map(
+  [appDistDir, hubDistDir].map((dir) => [
+    dir,
+    buildStrictCsp({
+      scriptHashes: inlineScriptHashesOfBuild(dir),
+      runnerOrigins: runnerOriginsFromEnv(),
+      reportUri: cspReportUri,
+    }),
+  ]),
+)
+
+function applyStrictCspReportOnly(hostname: string | undefined, res: express.Response): void {
+  if (CSP_MODE !== 'report-only') return
+  const csp = strictCspByDistDir.get(distDirForHost(hostname))
+  if (!csp) return
+  res.setHeader('Content-Security-Policy-Report-Only', csp)
+  if (cspReportingEndpoints) res.setHeader('Reporting-Endpoints', cspReportingEndpoints)
 }
 
 function staticCacheHeaders(res: express.Response, filePath: string) {

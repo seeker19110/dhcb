@@ -21,4 +21,10 @@ describe('CSP của app', () => {
     expect(csp).toContain("frame-ancestors 'self'")
     expect(csp).toContain("object-src 'none'")
   })
+
+  it('không còn tin 3 SDK đăng nhập không dùng (Q4 đặc tả)', () => {
+    for (const host of ['connect.facebook.net', 'appleid.cdn-apple.com', 'alcdn.msauth.net']) {
+      expect(CSP_HEADER).not.toContain(host)
+    }
+  })
 })

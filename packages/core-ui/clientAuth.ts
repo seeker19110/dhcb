@@ -408,6 +408,9 @@ declare global {
   }
 }
 
+// [2026-10-10] CSP KHÔNG còn cho tải SDK Facebook/Apple/Microsoft (chưa giao diện nào gọi ba hàm
+// loginWith… dưới đây). Bật lại nút nào thì thêm lại host SDK đó vào CSP — xem buildAppCsp
+// (apps/server/src/routes.ts) và buildStrictCsp (apps/server/src/strictCsp.ts).
 let facebookInitPromise: Promise<void> | null = null
 
 function loadFacebookScript(appId: string): Promise<void> {
