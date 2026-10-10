@@ -12,9 +12,10 @@
 
 import { getAuthHeader } from '@core/authHeader'
 import { LearnerIntentSchema, type LearnerIntent } from '@dhcb/core-contracts/learnerIntent'
+import { INTENT_KEY_PREFIX } from '../storageKeyPrefixes'
 
 /** Tiền tố khoá — PHẢI trùng với dòng đã đăng ký trong `ALL_PREFIXES` của `guestProgress.ts`. */
-export const INTENT_KEY_PREFIX = 'dhcb_intent_'
+export { INTENT_KEY_PREFIX }
 
 export const intentKey = (uid: string): string => `${INTENT_KEY_PREFIX}${uid}`
 

@@ -24,7 +24,6 @@ import {
 } from './lib/subjectsHost'
 import { LEGACY_NOTES_PATHS, REMOVED_DOMAIN_PATHS } from './lib/navPaths'
 import { refreshAppSettings } from './lib/appSettings'
-import { pruneExpiredSessions } from './lib/learningSession'
 import { refreshPlanFeatures } from './lib/planFeatures'
 import { refreshPlanMarketing } from './lib/planMarketing'
 import FeatureGate from './components/FeatureGate'
@@ -297,8 +296,12 @@ export default function App() {
     void refreshPlanFeatures()
     void refreshPlanMarketing()
     // Dọn nháp phiên học đã quá hạn (7 ngày) — một lần lúc khởi động, chỉ quét khoá
-    // `dhcb_lsession_v1_*`, không đụng khoá khác. Xem lib/learningSession.ts.
-    pruneExpiredSessions()
+    // `dhcb_lsession_v1_*`, không đụng khoá khác. Xem lib/learningSession.ts. Nạp ĐỘNG: module
+    // đó kéo zod (~24 kB brotli) mà việc dọn không gấp — đừng đưa lại vào bundle khởi động.
+    // Nạp lỗi (mất mạng) thì lần mở app sau dọn tiếp; nháp quá hạn vẫn bị `readSession` từ chối.
+    import('./lib/learningSession')
+      .then(({ pruneExpiredSessions }) => pruneExpiredSessions())
+      .catch(() => {})
     const interval = setInterval(() => {
       void refreshAppSettings()
       void refreshPlanFeatures()

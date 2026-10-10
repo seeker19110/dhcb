@@ -31,10 +31,13 @@ import {
   type EvidenceSubject,
 } from '@dhcb/core-contracts/completionEvidence'
 import type { StemLessonLike } from '@dhcb/core-learner/stemEvidenceGrader'
+import {
+  EVIDENCE_LOG_PREFIX,
+  EVIDENCE_PENDING_PREFIX,
+  EVIDENCE_STATE_PREFIX,
+} from './storageKeyPrefixes'
 
-export const EVIDENCE_LOG_PREFIX = 'dhcb_evidence_'
-export const EVIDENCE_STATE_PREFIX = 'dhcb_evidence_state_'
-export const EVIDENCE_PENDING_PREFIX = 'dhcb_evidence_pending_'
+export { EVIDENCE_LOG_PREFIX, EVIDENCE_STATE_PREFIX, EVIDENCE_PENDING_PREFIX }
 
 /** Trần nhật ký khách và hàng đợi gửi lại — vượt thì bỏ bản CŨ NHẤT (đặc tả §③.4). */
 export const MAX_EVIDENCE_LOG = 200

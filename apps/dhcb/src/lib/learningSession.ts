@@ -15,6 +15,7 @@
 //  4. KHÔNG BAO GIỜ CẮT NHÁP CỦA NGƯỜI HỌC. Quá dài thì BÁO (`too-large`), bản cũ giữ nguyên.
 //  5. THỜI GIAN LUÔN TRUYỀN VÀO (`now`) để test không phụ thuộc đồng hồ máy.
 import { z } from 'zod'
+import { LEARNING_SESSION_PREFIX } from './storageKeyPrefixes'
 
 /** Nháp quá hạn này (tính từ `updatedAt`) thì không nạp lại nữa — §7 Q2 của đặc tả. */
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -23,7 +24,7 @@ export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 export const MAX_SESSION_CHARS = 16_000
 
 /** Tiền tố khoá localStorage, không phải bí mật. Đăng ký thêm ở `guestProgress.ts`. */
-export const LEARNING_SESSION_PREFIX = 'dhcb_lsession_v1_'
+export { LEARNING_SESSION_PREFIX }
 
 const ownerSchema = z.object({
   kind: z.enum(['guest', 'account']),

@@ -260,6 +260,18 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules/lucide-react')) {
               return 'vendor-ui'
             }
+            // Nhóm riêng: zod BẢN ĐẦY ĐỦ (`zod` classic + bộ chuyển JSON Schema + locale). Đường
+            // khởi động chỉ dùng `zod/mini` (clientAuth.ts); bản đầy đủ chỉ các trang lười dùng.
+            // Nếu để rơi vào vendor-misc (tải eager) thì +~17 kB brotli vào bundle đầu dù đường
+            // khởi động không cần — lõi `zod/v4/core` + `zod/v4/mini` vẫn ở vendor-misc vì
+            // bản mini cần chúng (đo 2026-10-10, changelog đợt này).
+            if (
+              id.includes('node_modules/zod/') &&
+              !id.includes('/zod/v4/mini/') &&
+              !(id.includes('/zod/v4/core/') && !/json-schema|to-json-schema/.test(id))
+            ) {
+              return 'vendor-zod'
+            }
             // Nhóm 4: Mọi thư viện còn lại gộp chung vào 1 file "vendor-misc".
             // Trước đây tách MỖI package 1 file (vendor-libs-<tên>) → sinh ra nhiều
             // chunk tí hon (scheduler 3.8KB, remix 8KB...) = nhiều request nhỏ, hại

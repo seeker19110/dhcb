@@ -7,15 +7,16 @@
 // Trước đây client tự khai kiểu `Record<Plan, Record<UsageMode, number>>` (hạn mức THEO CHẾ ĐỘ, từ
 // trước GĐ1) rồi ép kiểu không kiểm, trong khi server đã trả MỘT con số tổng/ngày cho mỗi gói —
 // mọi chỗ đọc `limit.chat`/`limit.speaking` nhận `undefined`, trang Tiến độ hiện "0/".
-import { z } from 'zod'
+// `zod/mini` (không phải `zod`): hợp đồng này được client đọc NGAY LÚC MỞ TRANG
+// (`apps/dhcb/src/lib/appSettings.ts`, chunk modulepreload). Import zod bản đầy đủ ở đây là kéo
+// ~17 kB brotli vào đường khởi động (đo 2026-10-10, changelog 0580). Server chỉ `safeParse`.
+import * as z from 'zod/mini'
 
 // Hạn mức lượt AI mỗi ngày, TỔNG mọi tính năng cộng lại (GĐ1 2026-09-12). Admin chỉnh ở /admin.
-export const PlanDailyLimitsSchema = z
-  .object({
-    free: z.number().int().nonnegative(),
-    vip: z.number().int().nonnegative(),
-  })
-  .strict()
+export const PlanDailyLimitsSchema = z.strictObject({
+  free: z.int().check(z.nonnegative()),
+  vip: z.int().check(z.nonnegative()),
+})
 export type PlanDailyLimits = z.infer<typeof PlanDailyLimitsSchema>
 
 // Số mặc định CHỈ để hiển thị trước khi đọc được server — khớp `DEFAULT_SETTINGS` ở
@@ -27,11 +28,11 @@ export const DEFAULT_PLAN_DAILY_LIMITS: PlanDailyLimits = { free: 30, vip: 300 }
 export const PublicAppSettingsSchema = z.object({
   limits: PlanDailyLimitsSchema,
   // Additive: máy chủ cũ/rollback không có cờ này thì client vẫn giữ hạn mức cũ.
-  vipUnlimited: z.boolean().optional(),
+  vipUnlimited: z.optional(z.boolean()),
   // null = không có khuyến mãi đang chạy.
-  promoUntil: z.string().nullable(),
+  promoUntil: z.nullable(z.string()),
   leaderboardEnabled: z.boolean(),
   // Token so sánh ETag (= updated_at dòng cấu hình).
-  updatedAt: z.string().min(1),
+  updatedAt: z.string().check(z.minLength(1)),
 })
 export type PublicAppSettings = z.infer<typeof PublicAppSettingsSchema>

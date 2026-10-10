@@ -7,7 +7,7 @@ import { clearAudioCache } from '../lib/audioCache'
 import { cacheAllowedVoices } from '../lib/voiceTiers'
 import { getStoredToken, clearStoredToken, SESSION_MARKER_KEY } from '@core/authHeader'
 import { getGuestId } from '@core/guestId'
-import { mergeGuestProgressInto, hasGuestProgress } from '../lib/guestProgress'
+import { hasGuestProgress } from '../lib/guestProgressKeys'
 import type { User } from '../types'
 
 // [2026-09-15 — chế độ Khách] Không có phiên đăng nhập thì app KHÔNG còn chạy với `user: null`
@@ -50,10 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Apple, Microsoft, OAuth redirect) → hợp nhất tiến độ khách vào tài khoản NGAY, trước khi
     // bất cứ luồng đồng bộ nào kịp ghi đè. Đặt ở đây thay vì trong từng hàm login là có chủ ý:
     // một chỗ duy nhất, không thể quên đường nào.
+    // Phép kiểm `hasGuestProgress()` chạy đồng bộ, rẻ, ở MỌI lần nạp phiên; phần hợp nhất nặng
+    // (kéo zod + các module tiến độ) chỉ nạp động khi thật sự có tiến độ khách — tránh đưa nó
+    // vào bundle khởi động (đo 2026-10-10, changelog đợt này). Lỗi nạp chunk đi cùng nhánh
+    // `.catch` như lỗi hợp nhất: tiến độ cục bộ vẫn còn, lần đăng nhập sau thử lại.
     if (u && !wasLoggedIn.current && hasGuestProgress()) {
-      await mergeGuestProgressInto(u.id).catch((err) => {
-        console.warn('[auth] hợp nhất tiến độ khách thất bại (tiến độ cục bộ vẫn còn):', err)
-      })
+      await import('../lib/guestProgress')
+        .then(({ mergeGuestProgressInto }) => mergeGuestProgressInto(u.id))
+        .catch((err) => {
+          console.warn('[auth] hợp nhất tiến độ khách thất bại (tiến độ cục bộ vẫn còn):', err)
+        })
     }
     if (!isCurrent()) return
     wasLoggedIn.current = !!u
