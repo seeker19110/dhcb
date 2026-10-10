@@ -51,8 +51,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --port ${PORT} --strictPort`,
-    url: baseURL,
+    // `--host 127.0.0.1`: runner chạy ở origin 127.0.0.1, nên server PHẢI nghe trên IPv4. Mặc định
+    // Vite nghe `localhost` — trên máy CI `localhost` phân giải ra `::1` nên 127.0.0.1 bị từ chối
+    // kết nối (đỏ CI ở PR #1346). App vẫn mở bằng `localhost`: trình duyệt thử `::1` rồi tự
+    // chuyển sang 127.0.0.1.
+    command: `npm run dev -- --port ${PORT} --strictPort --host 127.0.0.1`,
+    // Kiểm sẵn sàng qua đúng địa chỉ server nghe (xem `--host` ở trên).
+    url: RUNNER_ORIGIN,
     timeout: 120_000,
     reuseExistingServer: reuseLocalServer,
     // `E2E_RUNNER_ORIGIN=''` chạy lại suite ở đường lui (Worker trong trang, như dev).
