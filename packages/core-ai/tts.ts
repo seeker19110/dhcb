@@ -360,6 +360,11 @@ export default async function handler(req: Request): Promise<Response> {
   let chargedDay: string | null = null
   let guestCharged = false
   let providerStarted = false
+  // Provider từ chối vì HẾT QUOTA (429/RESOURCE_EXHAUSTED) — không sinh ra audio nào, nhà cung cấp
+  // cũng không tính tiền lần gọi bị từ chối. Hoàn lượt dù provider đã được gọi: nếu không, lúc
+  // Google cạn quota mỗi câu mới vẫn trừ 1 lượt/ngày trong khi người dùng chỉ nghe giọng trình
+  // duyệt (fallback), và có thể cạn sạch lượt mà không nhận được gì.
+  let providerQuotaExhausted = false
   const runProvider = <T>(key: string, generate: () => Promise<T>) =>
     withConcurrencyLimit(key, () => {
       providerStarted = true
@@ -463,6 +468,7 @@ export default async function handler(req: Request): Promise<Response> {
       // để client biết tạm thời và tự fallback sang Web Speech. Lỗi khác mới log full + 500.
       const isQuota = /\(429\)|RESOURCE_EXHAUSTED|quota/i.test(msg)
       if (isQuota) {
+        providerQuotaExhausted = true
         console.warn('[tts] Google TTS hết quota (429) — client sẽ fallback Web Speech')
         return jsonResponse(
           { error: 'Dịch vụ giọng đọc tạm quá tải — thử lại sau', fallback: true },
@@ -544,8 +550,9 @@ export default async function handler(req: Request): Promise<Response> {
       allHeaders,
     )
   } finally {
-    // Chỉ hoàn khi CHƯA gọi provider; lỗi lưu file/DB hoặc ngắt client không tạo lượt miễn phí.
-    if (!providerStarted) {
+    // Hoàn khi CHƯA gọi provider, hoặc provider từ chối vì hết quota (không có audio, không tốn
+    // tiền). Lỗi lưu file/DB, lỗi provider khác hoặc ngắt client KHÔNG hoàn — không tạo lượt miễn phí.
+    if (!providerStarted || providerQuotaExhausted) {
       if (actor.kind === 'user' && chargedDay !== null) {
         await refundUsage(actor.userId, 'speaking', chargedDay).catch(() => {})
       } else if (actor.kind === 'guest' && guestCharged) {

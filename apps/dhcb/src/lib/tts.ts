@@ -1,8 +1,10 @@
 // Text-to-Speech — gọi Google TTS qua /api/tts (server-side, có cache dùng chung)
 // Audio cache được MÃ HÓA AES-256-GCM (lưu local VPS hoặc Cloudflare R2 tùy STORAGE_DRIVER):
-// ai có link cũng không nghe được nội dung nếu chưa đăng nhập — server chỉ trả khoá giải mã
-// (key_b64/iv_b64) cho request có phiên cookie HttpOnly hợp lệ.
-// Fallback về Web Speech API nếu /api/tts lỗi (mất mạng, server timeout, chưa đăng nhập...).
+// ai có link cũng không nghe được nội dung nếu không đi qua /api/tts — server chỉ trả khoá giải
+// mã (key_b64/iv_b64) cho request có phiên cookie HttpOnly hợp lệ HOẶC header khách `X-Guest-Id`
+// (khách vãng lai: nghe câu đã cache miễn phí, tạo câu mới trừ lượt dùng thử — xem
+// docs/specs/2026-09-15-mo-xem-web-khong-can-dang-nhap.md).
+// Fallback về Web Speech API nếu /api/tts lỗi (mất mạng, server timeout, hết lượt dùng thử...).
 
 import { getStoredToken, getAuthHeader } from '@core/authHeader'
 import { audioCacheKey, getAudioEntry, setAudioBuffer } from './audioCache'
@@ -441,6 +443,19 @@ export function speechCacheKey(text: string, lang: Lang, voiceInput: Voice): str
   return audioCacheKey(text, (ELEVEN_VOICE_IDS as string[]).includes(voice) ? '' : lang, voice)
 }
 
+const GUEST_TRIAL_EXHAUSTED_ERROR = 'TTS API lỗi: 429 (khách hết lượt dùng thử)'
+
+// Đọc cờ `guestTrialExhausted` server gắn vào body 429 khi khách hết lượt dùng thử.
+// Body không đọc được (không phải JSON...) → coi như 429 thường (vẫn thử lại như cũ).
+async function isGuestTrialExhausted(res: Response): Promise<boolean> {
+  try {
+    const body = (await res.json()) as { guestTrialExhausted?: unknown } | null
+    return body?.guestTrialExhausted === true
+  } catch {
+    return false
+  }
+}
+
 export async function ensureAudioWithTimeline(
   text: string,
   lang: Lang,
@@ -467,9 +482,8 @@ export async function ensureAudioWithTimeline(
   if (running) return running
 
   const job = (async () => {
-    const token = getStoredToken()
-    if (!token) throw new Error('Chưa đăng nhập — không gọi được /api/tts')
-
+    // Không chặn khách ở đây: getAuthHeader() tự gắn `X-Guest-Id` khi chưa có phiên, server
+    // quyết định hạn mức (cache HIT miễn phí, tạo mới trừ lượt dùng thử).
     const callTts = () =>
       fetch('/api/tts', {
         method: 'POST',
@@ -483,7 +497,10 @@ export async function ensureAudioWithTimeline(
     let res = await callTts()
     // 429 = quá nhiều request (thường do phát nhiều câu liên tiếp). Đợi 1.2s rồi thử lại
     // 1 lần trước khi báo lỗi — phần lớn câu đã cache nên lần 2 thường qua.
+    // Riêng khách HẾT LƯỢT DÙNG THỬ: thử lại vô ích (hạn mức theo ngày) — báo lỗi ngay để
+    // speak() rơi về Web Speech không phải chờ thêm 1.2s.
     if (res.status === 429) {
+      if (await isGuestTrialExhausted(res)) throw new Error(GUEST_TRIAL_EXHAUSTED_ERROR)
       await new Promise((r) => setTimeout(r, 1200))
       res = await callTts()
     }
@@ -532,6 +549,10 @@ export async function prefetchSpeech(
   voice: Voice = getVoicePref(),
 ): Promise<void> {
   if (!text.trim()) return
+  // Khách vãng lai KHÔNG nạp trước: câu chưa cache sẽ trừ lượt dùng thử (3 lượt/ngày, dùng
+  // chung với chat/STT) cho câu có thể không bao giờ được phát. Khách vẫn nghe giọng server
+  // lúc bấm phát thật (speak → ensureAudioWithTimeline).
+  if (!getStoredToken()) return
   try {
     await ensureAudioBuffer(text, lang, voice)
   } catch {
@@ -717,7 +738,7 @@ export async function speak(
   try {
     return await speakViaGoogle(text, lang, voice, rate, onWord)
   } catch {
-    // Lỗi Google TTS (chưa đăng nhập, mất mạng, server lỗi...) → dùng Web Speech API tạm
+    // Lỗi Google TTS (hết lượt dùng thử, mất mạng, server lỗi...) → dùng Web Speech API tạm
     return await speakViaWebSpeech(text, lang, voice, rate, onWord)
   }
 }

@@ -69,7 +69,7 @@ import { ensureProfileRow } from '@dhcb/core-auth/authService'
 import { clampVoiceToPlan } from './voiceAccess.js'
 import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
 import { getAppSettings } from '@dhcb/core-db/settings'
-import { checkAndConsumeGuestTrial } from '@dhcb/core-auth/guestTrial'
+import { checkAndConsumeGuestTrial, refundGuestTrial } from '@dhcb/core-auth/guestTrial'
 import * as guest from '@dhcb/core-auth/guest'
 import * as concurrency from '@dhcb/core-db/concurrencyLimiter'
 
@@ -463,6 +463,24 @@ describe('TTS — ngân sách AI chung cho cache MISS', () => {
     mockedSaveAudio.mockRejectedValueOnce(new Error('Storage failed'))
     expect((await handler(makeRequest())).status).toBe(500)
     expect(mockedGenGoogle).toHaveBeenCalledOnce()
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+  it('provider hết quota (503) → hoàn đúng ngày, không để người dùng mất lượt vô ích', async () => {
+    mockedGenGoogle.mockRejectedValueOnce(new Error('Google TTS lỗi (429): RESOURCE_EXHAUSTED'))
+    expect((await handler(makeRequest())).status).toBe(503)
+    expect(mockedGenGoogle).toHaveBeenCalledOnce()
+    expect(refundUsage).toHaveBeenCalledExactlyOnceWith('user-test', 'speaking', '2026-09-27')
+  })
+  it('provider lỗi khác (500) → KHÔNG hoàn lượt', async () => {
+    mockedGenGoogle.mockRejectedValueOnce(new Error('Google TTS lỗi (400): bad request'))
+    expect((await handler(makeRequest())).status).toBe(500)
+    expect(refundUsage).not.toHaveBeenCalled()
+  })
+  it('khách: provider hết quota → hoàn lượt dùng thử', async () => {
+    vi.spyOn(guest, 'resolveActor').mockResolvedValue({ kind: 'guest', guestKey: 'guest-1' })
+    mockedGenGoogle.mockRejectedValueOnce(new Error('quota exceeded'))
+    expect((await handler(makeRequest())).status).toBe(503)
+    expect(refundGuestTrial).toHaveBeenCalledOnce()
     expect(refundUsage).not.toHaveBeenCalled()
   })
   it('hai MISS đồng thời của một user vẫn đi qua gate nguyên tử cho từng lần', async () => {
