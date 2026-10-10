@@ -16,6 +16,7 @@ import {
   PERMISSIONS_POLICY,
   HSTS_VALUE,
 } from './security.js'
+import { ServiceUnavailableError } from '@dhcb/core-errors/appError'
 
 const validateSessionToken = vi.hoisted(() => vi.fn())
 vi.mock('./authService.js', () => ({ validateSessionToken }))
@@ -290,11 +291,21 @@ describe('validateAuth', () => {
     expect(result).toBeNull()
   })
 
-  it('validateSessionToken ném lỗi (DB lỗi) → null, không crash', async () => {
+  // Đổi có chủ đích 2026-10-10 (audit E1.5): bản cũ trả null → 401 → client xoá phiên, nên một
+  // lần CSDL chập chờn đăng xuất mọi người. Nay ném 503 có mã ổn định, kèm log ở server.
+  it('validateSessionToken ném lỗi (DB lỗi) → ném ServiceUnavailableError 503, KHÔNG trả null', async () => {
     delete process.env.SKIP_AUTH
     validateSessionToken.mockRejectedValue(new Error('db down'))
-    const result = await validateAuth(reqWithHeaders({ Cookie: 'session_token=x' }))
-    expect(result).toBeNull()
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const err = await validateAuth(reqWithHeaders({ Cookie: 'session_token=x' })).catch(
+      (e: unknown) => e,
+    )
+    expect(err).toBeInstanceOf(ServiceUnavailableError)
+    expect(err).toMatchObject({ status: 503, code: 'service_unavailable' })
+    // Thông điệp nội bộ của pg chỉ nằm trong log server, không nằm trong lỗi trả client.
+    expect((err as Error).message).not.toContain('db down')
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('[auth]'), 'db down')
+    errSpy.mockRestore()
   })
 
   it('cookie session_token hợp lệ → trả userId', async () => {

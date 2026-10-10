@@ -302,7 +302,7 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
     })
   })
 
-  // changelog 0581: request có rate limit đầu tiên tới instance PM2 1, 2 bị 429 oan vì client
+  // changelog 0583: request có rate limit đầu tiên tới instance PM2 1, 2 bị 429 oan vì client
   // Redis vừa tạo còn 'connecting'. Nay chờ ngắn sự kiện 'ready' thay vì từ chối ngay.
   describe('chờ Redis sẵn sàng thay vì từ chối ngay', () => {
     afterEach(() => vi.unstubAllEnvs())

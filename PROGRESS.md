@@ -174,8 +174,8 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-10-10] Sửa theo audit toàn diện** ([báo cáo](docs/audit/2026-10-10-audit-toan-dien-va-toi-uu.md),
   `docs/changelog/0580-*.md`). Đợt đầu (JS khởi động −15,9 kB, chunk trang xếp lớp 2,95 MB → 11 kB) đã
-  làm. **Chờ chủ dự án duyệt 5 đợt còn lại:** E1 lỗi im lặng server (Companion nuốt lỗi
-  AI mà vẫn trừ lượt; pool Postgres không timeout; cầu dao AI không xoá cache) · E2 nghiệp vụ/SQL
+  làm. **E1 lỗi im lặng server ĐÃ LÀM** (mục 1–8, `docs/changelog/0581-*.md`; mục 9 mức thấp
+  còn mở). **Chờ chủ dự án duyệt 4 đợt còn lại:** E2 nghiệp vụ/SQL
   (**`learn-day` cho phép gian lận điểm giải đấu** — cần chốt trần; `/api/history` không LIMIT;
   đua Elo PvP) · E3 migration chỉ mục + dọn dữ liệu hết hạn (thời hạn giữ `analytics_events` là
   quyết định xoá dữ liệu) · E4 frontend (DRY, 2 bug nhỏ, `stageDetails` nạp tĩnh 542 kB) · E5
@@ -1629,7 +1629,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   treo request khi Redis chết). Ứng viên hợp lý là nới `connectTimeout` (đang 2000ms) — nhưng
   chỉ khi có bằng chứng, không theo linh cảm.
 
-  **Cập nhật 2026-10-10 (`docs/changelog/0582-*.md`):** từ khi rate limit chuyển sang fail-closed,
+  **Cập nhật 2026-10-10 (`docs/changelog/0583-*.md`):** từ khi rate limit chuyển sang fail-closed,
   mỗi lần client Redis chưa `ready` = người dùng thật nhận **429 oan** (không còn là "cửa sổ lỏng").
   Đã giảm thiệt hại mà KHÔNG đổi `enableOfflineQueue`: mọi instance mở kết nối lúc khởi động
   (`warmUpRedis`), và ở trạng thái `connecting`/`reconnecting` chờ tối đa 1 s sự kiện `ready` trước

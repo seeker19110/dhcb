@@ -14,6 +14,11 @@ vi.mock('@dhcb/core-auth/security', () => ({
   logSecurityEvent: vi.fn(),
 }))
 
+const invalidateSettingsCache = vi.fn()
+vi.mock('@dhcb/core-db/settings', () => ({
+  invalidateSettingsCache: () => invalidateSettingsCache(),
+}))
+
 vi.mock('@dhcb/core-auth/adminAuth', () => ({
   isAdminUser: (userId?: string) => userId === 'a1',
 }))
@@ -50,7 +55,7 @@ describe('/api/admin-system-control', () => {
   it('bật/tắt circuit breaker (POST 200)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
 
-    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({ rows: [], rowCount: 1 })
 
     const req = new Request('http://localhost/api/admin-system-control', {
       method: 'POST',
@@ -60,6 +65,26 @@ describe('/api/admin-system-control', () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.circuitBreakerEnabled).toBe(true)
+    // Cầu dao có hiệu lực ngay ở tiến trình này, không đợi hết TTL cache 30s.
+    expect(invalidateSettingsCache).toHaveBeenCalledTimes(1)
+  })
+
+  it('POST khi không có hàng app_settings id=1 → 500, không báo đã đổi, không xoá cache', async () => {
+    vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
+    queryMock.mockResolvedValueOnce({ rows: [], rowCount: 0 })
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const req = new Request('http://localhost/api/admin-system-control', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'toggle-circuit-breaker', enabled: true }),
+    })
+    const res = await handler(req)
+    expect(res.status).toBe(500)
+    const json = await res.json()
+    expect(json.circuitBreakerEnabled).toBeUndefined()
+    expect(invalidateSettingsCache).not.toHaveBeenCalled()
+    expect(errSpy).toHaveBeenCalledTimes(1)
+    errSpy.mockRestore()
   })
 
   it('từ chối người dùng không phải admin (403)', async () => {
@@ -73,7 +98,7 @@ describe('/api/admin-system-control', () => {
   it('tắt circuit breaker trả message "Đã tắt" (POST enabled=false)', async () => {
     vi.mocked(validateAuth).mockResolvedValueOnce({ userId: 'a1' })
 
-    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({ rows: [], rowCount: 1 })
 
     const req = new Request('http://localhost/api/admin-system-control', {
       method: 'POST',

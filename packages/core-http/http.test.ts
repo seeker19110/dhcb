@@ -2,7 +2,7 @@
 // bản cũ đọc phần tử ĐẦU của X-Forwarded-For, tức giá trị client tự khai, nên đổi header mỗi
 // request là né sạch rate limit (40 request vào route giới hạn 30/phút → 40 lần 200, 0 lần 429).
 import { describe, it, expect, vi } from 'vitest'
-import { badJsonOrInternalError, getClientIp } from './http.js'
+import { badJsonOrInternalError, getClientIp, logInternalError } from './http.js'
 
 const req = (headers: Record<string, string>) => new Request('https://x.test/', { headers })
 
@@ -90,5 +90,18 @@ describe('badJsonOrInternalError (2026-10-08)', () => {
     expect(await res.text()).not.toContain('10.0.0.5')
     expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('pvp-arena'))
     errorLog.mockRestore()
+  })
+})
+
+describe('logInternalError (2026-10-10, E1.4)', () => {
+  it('ghi một dòng console.error có mã trạng thái + ngữ cảnh + thông điệp', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    logInternalError(new Error('ECONNREFUSED 10.0.0.5:5432'), 'cefr-assessment', 503)
+    logInternalError('chuỗi lỗi')
+    expect(spy.mock.calls).toEqual([
+      ['[503] cefr-assessment ECONNREFUSED 10.0.0.5:5432'],
+      ['[500] chuỗi lỗi'],
+    ])
+    spy.mockRestore()
   })
 })

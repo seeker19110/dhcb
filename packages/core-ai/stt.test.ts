@@ -119,6 +119,8 @@ describe('handler /api/stt — luồng nhận diện', () => {
     expect(mockedRefund).toHaveBeenCalledWith('user-test', 'stt', '2026-08-12')
     const data = (await res.json()) as { error: string }
     expect(data.error).toMatch(/Không nhận diện được giọng nói/)
+    // Thông điệp nội bộ của provider không lọt ra client (audit 2026-10-10, E1.8).
+    expect(data.error).not.toContain('boom')
   })
 
   it('lang mặc định "en" khi không truyền', async () => {

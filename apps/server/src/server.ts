@@ -41,7 +41,7 @@ installProcessSafetyNet({
 // lý do trong warnIfClusterWithoutRedis() (api/_lib/security.ts).
 warnIfClusterWithoutRedis()
 // Mở kết nối Redis ngay ở MỌI instance (không chỉ instance 0) — nếu không, request có rate limit
-// đầu tiên tới instance 1, 2 gặp client còn 'connecting' và bị từ chối 429 (changelog 0581).
+// đầu tiên tới instance 1, 2 gặp client còn 'connecting' và bị từ chối 429 (changelog 0583).
 warmUpRedis()
 
 import { attachChatWebSocketServer } from '@dhcb/core-chat/wsHandler'
@@ -230,9 +230,9 @@ function startReminderScheduler() {
     if (hasPushConfig) {
       void sendReminders(hour)
         .then((r) => {
-          if (r.sent || r.skipped)
+          if (r.sent || r.skipped || r.failed)
             console.log(
-              `[reminder:push] ${hour}h UTC → gửi ${r.sent}, bỏ qua ${r.skipped} (đã học)`,
+              `[reminder:push] ${hour}h UTC → gửi ${r.sent}, bỏ qua ${r.skipped} (đã học), lỗi ${r.failed}`,
             )
         })
         .catch((err) => {

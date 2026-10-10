@@ -74,6 +74,7 @@ beforeEach(() => {
   authState.user = { userId: 'user-1' }
   rateLimitOk = true
   usageMock.checkAndConsumeUsage.mockResolvedValue({ ok: true, day: '2026-08-25' })
+  usageMock.refundUsage.mockResolvedValue(undefined)
   getOrCreatePerson.mockResolvedValue({ id: PERSON })
   runtime.executeCompanionTurn.mockResolvedValue({
     reply: 'Xin chào!',
@@ -96,6 +97,7 @@ beforeEach(() => {
       pendingConfirmationSteps: 0,
       rejectedSteps: 0,
     },
+    isFallback: false,
   })
 })
 
@@ -153,6 +155,47 @@ describe('POST /api/companion execution', () => {
         tokenBudget: 3000,
       }),
     )
+  })
+})
+
+describe('POST /api/companion — câu mẫu dự phòng (mọi nhà cung cấp AI lỗi)', () => {
+  it('AI trả lời thật → KHÔNG hoàn lượt', async () => {
+    const res = await handler(req('POST', { message: 'hi' }))
+    expect(res.status).toBe(200)
+    expect(usageMock.refundUsage).not.toHaveBeenCalled()
+  })
+
+  it('isFallback → vẫn 200 nhưng HOÀN lượt đúng ngày đã trừ', async () => {
+    const base = (await runtime.executeCompanionTurn()) as Record<string, unknown>
+    runtime.executeCompanionTurn.mockResolvedValueOnce({ ...base, isFallback: true })
+    const res = await handler(req('POST', { message: 'hi' }))
+    expect(res.status).toBe(200)
+    expect(usageMock.refundUsage).toHaveBeenCalledTimes(1)
+    expect(usageMock.refundUsage).toHaveBeenCalledWith('user-1', 'chat', '2026-08-25')
+  })
+
+  it('stream: sự kiện done mang isFallback → hoàn lượt ĐÚNG MỘT lần', async () => {
+    const base = (await runtime.executeCompanionTurn()) as Record<string, unknown>
+    runtime.streamCompanionTurn.mockImplementationOnce(async function* () {
+      yield { type: 'done', data: { ...base, isFallback: true } }
+    })
+    const res = await handler(req('POST', { message: 'hi', stream: true }))
+    await res.text()
+    expect(usageMock.refundUsage).toHaveBeenCalledTimes(1)
+  })
+
+  it('stream lỗi không phải AppError → client KHÔNG nhận thông điệp nội bộ', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    runtime.streamCompanionTurn.mockImplementationOnce(async function* () {
+      yield* []
+      throw new Error('connect ECONNREFUSED 10.0.0.5:5432')
+    })
+    const res = await handler(req('POST', { message: 'hi', stream: true }))
+    const body = await res.text()
+    expect(body).toContain('event: error')
+    expect(body).not.toContain('ECONNREFUSED')
+    expect(usageMock.refundUsage).toHaveBeenCalledTimes(1)
+    error.mockRestore()
   })
 })
 

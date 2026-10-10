@@ -17,6 +17,9 @@
       "path": "../core-db"
     },
     {
+      "path": "../core-errors"
+    },
+    {
       "path": "../core-http"
     }
   ]

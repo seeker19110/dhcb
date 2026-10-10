@@ -1,6 +1,6 @@
-# 0581 — `/api/tts`: khách dùng thử giọng server + hoàn lượt khi provider hết quota
+# 0582 — `/api/tts`: khách dùng thử giọng server + hoàn lượt khi provider hết quota
 
-- **Ngày:** 2026-10-10 · **PR:** (xem mô tả PR) · **Loại:** `fix(tts)`
+- **Ngày:** 2026-10-10 · **PR:** #1332 · **Loại:** `fix(tts)`
 - **Nguồn:** lượt "kiểm tra api tts" cùng phiên — người dùng chốt "sửa cả hai điểm, khách được
   dùng thử giọng server".
 
@@ -49,7 +49,7 @@
   "chưa đăng nhập → ném lỗi" (hành vi đã bỏ có chủ đích).
 - Cổng ở máy: xem báo cáo xác thực trong mô tả PR.
 
-## Ghi chú vận hành (đã sửa ở đợt kế tiếp — `docs/changelog/0582-*.md`)
+## Ghi chú vận hành (đã sửa ở đợt kế tiếp — `docs/changelog/0583-*.md`)
 
 Lúc kiểm production, `/api/tts` và `/api/pronunciation` mỗi cái trả **429 một lần** khi chưa hề
 gần hạn mức 60/phút, rồi trở lại bình thường. Đọc mã thấy cơ chế khớp: `getRedis()`

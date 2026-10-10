@@ -42,7 +42,12 @@ import {
   validateAuth,
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
-import { jsonResponse, getClientIp, internalErrorResponse } from '@dhcb/core-http/http'
+import {
+  jsonResponse,
+  getClientIp,
+  internalErrorResponse,
+  logInternalError,
+} from '@dhcb/core-http/http'
 import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
 
 // Regex cho phép chữ (mọi ngôn ngữ, gồm chữ CÓ DẤU như sauté/café/naïve và tiếng Việt),
@@ -240,11 +245,9 @@ export default async function handler(req: Request): Promise<Response> {
     // (gate.day — xem refundUsage()). refundUsage tự nuốt lỗi hạ tầng (fail-open).
     // Lỗi SAU khi Google đã trả audio (lưu file) thì KHÔNG hoàn — tiền API đã tốn, giống /api/tts.
     await refundUsage(authResult.userId, 'speaking', gate.day)
-    return jsonResponse(
-      { error: `Không thể tạo audio: ${(err as Error).message}` },
-      500,
-      allHeaders,
-    )
+    // Lỗi Google TTS chỉ ghi ở server, client nhận câu chung (audit 2026-10-10, E1.8).
+    logInternalError(err, 'pronunciation:generate')
+    return jsonResponse({ error: 'Không thể tạo audio — thử lại sau nhé.' }, 500, allHeaders)
   }
 
   // ── BƯỚC 3: Lưu file audio (local VPS hoặc Cloudflare R2 tùy STORAGE_DRIVER) ──
@@ -257,7 +260,9 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     audioUrl = await saveAudio('pronunciations', fileName, audioData, origin)
   } catch (err) {
-    return jsonResponse({ error: `Lưu file thất bại: ${(err as Error).message}` }, 500, allHeaders)
+    // Lỗi R2/đĩa (bucket, đường dẫn) chỉ ghi ở server (audit 2026-10-10, E1.8).
+    logInternalError(err, 'pronunciation:save')
+    return jsonResponse({ error: 'Lưu file thất bại — thử lại sau nhé.' }, 500, allHeaders)
   }
 
   // ── BƯỚC 5: Lưu vào DB ────────────────────────────

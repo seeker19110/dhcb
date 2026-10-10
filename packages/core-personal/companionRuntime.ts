@@ -27,6 +27,11 @@ import {
 import { getDomainReadModelForContext } from '@dhcb/core-domains/domainReadModelService'
 import { callGroqChatWithKeyPool } from '@dhcb/core-ai/chatProviders'
 import { callAnthropicText } from '@dhcb/core-ai/anthropicClient'
+import {
+  describeAnthropicFailure,
+  describeChatCallFailure,
+  describeThrown,
+} from '@dhcb/core-ai/providerFailure'
 import { callGemini } from '@dhcb/core-ai/geminiApi'
 import { GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, getAnthropicRoute } from '@dhcb/core-ai/aiConfig'
 import { recordAiTokenUsage, type AiTokenUsage } from '@dhcb/core-ai/aiTokenUsage'
@@ -88,7 +93,26 @@ export interface CompanionResponse {
    * `packages/core-contracts/interactiveQuestion.ts`.
    */
   interactiveQuestions: InteractiveQuestion[]
+  /**
+   * `true` khi KHÔNG nhà cung cấp AI nào trả lời được và `reply` là câu mẫu tất định
+   * (`synthesizeReply`). Handler dựa vào cờ này để HOÀN LƯỢT — không trừ lượt cho một câu trả
+   * lời AI không hề viết (audit 2026-10-10, E1).
+   */
+  isFallback: boolean
 }
+
+/** Kết quả `synthesizeCompanionReply`: lời văn + có phải câu mẫu dự phòng không. */
+export interface CompanionReplyResult {
+  text: string
+  isFallback: boolean
+}
+
+/**
+ * Câu nối vào cuối câu mẫu khi rơi về dự phòng — để người dùng KHÔNG tưởng đây là AI vừa trả
+ * lời (`chatFallback.ts` cũng cố ý không "âm thầm đưa nội dung mẫu ra"). Lượt bị hoàn ở handler.
+ */
+export const AI_UNAVAILABLE_NOTE =
+  '(Trợ lý AI đang tạm gián đoạn nên đây là phản hồi tự động; lượt dùng lần này không bị tính. Bạn thử lại sau ít phút nhé.)'
 
 /**
  * Từ khoá nhận diện 4 trụ Career · Work · Startup · Life trong câu người dùng.
@@ -365,8 +389,8 @@ export function synthesizeReply(
 }
 
 /**
- * Synthesizes intelligent response using real LLM providers (Groq -> Gemini -> Anthropic)
- * with graceful fallback to deterministic synthesis when offline or keys missing.
+ * Sinh câu trả lời bằng nhà cung cấp AI thật (Anthropic → Groq → Gemini). Mọi nhánh lỗi đều GHI
+ * LOG; hết nhánh (hoặc không có key nào) thì trả câu mẫu tất định kèm `isFallback: true`.
  */
 export async function synthesizeCompanionReply(
   userMessage: string,
@@ -374,13 +398,18 @@ export async function synthesizeCompanionReply(
   domain: string,
   proposedActions: ProposedAction[],
   contextPackage: ContextPackage,
-): Promise<string> {
+): Promise<CompanionReplyResult> {
   const groqKey = process.env.GROQ_API_KEY
   const geminiKey = process.env.GEMINI_API_KEY
   const anthropicKey = process.env.ANTHROPIC_API_KEY
+  const fallback = (): CompanionReplyResult => ({
+    text: `${synthesizeReply(userMessage, intent, proposedActions, contextPackage)} ${AI_UNAVAILABLE_NOTE}`,
+    isFallback: true,
+  })
 
   if (!groqKey && !geminiKey && !anthropicKey) {
-    return synthesizeReply(userMessage, intent, proposedActions, contextPackage)
+    console.warn('[companion] không có key AI nào — trả câu mẫu dự phòng')
+    return fallback()
   }
 
   const historyItems = contextPackage.items.filter(
@@ -444,8 +473,9 @@ export async function synthesizeCompanionReply(
         usage: anthropicRes.usage,
       })
     }
-    if (anthropicRes.kind === 'success') return anthropicRes.text
+    if (anthropicRes.kind === 'success') return { text: anthropicRes.text, isFallback: false }
     // thất bại → thử Groq/Gemini
+    console.warn(`[companion] Anthropic ${describeAnthropicFailure(anthropicRes)}`)
   }
 
   // 2. Nhánh Groq (dự phòng thứ nhất — chung model với gia sư tiếng Anh: GROQ_CHAT_MODEL)
@@ -467,10 +497,13 @@ export async function synthesizeCompanionReply(
           mode: 'companion',
           usage: groqRes.usage,
         })
-        return groqRes.text.trim()
+        return { text: groqRes.text.trim(), isFallback: false }
       }
-    } catch {
-      // fallback
+      console.warn(
+        `[companion] Groq ${groqRes.kind === 'success' ? 'trả text rỗng' : describeChatCallFailure(groqRes)}`,
+      )
+    } catch (err) {
+      console.warn(`[companion] Groq lỗi: ${describeThrown(err)}`)
     }
   }
 
@@ -496,15 +529,18 @@ export async function synthesizeCompanionReply(
         usage: geminiUsage,
       })
       if (geminiText && geminiText.trim()) {
-        return geminiText.trim()
+        return { text: geminiText.trim(), isFallback: false }
       }
-    } catch {
-      // fallback
+      console.warn('[companion] Gemini trả text rỗng')
+    } catch (err) {
+      console.warn(`[companion] Gemini lỗi: ${describeThrown(err)}`)
     }
   }
 
-  // Fallback về template nếu mọi provider đều không phản hồi
-  return synthesizeReply(userMessage, intent, proposedActions, contextPackage)
+  // Mọi nhà cung cấp đều hỏng → câu mẫu + cờ dự phòng (handler hoàn lượt). `error` chứ không
+  // phải `warn`: tới được đây nghĩa là Companion đang KHÔNG có AI cho bất kỳ ai.
+  console.error('[companion] mọi nhà cung cấp AI đều lỗi — trả câu mẫu dự phòng')
+  return fallback()
 }
 
 /**
@@ -612,7 +648,7 @@ export async function executeCompanionTurn(
   }
 
   // Step 6: Synthesize Read Model / Intelligent LLM Response
-  const rawReply = await synthesizeCompanionReply(
+  const { text: rawReply, isFallback } = await synthesizeCompanionReply(
     userMessage,
     intent,
     domain,
@@ -660,6 +696,7 @@ export async function executeCompanionTurn(
   return {
     reply,
     interactiveQuestions,
+    isFallback,
     intent,
     targetDomain: domain,
     contextPackage,

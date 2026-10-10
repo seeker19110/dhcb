@@ -5,7 +5,7 @@ import {
   getCorsHeaders,
   SECURITY_HEADERS,
 } from '@dhcb/core-auth/security'
-import { jsonResponse } from '@dhcb/core-http/http'
+import { jsonResponse, logInternalError } from '@dhcb/core-http/http'
 import { CefrAssessmentRequest } from '@dhcb/core-contracts/cefrAssessment'
 import { assessCefr, AssessmentError } from '../../_lib/cefrAssessment.js'
 import { rewardReferralIfEligible } from '../../_lib/referral.js'
@@ -30,6 +30,7 @@ export default async function handler(req: Request): Promise<Response> {
   } catch (error) {
     if (error instanceof AssessmentError)
       return jsonResponse({ error: error.message }, error.status, headers)
+    logInternalError(error, 'cefr-assessment', 503)
     return jsonResponse({ error: 'Chưa lưu được bài thi. Vui lòng thử lại.' }, 503, headers)
   }
 }

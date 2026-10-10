@@ -232,6 +232,8 @@ describe('/api/pronunciation', () => {
     const handler = await importHandler()
     const res = await handler(makeRequest('word=apple&voice=kore'))
     expect(res.status).toBe(500)
+    // Lỗi Google chỉ ở log server (audit 2026-10-10, E1.8).
+    expect(await res.text()).not.toContain('quota exceeded')
   })
 
   it('saveAudio lỗi → 500', async () => {
@@ -241,6 +243,7 @@ describe('/api/pronunciation', () => {
     const handler = await importHandler()
     const res = await handler(makeRequest('word=apple&voice=kore'))
     expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('storage down')
   })
 
   it('lưu DB lỗi sau khi tạo audio thành công → vẫn trả 200 (best-effort)', async () => {

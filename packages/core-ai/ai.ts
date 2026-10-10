@@ -28,6 +28,7 @@ import { callGemini } from './geminiApi.js'
 import { recordAiTokenUsage, type AiTokenUsage } from './aiTokenUsage.js'
 import { callGroqChatWithKeyPool } from './chatProviders.js'
 import { callAnthropicText, type AnthropicTextResult } from './anthropicClient.js'
+import { describeAnthropicFailure } from './providerFailure.js'
 import { hasGroqKey } from './groqKeyPool.js'
 import { withConcurrencyLimit } from '@dhcb/core-db/concurrencyLimiter'
 import { createRequestLogger } from '@dhcb/core-db/logger'
@@ -155,12 +156,6 @@ function anthropicFailureStatus(r: Exclude<AnthropicTextResult, { kind: 'success
   if (r.kind === 'network_error') return 504
   if (r.kind === 'unusable' && r.reason === 'refusal') return 422
   return 502
-}
-
-function describeAnthropicFailure(r: Exclude<AnthropicTextResult, { kind: 'success' }>): string {
-  if (r.kind === 'network_error') return `lỗi mạng/timeout: ${r.message}`
-  if (r.kind === 'api_error') return `HTTP ${r.status}: ${r.message.slice(0, 200)}`
-  return `không dùng được (${r.reason}: ${r.detail})`
 }
 
 export default async function handler(req: Request): Promise<Response> {

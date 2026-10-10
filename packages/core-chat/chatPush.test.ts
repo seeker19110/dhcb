@@ -209,10 +209,15 @@ describe('chatPush: notifyOfflinePeers', () => {
       }
       return Promise.reject(new Error('Network error'))
     })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     const result = await notifyOfflinePeers(['peer-1'], 'sender-1', 'room-1', 'Alo?')
 
     expect(result.sent).toBe(0)
+    // Chỉ lỗi KHÔNG phải hết hạn mới được log (audit 2026-10-10, E1.8), không kèm endpoint.
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith('[chatPush] gửi push lỗi:', 'Network error')
+    warn.mockRestore()
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining('delete from public.push_subscriptions'),
       [

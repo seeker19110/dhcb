@@ -1,7 +1,7 @@
-# 0582 — Redis: chờ sẵn sàng thay vì từ chối ngay, hết 429 oan ở request đầu mỗi instance
+# 0583 — Redis: chờ sẵn sàng thay vì từ chối ngay, hết 429 oan ở request đầu mỗi instance
 
-- **Ngày:** 2026-10-10 · **PR:** (xem mô tả PR, gộp cùng PR của `0581`) · **Loại:** `fix(server)`
-- **Nguồn:** phát hiện lúc kiểm `/api/tts` (changelog `0581`); người dùng chốt "sửa luôn lỗi redis 429".
+- **Ngày:** 2026-10-10 · **PR:** (xem mô tả PR, PR riêng sau PR #1332 của `0582`) · **Loại:** `fix(server)`
+- **Nguồn:** phát hiện lúc kiểm `/api/tts` (changelog `0582`, PR #1332); người dùng chốt "sửa luôn lỗi redis 429".
 
 ## Vấn đề
 

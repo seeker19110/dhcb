@@ -73,6 +73,16 @@ export class RateLimitError extends AppError {
   }
 }
 
+/** Hạ tầng phía sau (CSDL, Redis…) tạm thời không trả lời — KHÁC lỗi của người dùng. Dùng khi
+ * phải phân biệt "không đăng nhập" (401) với "không KIỂM được đăng nhập" (503): client chỉ xoá
+ * phiên khi gặp 401, nên trả 401 lúc CSDL chập chờn là đá văng mọi người dùng (audit 2026-10-10). */
+export class ServiceUnavailableError extends AppError {
+  constructor(message = 'Hệ thống đang tạm gián đoạn — thử lại sau ít phút') {
+    super(message, 503, 'service_unavailable')
+    this.name = 'ServiceUnavailableError'
+  }
+}
+
 /** `err` có phải `AppError` (hoặc lớp con) không — dùng type guard thay vì `instanceof` trực tiếp
  * ở nơi gọi để rõ ý định, và để đứng vững nếu sau này đổi cách kiểm tra (vd nhiều bản `Error` từ
  * các bundle khác nhau). */

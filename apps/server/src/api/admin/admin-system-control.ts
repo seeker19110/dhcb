@@ -5,6 +5,7 @@
 
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
+import { invalidateSettingsCache } from '@dhcb/core-db/settings'
 import {
   validateAuth,
   getCorsHeaders,
@@ -58,12 +59,20 @@ export default async function handler(req: Request): Promise<Response> {
 
     const { enabled } = val.data
 
-    await pool.query(
+    const result = await pool.query(
       `update public.app_settings
        set ai_circuit_breaker = $1, updated_at = now()
        where id = 1`,
       [enabled],
     )
+    // Không có hàng id=1 thì cầu dao KHÔNG đổi — không được báo "ĐÃ KÍCH HOẠT" (audit 2026-10-10).
+    if (result.rowCount !== 1) {
+      console.error('[admin-system-control] app_settings id=1 không tồn tại — cầu dao chưa đổi')
+      return jsonResponse({ error: 'Chưa đổi được cầu dao — thử lại sau' }, 500, allHeaders)
+    }
+    // Xoá cache 30s của TIẾN TRÌNH NÀY để cầu dao có hiệu lực ngay. Các tiến trình PM2 khác vẫn
+    // có thể dùng giá trị cũ tối đa 30s (TTL của getAppSettings) — giới hạn đã biết.
+    invalidateSettingsCache()
 
     logSecurityEvent('CIRCUIT_BREAKER_TOGGLED', clientIp, {
       adminUserId: auth.userId,

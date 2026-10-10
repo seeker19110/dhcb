@@ -114,8 +114,18 @@ export default async function handler(req: Request): Promise<Response> {
       const stream = new ReadableStream({
         async start(controller) {
           const encoder = new TextEncoder()
+          // Hoàn lượt TỐI ĐA một lần: nhánh câu mẫu dự phòng và nhánh lỗi đều hoàn, mà nhánh lỗi
+          // vẫn có thể chạy SAU khi đã hoàn (vd `enqueue` ném vì client đã đóng kết nối).
+          let refunded = false
+          const refundOnce = () => {
+            if (refunded) return
+            refunded = true
+            refundUsage(auth.userId, 'chat', gate.day).catch(() => {})
+          }
           try {
             for await (const event of streamCompanionTurn(pool, turnInput)) {
+              // Không AI nào trả lời được (câu mẫu dự phòng) → hoàn lượt như khi lỗi.
+              if (event.type === 'done' && event.data.isFallback) refundOnce()
               // Metadata công khai chỉ chứa số liệu, không gửi raw context qua SSE.
               const data =
                 event.type === 'meta'
@@ -127,13 +137,18 @@ export default async function handler(req: Request): Promise<Response> {
             controller.close()
           } catch (streamErr) {
             // Provider lỗi giữa chừng → trả lại lượt vừa trừ (cùng quy ước /api/agent)
-            refundUsage(auth.userId, 'chat', gate.day).catch(() => {})
+            refundOnce()
+            // Lỗi không phải AppError có thể mang thông điệp nội bộ (pg, nhà cung cấp AI) → chỉ
+            // ghi log phía server, client nhận thông điệp chung (audit 2026-10-10, E1).
+            if (!isAppError(streamErr)) {
+              console.error(
+                '[500] companion stream',
+                streamErr instanceof Error ? streamErr.message : String(streamErr),
+              )
+            }
             const errPayload = isAppError(streamErr)
               ? toErrorBody(streamErr)
-              : {
-                  error: 'Stream error',
-                  message: streamErr instanceof Error ? streamErr.message : String(streamErr),
-                }
+              : { error: 'Stream error', message: 'Internal server error' }
             controller.enqueue(
               encoder.encode(`event: error\ndata: ${JSON.stringify(errPayload)}\n\n`),
             )
@@ -154,6 +169,9 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const response = await executeCompanionTurn(pool, turnInput)
+    // Câu mẫu dự phòng (mọi nhà cung cấp AI đều hỏng) không phải câu trả lời AI → hoàn lượt
+    // (audit 2026-10-10, E1). Lượt vẫn trả 200 vì hành động đề xuất/đã chạy là kết quả thật.
+    if (response.isFallback) refundUsage(auth.userId, 'chat', gate.day).catch(() => {})
 
     return jsonResponse(
       { ...response, contextPackage: { ...response.contextPackage, items: [] } },

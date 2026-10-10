@@ -112,8 +112,8 @@ function todayStr(): string {
 // bộ hẹn giờ trong server.ts. Tự xoá subscription hết hạn (410/404).
 export async function sendReminders(
   hour: number,
-): Promise<{ sent: number; skipped: number; expired: number }> {
-  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return { sent: 0, skipped: 0, expired: 0 }
+): Promise<{ sent: number; skipped: number; expired: number; failed: number }> {
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return { sent: 0, skipped: 0, expired: 0, failed: 0 }
   const pool = getPgPool()
 
   // Lấy các subscription tới giờ nhắc: đúng remind_hour, HOẶC chưa đặt giờ (null) thì
@@ -127,7 +127,7 @@ export async function sendReminders(
         'select user_id, endpoint, p256dh, auth_key from public.push_subscriptions where remind_hour = $1',
         [hour],
       ))
-  if (!subs.length) return { sent: 0, skipped: 0, expired: 0 }
+  if (!subs.length) return { sent: 0, skipped: 0, expired: 0, failed: 0 }
 
   // Tập user đã học hôm nay → bỏ qua, khỏi nhắc.
   const userIds = [...new Set(subs.map((s) => s.user_id))]
@@ -251,7 +251,8 @@ export async function sendReminders(
   })
 
   let sent = 0,
-    skipped = 0
+    skipped = 0,
+    failed = 0
   const expired: string[] = []
   await Promise.all(
     subs.map(async (row) => {
@@ -272,14 +273,19 @@ export async function sendReminders(
         )
         sent++
       } catch (err: unknown) {
-        if (
-          err &&
-          typeof err === 'object' &&
-          'statusCode' in err &&
-          (err.statusCode === 410 || err.statusCode === 404)
-        ) {
+        const status = webPushStatusCode(err)
+        if (status === 410 || status === 404) {
           expired.push(row.endpoint)
+          return
         }
+        // Lỗi khác (VAPID sai, dịch vụ push 5xx/429, mạng) trước đây bị nuốt im lặng — nhắc học
+        // không tới ai mà log vẫn chỉ báo "gửi 0" (audit 2026-10-10, E1.8). Không log endpoint
+        // (định danh thiết bị người dùng).
+        failed++
+        console.warn(
+          '[push] gửi nhắc lỗi:',
+          status ?? (err instanceof Error ? err.message : String(err)),
+        )
       }
     }),
   )
@@ -290,7 +296,14 @@ export async function sendReminders(
     ])
   }
 
-  return { sent, skipped, expired: expired.length }
+  return { sent, skipped, expired: expired.length, failed }
+}
+
+/** Mã HTTP mà dịch vụ push trả về (web-push gắn `statusCode` vào lỗi), nếu có. */
+function webPushStatusCode(err: unknown): number | undefined {
+  return err && typeof err === 'object' && 'statusCode' in err && typeof err.statusCode === 'number'
+    ? err.statusCode
+    : undefined
 }
 
 /**

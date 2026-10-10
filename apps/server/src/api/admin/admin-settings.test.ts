@@ -21,10 +21,12 @@ const settingsResult = {
   leaderboardEnabled: false,
   updatedAt: '2026-01-01T00:00:00.000Z',
 }
-const getAppSettings = vi.fn(async () => settingsResult)
+const getAppSettings = vi.fn<(opts?: unknown) => Promise<typeof settingsResult>>(
+  async () => settingsResult,
+)
 const invalidateSettingsCache = vi.fn()
 vi.mock('@dhcb/core-db/settings', () => ({
-  getAppSettings: () => getAppSettings(),
+  getAppSettings: (opts?: unknown) => getAppSettings(opts),
   invalidateSettingsCache: (...args: unknown[]) => invalidateSettingsCache(...args),
 }))
 
@@ -105,24 +107,51 @@ describe('/api/admin-settings', () => {
     expect(resp.status).toBe(400)
   })
 
-  it('POST không gửi aiCircuitBreaker/leaderboardEnabled → giữ nguyên giá trị cũ', async () => {
-    getAppSettings.mockImplementation(async () => ({
-      ...settingsResult,
-      aiCircuitBreaker: true,
-      leaderboardEnabled: true,
-    }))
-    query.mockResolvedValueOnce({})
+  it('POST không gửi aiCircuitBreaker/leaderboardEnabled → giữ nguyên giá trị TRONG CSDL (coalesce)', async () => {
+    query.mockResolvedValueOnce({ rowCount: 1 })
     const resp = await handler(
       makeRequest('POST', { limits: { free: 40, vip: 400 }, promoUntil: null }),
     )
     expect(resp.status).toBe(200)
-    const [, params] = query.mock.calls[0] as [string, unknown[]]
-    // params: [pro, vip, promoUntil, aiCircuitBreaker, leaderboardEnabled]
-    expect(params).toEqual([40, 400, null, true, true])
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]]
+    // params: [pro, vip, promoUntil, aiCircuitBreaker, leaderboardEnabled] — null = giữ nguyên
+    expect(params).toEqual([40, 400, null, null, null])
+    expect(sql).toContain('coalesce($4::boolean, ai_circuit_breaker)')
+    expect(sql).toContain('coalesce($5::boolean, leaderboard_enabled)')
+    // Không đọc cấu hình (có thể là cache cũ của tiến trình này) để ghi lại — chỉ đọc SAU khi ghi.
+    expect(getAppSettings).toHaveBeenCalledTimes(1)
+    expect(invalidateSettingsCache).toHaveBeenCalledTimes(1)
+  })
+
+  it('GET/POST đọc cấu hình với requireAvailable — CSDL lỗi thì không trả bản mặc định', async () => {
+    await handler(makeRequest('GET'))
+    expect(getAppSettings).toHaveBeenLastCalledWith({ requireAvailable: true })
+    query.mockResolvedValueOnce({ rowCount: 1 })
+    await handler(makeRequest('POST', { limits: { free: 30, vip: 300 }, promoUntil: null }))
+    expect(getAppSettings).toHaveBeenLastCalledWith({ requireAvailable: true })
+  })
+
+  it('GET khi đọc cấu hình lỗi → ném lỗi (adapter trả 500), không trả mặc định', async () => {
+    getAppSettings.mockImplementation(async () => {
+      throw new Error('db down')
+    })
+    await expect(handler(makeRequest('GET'))).rejects.toThrow('db down')
+  })
+
+  it('POST khi không có hàng app_settings id=1 → 500, không xoá cache', async () => {
+    query.mockResolvedValueOnce({ rowCount: 0 })
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const resp = await handler(
+      makeRequest('POST', { limits: { free: 30, vip: 300 }, promoUntil: null }),
+    )
+    expect(resp.status).toBe(500)
+    expect(invalidateSettingsCache).not.toHaveBeenCalled()
+    expect(errSpy).toHaveBeenCalledTimes(1)
+    errSpy.mockRestore()
   })
 
   it('POST thành công → cập nhật hạn mức + cầu dao khẩn cấp, trả cấu hình mới', async () => {
-    query.mockResolvedValueOnce({})
+    query.mockResolvedValueOnce({ rowCount: 1 })
     const resp = await handler(
       makeRequest('POST', {
         limits: { free: 50, vip: 500 },

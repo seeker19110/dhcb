@@ -25,7 +25,7 @@ import {
 } from '@dhcb/core-auth/security'
 import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 import { base64ToBytes } from '@dhcb/core-db/base64'
 
 // Giới hạn dung lượng base64 (~4MB chuỗi ≈ ~3MB audio thật) — câu chấm phát âm tối đa ~30s
@@ -119,7 +119,13 @@ export default async function handler(req: Request): Promise<Response> {
   } catch (err) {
     // Azure lỗi/timeout → người dùng không nhận được kết quả: hoàn lại lượt vừa trừ.
     await refundUsage(authResult.userId, 'pronounce', gate.day)
-    return jsonResponse({ error: (err as Error).message, fallback: true }, 500, allHeaders)
+    // Lỗi Azure (vùng, khoá, mã lỗi nội bộ) chỉ ghi ở server (audit 2026-10-10, E1.8).
+    logInternalError(err, 'pronounce-assess')
+    return jsonResponse(
+      { error: 'Chưa chấm được phát âm lúc này — thử lại sau nhé.', fallback: true },
+      500,
+      allHeaders,
+    )
   }
 }
 
