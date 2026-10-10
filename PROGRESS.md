@@ -524,7 +524,8 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
   ✅ **[changelog `0569`] Không còn chương Toán nào chỉ 1 bài** (+13 bài, Toán 68 bài). Hoá 10C4–C6
   và Sinh 12C5/C7/C9 chỉ 1 bài là ĐÚNG số bài SGK (đánh số theo bài SGK), không phải thiếu.
 - **[2026-10-10 — changelog `0577`, đặc tả `docs/specs/2026-10-10-toan-thcs-6-9.md`] Toán THCS
-  đang làm: Toán 6 XONG (9 chương, 26 bài, `draft`); CÒN Toán 7, 8, 9** — mỗi lớp một PR, chỉ thêm
+  đang làm: Toán 6 XONG (9 chương, 26 bài, `draft`, PR #1327); Toán 7 XONG (10 chương, 28 bài,
+  changelog `0578`); CÒN Toán 8, 9** — mỗi lớp một PR, chỉ thêm
   file chương + đăng ký + khoá chương (hạ tầng lớp đã có). Tiểu học (1–5) chưa làm: cần khuôn bài
   riêng. Bài THCS cố ý KHÔNG vào ngân hàng đề bảng nháp và chưa có trong menu "theo lớp".
 - **[2026-09-21 · CẬP NHẬT cùng ngày, PR đặc tả — `docs/changelog/0396-2026-09-21-dac-ta-19-chang-p6-con-thieu.md`] P6 (Lập trình,
