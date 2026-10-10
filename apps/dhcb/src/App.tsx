@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { LangProvider } from './context/LangProvider'
 import { AppThemeProvider as ThemeProvider } from './context/AppThemeProvider'
@@ -33,6 +33,8 @@ import { PROGRAMMING_PREFIX } from './lib/programmingRoutes'
 import { ENGLISH_PREFIX } from './lib/englishRoutes'
 import { runWhenPageSettled } from './lib/pageSettled'
 import { isSaveDataOn } from './lib/offlineDownload'
+import { PRERENDER_ATTR, releaseGuestPrerender } from './lib/guestPrerender'
+import { APP_CONTENT_COLUMN_CLASS } from './components/appFrame'
 // Dải báo đồng bộ hầu như luôn `return null` (chỉ hiện khi mất mạng / còn mục chờ / vừa gửi
 // xong), nên nó KHÔNG đáng nằm trong chunk khởi động — nạp lười để giữ ngân sách Initial JS
 // dưới trần 140 kB. Không bọc Suspense: khi chưa nạp xong, `lazy` render null, đúng bằng
@@ -266,6 +268,19 @@ function usePrefetchPages() {
   }, [])
 }
 
+// Lưới an toàn cho bản HTML dựng sẵn trang chủ khách (lib/guestPrerender.ts): GuestHomePage tự gỡ
+// nó khi vẽ xong, nhưng nếu React sẽ KHÔNG vẽ trang chủ khách — cờ không bật, đã sang trang khác,
+// hoá ra đã đăng nhập (phiên cookie mà máy chưa có cờ) — thì gỡ ngay, kẻo `#root` bị ẩn mãi.
+function GuestPrerenderGuard() {
+  const { pathname } = useLocation()
+  const { loading, isGuest } = useAuth()
+  useLayoutEffect(() => {
+    const shown = document.documentElement.hasAttribute(PRERENDER_ATTR)
+    if (!shown || pathname !== '/' || (!loading && !isGuest)) releaseGuestPrerender()
+  }, [pathname, loading, isGuest])
+  return null
+}
+
 // Trang `/`: khách chỉ tải GuestHomePage; người đã đăng nhập mới tải Home (nặng). Chọn ở ĐÂY
 // (trước khi nạp chunk) — để Home tự rẽ nhánh thì khách vẫn phải tải trọn chunk Home rồi mới vẽ.
 function HomeRoute() {
@@ -342,6 +357,7 @@ export default function App() {
           <ToastProvider>
             <BrowserRouter>
               <CanonicalUpdater />
+              <GuestPrerenderGuard />
               {/* "Bỏ qua tới nội dung chính" — WCAG 2.4.1 (mức A).
                   ĐẶT Ở ĐÂY, KHÔNG PHẢI TRONG Layout: `DesktopSidebar` render trước Layout
                   trong cây, nên skip link nằm trong Layout thì người dùng đã Tab qua hết
@@ -353,10 +369,8 @@ export default function App() {
                   Ở ngoài ErrorBoundary vì tự định vị `fixed`, giống BottomNav. */}
               <DesktopSidebar />
               <ErrorBoundary>
-                {/* `lg:pl-[var(--sidebar-w)]` chừa lề trái cho DesktopSidebar — biến CSS
-                    đổi theo trạng thái thu gọn/mở rộng nên không cần biết sidebar rộng
-                    bao nhiêu ở đây (xem index.css). */}
-                <div className="lg:pl-[var(--sidebar-w)] transition-[padding] duration-200">
+                {/* Chừa lề trái cho DesktopSidebar — xem components/appFrame.ts. */}
+                <div className={APP_CONTENT_COLUMN_CLASS}>
                   <Suspense fallback={<PageLoading />}>
                     <Routes>
                       <Route path="/login" element={<Login />} />

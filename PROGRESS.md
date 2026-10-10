@@ -1828,9 +1828,11 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   **Cập nhật 2026-10-10 (`docs/changelog/0582-*.md`): TRANG CHỦ đã đo được trên production**
   (phiên này tới được `www.donghanhcungban.org`): mobile 70 (LCP 5,1 s), desktop 96. Đã sửa ba
   nguyên nhân chính (khách tải JS trang chủ thành viên, việc nền chen băng thông, font latin-ext
-  thừa) — đo cục bộ trước/sau: mobile 66 → 89 (LCP 7,3 → 3,1 s), desktop 84 → 99. **Còn mở:** đo
-  lại PageSpeed sau deploy; Dictionary + trang CEFR; Tầng 9. FCP mobile ~2,7 s là trần của SPA —
-  xuống thấp hơn cần prerender trang chủ khách (chủ dự án quyết).
+  thừa) — đo cục bộ trước/sau: mobile 66 → 89 (LCP 7,3 → 3,1 s), desktop 84 → 99.
+  **Tiếp 2026-10-10 (`docs/changelog/0584-*.md`, người dùng chốt prerender):** dựng sẵn HTML
+  trang chủ khách (mobile) + nạp JS sau lần vẽ chữ đầu + `llms.txt`/404 `/.well-known/` — đo cục
+  bộ Lighthouse 13.5 mobile 97–99 (FCP = LCP 1,5 s), A11y/BP/SEO/Agentic Browsing 100. **Còn mở:**
+  đo lại PageSpeed sau deploy; Dictionary + trang CEFR; Tầng 9.
 
   **Cập nhật 2026-09-21 (`docs/changelog/0400-*.md`): một hồi quy CLS THẬT đã lộ ra và được sửa**
   (khác debt gốc ở trên — đây là cổng CI `e2e/home-clarity-evidence.spec.ts` chạy trong sandbox,

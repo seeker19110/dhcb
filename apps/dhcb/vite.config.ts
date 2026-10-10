@@ -4,9 +4,11 @@ import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import compress from 'vite-plugin-compression'
 import { cp, mkdir } from 'node:fs/promises'
-import { createReadStream, existsSync } from 'node:fs'
+import { createReadStream, existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { deferBootScriptsWhilePrerendered, injectGuestPrerender } from './src/lib/guestPrerender.ts'
+import { DESKTOP_VIEWPORT_QUERY } from './src/lib/useIsDesktopViewport.ts'
 
 // Alias CHỈ áp dụng cho src/ (frontend, do Vite bundle) — KHÔNG áp dụng cho api/.
 // api/ được `tsc -p tsconfig.server.json` biên dịch thành JS thật rồi chạy trực tiếp bằng
@@ -98,6 +100,31 @@ function pyodideSelfHostPlugin(): Plugin {
   }
 }
 
+// Bản HTML dựng sẵn của trang chủ khách (cơ chế + số đo: src/lib/guestPrerender.ts). Chạy ở CẢ dev
+// lẫn build để E2E (chạy trên dev server) đi qua đúng luồng production. File HTML do
+// `npm run gen:prerender-home` sinh từ chính các component; test canh nó không cũ.
+const GUEST_PRERENDER_FILE = fileURLToPath(
+  new URL('./src/prerender/guestHome.prerender.html', import.meta.url),
+)
+
+function guestHomePrerenderPlugin(): Plugin {
+  return {
+    name: 'dhcb-guest-home-prerender',
+    transformIndexHtml: {
+      // 'post': chạy sau khi Vite đã chèn thẻ <script>/<link> của bản build — cần để hoãn nạp JS.
+      order: 'post',
+      handler(html, ctx) {
+        const withPrerender = injectGuestPrerender(
+          html,
+          readFileSync(GUEST_PRERENDER_FILE, 'utf8'),
+          DESKTOP_VIEWPORT_QUERY,
+        )
+        return ctx.server ? withPrerender : deferBootScriptsWhilePrerendered(withPrerender)
+      },
+    },
+  }
+}
+
 // Gói thuộc chunk vendor-core: React/Router và dependency runtime của chúng (xem manualChunks).
 const VENDOR_CORE_PACKAGES = [
   'react',
@@ -165,6 +192,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       apiEdgeDevMiddleware(),
+      guestHomePrerenderPlugin(),
       // Tự host Pyodide (Python chạy trong trình duyệt cho môn Lập trình — PR-L2):
       // copy asset từ node_modules vào dist/pyodide/ để nginx phục vụ như file tĩnh,
       // KHÔNG dùng CDN ngoài. Worker nạp qua importScripts('/pyodide/pyodide.js') và chỉ
