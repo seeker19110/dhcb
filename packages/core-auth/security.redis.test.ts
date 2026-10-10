@@ -13,8 +13,10 @@ type Handler = (arg?: unknown) => void
 class FakeRedis {
   static instances: FakeRedis[] = []
   static ctorError: Error | null = null
-  status = 'ready'
-  handlers = new Map<string, Handler>()
+  /** Trạng thái lúc vừa tạo — 'connecting' để mô phỏng client thật (kết nối chưa xong). */
+  static initialStatus = 'ready'
+  status = FakeRedis.initialStatus
+  handlers = new Map<string, Handler[]>()
   eval = vi.fn<(...args: unknown[]) => Promise<unknown>>()
   ping = vi.fn<() => Promise<string>>(async () => 'PONG')
   del = vi.fn<(key: string) => Promise<number>>(async () => 1)
@@ -24,11 +26,30 @@ class FakeRedis {
     FakeRedis.instances.push(this)
   }
   on(event: string, fn: Handler): this {
-    this.handlers.set(event, fn)
+    this.handlers.set(event, [...(this.handlers.get(event) ?? []), fn])
     return this
   }
+  once(event: string, fn: Handler): this {
+    const wrapped: Handler = (arg) => {
+      this.off(event, wrapped)
+      fn(arg)
+    }
+    ;(wrapped as Handler & { original?: Handler }).original = fn
+    return this.on(event, wrapped)
+  }
+  off(event: string, fn: Handler): this {
+    const list = this.handlers.get(event) ?? []
+    this.handlers.set(
+      event,
+      list.filter((h) => h !== fn && (h as Handler & { original?: Handler }).original !== fn),
+    )
+    return this
+  }
+  listenerCount(event: string): number {
+    return this.handlers.get(event)?.length ?? 0
+  }
   emit(event: string, arg?: unknown): void {
-    this.handlers.get(event)?.(arg)
+    for (const h of [...(this.handlers.get(event) ?? [])]) h(arg)
   }
 }
 
@@ -46,6 +67,21 @@ async function loadSecurity() {
   return import('./security.js')
 }
 
+// Thời gian security.ts chờ client đang kết nối chuyển sang `ready` (REDIS_READY_WAIT_MS).
+const READY_WAIT_MS = 1000
+
+/** Chạy `fn` với đồng hồ giả và tua qua hết thời gian chờ Redis — ca "kết nối mãi không xong". */
+async function pastReadyWait<T>(fn: () => Promise<T>): Promise<T> {
+  vi.useFakeTimers()
+  try {
+    const pending = fn()
+    await vi.advanceTimersByTimeAsync(READY_WAIT_MS)
+    return await pending
+  } finally {
+    vi.useRealTimers()
+  }
+}
+
 function lastClient(): FakeRedis {
   const c = FakeRedis.instances[FakeRedis.instances.length - 1]
   if (!c) throw new Error('chưa tạo client Redis nào')
@@ -61,6 +97,7 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
     process.env.REDIS_URL = 'redis://:pw@127.0.0.1:6379'
     FakeRedis.instances = []
     FakeRedis.ctorError = null
+    FakeRedis.initialStatus = 'ready'
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   })
@@ -87,14 +124,14 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       expect(client.eval.mock.calls[0]?.[2]).toBe('b:1.2.3.4')
     })
 
-    it('Redis CHƯA ready (đang connecting) → không gọi eval, rơi về Map in-memory im lặng', async () => {
+    it('Redis kết nối MÃI không xong (quá hạn chờ) → không gọi eval, rơi về Map in-memory im lặng', async () => {
       const { checkRateLimit } = await loadSecurity()
       await checkRateLimit('x', 1, 'c') // tạo client
       const client = lastClient()
       client.status = 'connecting'
       client.eval.mockClear()
-      expect(await checkRateLimit('ip-c', 1, 'c')).toBe(true)
-      expect(await checkRateLimit('ip-c', 1, 'c')).toBe(false) // Map đếm được
+      expect(await pastReadyWait(() => checkRateLimit('ip-c', 1, 'c'))).toBe(true)
+      expect(await pastReadyWait(() => checkRateLimit('ip-c', 1, 'c'))).toBe(false) // Map đếm được
       expect(client.eval).not.toHaveBeenCalled()
       expect(warnSpy).not.toHaveBeenCalled() // đúng ý: không báo động khi chỉ đang kết nối
     })
@@ -172,8 +209,8 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       await checkRateLimit('seed', 5)
       const client = lastClient()
       client.status = 'connecting'
-      expect(await checkRateLimit('p', 5)).toBe(false)
-      expect(await consumeDailyCounter('guest:p', 5)).toBe(false)
+      expect(await pastReadyWait(() => checkRateLimit('p', 5))).toBe(false)
+      expect(await pastReadyWait(() => consumeDailyCounter('guest:p', 5))).toBe(false)
       client.status = 'ready'
       client.eval.mockRejectedValue(new Error('down'))
       expect(await checkRateLimit('p', 5)).toBe(false)
@@ -205,8 +242,10 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       await checkSeed()
       const client = lastClient()
       client.status = 'connecting'
-      expect(await consumeWindowCounterStatus('k', 5, 1000)).toBe('unavailable')
-      expect(await consumeWindowCounter('k', 5, 1000)).toBe(false)
+      expect(await pastReadyWait(() => consumeWindowCounterStatus('k', 5, 1000))).toBe(
+        'unavailable',
+      )
+      expect(await pastReadyWait(() => consumeWindowCounter('k', 5, 1000))).toBe(false)
       client.status = 'ready'
       client.eval.mockRejectedValue(new Error('down'))
       expect(await consumeWindowCounterStatus('k', 5, 1000)).toBe('unavailable')
@@ -246,7 +285,7 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       client.get.mockRejectedValueOnce(new Error('down'))
       expect(await peekWindowCounter('f')).toBe('unavailable')
       client.status = 'connecting'
-      expect(await peekWindowCounter('f')).toBe('unavailable')
+      expect(await pastReadyWait(() => peekWindowCounter('f'))).toBe('unavailable')
     })
 
     it('resetCounterChecked: Redis xoá được → true; production Redis lỗi → false', async () => {
@@ -259,7 +298,107 @@ describe('security.ts — nhánh Redis (REDIS_URL có cấu hình)', () => {
       client.del.mockRejectedValue(new Error('down'))
       expect(await resetCounterChecked('k')).toBe(false)
       client.status = 'connecting'
-      expect(await resetCounterChecked('k')).toBe(false)
+      expect(await pastReadyWait(() => resetCounterChecked('k'))).toBe(false)
+    })
+  })
+
+  // changelog 0583: request có rate limit đầu tiên tới instance PM2 1, 2 bị 429 oan vì client
+  // Redis vừa tạo còn 'connecting'. Nay chờ ngắn sự kiện 'ready' thay vì từ chối ngay.
+  describe('chờ Redis sẵn sàng thay vì từ chối ngay', () => {
+    afterEach(() => vi.unstubAllEnvs())
+
+    it('client VỪA tạo còn connecting, ready ngay sau đó → production đếm bằng Redis, không 429', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      FakeRedis.initialStatus = 'connecting'
+      const { checkRateLimit } = await loadSecurity()
+      const pending = checkRateLimit('1.2.3.4', 60, 'tts')
+      const client = lastClient()
+      client.eval.mockResolvedValue(1)
+      client.status = 'ready'
+      client.emit('ready')
+      expect(await pending).toBe(true)
+      expect(client.eval).toHaveBeenCalledOnce()
+    })
+
+    it('đang reconnecting (rớt dưới 1 giây) → chờ ready rồi đếm tiếp', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { consumeDailyCounter } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.eval.mockResolvedValue(1)
+      client.status = 'reconnecting'
+      const pending = consumeDailyCounter('guest:p', 5)
+      client.status = 'ready'
+      client.emit('ready')
+      expect(await pending).toBe(true)
+    })
+
+    it('nhiều request cùng chờ → dùng CHUNG một listener, gỡ sạch sau khi ready', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { checkRateLimit } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.eval.mockResolvedValue(1)
+      client.status = 'connecting'
+      const before = client.listenerCount('ready')
+      const pendings = Array.from({ length: 20 }, (_, i) => checkRateLimit(`ip-${i}`, 5))
+      expect(client.listenerCount('ready')).toBe(before + 1)
+      client.status = 'ready'
+      client.emit('ready')
+      expect(await Promise.all(pendings)).toEqual(Array(20).fill(true))
+      expect(client.listenerCount('ready')).toBe(before)
+    })
+
+    it('trạng thái end (không tự kết nối lại) → từ chối NGAY, không chờ', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { checkRateLimit } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.status = 'end'
+      expect(await checkRateLimit('p', 5)).toBe(false)
+      expect(client.listenerCount('ready')).toBe(1) // chỉ listener cố định của getRedis()
+    })
+
+    it('quá hạn chờ → gỡ listener, lần chờ sau tạo lời chờ mới', async () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const { checkRateLimit } = await loadSecurity()
+      await checkSeed()
+      const client = lastClient()
+      client.status = 'connecting'
+      expect(await pastReadyWait(() => checkRateLimit('p', 5))).toBe(false)
+      expect(client.listenerCount('ready')).toBe(1)
+      client.eval.mockResolvedValue(1)
+      const pending = checkRateLimit('p', 5)
+      client.status = 'ready'
+      client.emit('ready')
+      expect(await pending).toBe(true)
+    })
+
+    it('warmUpRedis() tạo client ngay (không chờ request đầu), gọi lại không tạo thêm', async () => {
+      const { warmUpRedis } = await loadSecurity()
+      expect(FakeRedis.instances).toHaveLength(0)
+      warmUpRedis()
+      warmUpRedis()
+      expect(FakeRedis.instances).toHaveLength(1)
+    })
+
+    it('warmUpRedis() không có REDIS_URL → không tạo client', async () => {
+      delete process.env.REDIS_URL
+      const { warmUpRedis } = await loadSecurity()
+      warmUpRedis()
+      expect(FakeRedis.instances).toHaveLength(0)
+    })
+
+    it('pingRedis lúc client vừa tạo (connecting) → chờ ready rồi mới ping, không báo ❌ giả', async () => {
+      FakeRedis.initialStatus = 'connecting'
+      const { pingRedis } = await loadSecurity()
+      const pending = pingRedis()
+      const client = lastClient()
+      expect(client.ping).not.toHaveBeenCalled()
+      client.status = 'ready'
+      client.emit('ready')
+      expect((await pending).ok).toBe(true)
+      expect(client.ping).toHaveBeenCalledOnce()
     })
   })
 

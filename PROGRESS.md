@@ -1629,6 +1629,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   treo request khi Redis chết). Ứng viên hợp lý là nới `connectTimeout` (đang 2000ms) — nhưng
   chỉ khi có bằng chứng, không theo linh cảm.
 
+  **Cập nhật 2026-10-10 (`docs/changelog/0583-*.md`):** từ khi rate limit chuyển sang fail-closed,
+  mỗi lần client Redis chưa `ready` = người dùng thật nhận **429 oan** (không còn là "cửa sổ lỏng").
+  Đã giảm thiệt hại mà KHÔNG đổi `enableOfflineQueue`: mọi instance mở kết nối lúc khởi động
+  (`warmUpRedis`), và ở trạng thái `connecting`/`reconnecting` chờ tối đa 1 s sự kiện `ready` trước
+  khi từ chối. Gốc rễ (vì sao rớt ~7 lần/ngày) VẪN mở — đọc lại `pm2 logs dhcb --err` như trên.
+
 - 🟡 **[ĐO LẠI 2026-09-14 — mô tả "ngân sách BUNDLE nay rộng" ĐÃ LỖI THỜI] Cả COVERAGE lẫn
   BUNDLE nay đều mỏng.**
   **Cập nhật 2026-10-10 (`docs/changelog/0580-*.md`, audit toàn diện):** Initial JS 93,3% →

@@ -179,6 +179,55 @@ function getRedis(): Redis | null {
   return redisClient
 }
 
+// ── Chờ Redis sẵn sàng (thay vì từ chối ngay) ───────────────────────────────────
+// [2026-10-10, changelog 0583] Production fail-closed khi Redis chưa `ready`. Nhưng client mới
+// tạo (instance PM2 vừa khởi động) hay đang kết nối lại sau một lần rớt dưới 1 giây ở trạng thái
+// `connecting`/`reconnecting` chỉ trong vài mili giây — từ chối ngay là trả 429 "Quá nhiều yêu cầu"
+// oan cho người dùng thật (thấy trên production: request đầu tới mỗi instance 1, 2 đều bị 429).
+// Nên: ở trạng thái chuyển tiếp thì CHỜ NGẮN sự kiện `ready`; quá hạn mới từ chối như cũ.
+// Trạng thái khác (`end`, `wait`…) không tự kết nối lại → không chờ.
+const REDIS_READY_WAIT_MS = 1000
+const REDIS_TRANSITIONAL_STATES = new Set(['connecting', 'connect', 'reconnecting', 'close'])
+// Một lời chờ dùng chung cho mọi request đang đợi — tránh gắn hàng trăm listener 'ready'
+// (Node cảnh báo MaxListenersExceeded) khi lưu lượng dồn vào đúng lúc Redis đang kết nối.
+let redisReadyWaiter: Promise<boolean> | null = null
+
+function waitForRedisReady(client: Redis): Promise<boolean> {
+  if (client.status === 'ready') return Promise.resolve(true)
+  if (!REDIS_TRANSITIONAL_STATES.has(client.status)) return Promise.resolve(false)
+  redisReadyWaiter ??= new Promise<boolean>((resolve) => {
+    const finish = (ready: boolean) => {
+      clearTimeout(timer)
+      client.off('ready', onReady)
+      redisReadyWaiter = null
+      resolve(ready)
+    }
+    const onReady = () => finish(true)
+    const timer = setTimeout(() => finish(client.status === 'ready'), REDIS_READY_WAIT_MS)
+    // Không giữ tiến trình sống chỉ vì đang chờ (tắt server êm, test không treo).
+    timer.unref?.()
+    client.once('ready', onReady)
+  })
+  return redisReadyWaiter
+}
+
+/** Client Redis ĐÃ sẵn sàng (chờ ngắn nếu đang kết nối), hoặc null nếu không dùng được. */
+async function getReadyRedis(): Promise<Redis | null> {
+  const client = getRedis()
+  if (!client) return null
+  return (await waitForRedisReady(client)) ? client : null
+}
+
+/**
+ * Mở kết nối Redis NGAY lúc khởi động — gọi ở MỌI instance PM2. Trước đây chỉ instance 0 chạm
+ * tới Redis lúc khởi động (qua reportRedisStatusAtStartup); instance 1, 2 tạo client lười ở
+ * request có rate limit đầu tiên, và request đó luôn bị từ chối vì client còn `connecting`.
+ * Phải gọi SAU dotenv.config(): getRedis() ghi nhớ `null` vĩnh viễn nếu lúc đó chưa có REDIS_URL.
+ */
+export function warmUpRedis(): void {
+  getRedis()
+}
+
 // Ghi nhận Redis hỏng. Log MỘT lần mỗi LẦN CHUYỂN TRẠNG THÁI (đang tốt → hỏng), không spam
 // mỗi request.
 //
@@ -223,6 +272,9 @@ export function getRedisRuntimeStatus(): {
 export async function pingRedis(): Promise<{ ok: boolean; latencyMs?: number; error?: string }> {
   const client = getRedis()
   if (!client) return { ok: false, error: 'REDIS_URL chưa cấu hình' }
+  // Client vừa tạo (lần ping lúc khởi động) còn `connecting` — ping ngay sẽ ném "Stream isn't
+  // writeable" (enableOfflineQueue: false) và log khởi động báo ❌ giả. Chờ ngắn trước khi ping.
+  await waitForRedisReady(client)
   const startedAt = Date.now()
   try {
     await client.ping()
@@ -346,12 +398,12 @@ export async function checkRateLimit(
 ): Promise<boolean> {
   const key = `${bucket}:${rateLimitSubject(ip)}`
 
-  const redis = getRedis()
   // CHỈ dùng khi kết nối đã sẵn sàng. `enableOfflineQueue: false` nghĩa là gọi lệnh lúc client
   // còn 'connecting'/'reconnecting' sẽ ném ngay "Stream isn't writeable…" — đúng lỗi thấy trong
-  // log production sau mỗi lần PM2 restart. Trong cửa sổ này production từ chối lượt mới;
-  // dev/test dùng bộ đếm cục bộ.
-  if (redis && redis.status === 'ready') {
+  // log production sau mỗi lần PM2 restart. getReadyRedis() chờ ngắn qua cửa sổ đó; quá hạn mà
+  // vẫn chưa sẵn sàng thì production từ chối lượt mới, dev/test dùng bộ đếm cục bộ.
+  const redis = await getReadyRedis()
+  if (redis) {
     try {
       // Script Lua chạy nguyên khối trên Redis → INCR và PEXPIRE không bị chen giữa
       // (tránh race: hai request cùng lúc đều thấy key mới và cùng đặt hạn dùng).
@@ -412,8 +464,8 @@ export async function consumeWindowCounterCount(
   key: string,
   windowMs: number,
 ): Promise<number | 'unavailable'> {
-  const redis = getRedis()
-  if (redis && redis.status === 'ready') {
+  const redis = await getReadyRedis()
+  if (redis) {
     try {
       const count = (await redis.eval(DAILY_COUNTER_LUA, 1, key, String(windowMs))) as number
       noteRedisRecovered()
@@ -441,8 +493,8 @@ export async function consumeWindowCounterCount(
  * lượt nào (thêm 2026-10-09, changelog 0559).
  */
 export async function peekWindowCounter(key: string): Promise<number | 'unavailable'> {
-  const redis = getRedis()
-  if (redis && redis.status === 'ready') {
+  const redis = await getReadyRedis()
+  if (redis) {
     try {
       const raw = await redis.get(key)
       noteRedisRecovered()
@@ -497,8 +549,8 @@ export async function consumeDailyCounter(key: string, limit: number): Promise<b
  * cần biết để ghi log vận hành (changelog 0555).
  */
 export async function resetCounterChecked(key: string): Promise<boolean> {
-  const redis = getRedis()
-  if (redis && redis.status === 'ready') {
+  const redis = await getReadyRedis()
+  if (redis) {
     try {
       await redis.del(key)
       return true
@@ -517,8 +569,8 @@ export async function resetCounter(key: string): Promise<void> {
 
 /** Trả lại 1 lượt đã trừ (nhà cung cấp lỗi). Nuốt mọi lỗi — không bao giờ làm vỡ luồng trả lỗi. */
 export async function releaseDailyCounter(key: string): Promise<void> {
-  const redis = getRedis()
-  if (redis && redis.status === 'ready') {
+  const redis = await getReadyRedis()
+  if (redis) {
     try {
       // Chỉ giảm khi key còn tồn tại: key đã hết hạn mà DECR sẽ tạo ra bộ đếm âm không hạn dùng.
       await redis.eval(
