@@ -9,7 +9,8 @@
 //
 // KHÔNG nạp nội dung bài: chỉ dùng chỉ mục nhẹ (`lessonsLoader`) như `pickNextLesson` vẫn làm —
 // registry bài 3 MB tuyệt đối không được vào chunk Trang chủ.
-import { todayItemId, type TodayItem } from '@dhcb/core-contracts/todayPlan'
+import type { TodayItem } from '@dhcb/core-contracts/todayPlan'
+import { todayItemId } from '@dhcb/core-contracts/todayItemId'
 import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
 import { findLeafByContentId, prevNext } from '@dhcb/core-learner/outline/outlineNav'
 import type { ProgrammingLessonProgress } from '../programmingProgress'

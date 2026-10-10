@@ -14,6 +14,9 @@
 //  2. Nền tảng KHÔNG mặc định tiếng Anh — thiếu bằng chứng thì trả `kind:'pick'` về góc học tập,
 //     tuyệt đối không đẩy người học vào lộ trình của một môn nào.
 import { z } from 'zod'
+import { TODAY_ITEM_KINDS } from './todayItemId.js'
+
+export { todayItemId, TODAY_ITEM_KINDS, type TodayItemKind } from './todayItemId.js'
 
 /** Nguồn bằng chứng của một mục — chữ hiển thị lấy từ bảng §③.3 của đặc tả, không tự bịa. */
 export const TodaySourceSchema = z.enum([
@@ -48,7 +51,7 @@ export type ResumePoint = z.infer<typeof ResumePointSchema>
 export const TodayItemSchema = z.object({
   /** `${kind}:${subjectId ?? '-'}:${contentId ?? '-'}` — dựng bằng `todayItemId`. */
   id: z.string().min(1),
-  kind: z.enum(['resume', 'next', 'review', 'pick']),
+  kind: z.enum(TODAY_ITEM_KINDS),
   /** undefined CHỈ khi `kind:'pick'` toàn cục (chưa biết người học quan tâm môn nào). */
   subjectId: z.string().min(1).optional(),
   courseId: z.string().min(1).optional(),
@@ -90,12 +93,3 @@ export const TodayPlanSchema = z
     message: "'pick' không bao giờ là mục phụ",
   })
 export type TodayPlan = z.infer<typeof TodayPlanSchema>
-
-/** Mã định danh một mục — dựng ở MỘT chỗ để resolver và test không lệch nhau. */
-export function todayItemId(
-  kind: TodayItem['kind'],
-  subjectId: string | undefined,
-  contentId: string | undefined,
-): string {
-  return `${kind}:${subjectId ?? '-'}:${contentId ?? '-'}`
-}

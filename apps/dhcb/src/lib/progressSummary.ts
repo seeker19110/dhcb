@@ -13,7 +13,7 @@
 // LUẬT SỐ 1 (CLAUDE.md §2): `unknown` KHÔNG BAO GIỜ được quy về 0 rồi đem chia. Cây toàn
 // `unknown` → `measured:false` → giao diện phải in CHỮ "chưa đo được", không in "0%".
 import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
-import { isOutlineLeaf } from '@dhcb/core-contracts/outline'
+import { isOutlineLeaf } from '@dhcb/core-contracts/outlineLeaf'
 
 export interface SubjectProgressSummary {
   subjectId: string

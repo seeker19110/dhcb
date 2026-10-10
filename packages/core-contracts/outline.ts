@@ -11,6 +11,9 @@
 // Cây là dữ liệu PHẲNG (mảng nút + `parentId`) chứ không lồng nhau: dễ tìm kiếm, dễ tính
 // bài trước/bài sau, dễ so sánh trong test, và không phải đệ quy khi tuần tự hoá.
 import { z } from 'zod'
+import { isOutlineLeaf } from './outlineLeaf.js'
+
+export { isOutlineLeaf } from './outlineLeaf.js'
 
 /** Vai trò của một nút trong cây. `lesson`/`activity` là LÁ (bấm vào là học). */
 export type OutlineKind = 'level' | 'chapter' | 'lesson' | 'activity'
@@ -82,11 +85,6 @@ const OutlineNodeSchema = z.object({
   progress: OutlineProgressSchema,
   evidenceSource: z.string().min(1).optional(),
 })
-
-/** Lá = nút người học bấm vào để học. */
-export function isOutlineLeaf(node: Pick<OutlineNode, 'kind'>): boolean {
-  return node.kind === 'lesson' || node.kind === 'activity'
-}
 
 const OutlineObjectSchema = z.object({
   rootId: z.string().min(1),

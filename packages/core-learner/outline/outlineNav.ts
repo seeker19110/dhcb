@@ -8,7 +8,7 @@
 // THUẦN: không React, không I/O, không đồng hồ. `nodes` đã ở thứ tự duyệt trước (pre-order)
 // nên mọi hàm ở đây chỉ duyệt tuyến tính.
 import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
-import { isOutlineLeaf } from '@dhcb/core-contracts/outline'
+import { isOutlineLeaf } from '@dhcb/core-contracts/outlineLeaf'
 
 /** Tra một nút theo `nodeId`. */
 export function findNode(outline: Outline, nodeId: string): OutlineNode | undefined {

@@ -10,7 +10,9 @@
 //  3. Lời hứa lỗi bị cache vĩnh viễn → nút "Thử lại" vô dụng. Nay lỗi thì xoá cache.
 // Dữ liệu ngoài được kiểm bằng Zod (CLAUDE.md §4.1). Lỗi luôn là `LessonLoadError` có `kind`
 // để giao diện phân biệt "mất mạng / máy chủ lỗi" (cho thử lại) với "mã bài không tồn tại".
-import { z } from 'zod'
+// `zod/mini` thay bản đầy đủ (audit 2026-10-10, E4.1b): `preloadBrowse` nạp module này ngay sau
+// khi đăng nhập (lúc trình duyệt rảnh) — bản đầy đủ sẽ kéo `vendor-zod` vào MỌI phiên đã đăng nhập.
+import * as z from 'zod/mini'
 
 const genderSchema = z.enum(['female', 'male'])
 const speakerNameSchema = z.object({ vi: z.string(), en: z.string() })
@@ -22,25 +24,25 @@ const turnSchema = z.object({
 })
 
 const lessonMetaSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.int().check(z.positive()),
   title: z.string(),
   situation: z.string(),
-  turnCount: z.number().int().nonnegative(),
-  speakerAGender: genderSchema.nullable(),
-  speakerBGender: genderSchema.nullable(),
-  chunk: z.number().int().nonnegative(),
-  idx: z.number().int().nonnegative(),
+  turnCount: z.int().check(z.nonnegative()),
+  speakerAGender: z.nullable(genderSchema),
+  speakerBGender: z.nullable(genderSchema),
+  chunk: z.int().check(z.nonnegative()),
+  idx: z.int().check(z.nonnegative()),
 })
 
 const lessonSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.int().check(z.positive()),
   title: z.string(),
   situation: z.string(),
   turns: z.array(turnSchema),
-  speakerAGender: genderSchema.optional(),
-  speakerBGender: genderSchema.optional(),
-  speakerAName: speakerNameSchema.optional(),
-  speakerBName: speakerNameSchema.optional(),
+  speakerAGender: z.optional(genderSchema),
+  speakerBGender: z.optional(genderSchema),
+  speakerAName: z.optional(speakerNameSchema),
+  speakerBName: z.optional(speakerNameSchema),
 })
 
 export type Turn = z.infer<typeof turnSchema>

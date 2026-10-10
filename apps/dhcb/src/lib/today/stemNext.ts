@@ -12,7 +12,7 @@ import type { TodayItem } from '@dhcb/core-contracts/todayPlan'
 import type { Outline } from '@dhcb/core-contracts/outline'
 import type { ResumePoint } from '@dhcb/core-contracts/todayPlan'
 import { findLeafByContentId, prevNext } from '@dhcb/core-learner/outline/outlineNav'
-import { todayItemId } from '@dhcb/core-contracts/todayPlan'
+import { todayItemId } from '@dhcb/core-contracts/todayItemId'
 import type { StemSubjectId } from '@dhcb/core-contracts/stemLesson'
 
 export interface StemNextCtx {
