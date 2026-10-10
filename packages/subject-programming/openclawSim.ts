@@ -28,6 +28,8 @@
 //   3. Gateway chưa chạy mà gọi chat/kênh → lỗi chỉ đúng nguyên nhân + gợi lệnh bật —
 //      dạy tư duy "control plane trước, mọi thứ sau".
 
+import { khongDau } from './khongDau.js'
+
 /** Kết quả một lượt chạy — cùng hình dạng với gitSim/hermesSim để dùng chung đường chấm. */
 export interface OpenclawRunResult {
   output: string
@@ -101,17 +103,6 @@ function taoMay(): May {
     choDuyet: [],
     soDuyet: 0,
   }
-}
-
-/** Bỏ dấu tiếng Việt + thường hoá — dò mẫu trên nội dung học viên gõ CÓ hoặc KHÔNG dấu đều
- *  trúng (output của máy thì luôn không dấu, đúng quy ước gitSim/bashSim). */
-function khongDau(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
 }
 
 /** Luật sư phạm 2 — chuỗi dạng secret trong tin nhắn: khóa API, mật khẩu, token. */

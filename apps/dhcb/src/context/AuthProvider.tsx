@@ -3,8 +3,6 @@ import { AuthContext } from './authContext'
 import { getCurrentUser, getCurrentUserVerified, SessionVerificationError } from '../lib/auth'
 import { preloadBrowseChunks } from '../lib/preloadBrowse'
 import { resetPreload } from '../lib/preloadState'
-import { clearAudioCache } from '../lib/audioCache'
-import { cacheAllowedVoices } from '../lib/voiceTiers'
 import { getStoredToken, clearStoredToken, SESSION_MARKER_KEY } from '@core/authHeader'
 import { getGuestId } from '@core/guestId'
 import { hasGuestProgress } from '../lib/guestProgressKeys'
@@ -44,7 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // (Giai đoạn B: không còn onAuthStateChange của Supabase để bắt sự kiện SIGNED_OUT).
     if (wasLoggedIn.current && !u) {
       resetPreload()
-      void clearAudioCache()
+      // Nạp động: audioCache + voiceTiers chỉ cần khi có phát âm thanh — import tĩnh ở đây kéo
+      // chúng vào bundle khởi động của mọi trang (audit 2026-10-10, đợt E4).
+      void import('../lib/audioCache')
+        .then(({ clearAudioCache }) => clearAudioCache())
+        .catch((err) => console.warn('[auth] không dọn được cache audio:', err))
     }
     // Vừa có phiên THẬT (đăng ký/đăng nhập bằng bất kỳ đường nào: email, Google, Facebook,
     // Apple, Microsoft, OAuth redirect) → hợp nhất tiến độ khách vào tài khoản NGAY, trước khi
@@ -67,7 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u ?? buildGuestUser())
     // Cache giọng gói thật (Free/VIP) để chế độ "giọng ngẫu nhiên" (lib/tts.ts) chỉ random
     // đúng trong phạm vi được phép — tránh random ra giọng rồi bị server âm thầm hạ xuống.
-    if (u) cacheAllowedVoices(u.plan)
+    if (u) {
+      const plan = u.plan
+      void import('../lib/voiceTiers')
+        .then(({ cacheAllowedVoices }) => cacheAllowedVoices(plan))
+        .catch((err) => console.warn('[auth] không lưu được danh sách giọng theo gói:', err))
+    }
   }, [])
 
   const refresh = useCallback(async () => {

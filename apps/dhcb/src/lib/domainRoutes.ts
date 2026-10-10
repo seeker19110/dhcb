@@ -33,8 +33,3 @@ export function duongDanGhiChu(): string {
 export function duongDanGhiChuKanban(): string {
   return '/ghi-chu/kanban'
 }
-
-/** Action Canvas của Companion (không thuộc riêng trụ nào). */
-export function duongDanActionCanvas(): string {
-  return '/action-canvas'
-}

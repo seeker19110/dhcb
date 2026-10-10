@@ -255,13 +255,16 @@ function usePrefetchPages() {
   useEffect(() => {
     if (isSaveDataOn()) return
     return runWhenPageSettled(() => {
-      void import('./pages/core/Home')
-      void import('./pages/subjects/english/Chat')
-      void import('./pages/subjects/english/Learn')
-      void import('./pages/subjects/english/Dictionary')
-      void import('./pages/subjects/english/Lessons')
-      void import('./pages/subjects/english/CommonPhrases')
-      void import('./pages/subjects/english/Speaking')
+      // Tải trước chỉ là tối ưu: lỗi mạng thì bỏ qua (trang nạp lại khi được mở thật), không để
+      // thành unhandled rejection (audit 2026-10-10, đợt E4).
+      const ignore = () => {}
+      import('./pages/core/Home').catch(ignore)
+      import('./pages/subjects/english/Chat').catch(ignore)
+      import('./pages/subjects/english/Learn').catch(ignore)
+      import('./pages/subjects/english/Dictionary').catch(ignore)
+      import('./pages/subjects/english/Lessons').catch(ignore)
+      import('./pages/subjects/english/CommonPhrases').catch(ignore)
+      import('./pages/subjects/english/Speaking').catch(ignore)
     })
   }, [])
 }

@@ -6,10 +6,6 @@ import { z } from 'zod'
 
 export const UuidSchema = z.string().uuid()
 
-/** Giới hạn thời gian chia sẻ — KHÔNG có lựa chọn "vĩnh viễn" (xem migration 0068, luật 1). */
-export const SESSION_DURATION_MINUTES = [60, 240, 480] as const
-export const DEFAULT_DURATION_MINUTES = 240
-
 /** Toạ độ + số đo kèm theo, gửi từ trình duyệt lên. */
 export const PositionSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -55,6 +51,7 @@ export type SessionState = z.infer<typeof SessionStateSchema>
 // ── REST body ────────────────────────────────────────────────────────────────────────────
 export const CreateSessionBodySchema = z.object({
   name: z.string().trim().min(1).max(80),
+  // Giới hạn thời gian chia sẻ — KHÔNG có lựa chọn "vĩnh viễn" (xem migration 0068, luật 1).
   durationMinutes: z.union([z.literal(60), z.literal(240), z.literal(480)]),
 })
 export type CreateSessionBody = z.infer<typeof CreateSessionBodySchema>

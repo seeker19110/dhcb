@@ -16,6 +16,7 @@
 //  5. THỜI GIAN LUÔN TRUYỀN VÀO (`now`) để test không phụ thuộc đồng hồ máy.
 import { z } from 'zod'
 import { LEARNING_SESSION_PREFIX } from './storageKeyPrefixes'
+import { fnv1a32 } from '@dhcb/core-contracts/seededRandom'
 
 /** Nháp quá hạn này (tính từ `updatedAt`) thì không nạp lại nữa — §7 Q2 của đặc tả. */
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -359,13 +360,7 @@ export function moveGuestSessionsTo(guestId: string, accountId: string): number 
 export function contentFingerprint(parts: readonly (string | number)[]): string {
   // Ký tự NUL ('\u0000') làm dấu ngăn: ['ab','c'] và ['a','bc'] phải ra hai vân tay khác nhau.
   const text = parts.map((p) => String(p)).join('\u0000')
-  let hash = 0x811c9dc5
-  for (let i = 0; i < text.length; i += 1) {
-    hash ^= text.charCodeAt(i)
-    // Nhân với 16777619 theo kiểu 32-bit không dấu (Math.imul tránh sai số của số thực).
-    hash = Math.imul(hash, 0x01000193) >>> 0
-  }
-  return hash.toString(16).padStart(8, '0')
+  return fnv1a32(text).toString(16).padStart(8, '0')
 }
 
 /** Chỉ dùng trong test — dọn bộ nhớ dự phòng giữa các ca. */

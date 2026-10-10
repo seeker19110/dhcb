@@ -15,6 +15,7 @@
 
 import type { Direction } from '../types'
 import { getAuthHeader } from '@core/authHeader'
+import { readLocalArray } from './localJson'
 
 export type MistakeSource = 'chat' | 'writing' | 'speaking'
 
@@ -63,13 +64,7 @@ const MAX_FIELD_LEN = 500
 export const REVIEW_SPACING_MS = 2 * 86_400_000
 
 function read(uid: string): Mistake[] {
-  try {
-    const raw = localStorage.getItem(KEY(uid))
-    const arr = raw ? (JSON.parse(raw) as unknown) : []
-    return Array.isArray(arr) ? (arr as Mistake[]) : []
-  } catch {
-    return []
-  }
+  return readLocalArray<Mistake>(KEY(uid))
 }
 
 function write(uid: string, list: Mistake[]): void {

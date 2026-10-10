@@ -10,6 +10,7 @@
 // Bộ sinh số ngẫu nhiên dùng SEED CỐ ĐỊNH nên hàm vẫn TẤT ĐỊNH (yêu cầu ở đặc tả §9).
 
 import { normalizeAnswerText } from './number.js'
+import { mulberry32 } from './mulberry32.js'
 
 type Node =
   | { type: 'num'; value: number }
@@ -281,18 +282,6 @@ export function evaluateNumeric(raw: string): number | null {
 
 // ── So khớp bằng thăm dò số ─────────────────────────────────────────────────
 
-/** Bộ sinh số giả ngẫu nhiên mulberry32 — SEED CỐ ĐỊNH để hàm chấm luôn tất định. */
-function makeRng(seed: number): () => number {
-  let a = seed >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 const PROBE_SEED = 0x5eed1234
 const PROBE_COUNT = 20
 const MAX_ATTEMPTS = 200
@@ -328,7 +317,8 @@ export function expressionsEqual(a: string, b: string): boolean {
   }
 
   const names = [...varsA]
-  const rng = makeRng(PROBE_SEED)
+  // mulberry32 với SEED CỐ ĐỊNH để hàm chấm luôn tất định.
+  const rng = mulberry32(PROBE_SEED)
   let matched = 0
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS && matched < PROBE_COUNT; attempt++) {

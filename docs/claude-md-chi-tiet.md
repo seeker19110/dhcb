@@ -140,6 +140,25 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   references, mỗi gói emit `dist/` riêng) rồi `tsc -p tsconfig.server.json`; dev
   (`tsx`/Vite/Vitest) phân giải `@dhcb` về source qua tsconfig `paths` + alias, KHÔNG cần build
   gói trước. CI có bước boot check `node dist-server/server.js` + `/api/health`.
+- **Tám gói `core-*` ít được nhắc (bổ sung 2026-10-10, audit E4.6 — mô tả lấy từ đầu file nguồn):**
+  - `core-contracts` — hợp đồng dữ liệu Zod dùng chung client/server (`versionedObject` ở
+    `version.ts`), kèm vài tiện ích THUẦN dùng chung hai phía: `shuffle.ts` (Fisher–Yates),
+    `seededRandom.ts` (`fnv1a32` + re-export `mulberry32`), `vnDate.ts` (ngày theo giờ VN —
+    nguồn duy nhất cho `apps/dhcb/src/lib/date.ts` và `packages/core-db/date.ts`).
+  - `core-errors` — `AppError` lỗi nghiệp vụ có kiểu cho handler API. Gói lá.
+  - `core-config` — nhận diện/che biến môi trường bí mật khi ghi log (`secrets.ts`) + mã hoá dữ
+    liệu người dùng (`userDataCrypto.ts`). Gói lá.
+  - `core-learner` — luật học dùng chung server (nguồn sự thật) và client (hiển thị lạc quan):
+    mở cấp CEFR, luật hoàn thành, read model tiến độ, chấm bằng chứng STEM, `outline/normalizeVi`.
+  - `core-chat` — chat thời gian thực: service phòng/tin nhắn, bạn bè, kiểm duyệt từ ngữ,
+    WebSocket + Redis pub/sub, Web Push khi người nhận offline.
+  - `core-location` — "Đi chung" (chia sẻ vị trí có thời hạn): toán haversine (`geo.ts`),
+    service phiên, kênh WebSocket.
+  - `core-examplan` — chế độ ôn thi: lập lịch ngược từ ngày thi + service lưu kế hoạch.
+  - `core-integrations` — kết nối Google Calendar / Notion.
+  - **Chiều phụ thuộc cần nhớ:** `core-contracts` → `core-grading`, nên `core-grading` KHÔNG được
+    import `core-contracts` (vòng tham chiếu `tsc -b`) — vì vậy `mulberry32` sống ở
+    `core-grading/mulberry32.ts` và chỉ được re-export qua `core-contracts/seededRandom.ts`.
 
 ## §7 — Quy ước khi viết code & cách làm việc
 

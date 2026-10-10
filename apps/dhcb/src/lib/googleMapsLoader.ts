@@ -87,8 +87,3 @@ export function loadGoogleMaps(): Promise<GoogleMapsApi> {
   })
   return loadPromise
 }
-
-export function _resetGoogleMapsLoaderForTests(): void {
-  loadPromise = null
-  document.getElementById(SCRIPT_ID)?.remove()
-}

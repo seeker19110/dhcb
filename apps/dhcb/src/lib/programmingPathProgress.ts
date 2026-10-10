@@ -3,6 +3,7 @@
 // Cùng khuôn với programmingSpecProgress.ts: nguồn sự thật là server
 // (/api/programming/path-progress), localStorage chỉ là bộ đệm để mở trang thấy ngay.
 import { getAuthHeader } from '@core/authHeader'
+import { readLocalArray } from './localJson'
 
 export type PathStageStatus = 'skipped' | 'in_progress' | 'completed'
 
@@ -16,14 +17,7 @@ export interface PathStageProgress {
 const cacheKey = (uid: string, pathId: string) => `dhcb_prog_path_${pathId}_${uid}`
 
 function readCache(uid: string, pathId: string): PathStageProgress[] {
-  try {
-    const raw = localStorage.getItem(cacheKey(uid, pathId))
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as unknown
-    return Array.isArray(parsed) ? (parsed as PathStageProgress[]) : []
-  } catch {
-    return []
-  }
+  return readLocalArray<PathStageProgress>(cacheKey(uid, pathId))
 }
 
 function writeCache(uid: string, pathId: string, stages: PathStageProgress[]): void {

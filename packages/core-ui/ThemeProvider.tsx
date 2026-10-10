@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ThemeContext } from './themeContext.js'
 import { getTheme, applyTheme, setTheme as persistTheme, KID_THEME, type Theme } from './theme.js'
 
@@ -21,11 +21,14 @@ export function ThemeProvider({ children, locked = false, settled = true }: Them
   // Nhi đồng, nên bỏ khoá là quay lại đúng theme đã chọn (không hề bị mất).
   const [theme, setThemeState] = useState<Theme>(getTheme)
 
-  function setTheme(t: Theme) {
-    if (locked) return // Nhi đồng bị khoá cứng — không cho tự đổi qua ThemeToggle
-    persistTheme(t) // lưu localStorage + gắn data-theme lên <html>
-    setThemeState(t)
-  }
+  const setTheme = useCallback(
+    (t: Theme) => {
+      if (locked) return // Nhi đồng bị khoá cứng — không cho tự đổi qua ThemeToggle
+      persistTheme(t) // lưu localStorage + gắn data-theme lên <html>
+      setThemeState(t)
+    },
+    [locked],
+  )
 
   // Theme HIỂN THỊ suy ra từ props (derived state — không setState trong effect,
   // luật react-hooks/set-state-in-effect): bị khoá → luôn "Nhi đồng".
@@ -40,9 +43,12 @@ export function ThemeProvider({ children, locked = false, settled = true }: Them
     applyTheme(effectiveTheme)
   }, [effectiveTheme, locked, settled])
 
-  return (
-    <ThemeContext.Provider value={{ theme: effectiveTheme, setTheme, locked }}>
-      {children}
-    </ThemeContext.Provider>
+  // Giữ nguyên object khi không có gì đổi — tạo object mới mỗi render làm MỌI nơi dùng
+  // useTheme() render lại theo (audit 2026-10-10, đợt E4).
+  const value = useMemo(
+    () => ({ theme: effectiveTheme, setTheme, locked }),
+    [effectiveTheme, setTheme, locked],
   )
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

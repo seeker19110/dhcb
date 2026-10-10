@@ -33,6 +33,7 @@ import {
   getStreakFreezeDatesForSync,
   setStreakFreezeDatesFromSync,
 } from './storage'
+import { readLocalArray } from './localJson'
 
 const LEARNED = (uid: string) => `et_learned_${uid}`
 const HARD = (uid: string) => `et_hard_${uid}`
@@ -211,13 +212,7 @@ function mergeExamMaps(
 }
 
 function readArr(key: string): string[] {
-  try {
-    const r = localStorage.getItem(key)
-    const arr = r ? (JSON.parse(r) as unknown) : []
-    return Array.isArray(arr) ? (arr as string[]) : []
-  } catch {
-    return []
-  }
+  return readLocalArray<string>(key)
 }
 
 function readObj(key: string): Record<string, SRSLike> {

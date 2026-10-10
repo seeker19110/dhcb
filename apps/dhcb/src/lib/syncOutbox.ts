@@ -273,10 +273,6 @@ export function setActiveUid(uid: string | null): void {
   if (activeUid) void flush(activeUid, { resetBackoff: true })
 }
 
-export function getActiveUid(): string | null {
-  return activeUid
-}
-
 function onWake(): void {
   if (activeUid) void flush(activeUid, { resetBackoff: true })
 }

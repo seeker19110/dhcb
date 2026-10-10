@@ -14,6 +14,7 @@ import * as z from 'zod/mini'
 import { isGuestId } from '@core/guestId'
 import { getAuthHeader, getStoredToken } from '@core/authHeader'
 import type { ChatSession, WritingSubmission, SpeakingSession, DailyUsage } from '../types'
+import { readLocalArray } from './localJson'
 
 // Khóa localStorage — PHẢI khớp với storage.ts để dùng chung bộ nhớ đệm
 const K = {
@@ -24,12 +25,7 @@ const K = {
 }
 
 function getLocalArray<T>(key: string): T[] {
-  try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? '[]')
-    return Array.isArray(parsed) ? (parsed as T[]) : []
-  } catch {
-    return []
-  }
+  return readLocalArray<T>(key)
 }
 
 // Server chỉ trả N phiên GẦN NHẤT mỗi loại (HISTORY_PULL_LIMIT ở apps/server/src/api/core/history.ts,

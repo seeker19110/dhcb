@@ -29,6 +29,8 @@
 //      thích — secret không bao giờ dán vào việc.
 //   3. Việc khó hoàn tác (xoá toàn bộ…) → agent DỪNG và đòi xác nhận rõ ràng trước khi làm.
 
+import { khongDau } from './khongDau.js'
+
 /** Kết quả một lượt chạy — cùng hình dạng với gitSim/bashSim để dùng chung đường chấm. */
 export interface HermesRunResult {
   output: string
@@ -83,17 +85,6 @@ function taoMay(): May {
     quyen: 'hoi',
     viec: [],
   }
-}
-
-/** Bỏ dấu tiếng Việt + thường hoá — để dò mẫu trên lệnh học viên gõ CÓ hoặc KHÔNG dấu đều
- *  trúng (output của máy thì luôn không dấu, đúng quy ước gitSim/bashSim). */
-function khongDau(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
 }
 
 /** Luật sư phạm 2 — chuỗi dạng secret trong nội dung việc: khóa API, mật khẩu, token. */

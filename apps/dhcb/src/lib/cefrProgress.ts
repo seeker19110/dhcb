@@ -24,6 +24,7 @@ import {
 } from '@dhcb/core-contracts/cefrDialogueCheck'
 import { pushProgress } from './progressSync'
 import { addGrammarToSRS } from './srs'
+import { readLocalArray } from './localJson'
 
 // Ngưỡng mở khóa cấp tiếp theo: thuộc ≥70% từ vựng của cấp trước.
 // Con số nằm ở `@dhcb/core-learner/unlockThreshold` — DÙNG CHUNG với luật mở bậc môn Lập trình
@@ -35,13 +36,7 @@ const DIALOGUE_KEY = (uid: string) => `et_cefr_dialogue_${uid}`
 
 // Đọc 1 Set chuỗi từ localStorage (hỏng/thiếu → Set rỗng).
 function readSet(key: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(key)
-    const arr = raw ? (JSON.parse(raw) as unknown) : []
-    return new Set(Array.isArray(arr) ? (arr as string[]) : [])
-  } catch {
-    return new Set()
-  }
+  return new Set(readLocalArray<string>(key))
 }
 
 function writeSet(key: string, set: Set<string>) {

@@ -110,9 +110,14 @@ export function minutesToSpeed(minutes: number): DailySpeed {
 // Hook cho component: trả cache NGAY nếu có (state ổn định — chỉ ghi 1 lần lúc
 // onboarding), thiết bị mới chưa có cache thì fetch nền rồi cập nhật.
 // null = chưa biết (đang tải, chưa onboarded, hoặc chưa đăng nhập).
+//
+// State GẮN KÈM uid (audit 2026-10-10, đợt E4): bản cũ khởi tạo theo uid ĐẦU TIÊN rồi chỉ ghi
+// khi có dữ liệu — đổi tài khoản/đăng xuất mà người mới chưa có hồ sơ thì vẫn trả dữ liệu người
+// trước (vd theme "Nhi đồng" còn khoá sau khi tài khoản trẻ em đăng xuất). Nay dữ liệu của uid
+// khác bị bỏ qua: đọc cache của uid mới ngay, chưa có thì null tới khi fetch xong.
 export function useOnboarding(uid: string | undefined): OnboardingData | null {
-  const [data, setData] = useState<OnboardingData | null>(() =>
-    uid ? getCachedOnboarding(uid) : null,
+  const [state, setState] = useState<{ uid: string | undefined; data: OnboardingData | null }>(
+    () => ({ uid, data: uid ? getCachedOnboarding(uid) : null }),
   )
   useEffect(() => {
     if (!uid) return
@@ -121,13 +126,14 @@ export function useOnboarding(uid: string | undefined): OnboardingData | null {
     // có cache thì dùng ngay, chưa có mới fetch nền như trước.
     void Promise.resolve().then(async () => {
       const d = getCachedOnboarding(uid) ?? (await fetchOnboarding(uid))
-      if (alive && d) setData(d)
+      if (alive) setState({ uid, data: d })
     })
     return () => {
       alive = false
     }
   }, [uid])
-  return data
+  if (state.uid === uid) return state.data
+  return uid ? getCachedOnboarding(uid) : null
 }
 
 // ── [U9b, 2026-10-05] Môn đã chọn lúc onboarding ─────────────────────────────────────────────

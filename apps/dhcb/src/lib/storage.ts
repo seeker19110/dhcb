@@ -323,6 +323,19 @@ export function markStreakCelebrated(userId: string) {
   localStorage.setItem(STREAK_CELEBRATED_KEY(userId), todayStr())
 }
 
+/**
+ * Chuỗi THÔ usage hôm nay (1 lần đọc localStorage) — làm khoá memo cho `getStreak` ở Layout:
+ * streak chỉ đổi trong phiên khi hoạt động HÔM NAY đổi (các ngày trước không đổi), nên khỏi
+ * quét lại tới 365 ngày mỗi lần render (audit 2026-10-10, đợt E4).
+ */
+export function getTodayUsageRaw(userId: string): string | null {
+  try {
+    return localStorage.getItem(K.usage(userId, todayStr()))
+  } catch {
+    return null
+  }
+}
+
 export function getStreak(userId: string): number {
   const freezeDates = getStreakFreezeDates(userId)
   let newFreezeDate: string | null = null
