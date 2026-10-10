@@ -7,6 +7,7 @@ import {
   generatePlan,
   synthesizeReply,
   synthesizeCompanionReply,
+  AI_UNAVAILABLE_NOTE,
   executeCompanionTurn,
   streamCompanionTurn,
 } from './companionRuntime.js'
@@ -644,7 +645,10 @@ describe('synthesizeCompanionReply with shared AI models', () => {
       sampleContext,
     )
 
-    expect(reply).toBe('Chào bạn! Tôi là Bạn Đồng Hành AI sẵn sàng cùng bạn chinh phục IELTS.')
+    expect(reply).toEqual({
+      isFallback: false,
+      text: 'Chào bạn! Tôi là Bạn Đồng Hành AI sẵn sàng cùng bạn chinh phục IELTS.',
+    })
     expect(chatProvidersMock.callGroqChatWithKeyPool).toHaveBeenCalled()
     delete process.env.GROQ_API_KEY
   })
@@ -684,7 +688,10 @@ describe('synthesizeCompanionReply with shared AI models', () => {
       sampleContext,
     )
 
-    expect(reply).toBe('Phản hồi từ Anthropic Claude cho Bạn Đồng Hành.')
+    expect(reply).toEqual({
+      isFallback: false,
+      text: 'Phản hồi từ Anthropic Claude cho Bạn Đồng Hành.',
+    })
     const call = anthropicClientMock.callAnthropicText.mock.calls[0]![0] as {
       route: { model: string }
       system: string
@@ -721,7 +728,7 @@ describe('synthesizeCompanionReply with shared AI models', () => {
       sampleContext,
     )
 
-    expect(reply).toBe('Từ Groq')
+    expect(reply).toEqual({ isFallback: false, text: 'Từ Groq' })
     delete process.env.GROQ_API_KEY
     delete process.env.ANTHROPIC_API_KEY
   })
@@ -738,7 +745,7 @@ describe('synthesizeCompanionReply with shared AI models', () => {
       sampleContext,
     )
 
-    expect(reply).toBe('Phản hồi từ Google Gemini 2.0 Flash.')
+    expect(reply).toEqual({ isFallback: false, text: 'Phản hồi từ Google Gemini 2.0 Flash.' })
     expect(geminiApiMock.callGemini).toHaveBeenCalled()
     delete process.env.GEMINI_API_KEY
   })
@@ -756,8 +763,52 @@ describe('synthesizeCompanionReply with shared AI models', () => {
       sampleContext,
     )
 
-    expect(reply).toContain('Đồng Hành đã nhận được tin nhắn: "Xin chào bạn".')
-    expect(reply).toContain('[Sử dụng 10/2000 token ngữ cảnh]')
+    expect(reply.text).toContain('Đồng Hành đã nhận được tin nhắn: "Xin chào bạn".')
+    expect(reply.text).toContain('[Sử dụng 10/2000 token ngữ cảnh]')
+    expect(reply.isFallback).toBe(true)
+    expect(reply.text).toContain(AI_UNAVAILABLE_NOTE)
+  })
+
+  it('có key nhưng CẢ BA nhà cung cấp đều lỗi → câu mẫu + isFallback + ghi log từng nhánh', async () => {
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
+    process.env.GROQ_API_KEY = 'test-groq-key'
+    process.env.GEMINI_API_KEY = 'test-gemini-key'
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    anthropicClientMock.callAnthropicText.mockResolvedValueOnce({
+      kind: 'api_error',
+      status: 401,
+      message: 'invalid x-api-key',
+      latencyMs: 5,
+    })
+    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValueOnce({
+      kind: 'http_error',
+      status: 503,
+      bodyText: 'over capacity',
+      latencyMs: 5,
+    })
+    geminiApiMock.callGemini.mockRejectedValueOnce(new Error('quota exceeded'))
+
+    const reply = await synthesizeCompanionReply(
+      'Xin chào',
+      'general_conversation',
+      'learning',
+      [],
+      sampleContext,
+    )
+
+    expect(reply.isFallback).toBe(true)
+    expect(reply.text).toContain(AI_UNAVAILABLE_NOTE)
+    const logged = warn.mock.calls.map((c) => String(c[0])).join('\n')
+    expect(logged).toContain('Anthropic HTTP 401')
+    expect(logged).toContain('Groq HTTP 503')
+    expect(logged).toContain('Gemini lỗi: quota exceeded')
+    expect(error).toHaveBeenCalledTimes(1)
+    warn.mockRestore()
+    error.mockRestore()
+    delete process.env.ANTHROPIC_API_KEY
+    delete process.env.GROQ_API_KEY
+    delete process.env.GEMINI_API_KEY
   })
 })
 

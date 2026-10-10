@@ -21,7 +21,7 @@ import {
   finalizeHolodeckSession,
 } from '@dhcb/core-personal/scenarioHolodeckService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { SessionGoneError } from '@dhcb/core-personal/ttlSessionStore'
 
@@ -123,6 +123,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (isAppError(err)) {
       return jsonResponse(toErrorBody(err), err.status, headers)
     }
+    logInternalError(err, 'scenario-holodeck')
     return jsonResponse({ error: 'Lỗi xử lý phòng giả lập Scenario Holodeck' }, 500, headers)
   }
 }

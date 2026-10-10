@@ -62,8 +62,11 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ error: 'Chỉ admin mới truy cập được' }, 403, allHeaders)
   }
 
+  // Trang admin KHÔNG được thấy/ghi đè bằng cấu hình MẶC ĐỊNH khi CSDL lỗi (audit 2026-10-10,
+  // E1.7): bản mặc định có cầu dao TẮT — admin bấm lưu lúc đó sẽ vô tình bật lại AI. Lỗi đọc
+  // → ném ra để adapter trả 500.
   if (req.method === 'GET') {
-    const settings = await getAppSettings()
+    const settings = await getAppSettings({ requireAvailable: true })
     return jsonResponse(settings, 200, allHeaders)
   }
 
@@ -77,22 +80,33 @@ export default async function handler(req: Request): Promise<Response> {
       return jsonResponse({ error: parsed.error.message }, parsed.error.status, allHeaders)
     }
     const { limits, promoUntil } = parsed.data
-    // Giữ nguyên giá trị cũ nếu client không gửi field này (xem comment ở UpdateSchema).
-    const current = await getAppSettings()
-    const aiCircuitBreaker = parsed.data.aiCircuitBreaker ?? current.aiCircuitBreaker
-    const leaderboardEnabled = parsed.data.leaderboardEnabled ?? current.leaderboardEnabled
-
+    // Giữ nguyên giá trị cũ nếu client không gửi field này (xem comment ở UpdateSchema): làm
+    // NGAY TRONG SQL bằng coalesce, không đọc `getAppSettings()` trước — bản đọc đó có thể là
+    // cache 30s của tiến trình này (PM2 chạy nhiều tiến trình), ghi lại giá trị cũ sẽ lật
+    // ngược cầu dao vừa bật ở tiến trình khác.
     const pool = getPgPool()
-    await pool.query(
+    const result = await pool.query(
       `update public.app_settings set
-         pro_daily_limit = $1, vip_daily_limit = $2,
-         promo_until = $3, ai_circuit_breaker = $4, leaderboard_enabled = $5, updated_at = now()
+         pro_daily_limit = $1, vip_daily_limit = $2, promo_until = $3,
+         ai_circuit_breaker = coalesce($4::boolean, ai_circuit_breaker),
+         leaderboard_enabled = coalesce($5::boolean, leaderboard_enabled),
+         updated_at = now()
        where id = 1`,
-      [limits.free, limits.vip, promoUntil, aiCircuitBreaker, leaderboardEnabled],
+      [
+        limits.free,
+        limits.vip,
+        promoUntil,
+        parsed.data.aiCircuitBreaker ?? null,
+        parsed.data.leaderboardEnabled ?? null,
+      ],
     )
+    if (result.rowCount !== 1) {
+      console.error('[admin-settings] app_settings id=1 không tồn tại — chưa ghi được cấu hình')
+      return jsonResponse({ error: 'Chưa lưu được cấu hình — thử lại sau' }, 500, allHeaders)
+    }
     invalidateSettingsCache()
 
-    const updated = await getAppSettings()
+    const updated = await getAppSettings({ requireAvailable: true })
     return jsonResponse(updated, 200, allHeaders)
   }
 

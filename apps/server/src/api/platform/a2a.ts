@@ -15,7 +15,7 @@ import {
 } from '@dhcb/core-personal/a2aNegotiationService'
 import { A2AMessageSchema } from '@dhcb/core-contracts/a2aProtocol'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 import { readJsonBody } from '@dhcb/core-http/validation'
 
 export default async function handler(req: Request): Promise<Response> {
@@ -66,6 +66,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (isAppError(err)) {
       return jsonResponse(toErrorBody(err), err.status, headers)
     }
+    logInternalError(err, 'a2a')
     return jsonResponse({ error: 'Lỗi xử lý giao thức A2A' }, 500, headers)
   }
 }

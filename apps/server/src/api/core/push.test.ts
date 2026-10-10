@@ -98,7 +98,7 @@ describe('sendReminders — chọn nội dung theo hoạt động challenge gầ
       mockPool({ subs: [sub('u1')], usageRows: [], challengeRows: [{ user_id: 'u1' }] }),
     )
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 1, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 1, skipped: 0, expired: 0, failed: 0 })
     const payload = JSON.parse(mockedSend.mock.calls[0]?.[1] as string)
     expect(payload.url).toBe('/challenge')
     expect(payload.title).toMatch(/challenge/i)
@@ -107,7 +107,7 @@ describe('sendReminders — chọn nội dung theo hoạt động challenge gầ
   it('chưa học hôm nay + KHÔNG có challenge_entries gần đây → nhận payload chung (url /)', async () => {
     mockedGetPool.mockReturnValue(mockPool({ subs: [sub('u2')], usageRows: [], challengeRows: [] }))
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 1, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 1, skipped: 0, expired: 0, failed: 0 })
     const payload = JSON.parse(mockedSend.mock.calls[0]?.[1] as string)
     expect(payload.url).toBe('/')
   })
@@ -121,7 +121,7 @@ describe('sendReminders — chọn nội dung theo hoạt động challenge gầ
       }),
     )
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 1, expired: 0 })
+    expect(result).toEqual({ sent: 0, skipped: 1, expired: 0, failed: 0 })
     expect(mockedSend).not.toHaveBeenCalled()
   })
 
@@ -134,7 +134,7 @@ describe('sendReminders — chọn nội dung theo hoạt động challenge gầ
       }),
     )
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 1, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 1, skipped: 0, expired: 0, failed: 0 })
     const payload = JSON.parse(mockedSend.mock.calls[0]?.[1] as string)
     expect(payload.url).toBe('/')
   })
@@ -148,7 +148,7 @@ describe('sendReminders — chọn nội dung theo hoạt động challenge gầ
       }),
     )
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 2, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 2, skipped: 0, expired: 0, failed: 0 })
     const payloads = mockedSend.mock.calls.map((c) => JSON.parse(c[1] as string).url)
     expect(payloads.sort()).toEqual(['/', '/challenge'])
   })
@@ -283,7 +283,7 @@ describe('sendReminders — thiếu VAPID key', () => {
     vi.stubEnv('VAPID_PRIVATE_KEY', '')
     const mod = await import('./push.js')
     const result = await mod.sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0, failed: 0 })
     expect(mockedGetPool).not.toHaveBeenCalled()
     // Khôi phục cho các test khác trong tiến trình (module cache đã bị reset).
     vi.stubEnv('VAPID_PUBLIC_KEY', 'pub-test')
@@ -398,7 +398,7 @@ describe('sendReminders — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)',
       mockPool({ subs: [sub('u10')], usageRows: [{ user_id: 'u10', writing_count: 2 }] }),
     )
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 1, expired: 0 })
+    expect(result).toEqual({ sent: 0, skipped: 1, expired: 0, failed: 0 })
     expect(mockedSend).not.toHaveBeenCalled()
   })
 
@@ -469,7 +469,7 @@ describe('sendReminders — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)',
     const err = Object.assign(new Error('Gone'), { statusCode: 410 })
     mockedSend.mockRejectedValueOnce(err)
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 0, expired: 1 })
+    expect(result).toEqual({ sent: 0, skipped: 0, expired: 1, failed: 0 })
     const deleteCall = queryLog.find((q) =>
       q.sql.startsWith('delete from public.push_subscriptions where endpoint'),
     )
@@ -483,8 +483,12 @@ describe('sendReminders — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)',
     )
     const err = Object.assign(new Error('Server Error'), { statusCode: 500 })
     mockedSend.mockRejectedValueOnce(err)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0 })
+    // Lỗi không phải "hết hạn" được ĐẾM + log mã HTTP (audit 2026-10-10, E1.8) — không còn im lặng.
+    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0, failed: 1 })
+    expect(warnSpy).toHaveBeenCalledWith('[push] gửi nhắc lỗi:', 500)
+    warnSpy.mockRestore()
     expect(
       queryLog.some((q) =>
         q.sql.startsWith('delete from public.push_subscriptions where endpoint'),
@@ -497,8 +501,11 @@ describe('sendReminders — nhánh còn thiếu (Đợt 2 coverage 2026-09-05)',
       mockPool({ subs: [sub('u13')], usageRows: [], challengeRows: [] }),
     )
     mockedSend.mockRejectedValueOnce('mang loi roi')
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const result = await sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0, failed: 1 })
+    expect(warnSpy).toHaveBeenCalledWith('[push] gửi nhắc lỗi:', 'mang loi roi')
+    warnSpy.mockRestore()
   })
 })
 
@@ -510,7 +517,7 @@ describe('sendReminders — biến môi trường VAPID hoàn toàn chưa set (�
     vi.stubEnv('VAPID_PRIVATE_KEY', undefined)
     const mod = await import('./push.js')
     const result = await mod.sendReminders(13)
-    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0 })
+    expect(result).toEqual({ sent: 0, skipped: 0, expired: 0, failed: 0 })
     // Khôi phục cho các test khác trong tiến trình (module cache đã bị reset).
     vi.stubEnv('VAPID_PUBLIC_KEY', 'pub-test')
     vi.stubEnv('VAPID_PRIVATE_KEY', 'priv-test')

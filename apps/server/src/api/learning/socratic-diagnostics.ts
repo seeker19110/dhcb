@@ -19,7 +19,7 @@ import {
   submitSocraticReflection,
 } from '@dhcb/core-personal/socraticDiagnosticsService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
-import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
+import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 
 /** Trần độ dài một câu trả lời — chặn một lượt nhét hàng MB vào phiên trong RAM. */
@@ -109,6 +109,7 @@ export default async function handler(req: Request): Promise<Response> {
     if (isAppError(err)) {
       return jsonResponse(toErrorBody(err), err.status, headers)
     }
+    logInternalError(err, 'socratic-diagnostics')
     return jsonResponse({ error: 'Lỗi xử lý chẩn đoán nhận thức Socratic' }, 500, headers)
   }
 }

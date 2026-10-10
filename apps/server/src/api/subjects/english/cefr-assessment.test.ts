@@ -125,9 +125,15 @@ describe('POST /api/cefr-assessment', () => {
 
   it('lỗi DB → 503, không lộ chi tiết hạ tầng hoặc xác nhận điểm', async () => {
     vi.mocked(assessCefr).mockRejectedValue(new Error('internal sensitive connection details'))
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const res = await handler(request())
     expect(res.status).toBe(503)
     expect(await res.text()).not.toContain('sensitive')
     expect(rewardReferralIfEligible).not.toHaveBeenCalled()
+    // Chi tiết ở LẠI server (audit 2026-10-10, E1.4) — trước đây lỗi này không để lại dấu vết nào.
+    expect(errSpy).toHaveBeenCalledWith(
+      '[503] cefr-assessment internal sensitive connection details',
+    )
+    errSpy.mockRestore()
   })
 })
