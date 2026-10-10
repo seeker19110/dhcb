@@ -513,8 +513,14 @@ test.describe('UX-R2 — canonical Home evidence', () => {
       await expect(promptPanel).toBeVisible()
       await expect(promptPanel.getByRole('button')).toHaveCount(4)
       await expect(promptToggle).toBeFocused()
+      // Chỉ đếm `/api/` — việc NỀN tải trước chunk trang/dữ liệu tĩnh chạy theo hẹn giờ
+      // (lib/pageSettled.ts) và có thể rơi vào khoảng đo này mà không do cú bấm chip gây ra.
       const requestsAfterSettle: string[] = []
-      page.on('request', (request) => requestsAfterSettle.push(request.url()))
+      page.on('request', (request) => {
+        if (new URL(request.url()).pathname.startsWith('/api/')) {
+          requestsAfterSettle.push(request.url())
+        }
+      })
       const promptCases = [
         {
           name: /Luyện phát âm AI/,

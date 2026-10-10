@@ -2,8 +2,9 @@
 // Phân tách shared learning primitives với subject-owned taxonomy, pedagogy & evaluation rules.
 import { z } from 'zod'
 import { versionedObject } from './version.js'
+import { SUBJECT_MANIFEST_SCHEMA_VERSION } from './subjectManifestVersion.js'
 
-export const SUBJECT_MANIFEST_SCHEMA_VERSION = 1
+export { SUBJECT_MANIFEST_SCHEMA_VERSION }
 
 export const SubjectCategorySchema = z.enum(['language', 'stem', 'humanities'])
 

@@ -3,10 +3,21 @@ import {
   getSubjectManifest,
   listSupportedSubjects,
   isValidSubjectLevel,
+  SUPPORTED_SUBJECTS,
 } from './subjectRegistry.js'
 import { NotFoundError } from '@dhcb/core-errors/appError'
+import { SubjectManifestSchema } from '@dhcb/core-contracts/subjectManifest'
 
 describe('subjectRegistry', () => {
+  // Registry KHÔNG parse lúc chạy (để zod khỏi lọt vào trang chủ của khách) — test này giữ nguyên
+  // bảo đảm cũ: mọi manifest viết tay phải qua đúng schema (strict, regex id, độ dài, version).
+  it.each(SUPPORTED_SUBJECTS.map((s) => [s.id, s] as const))(
+    'manifest %s hợp lệ theo SubjectManifestSchema',
+    (_id, manifest) => {
+      expect(SubjectManifestSchema.parse(manifest)).toEqual(manifest)
+    },
+  )
+
   it('retrieves English manifest', () => {
     const english = getSubjectManifest('english')
     expect(english.id).toBe('english')
