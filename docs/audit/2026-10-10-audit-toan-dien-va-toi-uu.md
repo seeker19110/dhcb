@@ -173,6 +173,10 @@ Mỗi đợt một PR nhỏ. Thứ tự đề xuất theo giá trị/rủi ro.
 
 ### E3 — Migration chỉ mục + dọn dữ liệu (một migration `0091`, cần duyệt)
 
+> **✅ ĐÃ LÀM ở `docs/changelog/0583-2026-10-10-e3-chi-muc-don-du-lieu.md`** (2026-10-10). Chủ dự án
+> chốt giữ `analytics_events` **365 ngày**. Migration `0091_audit_indexes.sql` (không `concurrently`
+> — runner bọc transaction) + job `startRetentionCleanup` hằng ngày.
+
 `daily_usage(day)` · chỉ mục bảng xếp hạng PvP theo `eloRating` · `chat.messages(sender_id)` ·
 `analytics_events(user_id)` + `(created_at)` · `sessions(expires)` ·
 `push_subscriptions(endpoint)`. Kèm job dọn `sessions`/`password_resets`/`email_verifications`
