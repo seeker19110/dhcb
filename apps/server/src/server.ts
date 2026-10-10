@@ -51,6 +51,7 @@ import { attachGeminiLiveWebSocketServer } from '@dhcb/core-ai/wsGeminiLiveHandl
 import { sendReminders, isLeakedVapidPublicKey } from './api/core/push.js'
 import { downgradeExpiredPlans } from './api/_lib/planExpiry.js'
 import { purgeOldSyncReceipts } from './api/_lib/syncReceipt.js'
+import { purgeExpiredAuthRows, purgeOldAnalyticsEvents } from './api/_lib/retentionCleanup.js'
 import { startDailyJob } from './dailyJob.js'
 import {
   ledgerConfigProblem,
@@ -337,6 +338,30 @@ function startErasedBenefitLedgerCleanup() {
   })
 }
 
+// ── Dọn phiên/mã hết hạn + analytics quá 365 ngày (1 lần/ngày) ──────────────
+// Audit 2026-10-10 (E3): các bảng này trước đây chỉ ghi, không xoá. Thời hạn giữ analytics do chủ
+// dự án chốt. Xem apps/server/src/api/_lib/retentionCleanup.ts.
+function startRetentionCleanup() {
+  startDailyJob({
+    run: async () => {
+      const pool = getPgPool()
+      const auth = await purgeExpiredAuthRows(pool)
+      const analytics = await purgeOldAnalyticsEvents(pool)
+      const total =
+        auth.sessions + auth.passwordResets + auth.emailVerifications + analytics.deleted
+      if (total > 0)
+        console.log(
+          `[retention] Đã dọn: phiên ${auth.sessions}, đặt lại MK ${auth.passwordResets}, ` +
+            `mã email ${auth.emailVerifications}, analytics ${analytics.deleted}`,
+        )
+    },
+    onError: (err) => {
+      console.error('[retention] lỗi dọn dữ liệu hết hạn:', err)
+      captureServerException(err, { context: 'retention-cleanup' })
+    },
+  })
+}
+
 // ── Dọn vị trí của chuyến "Đi chung" đã hết hạn (mỗi 15 phút) ───────────────
 // Vị trí là dữ liệu nhạy cảm nhất trong app: chuyến hết hạn/kết thúc thì toạ độ phải biến mất
 // mà không cần ai bấm nút. Xem packages/core-location/locationService.ts#purgeExpiredPositions.
@@ -368,6 +393,7 @@ const server = app.listen(PORT, () => {
     startPlanExpiryScheduler()
     startSyncReceiptCleanup()
     startErasedBenefitLedgerCleanup()
+    startRetentionCleanup()
     startLocationPurgeScheduler()
     startWeeklyReportScheduler()
     // Kiểm Redis CHỈ ở instance 0: cấu hình REDIS_URL giống hệt nhau ở mọi instance nên một
