@@ -29,6 +29,16 @@ import { TOAN8_C7_LESSONS } from './lessons/toan8c7.js'
 import { TOAN8_C8_LESSONS } from './lessons/toan8c8.js'
 import { TOAN8_C9_LESSONS } from './lessons/toan8c9.js'
 import { TOAN8_C10_LESSONS } from './lessons/toan8c10.js'
+import { TOAN9_C1_LESSONS } from './lessons/toan9c1.js'
+import { TOAN9_C2_LESSONS } from './lessons/toan9c2.js'
+import { TOAN9_C3_LESSONS } from './lessons/toan9c3.js'
+import { TOAN9_C4_LESSONS } from './lessons/toan9c4.js'
+import { TOAN9_C5_LESSONS } from './lessons/toan9c5.js'
+import { TOAN9_C6_LESSONS } from './lessons/toan9c6.js'
+import { TOAN9_C7_LESSONS } from './lessons/toan9c7.js'
+import { TOAN9_C8_LESSONS } from './lessons/toan9c8.js'
+import { TOAN9_C9_LESSONS } from './lessons/toan9c9.js'
+import { TOAN9_C10_LESSONS } from './lessons/toan9c10.js'
 import { TOAN10_C1_LESSONS } from './lessons/toan10c1.js'
 import { TOAN10_C2_LESSONS } from './lessons/toan10c2.js'
 import { TOAN10_C3_LESSONS } from './lessons/toan10c3.js'
@@ -90,6 +100,17 @@ export const MATH_LESSONS: MathLesson[] = [
   ...TOAN8_C8_LESSONS,
   ...TOAN8_C9_LESSONS,
   ...TOAN8_C10_LESSONS,
+  // Toán 9.
+  ...TOAN9_C1_LESSONS,
+  ...TOAN9_C2_LESSONS,
+  ...TOAN9_C3_LESSONS,
+  ...TOAN9_C4_LESSONS,
+  ...TOAN9_C5_LESSONS,
+  ...TOAN9_C6_LESSONS,
+  ...TOAN9_C7_LESSONS,
+  ...TOAN9_C8_LESSONS,
+  ...TOAN9_C9_LESSONS,
+  ...TOAN9_C10_LESSONS,
   ...TOAN10_C1_LESSONS,
   ...TOAN10_C2_LESSONS,
   ...TOAN10_C3_LESSONS,
