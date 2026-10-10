@@ -212,6 +212,10 @@ Bảng lớn nên dùng `create index concurrently` — phải kiểm runner có
 
 ### E5 — Đụng cổng (cần người dùng đồng ý trước — hook `config-protection`)
 
+> **✅ ĐÃ LÀM ở `docs/changelog/0585-2026-10-10-e5-size-limit-do-du-chunk-khoi-dong.md`**
+> (2026-10-10, chủ dự án đồng ý): Initial JS nay đếm đủ 9 file khởi động (135,68/160 kB), kèm phép
+> kiểm `scripts/check-startup-coverage.ts` trong `npm run size` chặn danh sách glob lệch.
+
 `.size-limit.json` chưa đo các chunk được `modulepreload` lúc khởi động (`guestId`,
 `authHeader`, `storage`, `appSettings`, `syncOutboxStorage`, runtime ~12 kB thô) ⇒ con số
 "Initial JS" đang thấp hơn thực tế. Đề xuất thêm vào `path` — và giữ trần 160 kB nhờ phần dư

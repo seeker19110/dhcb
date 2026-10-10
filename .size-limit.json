@@ -1,11 +1,16 @@
 [
   {
-    "name": "Initial JS (entry + vendors, brotli)",
+    "name": "Initial JS (entry + vendors + modulepreload, brotli)",
     "path": [
       "dist/js/index-*.js",
       "dist/js/vendor-core-*.js",
       "dist/js/vendor-misc-*.js",
-      "dist/js/vendor-ui-*.js"
+      "dist/js/vendor-ui-*.js",
+      "dist/js/rolldown-runtime-*.js",
+      "dist/js/guestId-*.js",
+      "dist/js/authHeader-*.js",
+      "dist/js/storage-*.js",
+      "dist/js/localJson-*.js"
     ],
     "limit": "160 kB"
   },
