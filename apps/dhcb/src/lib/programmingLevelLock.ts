@@ -18,6 +18,7 @@ import {
   type LockPlan,
 } from '@dhcb/subject-programming/levelLock'
 import type { ProgrammingLessonProgress } from './programmingProgress'
+import { readLocalArray } from './localJson'
 
 export type { LevelLockInfo } from '@dhcb/subject-programming/levelLock'
 
@@ -32,13 +33,7 @@ export function buildLevelLessons(): LevelLessons[] {
 }
 
 function readSet(uid: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(KEY(uid))
-    const arr = raw ? (JSON.parse(raw) as unknown) : []
-    return new Set(Array.isArray(arr) ? (arr as string[]) : [])
-  } catch {
-    return new Set()
-  }
+  return new Set(readLocalArray<string>(KEY(uid)))
 }
 
 function writeSet(uid: string, set: Set<string>): void {

@@ -1,6 +1,6 @@
 // apps/dhcb/src/lib/feedbackApi.ts — Client API gửi và tra cứu ý kiến đóng góp người dùng.
 import { getAuthHeader } from '@core/authHeader'
-import type { CreateFeedbackInput, UserFeedbackRecord } from '@dhcb/core-contracts/feedback'
+import type { CreateFeedbackInput } from '@dhcb/core-contracts/feedback'
 
 export async function submitFeedback(
   input: CreateFeedbackInput,
@@ -31,19 +31,5 @@ export async function submitFeedback(
   } catch (err) {
     // Chuỗi thô (vd "Failed to fetch") — giao diện tự dịch qua `thongDiepLoiThanThien`.
     return { ok: false, error: err instanceof Error ? err.message : 'Không thể gửi phản hồi' }
-  }
-}
-
-export async function fetchMyFeedback(): Promise<UserFeedbackRecord[]> {
-  try {
-    const authHeaders = getAuthHeader()
-    const res = await fetch('/api/feedback', {
-      headers: authHeaders,
-    })
-    if (!res.ok) return []
-    const data = (await res.json()) as { feedbackList: UserFeedbackRecord[] }
-    return data.feedbackList ?? []
-  } catch {
-    return []
   }
 }

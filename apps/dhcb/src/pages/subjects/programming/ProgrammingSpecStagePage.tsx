@@ -39,11 +39,12 @@ import {
   duongDanChangHuong,
   duongDanHuong,
 } from '../../../lib/programmingRoutes'
-import {
-  getSpecStageDetail,
-  type SpecBrief,
-  type SpecModuleDetail,
+import type {
+  SpecBrief,
+  SpecModuleDetail,
+  SpecStageDetail,
 } from '@dhcb/subject-programming/specializations/stageDetails'
+import { loadSpecStageDetail } from '@dhcb/subject-programming/specializations/stageDetailsLoader'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import { buttonClass } from '@core/buttonStyles'
 
@@ -222,6 +223,48 @@ function BriefBlock({ brief }: { brief: SpecBrief }) {
   )
 }
 
+type DetailState =
+  | { status: 'ready'; stageId: string; detail: SpecStageDetail | undefined }
+  | { status: 'error'; stageId: string }
+
+/**
+ * Nạp lười chi tiết MỘT chặng (audit 2026-10-10, đợt E4): trước đây trang import cả 56 chặng
+ * (chunk ~540 KB). Trạng thái "đang tải" được SUY RA (kết quả đang giữ là của chặng khác) thay
+ * vì setState đồng bộ trong effect.
+ */
+function useStageDetail(stageId: string | undefined) {
+  const [state, setState] = useState<DetailState | null>(null)
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    if (!stageId) return
+    let alive = true
+    loadSpecStageDetail(stageId).then(
+      (detail) => {
+        if (alive) setState({ status: 'ready', stageId, detail })
+      },
+      (err: unknown) => {
+        console.warn('[spec-stage] không tải được chi tiết chặng:', err)
+        if (alive) setState({ status: 'error', stageId })
+      },
+    )
+    return () => {
+      alive = false
+    }
+  }, [stageId, attempt])
+
+  const current = state && state.stageId === stageId ? state : null
+  return {
+    loading: !!stageId && current === null,
+    failed: current?.status === 'error',
+    detail: current?.status === 'ready' ? current.detail : undefined,
+    retry: () => {
+      setState(null)
+      setAttempt((n) => n + 1)
+    },
+  }
+}
+
 export default function ProgrammingSpecStagePage() {
   const nav = useNavigate()
   const { user } = useAuth()
@@ -240,7 +283,7 @@ export default function ProgrammingSpecStagePage() {
         .toLowerCase(),
   )
   usePageTitle(`${stage && spec ? `${stage.name} — ${spec.name}` : 'Chặng học'} | Môn Lập trình`)
-  const detail = stage ? getSpecStageDetail(stage.id) : undefined
+  const { detail, loading: detailLoading, failed: detailFailed, retry } = useStageDetail(stage?.id)
 
   const [progress, setProgress] = useState<ProgrammingLessonProgress[]>([])
 
@@ -333,12 +376,33 @@ export default function ProgrammingSpecStagePage() {
             <span>{stage.duration}</span>
           </p>
           <p className="text-sm text-zinc-200 leading-relaxed">
-            <span className="font-semibold">Đã đánh dấu xong:</span> {doneCount}/{totalItems} mục (
-            {percent}%)
+            <span className="font-semibold">Đã đánh dấu xong:</span>{' '}
+            {detailLoading ? 'đang tải…' : `${doneCount}/${totalItems} mục (${percent}%)`}
           </p>
         </section>
 
-        {!detail && (
+        {detailLoading && (
+          <p
+            role="status"
+            className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 text-sm text-zinc-200 leading-relaxed"
+          >
+            Đang tải chi tiết chặng…
+          </p>
+        )}
+
+        {detailFailed && (
+          <div
+            role="alert"
+            className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 space-y-3 text-sm text-zinc-200 leading-relaxed"
+          >
+            <p>Không tải được chi tiết chặng — kiểm tra kết nối mạng rồi thử lại.</p>
+            <button type="button" onClick={retry} className={buttonClass({ size: 'md' })}>
+              Thử lại
+            </button>
+          </div>
+        )}
+
+        {!detailLoading && !detailFailed && !detail && (
           <p className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 text-sm text-zinc-200 leading-relaxed">
             Chặng này mới có bản đồ (module và dự án). Phần chi tiết — bài luyện tay, câu tự kiểm và
             tiêu chí nghiệm thu — đang được soạn ở đợt sau; hiện tại chặng S2 của mọi hướng đã có

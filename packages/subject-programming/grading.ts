@@ -7,6 +7,8 @@ import {
   type GitRunResult,
 } from './gitSim.js'
 import type { ProgrammingTestCase } from './lessonTypes.js'
+import { fnv1a32 } from '@dhcb/core-contracts/seededRandom'
+import { shuffle } from '@dhcb/core-contracts/shuffle'
 
 /**
  * Chuẩn hoá output trước khi so: bỏ khoảng trắng cuối MỖI DÒNG + dòng trống cuối,
@@ -133,23 +135,16 @@ export function checkParsonsOrder(arranged: string[], solution: string[]): boole
  * gốc khi có ≥ 2 phần tử khác nhau (xáo xong mà trùng thì xoay vòng 1 bước).
  */
 export function parsonsShuffle(lines: string[], seed: string): string[] {
-  // Băm seed đơn giản (FNV-1a rút gọn) → dãy số giả ngẫu nhiên ổn định.
-  let h = 2166136261
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
+  // Băm seed (FNV-1a) → dãy xorshift32 ổn định → Fisher–Yates dùng chung. Giữ xorshift (không đổi
+  // sang mulberry32): đổi bộ sinh là đổi thứ tự dòng người học đang thấy ở mọi bài Parsons.
+  let h = fnv1a32(seed)
   const next = () => {
     h ^= h << 13
     h ^= h >>> 17
     h ^= h << 5
     return (h >>> 0) / 4294967296
   }
-  const out = [...lines]
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(next() * (i + 1))
-    ;[out[i], out[j]] = [out[j]!, out[i]!]
-  }
+  const out = shuffle(lines, next)
   const changed = out.some((l, i) => l !== lines[i])
   if (!changed && new Set(lines).size > 1) {
     out.push(out.shift()!)

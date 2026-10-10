@@ -301,6 +301,72 @@ describe('useOnboarding (hook)', () => {
     })
     container.remove()
   })
+
+  // Hồi quy đợt E4 (audit 2026-10-10): đổi tài khoản/đăng xuất không được giữ dữ liệu người trước.
+  it('đổi uid sang tài khoản CHƯA có hồ sơ → null, không giữ dữ liệu uid cũ', async () => {
+    localStorage.clear()
+    cacheOnboarding('kid', {
+      level: 'beginner',
+      goal: 'daily',
+      dailyMinutes: 10,
+      ageGroup: 'nhi_dong',
+    })
+    await act(async () => {
+      root.render(<Consumer uid="kid" />)
+    })
+    expect(latest?.ageGroup).toBe('nhi_dong')
+
+    localStorage.setItem(SESSION_MARKER_KEY, 'session:test')
+    mockProfileResponse({ onboarded: false })
+    await act(async () => {
+      root.render(<Consumer uid="adult" />)
+    })
+    expect(latest).toBeNull()
+    container.remove()
+  })
+
+  it('đăng xuất (uid → undefined) → null ngay', async () => {
+    localStorage.clear()
+    cacheOnboarding('kid', {
+      level: 'beginner',
+      goal: 'daily',
+      dailyMinutes: 10,
+      ageGroup: 'nhi_dong',
+    })
+    await act(async () => {
+      root.render(<Consumer uid="kid" />)
+    })
+    expect(latest).not.toBeNull()
+    await act(async () => {
+      root.render(<Consumer uid={undefined} />)
+    })
+    expect(latest).toBeNull()
+    container.remove()
+  })
+
+  it('đổi sang uid đã có cache → trả cache của uid MỚI ngay trong lượt render đầu', async () => {
+    localStorage.clear()
+    cacheOnboarding('a', {
+      level: 'beginner',
+      goal: 'daily',
+      dailyMinutes: 10,
+      ageGroup: 'nguoi_lon',
+    })
+    cacheOnboarding('b', {
+      level: 'advanced',
+      goal: 'work',
+      dailyMinutes: 30,
+      ageGroup: 'nguoi_lon',
+    })
+    await act(async () => {
+      root.render(<Consumer uid="a" />)
+    })
+    act(() => {
+      root.render(<Consumer uid="b" />)
+    })
+    expect(latest?.level).toBe('advanced')
+    container.remove()
+  })
 })
 
 // [U9b] Môn đã chọn + tình huống Trò chuyện theo mục tiêu (audit 2026-09-30 M19).

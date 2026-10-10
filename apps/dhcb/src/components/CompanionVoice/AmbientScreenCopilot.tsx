@@ -10,14 +10,18 @@ export const AmbientScreenCopilot: React.FC = () => {
   const [insight, setInsight] = useState<AmbientContextInsight | null>(null)
   const [autoCapture, setAutoCapture] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  // Bản sao của `stream` trong ref: listener 'ended' (người dùng bấm "Dừng chia sẻ" trên thanh của
+  // TRÌNH DUYỆT) được gắn lúc `stream` state còn null — nếu stopScreenShare đọc state qua closure
+  // thì nó không làm gì và panel kẹt ở "Đang bật" (audit 2026-10-10, đợt E4). Đọc ref thì callback
+  // ổn định, luôn thấy luồng hiện tại.
+  const streamRef = useRef<MediaStream | null>(null)
 
   const stopScreenShare = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach((t) => t.stop())
-      setStream(null)
-    }
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+    setStream(null)
     setAutoCapture(false)
-  }, [stream])
+  }, [])
 
   const startScreenShare = async () => {
     try {
@@ -29,6 +33,7 @@ export const AmbientScreenCopilot: React.FC = () => {
         video: { cursor: 'always' } as MediaTrackConstraints,
         audio: false,
       })
+      streamRef.current = mediaStream
       setStream(mediaStream)
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream

@@ -46,6 +46,21 @@ describe('đường khởi động không kéo zod bản đầy đủ', () => {
     expect(read('apps/dhcb/src/context/AuthProvider.tsx')).not.toMatch(staticHeavy)
   })
 
+  it('main.tsx mở khoá âm thanh qua sharedAudio — KHÔNG kéo cả lib/tts (+voiceTiers, audioCache)', () => {
+    // Đợt E4 (audit 2026-10-10): import `unlockAudio` từ './lib/tts' đưa ~53 KB nguồn TTS vào entry.
+    const main = read('apps/dhcb/src/main.tsx')
+    expect(main).not.toMatch(/from\s+['"]\.\/lib\/tts['"]/)
+    expect(main).toMatch(/from\s+['"]\.\/lib\/sharedAudio['"]/)
+    // sharedAudio phải nhẹ: không import gì cả.
+    expect(read('apps/dhcb/src/lib/sharedAudio.ts')).not.toMatch(/^import\s/m)
+  })
+
+  it('AuthProvider chỉ nạp ĐỘNG audioCache / voiceTiers', () => {
+    expect(read('apps/dhcb/src/context/AuthProvider.tsx')).not.toMatch(
+      /^import\s[^;]*from\s+['"][./]*lib\/(audioCache|voiceTiers|tts)['"]/m,
+    )
+  })
+
   it('Placement.tsx không import GIÁ TRỊ từ data/cefr (~4,4 MB JSON) — chỉ qua cefrLoader', () => {
     expect(read('apps/dhcb/src/pages/subjects/english/Placement.tsx')).not.toMatch(
       /from\s+['"][./]+data\/cefr['"]/,

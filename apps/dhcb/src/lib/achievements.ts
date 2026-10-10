@@ -20,17 +20,12 @@ import { getLearnedCount } from './vocab'
 import { getPassedExamLevels } from './cefrExam'
 import { getChallenge, getTotalSubmitted, hasPerfectWeek } from './challenge'
 import { pushProgress } from './progressSync'
+import { readLocalArray } from './localJson'
 
 const KEY = (uid: string) => `et_achievements_${uid}`
 
 function readEarned(uid: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(KEY(uid))
-    const arr = raw ? (JSON.parse(raw) as unknown) : []
-    return new Set(Array.isArray(arr) ? (arr as string[]) : [])
-  } catch {
-    return new Set()
-  }
+  return new Set(readLocalArray<string>(KEY(uid)))
 }
 
 function writeEarned(uid: string, set: Set<string>): void {

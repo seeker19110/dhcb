@@ -177,10 +177,11 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   làm. **E1 lỗi im lặng server ĐÃ LÀM** (mục 1–8, `docs/changelog/0581-*.md`; mục 9 mức thấp
   còn mở). **E2 nghiệp vụ/SQL ĐÃ LÀM** (`0582`: trần `learn-day` 300/ngày, lịch sử 200/loại, đua
   Elo PvP/phòng DM). **E3 ĐÃ LÀM** (`0583`: migration `0091`
-  chỉ mục + job dọn phiên/mã hết hạn + `analytics_events` giữ 365 ngày). **Đang làm (chủ dự án
-  đã duyệt 2026-10-10):** E4 frontend
-  (DRY, 2 bug nhỏ, `stageDetails` nạp tĩnh 542 kB) · E5 sửa phép đo `.size-limit.json` (đã được
-  đồng ý sửa file cổng).
+  chỉ mục + job dọn phiên/mã hết hạn + `analytics_events` giữ 365 ngày). **E4 frontend ĐÃ LÀM**
+  (`0584`: JS khởi động −3,5 kB, trang chặng 542 → 17 kB, gộp FNV/mulberry32/ngày VN/đọc
+  localStorage, sửa 2 bug; **E4.1b `zod/mini` cho hợp đồng trang chủ HOÃN** — đo thật là 10 file
+  - `versionedObject` của 38 hợp đồng, lý do ở `0584`). **Đang làm (chủ dự án đã duyệt
+    2026-10-10):** E5 sửa phép đo `.size-limit.json` (đã được đồng ý sửa file cổng).
 
 - **[2026-10-09] Dự án trục T2/T3 môn Lập trình** — hạ tầng xong (changelog `0571`, đặc tả
   `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md`): chọn dự án, mã bước

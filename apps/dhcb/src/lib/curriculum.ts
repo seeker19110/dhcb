@@ -27,9 +27,6 @@ import { getLearnedCount } from './vocab'
 // Kích thước cụm "Mở rộng" khi gom phần từ vựng ngoài nền tảng (thuần cấu trúc dữ
 // liệu, KHÔNG phải tốc độ học của người dùng — xem getDailySpeed() bên dưới).
 export const DAILY_GOAL = 20
-// Legacy: trần cũ khi tốc độ luôn cố định 20 từ/ngày (5×20). Giữ để không phá vỡ
-// chỗ nào còn tham chiếu tĩnh; luồng học thật dùng getDailyMax(uid) theo tốc độ đã chọn.
-export const DAILY_MAX = 100
 
 // ── Tốc độ học: cho chọn 5/10/20 từ/ngày (mặc định mới 10) ─────────────
 // Người dùng MỚI (chưa có từ nào đã thuộc) mặc định 10 — trong khuyến nghị

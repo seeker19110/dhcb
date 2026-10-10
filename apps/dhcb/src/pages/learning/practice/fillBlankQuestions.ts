@@ -9,6 +9,7 @@
 // mọi câu được kiểm TRƯỚC khi trộn/cắt; câu không chắc chắn bị loại kèm đúng MỘT lý do.
 
 import type { DictEntry } from '../../../types'
+import { fnv1a32 } from '@dhcb/core-contracts/seededRandom'
 
 /** Phiên bản luật — đổi luật match/chọn options thì tăng số này (audit ghi vào metadata). */
 export const FILL_BLANK_RULE_VERSION = 's05-v1'
@@ -112,12 +113,11 @@ export function foldLabel(text: string): string {
 
 /** Khoá xếp hạng mặc định (đồng bộ, chạy được trên trình duyệt): FNV-1a 32-bit × 2 lượt. */
 export function fnvRank(key: string): string {
-  let h1 = 0x811c9dc5
+  // Làn 1 là FNV-1a chuẩn (hàm dùng chung); làn 2 cùng khuôn nhưng hằng số khác để giảm va chạm.
+  const h1 = fnv1a32(key)
   let h2 = 0x01000193 ^ key.length
   for (let i = 0; i < key.length; i++) {
-    const c = key.charCodeAt(i)
-    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0
-    h2 = Math.imul(h2 ^ c, 0x5bd1e995) >>> 0
+    h2 = Math.imul(h2 ^ key.charCodeAt(i), 0x5bd1e995) >>> 0
   }
   return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0')
 }

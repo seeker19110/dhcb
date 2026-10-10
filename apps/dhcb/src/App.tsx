@@ -31,6 +31,7 @@ import LegacyProgrammingRedirect from './components/LegacyProgrammingRedirect'
 import LegacyEnglishRedirect from './components/LegacyEnglishRedirect'
 import { PROGRAMMING_PREFIX } from './lib/programmingRoutes'
 import { ENGLISH_PREFIX } from './lib/englishRoutes'
+import { isSaveDataOn } from './lib/offlineDownload'
 // Dải báo đồng bộ hầu như luôn `return null` (chỉ hiện khi mất mạng / còn mục chờ / vừa gửi
 // xong), nên nó KHÔNG đáng nằm trong chunk khởi động — nạp lười để giữ ngân sách Initial JS
 // dưới trần 140 kB. Không bọc Suspense: khi chưa nạp xong, `lazy` render null, đúng bằng
@@ -245,14 +246,20 @@ function CanonicalUpdater() {
 // Prefetch các trang hay dùng nhất khi browser rảnh sau lần tải đầu
 function usePrefetchPages() {
   useEffect(() => {
+    // Máy bật tiết kiệm dữ liệu (Data Saver) → KHÔNG tải trước 7 trang người dùng có thể không
+    // mở; trang vẫn nạp bình thường khi được mở (audit 2026-10-10, đợt E4).
+    if (isSaveDataOn()) return
     const prefetch = () => {
-      void import('./pages/core/Home')
-      void import('./pages/subjects/english/Chat')
-      void import('./pages/subjects/english/Learn')
-      void import('./pages/subjects/english/Dictionary')
-      void import('./pages/subjects/english/Lessons')
-      void import('./pages/subjects/english/CommonPhrases')
-      void import('./pages/subjects/english/Speaking')
+      // Tải trước chỉ là tối ưu: lỗi mạng thì bỏ qua (trang nạp lại khi được mở thật), không để
+      // thành unhandled rejection.
+      const ignore = () => {}
+      import('./pages/core/Home').catch(ignore)
+      import('./pages/subjects/english/Chat').catch(ignore)
+      import('./pages/subjects/english/Learn').catch(ignore)
+      import('./pages/subjects/english/Dictionary').catch(ignore)
+      import('./pages/subjects/english/Lessons').catch(ignore)
+      import('./pages/subjects/english/CommonPhrases').catch(ignore)
+      import('./pages/subjects/english/Speaking').catch(ignore)
     }
     if ('requestIdleCallback' in window) {
       requestIdleCallback(prefetch)

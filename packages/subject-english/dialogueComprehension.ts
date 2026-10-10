@@ -23,6 +23,7 @@
 // — `Dialogue` của app khớp kiểu này mà không cần chuyển đổi.
 
 import { shuffle } from '@dhcb/core-contracts/shuffle'
+import { fnv1a32, mulberry32 } from '@dhcb/core-contracts/seededRandom'
 import type { PublicDialogueQuestion } from '@dhcb/core-contracts/cefrDialogueCheck'
 
 /** Tên nhân vật song ngữ (chiều A hiện `vi`, chiều B hiện `en`). */
@@ -136,27 +137,6 @@ function explain(
   return { lead, quote, quoteLang }
 }
 
-// ── Ngẫu nhiên có seed (FNV-1a 32-bit → mulberry32) ──────────────────────────────────────
-function hashSeed(text: string): number {
-  let h = 0x811c9dc5
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i)
-    h = Math.imul(h, 0x01000193)
-  }
-  return h >>> 0
-}
-
-function makeRng(seed: number): () => number {
-  let a = seed >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 /** Chuẩn hoá để so trùng: bỏ hoa/thường, khoảng trắng thừa, dấu câu cuối. */
 function norm(text: string): string {
   return text
@@ -233,7 +213,8 @@ export function buildComprehensionQuiz(
   dir: ComprehensionDirection,
   seed: string,
 ): ComprehensionQuestion[] {
-  const rng = makeRng(hashSeed(seed))
+  // Ngẫu nhiên có seed: FNV-1a 32-bit → mulberry32 (core-contracts/seededRandom).
+  const rng = mulberry32(fnv1a32(seed))
   const lines: Line[] = dialogue.lines
     .map((ln, index) => ({
       index,

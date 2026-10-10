@@ -35,6 +35,8 @@
 // nhắc từ khoá ca biên. `kiemtra` gặp tính năng quên ca biên → 1 test đỏ nêu đích danh.
 // AI ngoài đời viết ca chính rất giỏi và quên ca biên rất đều — nén thành cơ chế tất định.
 
+import { khongDau } from './khongDau.js'
+
 /** Kết quả một lượt chạy — cùng hình dạng với gitSim/hermesSim để dùng chung đường chấm. */
 export interface VibeRunResult {
   output: string
@@ -77,17 +79,6 @@ interface May {
 
 function taoMay(): May {
   return { nhap: [], soNhapDaTao: 0, test: 'chua-chay', moc: [], daTrienKhai: false }
-}
-
-/** Bỏ dấu tiếng Việt + thường hoá — dò mẫu trên lệnh học viên gõ CÓ hoặc KHÔNG dấu đều
- *  trúng (output của máy thì luôn không dấu, đúng quy ước gitSim/bashSim). */
-function khongDau(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
 }
 
 /** Luật 4 — chuỗi dạng secret trong mô tả: khoá API, mật khẩu, token. */

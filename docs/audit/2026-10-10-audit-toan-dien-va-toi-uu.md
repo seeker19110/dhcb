@@ -185,6 +185,11 @@ Bảng lớn nên dùng `create index concurrently` — phải kiểm runner có
 
 ### E4 — Frontend: bundle tiếp, DRY, bug nhỏ
 
+> **✅ ĐÃ LÀM ở `docs/changelog/0584-2026-10-10-e4-frontend-bundle-dry-bug.md`** (2026-10-10), trừ
+> **1b** (`zod/mini` cho hợp đồng trang chủ — HOÃN: đo thật là 10 file + `versionedObject` dùng
+> chung 38 hợp đồng, lợi ~12 kB gzip trên một route lười), 3 helper fetch-kèm-auth và 5 bản bỏ dấu
+> có luật khác nhau có chủ đích — lý do từng mục ở changelog.
+
 1. Bundle: `main.tsx:10` import cả `lib/tts.ts` (+`voiceTiers`, `audioCache`) chỉ để lấy
    `unlockAudio` — tách module nhỏ (giữ mở khoá âm thanh đồng bộ trong cử chỉ người dùng, iOS).
    `stageDetails.ts` nạp tĩnh 56 chặng ⇒ chunk `ProgrammingSpecStagePage` 542 kB thô → loader lười.

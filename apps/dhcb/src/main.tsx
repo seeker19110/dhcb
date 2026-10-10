@@ -7,7 +7,7 @@ import '@fontsource-variable/inter/wght.css'
 import './index.css'
 import App from './App'
 import { applyTheme, getTheme } from '@core/theme'
-import { unlockAudio } from './lib/tts'
+import { unlockAudio } from './lib/sharedAudio'
 import { initErrorTracking } from './lib/errorTracking'
 import { initKeyboardNavModality } from './lib/keyboardNavModality'
 

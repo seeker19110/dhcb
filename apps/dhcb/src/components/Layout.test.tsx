@@ -22,7 +22,7 @@ vi.mock('../context/useLang', () => ({
     T: { home: 'Trang chủ', appName: 'Đồng Hành', aboutApp: 'Giới thiệu', streakDays: 'ngày' },
   }),
 }))
-vi.mock('../lib/storage', () => ({ getStreak: () => 7 }))
+vi.mock('../lib/storage', () => ({ getStreak: () => 7, getTodayUsageRaw: () => null }))
 // ThemeToggle đòi ThemeContext của `@core/*`; test này chỉ quan tâm các khe khác của header
 // nên thay bằng một chỗ giữ chỗ, không dựng cả cây provider chỉ để render một nút.
 vi.mock('./ThemeToggle', () => ({ default: () => null }))

@@ -2,14 +2,10 @@
 // để gợi ý "Tiếp tục bài N" ở Lessons.tsx/CommonPhrases.tsx. CHỈ lưu localStorage
 // (nhẹ, chỉ ảnh hưởng gợi ý UI, không phải tiến độ học thật nên không đồng bộ
 // Supabase — mẫu readSet/writeSet giống lib/cefrProgress.ts).
+import { readLocalArray } from './localJson'
+
 function readSet(key: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(key)
-    const arr = raw ? (JSON.parse(raw) as unknown) : []
-    return new Set(Array.isArray(arr) ? (arr as string[]) : [])
-  } catch {
-    return new Set()
-  }
+  return new Set(readLocalArray<string>(key))
 }
 
 function writeSet(key: string, set: Set<string>) {

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, BookOpen, Bot, Home as HomeIcon } from 'lucide-react'
 import { useLang } from '../context/useLang'
 import { useAuth } from '../context/useAuth'
-import { getStreak } from '../lib/storage'
+import { getStreak, getTodayUsageRaw } from '../lib/storage'
 import ThemeToggle from './ThemeToggle'
 import OfflineStatusBanner from './OfflineStatusBanner'
 import { buildCrumbs, defaultBackDestination, type Crumb } from '../lib/breadcrumb'
@@ -96,7 +96,12 @@ export default function Layout({
 
   // Streak tự lấy ở ĐÂY (không nhận qua prop nữa) — áp dụng TOÀN CỤC, hiện trên MỌI
   // trang có Layout, không cần từng trang tự truyền vào (trước đây dễ quên).
-  const streak = user && !focus ? getStreak(user.id) : 0
+  // Memo theo usage HÔM NAY (1 lần đọc) thay vì gọi getStreak — vòng tới 365 ngày đọc
+  // localStorage — ở MỌI lần render; học buổi đầu trong ngày vẫn làm số cập nhật ngay.
+  const uid = user && !focus ? user.id : null
+  const todayUsage = uid ? getTodayUsageRaw(uid) : null
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- todayUsage là khoá làm mới có chủ đích
+  const streak = useMemo(() => (uid ? getStreak(uid) : 0), [uid, todayUsage])
 
   // [2026-09-17] Nhãn nút Back lấy từ ĐÚNG đốt cha mà `onBack`/`backTo` sẽ đưa tới — dùng
   // chung nguồn `buildCrumbs` (trước đây Breadcrumb desktop dùng riêng) thay vì nhãn CỨNG

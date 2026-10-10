@@ -9,6 +9,7 @@
 import { getStoredToken, getAuthHeader } from '@core/authHeader'
 import { audioCacheKey, getAudioEntry, setAudioBuffer } from './audioCache'
 import { touchSettingsUpdated } from './storage'
+import { getSharedAudio, peekSharedAudio } from './sharedAudio'
 import type { VisemeFrame } from './viseme'
 import {
   isValidVoiceId,
@@ -27,21 +28,16 @@ import {
   type VoiceId,
 } from './voiceTiers'
 
+// Giữ tên cũ cho các nơi đang `import { unlockAudio } from '…/lib/tts'`.
+export { unlockAudio } from './sharedAudio'
+
 type Lang = 'en-US' | 'vi-VN'
 export type Voice = VoiceId
 
 const MALE_VOICE_IDS = new Set(VOICE_OPTIONS.filter((v) => v.gender === 'male').map((v) => v.id))
 
-// ── Thẻ <audio> DUY NHẤT dùng chung cho mọi lần phát ────────────────────────
-// iOS/Safari (kể cả khi cài PWA) chỉ cho JavaScript phát audio trên một thẻ
-// <audio> ĐÃ được người dùng "mở khoá" bằng một cú chạm tay. Nếu mỗi câu tạo
-// `new Audio()` mới rồi gọi .play() trong chuỗi async (sau khi await tải/giải mã),
-// thì sau câu 1–2 hiệu lực của cú chạm tay đã hết → iOS chặn các câu sau (hội
-// thoại đứng giữa chừng). Khắc phục: tái dùng MỘT thẻ duy nhất, mở khoá 1 lần
-// lúc chạm đầu tiên (unlockAudio), sau đó chỉ đổi .src cho từng câu — thẻ đã mở
-// khoá sẽ phát được mãi. Máy tính không có giới hạn này nên trước đây vẫn chạy.
-let sharedAudio: HTMLAudioElement | null = null
-let audioUnlocked = false
+// Thẻ <audio> dùng chung + mở khoá iOS nằm ở ./sharedAudio (tách 2026-10-10, audit E4 — để
+// main.tsx gọi unlockAudio mà KHÔNG kéo cả module TTS + voiceTiers vào bundle khởi động).
 let currentBlobUrl: string | null = null
 let currentAudioId: string | null = null
 // Callback để unblock Promise đang chờ trong speakViaGoogle khi stopSpeaking() được gọi
@@ -56,14 +52,6 @@ let currentResolve: (() => void) | null = null
 // speak()/speakViaGoogle TRẢ VỀ đúng số vé của lượt phát vừa rồi để nơi gọi so lại.
 let playToken = 0
 
-function getSharedAudio(): HTMLAudioElement {
-  if (!sharedAudio) {
-    sharedAudio = new Audio()
-    sharedAudio.preload = 'auto'
-  }
-  return sharedAudio
-}
-
 // Gỡ mọi handler cũ trên thẻ dùng chung trước khi gắn handler cho lượt phát mới
 function clearAudioHandlers(a: HTMLAudioElement) {
   a.onended = null
@@ -72,64 +60,15 @@ function clearAudioHandlers(a: HTMLAudioElement) {
   a.onloadedmetadata = null
 }
 
-// WAV im lặng cực ngắn để "mở khoá" thẻ audio trên iOS (tạo 1 lần, dùng lại)
-let silentUrl: string | null = null
-function getSilentUrl(): string {
-  if (silentUrl) return silentUrl
-  const numSamples = 8
-  const buf = new ArrayBuffer(44 + numSamples)
-  const dv = new DataView(buf)
-  const writeStr = (off: number, s: string) => {
-    for (let i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i))
-  }
-  writeStr(0, 'RIFF')
-  dv.setUint32(4, 36 + numSamples, true)
-  writeStr(8, 'WAVE')
-  writeStr(12, 'fmt ')
-  dv.setUint32(16, 16, true)
-  dv.setUint16(20, 1, true) // PCM
-  dv.setUint16(22, 1, true) // 1 kênh (mono)
-  dv.setUint32(24, 8000, true) // sample rate
-  dv.setUint32(28, 8000, true) // byte rate
-  dv.setUint16(32, 1, true) // block align
-  dv.setUint16(34, 8, true) // 8 bit / mẫu
-  writeStr(36, 'data')
-  dv.setUint32(40, numSamples, true)
-  for (let i = 0; i < numSamples; i++) dv.setUint8(44 + i, 128) // 128 = im lặng (8-bit)
-  silentUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
-  return silentUrl
-}
-
-// Mở khoá audio cho iOS — PHẢI gọi ĐỒNG BỘ bên trong handler của một cú chạm tay
-// (onClick/onTouch...), TRƯỚC mọi await. Phát 1 đoạn im lặng để Safari đánh dấu
-// thẻ dùng chung là "được người dùng cho phép". Gọi nhiều lần vẫn an toàn (chỉ
-// chạy thực sự ở lần đầu).
-export function unlockAudio(): void {
-  if (audioUnlocked) return
-  try {
-    const a = getSharedAudio()
-    a.src = getSilentUrl()
-    const p = a.play()
-    if (p && typeof p.then === 'function') {
-      p.then(() => {
-        a.pause()
-        a.currentTime = 0
-      }).catch(() => {})
-    }
-    audioUnlocked = true
-  } catch {
-    /* sẽ thử lại ở lần phát thật */
-  }
-}
-
 // ── Pause / Resume — dùng cho trình phát hội thoại ──────────────────────────
 export function pauseCurrentAudio() {
-  if (sharedAudio) sharedAudio.pause()
+  peekSharedAudio()?.pause()
   if ('speechSynthesis' in window) window.speechSynthesis.pause()
 }
 
 export function resumeCurrentAudio() {
-  if (sharedAudio) void sharedAudio.play().catch(() => {})
+  const audio = peekSharedAudio()
+  if (audio) void audio.play().catch(() => {})
   if ('speechSynthesis' in window) window.speechSynthesis.resume()
 }
 
@@ -310,12 +249,13 @@ export function isTTSSupported(): boolean {
 
 export function stopSpeaking() {
   playToken++ // huỷ phần còn lại của chuỗi đọc song ngữ đang chờ (nếu có)
-  if (sharedAudio) {
+  const audio = peekSharedAudio()
+  if (audio) {
     // Xóa handler trước khi pause để tránh onerror/onended fire sau khi đã stop.
-    // KHÔNG huỷ thẻ sharedAudio (đặt = null) — phải giữ lại để nó vẫn "đã mở
+    // KHÔNG huỷ thẻ dùng chung — phải giữ lại để nó vẫn "đã mở
     // khoá" trên iOS cho các lần phát sau. Chỉ pause + revoke blob là đủ.
-    clearAudioHandlers(sharedAudio)
-    sharedAudio.pause()
+    clearAudioHandlers(audio)
+    audio.pause()
   }
   if (currentBlobUrl) {
     URL.revokeObjectURL(currentBlobUrl)
