@@ -3,13 +3,15 @@ import { createRoot } from 'react-dom/client'
 // Font Inter tự host (variable font, chỉ 1 file/subset) thay vì tải qua Google Fonts —
 // bỏ 2 vòng DNS/TLS/HTTP tới domain ngoài (fonts.googleapis.com + fonts.gstatic.com),
 // file font giờ cùng domain, cache immutable như các asset khác (xem server.ts/nginx).
-import '@fontsource-variable/inter/wght.css'
+// fonts.css = wght.css của gói nhưng đổi thứ tự subset để chữ Việt khỏi kéo latin-ext (xem file).
+import './fonts.css'
 import './index.css'
 import App from './App'
 import { applyTheme, getTheme } from '@core/theme'
 import { unlockAudio } from './lib/sharedAudio'
 import { initErrorTracking } from './lib/errorTracking'
 import { initKeyboardNavModality } from './lib/keyboardNavModality'
+import { getStoredToken } from '@core/authHeader'
 
 // Áp dụng theme đã lưu NGAY trước khi render để tránh nhấp nháy màu
 applyTheme(getTheme())
@@ -19,6 +21,14 @@ initErrorTracking()
 
 // Cờ điều hướng bàn phím → CSS chừa chỗ header/thanh đáy khi Tab (S07d, WCAG 2.4.11).
 initKeyboardNavModality()
+
+// Khách mở thẳng trang chủ (máy này chưa có phiên): tải chunk trang chủ khách SONG SONG với lượt
+// hỏi phiên `/api/auth`, thay vì đợi phiên xong mới tải — bớt một vòng mạng trước nội dung đầu tiên
+// (đo Lighthouse 2026-10-10). Cùng specifier với lazy() ở App.tsx nên trình duyệt không tải hai
+// lần; lỗi mạng bỏ qua vì lazyWithRetry ở App.tsx sẽ tự tải lại khi thật sự cần.
+if (window.location.pathname === '/' && !getStoredToken()) {
+  import('./pages/core/GuestHomePage').catch(() => {})
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

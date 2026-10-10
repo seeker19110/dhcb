@@ -18,8 +18,9 @@
      Trang có trạng thái **đang tải** (`role="status"`, không nháy ghi chú "chưa soạn") và **lỗi**
      (`role="alert"` + nút "Thử lại"). Server/test vẫn dùng `stageDetails.ts` đồng bộ; test
      `stageDetailsLoader.test.ts` canh hai nơi không lệch nhau.
-   - `usePrefetchPages` (`App.tsx`) bỏ nạp trước 7 trang khi máy bật Data Saver (dùng lại
-     `isSaveDataOn`), và nuốt lỗi mạng của lượt nạp trước (trước đó thành unhandled rejection).
+   - `usePrefetchPages` (`App.tsx`) nuốt lỗi mạng của lượt nạp trước (trước đó thành unhandled
+     rejection). Phần bỏ nạp trước khi bật Data Saver trùng với PR #1336 (PageSpeed, merge cùng
+     ngày) — lúc gộp `main` giữ bản của #1336 (`runWhenPageSettled`).
    - `startupBundle.test.ts` thêm 2 canh: `main.tsx` không import `lib/tts`; `AuthProvider` không
      import tĩnh `audioCache`/`voiceTiers`/`tts`.
 2. **DRY** (E4.2) — mọi chỗ gộp đều GIỮ NGUYÊN TỪNG BIT đầu ra (vân tay phiên học trong

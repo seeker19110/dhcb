@@ -31,6 +31,7 @@ import LegacyProgrammingRedirect from './components/LegacyProgrammingRedirect'
 import LegacyEnglishRedirect from './components/LegacyEnglishRedirect'
 import { PROGRAMMING_PREFIX } from './lib/programmingRoutes'
 import { ENGLISH_PREFIX } from './lib/englishRoutes'
+import { runWhenPageSettled } from './lib/pageSettled'
 import { isSaveDataOn } from './lib/offlineDownload'
 // Dải báo đồng bộ hầu như luôn `return null` (chỉ hiện khi mất mạng / còn mục chờ / vừa gửi
 // xong), nên nó KHÔNG đáng nằm trong chunk khởi động — nạp lười để giữ ngân sách Initial JS
@@ -44,6 +45,8 @@ const Landing = lazyWithRetry(() => import('./pages/core/Landing'))
 const LandingEn = lazyWithRetry(() => import('./pages/core/LandingEn'))
 const ResetPassword = lazyWithRetry(() => import('./pages/core/ResetPassword'))
 const Home = lazyWithRetry(() => import('./pages/core/Home'))
+// Trang chủ cho KHÁCH tách riêng: nhẹ hơn hẳn Home (bản người đã đăng nhập) — xem GuestHomePage.tsx.
+const GuestHomePage = lazyWithRetry(() => import('./pages/core/GuestHomePage'))
 const History = lazyWithRetry(() => import('./pages/core/History'))
 const Dashboard = lazyWithRetry(() => import('./pages/core/Dashboard'))
 const Profile = lazyWithRetry(() => import('./pages/core/Profile'))
@@ -243,15 +246,17 @@ function CanonicalUpdater() {
   return null
 }
 
-// Prefetch các trang hay dùng nhất khi browser rảnh sau lần tải đầu
+// Prefetch các trang hay dùng nhất khi browser rảnh sau lần tải đầu.
+// [2026-10-10, đo Lighthouse] Chờ trang đầu vẽ xong (runWhenPageSettled — xem lib/pageSettled.ts) —
+// gọi requestIdleCallback ngay lúc khởi động thì nó bắn ra trong lúc chunk trang còn đang tải, ~100
+// chunk tải trước chen băng thông và đẩy LCP mobile lên 5,1 s. Máy bật Save-Data thì không tải
+// trước gì cả (người dùng đã nói rõ muốn tiết kiệm dữ liệu).
 function usePrefetchPages() {
   useEffect(() => {
-    // Máy bật tiết kiệm dữ liệu (Data Saver) → KHÔNG tải trước 7 trang người dùng có thể không
-    // mở; trang vẫn nạp bình thường khi được mở (audit 2026-10-10, đợt E4).
     if (isSaveDataOn()) return
-    const prefetch = () => {
+    return runWhenPageSettled(() => {
       // Tải trước chỉ là tối ưu: lỗi mạng thì bỏ qua (trang nạp lại khi được mở thật), không để
-      // thành unhandled rejection.
+      // thành unhandled rejection (audit 2026-10-10, đợt E4).
       const ignore = () => {}
       import('./pages/core/Home').catch(ignore)
       import('./pages/subjects/english/Chat').catch(ignore)
@@ -260,13 +265,15 @@ function usePrefetchPages() {
       import('./pages/subjects/english/Lessons').catch(ignore)
       import('./pages/subjects/english/CommonPhrases').catch(ignore)
       import('./pages/subjects/english/Speaking').catch(ignore)
-    }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(prefetch)
-    } else {
-      setTimeout(prefetch, 3000)
-    }
+    })
   }, [])
+}
+
+// Trang `/`: khách chỉ tải GuestHomePage; người đã đăng nhập mới tải Home (nặng). Chọn ở ĐÂY
+// (trước khi nạp chunk) — để Home tự rẽ nhánh thì khách vẫn phải tải trọn chunk Home rồi mới vẽ.
+function HomeRoute() {
+  const { isGuest } = useAuth()
+  return isGuest ? <GuestHomePage /> : <Home />
 }
 
 // Chu kỳ đồng bộ định kỳ khi app mở lâu (không đóng tab) — 1h là đủ mới cho cấu hình hiếm
@@ -306,9 +313,12 @@ export default function App() {
     // `dhcb_lsession_v1_*`, không đụng khoá khác. Xem lib/learningSession.ts. Nạp ĐỘNG: module
     // đó kéo zod (~24 kB brotli) mà việc dọn không gấp — đừng đưa lại vào bundle khởi động.
     // Nạp lỗi (mất mạng) thì lần mở app sau dọn tiếp; nháp quá hạn vẫn bị `readSession` từ chối.
-    import('./lib/learningSession')
-      .then(({ pruneExpiredSessions }) => pruneExpiredSessions())
-      .catch(() => {})
+    // Chạy khi trang đầu đã vẽ xong: tải zod ngay lúc khởi động chen băng thông với chunk trang.
+    const cancelPrune = runWhenPageSettled(() => {
+      import('./lib/learningSession')
+        .then(({ pruneExpiredSessions }) => pruneExpiredSessions())
+        .catch(() => {})
+    })
     const interval = setInterval(() => {
       void refreshAppSettings()
       void refreshPlanFeatures()
@@ -323,6 +333,7 @@ export default function App() {
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
+      cancelPrune()
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisible)
     }
@@ -672,7 +683,7 @@ export default function App() {
                         path="/"
                         element={
                           <AllowGuest>
-                            <Home />
+                            <HomeRoute />
                           </AllowGuest>
                         }
                       />
