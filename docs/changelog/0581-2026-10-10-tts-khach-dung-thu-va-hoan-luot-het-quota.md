@@ -49,7 +49,7 @@
   "chưa đăng nhập → ném lỗi" (hành vi đã bỏ có chủ đích).
 - Cổng ở máy: xem báo cáo xác thực trong mô tả PR.
 
-## Ghi chú vận hành (không sửa trong đợt này)
+## Ghi chú vận hành (đã sửa ở đợt kế tiếp — `docs/changelog/0582-*.md`)
 
 Lúc kiểm production, `/api/tts` và `/api/pronunciation` mỗi cái trả **429 một lần** khi chưa hề
 gần hạn mức 60/phút, rồi trở lại bình thường. Đọc mã thấy cơ chế khớp: `getRedis()`
