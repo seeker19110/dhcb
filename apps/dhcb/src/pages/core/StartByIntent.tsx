@@ -19,7 +19,9 @@ import { track } from '../../lib/analytics'
 import { Button } from '@core/Button'
 import {
   IntentSubjectIdSchema,
+  isGradeAllowedFor,
   isStemIntentSubject,
+  isThcsIntentGrade,
   type IntentSubjectId,
   type IntentPurpose,
   type IntentTimeBudget,
@@ -74,11 +76,10 @@ const LEVEL_OPTIONS: { value: IntentLevel; label: string }[] = [
   { value: 'lv_solid', label: 'Đã học khá lâu' },
 ]
 
-const GRADE_OPTIONS: { value: IntentGrade; label: string }[] = [
-  { value: '10', label: 'Lớp 10' },
-  { value: '11', label: 'Lớp 11' },
-  { value: '12', label: 'Lớp 12' },
-]
+// Lớp 6–9 chỉ hiện khi đã chọn Toán (môn duy nhất có bài THCS) — xem `gradeOptions` bên dưới.
+const GRADE_OPTIONS: { value: IntentGrade; label: string }[] = (
+  ['6', '7', '8', '9', '10', '11', '12'] as const
+).map((value) => ({ value, label: `Lớp ${value}` }))
 
 /** Mốc thời gian hiện tại — tách ra khỏi thân component cho rõ đây là việc của trình xử lý
  *  sự kiện, không phải của lượt render. */
@@ -129,6 +130,11 @@ export default function StartByIntent() {
     return subjectIds.some(isStemIntentSubject) ? [...base, 'lop'] : base
   }, [subjectIds])
   const step = steps[Math.min(stepIndex, steps.length - 1)] ?? 'mon'
+  const coToan = subjectIds.includes('mathematics')
+  const gradeOptions = useMemo(
+    () => GRADE_OPTIONS.filter((o) => coToan || !isThcsIntentGrade(o.value)),
+    [coToan],
+  )
 
   /** Tính lại "một việc" từ ý định + tiến độ hiện tại. Ý định `null` ⇒ dẫn về danh mục môn. */
   const tinhGoiY = useCallback(
@@ -199,8 +205,9 @@ export default function StartByIntent() {
         ...(cuoi.purpose ? { purpose: cuoi.purpose } : {}),
         ...(cuoi.timeBudget ? { timeBudget: cuoi.timeBudget } : {}),
         ...(cuoi.level ? { level: cuoi.level } : {}),
-        // Lớp chỉ đi cùng môn STEM — hợp đồng từ chối nếu không, nên lọc ngay tại đây.
-        ...(cuoi.grade && subjectIds.some(isStemIntentSubject) ? { grade: cuoi.grade } : {}),
+        // Lớp chỉ đi cùng môn STEM (lớp 6–9 còn cần Toán) — hợp đồng từ chối nếu không, nên lọc
+        // ngay tại đây: người đã khai "Lớp 8 + Toán" rồi bỏ Toán thì lớp cũ rơi về "chưa khai".
+        ...(cuoi.grade && isGradeAllowedFor(subjectIds, cuoi.grade) ? { grade: cuoi.grade } : {}),
       },
       now,
       cu?.createdAt ?? now,
@@ -463,7 +470,7 @@ export default function StartByIntent() {
           <fieldset className="space-y-3">
             <legend className="text-lg font-semibold text-white">Bạn đang học lớp mấy?</legend>
             <div className="space-y-2">
-              {GRADE_OPTIONS.map((o) => (
+              {gradeOptions.map((o) => (
                 <button
                   key={o.value}
                   type="button"

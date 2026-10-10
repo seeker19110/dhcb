@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { ENGLISH_PATHS, underPrefix } from './navPaths'
 import { PROGRAMMING_PREFIX } from './programmingRoutes'
+import { duongDanDanhSachBai, THAM_SO_LOP } from './stemLessonPaths'
 import {
   duongDanBaiHocAnh,
   duongDanCauThongDung,
@@ -56,6 +57,12 @@ export interface NavChild {
   subjectId?: string
   /** Tiền tố đường dẫn làm mục con này sáng. */
   paths: readonly string[]
+  /**
+   * Cặp `khoá=giá trị` trên query string mà mục con này cần THÊM để sáng (vd `lop=9`). Dùng cho
+   * các mục "theo lớp": chúng chung một đường dẫn, không có query thì cả dãy lớp cùng sáng và cùng
+   * mang `aria-current="page"` — trình đọc màn hình báo 8 "trang hiện tại" một lúc.
+   */
+  query?: readonly [string, string]
   /**
    * Mục con CẤP 2 (mở/đóng được). [Slice 02] Công cụ của môn Tiếng Anh nằm dưới mục "Tiếng Anh"
    * trong nhóm Góc học tập — quyết định chủ dự án 2026-09-15: "di chuyển, không xoá".
@@ -129,10 +136,35 @@ export function stemGradeChildren(subjectPath: string): NavChild[] {
     label,
     icon: BookOpen,
     to: `${subjectPath}?grade=${grade}`,
-    // So khớp active theo TIỀN TỐ ĐƯỜNG DẪN (không gồm query) — dùng chung `subjectPath`
-    // nên cả 4 lớp cùng "sáng" khi đứng ở trang môn; đó là đánh đổi chấp nhận được vì trang
-    // không đổi URL khi người dùng tự bấm tab lớp khác (chỉ đổi state nội bộ).
+    // Sáng khi ĐÚNG đường dẫn + đúng `?grade=`. Đánh đổi còn lại: trang tổng quan không ghi lại
+    // URL khi người dùng tự bấm tab lớp khác (chỉ đổi state nội bộ), nên mục sáng là lớp đã mở
+    // bằng link, không phải tab đang xem.
     paths: [subjectPath],
+    query: ['grade', grade] as const,
+  }))
+}
+
+/**
+ * Các lớp THCS của môn Toán (đặc tả `docs/specs/2026-10-10-menu-lop-thcs-va-bat-dau-6-9.md`).
+ * Ghi cứng ở đây thay vì đọc `STEM_SUBJECTS.mathematics.grades` vì thanh điều hướng có mặt ở mọi
+ * trang, không được kéo chỉ mục bài vào gói khởi động; `navTree.test.ts` đối chiếu với chỉ mục
+ * thật để danh sách này không bao giờ trỏ tới một lớp chưa có bài.
+ */
+export const LOP_THCS_TOAN = ['6', '7', '8', '9'] as const
+
+/**
+ * Mục "theo lớp" cho lớp THCS của Toán. KHÁC `stemGradeChildren`: lớp 6–9 không có phần tổng
+ * quan chương trình (`data/stemCurriculum.ts` chỉ có 10–12 + Đại học) nên link thẳng tới DANH
+ * SÁCH BÀI ở đúng tab lớp (`?lop=`), nơi đã có bài thật.
+ */
+export function mathThcsGradeChildren(): NavChild[] {
+  const listPath = duongDanDanhSachBai('mathematics')
+  return LOP_THCS_TOAN.map((lop) => ({
+    label: `Lớp ${lop}`,
+    icon: BookOpen,
+    to: duongDanDanhSachBai('mathematics', lop),
+    paths: [listPath],
+    query: [THAM_SO_LOP, lop] as const,
   }))
 }
 
@@ -150,7 +182,7 @@ export const SUBJECT_CHILDREN: NavChild[] = [
     icon: Calculator,
     subjectId: 'mathematics',
     paths: ['/goc-hoc-tap/mathematics', '/mathematics'],
-    children: stemGradeChildren('/goc-hoc-tap/mathematics'),
+    children: [...mathThcsGradeChildren(), ...stemGradeChildren('/goc-hoc-tap/mathematics')],
   },
   {
     label: 'Vật lí',
@@ -224,7 +256,11 @@ export function groupContainsPath(children: readonly NavChild[], pathname: strin
   )
 }
 
-/** Mục con này (hoặc một mục cấp 2 của nó) có khớp đường dẫn hiện tại không. */
-export function childIsActive(child: NavChild, pathname: string): boolean {
-  return child.paths.some((p) => underPrefix(pathname, p))
+/** Mục con này (hoặc một mục cấp 2 của nó) có khớp đường dẫn hiện tại không. Mục có `query`
+ *  phải khớp thêm tham số đó trên `search` (`location.search`, có hoặc không có dấu `?`). */
+export function childIsActive(child: NavChild, pathname: string, search = ''): boolean {
+  if (!child.paths.some((p) => underPrefix(pathname, p))) return false
+  if (!child.query) return true
+  const [khoa, giaTri] = child.query
+  return new URLSearchParams(search).get(khoa) === giaTri
 }

@@ -5,8 +5,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { PHYSICS_LOADER } from '@dhcb/subject-physics/lessonsLoader'
+import { MATH_LOADER } from '@dhcb/subject-math/lessonsLoader'
 import StemLessonList from './StemLessonList'
 import StemLessonView from './StemLessonView'
 import { duongDanBaiHoc } from '../../lib/stemLessonRoutes'
@@ -77,6 +78,60 @@ describe('trang bài học STEM', () => {
     const nut = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Lớp 12')!
     act(() => nut.click())
     expect(container.querySelectorAll('a').length).toBe(PHYSICS_LOADER.listCoreByGrade('12').length)
+  })
+
+  it('`?lop=9` (link sâu từ thanh điều hướng) mở sẵn tab Lớp 9 của Toán', () => {
+    hien(
+      '/goc-hoc-tap/mathematics/bai-hoc?lop=9',
+      '/goc-hoc-tap/:subjectId/bai-hoc',
+      <StemLessonList />,
+    )
+    const lop9 = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Lớp 9')!
+    expect(lop9.getAttribute('aria-pressed')).toBe('true')
+    expect(container.querySelectorAll('a').length).toBe(MATH_LOADER.listCoreByGrade('9').length)
+  })
+
+  it('`?lop=` lạ hoặc lớp môn không có bài → về lớp mặc định, không danh sách trống', () => {
+    for (const url of [
+      '/goc-hoc-tap/physics/bai-hoc?lop=8',
+      '/goc-hoc-tap/physics/bai-hoc?lop=x',
+    ]) {
+      hien(url, '/goc-hoc-tap/:subjectId/bai-hoc', <StemLessonList />)
+      const lop10 = [...container.querySelectorAll('button')].find(
+        (b) => b.textContent === 'Lớp 10',
+      )!
+      expect(lop10.getAttribute('aria-pressed'), url).toBe('true')
+    }
+  })
+
+  it('bấm tab lớp thì URL ghi lại `?lop=` — tải lại trang vẫn đúng tab', () => {
+    let search = ''
+    function DoUrl() {
+      search = useLocation().search
+      return null
+    }
+    act(() => {
+      root.render(
+        <MemoryRouter initialEntries={['/goc-hoc-tap/mathematics/bai-hoc']}>
+          <Routes>
+            <Route
+              path="/goc-hoc-tap/:subjectId/bai-hoc"
+              element={
+                <>
+                  <StemLessonList />
+                  <DoUrl />
+                </>
+              }
+            />
+          </Routes>
+        </MemoryRouter>,
+      )
+    })
+    expect(search).toBe('')
+    const lop7 = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Lớp 7')!
+    act(() => lop7.click())
+    expect(search).toBe('?lop=7')
+    expect(container.querySelectorAll('a').length).toBe(MATH_LOADER.listCoreByGrade('7').length)
   })
 
   it('mã môn lạ thì chuyển hướng chứ không dựng trang rỗng', () => {

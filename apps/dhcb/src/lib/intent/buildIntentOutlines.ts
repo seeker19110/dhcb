@@ -21,7 +21,6 @@ import type { LockPlan } from '@dhcb/subject-programming/levelLock'
 /** Bậc/cấp khởi đầu — S05 KHÔNG nới khoá, nên "quen rồi" vẫn vào chặng đầu (quyết định Q2(a)). */
 const ENGLISH_START_LEVEL = 'A1'
 const PROGRAMMING_START_LEVEL = 'p1'
-const DEFAULT_STEM_GRADE = '10'
 
 async function cayTiengAnh(uid: string): Promise<Outline | undefined> {
   const [
@@ -73,13 +72,18 @@ async function cayLapTrinh(uid: string, plan: LockPlan): Promise<Outline | undef
   })
 }
 
-async function cayStem(subjectId: StemSubjectId, grade: string): Promise<Outline | undefined> {
+async function cayStem(
+  subjectId: StemSubjectId,
+  grade: string | undefined,
+): Promise<Outline | undefined> {
   const [{ buildStemOutline }, routes] = await Promise.all([
     import('@dhcb/core-learner/outline/stemOutline'),
     import('../stemLessonRoutes'),
   ])
   const subject = routes.STEM_SUBJECTS[subjectId]
-  return buildStemOutline(subjectId, grade, {
+  // Một lớp chung cho mọi môn STEM đã chọn: "Toán + Vật lí, lớp 8" → Toán lớp 8, còn Vật lí (chưa
+  // có bài THCS) về lớp mặc định của môn thay vì dựng cây rỗng.
+  return buildStemOutline(subjectId, routes.lopChoMon(subject, grade), {
     loader: subject.loader,
     subjectLabel: subject.label,
     buildHref: (lesson) => routes.duongDanBaiHoc(subjectId, lesson.id, lesson.title),
@@ -98,7 +102,7 @@ async function cayMotMon(
     if (subjectId === 'english') return await cayTiengAnh(uid)
     if (subjectId === 'programming') return await cayLapTrinh(uid, plan)
     if (isStemIntentSubject(subjectId)) {
-      return await cayStem(subjectId as StemSubjectId, intent.grade ?? DEFAULT_STEM_GRADE)
+      return await cayStem(subjectId as StemSubjectId, intent.grade)
     }
     return undefined
   } catch {

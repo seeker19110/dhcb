@@ -51,10 +51,16 @@ function studioPath(id: string): string {
  * `path` nào khác cha (như "Lớp 10" của 4 môn STEM: cùng trang, chỉ khác `?grade=`) thì bỏ
  * qua hẳn ở tầng breadcrumb (không tạo nút riêng, không loại path khỏi cha) — nếu không sẽ tự
  * đè lên chính đường dẫn của cha, sinh nút cha trỏ vòng về chính nó.
+ *
+ * Tương tự, mục cấp 2 có `query` (Toán › "Lớp 6"…"Lớp 9" → danh sách bài `?lop=`) chỉ là MỘT
+ * TAB của trang khác, không phải trang riêng: dựng nút cho nó thì "Lớp 6" (mục đầu) chiếm tên của
+ * cả trang danh sách bài, và nút Back ghi "← Lớp 6" (thấy trên ảnh chụp Tầng 8b, 2026-10-10).
  */
 function childNodes(children: readonly NavChild[], parent: string): RouteNode[] {
   return children.flatMap((c) => {
-    const nested = (c.children ?? []).filter((n) => n.paths.some((p) => !c.paths.includes(p)))
+    const nested = (c.children ?? []).filter(
+      (n) => n.query === undefined && n.paths.some((p) => !c.paths.includes(p)),
+    )
     const owned = new Set(nested.flatMap((n) => n.paths))
     const own = c.paths.filter((p) => !owned.has(p))
     const to = c.to ?? c.paths[0]

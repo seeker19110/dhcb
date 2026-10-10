@@ -9,6 +9,7 @@ import {
   chonLopMacDinh,
   duongDanBaiHoc,
   lopCoBai,
+  lopChoMon,
   duongDanDanhSachBai,
   getStemSubject,
   maBaiTuUrl,
@@ -41,6 +42,15 @@ describe('stemLessonRoutes', () => {
 
   it('đường dẫn danh sách bài bám mã môn', () => {
     expect(duongDanDanhSachBai('chemistry')).toBe('/goc-hoc-tap/chemistry/bai-hoc')
+    expect(duongDanDanhSachBai('mathematics', '9')).toBe('/goc-hoc-tap/mathematics/bai-hoc?lop=9')
+  })
+
+  it('lopChoMon: lớp chung có bài ở môn thì dùng, không có thì về lớp mặc định của môn', () => {
+    expect(lopChoMon(STEM_SUBJECTS.mathematics, '8')).toBe('8')
+    expect(lopChoMon(STEM_SUBJECTS.physics, '8')).toBe(STEM_SUBJECTS.physics.defaultGrade)
+    expect(lopChoMon(STEM_SUBJECTS.physics, '12')).toBe('12')
+    expect(lopChoMon(STEM_SUBJECTS.chemistry, undefined)).toBe('10')
+    expect(lopChoMon(STEM_SUBJECTS.biology, 'x')).toBe('10')
   })
 
   it('tên tiếng Việt của ba cấp học sinh giỏi', () => {

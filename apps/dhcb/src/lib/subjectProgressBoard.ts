@@ -167,8 +167,11 @@ async function cacTheStem(
     MON_STEM.map(async (subjectId): Promise<SubjectProgressCard | undefined> => {
       try {
         const subject = routes.STEM_SUBJECTS[subjectId]
+        // Lớp khai ở "Bắt đầu" là lớp CHUNG; môn chưa có bài ở lớp đó (Lí/Hoá/Sinh với lớp 6–9)
+        // dùng lớp mặc định của môn — thẻ không bao giờ rỗng chỉ vì lớp chung không khớp.
+        const lop = routes.lopChoMon(subject, grade)
         const { state, status } = await evidence.fetchCompletionState(uid, subjectId)
-        const cay = stemOutline.buildStemOutlineForApp(subject, grade, {
+        const cay = stemOutline.buildStemOutlineForApp(subject, lop, {
           state,
           stateStatus: status,
         })
@@ -176,7 +179,11 @@ async function cacTheStem(
         return {
           subjectId,
           subjectLabel: subject.label,
-          href: routes.duongDanDanhSachBai(subjectId),
+          // Mở danh sách bài ở đúng tab lớp của thẻ; lớp mặc định thì giữ URL gọn như cũ.
+          href: routes.duongDanDanhSachBai(
+            subjectId,
+            lop === subject.defaultGrade ? undefined : lop,
+          ),
           summary: summarizeOutline(cay),
         }
       } catch {

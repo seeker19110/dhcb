@@ -226,7 +226,7 @@ export default function DesktopSidebar() {
     const id = childGroupId(child)
     return (
       openGroups.includes(id) ||
-      childIsActive(child, location.pathname) ||
+      childIsActive(child, location.pathname, location.search) ||
       groupContainsPath(child.children, location.pathname)
     )
   }
@@ -238,7 +238,7 @@ export default function DesktopSidebar() {
   function renderChild(child: NavChild) {
     const Icon = child.icon
     // Khớp theo BIÊN đoạn: `/goc-hoc-tap/english-abc` không làm sáng "Tiếng Anh".
-    const active = childIsActive(child, location.pathname)
+    const active = childIsActive(child, location.pathname, location.search)
     const hasChildren = !!child.children?.length
     const open = hasChildren && isChildOpen(child)
     const groupId = `nav-sub-${childGroupId(child).replace(/\W+/g, '-')}`

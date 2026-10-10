@@ -133,6 +133,35 @@ describe('StartByIntent', () => {
     expect(container.querySelector('ol')?.getAttribute('aria-label')).toBe('Bước 1 trên 5')
   })
 
+  async function denBuocLop(mon: string) {
+    await hien(`/bat-dau?mon=${mon}`)
+    await bam(nut('Tiếp'))
+    await bam(nut('Vì thích'))
+    await bam(nut('10 phút'))
+    await bam(nut('Mới bắt đầu'))
+  }
+
+  function cacLop(): string[] {
+    return [...container.querySelectorAll('fieldset button')]
+      .map((b) => b.textContent ?? '')
+      .filter((t) => t.startsWith('Lớp'))
+  }
+
+  it('bước "lớp" có Lớp 6–9 khi chọn Toán, lưu được lớp THCS', async () => {
+    await denBuocLop('mathematics,physics')
+    expect(cacLop()).toEqual(['Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9', 'Lớp 10', 'Lớp 11', 'Lớp 12'])
+    await bam(nut('Lớp 8'))
+    expect(JSON.parse(localStorage.getItem('dhcb_intent_guest_x') ?? '{}')).toMatchObject({
+      subjectIds: ['mathematics', 'physics'],
+      grade: '8',
+    })
+  })
+
+  it('bước "lớp" KHÔNG có Lớp 6–9 khi chỉ chọn Lí/Hoá/Sinh (chưa có bài THCS)', async () => {
+    await denBuocLop('physics')
+    expect(cacLop()).toEqual(['Lớp 10', 'Lớp 11', 'Lớp 12'])
+  })
+
   it('khách trả lời xong → lưu localStorage, KHÔNG gọi /api/learner-intent [AC-8/AC-11]', async () => {
     await hien('/bat-dau?mon=programming')
     await bam(nut('Tiếp'))

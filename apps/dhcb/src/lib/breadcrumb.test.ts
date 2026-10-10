@@ -20,6 +20,15 @@ describe('buildCrumbs', () => {
     ])
   })
 
+  it('danh sách bài Toán mang tên môn, KHÔNG mang tên tab lớp "Lớp 6" của thanh điều hướng', () => {
+    // Mục "Lớp 6…9" trỏ `/goc-hoc-tap/mathematics/bai-hoc?lop=`: chỉ là tab, không phải trang.
+    expect(buildCrumbs('/goc-hoc-tap/mathematics/bai-hoc').map((c) => c.label)).toEqual([
+      'Trang chủ',
+      'Góc học tập',
+      'Toán học',
+    ])
+  })
+
   it('trang con sâu vẫn lần đúng về nhánh cha', () => {
     expect(buildCrumbs('/lap-trinh/khoa/pyai').map((c) => c.label)).toEqual([
       'Trang chủ',

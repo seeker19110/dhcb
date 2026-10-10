@@ -534,10 +534,11 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
 - **[2026-10-10 — changelog `0577`–`0579`, `0594`, đặc tả `docs/specs/2026-10-10-toan-thcs-6-9.md`] Toán
   THCS ĐỦ 4 LỚP:** Toán 6 (9 chương, 26 bài, PR #1327), Toán 7 (10 chương, 28 bài, PR #1328), Toán 8
   (10 chương, 29 bài), Toán 9 (10 chương, 26 bài, changelog `0594`) — mọi bài `draft`, chờ giáo viên
-  duyệt. Bài THCS cố ý KHÔNG vào ngân hàng đề bảng nháp. **Tiếp theo (đặc tả ① "cập nhật sau khi
-  đủ 4 lớp"):** menu "theo lớp" ở thanh bên (`stemGradeChildren`, `apps/dhcb/src/data/stemCurriculum.ts`)
-  và `IntentGradeSchema` vẫn chỉ có lớp 10–12 — cần đặc tả nhỏ trước khi sửa. Tiểu học (1–5) chưa
-  làm: cần khuôn bài riêng.
+  duyệt. Bài THCS cố ý KHÔNG vào ngân hàng đề bảng nháp. ✅ **[changelog `0596`, đặc tả
+  `docs/specs/2026-10-10-menu-lop-thcs-va-bat-dau-6-9.md`]** Thanh bên mục Toán có Lớp 6–9 (trỏ danh
+  sách bài `?lop=`), `/bat-dau` hỏi được lớp 6–9 khi chọn Toán (`IntentGradeSchema` 6–12 + migration
+  `0092`). Phần TỔNG QUAN chương trình lớp 6–9 (`apps/dhcb/src/data/stemCurriculum.ts`) cố ý chưa viết.
+  Tiểu học (1–5) chưa làm: cần khuôn bài riêng.
 - **[2026-09-21 · CẬP NHẬT cùng ngày, PR đặc tả — `docs/changelog/0396-2026-09-21-dac-ta-19-chang-p6-con-thieu.md`] P6 (Lập trình,
   14 hướng chuyên sâu) — lệch lớn giữa "đã đặc tả" và "đã có bài học thật".**
   **Phần KẾ HOẠCH đã khép: đủ 56/56 chặng có đặc tả.** 19 chặng thiếu nay đều có đặc tả triển
