@@ -322,13 +322,45 @@ describe('ensureAudioBuffer / ensureAudioWithTimeline — đường gọi /api/t
     await expect(ensureAudioBuffer('Fail me', 'en-US', 'Kore')).rejects.toThrow('TTS API lỗi: 500')
   })
 
-  it('chưa đăng nhập (getStoredToken trả null) → ném lỗi rõ ràng', async () => {
+  it('khách chưa đăng nhập (getStoredToken trả null) → VẪN gọi /api/tts (giọng server)', async () => {
     const { getStoredToken } = await import('@core/authHeader')
-    vi.mocked(getStoredToken).mockReturnValueOnce(null)
-    const { ensureAudioBuffer } = await import('./tts')
-    await expect(ensureAudioBuffer('Not logged in', 'en-US', 'Kore')).rejects.toThrow(
-      'Chưa đăng nhập',
+    vi.mocked(getStoredToken).mockReturnValue(null)
+    const fetchMock = vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(
+        url === '/api/tts'
+          ? {
+              ok: true,
+              status: 200,
+              json: async () => ({ audio_url: '/fake.mp3', key_b64: 'a2V5', iv_b64: 'aXY=' }),
+            }
+          : { ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(16) },
+      ),
     )
+    vi.stubGlobal('fetch', fetchMock)
+    const { ensureAudioBuffer } = await import('./tts')
+    const buffer = await ensureAudioBuffer('Guest hello', 'en-US', 'Kore')
+    expect(buffer.byteLength).toBe(4)
+    expect(fetchMock).toHaveBeenCalledWith('/api/tts', expect.anything())
+  })
+
+  it('khách hết lượt dùng thử (429 + guestTrialExhausted) → ném lỗi ngay, KHÔNG thử lại', async () => {
+    let ttsCalls = 0
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() => {
+        ttsCalls++
+        return Promise.resolve({
+          ok: false,
+          status: 429,
+          json: async () => ({ error: 'Hết lượt', guestTrialExhausted: true }),
+        })
+      }),
+    )
+    const { ensureAudioBuffer } = await import('./tts')
+    await expect(ensureAudioBuffer('Out of trial', 'en-US', 'Kore')).rejects.toThrow(
+      'khách hết lượt dùng thử',
+    )
+    expect(ttsCalls).toBe(1)
   })
 
   it('2 lời gọi CÙNG lúc CÙNG câu → gộp thành 1 request (inflight dedupe)', async () => {
@@ -409,6 +441,19 @@ describe('prefetchSpeech', () => {
     vi.mocked(getAudioEntry).mockRejectedValueOnce(new Error('idb error'))
     const { prefetchSpeech } = await import('./tts')
     await expect(prefetchSpeech('Oops', 'en-US', 'Kore')).resolves.toBeUndefined()
+  })
+
+  it('khách chưa đăng nhập → KHÔNG nạp trước (không đốt lượt dùng thử ở nền)', async () => {
+    const { getStoredToken } = await import('@core/authHeader')
+    vi.mocked(getStoredToken).mockReturnValue(null)
+    const { getAudioEntry } = await import('./audioCache')
+    vi.mocked(getAudioEntry).mockClear()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const { prefetchSpeech } = await import('./tts')
+    await prefetchSpeech('Guest prefetch', 'en-US', 'Kore')
+    expect(getAudioEntry).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })
 
