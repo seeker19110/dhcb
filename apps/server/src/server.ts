@@ -246,9 +246,9 @@ function startReminderScheduler() {
     if (hour === 13) {
       void sendEmailReminders()
         .then((r) => {
-          if (r.sent || r.skipped)
+          if (r.sent || r.skipped || r.failed)
             console.log(
-              `[reminder:email] Gửi xong email nhắc học: ${r.sent} gửi, ${r.skipped} bỏ qua`,
+              `[reminder:email] Gửi xong email nhắc học: ${r.sent} gửi, ${r.skipped} bỏ qua, ${r.failed} lỗi`,
             )
         })
         .catch((err) => {

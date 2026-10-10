@@ -113,6 +113,20 @@ export async function verifyUserPassword(
 // ── Google OAuth (Google Identity Services — client gửi ID token, server verify) ──────
 let googleClient: OAuth2Client | null = null
 let googleClientId: string | null = null
+/**
+ * Nhà cung cấp OAuth trả mã lỗi PHÍA HỌ (5xx) hoặc chặn tần suất (429) → ghi log để vận hành thấy
+ * "Google/Facebook đang sập" thay vì chỉ thấy người dùng báo "token không hợp lệ" (audit
+ * 2026-10-10, E1.9). 4xx khác là token sai/hết hạn — chuyện thường, không log cho đỡ nhiễu. Nơi gọi
+ * vẫn trả `null` (fail-closed) như cũ.
+ */
+function warnIfProviderDown(provider: string, step: string, status: number): void {
+  if (status >= 500 || status === 429) {
+    console.warn(
+      `[authService] ${provider} ${step} trả HTTP ${status} — nhà cung cấp có thể đang lỗi`,
+    )
+  }
+}
+
 function getGoogleClient(): { client: OAuth2Client; clientId: string } {
   if (googleClient && googleClientId) return { client: googleClient, clientId: googleClientId }
   const clientId = process.env.GOOGLE_CLIENT_ID
@@ -176,7 +190,10 @@ export async function inspectGoogleAccessToken(
     const tokenInfoRes = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
     )
-    if (!tokenInfoRes.ok) return null
+    if (!tokenInfoRes.ok) {
+      warnIfProviderDown('Google', 'tokeninfo', tokenInfoRes.status)
+      return null
+    }
     const tokenInfo = (await tokenInfoRes.json()) as { aud?: string; expires_in?: string | number }
     if (tokenInfo.aud !== clientId) return null
     const expiresIn = Number(tokenInfo.expires_in)
@@ -186,7 +203,10 @@ export async function inspectGoogleAccessToken(
     const userInfoRes = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!userInfoRes.ok) return null
+    if (!userInfoRes.ok) {
+      warnIfProviderDown('Google', 'userinfo', userInfoRes.status)
+      return null
+    }
     const userInfo = (await userInfoRes.json()) as {
       sub?: string
       email?: string
@@ -343,6 +363,10 @@ export async function verifyFacebookAccessToken(
     const debugRes = await fetch(
       `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(accessToken)}&access_token=${encodeURIComponent(appToken)}`,
     )
+    if (!debugRes.ok) {
+      warnIfProviderDown('Facebook', 'debug_token', debugRes.status)
+      return null
+    }
     const debugData = (await debugRes.json()) as {
       data?: { is_valid?: boolean; app_id?: string }
     }
@@ -351,6 +375,10 @@ export async function verifyFacebookAccessToken(
     const meRes = await fetch(
       `https://graph.facebook.com/me?fields=id,email,name&access_token=${encodeURIComponent(accessToken)}`,
     )
+    if (!meRes.ok) {
+      warnIfProviderDown('Facebook', 'me', meRes.status)
+      return null
+    }
     const me = (await meRes.json()) as { id?: string; email?: string; name?: string }
     // Facebook cho phép user KHÔNG cấp quyền email (hiếm, thường do tài khoản chỉ có SĐT) —
     // không tạo được tài khoản nếu thiếu, vì `users.email` là NOT NULL UNIQUE.

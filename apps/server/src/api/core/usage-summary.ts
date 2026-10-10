@@ -74,6 +74,8 @@ export default async function handler(req: Request): Promise<Response> {
     console.warn('[usage-summary] lỗi đọc lượt đã dùng → fail-open (ẩn số, không chặn):', err)
     // Lỗi hạ tầng: KHÔNG bịa con số. `null` = client tự hiểu là chưa biết và không hiện thanh
     // tiến trình sai — việc chặn thật vẫn do server quyết ở checkAndConsumeUsage().
-    return jsonResponse({ plan: 'free', freeWeeklyCredit: null, freeWeeklyCap: 0 }, 200, allHeaders)
+    // `plan: null` cũng vậy (audit 2026-10-10, E1.9): trước đây trả 'free' nên VIP gặp lỗi thoáng
+    // qua bị báo là Free. Client hiện hành coi cả phản hồi này là "chưa biết" (schema loại).
+    return jsonResponse({ plan: null, freeWeeklyCredit: null, freeWeeklyCap: 0 }, 200, allHeaders)
   }
 }

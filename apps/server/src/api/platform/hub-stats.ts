@@ -82,8 +82,10 @@ export default async function handler(req: Request): Promise<Response> {
       ])
       isAdmin = isAdminUser(auth.userId)
       userName = profileRes.rows[0]?.name || user?.email?.split('@')[0] || ''
-    } catch {
-      // Fail-open: vẫn coi như đã đăng nhập nhưng không phải admin nếu DB lỗi tạm thời
+    } catch (err) {
+      // Fail-open: vẫn coi như đã đăng nhập nhưng không phải admin nếu DB lỗi tạm thời. Có log
+      // (audit 2026-10-10, E1.9) — trước đây admin âm thầm thành người thường mà không ai biết.
+      console.warn('[hub-stats] đọc hồ sơ lỗi → coi như người thường:', err)
     }
   }
 

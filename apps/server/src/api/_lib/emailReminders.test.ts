@@ -65,7 +65,7 @@ describe('sendEmailReminders', () => {
     queryMock.mockResolvedValueOnce({ rows: [{ user_id: 'u1' }] })
 
     const res = await sendEmailReminders()
-    expect(res).toEqual({ sent: 0, skipped: 0 })
+    expect(res).toEqual({ sent: 0, skipped: 0, failed: 0 })
     // Không gọi thêm query nào sau khi early return
     expect(queryMock).toHaveBeenCalledTimes(2)
   })
@@ -122,5 +122,41 @@ describe('sendEmailReminders', () => {
     expect(res.sent).toBe(0)
     // Không gọi upsert email_reminders khi mail không gửi thành công
     expect(queryMock).toHaveBeenCalledTimes(7)
+  })
+
+  /** 7 câu đọc đầu của một vòng có đúng hai học viên u5, u6 cần nhắc. */
+  function queueTwoTargets() {
+    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({ rows: [{ user_id: 'u5' }, { user_id: 'u6' }] })
+    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({
+      rows: [
+        { id: 'u5', email: 'u5@example.com' },
+        { id: 'u6', email: 'u6@example.com' },
+      ],
+    })
+    queryMock.mockResolvedValueOnce({ rows: [] })
+    queryMock.mockResolvedValueOnce({ rows: [] })
+  }
+
+  it('SMTP lỗi / chưa cấu hình → đếm vào failed, KHÔNG lẫn vào skipped', async () => {
+    const send = sendMailWithQuota as ReturnType<typeof vi.fn>
+    send
+      .mockResolvedValueOnce({ status: 'error' })
+      .mockResolvedValueOnce({ status: 'not_configured' })
+    queueTwoTargets()
+    expect(await sendEmailReminders()).toEqual({ sent: 0, skipped: 0, failed: 2 })
+  })
+
+  it('ghi mốc cooldown lỗi CSDL → KHÔNG dừng cả vòng, người sau vẫn được gửi', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    queueTwoTargets()
+    queryMock.mockRejectedValueOnce(new Error('db down'))
+    queryMock.mockResolvedValueOnce({ rows: [] })
+    expect(await sendEmailReminders()).toEqual({ sent: 2, skipped: 0, failed: 0 })
+    expect(sendMailWithQuota).toHaveBeenCalledTimes(2)
+    expect(error).toHaveBeenCalledOnce()
+    error.mockRestore()
   })
 })

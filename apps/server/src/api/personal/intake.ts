@@ -39,6 +39,8 @@ const BodySchema = z.union([
   z.object({ action: z.literal('done') }),
 ])
 
+const INTAKE_MISSING_MESSAGE = 'Bạn chưa trả lời 5 câu hỏi đầu — hãy trả lời trước nhé.'
+
 export default async function handler(req: Request): Promise<Response> {
   const allHeaders = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: allHeaders })
@@ -79,13 +81,13 @@ export default async function handler(req: Request): Promise<Response> {
   if (!result.ok)
     return jsonResponse({ error: result.error.message }, result.error.status, allHeaders)
 
-  if (result.data.action === 'choose') {
-    await saveChosenTask(pool, auth.userId, result.data.taskId)
-    return jsonResponse({ ok: true }, 200, allHeaders)
-  }
-
-  if (result.data.action === 'done') {
-    await markTaskDone(pool, auth.userId)
+  if (result.data.action === 'choose' || result.data.action === 'done') {
+    const saved =
+      result.data.action === 'choose'
+        ? await saveChosenTask(pool, auth.userId, result.data.taskId)
+        : await markTaskDone(pool, auth.userId)
+    // Chưa trả lời 5 câu thì chưa có hàng intake để ghi — báo thẳng thay vì `ok: true` giả.
+    if (!saved) return jsonResponse({ error: INTAKE_MISSING_MESSAGE }, 409, allHeaders)
     return jsonResponse({ ok: true }, 200, allHeaders)
   }
 

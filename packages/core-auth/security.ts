@@ -543,6 +543,14 @@ export async function consumeDailyCounter(key: string, limit: number): Promise<b
   return consumeWindowCounter(key, limit, DAY_MS)
 }
 
+/** Như `consumeDailyCounter` nhưng phân biệt `exhausted`/`unavailable` (xem `CounterStatus`). */
+export async function consumeDailyCounterStatus(
+  key: string,
+  limit: number,
+): Promise<CounterStatus> {
+  return consumeWindowCounterStatus(key, limit, DAY_MS)
+}
+
 /**
  * Xoá hẳn bộ đếm `key`, trả `true` nếu CHẮC CHẮN đã xoá ở kho dùng chung. `false` = production mà
  * Redis không sẵn sàng/lỗi (bản Map cục bộ vẫn được xoá nhưng không có tác dụng ở cụm) — nơi gọi

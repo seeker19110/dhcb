@@ -148,9 +148,18 @@ describe('đo gợi ý có trúng không', () => {
 
   it('markTaskDone chỉ ghi mốc LẦN ĐẦU — bấm lại không được dời mốc', async () => {
     await markTaskDone(pool, USER)
-    const upd = seen.find((q) => q.sql.includes('task_done_at = now()'))
+    const upd = seen.find((q) => q.sql.includes('set task_done_at'))
     // Điều kiện này là thứ giữ cho phép đo "trong 7 ngày" không bị bóp méo.
-    expect(upd?.sql).toContain('task_done_at is null')
+    expect(upd?.sql).toContain('coalesce(task_done_at, now())')
+  })
+
+  it('chưa có hàng intake → saveChosenTask/markTaskDone trả false (không báo thành công giả)', async () => {
+    nextRows = []
+    expect(await saveChosenTask(pool, USER, 'x')).toBe(false)
+    expect(await markTaskDone(pool, USER)).toBe(false)
+    nextRows = [{}]
+    expect(await saveChosenTask(pool, USER, 'x')).toBe(true)
+    expect(await markTaskDone(pool, USER)).toBe(true)
   })
 
   it('getIntakeState báo đúng việc đã làm xong hay chưa', async () => {

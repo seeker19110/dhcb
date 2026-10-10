@@ -111,14 +111,19 @@ export async function saveIntake(
   return answers
 }
 
-/** Ghi lại việc người dùng CHỌN. So với `suggested_task_id` sẽ ra độ chính xác của suy luận. */
-export async function saveChosenTask(pool: Pool, userId: string, taskId: string): Promise<void> {
-  await pool.query(
+/**
+ * Ghi lại việc người dùng CHỌN. So với `suggested_task_id` sẽ ra độ chính xác của suy luận.
+ * Trả `false` khi CHƯA có hàng intake (chưa trả lời 5 câu) — trước đây API vẫn báo thành công và
+ * số đo lệch âm thầm (audit 2026-10-10, E1.9).
+ */
+export async function saveChosenTask(pool: Pool, userId: string, taskId: string): Promise<boolean> {
+  const res = await pool.query(
     `update personal.intake
         set chosen_task_id = $2, task_chosen_at = now(), updated_at = now()
       where user_id = $1`,
     [userId, taskId],
   )
+  return (res.rowCount ?? 0) > 0
 }
 
 /**
@@ -128,16 +133,19 @@ export async function saveChosenTask(pool: Pool, userId: string, taskId: string)
  * liệu. Nhưng nó vẫn là tín hiệu tốt nhất có được: cái ta cần biết là "việc này có xảy ra trong
  * đời thật không", mà đời thật thì app không nhìn thấy.
  *
- * `where task_done_at is null` để lần đánh dấu ĐẦU TIÊN là mốc được giữ — bấm lại không dời mốc,
- * nếu không thì mọi phép đo "trong 7 ngày" đều sai.
+ * `coalesce(task_done_at, now())` để lần đánh dấu ĐẦU TIÊN là mốc được giữ — bấm lại không dời
+ * mốc, nếu không thì mọi phép đo "trong 7 ngày" đều sai. Không lọc `task_done_at is null` ở `where`
+ * nữa để `rowCount` phân biệt được "đã đánh dấu từ trước" (1) với "chưa có hàng intake" (0 → trả
+ * `false`).
  */
-export async function markTaskDone(pool: Pool, userId: string): Promise<void> {
-  await pool.query(
+export async function markTaskDone(pool: Pool, userId: string): Promise<boolean> {
+  const res = await pool.query(
     `update personal.intake
-        set task_done_at = now(), updated_at = now()
-      where user_id = $1 and task_done_at is null`,
+        set task_done_at = coalesce(task_done_at, now()), updated_at = now()
+      where user_id = $1`,
     [userId],
   )
+  return (res.rowCount ?? 0) > 0
 }
 
 // ── Đo: gợi ý có TRÚNG không ────────────────────────────────────────────────

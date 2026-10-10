@@ -660,6 +660,25 @@ describe('POST /api/progress — version, xung đột, replay (S09-1)', () => {
     expect(String(upsert?.[0])).toContain('returning version')
   })
 
+  it('đọc gói LỖI → vẫn lưu tiến độ nhưng KHÔNG ghi biên nhận (không đóng băng danh sách hẹp)', async () => {
+    mockDb({ existing: { version: 4 }, nextVersion: 5 })
+    const base = query.getMockImplementation()
+    query.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (String(sql).includes('from public.profiles')) throw new Error('db down')
+      return base!(sql, params)
+    })
+    const resp = await handler(makeRequest({ learned: ['apple'], sync: envelope(4) }))
+    expect(resp.status).toBe(200)
+    expect(findCall('insert into english.learning_progress')).toBeDefined()
+    expect(findCall('insert into public.sync_receipts')).toBeUndefined()
+  })
+
+  it('đọc gói bình thường → CÓ ghi biên nhận', async () => {
+    mockDb({ existing: { version: 4 }, nextVersion: 5 })
+    await handler(makeRequest({ learned: ['apple'], sync: envelope(4) }))
+    expect(findCall('insert into public.sync_receipts')).toBeDefined()
+  })
+
   it('AC-1b không có phong bì `sync` (client cũ) → đường cũ y nguyên, response vẫn có version', async () => {
     mockDb({ existing: { version: 2 }, nextVersion: 3 })
     const resp = await handler(makeRequest({ learned: ['apple'] }))

@@ -12,17 +12,22 @@ const release = vi.fn()
 vi.mock('./security.js', async (importOriginal) => ({
   // Bản THẬT của hàm chuẩn hoá khoá — test dưới cần thấy IPv6 được gom theo /64.
   rateLimitSubject: (await importOriginal<typeof import('./security.js')>()).rateLimitSubject,
-  consumeDailyCounter: consume,
+  consumeDailyCounterStatus: consume,
   releaseDailyCounter: release,
 }))
 
-const { checkAndConsumeGuestTrial, refundGuestTrial, GUEST_DAILY_TRIAL, GUEST_IP_DAILY_TRIAL } =
-  await import('./guestTrial.js')
+const {
+  checkAndConsumeGuestTrial,
+  refundGuestTrial,
+  GUEST_DAILY_TRIAL,
+  GUEST_IP_DAILY_TRIAL,
+  GUEST_TRIAL_UNAVAILABLE_MESSAGE,
+} = await import('./guestTrial.js')
 
 beforeEach(() => {
   consume.mockReset()
   release.mockReset()
-  consume.mockResolvedValue(true)
+  consume.mockResolvedValue('ok')
   release.mockResolvedValue(undefined)
 })
 
@@ -47,7 +52,7 @@ describe('checkAndConsumeGuestTrial', () => {
   })
 
   it('hết lượt theo id → chặn NGAY, không đụng tới bộ đếm IP', async () => {
-    consume.mockResolvedValueOnce(false)
+    consume.mockResolvedValueOnce('exhausted')
     const gate = await checkAndConsumeGuestTrial('guest_a', '1.2.3.4')
     expect(gate.ok).toBe(false)
     expect(gate.message).toContain('Đăng ký')
@@ -55,9 +60,24 @@ describe('checkAndConsumeGuestTrial', () => {
   })
 
   it('hết lượt theo IP → chặn VÀ hoàn lại lượt vừa trừ ở tầng id', async () => {
-    consume.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+    consume.mockResolvedValueOnce('ok').mockResolvedValueOnce('exhausted')
     const gate = await checkAndConsumeGuestTrial('guest_a', '1.2.3.4')
     expect(gate.ok).toBe(false)
+    expect(release).toHaveBeenCalledExactlyOnceWith('guest-trial:id:guest_a')
+  })
+
+  it('Redis không đếm được ở tầng id → vẫn CHẶN nhưng KHÔNG báo "hết lượt"', async () => {
+    consume.mockResolvedValueOnce('unavailable')
+    const gate = await checkAndConsumeGuestTrial('guest_a', '1.2.3.4')
+    expect(gate).toEqual({ ok: false, message: GUEST_TRIAL_UNAVAILABLE_MESSAGE, unavailable: true })
+    expect(consume).toHaveBeenCalledTimes(1)
+  })
+
+  it('Redis không đếm được ở tầng IP → chặn, báo bận, hoàn lượt tầng id', async () => {
+    consume.mockResolvedValueOnce('ok').mockResolvedValueOnce('unavailable')
+    const gate = await checkAndConsumeGuestTrial('guest_a', '1.2.3.4')
+    expect(gate.unavailable).toBe(true)
+    expect(gate.message).toBe(GUEST_TRIAL_UNAVAILABLE_MESSAGE)
     expect(release).toHaveBeenCalledExactlyOnceWith('guest-trial:id:guest_a')
   })
 

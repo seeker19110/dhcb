@@ -123,7 +123,7 @@ Mỗi đợt một PR nhỏ. Thứ tự đề xuất theo giá trị/rủi ro.
 ### E1 — Server: lỗi im lặng & độ bền (`fix(server)`, không cần migration)
 
 > **✅ ĐÃ LÀM mục 1–8 ở `docs/changelog/0581-2026-10-10-e1-loi-im-lang-server.md`** (2026-10-10).
-> Mục 9 (mức thấp) còn mở. Ngưỡng timeout pool đã chọn: 10s kết nối / 60s câu lệnh / 60s ngồi im
+> **Mục 9 ĐÃ LÀM ở `docs/changelog/0586-2026-10-10-e1-9-loi-im-lang-muc-thap.md`.** Ngưỡng timeout pool đã chọn: 10s kết nối / 60s câu lệnh / 60s ngồi im
 > giữa transaction, chỉnh được qua `.env`.
 
 1. **CAO** `packages/core-personal/companionRuntime.ts:472,501,507` — Companion nuốt lỗi cả 3

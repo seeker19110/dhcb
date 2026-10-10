@@ -18,7 +18,7 @@
 // Đặt ở `core-auth` chứ không phải `core-billing` là CÓ CHỦ Ý: `core-auth` đã phụ thuộc
 // `core-billing` (auth.ts/trial.ts), nên để ngược lại sẽ tạo vòng phụ thuộc giữa hai gói và
 // `tsc -b` (project references) từ chối biên dịch.
-import { consumeDailyCounter, rateLimitSubject, releaseDailyCounter } from './security.js'
+import { consumeDailyCounterStatus, rateLimitSubject, releaseDailyCounter } from './security.js'
 
 /** Số lượt AI/ngày cho MỘT trình duyệt khách. Thấp hơn nhiều hạn mức Free (30). */
 export const GUEST_DAILY_TRIAL = 3
@@ -39,9 +39,24 @@ function ipKeyOf(ip: string): string {
   return `guest-trial:ip:${rateLimitSubject(ip)}`
 }
 
+/**
+ * Production mà Redis không đếm được (audit 2026-10-10, E1.9): vẫn CHẶN (fail-closed) nhưng nói
+ * đúng lý do — trước đây khách thấy "đã dùng hết lượt thử" dù chưa dùng lượt nào.
+ */
+export const GUEST_TRIAL_UNAVAILABLE_MESSAGE =
+  'Máy chủ đang tạm bận nên chưa dùng thử được. Bạn thử lại sau ít phút nhé.'
+
 export interface GuestTrialGate {
   ok: boolean
   message?: string
+  /** `true` = bị chặn vì không đếm được lượt (hạ tầng), KHÔNG phải vì khách đã hết lượt. */
+  unavailable?: boolean
+}
+
+const UNAVAILABLE_GATE: GuestTrialGate = {
+  ok: false,
+  message: GUEST_TRIAL_UNAVAILABLE_MESSAGE,
+  unavailable: true,
 }
 
 /**
@@ -55,16 +70,19 @@ export async function checkAndConsumeGuestTrial(
   guestKey: string,
   ip: string,
 ): Promise<GuestTrialGate> {
-  const idOk = await consumeDailyCounter(guestKeyOf(guestKey), GUEST_DAILY_TRIAL)
-  if (!idOk) return { ok: false, message: GUEST_TRIAL_MESSAGE }
+  const idStatus = await consumeDailyCounterStatus(guestKeyOf(guestKey), GUEST_DAILY_TRIAL)
+  if (idStatus === 'unavailable') return UNAVAILABLE_GATE
+  if (idStatus === 'exhausted') return { ok: false, message: GUEST_TRIAL_MESSAGE }
 
   // IP rỗng (không xác định được) → bỏ qua tầng 2, tầng 1 vẫn chặn.
   if (!ip) return { ok: true }
 
-  const ipOk = await consumeDailyCounter(ipKeyOf(ip), GUEST_IP_DAILY_TRIAL)
-  if (!ipOk) {
+  const ipStatus = await consumeDailyCounterStatus(ipKeyOf(ip), GUEST_IP_DAILY_TRIAL)
+  if (ipStatus !== 'ok') {
     await releaseDailyCounter(guestKeyOf(guestKey))
-    return { ok: false, message: GUEST_TRIAL_MESSAGE }
+    return ipStatus === 'unavailable'
+      ? UNAVAILABLE_GATE
+      : { ok: false, message: GUEST_TRIAL_MESSAGE }
   }
   return { ok: true }
 }

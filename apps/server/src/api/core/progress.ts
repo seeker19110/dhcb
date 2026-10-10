@@ -161,18 +161,22 @@ function countCompletedDueVocabularyCards(
  *
  * FAIL-SAFE ĐÚNG CHIỀU (bất biến §⑤ của đặc tả): đọc lỗi → coi như `free` (KHOÁ CHẶT). Khác
  * `checkAndConsumeUsage` vốn fail-open: ở đây fail-open nghĩa là phát không gói VIP cho mọi người
- * mỗi lần CSDL trục trặc.
+ * mỗi lần CSDL trục trặc. `degraded: true` = kết quả là giá trị thay thế, KHÔNG được lưu vào biên
+ * nhận idempotent (audit 2026-10-10, E1.9 — xem nơi gọi `saveReceipt`).
  */
-async function readEffectivePlan(pool: Pool, userId: string): Promise<'free' | 'vip'> {
+async function readEffectivePlan(
+  pool: Pool,
+  userId: string,
+): Promise<{ plan: 'free' | 'vip'; degraded: boolean }> {
   try {
     const { rows } = await pool.query<{ plan: string | null; plan_expires_at: Date | null }>(
       'select plan, plan_expires_at from public.profiles where id = $1',
       [userId],
     )
-    return resolvePlan(rows[0]?.plan, rows[0]?.plan_expires_at)
+    return { plan: resolvePlan(rows[0]?.plan, rows[0]?.plan_expires_at), degraded: false }
   } catch (err) {
     console.warn('[progress] đọc plan lỗi → coi như Free (khoá chặt):', err)
-    return 'free'
+    return { plan: 'free', degraded: true }
   }
 }
 
@@ -210,7 +214,7 @@ export default async function handler(req: Request): Promise<Response> {
       return jsonResponse(null, 200, allHeaders)
     // TÍNH LẠI mỗi lần đọc, không trả thẳng cột đã lưu: có vậy VIP hết hạn mới bị khoá lại đúng
     // lúc (tiêu chí 6) mà không cần job dọn dữ liệu chạy trước.
-    const plan = await readEffectivePlan(pool, auth.userId)
+    const { plan } = await readEffectivePlan(pool, auth.userId)
     return jsonResponse(
       {
         learned: row.learned ?? [],
@@ -293,7 +297,7 @@ export default async function handler(req: Request): Promise<Response> {
   // độ) VẪN ghi đè theo client như cũ.
   // Đọc gói TRƯỚC transaction: nó nằm ở bảng khác (public.profiles), không cần nằm trong phạm vi
   // row lock của learning_progress và giữ vùng khoá gọn nhất có thể.
-  const plan = await readEffectivePlan(pool, auth.userId)
+  const { plan, degraded: planDegraded } = await readEffectivePlan(pool, auth.userId)
 
   const {
     didGrowLearning: grewLearning,
@@ -432,7 +436,11 @@ export default async function handler(req: Request): Promise<Response> {
     // không cái nào — không có cửa sổ "đã merge nhưng chưa có biên nhận" (F2 của đặc tả).
     // Cố ý KHÔNG lưu `merged` vào biên nhận để dòng receipt nhỏ; lần gửi lại chỉ cần biết
     // version/cefrUnlocked, còn bản gộp đầy đủ lấy bằng `pullProgress` như thường lệ.
-    if (sync) {
+    // Đọc gói LỖI thì KHÔNG ghi biên nhận: `cefrUnlocked` lúc này là danh sách hẹp tạm thời
+    // (coi như Free) — lưu vào biên nhận thì mọi lần replay trả mãi bản hẹp đó cho VIP. Bỏ biên
+    // nhận an toàn vì merge là hợp nhất (gửi lại không mất/nhân đôi gì) và cột `cefr_unlocked`
+    // tự lành ở lần ghi kế tiếp.
+    if (sync && !planDegraded) {
       await saveReceipt(client, auth.userId, sync.attemptId, 'progress', {
         ok: true,
         cefrUnlocked: merged.cefrUnlocked,
