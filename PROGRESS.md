@@ -180,7 +180,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   chỉ mục + job dọn phiên/mã hết hạn + `analytics_events` giữ 365 ngày). **E4 frontend ĐÃ LÀM**
   (`0584`: JS khởi động −3,5 kB, trang chặng 542 → 17 kB, gộp FNV/mulberry32/ngày VN/đọc
   localStorage, sửa 2 bug). **E4.1b ĐÃ LÀM** (`0587`: tách hàm thuần khỏi file hợp đồng thay vì đổi
-  hợp đồng sang `zod/mini` — route `/` đã đăng nhập không còn tải `vendor-zod`, −13,7 kB gzip). **E5 ĐÃ LÀM** (`0585`: `.size-limit.json` đếm đủ chunk `modulepreload`, 135,68/160 kB + phép kiểm `scripts/check-startup-coverage.ts` trong `npm run size`). Cả 5 đợt audit đã xong, không còn mục mở (3 helper fetch + 5 bản bỏ dấu cố ý không gộp, lý do ở `0584`).
+  hợp đồng sang `zod/mini` — route `/` đã đăng nhập không còn tải `vendor-zod`, −13,7 kB gzip). **E5 ĐÃ LÀM** (`0585`: `.size-limit.json` đếm đủ chunk `modulepreload`, 135,68/160 kB + phép kiểm `scripts/check-startup-coverage.ts` trong `npm run size`). Cả 5 đợt audit đã xong, không còn mục mở (3 helper fetch + 5 bản bỏ dấu cố ý không gộp, lý do ở `0584`). Giới hạn đã biết của E1 (cầu dao chỉ xoá cache ở 1 tiến trình PM2) đã gỡ ở `0589`: phát tin xoá cache qua Redis pub/sub tới cả cụm.
 
 - **[2026-10-09] Dự án trục T2/T3 môn Lập trình** — hạ tầng xong (changelog `0571`, đặc tả
   `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md`): chọn dự án, mã bước

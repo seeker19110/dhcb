@@ -60,6 +60,7 @@ import {
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import { sendEmailReminders } from './api/_lib/emailReminders.js'
 import { sendWeeklyReports } from './api/_lib/weeklyReportService.js'
+import { startSettingsSyncListener } from './api/_lib/settingsSync.js'
 
 const app = express()
 
@@ -393,6 +394,9 @@ const server = app.listen(PORT, () => {
   console.log(`✅ Đồng Hành Cùng Bạn (DHCB) đang chạy tại http://localhost:${PORT}`)
   console.log(`   NODE_ENV : ${process.env.NODE_ENV || 'production'}`)
   console.log(`   Node.js  : ${process.version}`)
+  // MỌI instance (không chỉ instance 0) nghe tin "admin vừa đổi cấu hình" để xoá cache 30s của
+  // mình — cầu dao khẩn cấp có hiệu lực ở cả cụm PM2 ngay (xem api/_lib/settingsSync.ts).
+  startSettingsSyncListener()
   // PM2 cluster: chỉ instance 0 chạy scheduler — trước đây CẢ 3 instance cùng chạy nên
   // push/email nhắc học gửi 3 lần/người và downgradeExpiredPlans() chạy 3 lần
   // (vá 2026-08-23, đề xuất N1 mục B5). Chạy ngoài PM2 thì biến không tồn tại → vẫn chạy.

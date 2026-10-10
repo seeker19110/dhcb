@@ -16,7 +16,8 @@ import {
   logSecurityEvent,
 } from '@dhcb/core-auth/security'
 import { isAdminUser } from '@dhcb/core-auth/adminAuth'
-import { getAppSettings, invalidateSettingsCache } from '@dhcb/core-db/settings'
+import { getAppSettings } from '@dhcb/core-db/settings'
+import { invalidateSettingsEverywhere } from '../_lib/settingsSync.js'
 import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
@@ -104,7 +105,7 @@ export default async function handler(req: Request): Promise<Response> {
       console.error('[admin-settings] app_settings id=1 không tồn tại — chưa ghi được cấu hình')
       return jsonResponse({ error: 'Chưa lưu được cấu hình — thử lại sau' }, 500, allHeaders)
     }
-    invalidateSettingsCache()
+    invalidateSettingsEverywhere()
 
     const updated = await getAppSettings({ requireAvailable: true })
     return jsonResponse(updated, 200, allHeaders)
