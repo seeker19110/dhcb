@@ -1,44 +1,51 @@
-# Gia sư tiếng Anh AI (Bilingual English-Vietnamese AI Tutor)
+# Đồng Hành Cùng Bạn (DHCB)
 
-> Ứng dụng web Progressive Web App (PWA) gia sư học tiếng Anh thông minh hỗ trợ 2 chiều Anh - Việt dành cho người Việt Nam từ trình độ A1 đến C2.
+> Nền tảng đồng hành cá nhân giúp mọi người học hỏi và từng bước nâng cao khả năng tự học: bài học, thực hành, ôn tập ngắt quãng và AI hỗ trợ giải thích bằng tiếng Việt. Dùng thử không cần tài khoản.
+> A personal learning companion for Vietnamese learners (and foreigners learning Vietnamese through English): lessons, practice, spaced review and an AI tutor that explains in the learner's native language.
 
-## Tổng quan dự án (Project Overview)
-Gia sư tiếng Anh AI là nền tảng học tiếng Anh cá nhân hóa ứng dụng công nghệ trí tuệ nhân tạo (AI) nâng cao. Nền tảng giúp học viên luyện tập 4 kỹ năng Nghe - Nói - Đọc - Viết với phản hồi giải thích chi tiết bằng tiếng Việt hoặc tiếng Anh tùy lựa chọn.
+Nền tảng có hai trụ — **Học tập** (nhiều môn) và **Ghi chú** — cùng "Bạn Đồng Hành", tác tử AI nhớ ngữ cảnh việc học. Giao diện chính bằng tiếng Việt. Gói dịch vụ: Miễn phí (hạn mức lượt AI mỗi ngày) và VIP (tự chọn bài, không giới hạn lượt AI khi gói còn hiệu lực). Mọi lệnh gọi AI đi qua máy chủ của DHCB; trình duyệt không gọi thẳng nhà cung cấp AI.
 
-## Các tính năng chính (Key Features)
+## Bắt đầu
 
-### 1. Trò chuyện & Giải đáp cùng AI (AI Chat Tutor)
-- URL: `/tro-truyen`
-- Hỗ trợ hội thoại tiếng Anh tự nhiên, tự động phân tích lỗi sai ngữ pháp, từ vựng và gợi ý cách diễn đạt chuẩn bản xứ kèm giải thích tiếng Việt.
+- [Trang chủ](https://www.donghanhcungban.org/): Bạn Đồng Hành tự giới thiệu, một nút bắt đầu và danh sách các môn.
+- [Bắt đầu theo ý định](https://www.donghanhcungban.org/bat-dau): chọn việc muốn làm trước, không cần tài khoản.
+- [Giới thiệu ứng dụng](https://www.donghanhcungban.org/gioi-thieu): các tính năng và cách DHCB hỗ trợ việc học.
+- [Góc học tập](https://www.donghanhcungban.org/goc-hoc-tap): tất cả các môn học.
+- [Ôn tập](https://www.donghanhcungban.org/goc-hoc-tap/on-tap): ôn lại điều đã học theo lịch lặp lại ngắt quãng.
 
-### 2. Luyện nói tiếng Anh tương tác (AI Speaking Coach)
-- URL: `/luyen-noi`
-- Luyện nói phản xạ theo ngữ cảnh, AI phát âm chuẩn bản xứ (US/UK/AU), phân tích âm tiết và chấm điểm phát âm trực tiếp.
+## Môn Tiếng Anh
 
-### 3. Luyện viết & Chấm điểm IELTS (AI Writing Evaluator)
-- URL: `/luyen-viet`
-- Chấm bài luận, email, đoạn văn theo tiêu chuẩn IELTS Task 1 & Task 2. Chỉ rõ lỗi ngữ pháp, gợi ý nâng băng thông từ vựng (Band score booster).
+Lộ trình CEFR A1 → C2, học hai chiều: người Việt học tiếng Anh, hoặc người nước ngoài học tiếng Việt qua tiếng Anh. Điểm khác biệt: AI hội thoại bằng giọng ngôn ngữ đích và sửa lỗi, giải thích bằng giọng tiếng mẹ đẻ của người học.
 
-### 4. Thẻ từ vựng thông minh SRS & Học Offline (SRS Flashcards & Offline Mode)
-- URL: `/luyen-tap`
-- Thuật toán lặp lại ngắt quãng SRS (Free Spaced Repetition System - FSRS) tối ưu khả năng ghi nhớ dài hạn. Hỗ trợ lưu dữ liệu vào IndexedDB và Service Worker để ôn tập từ vựng mượt mà ngay cả khi không có kết nối Internet (PWA Offline SRS).
+- [Trang môn Tiếng Anh](https://www.donghanhcungban.org/goc-hoc-tap/english): điểm vào của môn.
+- [Lộ trình CEFR](https://www.donghanhcungban.org/goc-hoc-tap/english/lo-trinh): các bậc A1, A2, B1, B2, C1, C2.
+- [Trò chuyện với gia sư AI](https://www.donghanhcungban.org/goc-hoc-tap/english/tro-truyen): hội thoại thân mật, sửa lỗi kèm giải thích tiếng Việt, chấm điểm kiểu IELTS Speaking cuối phiên.
+- [Luyện nói song ngữ](https://www.donghanhcungban.org/goc-hoc-tap/english/luyen-noi): nói → AI nghe → trả lời bằng giọng tiếng Anh chuẩn, sửa lỗi bằng giọng tiếng Việt.
+- [Luyện viết và chấm điểm](https://www.donghanhcungban.org/goc-hoc-tap/english/luyen-viet): chấm bài kiểu IELTS, chỉ lỗi, ước lượng band.
+- [Luyện nghe](https://www.donghanhcungban.org/goc-hoc-tap/english/luyen-nghe): bài nghe theo trình độ.
+- [Bài học](https://www.donghanhcungban.org/goc-hoc-tap/english/bai-hoc): bài học ngữ pháp và từ vựng theo bậc.
+- [Từ điển](https://www.donghanhcungban.org/goc-hoc-tap/english/tu-dien): tra từ Anh – Việt kèm phát âm.
+- [Câu thông dụng](https://www.donghanhcungban.org/goc-hoc-tap/english/cau-thong-dung): mẫu câu giao tiếp hằng ngày.
+- [Truyện song ngữ](https://www.donghanhcungban.org/goc-hoc-tap/english/truyen): đọc truyện Anh – Việt theo trình độ.
+- [Learn Vietnamese](https://www.donghanhcungban.org/learn-vietnamese): giới thiệu bằng tiếng Anh cho người nước ngoài học tiếng Việt.
 
-### 5. Khung lộ trình năng lực CEFR (A1 -> C2)
-- URL: `/lo-trinh-hoc`
-- Lộ trình bài học bài bản chia theo khung tham chiếu châu Âu CEFR từ A1 (Cơ bản), A2, B1, B2 đến C1-C2 (Nâng cao).
+## Môn Lập trình
 
-### 6. Từ điển 10.000+ từ & Bài học Ngữ pháp
-- Từ điển: `/tu-dien`
-- Bài học: `/bai-hoc`
-- Câu thông dụng: `/cau-thong-dung`
-- Sổ tay lỗi sai: `/so-tay-loi-sai`
+- [Trang môn Lập trình](https://www.donghanhcungban.org/goc-hoc-tap/programming): lộ trình từ nhập môn tư duy (P1) tới P6, cùng 14 hướng chuyên sâu; viết và chạy code ngay trên trình duyệt, AI góp ý bằng tiếng Việt mà không đưa sẵn lời giải.
 
-## Đối tượng sử dụng (Target Audience)
-- Học sinh, sinh viên, người đi làm Việt Nam muốn cải thiện kỹ năng tiếng Anh giao tiếp và học thuật.
-- Người luyện thi chứng chỉ IELTS, TOEIC, VSTEP.
-- Người bận rộn cần giải pháp học ngoại ngữ linh hoạt, học offline mọi lúc mọi nơi.
+## Các môn khoa học
 
-## Thông tin kỹ thuật (Technical Specs)
-- **Kiến trúc**: React (Vite) Single Page Application, Progressive Web App (PWA), Service Worker & IndexedDB offline cache.
-- **Ngôn ngữ**: Tiếng Việt (chính), Tiếng Anh.
-- **Bảo mật**: Chuẩn OAuth & Supabase Auth, Row-Level Security.
+- [Toán học](https://www.donghanhcungban.org/goc-hoc-tap/mathematics): bài học và bài tập.
+- [Vật lí](https://www.donghanhcungban.org/goc-hoc-tap/physics): bài học và bài tập.
+- [Hoá học](https://www.donghanhcungban.org/goc-hoc-tap/chemistry): bài học và bài tập.
+- [Sinh học](https://www.donghanhcungban.org/goc-hoc-tap/biology): bài học và bài tập.
+
+## Ghi chú và Bạn Đồng Hành
+
+- [Ghi chú](https://www.donghanhcungban.org/ghi-chu): ghi lại ý tưởng và việc cần làm trong lúc học.
+- [Bạn Đồng Hành](https://www.donghanhcungban.org/ban-dong-hanh): trò chuyện với tác tử AI nhớ ngữ cảnh việc học (cần tài khoản).
+
+## Optional
+
+- [Đăng nhập / đăng ký](https://www.donghanhcungban.org/login): tài khoản giúp giữ tiến độ trên nhiều thiết bị.
+- [Sơ đồ trang](https://www.donghanhcungban.org/sitemap.xml): danh sách URL công khai.

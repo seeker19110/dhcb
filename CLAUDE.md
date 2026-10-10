@@ -204,6 +204,10 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
   `loadLesson`/`loadUnitLessons` nạp đúng unit). **Thêm/đổi bài học xong PHẢI chạy
   `npm run gen:lesson-index`** để sinh lại `lessonsLazy.ts`; quên thì `lessonsLazy.test.ts` đỏ
   với đúng câu nhắc đó.
+- **Trang chủ khách có bản HTML DỰNG SẴN (2026-10-10, changelog 0584)** — `index.html` mang sẵn
+  HTML trang chủ khách cho màn hẹp, React tiếp quản sau (`apps/dhcb/src/lib/guestPrerender.ts`).
+  **Sửa component trong cây trang chủ khách (GuestHome, Layout, BottomNav…) xong PHẢI chạy
+  `npm run gen:prerender-home`**; quên thì `guestHomePrerender.test.tsx` đỏ.
 - Code đơn giản, dễ đọc, **thêm comment tiếng Việt** ở chỗ quan trọng. Mỗi file/hàm làm 1 việc; tên biến tiếng Anh dễ hiểu.
 - KHÔNG đưa API key/mật khẩu vào code — luôn dùng `.env`. Mọi lệnh gọi AI phải **đếm/giới hạn lượt** (Free vs VIP) tránh tốn tiền API.
 - Trước khi sửa nhiều file hoặc đổi cấu trúc: **giải thích kế hoạch ngắn gọn rồi hỏi trước**. Mỗi thay đổi nhỏ, dễ kiểm tra; sau khi sửa nói rõ đã đổi gì + cách chạy thử.

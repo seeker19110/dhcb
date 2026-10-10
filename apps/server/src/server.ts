@@ -182,6 +182,15 @@ app.all('/api/*splat', (_req, res) => {
   res.status(404).json({ error: 'API route không tồn tại' })
 })
 
+// /.well-known/* không có file thật → 404, KHÔNG rơi xuống catch-all SPA. Lý do: các tác tử AI và
+// công cụ kiểm tra (Lighthouse "Agentic Browsing" hỏi `/.well-known/ai-catalog.json`) coi phản
+// hồi 200 là một manifest có thật — trả index.html 200 khiến nó bị chấm là "catalog JSON hỏng"
+// (đo 2026-10-10, changelog 0584). DHCB không công bố agent/MCP server nào nên 404 là đúng nghĩa.
+// (express.static mặc định bỏ qua thư mục bắt đầu bằng dấu chấm, nên ở đây chưa có file nào.)
+app.all('/.well-known/*splat', (_req, res) => {
+  res.status(404).type('text/plain').send('Not found')
+})
+
 // Mọi route client SPA (Toán, Tiếng Anh, Lộ trình, Luyện nói, Đồng Hành, Simulators, v.v.) đều trả index.html đầy đủ
 // '/{*splat}' = khớp MỌI đường dẫn kể cả '/' (dấu {} làm phần splat thành tùy chọn). Viết
 // '/*splat' sẽ KHÔNG khớp trang gốc '/' — trang chủ trả 404, xem changelog đợt nâng Express 5.

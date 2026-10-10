@@ -5,7 +5,8 @@
 // tử trùng — xem Chat.tsx: FeedbackBlock trong Bubble/FeedbackPanel).
 import { useState, useEffect } from 'react'
 
-const QUERY = '(min-width: 1024px)'
+/** Ngưỡng desktop — dùng chung với điều kiện bật bản dựng sẵn trang chủ (lib/guestPrerender.ts). */
+export const DESKTOP_VIEWPORT_QUERY = '(min-width: 1024px)'
 
 /**
  * Theo dõi MỘT media query bất kỳ bằng JS. Tách ra từ `useIsDesktopViewport` (2026-09-02)
@@ -29,5 +30,5 @@ export function useMediaQuery(query: string): boolean {
 }
 
 export function useIsDesktopViewport(): boolean {
-  return useMediaQuery(QUERY)
+  return useMediaQuery(DESKTOP_VIEWPORT_QUERY)
 }

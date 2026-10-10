@@ -66,6 +66,7 @@
     "gen:form-examples": "tsx scripts/archive/gen-form-examples.ts",
     "gen:stories": "node scripts/gen-stories-json.mjs",
     "gen:lesson-index": "tsx scripts/gen-lesson-index.ts",
+    "gen:prerender-home": "vitest run apps/dhcb/src/prerender/guestHomePrerender.test.tsx -u",
     "gen:subject-catalog": "tsx scripts/gen-subject-catalog.ts",
     "extract:words-cefr": "tsx scripts/archive/extract-words-cefr-subset.ts",
     "prefetch:tts-patterns": "tsx scripts/prefetch-tts-patterns.ts",

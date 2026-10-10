@@ -3,6 +3,7 @@
 // rất nhiều chunk: chỉ cần 1 chunk lỗi mạng là cả trang có thể sập nếu không bắt.
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 import { captureException } from '../lib/errorTracking'
+import { releaseGuestPrerender } from '../lib/guestPrerender'
 import { buttonClass } from '@core/buttonStyles'
 
 interface Props {
@@ -21,6 +22,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
+    // Trang lỗi phải HIỆN ra — đừng để bản dựng sẵn trang chủ (lib/guestPrerender.ts) che nó.
+    releaseGuestPrerender()
     // Ghi log ra console để debug.
     console.error('[ErrorBoundary] Lỗi render:', error)
     // Gửi lên Sentry nếu đã cấu hình VITE_SENTRY_DSN — no-op an toàn nếu chưa (xem errorTracking.ts).

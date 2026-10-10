@@ -55,6 +55,6 @@ describe('chụp toàn trang Tầng 8b đi qua screenshotFullPage', () => {
 
   it('ngưỡng desktop của helper khớp useIsDesktopViewport', () => {
     const hook = read('apps/dhcb/src/lib/useIsDesktopViewport.ts')
-    expect(hook).toContain("const QUERY = '(min-width: 1024px)'")
+    expect(hook).toContain("export const DESKTOP_VIEWPORT_QUERY = '(min-width: 1024px)'")
   })
 })
