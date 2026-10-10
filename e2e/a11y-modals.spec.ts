@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { mockLogin, type ThemeName } from './helpers/auth'
+import { mockLogin, USER_ID, type ThemeName } from './helpers/auth'
 import { mockDomainApis } from './helpers/domains'
 import { freezeAnimations } from './helpers/axe'
 
@@ -97,6 +97,39 @@ for (const theme of THEMES) {
     await expect(dialog).toBeVisible()
     await expect(dialog).toHaveAccessibleName('Mục lục môn học')
     expect(await scan(page)).toEqual([])
+
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+  })
+}
+
+// ── MÀN KẾT PHIÊN `SessionDone` (P1-6 · AC-7) ──────────────────────────────────
+//
+// Đặc tả docs/specs/2026-09-17-redesign-trang-chu-thi-hanh.md §P1-6 ④ AC-7: overlay gộp
+// streak + mục tiêu tuần chỉ hiện SAU khi học hết một lượt, nên `a11y.spec.ts` (quét trang lúc
+// mới mở) không bao giờ nhìn thấy nó. Quét cả 1440px lẫn 390px trong CÙNG một lần mở: overlay
+// dáng thẻ giữa màn, ở màn hẹp mới dễ rớt `target-size`/tràn chữ.
+for (const theme of THEMES) {
+  test(`a11y hộp thoại: SessionDone theme=${theme} — 0 vi phạm A/AA`, async ({ page }) => {
+    await mockLogin(page, 'vi', theme)
+    // Tốc độ 5 từ/lượt + `cap=2` (luồng "quay lại") ⇒ lượt đầu chỉ 2 từ — cùng cách mở với
+    // ca AC-4 ở `e2e/quiz-session.spec.ts`.
+    await page.addInitScript((uid) => localStorage.setItem(`et_speed_${uid}`, '5'), USER_ID)
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/lo-trinh-hoc/a1?tab=today&cap=2')
+
+    const gotIt = page.getByRole('button', { name: /Đã thuộc/ })
+    await expect(gotIt).toBeVisible()
+    for (let i = 0; i < 2; i++) await gotIt.click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    // aria-labelledby trỏ tới h2 ẩn — tên rỗng là lỗi "dialog không tên" với trình đọc màn hình.
+    await expect(dialog).not.toHaveAccessibleName('')
+    expect(await scan(page), 'SessionDone @1440').toEqual([])
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    expect(await scan(page), 'SessionDone @390').toEqual([])
 
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
