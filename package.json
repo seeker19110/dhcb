@@ -27,7 +27,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "size": "size-limit",
+    "size": "size-limit && tsx scripts/check-startup-coverage.ts",
     "budget": "tsx scripts/check-budget-margin.ts",
     "start": "tsx apps/server/src/server.ts",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",

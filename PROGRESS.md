@@ -180,8 +180,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   chỉ mục + job dọn phiên/mã hết hạn + `analytics_events` giữ 365 ngày). **E4 frontend ĐÃ LÀM**
   (`0584`: JS khởi động −3,5 kB, trang chặng 542 → 17 kB, gộp FNV/mulberry32/ngày VN/đọc
   localStorage, sửa 2 bug; **E4.1b `zod/mini` cho hợp đồng trang chủ HOÃN** — đo thật là 10 file
-  - `versionedObject` của 38 hợp đồng, lý do ở `0584`). **Đang làm (chủ dự án đã duyệt
-    2026-10-10):** E5 sửa phép đo `.size-limit.json` (đã được đồng ý sửa file cổng).
+  - `versionedObject` của 38 hợp đồng, lý do ở `0584`). **E5 ĐÃ LÀM** (`0585`: `.size-limit.json` đếm đủ chunk `modulepreload`, 135,59/160 kB + phép kiểm `scripts/check-startup-coverage.ts` trong `npm run size`). Cả 5 đợt audit đã xong; còn mở: E1 mục 9 (mức thấp), E4.1b (hoãn có lý do).
 
 - **[2026-10-09] Dự án trục T2/T3 môn Lập trình** — hạ tầng xong (changelog `0571`, đặc tả
   `docs/specs/2026-10-09-du-an-truc-t2-t3-ha-tang.md`): chọn dự án, mã bước
@@ -1643,8 +1642,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   **84,0%** (149,29 → 134,39/160 kB; JS khởi động THẬT gồm mọi modulepreload 154,3 → 138,4 kB)
   nhờ đưa zod bản đầy đủ ra khỏi đường khởi động (`zod/mini` ở `clientAuth`/`appSettings`/
   `cloud`, chunk `vendor-zod` lười, test canh `startupBundle.test.ts`). CSS vẫn 24,57/26 kB (**94,5% — sát ngưỡng cảnh báo**;
-  30% CSS thô là khối `@supports color-mix` của Tailwind 4 nhưng bỏ chỉ được ~0,7 kB nén). Lưu ý:
-  `.size-limit.json` chưa đo ~12 kB thô chunk `modulepreload` (báo cáo audit mục E5).
+  30% CSS thô là khối `@supports color-mix` của Tailwind 4 nhưng bỏ chỉ được ~0,7 kB nén). **Cập nhật 2026-10-10 (`0584`/`0585`):** Initial JS nay đếm ĐỦ chunk `modulepreload` — 135,59/160 kB (84,7%); `npm run size` đỏ nếu chunk khởi động mới không có glob.
   **Cập nhật 2026-10-08 (`docs/changelog/0522-*.md`):** Initial JS 96,6% → **93,1%** (148,93/160 kB, tách
   `ts-fsrs` ra chunk `vendor-fsrs` không preload); CSS không đổi 23,95/26 kB (92,1%, toàn class đang
   dùng). Coverage 95,74/91,79/96,41/96,36 sau test ca biên 6 file — lộ và sửa 3 bug
