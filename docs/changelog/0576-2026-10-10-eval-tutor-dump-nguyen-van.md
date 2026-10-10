@@ -60,3 +60,11 @@ grep '"outcome":"FP"' /tmp/eval-dump.jsonl
 ```
 
 Gửi kết quả lệnh `grep` để sửa prompt chat (chiều A và B).
+
+## Bẫy mắc trong đợt này
+
+Check `gitleaks` của PR đỏ dù không có bí mật mới. Nguyên nhân: phiên AI gộp nhánh cũ đã
+squash-merge (#1318) vào nhánh mới bằng `-s ours`, nên danh sách commit của PR mang theo hai commit
+cũ và gitleaks quét lùi trúng khoá giả của bài học T3 (commit `40a096a`). Check này không bắt buộc
+nên không chặn merge. Ghi thành `TRAPS.md` mục 21, kèm quy ước: xin xác nhận xoá nhánh remote cũ
+rồi tạo lại nhánh từ `main`, không gộp nhánh cũ vào.

@@ -794,3 +794,34 @@ oan commit sạch của worktree; lỗi chỉ có trong worktree → cổng xanh
 `git -C <dir>`, rồi `git rev-parse --show-toplevel`; chỉ gác cây cùng `--git-common-dir` với repo
 dự án; worktree chưa có `node_modules` thì chặn kèm lời nhắc `npm ci`. Test:
 `scripts/claude-hooks.test.ts` (describe "pre-commit-gate.sh — chọn thư mục cổng").
+
+## 21. Gộp lại nhánh cũ đã squash-merge vào nhánh mới → PR mang commit cũ, gitleaks quét lùi vào lịch sử `main`
+
+**Ngày/PR:** 2026-10-10, PR #1325 (changelog `0576`). Nhánh `claude/wonderful-ramanujan-hmon5t`
+đã squash-merge ở #1318, nhưng nhánh trên remote vẫn còn. Phiên AI tạo lại nhánh từ `main`. Push
+thường bị từ chối vì hai lịch sử đã tách nhau, và hook chặn force-push. Phiên đó bèn chạy
+`git merge -s ours origin/<nhánh>` để push được.
+
+**Khuôn lỗi:** squash-merge tạo commit MỚI trên `main`. Các commit gốc của nhánh (`7e41349`,
+`a291f59`) KHÔNG có trong `main`. Gộp chúng vào nhánh mới (kể cả `-s ours`, giữ nguyên cây) thì
+nội dung không đổi, nhưng danh sách commit của PR mới có thêm hai commit cũ. `gitleaks-action`
+quét `git log --first-parent <commit đầu của PR>^..head`, nên phạm vi quét lùi về trước các
+commit đã vào `main` sau đó. Lần này nó quét trúng 5 khoá giả của bài học T3 (commit `40a096a`,
+PR #1323), check đỏ dù PR không có bí mật nào. Muốn gỡ thì phải viết lại lịch sử, mà
+force-push bị chặn, nên PR mang check đỏ tới lúc merge.
+
+**Cách rà:**
+
+- Trước khi push lần đầu cho đợt việc mới, chạy `git log --oneline origin/main..HEAD`. Danh sách
+  chỉ được có commit của đợt này. Thấy commit của PR đã merge thì dừng lại.
+- Check `gitleaks` báo file/commit mà PR không đụng → đọc dòng `gitleaks cmd:` trong log để xem
+  điểm bắt đầu phạm vi quét. Rồi chạy `gitleaks git --log-opts="origin/main..HEAD"` ở máy để biết
+  commit mới của PR có thật sự sạch không.
+
+**Cổng chốt chặn:** quy ước, chưa có cổng tự động. Khi nhánh của PR đã squash-merge mà vẫn còn
+trên remote:
+
+1. KHÔNG gộp nhánh cũ vào, kể cả bằng `-s ours`.
+2. Xin chủ dự án xác nhận xoá nhánh remote đó (CLAUDE.md mục 9: chỉ xoá nhánh khi người dùng xác
+   nhận rõ ràng): `git push origin --delete <nhánh>`. PR cũ đã merge nên không mất gì.
+3. Tạo lại nhánh: `git switch -C <nhánh> origin/main`, rồi push thường.
