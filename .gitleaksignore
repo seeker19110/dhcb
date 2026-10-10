@@ -1,0 +1,11 @@
+# Dấu vân tay gitleaks được bỏ qua. MỖI dòng = đúng một phát hiện (commit:file:rule:dòng),
+# không phải miễn trừ theo file hay theo luật. Chỉ thêm khi đã xác minh là khoá GIẢ.
+#
+# Khoá giả SECRET_KEY trong ca kiểm đề P5 s4 dự án T3 (PR #1323). Trên main đã đánh dấu
+# gitleaks:allow từ #1324, nhưng commit gốc vẫn nằm trong lịch sử. PR nào có phạm vi quét lùi
+# qua commit này sẽ đỏ oan (TRAPS.md mục 21).
+40a096a65e87de7c58617ae65f6df2e916055228:packages/subject-programming/projectStepsT3P5.ts:generic-api-key:291
+40a096a65e87de7c58617ae65f6df2e916055228:packages/subject-programming/projectStepsT3P5.ts:generic-api-key:296
+40a096a65e87de7c58617ae65f6df2e916055228:packages/subject-programming/projectStepsT3P5.ts:generic-api-key:304
+40a096a65e87de7c58617ae65f6df2e916055228:packages/subject-programming/projectStepsT3P5.ts:generic-api-key:311
+40a096a65e87de7c58617ae65f6df2e916055228:packages/subject-programming/projectStepsT3P5.ts:generic-api-key:327

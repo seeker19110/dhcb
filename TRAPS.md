@@ -825,3 +825,9 @@ trên remote:
 2. Xin chủ dự án xác nhận xoá nhánh remote đó (CLAUDE.md mục 9: chỉ xoá nhánh khi người dùng xác
    nhận rõ ràng): `git push origin --delete <nhánh>`. PR cũ đã merge nên không mất gì.
 3. Tạo lại nhánh: `git switch -C <nhánh> origin/main`, rồi push thường.
+
+Lần này đã lỡ gộp nên không gỡ được commit cũ khỏi PR. Cách xử lý: thêm đúng dấu vân tay của 5
+phát hiện vào `.gitleaksignore` (mỗi dòng `commit:file:rule:dòng`, không miễn trừ cả file hay cả
+luật). Kiểm bằng đúng lệnh CI chạy, lấy từ dòng `gitleaks cmd:` trong log:
+`gitleaks git --log-opts="--no-merges --first-parent <commit>^..HEAD"`. Lệnh này phải báo 5 phát
+hiện trước khi thêm và 0 sau khi thêm.
