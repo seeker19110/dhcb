@@ -1,7 +1,10 @@
 // packages/core-ui/clientAuth.ts — Xác thực phía client dùng chung cho toàn bộ hệ sinh thái (Hub & Subdomains).
 // Quản lý đăng nhập, đăng ký, OAuth 2.0 (Google, Facebook, Apple, Microsoft), SSO cookie và chuyển hướng an toàn.
 
-import { z } from 'zod'
+// `zod/mini` thay vì `zod`: file này nằm trên ĐƯỜNG KHỞI ĐỘNG của app (kiểm phiên lúc mở trang).
+// Bản đầy đủ của zod nặng ~24 kB brotli và không tree-shake được; bản mini cùng lõi kiểm tra
+// nhưng API dạng hàm nên chỉ kéo đúng phần dùng (~7 kB). Đo 2026-10-10 — xem changelog đợt này.
+import * as z from 'zod/mini'
 import { setStoredToken, clearStoredToken, getAuthHeader, getStoredToken } from './authHeader.js'
 
 // GĐ1 2026-09-12 (docs/specs/2026-09-12-gd1-xoa-goi-pro.md): chỉ còn Free + VIP.
@@ -92,13 +95,13 @@ export function isValidNewPassword(password: string): boolean {
 }
 
 const authApiUserSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().check(z.minLength(1)),
   email: z.string(),
   name: z.string(),
   plan: z.enum(['free', 'vip']),
   onboarded: z.boolean(),
-  planExpiresAt: z.string().nullable().optional(),
-  isFounder: z.boolean().optional(),
+  planExpiresAt: z.optional(z.nullable(z.string())),
+  isFounder: z.optional(z.boolean()),
   createdAt: z.number(),
 })
 const authResponseSchema = z.object({ authenticated: z.literal(true), user: authApiUserSchema })
@@ -633,15 +636,15 @@ export class SessionVerificationError extends Error {
 }
 
 const verifiedUserSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().check(z.minLength(1)),
   email: z.string(),
   name: z.string(),
   plan: z.enum(['free', 'vip']),
   onboarded: z.boolean(),
-  planExpiresAt: z.string().nullable().optional(),
-  emailVerified: z.boolean().optional(),
-  isAdmin: z.boolean().optional(),
-  isFounder: z.boolean().optional(),
+  planExpiresAt: z.optional(z.nullable(z.string())),
+  emailVerified: z.optional(z.boolean()),
+  isAdmin: z.optional(z.boolean()),
+  isFounder: z.optional(z.boolean()),
 })
 
 export async function getCurrentUserVerified(): Promise<AppUser> {

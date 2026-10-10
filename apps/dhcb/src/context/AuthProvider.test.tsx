@@ -15,10 +15,8 @@ vi.mock('../lib/auth', async (original) => ({
 }))
 vi.mock('../lib/preloadBrowse', () => ({ preloadBrowseChunks: vi.fn() }))
 vi.mock('../lib/audioCache', () => ({ clearAudioCache: vi.fn(async () => {}) }))
-vi.mock('../lib/guestProgress', () => ({
-  hasGuestProgress: () => false,
-  mergeGuestProgressInto: vi.fn(),
-}))
+vi.mock('../lib/guestProgressKeys', () => ({ hasGuestProgress: () => false }))
+vi.mock('../lib/guestProgress', () => ({ mergeGuestProgressInto: vi.fn() }))
 const USER: User = {
   id: 'u1',
   email: 'user@example.com',

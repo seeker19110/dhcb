@@ -8,7 +8,9 @@
 // Giai đoạn C (rời Supabase): mọi đọc/ghi đi qua /api/history (Postgres tự host),
 // server tự kiểm user từ Bearer token — thay client query Supabase dựa vào RLS trước đây.
 
-import { z } from 'zod'
+// `zod/mini`: file này nằm trên đường khởi động (chunk modulepreload `storage`) — xem
+// changelog 0580, đừng đổi lại thành `zod` bản đầy đủ.
+import * as z from 'zod/mini'
 import { isGuestId } from '@core/guestId'
 import { getAuthHeader, getStoredToken } from '@core/authHeader'
 import type { ChatSession, WritingSubmission, SpeakingSession, DailyUsage } from '../types'

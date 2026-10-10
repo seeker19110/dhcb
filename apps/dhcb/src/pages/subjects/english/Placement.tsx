@@ -26,7 +26,9 @@ import ExamQuestionCard from '../../../components/ExamQuestionCard'
 import { useAuth } from '../../../context/useAuth'
 import { getDirection } from '../../../lib/storage'
 import { ACCENT } from '../../../lib/cefrAccent'
-import { CEFR_LEVELS, type CefrLevel } from '../../../data/cefr'
+// CHỈ dùng `loadCefr()` (fetch `/data/cefr.json`), KHÔNG import giá trị từ `data/cefr`: import
+// thẳng là nhét ~4,4 MB JSON từ vựng vào chunk của trang này (đo 2026-10-10: 2,95 MB thô).
+import { loadCefr, type CefrLevel } from '../../../data/cefrLoader'
 import type { Dialogue } from '../../../data/dialogues'
 import { getDialogues } from '../../../data/dialoguesLoader'
 import { getLevelWords } from '../../../lib/curriculum'
@@ -123,13 +125,15 @@ function PlacementSession() {
 
   // Dựng 1 vòng thi ở cấp `levelId`: nạp hội thoại của cấp rồi buildExam thu nhỏ.
   async function loadRound(levelId: CefrId) {
-    const level = CEFR_LEVELS.find((l) => l.id === levelId)
-    if (!level || !user) return
+    if (!user) return
     const request = ++requestId.current
     setRoundToLoad(levelId)
     setLoadError(false)
     setLoading(true)
     try {
+      // Lỗi tải dữ liệu CEFR (mất mạng) đi chung nhánh `loadError` với lỗi tải hội thoại.
+      const level = (await loadCefr()).find((l) => l.id === levelId)
+      if (!level) throw new Error(`Unknown CEFR level ${levelId}`)
       const dialogueLists = await Promise.all(level.units.map((u) => getDialogues(u.id)))
       if (request !== requestId.current) return
       const dialogues: Dialogue[] = dialogueLists.flat()

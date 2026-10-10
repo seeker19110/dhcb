@@ -43,6 +43,10 @@ vi.mock('../lib/achievements', () => ({
   achievementMessage: vi.fn(),
 }))
 vi.mock('../data/dialoguesLoader', () => ({ getDialogues: async () => [] }))
+// Placement nạp CEFR qua fetch `/data/cefr.json` — trả đúng dữ liệu thật (cùng nguồn với file JSON).
+vi.mock('../data/cefrLoader', () => ({
+  loadCefr: async () => (await import('../data/cefr')).CEFR_LEVELS,
+}))
 vi.mock('../lib/curriculum', () => ({ getLevelWords: () => [] }))
 vi.mock('../lib/vocab', () => ({ getLearnedWords: () => new Set() }))
 vi.mock('../lib/cefrAssessmentApi', () => ({
