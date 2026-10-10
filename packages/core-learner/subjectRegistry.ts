@@ -1,14 +1,15 @@
 // packages/core-learner/subjectRegistry.ts — Subject Registry for Multi-Subject Learning.
 // Supports English, Mathematics, Physics, Chemistry, Biology without forcing language concepts onto STEM.
-import {
-  SubjectManifestSchema,
-  SUBJECT_MANIFEST_SCHEMA_VERSION,
-  type SubjectManifest,
-} from '@dhcb/core-contracts/subjectManifest'
+import { SUBJECT_MANIFEST_SCHEMA_VERSION } from '@dhcb/core-contracts/subjectManifestVersion'
+import type { SubjectManifest } from '@dhcb/core-contracts/subjectManifest'
 import { NotFoundError } from '@dhcb/core-errors/appError'
 
+// Hằng số tĩnh: KHÔNG `SubjectManifestSchema.parse` lúc chạy — kiểu `SubjectManifest[]` đã chặn field
+// lạ/thiếu lúc biên dịch, còn ràng buộc giá trị (regex id, độ dài…) do subjectRegistry.test.ts kiểm
+// bằng chính schema. Parse lúc chạy từng kéo zod (~37 KB) vào trang chủ của KHÁCH chỉ để xác nhận
+// lại 6 hằng số viết tay (đo Lighthouse 2026-10-10, changelog đợt này).
 export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
-  SubjectManifestSchema.parse({
+  {
     id: 'english',
     label: 'Tiếng Anh',
     description: 'Luyện giao tiếp, ngữ pháp, phát âm và từ vựng tiếng Anh theo chuẩn CEFR quốc tế',
@@ -26,8 +27,8 @@ export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
     // [Slice 04] KHÔNG còn `isDefault: true` — nền tảng không ngầm định người dùng học Tiếng Anh
     // (docs/specs/2026-09-15-goc-hoc-tap-03-04-*.md). Field vẫn optional trong schema để tương thích.
     schemaVersion: SUBJECT_MANIFEST_SCHEMA_VERSION,
-  }),
-  SubjectManifestSchema.parse({
+  },
+  {
     id: 'mathematics',
     label: 'Toán học',
     description:
@@ -43,8 +44,8 @@ export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
     ],
     evaluationModes: ['exact_formula', 'step_analysis', 'discrete_check'],
     schemaVersion: SUBJECT_MANIFEST_SCHEMA_VERSION,
-  }),
-  SubjectManifestSchema.parse({
+  },
+  {
     id: 'physics',
     label: 'Vật lí',
     description: 'Cơ học, nhiệt học, điện từ học, quang học và vật lí lượng tử',
@@ -59,8 +60,8 @@ export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
     ],
     evaluationModes: ['exact_formula', 'step_analysis', 'discrete_check'],
     schemaVersion: SUBJECT_MANIFEST_SCHEMA_VERSION,
-  }),
-  SubjectManifestSchema.parse({
+  },
+  {
     id: 'chemistry',
     label: 'Hóa học',
     description: 'Hóa vô cơ, hóa hữu cơ, phản ứng oxi hóa khử và hóa phân tích',
@@ -75,8 +76,8 @@ export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
     ],
     evaluationModes: ['exact_formula', 'step_analysis', 'discrete_check'],
     schemaVersion: SUBJECT_MANIFEST_SCHEMA_VERSION,
-  }),
-  SubjectManifestSchema.parse({
+  },
+  {
     id: 'biology',
     label: 'Sinh học',
     description: 'Di truyền học, tiến hóa, sinh thái học, sinh học tế bào và vi sinh vật',
@@ -91,8 +92,8 @@ export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
     ],
     evaluationModes: ['step_analysis', 'rubric_ai', 'discrete_check'],
     schemaVersion: SUBJECT_MANIFEST_SCHEMA_VERSION,
-  }),
-  SubjectManifestSchema.parse({
+  },
+  {
     id: 'programming',
     label: 'Lập trình',
     description:
@@ -103,7 +104,7 @@ export const SUPPORTED_SUBJECTS: SubjectManifest[] = [
     questionTypes: ['predict_output', 'parsons_ordering', 'code_writing', 'project_milestone'],
     evaluationModes: ['discrete_check', 'rubric_ai'],
     schemaVersion: SUBJECT_MANIFEST_SCHEMA_VERSION,
-  }),
+  },
 ]
 
 const subjectMap = new Map<string, SubjectManifest>(SUPPORTED_SUBJECTS.map((s) => [s.id, s]))

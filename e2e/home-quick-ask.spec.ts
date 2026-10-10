@@ -111,8 +111,13 @@ test.describe('UX-R2 — progressive disclosure ở Trang chủ member', () => {
     await expect(panel).toBeVisible()
     await expect(toggle).toBeFocused()
 
+    // "Không gọi mạng" = không gọi API (AI/server). Chỉ đếm `/api/`: app có việc NỀN tải trước
+    // chunk trang + dữ liệu tĩnh theo hẹn giờ (lib/pageSettled.ts, 2026-10-10) — chúng có thể rơi
+    // đúng vào khoảng đo này mà không liên quan gì tới cú bấm chip.
     const requests: string[] = []
-    page.on('request', (request) => requests.push(request.url()))
+    page.on('request', (request) => {
+      if (new URL(request.url()).pathname.startsWith('/api/')) requests.push(request.url())
+    })
     await panel.getByRole('button', { name: /Giải Toán & STEM/ }).click()
     await expect(page.getByRole('region', { name: 'Gợi ý nơi học' })).toBeVisible()
     expect(requests).toEqual([])

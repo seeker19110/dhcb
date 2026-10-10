@@ -14,7 +14,7 @@ import HomeAiBriefingCard, { type HomeComeback } from '../../components/Home/Hom
 import TodayCard from '../../components/Home/TodayCard.js'
 import HomeUniversalAiBar from '../../components/Home/HomeUniversalAiBar.js'
 import SubjectSpaceList from '../../components/Home/SubjectSpaceList.js'
-import GuestHome from '../../components/Home/GuestHome.js'
+import GuestHomePage, { HOME_PAGE_TITLE } from './GuestHomePage'
 import WeekRhythm from '../../components/Home/WeekRhythm.js'
 import SalesHunterSlot from '../../components/SalesHunterSlot.js'
 import { usePageTitle } from '../../lib/usePageTitle'
@@ -76,7 +76,7 @@ export default function Home() {
   // tải xong (dòng "Nhiệm vụ x/y" tự ẩn, xem `buildWeekRhythm`), không toast lỗi.
   const [questsStatus, setQuestsStatus] = useState<QuestsStatus | null>(null)
 
-  usePageTitle('Trang chủ | Đồng Hành Cùng Bạn')
+  usePageTitle(HOME_PAGE_TITLE)
 
   useEffect(() => {
     let cancelled = false
@@ -168,16 +168,9 @@ export default function Home() {
   // [P0-3] Khách (chưa đăng nhập) có trang chủ RIÊNG, đơn giản hơn hẳn: không "Hôm nay"/streak/
   // lịch sử (những thứ đó cần tài khoản để tính) — chỉ Companion giới thiệu + ĐÚNG MỘT CTA vào
   // `/bat-dau` + dải môn. Trả sớm TRƯỚC khi tính mọi state chỉ người đã đăng nhập mới cần.
-  if (isGuest) {
-    return (
-      <div className="min-h-dvh bg-zinc-950 text-zinc-100">
-        <Layout title={T.greeting} back={false} />
-        <PageShell width="standard" baseWidth="max-w-3xl">
-          <GuestHome />
-        </PageShell>
-      </div>
-    )
-  }
+  // App.tsx (`HomeRoute`) đã đưa khách sang GuestHomePage mà KHÔNG tải chunk này; nhánh dưới chỉ
+  // còn là lưới an toàn khi Home được render trực tiếp (test, điều hướng nội bộ).
+  if (isGuest) return <GuestHomePage />
 
   const isGuestUser = user.isGuest === true
   const srsDue = getSRSStats(user.id).due
