@@ -196,7 +196,8 @@ export default async function handler(req: Request): Promise<Response> {
 
       if (action === 'create_problem') {
         // Mở phiên từ NGÂN HÀNG ĐỀ: đề, môn, tiêu đề lấy ở server — không tin client. Bảng thứ
-        // nguyên biến (câu Vật lí, changelog 0560) cũng do server gắn từ bài học — client không gửi.
+        // nguyên biến (câu Vật lí, changelog 0560) và phương trình mốc (câu Toán, changelog 0612)
+        // cũng do server gắn từ bài học — client không gửi.
         if (body && typeof body === 'object' && 'questionId' in body) {
           const parsed = CreateFromBankSchema.safeParse(body)
           if (!parsed.success) return jsonResponse({ error: 'questionId không hợp lệ' }, 400)
@@ -209,6 +210,7 @@ export default async function handler(req: Request): Promise<Response> {
             problemStatement: question.problemStatement,
             questionId: question.id,
             ...(question.variables === undefined ? {} : { variables: question.variables }),
+            ...(question.problemLatex === undefined ? {} : { problemLatex: question.problemLatex }),
           })
           await saveProblem(personId, await readProblems(personId), prob)
           return jsonResponse({ success: true, problem: prob }, 200)

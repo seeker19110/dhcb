@@ -37,6 +37,8 @@ export interface StemLessonSource {
     readonly explain: string
     /** Bảng thứ nguyên biến (chỉ câu Vật lí có — changelog 0560). */
     readonly variables?: StemVariableTable
+    /** Phương trình nguyên văn của đề (chỉ câu Toán có — changelog 0612). */
+    readonly equation?: string
   }[]
 }
 
@@ -54,6 +56,13 @@ export interface StemQuestion extends StemBankQuestionPublic {
    * đáp án.
    */
   variables?: StemVariableTable
+  /**
+   * Phương trình/bất phương trình của đề (câu Toán, changelog 0612) — server gắn làm
+   * `problemLatex` của phiên ở `create_problem` để bước 1 được so với đề. Là chữ NGUYÊN VĂN của đề
+   * (luật soạn ở `MathCheckQuestionSchema.equation`), nên không lộ đáp án; vẫn không đưa vào bản
+   * công khai của danh sách đề vì màn chọn đề không dùng tới.
+   */
+  problemLatex?: string
 }
 
 /** Lớp ngân hàng đề phục vụ. Bảng nháp (Companion › Thử thách) là chỗ luyện đề THPT; bài Toán
@@ -112,6 +121,7 @@ export function buildStemQuestionBank(
           answer,
           explain: q.explain,
           ...(q.variables === undefined ? {} : { variables: q.variables }),
+          ...(q.equation === undefined ? {} : { problemLatex: q.equation }),
         })
       })
     }

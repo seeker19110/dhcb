@@ -565,6 +565,31 @@ describe('STEM Scratchpad API Handler (/api/stem-scratchpad)', () => {
       expect(khop.data.isSolved).toBe(false)
     })
 
+    it('Toán từ ngân hàng: server gắn phương trình của đề làm mốc → bước 1 được so với đề (changelog 0612)', async () => {
+      const cau = BANK.find((q) => q.id === 'toan10-c6-b2-q3')
+      expect(cau?.problemLatex).toBe('x^2 + 1 < 0')
+      const { data } = await post('create_problem', {
+        questionId: cau?.id,
+        // Client cố gửi mốc khác — phải bị bỏ qua (mốc do server gắn).
+        problemLatex: 'x > 0',
+      })
+      expect(data.problem.problemLatex).toBe('x^2 + 1 < 0')
+      const id = data.problem.id
+
+      const dung = await post('validate_step', { problemId: id, latexInput: 'x^2 < -1' })
+      expect(dung.data.validation.status).toBe('valid')
+      expect(dung.data.validation.feedback).not.toContain('MỐC')
+      const sai = await post('validate_step', { problemId: id, latexInput: 'x^2 > -1' })
+      expect(sai.data.validation.status).toBe('invalid')
+      expect(sai.data.validation.errorType).toBe('changed_solutions')
+    })
+
+    it('Toán từ ngân hàng, câu KHÔNG khai phương trình → bước 1 vẫn là mốc như trước', async () => {
+      expect(toan?.problemLatex).toBeUndefined()
+      const { data } = await post('create_problem', { questionId: toan?.id })
+      expect(data.problem).not.toHaveProperty('problemLatex')
+    })
+
     it('Vật lí từ ngân hàng, câu KHÔNG có bảng → vẫn "chưa tự kiểm được" như trước 0560', async () => {
       // Câu bảo toàn số khối: số đếm, cố ý không khai bảng (changelog 0560).
       const cau = BANK.find((q) => q.id === 'ly12-c4-b22-q2')

@@ -63,10 +63,24 @@ export const MathCheckQuestionSchema = z
     choices: z.array(z.object({ id: z.string().min(1), label: z.string().min(1) })).optional(),
     answer: MathAnswerSpecSchema,
     explain: z.string().min(1).max(1000),
+    /**
+     * Phương trình/bất phương trình MỘT ẩn của đề, viết LaTeX phẳng — làm MỐC cho Bảng nháp STEM
+     * (`problemLatex` của phiên) để bước 1 của người học được so với đề. Thêm changelog 0612
+     * (`docs/specs/2026-10-11-moc-de-ngan-hang-toan.md`).
+     *
+     * Luật soạn: phải NGUYÊN VĂN trong đề (chỉ đổi cách viết `²` → `^2`, `−` → `-`), việc giải nó
+     * phải CHÍNH LÀ yêu cầu của đề, và bộ kiểm đọc được. KHÔNG khai phương trình tự lập (tham số,
+     * đạo hàm, đỉnh…) — đó là làm hộ bước 1, lộ cách giải. Test canh:
+     * `packages/core-ai/stemQuestionBank.mathEquation.test.ts`.
+     */
+    equation: z.string().min(1).max(200).optional(),
   })
   .strict()
   .refine((q) => (q.answer.kind === 'choice') === (q.choices !== undefined), {
     message: "câu 'choice' phải có choices; đáp án khác thì không được có choices",
+  })
+  .refine((q) => q.answer.kind !== 'choice' || q.equation === undefined, {
+    message: "câu 'choice' không có bước giải để kiểm — không khai equation",
   })
 
 export const MathLessonSchema = z
