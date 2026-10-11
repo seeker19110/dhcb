@@ -148,7 +148,23 @@ const DE_TOAN: ReadonlyArray<{ de: string; chuoi: readonly string[][] }> = [
   },
   {
     de: 'x^2 - 4 < 0',
-    chuoi: [[], ['x^2 < 4'], ['x < 2'], ['-2 < x < 2'], ['x \\le 2']],
+    chuoi: [[], ['x^2 < 4'], ['x < 2'], ['-2 < x < 2'], ['x \\le 2'], ['S = (-2; 2)']],
+  },
+  // Trị tuyệt đối + ký hiệu tập (đặc tả 2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi).
+  {
+    de: '|x - 1| = 3',
+    chuoi: [
+      [],
+      ['x - 1 = 3'],
+      ['x - 1 = 3 hoặc x - 1 = -3'],
+      ['x = 4 hoặc x = -2'],
+      ['S = \\{4; -2\\}'],
+      ['x = 4 hoặc x = 2'],
+    ],
+  },
+  {
+    de: '|2x - 1| < 5',
+    chuoi: [[], ['2x - 1 < 5'], ['-5 < 2x - 1 < 5'], ['-2 < x < 3'], ['S = (-2; 3)'], ['x < 3']],
   },
 ]
 
@@ -275,6 +291,17 @@ describe('generateSocraticHint — đúng loại bước/lỗi', () => {
     const hopLe = goiY('-2x + 1 < 7', ['-2x < 6'])
     expect(hopLe.level).toBe(2)
     expect(hopLe.hintText).not.toContain('bộ kiểm đọc được')
+  })
+
+  it('trị tuyệt đối: bỏ một trường hợp → hỏi đủ hai trường hợp; thêm nghiệm → hỏi điều kiện', () => {
+    const thieu = goiY('|x - 1| = 3', ['x - 1 = 3'])
+    expect(thieu.level).toBe(3)
+    expect(thieu.hintText).toContain('HAI trường hợp')
+    const thua = goiY('|2x - 1| < 5', ['2x - 1 < 5'])
+    expect(thua.level).toBe(3)
+    expect(thua.hintText).toContain('điều kiện của chính nó')
+    // Bước còn trị tuyệt đối → không phải câu chia trường hợp.
+    expect(goiY('|x - 1| = 3', ['|x - 1| = 4']).hintText).not.toContain('trường hợp')
   })
 
   it('bước HỢP LỆ → bậc 2, hỏi về cấu trúc của chính bước đó', () => {

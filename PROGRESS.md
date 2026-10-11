@@ -1291,7 +1291,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
   bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
   còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
-- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`, `0560`, `0608`] Bảng nháp
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`, `0560`, `0608`, `0611`] Bảng nháp
   STEM (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên.** `0547` (đặc tả
   `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
   NGHIỆM THỰC với đề, chính xác (đa thức hữu tỉ BigInt + Sturm, giữ điều kiện xác định) → `✓ Hợp lệ`
@@ -1309,10 +1309,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `questionId` (giao diện chỉ mở đề từ ngân hàng nên không cần gửi gì); 3 câu số đếm cố ý không
   khai. **Còn lại:** (1) Vật lí — chưa kiểm vector/chiều, đạo hàm/tích phân; bảng biến cho đề TỰ DO
   chỉ gửi được qua API (giao diện không có luồng tạo đề tự do);
-  (2) Toán ngoài phạm vi: căn, lượng giác, log, π, trị tuyệt đối, ký hiệu khoảng `S = (a; b)`, nhiều
-  ẩn (dấu chia `:` ✅ 0562; bất phương trình một ẩn ✅ `0608`, đặc tả
-  `docs/specs/2026-10-11-kiem-buoc-bat-phuong-trinh.md` — trị tuyệt đối + ký hiệu khoảng chủ dự án
-  chốt "để đợt sau"); (3) đề
+  (2) Toán ngoài phạm vi: căn, lượng giác, log, π, dấu `≠`, nhiều ẩn (dấu chia `:` ✅ 0562; bất
+  phương trình một ẩn ✅ `0608`, đặc tả `docs/specs/2026-10-11-kiem-buoc-bat-phuong-trinh.md`; trị
+  tuyệt đối (chia trường hợp, chính xác) + ký hiệu tập `S = (a; b)`, `x ∈ [a; b) ∪ {c}`, `S = ℝ \ {a}`
+  ✅ `0611`, đặc tả `docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md`); (3) đề
   ngân hàng là lời văn nên bước Toán chỉ so được với bước 1 của người học (chưa có phương trình đề
   để làm mốc); 272 câu đều là bài `draft` chưa duyệt chuyên môn.
 - 🟡 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` —

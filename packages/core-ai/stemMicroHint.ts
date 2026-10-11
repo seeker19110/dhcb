@@ -70,8 +70,8 @@ const BAT_DAU_CAN_BANG =
 const CHUA_DOC_DUOC: Record<StemSubjectType, string> = {
   math:
     'Em có thể viết bước này thành một phương trình hoặc bất phương trình chỉ có MỘT ẩn (dùng +, ' +
-    '−, ·, /, phân số, luỹ thừa; đáp số dạng x > a thay cho ký hiệu khoảng) để bộ kiểm đọc được ' +
-    'không? Nếu chưa, hãy tự thay giá trị vào đề: hai vế có bằng nhau không?',
+    '−, ·, /, phân số, luỹ thừa, trị tuyệt đối |…|; đáp số viết x > a hoặc S = (a; +∞)) để bộ ' +
+    'kiểm đọc được không? Nếu chưa, hãy tự thay giá trị vào đề: hai vế có bằng nhau không?',
   physics:
     'Đơn vị ở hai vế của bước vừa viết có khớp nhau không? Em đã đổi mọi đại lượng về cùng một hệ ' +
     'đơn vị (SI) trước khi thay số chưa?',
@@ -117,6 +117,26 @@ export function cauHoiBatPhuongTrinh(
   )
 }
 
+/**
+ * Câu hỏi khi mốc có trị tuyệt đối mà bước đã bỏ nó và làm đổi tập nghiệm (đặc tả
+ * 2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi ①): người học đang chia trường hợp. Không chứa số.
+ */
+export function cauHoiTriTuyetDoi(
+  kq: Extract<MathStepCheck, { verdict: 'changed' }>,
+): string | null {
+  if (kq.absoluteValue === undefined) return null
+  if (kq.lost && !kq.extra) {
+    return (
+      'Khi bỏ dấu giá trị tuyệt đối, em đã xét đủ HAI trường hợp chưa: biểu thức bên trong không ' +
+      'âm, và biểu thức bên trong âm? Mỗi trường hợp cho em điều gì?'
+    )
+  }
+  return (
+    'Mỗi trường hợp khi bỏ dấu giá trị tuyệt đối đi kèm một điều kiện (biểu thức bên trong không ' +
+    'âm, hoặc âm). Kết quả của từng trường hợp đã được đối chiếu với điều kiện của chính nó chưa?'
+  )
+}
+
 /** Bước cuối SAI → bậc 3: hỏi đúng loại lỗi bộ kiểm vừa chứng minh. */
 function hoiLoiToan(kq: MathStepCheck, deCoDKXD: boolean): string | null {
   if (kq.verdict === 'division_by_zero') {
@@ -126,8 +146,8 @@ function hoiLoiToan(kq: MathStepCheck, deCoDKXD: boolean): string | null {
   const truoc = kq.sameAsPrevious
     ? 'Bước này cùng tập nghiệm với bước liền trước, nên chỗ sai nằm ở bước ✗ ĐẦU TIÊN. '
     : ''
-  const batPhuongTrinh = cauHoiBatPhuongTrinh(kq)
-  if (batPhuongTrinh !== null) return truoc + batPhuongTrinh
+  const rieng = cauHoiTriTuyetDoi(kq) ?? cauHoiBatPhuongTrinh(kq)
+  if (rieng !== null) return truoc + rieng
   if (kq.lost && kq.extra) {
     return (
       truoc +
