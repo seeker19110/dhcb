@@ -27,6 +27,30 @@ const tc = (
   hidden = false,
 ): ProgrammingTestCase => TestCaseSchema.parse({ stdinLines, expected, label, hidden })
 
+// ── Probe của BỘ CHẤM cho bước làn apisim (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+// Chạy NGUYÊN api.py (runpy, run_name="__main__" để khối kiểm thử bọc trong
+// `if __name__ == "__main__":` vẫn chạy), rồi tự gọi API bằng dữ liệu riêng. Bài 3 chưa nộp
+// sau khối kiểm thử của đề (ca "Ngay sai: 422" chốt điều đó); sổ đo bằng HIỆU trước/sau.
+const P5_S5_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+
+
+def nop(bai_id, ngay):
+    return c.post("/bai-tap/" + str(bai_id) + "/nop", json={"ngay": ngay})
+
+
+tk0 = c.get("/tong-ket").json()
+r = nop(3, "2026-10-20")
+tk1 = c.get("/tong-ket").json()
+print("KT NOP MOI:", r.status_code, r.json()["tre_han"], tk1["da_nop"] - tk0["da_nop"], tk1["tre_han"] - tk0["tre_han"], tk1["chua_nop"] - tk0["chua_nop"])
+print("KT NOP LAI:", nop(3, "2026-10-25").status_code, c.get("/tong-ket").json()["da_nop"] - tk1["da_nop"])
+l1 = nop(3, 20261020).status_code
+l2 = nop(3, "2026-04-31").status_code
+print("KT LOI:", l1, l2, nop(987654, "2026-13-01").status_code, nop(987654, "2026-10-01").status_code)`
+
 export const T3_P5_PROJECT_STEPS: ProjectStep[] = [
   {
     id: 't3-p5-s1',
@@ -425,6 +449,8 @@ print("Ngay sai:", client.post("/bai-tap/3/nop", json={"ngay": "2026-02-30"}).st
 print("Sai ca hai:", client.post("/bai-tap/99/nop", json={"ngay": "hom qua"}).status_code)
 tk = client.get("/tong-ket").json()
 print(f"Tong ket: {tk['da_nop']} da nop, {tk['tre_han']} tre han, {tk['chua_nop']} chua nop")`,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P5_S5_PROBE,
     checks: [
       tc([], 'Dung han: 201 False', 'Nộp đúng ngày hạn vẫn là đúng hạn'),
       tc([], 'Tre han: 201 True', 'Nộp sau hạn bị đánh dấu trễ'),
@@ -443,6 +469,19 @@ print(f"Tong ket: {tk['da_nop']} da nop, {tk['tre_han']} tre han, {tk['chua_nop'
         'Ca ẩn: sổ không lệch — chỉ hai lượt nộp hợp lệ được ghi',
         true,
       ),
+      // Đề ①: "Hợp lệ → 201, trả {"tre_han": …} (nộp đúng ngày hạn vẫn là đúng hạn)"; ②: tổng kết
+      // đếm từ CSDL — bài 3 nộp đúng hạn 2026-10-20: da_nop +1, tre_han +0, chua_nop -1.
+      tc(
+        [],
+        'KT NOP MOI: 201 False 1 0 -1',
+        'Ca ẩn: bài khác đề nộp đúng ngày hạn, tổng kết đổi đúng',
+        true,
+      ),
+      // Đề ①: "Bài đã nộp → 409 "Bai nay da nop roi"" — không ghi thêm bản nộp.
+      tc([], 'KT NOP LAI: 409 0', 'Ca ẩn: nộp lại bài vừa nộp → 409, sổ không đổi', true),
+      // Đề ① "kiểm theo đúng thứ tự": ngày sai (không phải chuỗi / ngày không có thật) → 422 trước
+      // cả 409 và 404; "Không có bài → 404".
+      tc([], 'KT LOI: 422 422 422 404', 'Ca ẩn: ngày sai luôn 422 trước 409/404', true),
     ],
   },
 ]

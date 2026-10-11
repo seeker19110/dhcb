@@ -39,7 +39,9 @@ export const ProjectStepSchema = z
     /** Code tham chiếu của bước (phao — mở được, đánh dấu đã xem). */
     referenceCode: z.string().min(1).max(6000),
     /** Milestone check: đạt HẾT thì mở bước sau. */
-    checks: z.array(TestCaseSchema).min(1).max(8),
+    // Trần 12 (nới từ 8, đặc tả 2026-10-11-apisim-ca-an-chong-go-cung): bước apisim cần thêm
+    // 2–3 ca ẩn `KT` của bộ chấm mà KHÔNG được bỏ ca cũ nào.
+    checks: z.array(TestCaseSchema).min(1).max(12),
     /** true = bước cuối chặng: đạt xong thì chốt snapshot milestone. */
     isMilestone: z.boolean().default(false),
     /** Các file workspace bước này dùng — phần tử ĐẦU là file chạy chính (PR-L6b).
@@ -53,7 +55,9 @@ export const ProjectStepSchema = z
     referenceFiles: z.record(z.string(), z.string().min(1).max(6000)).optional(),
     /** Code CHẤM chạy thay cho file chính: import module của học viên rồi gọi hàm.
      *  Dùng khi cần ép tách file thật (chấm hành vi qua ranh giới module), vì chỉ chạy
-     *  file chính thì code gộp một file vẫn cho output y hệt. */
+     *  file chính thì code gộp một file vẫn cho output y hệt.
+     *  Làn `apisim`: chạy nguyên api.py của học viên rồi tự gọi API bằng dữ liệu riêng của bộ
+     *  chấm (in dòng `KT …`) — chặn lời giải chỉ in sẵn các dòng đáp án. */
     probeCode: z.string().max(2000).optional(),
   })
   .strict()
@@ -65,11 +69,20 @@ export const ProjectStepSchema = z
   })
   // `?? 'python'` chứ không so thẳng: bước chặng P1/P2 bỏ trống `language` nghĩa là Python
   // (xem getStepLanguage) — so thẳng sẽ đánh trượt oan chính những bước cũ đang dùng probeCode.
-  .refine((s) => (s.language ?? 'python') === 'python' || s.probeCode === undefined, {
-    // probeCode = "chạy code chấm thay file chính để ép tách module" — chỉ có nghĩa với
-    // Python thuần; làn pytest/apisim đã có bộ chạy riêng nối ở cuối (pyLanes.ts).
-    message: "probeCode chỉ dùng cho bước 'python'",
-  })
+  .refine(
+    (s) => {
+      const lan = s.language ?? 'python'
+      return lan === 'python' || lan === 'apisim' || s.probeCode === undefined
+    },
+    {
+      // probeCode = code của BỘ CHẤM chạy thay file chính:
+      //   - làn `python`: import module của học viên để ép tách module;
+      //   - làn `apisim` (2026-10-11): chạy nguyên api.py rồi tự gọi API bằng dữ liệu riêng,
+      //     để lời giải chỉ in sẵn đáp án không qua được ca ẩn.
+      // Làn pytest đã có phần nối riêng ở cuối (pyLanes.ts) nên vẫn KHÔNG được có probeCode.
+      message: "probeCode chỉ dùng cho bước 'python' hoặc 'apisim'",
+    },
+  )
 
 export type ProjectStep = z.infer<typeof ProjectStepSchema>
 

@@ -31,6 +31,51 @@ const tc = (
   match: 'contains' | 'exact' = 'contains',
 ): ProgrammingTestCase => TestCaseSchema.parse({ stdinLines, expected, label, hidden, match })
 
+// ── Probe của BỘ CHẤM cho hai bước làn apisim (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+// Chạy NGUYÊN api.py của học viên bằng runpy (run_name="__main__" để khối kiểm thử bọc trong
+// `if __name__ == "__main__":` vẫn chạy → các ca cũ vẫn in), rồi TỰ gọi API bằng dữ liệu riêng.
+// Mọi request TƯƠNG ĐỐI với trạng thái: khối kiểm thử của học viên đã thêm/xoá trước đó.
+// Lời giải chỉ in sẵn đáp án không có biến `app` → KeyError → mọi ca của lượt đó trượt.
+const P4_S5_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+n0 = len(c.get("/mon").json())
+tao = c.post("/mon", json={"ten": "khoai lang say", "gia": 12345})
+moi = tao.json()["id"]
+u = "/mon/" + str(moi)
+doc = c.get(u)
+print("KT TAO DOC:", tao.status_code, doc.status_code, doc.json()["ten"], doc.json()["gia"])
+ds = c.get("/mon").json()
+print("KT DS THEM:", len(ds) - n0, any(m["id"] == moi for m in ds))
+xoa = c.delete(u)
+print("KT XOA:", xoa.status_code, xoa.json()["da_xoa"] == moi, c.get(u).status_code, c.get("/mon/987654").status_code)`
+
+const P4_S6_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+# Gia/tong do nguoi goi gui len phai bi BO QUA — gia lay tu bang mon
+tao = c.post("/don", json={"ban": 7, "tong": 1, "thanh_toan": 1, "dong": [
+    {"mon_id": 3, "so_luong": 5, "gia": 1}, {"mon_id": 2, "so_luong": 4, "gia": 1}]})
+t = tao.json()
+print("KT DON MOI:", tao.status_code, t["ban"], t["tong"], t["thanh_toan"])
+doc = c.get("/don/" + str(t["id"]))
+d = doc.json()
+ten = ",".join(sorted(x["ten"] for x in d["dong"]))
+print("KT DOC LAI:", doc.status_code, d["ban"], len(d["dong"]), sum(x["thanh_tien"] for x in d["dong"]), ten)
+
+
+def gui(du_lieu):
+    return c.post("/don", json=du_lieu).status_code
+
+
+sai_sl = gui({"ban": 2, "dong": [{"mon_id": 2, "so_luong": 0}]})
+mon_la = gui({"ban": 2, "dong": [{"mon_id": 987654, "so_luong": 1}]})
+print("KT LOI:", sai_sl, gui({"ban": 2}), mon_la, c.get("/don/987654").status_code)`
+
 export const P4_PROJECT_STEPS: ProjectStep[] = [
   {
     id: 'p4-s1',
@@ -444,6 +489,8 @@ print("TAO:", tao.status_code, tao.json()["id"])
 print("GIA MOI:", client.get("/mon/4").json()["gia"])
 print("XOA:", client.delete("/mon/1").status_code)
 print("CON LAI:", len(client.get("/mon").json()))`,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P4_S5_PROBE,
     checks: [
       tc([], 'DS: 200 3', 'GET /mon trả 200 và đủ 3 món của quán'),
       tc([], 'MOT: 200 nuoc cam', 'GET /mon/2 lấy đúng món (tham số đường dẫn đổi sang số)'),
@@ -452,6 +499,23 @@ print("CON LAI:", len(client.get("/mon").json()))`,
       tc([], 'GIA MOI: 20000', 'Món vừa tạo đọc lại được từ CSDL'),
       tc([], 'XOA: 200', 'Ca ẩn: DELETE trả 200', true),
       tc([], 'CON LAI: 3', 'Ca ẩn: thêm 1 xoá 1 thì còn đúng 3 món (có commit thật)', true),
+      // Đề cửa 3 + 2: "POST /mon … ghi vào CSDL, trả {id, ten, gia} với id vừa sinh (mã 201)" và
+      // "GET /mon/{mon_id} — trả một món" — đọc lại đúng id vừa nhận, dữ liệu KHÁC đề.
+      tc(
+        [],
+        'KT TAO DOC: 201 200 khoai lang say 12345',
+        'Ca ẩn: món mới (dữ liệu của bộ chấm) tạo xong đọc lại đúng theo id',
+        true,
+      ),
+      // Đề cửa 1: "GET /mon — trả DANH SÁCH mọi món" — danh sách tăng đúng 1 và có món vừa tạo.
+      tc([], 'KT DS THEM: 1 True', 'Ca ẩn: danh sách có thêm đúng món vừa tạo', true),
+      // Đề cửa 4 + 2: "DELETE … xoá món, trả {"da_xoa": mon_id}"; "không có thì … 404".
+      tc(
+        [],
+        'KT XOA: 200 True 404 404',
+        'Ca ẩn: xoá món vừa tạo, đọc lại và hỏi id rất lớn đều 404',
+        true,
+      ),
     ],
   },
   {
@@ -579,6 +643,8 @@ print(
     client.post("/don", json={"ban": 1, "dong": [{"mon_id": 99, "so_luong": 1}]}).status_code,
 )
 print("DON LA:", client.get("/don/99").status_code)`,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P4_S6_PROBE,
     checks: [
       tc([], 'TAO: 201 1', 'POST /don tạo đơn, trả 201 kèm id'),
       tc([], 'TONG: 55000', 'Tổng tính bằng giá LẤY TỪ CSDL'),
@@ -588,6 +654,25 @@ print("DON LA:", client.get("/don/99").status_code)`,
       tc([], 'RONG: 422', 'Đơn không có dòng nào bị từ chối'),
       tc([], 'SL AM: 422', 'Ca ẩn: số lượng âm bị chặn ngay ở cửa API', true),
       tc([], 'MON LA: 404', 'Ca ẩn: món không có trong CSDL trả 404, không ghi đơn hỏng', true),
+      // Đề: "giá TUYỆT ĐỐI lấy từ CSDL, không bao giờ nhận giá do người gọi gửi lên" + "tính tong và
+      // thanh_toan theo luật quán (≥100000 giảm 20% …)" + "trả {id, ban, tong, thanh_toan} (mã 201)".
+      tc(
+        [],
+        'KT DON MOI: 201 7 110000 88000',
+        'Ca ẩn: đơn của bộ chấm (kèm giá giả) tính từ CSDL, mốc giảm 20%',
+        true,
+      ),
+      // Đề mục 2: "GET /don/{don_id} — trả {id, ban, tong, thanh_toan, dong} với "dong" là danh sách
+      // {ten, so_luong, thanh_tien}" — đọc lại theo id vừa nhận (không phụ thuộc thứ tự dòng).
+      tc(
+        [],
+        'KT DOC LAI: 200 7 2 110000 nuoc cam,sua dau',
+        'Ca ẩn: đọc lại đơn vừa tạo đủ dòng và thành tiền',
+        true,
+      ),
+      // Đề mục 1: "so_luong <= 0 → 422", ""dong" rỗng hoặc thiếu → 422", "mon_id không có … → 404";
+      // mục 2: "không có đơn thì 404".
+      tc([], 'KT LOI: 422 422 404 404', 'Ca ẩn: các nhánh lỗi với dữ liệu khác đề', true),
     ],
   },
 ]

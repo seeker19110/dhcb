@@ -29,6 +29,28 @@ const tc = (
   hidden = false,
 ): ProgrammingTestCase => TestCaseSchema.parse({ stdinLines, expected, label, hidden })
 
+// ── Probe của BỘ CHẤM cho bước làn apisim (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+// Chạy NGUYÊN api.py (runpy, run_name="__main__" để khối kiểm thử bọc trong
+// `if __name__ == "__main__":` vẫn chạy), rồi tự gọi API bằng dữ liệu riêng. Không có endpoint
+// thêm món nên probe chỉ đi các nhánh KHÔNG đổi sổ, và đo sổ bằng HIỆU trước/sau (tương đối).
+const P5_S5_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+
+
+def gui(du_lieu):
+    return c.post("/don", json=du_lieu).status_code
+
+
+bc0 = c.get("/bao-cao").json()
+print("KT SAI KIEU:", gui({"mon": 123, "so_luong": 1}), gui({"mon": "tra da", "so_luong": 0}), gui({"mon": "tra da", "so_luong": "2"}))
+lo = gui({"mon": "banh mi xyz", "so_luong": 0})
+print("KT THU TU:", lo, gui({"mon": "banh mi xyz", "so_luong": 1}), gui({"mon": "  SUA DAU ", "so_luong": 1000000}))
+bc1 = c.get("/bao-cao").json()
+print("KT SO KHONG DOI:", bc1["so_don"] - bc0["so_don"], bc1["doanh_thu"] - bc0["doanh_thu"])`
+
 export const P5_PROJECT_STEPS: ProjectStep[] = [
   {
     id: 'p5-s1',
@@ -428,6 +450,8 @@ print("So luong am:", client.post("/don", json={"mon": "tra da", "so_luong": -2}
 print("Vuot ton kho:", client.post("/don", json={"mon": "nuoc cam", "so_luong": 99}).status_code)
 bc = client.get("/bao-cao").json()
 print(f"Bao cao: {bc['so_don']} don {bc['doanh_thu']} dong")`,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P5_S5_PROBE,
     checks: [
       tc([], 'Don hop le: 201', 'Đơn hợp lệ đầu tiên được nhận'),
       tc(
@@ -445,6 +469,14 @@ print(f"Bao cao: {bc['so_don']} don {bc['doanh_thu']} dong")`,
         'Sổ đơn không lệch: chỉ 2 lượt thành công được ghi',
         true,
       ),
+      // Đề ①: "mon không phải chuỗi, hoặc so_luong không phải số nguyên dương → 422".
+      tc([], 'KT SAI KIEU: 422 422 422', 'Ca ẩn: sai kiểu dữ liệu (dữ liệu khác đề) → 422', true),
+      // Đề ①: "kiểm theo đúng thứ tự" 422 → 404 → 409; "bỏ khoảng trắng thừa, không phân biệt hoa
+      // thường"; "Tồn kho ít hơn số lượng đặt → 409" (số lượng cực lớn → luôn quá kho).
+      tc([], 'KT THU TU: 422 404 409', 'Ca ẩn: đúng thứ tự kiểm, tên chuẩn hoá tìm ra món', true),
+      // Đề ①: chỉ "Hợp lệ → 201 … Ghi đơn" + ② báo cáo "đọc bằng COUNT/SUM" — lượt bị từ chối
+      // không làm sổ đổi (đo bằng hiệu trước/sau).
+      tc([], 'KT SO KHONG DOI: 0 0', 'Ca ẩn: lượt bị từ chối không ghi gì vào sổ', true),
     ],
   },
 ]

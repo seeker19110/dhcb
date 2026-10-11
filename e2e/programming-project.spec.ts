@@ -175,3 +175,51 @@ test('chặng P3 bước HTML: khung xem trang hiện ngay trang học viên đa
   await expect(khung.locator('h1')).toHaveText('Quan cua toi')
   await expect(khung.locator('.menu li').first()).toHaveText('Tra da - 5000')
 })
+
+// Đặc tả 2026-10-11-apisim-ca-an-chong-go-cung — bước làn apisim chấm bằng `probeCode` của BỘ
+// CHẤM: chạy nguyên api.py của học viên bằng runpy rồi tự gọi API bằng dữ liệu riêng (dòng `KT …`).
+// Cổng python3 ở CI (lessonsPython.test.ts) đã chấm nội dung; test này chốt thứ cổng kia không
+// thấy: trên Pyodide THẬT, probe đọc được api.py học viên trong thư mục làm việc, `runpy` và gói
+// `fastapi` giả lập nạp được, và code tham chiếu đạt HẾT ca — kể cả ca ẩn KT mới.
+test('dự án T2 bước 5 chặng P4 (apisim): code mẫu đạt hết ca, kể cả ca ẩn của probe', async ({
+  page,
+}) => {
+  test.setTimeout(240_000)
+  await mockLogin(page, 'vi', 'dark-blue')
+
+  // Giả lập: đang theo dự án T2, đã xong trọn chặng P1–P3 và 4 bước đầu chặng P4 → trang tự
+  // mở bước đầu tiên chưa xong của chặng P4, tức t2-p4-s5. Mã bước gõ tay (không import gói
+  // subject-programming vào e2e — xem ghi chú ở programming-home.spec.ts).
+  const done = [
+    ...['p1', 'p2', 'p3'].flatMap((chang) => [1, 2, 3, 4, 5].map((i) => `t2-${chang}-s${i}`)),
+    ...[1, 2, 3, 4].map((i) => `t2-p4-s${i}`),
+  ].map((lessonId) => ({ lessonId, status: 'completed', completedAt: 1 }))
+  await page.route('**/api/programming/progress', (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({
+          status: 200,
+          body: JSON.stringify({ lessons: done, state: { projectTrack: 'T2' } }),
+        })
+      : route.fulfill({ status: 200, body: '{}' }),
+  )
+  await page.route('**/api/programming/project', (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({ status: 200, body: JSON.stringify({ files: [], snapshots: [] }) })
+      : route.fulfill({ status: 200, body: '{}' }),
+  )
+
+  await page.goto('/goc-hoc-tap/programming/du-an?chang=p4', { waitUntil: 'domcontentloaded' })
+  await expect(page.getByRole('heading', { name: /^Bước 5: API CRUD cho thành viên/ })).toBeVisible(
+    { timeout: 60_000 },
+  )
+
+  await page.getByRole('button', { name: 'Xem code mẫu bước này' }).click()
+  await page.getByRole('button', { name: 'Kiểm tra bước' }).click()
+
+  // Ca thường đầu tiên + ca ẩn CUỐI (ca KT của probe) đều đã chấm, rồi banner đạt hết hiện ra.
+  await expect(page.getByText('GET /thanh-vien trả 200 và đủ 4 bạn')).toBeVisible({
+    timeout: 180_000,
+  })
+  await expect(page.getByText('Ca ẩn 11')).toBeVisible({ timeout: 180_000 })
+  await expect(page.getByText(/Đạt hết test của bước 5/)).toBeVisible({ timeout: 180_000 })
+})

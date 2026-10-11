@@ -336,6 +336,32 @@ def minh_bach():
 
 ${P5_S5_KIEM_THU}`
 
+// ── Probe của BỘ CHẤM cho bước làn apisim (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+// Chạy NGUYÊN api.py (runpy, run_name="__main__" để khối kiểm thử bọc trong
+// `if __name__ == "__main__":` vẫn chạy), rồi tự gọi API bằng dữ liệu riêng. Số dư đo bằng HIỆU
+// trước/sau — không phụ thuộc khối kiểm thử của học viên đã ghi gì.
+const P5_S5_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+
+
+def gui(duong_dan, du_lieu):
+    return c.post(duong_dan, json=du_lieu)
+
+
+sai_ten = gui("/thu", {"ten": 123, "so_tien": 1000}).status_code
+sai_hm = gui("/chi", {"hang_muc": "   ", "so_tien": 1000}).status_code
+print("KT 422:", sai_ten, sai_hm, gui("/chi", {"hang_muc": "in an", "so_tien": "1000"}).status_code)
+mb0 = c.get("/minh-bach").json()
+t = gui("/thu", {"ten": " BINH ", "so_tien": 23456})
+mb1 = c.get("/minh-bach").json()
+print("KT THU MOI:", t.status_code, t.json()["so_du"] == mb0["so_du"] + 23456, mb1["so_du"] == mb0["so_du"] + 23456, isinstance(mb1["chua_dong"], int))
+du = mb1["so_du"]
+qua = gui("/chi", {"hang_muc": "in an", "so_tien": du + 1}).status_code
+print("KT CHI:", qua, gui("/chi", {"hang_muc": "in an", "so_tien": du}).status_code, c.get("/minh-bach").json()["so_du"])`
+
 export const T2_P5_PROJECT_STEPS: ProjectStep[] = [
   {
     id: 't2-p5-s1',
@@ -534,6 +560,8 @@ export const T2_P5_PROJECT_STEPS: ProjectStep[] = [
     requirement: `Bước cuối của dự án: ráp lại thành API cho trang minh bạch thật gọi.\n\nTrong api.py, SQLite bộ nhớ (PRAGMA foreign_keys = ON): thanh_vien(id, ten UNIQUE) với 4 bạn an · binh · hoa · minh; giao_dich(id AUTOINCREMENT, loai CHECK IN ('thu','chi'), thanh_vien_id trỏ tới thanh_vien(id), hang_muc, so_tien CHECK (so_tien > 0)).\n\n① POST /thu {"ten", "so_tien"}: ten không phải chuỗi hoặc so_tien không phải số nguyên dương → 422; không có bạn này (chuẩn hoá tên, tra bằng tham số ?) → 404; hợp lệ → 201 {"so_du"}.\n② POST /chi {"hang_muc", "so_tien"}: hang_muc rỗng hoặc so_tien sai → 422; so_tien lớn hơn số dư TÍNH TỪ CSDL → 409; hợp lệ → 201 {"so_du"}.\n③ GET /minh-bach → {"tong_thu", "tong_chi", "so_du", "chua_dong"} — chua_dong là SỐ bạn chưa có khoản thu nào. Trang công khai KHÔNG nêu tên ai nợ quỹ.\n\nCuối file dán khối kiểm thử:\n\n${P5_S5_KIEM_THU}\n\nLÀN C — KHÔNG chấm tự động được: chạy file này bằng FastAPI + uvicorn trên máy thật, đổi CSDL sang file thật, cấu hình qua biến môi trường như bước 4, rồi deploy lên nền tảng free-tier. Nộp bằng chứng: URL https chạy thật, bảng biến môi trường (che giá trị), log khởi động. Không có URL sống thì không có dấu HOÀN THÀNH MÔN — hệ thống không tự đánh dấu "đạt" khi không có gì để kiểm chứng.`,
     hint: 'Thứ tự kiểm quyết định mã lỗi: 422 (dữ liệu vào) → 404 (tồn tại) → 409 (trạng thái quỹ). Trong Python True cũng là int, nên kiểm isinstance(so_tien, bool) trước. Số dư luôn hỏi CSDL bằng SUM(CASE …) bọc COALESCE — không giữ biến số dư trong bộ nhớ.',
     referenceCode: P5_S5_CODE,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P5_S5_PROBE,
     checks: [
       tc([], 'Thu hop le: 201', 'Khoản thu hợp lệ được nhận'),
       tc([], 'Thu sai ban: 404', 'Thu tiền người ngoài lớp → 404'),
@@ -548,6 +576,19 @@ export const T2_P5_PROJECT_STEPS: ProjectStep[] = [
         'Ca ẩn: trang minh bạch khớp sổ — chỉ các lượt hợp lệ được ghi',
         true,
       ),
+      // Đề ①: "ten không phải chuỗi … → 422"; ②: "hang_muc rỗng hoặc so_tien sai → 422".
+      tc([], 'KT 422: 422 422 422', 'Ca ẩn: dữ liệu vào sai kiểu (khác đề) → 422', true),
+      // Đề ①: "chuẩn hoá tên … hợp lệ → 201 {"so_du"}"; ③: "chua_dong là SỐ bạn chưa có khoản thu
+      // nào. Trang công khai KHÔNG nêu tên ai nợ quỹ" — số dư so bằng hiệu trước/sau.
+      tc(
+        [],
+        'KT THU MOI: 201 True True True',
+        'Ca ẩn: khoản thu của bộ chấm làm số dư tăng đúng, chua_dong là số',
+        true,
+      ),
+      // Đề ②: "so_tien lớn hơn số dư TÍNH TỪ CSDL → 409; hợp lệ → 201" — hơn 1 đồng bị chặn,
+      // bằng số dư thì được, quỹ về 0.
+      tc([], 'KT CHI: 409 201 0', 'Ca ẩn: chi hơn số dư 1 đồng → 409, chi vừa đủ → 201', true),
     ],
   },
 ]

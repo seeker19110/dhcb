@@ -117,8 +117,11 @@ describe('P4 project steps (PR-L17)', () => {
     // ngoài. Thiếu một làn nghĩa là milestone "full-stack mini" chỉ còn là lời hứa.
     const lanes = P4_PROJECT_STEPS.map((s) => s.language ?? 'python')
     expect(lanes).toEqual(['python', 'python', 'python', 'pytest', 'apisim', 'apisim'])
-    // probeCode chỉ hợp lệ với Python thuần (schema chặn) — không bước nào ở đây cần nó.
-    expect(P4_PROJECT_STEPS.every((s) => s.probeCode === undefined)).toBe(true)
+    // Chỉ bước apisim có probe của bộ chấm (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung):
+    // chạy nguyên api.py rồi tự gọi API bằng dữ liệu riêng. Bước python/pytest ở đây không cần.
+    for (const s of P4_PROJECT_STEPS) {
+      expect(s.probeCode !== undefined, s.id).toBe(s.language === 'apisim')
+    }
   })
 
   it('số học các ca chấm khớp luật tiền của quán (giá món × số lượng, giảm giá bậc)', () => {
@@ -162,4 +165,34 @@ it('mọi language project hiện có từ chối Git assertions', () => {
       }).success,
     ).toBe(false)
   }
+})
+
+// Đặc tả 2026-10-11-apisim-ca-an-chong-go-cung: probeCode mở cho làn apisim (bộ chấm tự gọi API),
+// làn pytest vẫn bị chặn vì đã có phần nối riêng ở cuối (pyLanes.ts).
+describe('ProjectStepSchema — probeCode theo làn và trần số ca', () => {
+  const apisim = P4_PROJECT_STEPS.find((s) => s.id === 'p4-s5')!
+  const pytest = P4_PROJECT_STEPS.find((s) => s.id === 'p4-s4')!
+
+  it('bước apisim có probeCode thì hợp lệ', () => {
+    expect(apisim.language).toBe('apisim')
+    expect(
+      ProjectStepSchema.safeParse({ ...apisim, probeCode: 'import runpy\nprint("KT")' }).success,
+    ).toBe(true)
+  })
+
+  it('bước pytest có probeCode vẫn bị từ chối', () => {
+    expect(pytest.language).toBe('pytest')
+    const r = ProjectStepSchema.safeParse({ ...pytest, probeCode: 'print("KT")' })
+    expect(r.success).toBe(false)
+    expect(r.error?.issues.map((i) => i.message)).toContain(
+      "probeCode chỉ dùng cho bước 'python' hoặc 'apisim'",
+    )
+  })
+
+  it('checks nhận tối đa 12 ca: 12 hợp lệ, 13 bị từ chối', () => {
+    const mot = apisim.checks[0]!
+    const nCa = (n: number) => Array.from({ length: n }, (_v, i) => ({ ...mot, label: `ca ${i}` }))
+    expect(ProjectStepSchema.safeParse({ ...apisim, checks: nCa(12) }).success).toBe(true)
+    expect(ProjectStepSchema.safeParse({ ...apisim, checks: nCa(13) }).success).toBe(false)
+  })
 })

@@ -1,6 +1,6 @@
 # Đặc tả — Bước dự án làn `apisim`: ca ẩn do BỘ CHẤM tự gọi API (chống in sẵn đáp án)
 
-- **Ngày:** 2026-10-11 · **Trạng thái:** Draft — chờ chủ dự án duyệt
+- **Ngày:** 2026-10-11 · **Trạng thái:** Approved for implementation (chủ dự án duyệt 2026-10-11)
 - **Nguồn việc:** nợ ghi ở `PROGRESS.md` mục "Dự án trục T2/T3": "bước apisim (P4 s5/s6, P5 s5)
   không có input nên ca ẩn không chặn hết lời giải gõ cứng (giới hạn chung với T1)". Chủ dự án chọn
   hướng này ngày 2026-10-11.
@@ -44,6 +44,9 @@ nó, nên lời giải chỉ in sẵn các dòng đáp án không còn qua đư�
 
 - Nới `refine` của `ProjectStepSchema` để cho phép `probeCode` ở cả bước `apisim`. Bước `pytest`
   vẫn KHÔNG cho phép, vì làn này đã có phần nối của riêng nó.
+- Nâng trần `checks` của `ProjectStepSchema` từ `.max(8)` lên `.max(12)` (bổ sung khi thi hành:
+  6/9 bước đã có đủ 8 ca nên không thêm được ca nào). Trần này chỉ giới hạn kích thước nội dung
+  tĩnh; không mã nào khác dựa vào con số 8 (đã `grep`), ca không lưu trong CSDL.
 - Mỗi bước trong 9 bước có một `probeCode` theo cùng một khuôn:
   1. `g = runpy.run_path('<file>.py', run_name='__main__')`. Chạy NGUYÊN file học viên như khi bấm
      chạy, kể cả khối kiểm thử họ đã dán, nên các dòng của ca hiện có vẫn in ra y như cũ. Dùng
@@ -76,17 +79,17 @@ nó, nên lời giải chỉ in sẵn các dòng đáp án không còn qua đư�
 
 ## ② Điểm chạm
 
-| Việc | Đường dẫn file                                       | Ghi chú                                                  |
-| ---- | ---------------------------------------------------- | -------------------------------------------------------- |
-| Sửa  | `packages/subject-programming/projectStepTypes.ts`   | `refine`: `probeCode` cho `python` + `apisim`            |
-| Sửa  | `packages/subject-programming/projectStepsP4.ts`     | `probeCode` + ca ẩn `p4-s5`, `p4-s6`                     |
-| Sửa  | `packages/subject-programming/projectStepsP5.ts`     | `p5-s5`                                                  |
-| Sửa  | `packages/subject-programming/projectStepsT2P4.ts`   | `t2-p4-s5`, `t2-p4-s6`                                   |
-| Sửa  | `packages/subject-programming/projectStepsT2P5.ts`   | `t2-p5-s5`                                               |
-| Sửa  | `packages/subject-programming/projectStepsT3P4.ts`   | `t3-p4-s5`, `t3-p4-s6`                                   |
-| Sửa  | `packages/subject-programming/projectStepsT3P5.ts`   | `t3-p5-s5`                                               |
-| Sửa  | `packages/subject-programming/lessonsPython.test.ts` | chạy probe làn `apisim`; ca "gõ cứng phải trượt"         |
-| Sửa  | `packages/subject-programming/projectSteps.test.ts`  | test `refine`: `apisim` nhận probe, `pytest` vẫn từ chối |
+| Việc | Đường dẫn file                                       | Ghi chú                                                            |
+| ---- | ---------------------------------------------------- | ------------------------------------------------------------------ |
+| Sửa  | `packages/subject-programming/projectStepTypes.ts`   | `refine`: `probeCode` cho `python` + `apisim`; `checks` `.max(12)` |
+| Sửa  | `packages/subject-programming/projectStepsP4.ts`     | `probeCode` + ca ẩn `p4-s5`, `p4-s6`                               |
+| Sửa  | `packages/subject-programming/projectStepsP5.ts`     | `p5-s5`                                                            |
+| Sửa  | `packages/subject-programming/projectStepsT2P4.ts`   | `t2-p4-s5`, `t2-p4-s6`                                             |
+| Sửa  | `packages/subject-programming/projectStepsT2P5.ts`   | `t2-p5-s5`                                                         |
+| Sửa  | `packages/subject-programming/projectStepsT3P4.ts`   | `t3-p4-s5`, `t3-p4-s6`                                             |
+| Sửa  | `packages/subject-programming/projectStepsT3P5.ts`   | `t3-p5-s5`                                                         |
+| Sửa  | `packages/subject-programming/lessonsPython.test.ts` | chạy probe làn `apisim`; ca "gõ cứng phải trượt"                   |
+| Sửa  | `packages/subject-programming/projectSteps.test.ts`  | test `refine`: `apisim` nhận probe, `pytest` vẫn từ chối           |
 
 **Ảnh hưởng lan ra:** `ProgrammingProjectPage.tsx` đọc `probeCode` sẵn (không sửa). Trước khi làm,
 chạy `npm run codemap -- impact packages/subject-programming/projectStepTypes.ts` và ghi kết quả

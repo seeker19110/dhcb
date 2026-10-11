@@ -419,6 +419,48 @@ def bao_cao():
 
 ${P4_S6_KIEM_THU}`
 
+// ── Probe của BỘ CHẤM cho hai bước làn apisim (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+// Chạy NGUYÊN api.py (runpy, run_name="__main__" để khối kiểm thử bọc trong
+// `if __name__ == "__main__":` vẫn chạy → ca cũ vẫn in), rồi tự gọi API bằng dữ liệu riêng.
+// Mọi request TƯƠNG ĐỐI với trạng thái khối kiểm thử của học viên để lại.
+const P4_S5_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+n0 = len(c.get("/thanh-vien").json())
+tao = c.post("/thanh-vien", json={"ten": "  Quoc  "})
+moi = tao.json()["id"]
+u = "/thanh-vien/" + str(moi)
+doc = c.get(u)
+print("KT TAO DOC:", tao.status_code, tao.json()["ten"], doc.status_code, doc.json()["ten"])
+rong = c.post("/thanh-vien", json={"ten": ""}).status_code
+print("KT DS THEM:", rong, len(c.get("/thanh-vien").json()) - n0)
+xoa = c.delete(u)
+print("KT XOA:", xoa.status_code, xoa.json()["da_xoa"] == moi, c.get(u).status_code, c.delete(u).status_code, c.delete("/thanh-vien/987654").status_code)`
+
+const P4_S6_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+
+
+def gui(du_lieu):
+    return c.post("/giao-dich", json=du_lieu)
+
+
+# So du truoc khi bo cham ghi — moi phep so deu la HIEU so voi moc nay
+du0 = c.get("/bao-cao").json()["so_du"]
+t = gui({"loai": "thu", "thanh_vien_id": 4, "so_tien": 12345, "so_du": 0})
+bc = c.get("/bao-cao").json()
+print("KT THU MOI:", t.status_code, t.json()["so_du"] == du0 + 12345, bc["so_du"] == du0 + 12345, "minh" not in bc["chua_dong"])
+du1 = bc["so_du"]
+q = gui({"loai": "chi", "hang_muc": "qua tang", "so_tien": du1 + 1, "so_du": 10 ** 9})
+print("KT CHI QUA QUY:", q.status_code, q.json()["detail"] == "Quy chi con " + str(du1) + ", khong du " + str(du1 + 1))
+v = gui({"loai": "chi", "hang_muc": "qua tang", "so_tien": du1})
+print("KT CHI VUA DU:", v.status_code, v.json()["so_du"], c.get("/bao-cao").json()["so_du"])`
+
 export const T2_P4_PROJECT_STEPS: ProjectStep[] = [
   {
     id: 't2-p4-s1',
@@ -568,6 +610,8 @@ export const T2_P4_PROJECT_STEPS: ProjectStep[] = [
       'Viết api.py: một API kiểu REST cho danh sách thành viên, dữ liệu nằm trong SQLite.\n\nDựng sẵn CSDL trong bộ nhớ: bảng thanh_vien(id INTEGER PRIMARY KEY, ten TEXT, da_dong INTEGER DEFAULT 0) với 4 bạn theo thứ tự an · binh · hoa · minh.\n\nBốn cửa:\n1. GET /thanh-vien — trả DANH SÁCH mọi bạn, mỗi bạn là dict {id, ten, da_dong}.\n2. GET /thanh-vien/{tv_id} (tv_id: int) — trả một bạn; không có thì raise HTTPException(404, f"Khong tim thay thanh vien {tv_id}").\n3. POST /thanh-vien — nhận thân JSON qua tham số tên du_lieu (dict có "ten"). Tên chuẩn hoá (bỏ khoảng trắng thừa, viết thường); rỗng thì raise HTTPException(422, "Ten khong duoc de trong"). Hợp lệ thì ghi vào CSDL, trả {id, ten, da_dong} với id vừa sinh (mã 201 là mặc định của @app.post).\n4. DELETE /thanh-vien/{tv_id} — xoá bạn đó, trả {"da_xoa": tv_id}; không có ai để xoá thì 404 (xoá hai lần thì lần sau phải biết là không còn).\n\nCuối file, dán khối kiểm thử sau (in GIÁ TRỊ ĐƠN LẺ, không in cả dict):\n\nclient = TestClient(app)\nds = client.get("/thanh-vien")\nprint("DS:", ds.status_code, len(ds.json()))\nmot = client.get("/thanh-vien/3")\nprint("MOT:", mot.status_code, mot.json()["ten"])\nprint("THIEU:", client.get("/thanh-vien/99").status_code)\ntao = client.post("/thanh-vien", json={"ten": "  Lan "})\nprint("TAO:", tao.status_code, tao.json()["id"], tao.json()["ten"])\nprint("TEN RONG:", client.post("/thanh-vien", json={"ten": "   "}).status_code)\nprint("XOA:", client.delete("/thanh-vien/1").status_code)\nprint("XOA LAI:", client.delete("/thanh-vien/1").status_code)\nprint("CON LAI:", len(client.get("/thanh-vien").json()))',
     hint: 'Ghi chú kiểu tv_id: int là bắt buộc — URL vốn là chuỗi, thiếu nó thì "3" đem so với số trong CSDL sẽ không khớp. Biết DELETE có xoá được dòng nào không: cur = db.execute("DELETE ...") rồi cur.rowcount (0 nghĩa là không có gì để xoá). Nhớ db.commit() sau mọi INSERT/DELETE.',
     referenceCode: P4_S5_CODE,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P4_S5_PROBE,
     checks: [
       tc([], 'DS: 200 4', 'GET /thanh-vien trả 200 và đủ 4 bạn'),
       tc([], 'MOT: 200 hoa', 'GET /thanh-vien/3 lấy đúng bạn (tham số đường dẫn đổi sang số)'),
@@ -577,6 +621,25 @@ export const T2_P4_PROJECT_STEPS: ProjectStep[] = [
       tc([], 'XOA: 200', 'DELETE trả 200'),
       tc([], 'XOA LAI: 404', 'Ca ẩn: xoá lần hai báo 404 chứ không giả vờ thành công', true),
       tc([], 'CON LAI: 4', 'Ca ẩn: thêm 1 xoá 1 thì còn đúng 4 bạn (có commit thật)', true),
+      // Đề cửa 3 + 2: "Tên chuẩn hoá (bỏ khoảng trắng thừa, viết thường) … trả {id, ten, da_dong}
+      // với id vừa sinh (mã 201)" và "GET /thanh-vien/{tv_id} — trả một bạn".
+      tc(
+        [],
+        'KT TAO DOC: 201 quoc 200 quoc',
+        'Ca ẩn: bạn mới (dữ liệu của bộ chấm) tên chuẩn hoá, đọc lại đúng theo id',
+        true,
+      ),
+      // Đề cửa 3: "rỗng thì raise HTTPException(422 …)"; cửa 1: "GET /thanh-vien — trả DANH SÁCH
+      // mọi bạn" — thêm 1 hợp lệ + 1 bị từ chối thì danh sách tăng đúng 1.
+      tc([], 'KT DS THEM: 422 1', 'Ca ẩn: tên rỗng bị từ chối, danh sách chỉ tăng 1', true),
+      // Đề cửa 4: "xoá bạn đó, trả {"da_xoa": tv_id}; không có ai để xoá thì 404 (xoá hai lần …)";
+      // cửa 2: "không có thì … 404".
+      tc(
+        [],
+        'KT XOA: 200 True 404 404 404',
+        'Ca ẩn: xoá bạn vừa tạo, đọc lại / xoá lại / id rất lớn đều 404',
+        true,
+      ),
     ],
   },
   {
@@ -589,6 +652,8 @@ export const T2_P4_PROJECT_STEPS: ProjectStep[] = [
     requirement: `Bước chốt chặng: nối sổ quỹ vào API. LUẬT SỐNG CÒN — số dư TUYỆT ĐỐI tính từ CSDL, không bao giờ nhận số dư người gọi gửi lên: dữ liệu từ trình duyệt ai cũng sửa được, tin nó là mở cửa cho một khoản chi rút sạch quỹ.\n\nTrong api.py: bảng thanh_vien(id, ten) với 4 bạn an · binh · hoa · minh, và bảng giao_dich(id, loai, thanh_vien_id, hang_muc, so_tien).\n\n1. POST /giao-dich — thân JSON {"loai", "so_tien", "thanh_vien_id" (khoản thu) hoặc "hang_muc" (khoản chi)}. Kiểm theo thứ tự:\n   - loai không phải "thu"/"chi" → 422\n   - so_tien không phải số nguyên lớn hơn 0 → 422\n   - khoản thu: thanh_vien_id không có → 404\n   - khoản chi: hang_muc trống → 422; so_tien lớn hơn số dư → 409 f"Quy chi con {so du}, khong du {so_tien}"\n   - hợp lệ → ghi, trả {id, loai, so_tien, so_du} với so_du SAU khi ghi (mã 201).\n2. GET /bao-cao — trả {tong_thu, tong_chi, so_du, chua_dong}; chua_dong là tên các bạn CHƯA có khoản thu nào, theo id tăng dần.\n\nCuối file dán khối kiểm thử:\n\n${P4_S6_KIEM_THU}`,
     hint: 'Số dư một câu SQL: SUM(CASE WHEN loai = \'thu\' THEN so_tien ELSE -so_tien END), bọc COALESCE(…, 0) để sổ trống ra 0 chứ không ra None. "Chưa đóng" = thành viên mà NOT EXISTS một giao dịch thu của bạn đó. Kiểm dữ liệu TRƯỚC, ghi CSDL SAU — khoản sai mà đã kịp ghi là sổ hỏng.',
     referenceCode: P4_S6_CODE,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P4_S6_PROBE,
     checks: [
       tc([], 'THU: 201 50000', 'Ghi khoản thu, trả 201 kèm số dư mới'),
       tc([], 'CHI: 201 70000', 'Ghi khoản chi, số dư tính lại từ CSDL'),
@@ -602,6 +667,20 @@ export const T2_P4_PROJECT_STEPS: ProjectStep[] = [
       tc([], 'SO AM: 422', 'Ca ẩn: khoản thu âm bị chặn ngay ở cửa API', true),
       tc([], 'BAN LA: 404', 'Ca ẩn: thu tiền của người không có trong lớp trả 404', true),
       tc([], 'CHUA DONG: hoa, minh', 'Ca ẩn: danh sách chưa đóng đúng thứ tự', true),
+      // Đề mục 1: "hợp lệ → ghi, trả {id, loai, so_tien, so_du} với so_du SAU khi ghi (mã 201)";
+      // "số dư … tính từ CSDL, không bao giờ nhận số dư người gọi gửi lên"; mục 2: "chua_dong là
+      // tên các bạn CHƯA có khoản thu nào".
+      tc(
+        [],
+        'KT THU MOI: 201 True True True',
+        'Ca ẩn: khoản thu của bộ chấm làm số dư tăng đúng, bạn đó rời danh sách chưa đóng',
+        true,
+      ),
+      // Đề mục 1: "so_tien lớn hơn số dư → 409 f"Quy chi con {so du}, khong du {so_tien}"" — số dư
+      // đọc lúc probe chạy, chi hơn đúng 1 đồng.
+      tc([], 'KT CHI QUA QUY: 409 True', 'Ca ẩn: chi hơn số dư 1 đồng → 409 đúng thông điệp', true),
+      // Đề mục 1: chỉ "lớn hơn số dư" mới 409 → chi BẰNG số dư là hợp lệ, số dư về 0 (mục 2 khớp).
+      tc([], 'KT CHI VUA DU: 201 0 0', 'Ca ẩn: chi đúng bằng số dư vẫn được, quỹ về 0', true),
     ],
   },
 ]

@@ -239,24 +239,102 @@ describe.skipIf(!hasPython)('nội dung môn Lập trình chạy THẬT bằng p
     .flatMap((stage) => stage.steps)
     .filter((s) => laLanPython(getStepLanguage(s)))
 
+  /**
+   * Chấm một bước dự án với `mainCode` đặt vào file chính — dựng thư mục y như worker Pyodide
+   * mount workspace: module của làn + `referenceFiles` + file chính; entry là `probeCode` nếu
+   * bước có (code của BỘ CHẤM), không thì chính file chính.
+   */
+  function chamBuoc(step: ProjectStep, mainCode: string) {
+    const lane = getStepLanguage(step) as PythonLane
+    const dir = mkdtempSync(join(tmpdir(), `dhcb-step-${step.id}-`))
+    for (const [name, content] of Object.entries(fileCuaLan(lane))) {
+      const dich = join(dir, name)
+      mkdirSync(dirname(dich), { recursive: true })
+      writeFileSync(dich, content, 'utf8')
+    }
+    for (const [path, content] of Object.entries(step.referenceFiles ?? {})) {
+      writeFileSync(join(dir, path), content, 'utf8')
+    }
+    const mainFile = step.files?.[0] ?? 'cua_hang.py'
+    writeFileSync(join(dir, mainFile), mainCode, 'utf8')
+
+    const entry = noiCodeTheoLan(lane, step.probeCode ?? mainCode)
+    return gradeAll(entry, step.checks, dir)
+  }
+
   it.each(ALL_STEPS)(
     '$id — code tham chiếu đạt HẾT milestone check',
     async (step) => {
-      const lane = getStepLanguage(step) as PythonLane
-      const dir = mkdtempSync(join(tmpdir(), `dhcb-step-${step.id}-`))
-      for (const [name, content] of Object.entries(fileCuaLan(lane))) {
-        const dich = join(dir, name)
-        mkdirSync(dirname(dich), { recursive: true })
-        writeFileSync(dich, content, 'utf8')
-      }
-      for (const [path, content] of Object.entries(step.referenceFiles ?? {})) {
-        writeFileSync(join(dir, path), content, 'utf8')
-      }
-      const mainFile = step.files?.[0] ?? 'cua_hang.py'
-      writeFileSync(join(dir, mainFile), step.referenceCode, 'utf8')
+      const results = chamBuoc(step, step.referenceCode)
+      expect(allTestsPassed(results), `Bước ${step.id}: ${describeFailures(results)}`).toBe(true)
+      await nhuongEventLoop()
+    },
+    PYTHON_TEST_TIMEOUT_MS,
+  )
 
-      const entry = noiCodeTheoLan(lane, step.probeCode ?? step.referenceCode)
-      const results = gradeAll(entry, step.checks, dir)
+  // ── Làn apisim: bộ chấm tự gọi API (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+  // Trước đặc tả, mọi ca của bước apisim là "stdout chứa dòng X" của khối kiểm thử học viên tự
+  // dán — một file chỉ gồm print(...) đạt được HẾT. Probe chạy nguyên api.py rồi tự gọi API
+  // bằng dữ liệu riêng, in dòng `KT …` cho các ca ẩn mới.
+  const APISIM_STEPS = ALL_STEPS.filter((s) => getStepLanguage(s) === 'apisim')
+
+  it('đủ 9 bước apisim của ba dự án trục, bước nào cũng có probe và ≥ 2 ca ẩn KT', () => {
+    expect(APISIM_STEPS.map((s) => s.id).sort()).toEqual(
+      [
+        'p4-s5',
+        'p4-s6',
+        'p5-s5',
+        't2-p4-s5',
+        't2-p4-s6',
+        't2-p5-s5',
+        't3-p4-s5',
+        't3-p4-s6',
+        't3-p5-s5',
+      ].sort(),
+    )
+    for (const step of APISIM_STEPS) {
+      expect(step.probeCode, step.id).toContain('runpy.run_path(')
+      expect(step.probeCode, step.id).toContain('run_name="__main__"')
+      const kt = step.checks.filter((c) => c.expected.startsWith('KT '))
+      expect(kt.length, step.id).toBeGreaterThanOrEqual(2)
+      expect(
+        kt.every((c) => c.hidden),
+        step.id,
+      ).toBe(true)
+    }
+  })
+
+  it.each(APISIM_STEPS)(
+    '$id — lời giải GÕ CỨNG (chỉ in sẵn các dòng đáp án cũ) phải trượt',
+    async (step) => {
+      // In đúng mọi dòng mong đợi của ca CŨ (kể cả ca ẩn) — đúng kiểu "qua bài" mà đặc tả chặn.
+      const goCung = step.checks
+        .filter((c) => !c.expected.startsWith('KT '))
+        .map((c) => `print(${JSON.stringify(c.expected)})`)
+        .join('\n')
+      const results = chamBuoc(step, goCung)
+      expect(allTestsPassed(results), `Bước ${step.id}: bản gõ cứng mà vẫn đạt`).toBe(false)
+      await nhuongEventLoop()
+    },
+    PYTHON_TEST_TIMEOUT_MS,
+  )
+
+  // Ca biên runpy: học viên bọc khối kiểm thử trong `if __name__ == "__main__":` — probe chạy file
+  // với run_name="__main__" nên khối đó vẫn chạy, ca cũ không đỏ oan. Kiểm một bước mỗi dự án.
+  const KHOI_KIEM_THU = '\nclient = TestClient(app)\n'
+  it.each(APISIM_STEPS.filter((s) => ['p4-s5', 't2-p4-s5', 't3-p4-s5'].includes(s.id)))(
+    '$id — khối kiểm thử bọc trong if __name__ == "__main__" vẫn đạt HẾT',
+    async (step) => {
+      const viTri = step.referenceCode.indexOf(KHOI_KIEM_THU)
+      expect(viTri, `${step.id}: không thấy dòng client = TestClient(app)`).toBeGreaterThan(0)
+      const dau = step.referenceCode.slice(0, viTri + 1)
+      const khoi = step.referenceCode
+        .slice(viTri + 1)
+        .split('\n')
+        .map((dong) => (dong.trim() === '' ? '' : `    ${dong}`))
+        .join('\n')
+      const boc = `${dau}if __name__ == "__main__":\n${khoi}`
+      const results = chamBuoc(step, boc)
       expect(allTestsPassed(results), `Bước ${step.id}: ${describeFailures(results)}`).toBe(true)
       await nhuongEventLoop()
     },
