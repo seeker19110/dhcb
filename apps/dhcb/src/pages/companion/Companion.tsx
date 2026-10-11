@@ -360,6 +360,9 @@ export default function Companion() {
               prev.map((m) => (m.id === botMsgId ? { ...m, interactiveQuestions: questions } : m)),
             )
           },
+          onSafety: (safety) => {
+            setMessages((prev) => prev.map((m) => (m.id === botMsgId ? { ...m, safety } : m)))
+          },
           onDone: (finalResp) => {
             // Trang đã rời → không chạm state, không đọc. `companionApi` đã chặn `onDone` sau
             // khi abort, đây là lớp khoá thứ hai (callback có thể về từ lượt đọc ngay trước
@@ -376,6 +379,7 @@ export default function Companion() {
                       contextPackage: finalResp.contextPackage,
                       proposedActions: finalResp.proposedActions,
                       interactiveQuestions: finalResp.interactiveQuestions ?? [],
+                      ...(finalResp.safety ? { safety: finalResp.safety } : {}),
                     }
                   : m,
               ),

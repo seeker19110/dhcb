@@ -184,6 +184,43 @@ describe('POST /api/companion — câu mẫu dự phòng (mọi nhà cung cấp 
     expect(usageMock.refundUsage).toHaveBeenCalledTimes(1)
   })
 
+  it('stream: lượt khủng hoảng imminent → chuyển tiếp sự kiện safety, hoàn lượt một lần, tắt đệm Nginx', async () => {
+    const base = (await runtime.executeCompanionTurn()) as Record<string, unknown>
+    const safety = {
+      level: 'imminent',
+      category: 'self_harm',
+      resources: [{ phone: '111', name: 'Tổng đài 111', note: '24/7' }],
+    }
+    runtime.streamCompanionTurn.mockImplementationOnce(async function* () {
+      yield { type: 'safety', data: { safety } }
+      yield { type: 'chunk', data: { delta: 'Mình' } }
+      yield { type: 'done', data: { ...base, isFallback: false, safety } }
+    })
+    const res = await handler(req('POST', { message: 'hi', stream: true }))
+    expect(res.headers.get('X-Accel-Buffering')).toBe('no')
+    const body = await res.text()
+    expect(body).toContain('event: safety')
+    expect(body).toContain('"phone":"111"')
+    expect(usageMock.refundUsage).toHaveBeenCalledTimes(1)
+  })
+
+  it('JSON: lượt khủng hoảng imminent → 200 kèm safety và HOÀN lượt', async () => {
+    const base = (await runtime.executeCompanionTurn()) as Record<string, unknown>
+    runtime.executeCompanionTurn.mockResolvedValueOnce({
+      ...base,
+      safety: {
+        level: 'imminent',
+        category: 'abuse',
+        resources: [{ phone: '111', name: 'x', note: '' }],
+      },
+    })
+    const res = await handler(req('POST', { message: 'hi' }))
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as { safety?: { level: string } }
+    expect(json.safety?.level).toBe('imminent')
+    expect(usageMock.refundUsage).toHaveBeenCalledWith('user-1', 'chat', '2026-08-25')
+  })
+
   it('stream lỗi không phải AppError → client KHÔNG nhận thông điệp nội bộ', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     runtime.streamCompanionTurn.mockImplementationOnce(async function* () {

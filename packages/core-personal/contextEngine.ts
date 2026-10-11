@@ -56,6 +56,20 @@ export function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 3.5))
 }
 
+const HISTORY_PROVENANCE = /^companion_message:(user|companion):/
+
+/**
+ * Lịch sử Companion được GÓI theo thứ tự mới → cũ (để giữ lượt mới nhất khi hết ngân sách)
+ * nhưng phải TRẢ cho LLM theo thứ tự cũ → mới (nhà cung cấp nào cũng đọc `messages` theo thời
+ * gian). Lịch sử luôn là nhóm cuối cùng của gói, nên chỉ cần đảo lại đúng nhóm đó; các mục khác
+ * giữ nguyên vị trí.
+ */
+function restoreHistoryOrder<T extends { provenance: string }>(items: T[]): T[] {
+  const rest = items.filter((item) => !HISTORY_PROVENANCE.test(item.provenance))
+  const history = items.filter((item) => HISTORY_PROVENANCE.test(item.provenance)).reverse()
+  return [...rest, ...history]
+}
+
 /**
  * Builds a deterministic ContextPackage obeying:
  * 1. Selection Order:
@@ -212,7 +226,12 @@ export async function buildContextPackage(
         domain,
         maxSensitivity,
       )
-      for (const message of history) {
+      // Xét theo thứ tự MỚI → CŨ: vòng gói ngân sách bên dưới dừng ở mục đầu tiên không vừa,
+      // nên thứ tự đẩy vào `candidates` quyết định lượt nào bị bỏ khi hết chỗ. Trước 2026-10-11
+      // lịch sử đẩy cũ → mới, nên hết ngân sách là mất chính những lượt VỪA nói — Companion
+      // "quên" câu người dùng vừa hỏi trong khi vẫn nhớ chuyện 10 lượt trước. Thứ tự thời gian
+      // cho LLM được trả lại ở bước sắp xếp cuối (`restoreHistoryOrder`).
+      for (const message of [...history].reverse()) {
         // Loại cả dữ liệu cũ thiếu miền; không coi "all" là quyền đọc mọi miền.
         if (message.domain !== domain) continue
         const content = message.content.slice(0, 1500)
@@ -287,7 +306,7 @@ export async function buildContextPackage(
     id: randomUUID(),
     personId,
     requestId,
-    items: selectedItems,
+    items: restoreHistoryOrder(selectedItems),
     tokenBudget,
     tokenUsed,
     createdAt: new Date().toISOString(),

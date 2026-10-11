@@ -22,6 +22,7 @@ import CyberTutorAvatar3D from '../Companion3D/CyberTutorAvatar3D'
 import AvatarEmbodimentSelector, { EmbodimentMode } from '../Companion3D/AvatarEmbodimentSelector'
 import EdgeAiIndicator from '../EdgeAi/EdgeAiIndicator'
 import InteractiveQuestionCard from './InteractiveQuestionCard'
+import CrisisSupportCard from './CrisisSupportCard'
 import ChatProse from './ChatProse'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
@@ -382,6 +383,9 @@ export default function StudioDialogue({
                         {msg.text}
                       </div>
                     )}
+
+                    {/* Thẻ hỗ trợ khủng hoảng — server quyết định, hiện ngay dưới lời AI */}
+                    {isBot && msg.safety && <CrisisSupportCard notice={msg.safety} />}
 
                     {/* Câu hỏi tick chọn — trả lời bằng cách bấm thay vì gõ tay */}
                     {isBot && msg.interactiveQuestions && msg.interactiveQuestions.length > 0 && (

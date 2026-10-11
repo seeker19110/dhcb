@@ -1,5 +1,5 @@
 // packages/core-personal/companionRuntime.test.ts — Unit tests for Companion Runtime pipeline.
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { Pool } from 'pg'
 import {
   resolveIntentAndDomain,
@@ -10,6 +10,7 @@ import {
   AI_UNAVAILABLE_NOTE,
   executeCompanionTurn,
   streamCompanionTurn,
+  COMPANION_DEFAULT_TOKEN_BUDGET,
 } from './companionRuntime.js'
 
 const PERSON_ID = '11111111-1111-4111-8111-111111111111'
@@ -38,6 +39,19 @@ const proposedActionMock = vi.hoisted(() => ({
 
 vi.mock('./proposedActionService.js', () => ({
   proposeAction: (...a: unknown[]) => proposedActionMock.proposeAction(...a),
+}))
+
+// Lớp an toàn: mặc định "không có dấu hiệu" để các test luồng chính không gọi bộ phân loại Haiku;
+// ca khủng hoảng tự đặt `safetyMock.assessSafety` riêng.
+const safetyMock = vi.hoisted(() => ({
+  assessSafety: vi.fn<(...a: unknown[]) => Promise<unknown>>(async () => ({
+    level: 'none',
+    category: 'none',
+    source: 'none',
+  })),
+}))
+vi.mock('./safetyGuard.js', () => ({
+  assessSafety: (...a: unknown[]) => safetyMock.assessSafety(...a),
 }))
 
 const chatProvidersMock = vi.hoisted(() => ({
@@ -475,10 +489,11 @@ describe('executeCompanionTurn — nhánh ngữ cảnh & đếm trạng thái', 
       intent: 'general_conversation',
     })
 
-    // Bước đọc Learning Read Model là câu tra `personal.persons` để lấy user_id. Các câu query
-    // khác (lịch sử hội thoại) là bình thường — chỉ khẳng định KHÔNG có câu nào của read model.
+    // [2026-10-11] Câu tra `personal.persons` nay chạy ở MỌI miền (lấy user_id + nhóm tuổi cho
+    // prompt) — chỉ còn khẳng định KHÔNG có câu nào của Learning Read Model (bảng learner).
     const sqlCalls = queryMock.mock.calls.map((call) => String(call[0]))
-    expect(sqlCalls.some((sql) => sql.includes('personal.persons'))).toBe(false)
+    expect(sqlCalls.filter((sql) => sql.includes('personal.persons'))).toHaveLength(1)
+    expect(sqlCalls.some((sql) => /learner|lesson|srs/.test(sql))).toBe(false)
     expect(res.targetDomain).toBe('personal')
     expect(res.executionSummary.plannedSteps).toBe(0)
     const ctxOptions = contextEngineMock.buildContextPackage.mock.calls[0]![1] as {
@@ -486,7 +501,9 @@ describe('executeCompanionTurn — nhánh ngữ cảnh & đếm trạng thái', 
       tokenBudget?: number
     }
     expect(ctxOptions.domainState).toBeUndefined()
-    expect(ctxOptions.tokenBudget).toBeUndefined()
+    // Không truyền tokenBudget → runtime dùng ngân sách mặc định của Companion (4000, không
+    // phải 2000 của Context Engine — xem COMPANION_DEFAULT_TOKEN_BUDGET).
+    expect(ctxOptions.tokenBudget).toBe(COMPANION_DEFAULT_TOKEN_BUDGET)
   })
 
   // [2026-08-27] Companion "xuyên suốt 5 trụ": trước đây CHỈ trụ Learning có read model nạp vào
@@ -518,9 +535,10 @@ describe('executeCompanionTurn — nhánh ngữ cảnh & đếm trạng thái', 
       }
       expect(ctxOptions.domainState?.content).toBe(`[Domain: ${domain}] tóm tắt`)
       expect(ctxOptions.domainState?.provenance).toBe(`${domain}:read_model`)
-      // KHÔNG chạm vào nhánh Learning Read Model.
+      // KHÔNG chạm vào nhánh Learning Read Model (câu tra `personal.persons` còn lại là câu đọc
+      // hồ sơ/nhóm tuổi, chạy ở mọi miền từ 2026-10-11).
       expect(
-        queryMock.mock.calls.map((c) => String(c[0])).some((q) => q.includes('personal.persons')),
+        queryMock.mock.calls.map((c) => String(c[0])).some((q) => /learner|lesson|srs/.test(q)),
       ).toBe(false)
     },
   )
@@ -555,9 +573,12 @@ describe('executeCompanionTurn — nhánh ngữ cảnh & đếm trạng thái', 
       targetDomain: 'learning',
     })
 
-    expect(queryMock).toHaveBeenCalledWith('select user_id from personal.persons where id = $1', [
-      PERSON_ID,
-    ])
+    // Câu đọc hồ sơ (user_id + nhóm tuổi) chạy với đúng personId; không có hàng → userId rơi về
+    // personId (kiểm qua lời gọi read model bên dưới không ném lỗi, hành vi cũ giữ nguyên).
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringMatching(/select p\.user_id, pr\.age_group[\s\S]*personal\.persons p/),
+      [PERSON_ID],
+    )
   })
 })
 
@@ -688,8 +709,10 @@ describe('synthesizeCompanionReply with shared AI models', () => {
       sampleContext,
     )
 
+    // Không truyền onDelta → `streamed: false` (nơi gọi tự phát chữ).
     expect(reply).toEqual({
       isFallback: false,
+      streamed: false,
       text: 'Phản hồi từ Anthropic Claude cho Bạn Đồng Hành.',
     })
     const call = anthropicClientMock.callAnthropicText.mock.calls[0]![0] as {
@@ -1147,4 +1170,260 @@ it('cả hai vế transcript kế thừa sensitivity từ context T2 đã đọc
     if (String(call[0]).includes('insert into personal.companion_messages'))
       expect((call[1] as unknown[])[5]).toBe('sensitive')
   }
+})
+
+// ─── [2026-10-11] Nâng cấp GĐ1: stream thật · lớp an toàn · nhóm tuổi ───────────────────────
+import {
+  QuestionFenceGuard,
+  IMMINENT_SAFETY_REPLY,
+  prepareCompanionTurn,
+} from './companionRuntime.js'
+
+describe('QuestionFenceGuard — giữ khối ```dhcb-questions khỏi stream', () => {
+  function run(deltas: string[]): string {
+    let out = ''
+    const guard = new QuestionFenceGuard((d) => (out += d))
+    for (const d of deltas) guard.push(d)
+    guard.end()
+    return out
+  }
+
+  it('chữ thường và code block thường đi qua nguyên vẹn', () => {
+    expect(run(['Xin ', 'chào ', 'bạn!'])).toBe('Xin chào bạn!')
+    expect(run(['Ví dụ:\n```py', 'thon\nprint(1)\n```\nxong'])).toBe(
+      'Ví dụ:\n```python\nprint(1)\n```\nxong',
+    )
+  })
+
+  it('khối câu hỏi bị nuốt kể cả khi tên khối đến theo từng mẩu', () => {
+    expect(run(['Mình hỏi nhé:\n\n``', '`dh', 'cb-questions\n{"a":1}\n```'])).toBe(
+      'Mình hỏi nhé:\n\n',
+    )
+  })
+
+  it('stream hết khi mới thấy "```dh" (không thành khối) → nhả nốt', () => {
+    expect(run(['a ', '```dh'])).toBe('a ```dh')
+  })
+})
+
+describe('streamCompanionTurn — stream THẬT từ Claude', () => {
+  beforeEach(() => {
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key'
+  })
+  afterEach(() => {
+    delete process.env.ANTHROPIC_API_KEY
+  })
+
+  it('phát chunk ngay khi Claude sinh chữ, giữ khối câu hỏi, không phát lại theo từng từ', async () => {
+    const QUESTION_BLOCK =
+      '```dhcb-questions\n' +
+      JSON.stringify({
+        schemaVersion: 1,
+        questions: [
+          {
+            id: 'q',
+            text: 'Chọn?',
+            multi: false,
+            options: [
+              { id: 'a', label: 'A' },
+              { id: 'b', label: 'B' },
+            ],
+            allowFreeText: false,
+          },
+        ],
+      }) +
+      '\n```'
+    anthropicClientMock.callAnthropicText.mockImplementationOnce(
+      async (params: { onTextDelta?: (d: string) => void }) => {
+        for (const d of ['Chào ', 'bạn.', '\n\n', QUESTION_BLOCK]) params.onTextDelta?.(d)
+        return {
+          kind: 'success',
+          text: 'Chào bạn.\n\n' + QUESTION_BLOCK,
+          model: 'claude-sonnet-5-5',
+          usage: null,
+          latencyMs: 10,
+        }
+      },
+    )
+    const events: CompanionStreamEventLike[] = []
+    for await (const ev of streamCompanionTurn(pool, { personId: PERSON_ID, userMessage: 'Hi' })) {
+      events.push(ev)
+    }
+    const chunks = events.filter((e) => e.type === 'chunk').map((e) => e.data.delta)
+    expect(chunks).toEqual(['Chào ', 'bạn.', '\n\n'])
+    expect(events.map((e) => e.type)).toEqual([
+      'meta',
+      'chunk',
+      'chunk',
+      'chunk',
+      'actions',
+      'questions',
+      'done',
+    ])
+    const done = events.at(-1)!
+    expect(done.type === 'done' && done.data.reply).toBe('Chào bạn.')
+    expect(done.type === 'done' && done.data.interactiveQuestions).toHaveLength(1)
+  })
+
+  it('Claude rớt giữa chừng → dự phòng Groq trả bản đầy đủ, phát theo từng từ, done.reply đúng', async () => {
+    process.env.GROQ_API_KEY = 'g'
+    anthropicClientMock.callAnthropicText.mockImplementationOnce(
+      async (params: { onTextDelta?: (d: string) => void }) => {
+        params.onTextDelta?.('Dở ')
+        return { kind: 'network_error', message: 'rớt', latencyMs: 10 }
+      },
+    )
+    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValueOnce({
+      kind: 'success',
+      text: 'Bản đầy đủ từ Groq',
+      latencyMs: 5,
+    })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const events: CompanionStreamEventLike[] = []
+    for await (const ev of streamCompanionTurn(pool, { personId: PERSON_ID, userMessage: 'Hi' })) {
+      events.push(ev)
+    }
+    const chunks = events.filter((e) => e.type === 'chunk').map((e) => e.data.delta)
+    // Mẩu "Dở " đã phát (không rút lại được) — rồi bản đầy đủ phát theo từng từ sau nó.
+    expect(chunks[0]).toBe('Dở ')
+    expect(chunks.slice(1).join('')).toBe('Bản đầy đủ từ Groq')
+    const done = events.at(-1)!
+    expect(done.type === 'done' && done.data.reply).toBe('Bản đầy đủ từ Groq')
+    warn.mockRestore()
+    delete process.env.GROQ_API_KEY
+  })
+
+  it('AI ném lỗi giữa stream → generator ném ra ngoài (handler hoàn lượt), không treo', async () => {
+    anthropicClientMock.callAnthropicText.mockRejectedValueOnce(new Error('bùm'))
+    const gen = streamCompanionTurn(pool, { personId: PERSON_ID, userMessage: 'Hi' })
+    await expect(
+      (async () => {
+        for await (const _ev of gen) void _ev
+      })(),
+    ).rejects.toThrow('bùm')
+  })
+})
+
+type CompanionStreamEventLike = Awaited<
+  ReturnType<ReturnType<typeof streamCompanionTurn>['next']>
+>['value'] extends infer V
+  ? Exclude<V, CompanionResponseLike>
+  : never
+type CompanionResponseLike = { reply: string; interactiveQuestions: unknown[] }
+
+describe('lớp an toàn trong lượt thoại', () => {
+  function poolRecording() {
+    // Khai đủ chữ ký (sql, params) để test đọc được tham số insert ở call[1].
+    const query = vi.fn<(sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>>(
+      async (sql) => {
+        if (sql.includes('select p.user_id, pr.age_group')) {
+          return { rows: [{ user_id: 'user-9', age_group: 'thieu_nien' }] }
+        }
+        if (sql.includes('insert into personal.companion_messages')) {
+          return {
+            rows: [
+              {
+                id: SOURCE_ID,
+                role: 'user',
+                content: 'x',
+                domain: null,
+                intent: null,
+                sensitivity: 'sensitive',
+                created_at: new Date(),
+              },
+            ],
+          }
+        }
+        return { rows: [] }
+      },
+    )
+    return { pool: { query } as unknown as Pool, query }
+  }
+
+  beforeEach(() => {
+    process.env.GROQ_API_KEY = 'g'
+    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValue({
+      kind: 'success',
+      text: 'Mình ở đây với bạn.',
+      latencyMs: 5,
+    })
+  })
+  afterEach(() => {
+    delete process.env.GROQ_API_KEY
+    safetyMock.assessSafety.mockResolvedValue({ level: 'none', category: 'none', source: 'none' })
+  })
+
+  it('concern: KHÔNG lập kế hoạch tác vụ, prompt có lời dặn an toàn + nhóm tuổi, transcript ≥ sensitive, trả safety', async () => {
+    safetyMock.assessSafety.mockResolvedValue({
+      level: 'concern',
+      category: 'abuse',
+      source: 'keyword',
+    })
+    const { pool: livePool, query } = poolRecording()
+    const res = await executeCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      // Câu này bình thường ra intent create_memory → có bước memory.create_record.
+      userMessage: 'ghi nhớ giúp tôi: bố đánh con',
+    })
+    expect(proposedActionMock.proposeAction).not.toHaveBeenCalled()
+    expect(res.proposedActions).toEqual([])
+    expect(res.safety).toMatchObject({ level: 'concern', category: 'abuse' })
+    expect(res.safety?.resources.map((r) => r.phone)).toContain('111')
+    const system = chatProvidersMock.callGroqChatWithKeyPool.mock.calls[0]![1] as string
+    expect(system).toContain('AN TOÀN')
+    expect(system).toContain('THIẾU NIÊN')
+    expect(system).not.toContain('dhcb-questions')
+    const inserts = query.mock.calls.filter(([sql]) =>
+      String(sql).includes('insert into personal.companion_messages'),
+    )
+    expect(inserts).toHaveLength(2)
+    for (const [, params] of inserts) expect(params?.[5]).toBe('sensitive')
+    // Bộ phân loại nhận lượt người dùng gần đây từ ngữ cảnh đã lọc (ở đây rỗng) + câu hiện tại.
+    expect(safetyMock.assessSafety).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'ghi nhớ giúp tôi: bố đánh con', recentUserTurns: [] }),
+    )
+  })
+
+  it('imminent: câu cố định, KHÔNG gọi AI, KHÔNG lưu transcript, stream phát sự kiện safety trước chữ', async () => {
+    safetyMock.assessSafety.mockResolvedValue({
+      level: 'imminent',
+      category: 'self_harm',
+      source: 'both',
+    })
+    const { pool: livePool, query } = poolRecording()
+    const events: string[] = []
+    let reply = ''
+    for await (const ev of streamCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'x',
+    })) {
+      events.push(ev.type)
+      if (ev.type === 'chunk') reply += ev.data.delta
+      if (ev.type === 'done') expect(ev.data.safety?.level).toBe('imminent')
+    }
+    expect(events.slice(0, 3)).toEqual(['meta', 'safety', 'chunk'])
+    expect(reply).toBe(IMMINENT_SAFETY_REPLY)
+    expect(chatProvidersMock.callGroqChatWithKeyPool).not.toHaveBeenCalled()
+    expect(anthropicClientMock.callAnthropicText).not.toHaveBeenCalled()
+    expect(
+      query.mock.calls.some(([sql]) =>
+        String(sql).includes('insert into personal.companion_messages'),
+      ),
+    ).toBe(false)
+  })
+
+  it('lượt thường: không có safety trong response, prompt có mốc thời gian và nhóm tuổi từ hồ sơ', async () => {
+    const { pool: livePool } = poolRecording()
+    const prepared = await prepareCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'Chào',
+    })
+    expect(prepared.ageGroup).toBe('thieu_nien')
+    const res = await executeCompanionTurn(livePool, { personId: PERSON_ID, userMessage: 'Chào' })
+    expect(res.safety).toBeUndefined()
+    const system = chatProvidersMock.callGroqChatWithKeyPool.mock.calls.at(-1)![1] as string
+    expect(system).toContain('BÂY GIỜ LÀ:')
+    expect(system).toContain('giờ Việt Nam')
+    expect(system).toContain('THIẾU NIÊN')
+  })
 })

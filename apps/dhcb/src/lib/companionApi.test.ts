@@ -72,6 +72,7 @@ describe('companionApi', () => {
     it('nhận và phân giải các sự kiện SSE tuần tự', async () => {
       const sseBody = [
         'event: meta\ndata: {"intent":"general_conversation","targetDomain":"learning","contextPackage":{"items":[],"tokenBudget":4000,"tokenUsed":0}}\n\n',
+        'event: safety\ndata: {"safety":{"level":"concern","category":"other","resources":[{"phone":"111","name":"Tổng đài 111","note":"24/7"}]}}\n\n',
         'event: chunk\ndata: {"delta":"Xin"}\n\n',
         'event: chunk\ndata: {"delta":" chào!"}\n\n',
         'event: actions\ndata: {"proposedActions":[],"executionSummary":{"plannedSteps":0,"executedSteps":0,"pendingConfirmationSteps":0,"rejectedSteps":0}}\n\n',
@@ -92,6 +93,7 @@ describe('companionApi', () => {
       let metaReceived = false
       let actionsReceived = false
       let doneReceived = false
+      let safetyPhone = ''
 
       const res = await sendCompanionMessageStream(
         { message: 'Hello stream' },
@@ -107,6 +109,10 @@ describe('companionApi', () => {
             actionsReceived = true
             expect(actions.proposedActions).toHaveLength(0)
           },
+          onSafety: (safety) => {
+            // Thẻ hỗ trợ đến TRƯỚC chữ (server phát ngay sau meta) — bắt được là đủ.
+            safetyPhone = safety.resources[0]?.phone ?? ''
+          },
           onDone: (final) => {
             doneReceived = true
             expect(final.reply).toBe(MOCK_COMPANION_RESPONSE.reply)
@@ -114,6 +120,7 @@ describe('companionApi', () => {
         },
       )
 
+      expect(safetyPhone).toBe('111')
       expect(metaReceived).toBe(true)
       expect(receivedChunks).toBe('Xin chào!')
       expect(actionsReceived).toBe(true)

@@ -158,21 +158,38 @@ export async function callAnthropicText(params: {
   messages: unknown[]
   /** Ép câu trả lời theo JSON Schema (structured outputs) — chỉ lượt chấm điểm dùng. */
   outputSchema?: JsonSchema
+  /**
+   * Nhận từng mẩu chữ NGAY khi model sinh ra (stream thật qua SSE của Anthropic). Có callback
+   * này thì lời gọi đi đường `messages.stream`; kết quả trả về vẫn là MỘT `AnthropicTextResult`
+   * đầy đủ (text ghép, usage, stop_reason) y hệt đường không stream — caller không phải xử lý
+   * hai kiểu kết quả. Không dùng cùng `outputSchema`: JSON chấm điểm chỉ dùng được khi đã trọn.
+   */
+  onTextDelta?: (delta: string) => void
   /** Chỉ dùng trong test: fetch giả thay cho mạng thật. */
   fetchImpl?: typeof fetch
 }): Promise<AnthropicTextResult> {
-  const { apiKey, route, system, messages, outputSchema, fetchImpl } = params
+  const { apiKey, route, system, messages, outputSchema, onTextDelta, fetchImpl } = params
   const startedAt = Date.now()
   const latency = () => Date.now() - startedAt
 
   let response: Anthropic.Beta.Messages.BetaMessage
   try {
-    response = await getClient(apiKey, fetchImpl).beta.messages.create(
-      buildAnthropicRequest(route, system, messages, outputSchema),
-      // `signal` là HẠN CHÓT TỔNG cho cả lần thử lại; `timeout` chỉ áp từng lần thử. Không có
-      // signal, timeout + 1 lần thử lại có thể kéo gấp đôi và vượt mốc 60s của Nginx.
-      { timeout: route.timeoutMs, signal: AbortSignal.timeout(route.timeoutMs) },
-    )
+    const request = buildAnthropicRequest(route, system, messages, outputSchema)
+    // `signal` là HẠN CHÓT TỔNG cho cả lần thử lại; `timeout` chỉ áp từng lần thử. Không có
+    // signal, timeout + 1 lần thử lại có thể kéo gấp đôi và vượt mốc 60s của Nginx.
+    const options = { timeout: route.timeoutMs, signal: AbortSignal.timeout(route.timeoutMs) }
+    const client = getClient(apiKey, fetchImpl)
+    if (onTextDelta && !outputSchema) {
+      // Stream: SDK gom các sự kiện SSE thành đúng một BetaMessage ở `finalMessage()` (kể cả
+      // usage và stop_reason trong `message_delta`), nên phần đọc kết quả bên dưới dùng chung.
+      // Lỗi giữa chừng (mạng rớt, overloaded) làm `finalMessage()` ném — rơi vào `catch` như
+      // đường không stream; caller đã nhận một phần chữ thì tự quyết giữ hay bỏ.
+      const stream = client.beta.messages.stream(request, options)
+      stream.on('text', (delta) => onTextDelta(delta))
+      response = await stream.finalMessage()
+    } else {
+      response = await client.beta.messages.create(request, options)
+    }
   } catch (err) {
     if (err instanceof Anthropic.APIUserAbortError) {
       return { kind: 'network_error', message: 'Hết thời gian chờ Anthropic', latencyMs: latency() }

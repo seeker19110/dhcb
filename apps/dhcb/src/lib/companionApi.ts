@@ -3,6 +3,7 @@ import { getAuthHeader } from '@core/authHeader'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { InteractiveQuestion } from '@dhcb/core-contracts/interactiveQuestion'
+import type { CompanionSafetyNotice } from '@dhcb/core-contracts/companionSafety'
 
 export interface CompanionExecutionSummary {
   plannedSteps: number
@@ -21,6 +22,8 @@ export interface CompanionResponse {
   // Câu hỏi tick chọn kèm lượt trả lời — server luôn trả mảng, nhưng để optional để client vẫn
   // chạy được với bản server cũ chưa có trường này.
   interactiveQuestions?: InteractiveQuestion[]
+  // Thẻ hỗ trợ khủng hoảng — chỉ có khi lớp an toàn ở server kết luận concern/imminent.
+  safety?: CompanionSafetyNotice
 }
 
 export interface SendCompanionMessageParams {
@@ -38,6 +41,8 @@ export interface CompanionStreamCallbacks {
     executionSummary: CompanionExecutionSummary
   }) => void
   onQuestions?: (questions: InteractiveQuestion[]) => void
+  // Sự kiện `safety` đến TRƯỚC chữ — hiện thẻ ngay, không chờ AI nói xong.
+  onSafety?: (safety: CompanionSafetyNotice) => void
   onDone?: (response: CompanionResponse) => void
   onError?: (error: Error) => void
 }
@@ -163,6 +168,8 @@ export async function sendCompanionMessageStream(
             callbacks.onActions?.(parsed)
           } else if (eventType === 'questions') {
             callbacks.onQuestions?.(parsed.interactiveQuestions)
+          } else if (eventType === 'safety') {
+            callbacks.onSafety?.(parsed.safety)
           } else if (eventType === 'done') {
             finalResponse = parsed as CompanionResponse
             callbacks.onDone?.(finalResponse)

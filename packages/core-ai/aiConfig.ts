@@ -26,7 +26,7 @@ export const DEFAULT_ANTHROPIC_SMART_MODEL = 'claude-sonnet-5-5'
 
 /** Nhiệm vụ AI — server chọn model/effort/trần token theo đây. */
 export type AiTask =
-  'converse' | 'grade' | 'companion' | 'code_feedback' | 'action_canvas' | 'debate'
+  'converse' | 'grade' | 'companion' | 'code_feedback' | 'action_canvas' | 'debate' | 'safety'
 
 /** Nhiệm vụ mà CLIENT được phép xin qua /api/agent (các nhiệm vụ còn lại chỉ server tự gọi). */
 export const CLIENT_AI_TASKS: ReadonlySet<AiTask> = new Set<AiTask>(['converse', 'grade'])
@@ -57,6 +57,9 @@ const ROUTE_TABLE: Record<AiTask, { tier: Tier } & Omit<AnthropicRoute, 'model'>
   action_canvas: { tier: 'smart', effort: 'medium', maxTokens: 8192, timeoutMs: 40_000 },
   // Đối thủ tranh biện AI: câu ngắn, nhiều lượt → Haiku.
   debate: { tier: 'fast', effort: 'low', maxTokens: 3072, timeoutMs: 25_000 },
+  // Lớp an toàn Companion (phân loại dấu hiệu khủng hoảng, trả JSON ngắn): chạy MỖI lượt, song
+  // song với dựng ngữ cảnh → Haiku, nghĩ ít, hạn chót ngắn (quá hạn thì rơi về bộ lọc từ khoá).
+  safety: { tier: 'fast', effort: 'low', maxTokens: 1024, timeoutMs: 8_000 },
 }
 
 // Đọc env LÚC GỌI (không phải lúc import) — test đổi env được, và PM2 reload đọc giá trị mới.

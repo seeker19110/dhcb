@@ -1,7 +1,7 @@
 // ChatProse — hiển thị câu trả lời của Companion có định dạng, KHÔNG thêm thư viện nào.
 //
 // VẤN ĐỀ NÓ GIẢI (đo thật 2026-09-15, trước khi sửa): `StudioDialogue` in câu trả lời bằng
-// `whitespace-pre-wrap` thuần. Prompt hệ thống (`COMPANION_SYSTEM_PROMPT`) yêu cầu trả lời
+// `whitespace-pre-wrap` thuần. Prompt hệ thống (`COMPANION_PERSONA`, companionPrompt.ts) yêu cầu trả lời
 // "có cấu trúc mạch lạc" và không hề cấm markdown, nên mô hình trả về đúng thứ mô hình vẫn
 // trả về: `**đậm**`, danh sách, và code trong rào ```. Người dùng đọc ra nguyên dấu sao, và
 // code thì mất hẳn hình khối.

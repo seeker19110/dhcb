@@ -563,3 +563,68 @@ it('history cùng người nhưng khác miền/thiếu miền không bao giờ v
   })
   expect(pkg.items.map((item) => item.content)).toEqual(['hello'])
 })
+
+describe('lịch sử Companion — hết ngân sách thì giữ lượt MỚI NHẤT (vá 2026-10-11)', () => {
+  const base = {
+    role: 'user',
+    domain: 'learning',
+    intent: null,
+  }
+  // 4 lượt theo thời gian: cũ nhất → mới nhất. Mỗi nội dung ≈ 12 token.
+  const rows = [
+    'lượt một cũ nhất ......',
+    'lượt hai ..............',
+    'lượt ba ...............',
+    'lượt bốn mới nhất .....',
+  ].map((content, i) => ({
+    ...base,
+    id: `5555555${i}-5555-4555-8555-555555555555`,
+    content,
+    role: i % 2 === 0 ? 'user' : 'companion',
+    created_at: new Date(Date.UTC(2026, 9, 11, 0, i)),
+  }))
+  const options = {
+    personId: PERSON,
+    requestId: 'history-order',
+    requestText: 'Câu hỏi hiện tại',
+    domain: 'learning',
+    purpose: 'companion_conversation',
+    includeCompanionHistory: true,
+  }
+
+  beforeEach(() => {
+    lifeGraph.listNodes.mockResolvedValue([])
+    personService.listFacts.mockResolvedValue([])
+    memoryService.listMemoryRecords.mockResolvedValue([])
+  })
+
+  it('ngân sách chỉ đủ 2 lượt → giữ hai lượt MỚI nhất, vẫn xếp cũ → mới cho LLM', async () => {
+    // Truy vấn trả về đã đảo về cũ → mới (như listRecentCompanionMessages làm thật).
+    const query = vi.fn(async () => ({ rows: [...rows].reverse() }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, {
+      ...options,
+      tokenBudget: 5 + 7 + 7 + 2, // câu hỏi (5) + đúng hai lượt (7 + 7) + dư 2 không đủ lượt thứ ba
+    })
+    const history = pkg.items.filter((item) => item.provenance.startsWith('companion_message:'))
+    expect(history.map((item) => item.content)).toEqual([
+      'lượt ba ...............',
+      'lượt bốn mới nhất .....',
+    ])
+    // Mục không phải lịch sử vẫn đứng trước, không bị xáo.
+    expect(pkg.items[0]?.sourceType).toBe('current_request')
+    expect(pkg.tokenUsed).toBeLessThanOrEqual(21)
+  })
+
+  it('đủ ngân sách → giữ nguyên toàn bộ lịch sử theo thứ tự thời gian', async () => {
+    const query = vi.fn(async () => ({ rows: [...rows].reverse() }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+    const history = pkg.items.filter((item) => item.provenance.startsWith('companion_message:'))
+    expect(history.map((item) => item.content)).toEqual(rows.map((r) => r.content))
+    expect(history.map((item) => item.provenance)).toEqual([
+      'companion_message:user:learning',
+      'companion_message:companion:learning',
+      'companion_message:user:learning',
+      'companion_message:companion:learning',
+    ])
+  })
+})
