@@ -1867,8 +1867,12 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   425 → 180 KB thô); **Từ điển đã tách ở `docs/changelog/0604-*.md`** (nạp lười 4 tab học:
   317 → 138 KB thô); (2) **CEFR B1 đã đo lại sau deploy 0601+0603** (`docs/changelog/0605-*.md`):
   điểm 90–92, LCP 2,9–3,1 s, TBT 70–80 ms (trước 83–85 · 3,1–3,2 s · 190–280 ms) — LCP còn lại
-  chủ yếu là CSS chặn hiển thị (~450 ms) + TTFB; **Từ điển cần đo lại sau deploy 0604**;
-  (3) Tầng 9. (Vị trí cuộn khi mở/đóng màn con trang cấp trên mobile — ✅ ĐÃ CHỐT ở `0605`: mở → về đầu,
+  chủ yếu là CSS chặn hiển thị (~450 ms) + TTFB. **Từ điển đã đo lại sau deploy 0604**
+  (`docs/changelog/0606-*.md`): 90–92, LCP 2,8–3,0 s, TBT 20–120 ms, request JS trước 3 s
+  60 → 27 — LCP chưa tách được khỏi nhiễu TTFB đo từ container (0,4–1,5 s, cả `/api/health`).
+  CSS chặn hiển thị: đã bỏ ~170 rule rác do Tailwind tự quét cả repo (`0606`, 34,7 → 32,8 KB
+  gzip); phần còn lại là utility dùng thật — bước kế (nếu cần) là CSS tới hạn nội tuyến, cần
+  đo lợi/hại trước; (3) Tầng 9. (Vị trí cuộn khi mở/đóng màn con trang cấp trên mobile — ✅ ĐÃ CHỐT ở `0605`: mở → về đầu,
   đóng → danh sách về chỗ cũ.)
   (Nhánh lỗi khi tải `cefr.json` + chỉ mục ở trang cấp/Lộ trình/trang môn — ✅ ĐÃ SỬA ở
   `docs/changelog/0602-*.md`; Home + `useTodayPlan` vốn đã có nhánh lỗi.)

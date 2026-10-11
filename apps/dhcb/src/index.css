@@ -1,6 +1,10 @@
 @import '../../../packages/core-ui/theme.css';
-/* Tailwind 4: một dòng @import thay ba chỉ thị @tailwind của v3. */
-@import 'tailwindcss';
+/* Tailwind 4: một dòng @import thay ba chỉ thị @tailwind của v3.
+   `source(none)` [changelog 0606]: TẮT tự quét class trên cả repo (Vite chạy từ gốc repo nên
+   Tailwind quét luôn docs/, scripts/, dữ liệu bài học… sinh ~170 rule rác, ~1,9 KB gzip trên CSS
+   chặn hiển thị của MỌI trang). Nguồn class DUY NHẤT là `content` trong tailwind.config.js —
+   `scripts/tailwind-sources.test.ts` canh không gói nào ngoài danh sách đó dùng `className`. */
+@import 'tailwindcss' source(none);
 /* Dùng LẠI nguyên cấu hình JS của v3 (ánh xạ zinc/accent/warm/content sang biến CSS,
    13 keyframes, biến thể theme-light). Đường dẫn TƯƠNG ĐỐI so với file CSS này. */
 @config '../tailwind.config.js';
