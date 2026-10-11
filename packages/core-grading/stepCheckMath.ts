@@ -1,5 +1,6 @@
-// Kiểm một BƯỚC GIẢI phương trình đại số MỘT ẨN: bước này có giữ nguyên tập nghiệm của đề không.
-// Đặc tả: docs/specs/2026-10-09-kiem-buoc-giai-stem.md §4–§5.
+// Kiểm một BƯỚC GIẢI phương trình/bất phương trình đại số MỘT ẨN: bước này có giữ nguyên tập
+// nghiệm của đề không. Đặc tả: docs/specs/2026-10-09-kiem-buoc-giai-stem.md §4–§5 (phương trình)
+// + docs/specs/2026-10-11-kiem-buoc-bat-phuong-trinh.md (bất phương trình, `mathSolutionSet.ts`).
 //
 // Ý tưởng: mỗi phương trình `trái = phải` đổi về `N(x)/D(x) = 0` với N, D là đa thức hệ số HỮU TỈ
 // CHÍNH XÁC (polynomial.ts), kèm danh sách mọi mẫu số đã gặp (tập xác định). Tập nghiệm thực =
@@ -7,8 +8,10 @@
 // thực bằng dãy Sturm — KHÔNG lấy mẫu số ngẫu nhiên, KHÔNG làm tròn, nên:
 //   - "tương đương" là CHỨNG MINH được (mới được báo ✓);
 //   - "đổi nghiệm" cũng chứng minh được (có nghiệm thực bị mất hoặc sinh thêm) → ✗;
-//   - mọi thứ ngoài phạm vi (căn, lượng giác, nhiều ẩn, bất phương trình, LaTeX lạ, quá lớn)
-//     → "unsupported" để giao diện nói thật "? Chưa tự kiểm được" — tuyệt đối không đoán.
+//   - mọi thứ ngoài phạm vi (căn, lượng giác, trị tuyệt đối, ký hiệu khoảng, nhiều ẩn, LaTeX lạ,
+//     quá lớn) → "unsupported" để giao diện nói thật "? Chưa tự kiểm được" — tuyệt đối không đoán.
+// Khi MỌI đoạn đều là phương trình, đi đúng nhánh cũ (finite/cofinite) — kết luận không đổi. Có
+// bất phương trình ở bất kỳ đâu thì so bằng phân hoạch trục số (`compareFormulas`).
 
 import { parseExpression, type ExprNode } from './expression.js'
 import { StepCheckLimitError, fromNumber, toSmallInteger, type Rational } from './rational.js'
@@ -34,10 +37,11 @@ import {
   squareFree,
 } from './polynomial.js'
 import { div as ratDiv, ONE } from './rational.js'
+import { compareFormulas, type Rel, type SetFormula } from './mathSolutionSet.js'
 
 /** Vì sao bộ kiểm KHÔNG kết luận được — để phản hồi nói rõ giới hạn, không nói chung chung. */
 export type MathUnsupportedReason =
-  | 'not_equation' // không có dấu `=` (biểu thức trơn, bất phương trình…)
+  | 'not_equation' // không có dấu `=` hay dấu bất đẳng thức (biểu thức trơn)
   | 'unknown_notation' // lệnh LaTeX/ký hiệu bộ đọc không hiểu
   | 'multi_variable' // nhiều hơn một ẩn, hoặc tên ẩn không phải một chữ cái
   | 'non_polynomial' // căn, lượng giác, log, π, số mũ không nguyên…
@@ -54,6 +58,11 @@ export type MathStepCheck =
       extra: boolean
       /** Bước này cùng tập nghiệm với bước liền trước → lỗi nằm ở một bước TRƯỚC đó. */
       sameAsPrevious: boolean
+      /**
+       * Chỉ có khi đề hoặc bước là BẤT phương trình. `complementOnIntervals`: tập của bước là phần
+       * bù của tập đúng trên mọi khoảng (chỉ có thể trùng ở đầu mút) — dấu hiệu "quên đổi chiều".
+       */
+      inequality?: { complementOnIntervals: boolean }
     }
   | { verdict: 'division_by_zero' }
   | { verdict: 'unsupported'; reason: MathUnsupportedReason }
@@ -281,21 +290,47 @@ function latexToPlain(input: string): string | null {
   return s
 }
 
-type Clause = ExprNode[] // các vế nối nhau bằng `=`: a = b = c
+/** Các vế nối nhau bằng quan hệ: `a = b = c`, `a < x \le b` (`rels[i]` nằm giữa vế i và i+1). */
+type Clause = { sides: ExprNode[]; rels: Rel[] }
 type Statement = Clause[] // các mệnh đề nối bằng "hoặc"
 
-/** Một mệnh đề "hoặc" → danh sách vế đã phân tích. */
-function parseClause(raw: string): Clause {
-  const plain = latexToPlain(raw)
-  if (plain === null) throw new Unsupported('unknown_notation')
-  const sides = plain.split('=')
-  if (sides.length < 2) throw new Unsupported('not_equation')
-  return sides.map((side) => {
-    const node = parseExpression(side)
-    if (node === null) throw new Unsupported('unknown_notation')
-    return node
-  })
+/**
+ * Đưa mọi cách viết dấu bất đẳng thức về một ký tự: `\le`, `\leq`, `\leqslant`, `<=`, `⩽` → `≤`…
+ * `(?![a-zA-Z])` để `\left` không bị đọc thành `\le` + `ft`. Chạy SAU khi đã tách `⇒`/`=>`.
+ */
+function normalizeRelations(raw: string): string {
+  return raw
+    .replace(/\\(?:leqslant|leq|le)(?![a-zA-Z])|<=|⩽/g, '≤')
+    .replace(/\\(?:geqslant|geq|ge)(?![a-zA-Z])|>=|⩾/g, '≥')
+    .replace(/\\lt(?![a-zA-Z])/g, '<')
+    .replace(/\\gt(?![a-zA-Z])/g, '>')
 }
+
+const REL_SPLIT = /([=<>≤≥])/
+
+/** Một mệnh đề "hoặc" → danh sách vế đã phân tích + quan hệ giữa chúng. */
+function parseClause(raw: string): Clause {
+  const plain = latexToPlain(normalizeRelations(raw))
+  if (plain === null) throw new Unsupported('unknown_notation')
+  const tokens = plain.split(REL_SPLIT)
+  if (tokens.length < 3) throw new Unsupported('not_equation')
+  const sides: ExprNode[] = []
+  const rels: Rel[] = []
+  tokens.forEach((tok, i) => {
+    if (i % 2 === 1) {
+      rels.push(tok as Rel)
+      return
+    }
+    const node = parseExpression(tok)
+    if (node === null) throw new Unsupported('unknown_notation')
+    sides.push(node)
+  })
+  return { sides, rels }
+}
+
+/** Mệnh đề chỉ toàn dấu `=` (phương trình) — đi nhánh so tập nghiệm cũ. */
+const isEquationOnly = (st: Statement): boolean =>
+  st.every((clause) => clause.rels.every((r) => r === '='))
 
 /** Một đoạn (giữa hai dấu ⇒) → các mệnh đề "hoặc", đã khai triển ±. */
 function parseStatement(raw: string): Statement {
@@ -333,7 +368,9 @@ function collectVars(node: ExprNode, out: Set<string>): void {
 
 function statementVars(statements: readonly Statement[]): Set<string> {
   const vars = new Set<string>()
-  for (const st of statements) for (const clause of st) for (const n of clause) collectVars(n, vars)
+  for (const st of statements) {
+    for (const clause of st) for (const n of clause.sides) collectVars(n, vars)
+  }
   return vars
 }
 
@@ -347,7 +384,7 @@ function solutionSetOf(statement: Statement, variable: string | null): SolutionS
 /** Tập nghiệm của `a = b = c…`: giao các cặp vế liền nhau, rồi bỏ điểm ngoài tập xác định. */
 function clauseSetOf(clause: Clause, variable: string | null): SolutionSet {
   const domain: Poly[] = []
-  const fns = clause.map((node) => toRatFn(node, variable, domain))
+  const fns = clause.sides.map((node) => toRatFn(node, variable, domain))
   let clauseSet: SolutionSet = ALL_REALS
   fns.slice(1).forEach((b, i) => {
     const a = fns[i] ?? b
@@ -361,19 +398,85 @@ function clauseSetOf(clause: Clause, variable: string | null): SolutionSet {
   return restrictToDomain(clauseSet, domain)
 }
 
-/** Đoạn cuối có ở dạng đáp số chưa: mỗi mệnh đề là `ẩn = hằng số` (hoặc `hằng số = ẩn`). */
+// ── Công thức dấu cho nhánh bất phương trình (mathSolutionSet.ts) ──────────
+
+/** Một mệnh đề → "mọi cặp vế liền nhau thoả quan hệ" VÀ "mọi mẫu số ≠ 0". */
+function clauseFormula(clause: Clause, variable: string | null): SetFormula {
+  const domain: Poly[] = []
+  const fns = clause.sides.map((node) => toRatFn(node, variable, domain))
+  const parts: SetFormula[] = []
+  clause.rels.forEach((rel, i) => {
+    const a = fns[i]
+    const b = fns[i + 1]
+    if (a === undefined || b === undefined) return
+    // a rel b ⇔ (a − b) rel 0, với a − b = (a.num·b.den − b.num·a.den) / (a.den·b.den).
+    const num = polySub(polyMul(a.num, b.den), polyMul(b.num, a.den))
+    parts.push({ kind: 'atom', num, den: polyMul(a.den, b.den), rel })
+  })
+  for (const d of domain) if (!isConstant(d)) parts.push({ kind: 'nonzero', poly: d })
+  return { kind: 'and', parts }
+}
+
+function statementFormula(statement: Statement, variable: string | null): SetFormula {
+  return { kind: 'or', parts: statement.map((clause) => clauseFormula(clause, variable)) }
+}
+
+/** Tập nghiệm của MỘT đoạn ở dạng so được: nhánh phương trình cũ, hoặc công thức dấu. */
+type Comparable = { kind: 'set'; set: SolutionSet } | { kind: 'formula'; formula: SetFormula }
+
+function comparableOf(
+  statement: Statement,
+  variable: string | null,
+  asFormula: boolean,
+): Comparable {
+  return asFormula
+    ? { kind: 'formula', formula: statementFormula(statement, variable) }
+    : { kind: 'set', set: solutionSetOf(statement, variable) }
+}
+
+/** Tập `finite`/`cofinite` → công thức dấu tương đương. */
+function setToFormula(set: SolutionSet): SetFormula {
+  return set.kind === 'finite'
+    ? { kind: 'atom', num: set.poly, den: ONE_POLY, rel: '=' }
+    : { kind: 'nonzero', poly: set.excluded }
+}
+
+const asFormula = (c: Comparable): SetFormula =>
+  c.kind === 'formula' ? c.formula : setToFormula(c.set)
+
+/** So hai tập: cả hai là phương trình → nhánh cũ (y hệt trước đây); còn lại → phân hoạch. */
+function compareComparable(
+  a: Comparable,
+  b: Comparable,
+): { lost: boolean; extra: boolean; inequality?: { complementOnIntervals: boolean } } {
+  if (a.kind === 'set' && b.kind === 'set') return compareSets(a.set, b.set)
+  const { lost, extra, complementOnIntervals } = compareFormulas(asFormula(a), asFormula(b))
+  return { lost, extra, inequality: { complementOnIntervals } }
+}
+
+/** Đoạn cuối có ở dạng đáp số chưa — mỗi mệnh đề là một trong:
+ *  `ẩn <qh> hằng số`, `hằng số <qh> ẩn` (qh là `=` hoặc dấu bất đẳng thức), hoặc
+ *  `a <qh> ẩn <qh> b` với hai dấu CÙNG chiều (`a < x \le b`), a, b là hằng số. */
 function isAnswerForm(statement: Statement, variable: string | null): boolean {
   if (variable === null) return false
-  return statement.every((clause) => {
-    if (clause.length !== 2) return false
-    const [a, b] = clause as [ExprNode, ExprNode]
-    const isVar = (n: ExprNode) => n.type === 'var' && n.name === variable
-    const hasNoVar = (n: ExprNode) => {
-      const s = new Set<string>()
-      collectVars(n, s)
-      return s.size === 0
+  const isVar = (n: ExprNode) => n.type === 'var' && n.name === variable
+  const hasNoVar = (n: ExprNode) => {
+    const s = new Set<string>()
+    collectVars(n, s)
+    return s.size === 0
+  }
+  const up = (r: Rel) => r === '<' || r === '≤'
+  const down = (r: Rel) => r === '>' || r === '≥'
+  return statement.every(({ sides, rels }) => {
+    if (sides.length === 2) {
+      const [a, b] = sides as [ExprNode, ExprNode]
+      return (isVar(a) && hasNoVar(b)) || (isVar(b) && hasNoVar(a))
     }
-    return (isVar(a) && hasNoVar(b)) || (isVar(b) && hasNoVar(a))
+    if (sides.length !== 3) return false
+    const [a, x, b] = sides as [ExprNode, ExprNode, ExprNode]
+    const [r1, r2] = rels as [Rel, Rel]
+    const sameDirection = (up(r1) && up(r2)) || (down(r1) && down(r2))
+    return sameDirection && isVar(x) && hasNoVar(a) && hasNoVar(b)
   })
 }
 
@@ -458,15 +561,17 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
     return { verdict: 'unsupported', reason: 'multi_variable' }
   }
 
-  const anchorSet = guarded(() => solutionSetOf(anchorStmt, variable))
+  // Có bất phương trình ở đề hoặc ở bất kỳ đoạn nào → cả bước so bằng công thức dấu.
+  const useFormula = ![anchorStmt, ...stepStmts].every(isEquationOnly)
+  const anchorSet = guarded(() => comparableOf(anchorStmt, variable, useFormula))
   if (anchorSet === 'div0' || 'verdict' in anchorSet) {
     return { verdict: 'unsupported', reason: 'anchor_unsupported' }
   }
 
   for (const stmt of stepStmts) {
     const outcome = guarded(() => {
-      const set = solutionSetOf(stmt, variable)
-      return { set, diff: compareSets(anchorSet, set) }
+      const set = comparableOf(stmt, variable, useFormula)
+      return { set, diff: compareComparable(anchorSet, set) }
     })
     if (outcome === 'div0') return { verdict: 'division_by_zero' }
     if ('verdict' in outcome) {
@@ -480,6 +585,7 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
         extra: outcome.diff.extra,
         sameAsPrevious:
           previous !== undefined && sameSetAsPrevious(outcome.set, previous, variable),
+        ...(outcome.diff.inequality === undefined ? {} : { inequality: outcome.diff.inequality }),
       }
     }
   }
@@ -590,13 +696,14 @@ function describeMathStepUnsafe(step: string): MathStepShape | null {
     const stmt = parseStatement(last)
     if (stmt.length !== 1) return null
     const clause = stmt[0]
-    if (clause === undefined || clause.length !== 2) return null
+    // Hình dạng chỉ mô tả PHƯƠNG TRÌNH hai vế; bất phương trình → câu gợi ý chung.
+    if (clause === undefined || clause.sides.length !== 2 || clause.rels[0] !== '=') return null
     const vars = statementVars([stmt])
     if (vars.size > 1) return null
     const variable = vars.size === 1 ? ([...vars][0] ?? null) : null
     if (variable !== null && !/^[a-zA-Z]$/.test(variable)) return null
 
-    const [left, right] = clause as [ExprNode, ExprNode]
+    const [left, right] = clause.sides as [ExprNode, ExprNode]
     const domain: Poly[] = []
     const l = toRatFn(left, variable, domain)
     const r = toRatFn(right, variable, domain)
@@ -632,9 +739,32 @@ function describeMathStepUnsafe(step: string): MathStepShape | null {
   return result
 }
 
+/**
+ * Bộ kiểm có ĐỌC được bước này không (phương trình hoặc bất phương trình một ẩn, mọi đoạn ⇒) —
+ * dùng khi bước là MỐC (đề lời văn, bước 1) nên không có gì để so. Không kết luận đúng/sai.
+ */
+export function readsAsMathStatement(step: string): boolean {
+  if (nestingDepth(step) > MAX_NESTING) return false
+  try {
+    const result = guarded(() => {
+      const stmts = step.split(IMPLIES).map((p) => parseStatement(p.trim()))
+      const vars = statementVars(stmts)
+      if (vars.size > 1) return false
+      const variable = vars.size === 1 ? ([...vars][0] ?? null) : null
+      if (variable !== null && !/^[a-zA-Z]$/.test(variable)) return false
+      for (const st of stmts) statementFormula(st, variable)
+      return true
+    })
+    return result === true
+  } catch (err) {
+    if (err instanceof RangeError) return false
+    throw err
+  }
+}
+
 /** Bước này có cùng tập nghiệm với bước liền trước không (để chỉ đúng chỗ lỗi bắt đầu). */
 function sameSetAsPrevious(
-  stepSet: SolutionSet,
+  stepSet: Comparable,
   previous: string,
   variable: string | null,
 ): boolean {
@@ -644,8 +774,8 @@ function sameSetAsPrevious(
     const stmt = parseStatement(lastPart)
     // Bước trước dùng ẩn khác → không so được, coi như khác.
     for (const name of statementVars([stmt])) if (name !== variable) return false
-    const set = solutionSetOf(stmt, variable)
-    const diff = compareSets(set, stepSet)
+    const asFormula = stepSet.kind === 'formula' || !isEquationOnly(stmt)
+    const diff = compareComparable(comparableOf(stmt, variable, asFormula), stepSet)
     return !diff.lost && !diff.extra
   })
   return result === true

@@ -8,7 +8,7 @@ import {
 } from '@dhcb/core-contracts/stemScratchpad'
 import {
   checkMathStep,
-  describeMathStep,
+  readsAsMathStatement,
   type MathStepCheck,
 } from '@dhcb/core-grading/stepCheckMath'
 import { checkChemStep, type ChemStepCheck } from '@dhcb/core-grading/stepCheckChem'
@@ -17,14 +17,15 @@ import {
   type DimensionMismatch,
   type PhysicsStepCheck,
 } from '@dhcb/core-grading/stepCheckPhysics'
-import { generateSocraticHint, type MicroHint } from './stemMicroHint.js'
+import { cauHoiBatPhuongTrinh, generateSocraticHint, type MicroHint } from './stemMicroHint.js'
 import { bangBienCuaDe } from './stemPhysicsVariables.js'
 
 /** Nói rõ bộ kiểm đọc được gì — để "chưa tự kiểm được" không mơ hồ. */
 const PHAM_VI_KIEM: Record<StemSubjectType, string> = {
   math:
-    'Bộ kiểm hiện đọc được phương trình đại số MỘT ẩn (cộng, trừ, nhân, chia, phân số, luỹ thừa ' +
-    'số nguyên); chưa đọc căn, lượng giác, log, π, bất phương trình hay nhiều ẩn.',
+    'Bộ kiểm hiện đọc được phương trình và bất phương trình đại số MỘT ẩn (cộng, trừ, nhân, chia, ' +
+    'phân số, luỹ thừa số nguyên); chưa đọc căn, lượng giác, log, π, trị tuyệt đối, nhiều ẩn hay ' +
+    'ký hiệu khoảng như S = (2; +∞) — đáp số bất phương trình hãy viết dạng x > 2.',
   chemistry:
     'Bộ kiểm hiện đọc được phương trình hoá học dạng `2H_2 + O_2 -> 2H_2O` (ngoặc, ngậm nước ·, ' +
     'ion có điện tích, electron e^-).',
@@ -74,21 +75,29 @@ function ketLuanToan(kq: MathStepCheck, moc: MocSo): ScratchpadStepValidation | 
         confidence: 1,
       }
     case 'changed': {
+      const batPhuongTrinh = cauHoiBatPhuongTrinh(kq)
       const doi =
-        kq.lost && kq.extra
-          ? `Bước này làm ĐỔI tập nghiệm so với ${tenMoc} (vừa mất nghiệm, vừa có nghiệm lạ).`
-          : kq.lost
-            ? `Bước này làm MẤT nghiệm: có giá trị thoả ${tenMoc} nhưng không thoả bước này.`
-            : `Bước này làm THÊM nghiệm lạ: có giá trị thoả bước này nhưng không thoả ${tenMoc}.`
+        kq.inequality !== undefined
+          ? kq.lost && kq.extra
+            ? `Bước này làm ĐỔI tập nghiệm so với ${tenMoc}: vừa mất một phần tập nghiệm, vừa thêm khoảng không phải nghiệm.`
+            : kq.lost
+              ? `Bước này làm MẤT một phần tập nghiệm: có giá trị thoả ${tenMoc} nhưng không thoả bước này.`
+              : `Bước này THÊM giá trị không phải nghiệm: có giá trị thoả bước này nhưng không thoả ${tenMoc}.`
+          : kq.lost && kq.extra
+            ? `Bước này làm ĐỔI tập nghiệm so với ${tenMoc} (vừa mất nghiệm, vừa có nghiệm lạ).`
+            : kq.lost
+              ? `Bước này làm MẤT nghiệm: có giá trị thoả ${tenMoc} nhưng không thoả bước này.`
+              : `Bước này làm THÊM nghiệm lạ: có giá trị thoả bước này nhưng không thoả ${tenMoc}.`
       const goiY =
-        kq.lost && kq.extra
+        batPhuongTrinh ??
+        (kq.lost && kq.extra
           ? 'Thử kiểm lại từng vế: khi chuyển một hạng tử sang vế bên kia, dấu của nó đổi thế nào? ' +
             'Khi nhân/chia, em đã làm cho CẢ HAI vế và cho mọi hạng tử chưa?'
           : kq.lost
             ? 'Em có vừa chia hai vế cho một biểu thức chứa ẩn không? Biểu thức đó có thể bằng 0 ' +
               'không — và nếu bằng 0 thì đề bài có được thoả không?'
             : 'Em có vừa nhân hai vế với biểu thức chứa ẩn, bình phương hai vế, hoặc bỏ mất điều ' +
-              'kiện xác định (mẫu khác 0) không? Thử thay giá trị tìm được vào đề bài.'
+              'kiện xác định (mẫu khác 0) không? Thử thay giá trị tìm được vào đề bài.')
       const truoc = kq.sameAsPrevious
         ? ' Bước này khớp với bước liền trước — chỗ sai nằm ở một bước TRƯỚC đó; hãy tìm bước ' +
           'đầu tiên bị đánh ✗.'
@@ -381,7 +390,7 @@ export class StemScratchpadService {
           deCoPhuongTrinh ? 'de' : 'buoc1',
         )
         if (ketQua !== null) return ketQua
-      } else if (describeMathStep(trimmed) !== null) {
+      } else if (readsAsMathStatement(trimmed)) {
         // Đề lời văn (ngân hàng đề) + đây là bước 1: bộ kiểm ĐỌC được nhưng không có gì để so.
         // Nói rõ vai trò "mốc" thay vì câu chung "chưa đọc được" (vốn sai sự thật ở đây).
         return {

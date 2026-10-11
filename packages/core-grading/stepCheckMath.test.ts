@@ -163,7 +163,6 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
     ['x = \\pi', 'x = 3', 'unknown_notation'],
     ['x = π', 'x = 3', 'unknown_notation'],
     ['x \\neq 5', '2x + 5 = 15', 'unknown_notation'],
-    ['x < 5', '2x + 5 = 15', 'not_equation'],
     ['15 - 5', '2x + 5 = 15', 'not_equation'],
     ['x + y = 5', '2x + 5 = 15', 'multi_variable'],
     ['y = 5', '2x + 5 = 15', 'multi_variable'],
@@ -334,5 +333,183 @@ describe('lồng sâu / quá dài — KHÔNG ném lỗi (rà soát bảo mật 0
   it('describeMathStep trả null thay vì ném', () => {
     expect(describeMathStep(longNgoac(30000))).toBeNull()
     expect(() => describeMathStep(congDai)).not.toThrow()
+  })
+})
+
+// Đặc tả docs/specs/2026-10-11-kiem-buoc-bat-phuong-trinh.md — bất phương trình một ẩn, so tập
+// nghiệm CHÍNH XÁC bằng phân hoạch trục số (mathSolutionSet.ts).
+describe('checkMathStep — bất phương trình (bảng ③)', () => {
+  it('quên đổi chiều khi chia cho số âm → mất + thêm, đánh dấu phần bù', () => {
+    expect(checkMathStep('x < -3', '-2x < 6')).toEqual({
+      verdict: 'changed',
+      lost: true,
+      extra: true,
+      sameAsPrevious: false,
+      inequality: { complementOnIntervals: true },
+    })
+    expect(checkMathStep('x > -3', '-2x < 6').verdict).toBe('equivalent')
+  })
+
+  it('x² < 4 → x < 2 thêm nửa dưới (không phải phần bù)', () => {
+    expect(checkMathStep('x < 2', 'x^2 < 4')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+      inequality: { complementOnIntervals: false },
+    })
+    expect(verdict('-2 < x < 2', 'x^2 < 4')).toBe('equivalent')
+  })
+
+  it('nhân hai vế với ẩn chưa biết dấu: 1/x > 1 → 1 > x thêm x ≤ 0', () => {
+    expect(checkMathStep('1 > x', '\\frac{1}{x} > 1')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+    })
+    expect(verdict('0 < x < 1', '\\frac{1}{x} > 1')).toBe('equivalent')
+  })
+
+  it('rút gọn mất điều kiện xác định: (x−1)/(x−1) ≥ 0 → 1 ≥ 0 thêm đúng x = 1', () => {
+    expect(checkMathStep('1 \\ge 0', '\\frac{x-1}{x-1} \\ge 0')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+      inequality: { complementOnIntervals: false },
+    })
+  })
+
+  it('cả hai tập rỗng → tương đương', () => {
+    expect(verdict('x^2 < -1', 'x^2 + 1 < 0')).toBe('equivalent')
+  })
+
+  it('ký hiệu khoảng S = (2; +∞) và lượng giác → "?"', () => {
+    expect(checkMathStep('S = (2; +\\infty)', '2x > 4')).toEqual({
+      verdict: 'unsupported',
+      reason: 'unknown_notation',
+    })
+    expect(checkMathStep('x \\in (2; 3)', '2x > 4').verdict).toBe('unsupported')
+    expect(checkMathStep('\\sin x > 0', 'x > 0')).toEqual({
+      verdict: 'unsupported',
+      reason: 'unknown_notation',
+    })
+  })
+
+  it('phương trình so với bất phương trình (và ngược lại) là hai tập bình thường', () => {
+    expect(checkMathStep('x < 5', '2x + 5 = 15')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      extra: true,
+    })
+    // `2 ≤ x ≤ 2` chỉ có đúng x = 2 → tương đương phương trình x = 2.
+    expect(verdict('2 \\le x \\le 2', 'x = 2')).toBe('equivalent')
+    expect(verdict('x = 2', '2 \\le x \\le 2')).toBe('equivalent')
+  })
+})
+
+describe('checkMathStep — bất phương trình: đọc ký hiệu', () => {
+  it.each([
+    ['x \\le 2', 'x \\leq 2'],
+    ['x <= 2', 'x \\leqslant 2'],
+    ['x ≤ 2', 'x ⩽ 2'],
+    ['x \\ge 2', 'x >= 2'],
+    ['x \\geq 2', 'x ≥ 2'],
+    ['x \\lt 2', 'x < 2'],
+    ['x \\gt 2', '2 < x'],
+    ['\\left(x+1\\right) \\le 3', 'x \\le 2'], // `\left` không bị đọc thành `\le`
+    ['x < -1 \\text{ hoặc } x > 1', 'x^2 > 1'],
+    ['x < -1; x > 1', 'x^2 - 1 > 0'],
+    ['2x - 4 > 0 \\implies 2x > 4 \\implies x > 2', 'x > 2'],
+  ])('%s ⇔ %s', (step, anchor) => {
+    expect(verdict(step, anchor)).toBe('equivalent')
+  })
+
+  it('`>=` không bị hiểu nhầm là dấu suy ra `=>`', () => {
+    expect(verdict('x >= 2', 'x - 2 \\ge 0')).toBe('equivalent')
+  })
+})
+
+describe('checkMathStep — bất phương trình: chính xác ở nghiệm vô tỉ và đầu mút (④)', () => {
+  it('x² < 2: căn chưa đọc → "?", dạng đa thức thì so chính xác', () => {
+    expect(verdict('-\\sqrt{2} < x < \\sqrt{2}', 'x^2 < 2')).toBe('unsupported')
+    expect(verdict('x^2 - 2 < 0', 'x^2 < 2')).toBe('equivalent')
+    expect(checkMathStep('x^2 < 3', 'x^2 < 2')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+    })
+    expect(checkMathStep('x^2 \\le 2', 'x^2 < 2')).toMatchObject({ lost: false, extra: true })
+    expect(checkMathStep('x^2 < 2', 'x^2 \\le 2')).toMatchObject({ lost: true, extra: false })
+  })
+
+  it('nghiệm vô tỉ của đa thức bậc ba: so dấu đúng tại nghiệm', () => {
+    // x³ − 2 có nghiệm ∛2 vô tỉ; (x³−2)(x−1) đổi dấu ở 1 và ∛2.
+    expect(verdict('(x^3 - 2)(x - 1) \\le 0', 'x^4 - x^3 - 2x + 2 \\le 0')).toBe('equivalent')
+    expect(checkMathStep('(x^3 - 2)(x - 1) < 0', 'x^4 - x^3 - 2x + 2 \\le 0')).toMatchObject({
+      lost: true,
+      extra: false,
+    })
+  })
+
+  it('đầu mút: x ≤ 2 so với x < 2 → mất đúng điểm 2', () => {
+    expect(checkMathStep('x < 2', 'x \\le 2')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      extra: false,
+      inequality: { complementOnIntervals: false },
+    })
+  })
+
+  it('hai nghiệm rất sát nhau vẫn tách được', () => {
+    expect(verdict('(x - 1)(x - 1.0001) < 0', '1 < x < 1.0001')).toBe('equivalent')
+  })
+
+  it('bậc 25 → too_complex, không treo', { timeout: 2000 }, () => {
+    expect(checkMathStep('x^{25} > 0', 'x > 0')).toEqual({
+      verdict: 'unsupported',
+      reason: 'too_complex',
+    })
+    expect(checkMathStep('x^{13} \\cdot x^{12} > 0', 'x > 0')).toEqual({
+      verdict: 'unsupported',
+      reason: 'too_complex',
+    })
+  })
+
+  it('bậc cao dưới trần vẫn kiểm nhanh', { timeout: 2000 }, () => {
+    expect(verdict('x^{24} - 1 > 0', 'x^{24} > 1')).toBe('equivalent')
+  })
+})
+
+describe('checkMathStep — bất phương trình: đáp số và bước trước', () => {
+  it('dạng đáp số: x op c, a op x op b (cùng chiều), nối "hoặc"', () => {
+    expect(checkMathStep('x > 2', '2x - 4 > 0')).toEqual({
+      verdict: 'equivalent',
+      isFinalAnswer: true,
+    })
+    expect(checkMathStep('-2 < x < 2', 'x^2 < 4')).toMatchObject({ isFinalAnswer: true })
+    expect(checkMathStep('x < -1 hoặc x > 1', 'x^2 > 1')).toMatchObject({ isFinalAnswer: true })
+    expect(checkMathStep('2 > x > -2', 'x^2 < 4')).toMatchObject({ isFinalAnswer: true })
+    // Chưa phải đáp số: còn biểu thức, hoặc hai dấu ngược chiều.
+    expect(checkMathStep('x^2 - 4 < 0', 'x^2 < 4')).toMatchObject({ isFinalAnswer: false })
+    expect(checkMathStep('2x > 4', '2x - 4 > 0')).toMatchObject({ isFinalAnswer: false })
+  })
+
+  it('sameAsPrevious cho bất phương trình', () => {
+    expect(checkMathStep('x < -3', '-2x < 6', '-2x > 6 \\implies x < -3')).toMatchObject({
+      verdict: 'changed',
+      sameAsPrevious: true,
+    })
+    expect(checkMathStep('x < -3', '-2x < 6', '2x > -6')).toMatchObject({
+      verdict: 'changed',
+      sameAsPrevious: false,
+    })
+  })
+
+  it('describeMathStep chỉ mô tả phương trình — bất phương trình → null', () => {
+    expect(describeMathStep('2x > 4')).toBeNull()
+    expect(describeMathStep('1 < x \\le 3')).toBeNull()
+  })
+
+  it('kết luận phương trình KHÔNG mang trường inequality', () => {
+    expect(checkMathStep('x = 1', 'x^2 = x')).not.toHaveProperty('inequality')
   })
 })

@@ -155,13 +155,15 @@ function signAtInfinity(p: Poly, atPlus: boolean): number {
   return atPlus || degree(p) % 2 === 0 ? s : -s
 }
 
-/**
- * Số nghiệm THỰC PHÂN BIỆT của `p` (định lý Sturm) — tính chính xác trên số hữu tỉ.
- * `p` khác 0. Đa thức hằng khác 0 không có nghiệm.
- */
-export function countRealRoots(p: Poly): number {
-  if (isZeroPoly(p)) throw new RangeError('Đa thức 0 có vô số nghiệm')
-  if (isConstant(p)) return 0
+/** Giá trị CHÍNH XÁC của `p` tại số hữu tỉ `x` (sơ đồ Horner). */
+export function polyEval(p: Poly, x: Rational): Rational {
+  let acc = ZERO
+  for (let i = p.length - 1; i >= 0; i--) acc = add(mul(acc, x), at(p, i))
+  return acc
+}
+
+/** Dãy Sturm của phần không lặp của `p` (`p` không phải hằng). */
+export function sturmChain(p: Poly): Poly[] {
   const sf = squareFree(p)
   const chain: Poly[] = [sf, derivative(sf)]
   for (;;) {
@@ -171,15 +173,29 @@ export function countRealRoots(p: Poly): number {
     if (isZeroPoly(r)) break
     chain.push(polyNeg(r))
   }
-  const changes = (atPlus: boolean): number => {
-    let count = 0
-    let prev = 0
-    for (const q of chain) {
-      const s = signAtInfinity(q, atPlus)
-      if (s !== 0 && prev !== 0 && s !== prev) count++
-      if (s !== 0) prev = s
-    }
-    return count
+  return chain
+}
+
+/** Số lần đổi dấu của một dãy dấu (bỏ qua số 0) — dùng cho định lý Sturm. */
+export function signChanges(signs: readonly number[]): number {
+  let count = 0
+  let prev = 0
+  for (const s of signs) {
+    if (s !== 0 && prev !== 0 && s !== prev) count++
+    if (s !== 0) prev = s
   }
+  return count
+}
+
+/**
+ * Số nghiệm THỰC PHÂN BIỆT của `p` (định lý Sturm) — tính chính xác trên số hữu tỉ.
+ * `p` khác 0. Đa thức hằng khác 0 không có nghiệm.
+ */
+export function countRealRoots(p: Poly): number {
+  if (isZeroPoly(p)) throw new RangeError('Đa thức 0 có vô số nghiệm')
+  if (isConstant(p)) return 0
+  const chain = sturmChain(p)
+  const changes = (atPlus: boolean): number =>
+    signChanges(chain.map((q) => signAtInfinity(q, atPlus)))
   return changes(false) - changes(true)
 }
