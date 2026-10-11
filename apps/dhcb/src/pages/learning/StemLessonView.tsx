@@ -678,7 +678,12 @@ export default function StemLessonView() {
 
   if (!subject) return <Navigate to="/goc-hoc-tap" replace />
 
-  const duongDanVe = duongDanDanhSachBai(subject.id)
+  // Về danh sách bài ở ĐÚNG tab lớp của bài đang học (bài lớp 9 → tab "Lớp 9"), không về lớp
+  // mặc định. Bài bồi dưỡng HSG không thuộc tab lớp nào nên về danh sách như cũ.
+  const duongDanVe = duongDanDanhSachBai(
+    subject.id,
+    tomTat?.track === 'core' ? tomTat.grade : undefined,
+  )
   const nhanDanhSach = `Bài học môn ${subject.label}`
 
   return (

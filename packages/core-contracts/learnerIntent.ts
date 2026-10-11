@@ -58,9 +58,30 @@ export type IntentTimeBudget = z.infer<typeof IntentTimeBudgetSchema>
 export const IntentLevelSchema = z.enum(['lv_new', 'lv_some', 'lv_solid'])
 export type IntentLevel = z.infer<typeof IntentLevelSchema>
 
-/** Câu 5 — chỉ khi có môn STEM. Khớp `grade` của `StemLessonSummary`. */
-export const IntentGradeSchema = z.enum(['10', '11', '12'])
+/** Câu 5 — chỉ khi có môn STEM. Khớp `grade` của `StemLessonSummary`.
+ *  [2026-10-10] Thêm lớp THCS '6'–'9' (BỔ SUNG, dữ liệu cũ '10'–'12' vẫn hợp lệ) — chỉ đi cùng
+ *  môn Toán, môn duy nhất có bài THCS (đặc tả `docs/specs/2026-10-10-menu-lop-thcs-va-bat-dau-6-9.md`). */
+export const IntentGradeSchema = z.enum(['6', '7', '8', '9', '10', '11', '12'])
 export type IntentGrade = z.infer<typeof IntentGradeSchema>
+
+/** Lớp THCS — chỉ môn Toán có bài ở các lớp này. */
+export const THCS_INTENT_GRADES: readonly IntentGrade[] = ['6', '7', '8', '9']
+
+/** Lớp này có phải lớp THCS (6–9) không. */
+export function isThcsIntentGrade(grade: string | undefined): boolean {
+  return grade !== undefined && (THCS_INTENT_GRADES as readonly string[]).includes(grade)
+}
+
+/** Lớp có đi được cùng bộ môn này không — MỘT luật cho cả hợp đồng lẫn màn hỏi: cần ít nhất
+ *  một môn STEM; lớp THCS còn cần môn Toán. */
+export function isGradeAllowedFor(
+  subjectIds: readonly string[],
+  grade: string | undefined,
+): boolean {
+  if (grade === undefined) return true
+  if (!subjectIds.some((s) => STEM_IDS.has(s))) return false
+  return !isThcsIntentGrade(grade) || subjectIds.includes('mathematics')
+}
 
 export const LearnerIntentSchema = versionedObject(
   {
@@ -78,10 +99,12 @@ export const LearnerIntentSchema = versionedObject(
     updatedAt: z.number().int().positive(),
   },
   LEARNER_INTENT_SCHEMA_VERSION,
-).refine(
-  (v) => v.grade === undefined || v.subjectIds.some((s) => STEM_IDS.has(s)),
-  'Lớp chỉ đi cùng môn Toán/Lý/Hoá/Sinh',
 )
+  .refine(
+    (v) => v.grade === undefined || v.subjectIds.some((s) => STEM_IDS.has(s)),
+    'Lớp chỉ đi cùng môn Toán/Lý/Hoá/Sinh',
+  )
+  .refine((v) => isGradeAllowedFor(v.subjectIds, v.grade), 'Lớp 6–9 chỉ đi cùng môn Toán')
 export type LearnerIntent = z.infer<typeof LearnerIntentSchema>
 
 // Bỏ hết 5 câu ⇒ KHÔNG có LearnerIntent (không lưu bản rỗng); gợi ý mặc định là `/goc-hoc-tap`.

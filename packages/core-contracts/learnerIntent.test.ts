@@ -68,6 +68,29 @@ describe('LearnerIntentSchema', () => {
     expect(r.success).toBe(true)
   })
 
+  it('nhận lớp THCS 6–9 khi có môn Toán (bổ sung 2026-10-10)', () => {
+    for (const grade of ['6', '7', '8', '9']) {
+      const r = LearnerIntentSchema.safeParse({
+        ...base,
+        subjectIds: ['physics', 'mathematics'],
+        grade,
+      })
+      expect(r.success, grade).toBe(true)
+    }
+  })
+
+  it('từ chối lớp THCS khi KHÔNG có môn Toán — Lí/Hoá/Sinh chưa có bài THCS', () => {
+    const r = LearnerIntentSchema.safeParse({ ...base, subjectIds: ['physics'], grade: '8' })
+    expect(r.success).toBe(false)
+  })
+
+  it('từ chối lớp ngoài 6–12', () => {
+    for (const grade of ['5', '13', '06']) {
+      const r = LearnerIntentSchema.safeParse({ ...base, subjectIds: ['mathematics'], grade })
+      expect(r.success, grade).toBe(false)
+    }
+  })
+
   it('từ chối createdAt không phải số nguyên dương', () => {
     expect(LearnerIntentSchema.safeParse({ ...base, createdAt: 'hôm qua' }).success).toBe(false)
     expect(LearnerIntentSchema.safeParse({ ...base, createdAt: -1 }).success).toBe(false)

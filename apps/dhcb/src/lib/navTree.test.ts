@@ -5,10 +5,13 @@ import {
   childIsActive,
   groupContainsPath,
   readOpenGroups,
+  LOP_THCS_TOAN,
+  mathThcsGradeChildren,
   stemGradeChildren,
   toggleGroup,
   writeOpenGroups,
 } from './navTree'
+import { STEM_SUBJECTS } from './stemLessonRoutes'
 
 describe('navTree — dữ liệu cây điều hướng', () => {
   it('mỗi mục con có ĐÚNG một cách trỏ đích: đường dẫn hoặc id môn học', () => {
@@ -96,12 +99,52 @@ describe('stemGradeChildren — mục "theo lớp" cho 4 môn STEM', () => {
   })
 
   it('4 môn STEM đều gắn stemGradeChildren, Lập trình thì không (bậc P1-P6, không phải Lớp)', () => {
-    for (const subjectId of ['mathematics', 'physics', 'chemistry', 'biology']) {
+    for (const subjectId of ['physics', 'chemistry', 'biology']) {
       const c = SUBJECT_CHILDREN.find((s) => s.subjectId === subjectId)!
       expect(c.children?.length, subjectId).toBe(4)
     }
+    // Toán: 4 lớp THCS (trỏ danh sách bài) đứng TRƯỚC 4 mốc tổng quan.
+    const math = SUBJECT_CHILDREN.find((s) => s.subjectId === 'mathematics')!
+    expect(math.children?.map((c) => c.label)).toEqual([
+      'Lớp 6',
+      'Lớp 7',
+      'Lớp 8',
+      'Lớp 9',
+      'Lớp 10',
+      'Lớp 11',
+      'Lớp 12',
+      'Đại học',
+    ])
     const programming = SUBJECT_CHILDREN.find((s) => s.subjectId === 'programming')!
     expect(programming.children).toBeUndefined()
+  })
+})
+
+describe('mathThcsGradeChildren — Toán lớp 6–9 trỏ thẳng danh sách bài', () => {
+  it('mỗi lớp là link sâu `?lop=` tới danh sách bài Toán', () => {
+    expect(mathThcsGradeChildren().map((c) => c.to)).toEqual([
+      '/goc-hoc-tap/mathematics/bai-hoc?lop=6',
+      '/goc-hoc-tap/mathematics/bai-hoc?lop=7',
+      '/goc-hoc-tap/mathematics/bai-hoc?lop=8',
+      '/goc-hoc-tap/mathematics/bai-hoc?lop=9',
+    ])
+  })
+
+  it('chỉ trỏ tới lớp ĐÃ có bài thật (đối chiếu chỉ mục bài Toán)', () => {
+    for (const lop of LOP_THCS_TOAN) {
+      expect(STEM_SUBJECTS.mathematics.grades, `Lớp ${lop}`).toContain(lop)
+    }
+  })
+
+  it('chỉ ĐÚNG lớp trên URL sáng — không cả dãy lớp cùng mang aria-current', () => {
+    const items = SUBJECT_CHILDREN.find((s) => s.subjectId === 'mathematics')!.children!
+    const sang = (path: string, search: string) =>
+      items.filter((c) => childIsActive(c, path, search)).map((c) => c.label)
+    expect(sang('/goc-hoc-tap/mathematics/bai-hoc', '?lop=9')).toEqual(['Lớp 9'])
+    expect(sang('/goc-hoc-tap/mathematics', '?grade=grade_11')).toEqual(['Lớp 11'])
+    // Không có tham số lớp → không mục lớp nào sáng (mục cha "Toán học" sáng là đủ).
+    expect(sang('/goc-hoc-tap/mathematics/bai-hoc', '')).toEqual([])
+    expect(sang('/goc-hoc-tap/mathematics', '')).toEqual([])
   })
 })
 

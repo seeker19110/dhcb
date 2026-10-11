@@ -61,9 +61,13 @@ export function getStemSubject(subjectId: string | undefined): StemSubject | und
   return STEM_SUBJECTS[subjectId as StemSubjectId]
 }
 
-/** Đường dẫn danh sách bài học của một môn. */
-export function duongDanDanhSachBai(subjectId: StemSubjectId): string {
-  return `/goc-hoc-tap/${subjectId}/bai-hoc`
+export { duongDanDanhSachBai, THAM_SO_LOP } from './stemLessonPaths'
+
+/** Lớp dùng cho MỘT môn khi người học đã chọn `lop` chung cho nhiều môn (màn "Bắt đầu", bảng
+ *  tiến độ): môn có bài ở lớp đó thì dùng, không có (vd Vật lí khi chọn lớp 8 — chỉ Toán có THCS)
+ *  thì về lớp mặc định của môn — không bao giờ dựng cây rỗng chỉ vì lớp chung không khớp. */
+export function lopChoMon(subject: Pick<StemSubject, 'grades' | 'defaultGrade'>, lop?: string) {
+  return lop && subject.grades.includes(lop) ? lop : subject.defaultGrade
 }
 
 /** Đường dẫn một bài học — mã giữ nguyên, phần slug chỉ để người đọc và máy tìm kiếm hiểu. */

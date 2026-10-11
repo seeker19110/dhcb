@@ -106,6 +106,9 @@ describe('/api/learner-intent', () => {
       { intent: { ...INTENT, subjectIds: [] } },
       { intent: { ...INTENT, subjectIds: ['music'] } },
       { intent: { ...INTENT, subjectIds: ['english'], grade: '10' } },
+      // Lớp THCS chỉ đi cùng Toán (2026-10-10) — Lí/Hoá/Sinh chưa có bài lớp 6–9.
+      { intent: { ...INTENT, subjectIds: ['physics'], grade: '9' } },
+      { intent: { ...INTENT, grade: '5' } },
       { intent: { ...INTENT, score: 72 } },
     ]) {
       const res = await handler(req('PUT', body))
@@ -114,6 +117,14 @@ describe('/api/learner-intent', () => {
       expect(typeof data.error).toBe('string')
     }
     expect(saveLearnerIntent).not.toHaveBeenCalled()
+  })
+
+  it('PUT lớp THCS kèm Toán → ghi được (khớp CHECK mới của migration 0092)', async () => {
+    const thcs = { ...INTENT, grade: '9' }
+    saveLearnerIntent.mockResolvedValue(thcs)
+    const res = await handler(req('PUT', { intent: thcs }))
+    expect(res.status).toBe(200)
+    expect(saveLearnerIntent.mock.calls[0]?.[2]).toMatchObject({ grade: '9' })
   })
 
   it('method khác → 405', async () => {

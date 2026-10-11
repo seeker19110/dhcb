@@ -178,6 +178,22 @@ describe('buildSubjectProgressBoard', () => {
     ])
   })
 
+  it('STEM: lớp THCS đã khai → Toán dùng lớp đó (href `?lop=`), môn chưa có bài THCS về lớp 10', async () => {
+    m.readLocalIntent.mockReturnValue({ grade: '8' } as never)
+    const the = await buildSubjectProgressBoard('u1', 'free')
+    const lopTheoMon = new Map(
+      m.buildStemOutlineForApp.mock.calls.map((c) => [(c[0] as { id: string }).id, c[1]]),
+    )
+    expect(lopTheoMon.get('mathematics')).toBe('8')
+    expect(lopTheoMon.get('physics')).toBe('10')
+    expect(lopTheoMon.get('chemistry')).toBe('10')
+    expect(lopTheoMon.get('biology')).toBe('10')
+    expect(the.find((t) => t.subjectId === 'mathematics')?.href).toBe(
+      '/goc-hoc-tap/mathematics/bai-hoc?lop=8',
+    )
+    expect(the.find((t) => t.subjectId === 'physics')?.href).toBe('/goc-hoc-tap/physics/bai-hoc')
+  })
+
   it('đọc ý định ném lỗi → lớp mặc định, không vỡ', async () => {
     m.readLocalIntent.mockImplementation(() => {
       throw new Error('localStorage hỏng')

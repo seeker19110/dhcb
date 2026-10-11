@@ -4,7 +4,7 @@
 // Trang chỉ đọc CHỈ MỤC NHẸ (`loader.index`), không nạp nội dung bài nào — nội dung chỉ tải
 // khi người học mở đúng bài (xem StemLessonView).
 import { useMemo, useState } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams, useSearchParams, Navigate } from 'react-router-dom'
 import { GraduationCap, Trophy } from 'lucide-react'
 import Layout from '../../components/Layout'
 import { PageShell } from '@core/PageShell'
@@ -12,14 +12,28 @@ import { buttonClass } from '@core/buttonStyles'
 import { usePageTitle } from '../../lib/usePageTitle'
 import { TomTatChuaDuyet } from '../../components/ChuaDuyetChuyenMon'
 import { OutlineTreeLinked, LoiTienDo } from '../../components/OutlinePane'
-import { getStemSubject } from '../../lib/stemLessonRoutes'
+import { getStemSubject, lopChoMon, THAM_SO_LOP } from '../../lib/stemLessonRoutes'
 import { buildStemOutlineForApp, locNhanh } from '../../lib/outline/stemOutlineApp'
 import { useStemCompletionState } from '../../lib/useStemCompletionState'
 
 export default function StemLessonList() {
   const { subjectId } = useParams<{ subjectId: string }>()
   const subject = getStemSubject(subjectId)
-  const [grade, setGrade] = useState<string>(subject?.defaultGrade ?? '10')
+  // Lớp đang xem nằm TRÊN URL (`?lop=9`), không ở state: link sâu từ thanh điều hướng
+  // ("Toán › Lớp 9") mở đúng tab, tải lại trang giữ nguyên tab, và nút Back của trình duyệt
+  // không bị đổi nghĩa (bấm tab dùng `replace`). Lớp lạ/không có bài → lớp mặc định của môn.
+  const [params, setParams] = useSearchParams()
+  const grade = subject ? lopChoMon(subject, params.get(THAM_SO_LOP) ?? undefined) : '10'
+  function chonLop(g: string) {
+    setParams(
+      (cu) => {
+        const moi = new URLSearchParams(cu)
+        moi.set(THAM_SO_LOP, g)
+        return moi
+      },
+      { replace: true },
+    )
+  }
   const [nhanh, setNhanh] = useState<'core' | 'advanced'>('core')
 
   usePageTitle(subject ? `Bài học môn ${subject.label}` : 'Bài học')
@@ -92,7 +106,7 @@ export default function StemLessonList() {
                   key={g}
                   type="button"
                   aria-pressed={grade === g}
-                  onClick={() => setGrade(g)}
+                  onClick={() => chonLop(g)}
                   className={buttonClass({ variant: grade === g ? 'primary' : 'ghost' })}
                 >
                   Lớp {g}
