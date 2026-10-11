@@ -599,6 +599,7 @@ export const TOAN10_C6_LESSONS: MathLesson[] = [
       },
       {
         prompt: 'Bất phương trình x² + 1 < 0 có bao nhiêu nghiệm thực?',
+        equation: 'x^2 + 1 < 0',
         answer: { kind: 'numeric', value: 0 },
         explain:
           'Δ = 0 − 4 = −4 < 0 và a = 1 > 0, nên tam thức luôn CÙNG DẤU với a, tức luôn dương với mọi x. Không có x ' +

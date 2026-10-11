@@ -1291,7 +1291,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
   bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
   còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
-- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`, `0560`, `0608`, `0611`] Bảng nháp
+- 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`, `0560`, `0608`, `0611`, `0612`] Bảng nháp
   STEM (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên.** `0547` (đặc tả
   `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
   NGHIỆM THỰC với đề, chính xác (đa thức hữu tỉ BigInt + Sturm, giữ điều kiện xác định) → `✓ Hợp lệ`
@@ -1312,9 +1312,12 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   (2) Toán ngoài phạm vi: căn, lượng giác, log, π, dấu `≠`, nhiều ẩn (dấu chia `:` ✅ 0562; bất
   phương trình một ẩn ✅ `0608`, đặc tả `docs/specs/2026-10-11-kiem-buoc-bat-phuong-trinh.md`; trị
   tuyệt đối (chia trường hợp, chính xác) + ký hiệu tập `S = (a; b)`, `x ∈ [a; b) ∪ {c}`, `S = ℝ \ {a}`
-  ✅ `0611`, đặc tả `docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md`); (3) đề
-  ngân hàng là lời văn nên bước Toán chỉ so được với bước 1 của người học (chưa có phương trình đề
-  để làm mốc); 272 câu đều là bài `draft` chưa duyệt chuyên môn.
+  ✅ `0611`, đặc tả `docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md`); (3) ✅ `0612` mốc phương trình cho câu
+  Toán ngân hàng (trường `equation` của câu "Tự kiểm tra", đặc tả
+  `docs/specs/2026-10-11-moc-de-ngan-hang-toan.md`) — đo thật: trong 168 câu Toán lớp 10–12 chỉ 1
+  câu có phương trình một ẩn NGUYÊN VĂN mà việc giải nó là đề bài (`x² + 1 < 0`); các câu còn lại
+  không có phương trình hoặc phải tự lập (khai sẵn = lộ cách giải), nên bước 1 vẫn là mốc. Câu "Giải
+  phương trình…" thật ở lớp 8–9, ngoài ngân hàng (muốn đưa vào cần bộ lọc lớp ở màn chọn đề); 272 câu đều là bài `draft` chưa duyệt chuyên môn.
 - 🟡 **[2026-09-30 — audit UI/UX chuẩn 2026, `docs/audit/2026-09-30-audit-ui-ux-chuan-2026.md` —
   HẠ MỨC từ 🔴 sau changelog `0512`, 2026-10-07] Phần WCAG 2.2 A/AA của audit ĐÃ ĐÓNG.** U1–U9 +
   đợt minor (#1222–#1255) đóng 8 critical + major/minor. Đo lại bằng máy trên `main` `e3afc29`
