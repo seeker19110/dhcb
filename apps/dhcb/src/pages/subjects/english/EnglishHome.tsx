@@ -52,9 +52,9 @@ import {
 } from '../../../lib/englishRoutes'
 import { useCloudSync } from '../../../lib/useCloudSync'
 import type { CefrLevel } from '../../../data/cefr'
-import type { Circle } from '../../../data/curriculum'
+import type { CircleSummary } from '../../../data/curriculum'
 import { loadCefr } from '../../../data/cefrLoader'
-import { loadFoundation } from '../../../data/curriculumLoader'
+import { loadFoundationIndex } from '../../../data/curriculumLoader'
 import { getLearnedWords, getRecentlyLearnedWords } from '../../../lib/vocab'
 import { getDoneGrammar, computeLockedMapFromServer } from '../../../lib/cefrProgress'
 import { englishNext, duongDanCapCefr } from '../../../lib/today/englishNext'
@@ -82,9 +82,9 @@ export default function EnglishHome() {
   const [comebackClosed, setComebackClosed] = useState(false)
 
   const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, Circle>>({})
+  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
   useEffect(() => {
-    Promise.all([loadCefr(), loadFoundation()]).then(([lv, foundation]) => {
+    Promise.all([loadCefr(), loadFoundationIndex()]).then(([lv, foundation]) => {
       setCefrLevels(lv)
       setCircleById(Object.fromEntries(foundation.map((c) => [c.id, c])))
     })

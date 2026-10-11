@@ -21,7 +21,7 @@ vi.mock('../../../context/useAuth', () => ({
 }))
 vi.mock('../../../lib/useCloudSync', () => ({ useCloudSync: () => ({ synced: true }) }))
 vi.mock('../../../data/cefrLoader', () => ({ loadCefr: async () => [] }))
-vi.mock('../../../data/curriculumLoader', () => ({ loadFoundation: async () => [] }))
+vi.mock('../../../data/curriculumLoader', () => ({ loadFoundationIndex: async () => [] }))
 vi.mock('../../../lib/today/englishNext', async (importOriginal) => {
   const real = await importOriginal<typeof import('../../../lib/today/englishNext')>()
   return {

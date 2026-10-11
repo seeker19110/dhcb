@@ -16,6 +16,7 @@ import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FOUNDATION } from '../../apps/dhcb/src/data/curriculum.ts'
 import type { DictEntry } from '../../apps/dhcb/src/types.ts'
+import { buildCurriculumIndex } from '../../apps/dhcb/src/data/curriculumIndex.ts'
 
 // Script nằm ở scripts/archive/ nên gốc repo lùi HAI cấp (sửa 2026-09-14).
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
@@ -45,6 +46,11 @@ const out = FOUNDATION.map((circle) => ({
 }))
 
 fs.writeFileSync(OUT, JSON.stringify(out))
+// Bản tóm tắt cho các trang chỉ đếm tiến độ (changelog 0601) — sinh CÙNG LÚC để không lệch.
+fs.writeFileSync(
+  path.join(path.dirname(OUT), 'curriculum-index.json'),
+  JSON.stringify(buildCurriculumIndex(out)),
+)
 const totalWords = out.reduce((s, c) => s + c.words.length, 0)
 console.log(
   `✅ Sinh curriculum.json: ${out.length} vòng, ${totalWords} từ, ${enriched} từ được gắn ipa_en từ từ điển`,

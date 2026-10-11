@@ -11,9 +11,9 @@ import { buildTodayPlan, type SubjectSignal } from '@dhcb/core-learner/today/bui
 import { SUPPORTED_SUBJECTS } from '@dhcb/core-learner/subjectRegistry'
 import type { TodayPlan } from '@dhcb/core-contracts/todayPlan'
 import type { CefrLevel } from '../../data/cefr'
-import type { Circle } from '../../data/curriculum'
+import type { CircleSummary } from '../../data/curriculum'
 import { loadCefr } from '../../data/cefrLoader'
-import { loadFoundation } from '../../data/curriculumLoader'
+import { loadFoundationIndex } from '../../data/curriculumLoader'
 import { getLearnedWords } from '../vocab'
 import { computeLockedMapFromServer, getDoneGrammar } from '../cefrProgress'
 import { getPassedExamLevels } from '../cefrExam'
@@ -67,7 +67,7 @@ function ownerOf(uid: string): SessionOwner {
  */
 export function useTodayPlan(uid: string): UseTodayPlanResult {
   const [levels, setLevels] = useState<readonly CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, Circle>>({})
+  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
   const [cefrLoaded, setCefrLoaded] = useState(false)
   // Tiến độ Lập trình lưu KÈM khoá của lần tải sinh ra nó. Nhờ vậy "đang tải" là thứ SUY RA
   // (khoá hiện tại khác khoá của dữ liệu) chứ không phải một `setState` gọi thẳng trong effect.
@@ -111,7 +111,7 @@ export function useTodayPlan(uid: string): UseTodayPlanResult {
 
   useEffect(() => {
     let alive = true
-    Promise.all([loadCefr(), loadFoundation()])
+    Promise.all([loadCefr(), loadFoundationIndex()])
       .then(([lv, foundation]) => {
         if (!alive) return
         setLevels(lv)

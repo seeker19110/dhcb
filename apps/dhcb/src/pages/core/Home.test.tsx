@@ -183,7 +183,7 @@ describe('Home — khối Bộ môn & không gian dùng SUBJECT_ENTRIES (AC-19)'
   it('có bằng chứng English + vắng 5 ngày: reserve comeback bật ngay trước CEFR async', async () => {
     vi.doMock('../../data/cefrLoader', () => ({ loadCefr: () => new Promise(() => {}) }))
     vi.doMock('../../data/curriculumLoader', () => ({
-      loadFoundation: () => new Promise(() => {}),
+      loadFoundationIndex: () => new Promise(() => {}),
     }))
     localStorage.setItem('et_learned_u1', JSON.stringify(['hello']))
     seedActivityDaysAgo('u1', 5)
@@ -195,7 +195,7 @@ describe('Home — khối Bộ môn & không gian dùng SUBJECT_ENTRIES (AC-19)'
 
   it('English đã hoàn thành, loader settle nhưng không còn next: gỡ reserve 173px', async () => {
     vi.doMock('../../data/cefrLoader', () => ({ loadCefr: async () => [] }))
-    vi.doMock('../../data/curriculumLoader', () => ({ loadFoundation: async () => [] }))
+    vi.doMock('../../data/curriculumLoader', () => ({ loadFoundationIndex: async () => [] }))
     localStorage.setItem('et_learned_u1', JSON.stringify(['hello']))
     seedActivityDaysAgo('u1', 5)
     mockAuth({ id: 'u1', name: 'An', email: 'an@vd.vn' })
@@ -213,7 +213,7 @@ describe('Home — khối Bộ môn & không gian dùng SUBJECT_ENTRIES (AC-19)'
     vi.doMock('../../data/cefrLoader', () => ({
       loadCefr: async () => Promise.reject(new Error('fixture CEFR lỗi')),
     }))
-    vi.doMock('../../data/curriculumLoader', () => ({ loadFoundation: async () => [] }))
+    vi.doMock('../../data/curriculumLoader', () => ({ loadFoundationIndex: async () => [] }))
     localStorage.setItem('et_learned_u1', JSON.stringify(['hello']))
     seedActivityDaysAgo('u1', 5)
     mockAuth({ id: 'u1', name: 'An', email: 'an@vd.vn' })

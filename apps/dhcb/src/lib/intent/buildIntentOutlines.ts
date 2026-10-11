@@ -25,7 +25,7 @@ const PROGRAMMING_START_LEVEL = 'p1'
 async function cayTiengAnh(uid: string): Promise<Outline | undefined> {
   const [
     { loadCefr },
-    { loadFoundation },
+    { loadFoundationIndex },
     { getDialogueTitlesByUnit },
     { buildCefrOutline },
     cefrProgress,
@@ -38,7 +38,7 @@ async function cayTiengAnh(uid: string): Promise<Outline | undefined> {
     import('../cefrProgress'),
     import('../vocab'),
   ])
-  const [levels, circles] = await Promise.all([loadCefr(), loadFoundation()])
+  const [levels, circles] = await Promise.all([loadCefr(), loadFoundationIndex()])
   const level = levels.find((l) => l.id === ENGLISH_START_LEVEL)
   if (!level) return undefined
   // Tải tên hội thoại lỗi thì bỏ qua — adapter không khẳng định "đã học hết" khi không biết tổng.

@@ -23,3 +23,18 @@ export interface Circle {
   // em chạm tới mức C1/C2 trong thời gian ngắn.
   notForKids?: boolean
 }
+
+/**
+ * Bản TÓM TẮT của một vòng — đủ để vẽ tên vòng và đếm tiến độ ("đã thuộc x/N từ"), không có
+ * nghĩa/câu ví dụ/phiên âm. Tải từ `/data/curriculum-index.json` (~50 KB nén) thay cho
+ * `curriculum.json` (~1 MB nén) ở mọi trang chỉ đếm tiến độ — changelog 0601.
+ * `Circle` đầy đủ vẫn gán được vào kiểu này, nên hàm đếm nhận cả hai.
+ */
+export interface CircleSummary {
+  id: string
+  titleVi: string
+  titleEn: string
+  emoji: string
+  words: ReadonlyArray<Pick<DictEntry, 'word'>>
+  notForKids?: boolean
+}

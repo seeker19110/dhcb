@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 
-// Mock loader ví dụ dạng từ để test không cần fetch mạng; component đọc cache module-level
-// nên chỉ cần "xả" microtask (await) là cache có dữ liệu trước khi render.
+// Mock loader ví dụ dạng từ để test không cần fetch mạng. Component nạp ví dụ trong `useEffect`
+// (không tải sẵn lúc import — changelog 0601), nên ca kiểm ví dụ phải MOUNT thật, không render tĩnh.
 vi.mock('../data/formExamplesLoader.js', () => ({
   loadFormExamples: () =>
     Promise.resolve({
@@ -70,9 +72,21 @@ describe('WordFormsBlock', () => {
   })
 
   it('hiện 2 ví dụ cho dạng có sẵn ví dụ (vd go|past)', async () => {
-    // Đợi cache ví dụ (loadFormExamples đã mock) được nạp qua microtask.
-    await Promise.resolve()
-    const html = render(<WordFormsBlock forms={computeForms('go', 'v')} word="go" isA={true} />)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    const container = document.createElement('div')
+    const root = createRoot(container)
+    // Mount thật để `useEffect` nạp ví dụ (loadFormExamples đã mock), rồi xả microtask.
+    await act(async () => {
+      root.render(
+        <ToastProvider>
+          <WordFormsBlock forms={computeForms('go', 'v')} word="go" isA={true} />
+        </ToastProvider>,
+      )
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    const html = container.innerHTML
     // KaraokeText tách câu thành từng span mỗi chữ → kiểm tra các từ ĐẶC TRƯNG chỉ có ở ví dụ.
     expect(html).toContain('early.') // từ ví dụ 1 (en)
     expect(html).toContain('market.') // từ ví dụ 2 (en)
@@ -80,5 +94,6 @@ describe('WordFormsBlock', () => {
     expect(html).toContain('chợ.') // từ ví dụ 2 (vi)
     // Có 2 câu tiếng Anh đánh số (KaraokeText phát tiếng Anh) → khối ví dụ xuất hiện.
     expect(html).toContain('Nghe tiếng Anh')
+    act(() => root.unmount())
   })
 })

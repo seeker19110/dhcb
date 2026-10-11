@@ -40,7 +40,7 @@ const BAC_LAP_TRINH_MAC_DINH = 'p1'
 async function theTiengAnh(uid: string): Promise<SubjectProgressCard | undefined> {
   const [
     { loadCefr },
-    { loadFoundation },
+    { loadFoundationIndex },
     { getDialogueTitlesByUnit },
     outline,
     cefrProgress,
@@ -59,7 +59,7 @@ async function theTiengAnh(uid: string): Promise<SubjectProgressCard | undefined
     import('./today/englishNext'),
     import('./storage'),
   ])
-  const [levels, circles] = await Promise.all([loadCefr(), loadFoundation()])
+  const [levels, circles] = await Promise.all([loadCefr(), loadFoundationIndex()])
   const capDau = levels[0]
   if (!capDau) return undefined
 

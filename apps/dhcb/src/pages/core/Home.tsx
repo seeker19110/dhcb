@@ -23,9 +23,9 @@ import { useLang } from '../../context/useLang'
 import { useAuth } from '../../context/useAuth'
 import { useCloudSync } from '../../lib/useCloudSync'
 import type { CefrLevel } from '../../data/cefr'
-import type { Circle } from '../../data/curriculum'
+import type { CircleSummary } from '../../data/curriculum'
 import { loadCefr } from '../../data/cefrLoader'
-import { loadFoundation } from '../../data/curriculumLoader'
+import { loadFoundationIndex } from '../../data/curriculumLoader'
 import { getLearnedWords } from '../../lib/vocab'
 import { getDoneGrammar, computeLockedMapFromServer } from '../../lib/cefrProgress'
 import { getPassedExamLevels } from '../../lib/cefrExam'
@@ -70,7 +70,7 @@ export default function Home() {
   const [comebackClosed, setComebackClosed] = useState(false)
 
   const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, Circle>>({})
+  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
   const [englishContextSettled, setEnglishContextSettled] = useState(false)
   // Trạng thái nhiệm vụ cho `WeekRhythm` (P1-5) — gọi mạng, null khi lỗi/chưa đăng nhập/chưa
   // tải xong (dòng "Nhiệm vụ x/y" tự ẩn, xem `buildWeekRhythm`), không toast lỗi.
@@ -80,7 +80,7 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false
-    void Promise.all([loadCefr(), loadFoundation()])
+    void Promise.all([loadCefr(), loadFoundationIndex()])
       .then(([lv, foundation]) => {
         if (cancelled) return
         setCefrLevels(lv)

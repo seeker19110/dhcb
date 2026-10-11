@@ -20,7 +20,7 @@ import { CEFR_CIRCLE_SENTENCES } from './cefrCircleSentences'
 
 // Kiểu ở `curriculumTypes.ts` (file chỉ-chứa-kiểu) để cắt chu trình import với các file vòng
 // từ vựng sinh tự động; xuất lại ở đây để mọi nơi đang import từ './curriculum' giữ nguyên.
-export type { Circle } from './curriculumTypes'
+export type { Circle, CircleSummary } from './curriculumTypes'
 import type { Circle } from './curriculumTypes'
 
 // Rút gọn: hàm tạo 1 mục từ cho nhanh (ipa để trống — PronounceButton vẫn đọc được)
