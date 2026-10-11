@@ -82,3 +82,39 @@ test('bản đầy đủ lỗi → khối lỗi + Thử lại; mạng hồi → 
   await expect(tieuDeTheTu(page)).toBeVisible({ timeout: 60_000 })
   await expect(alert).toHaveCount(0)
 })
+
+// ── JS của màn con + tab học + bài thi nạp LƯỜI (changelog 0603) ──────────────────────────────
+// Ba module này chỉ cần khi người học bấm vào. Giữ treo chúng mà danh sách bài vẫn phải hiện —
+// nếu ai đó import tĩnh lại (trực tiếp hay qua module khác), trang sẽ kẹt và ca này đỏ.
+// E2E chạy trên dev server của Vite nên mỗi module là một request riêng theo đường dẫn nguồn.
+const MODULE_LUOI = [
+  '**/components/CefrLessonViews.tsx*',
+  '**/components/StudyTabs.tsx*',
+  '**/components/CefrExam.tsx*',
+] as const
+
+test('màn con + tab học + bài thi nạp lười: giữ treo JS của chúng, danh sách bài vẫn hiện', async ({
+  page,
+}) => {
+  await mockLogin(page, 'vi', 'blue-sky')
+  let nha!: () => void
+  const cong = new Promise<void>((resolve) => (nha = resolve))
+  const daXin = new Set<string>()
+  const giu = async (route: Route) => {
+    daXin.add(new URL(route.request().url()).pathname)
+    await cong
+    await route.continue()
+  }
+  for (const p of MODULE_LUOI) await page.route(p, giu)
+  await page.goto(CAP_A1, { waitUntil: 'domcontentloaded' })
+
+  await expect(nutVong(page)).toBeVisible({ timeout: 60_000 })
+  // Mở vòng lúc JS màn con còn treo → ô chờ, không trắng trang.
+  await nutVong(page).click()
+  await expect(page.getByText('Đang tải…', { exact: true })).toBeVisible()
+
+  nha()
+  await expect(tieuDeTheTu(page)).toBeVisible({ timeout: 60_000 })
+  // Có xin thật (nạp trước lúc rảnh hoặc lúc bấm) — tức là module đúng là được nạp lười.
+  expect([...daXin].some((p) => p.endsWith('/components/CefrLessonViews.tsx'))).toBe(true)
+})
