@@ -19,6 +19,7 @@ import {
 } from '@dhcb/core-grading/stepCheckPhysics'
 import {
   cauHoiBatPhuongTrinh,
+  cauHoiCanThuc,
   cauHoiTriTuyetDoi,
   generateSocraticHint,
   type MicroHint,
@@ -29,8 +30,9 @@ import { bangBienCuaDe } from './stemPhysicsVariables.js'
 const PHAM_VI_KIEM: Record<StemSubjectType, string> = {
   math:
     'Bộ kiểm hiện đọc được phương trình và bất phương trình đại số MỘT ẩn (cộng, trừ, nhân, chia, ' +
-    'phân số, luỹ thừa số nguyên, trị tuyệt đối |…|) và đáp số dạng x > 2, S = (2; +∞), ' +
-    'x ∈ [1; 3), S = {2; 5}; chưa đọc căn, lượng giác, log, π, dấu ≠ hay nhiều ẩn.',
+    'phân số, luỹ thừa số nguyên, trị tuyệt đối |…|, căn bậc hai √ với một biểu thức dưới căn) ' +
+    'và đáp số dạng x > 2, x = ±√2, S = (2; +∞), x ∈ [1; 3), S = {2; 5}; chưa đọc căn bậc ba, ' +
+    'hai căn khác nhau cộng với nhau, lượng giác, log, π, dấu ≠ hay nhiều ẩn.',
   chemistry:
     'Bộ kiểm hiện đọc được phương trình hoá học dạng `2H_2 + O_2 -> 2H_2O` (ngoặc, ngậm nước ·, ' +
     'ion có điện tích, electron e^-).',
@@ -80,7 +82,7 @@ function ketLuanToan(kq: MathStepCheck, moc: MocSo): ScratchpadStepValidation | 
         confidence: 1,
       }
     case 'changed': {
-      const cauHoiRieng = cauHoiTriTuyetDoi(kq) ?? cauHoiBatPhuongTrinh(kq)
+      const cauHoiRieng = cauHoiTriTuyetDoi(kq) ?? cauHoiCanThuc(kq) ?? cauHoiBatPhuongTrinh(kq)
       const doi =
         kq.inequality !== undefined
           ? kq.lost && kq.extra

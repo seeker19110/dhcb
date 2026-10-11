@@ -87,7 +87,7 @@ describe('StemScratchpadService', () => {
       expect(r.status).toBe('invalid')
       expect(r.errorType).toBe('changed_solutions')
     }
-    for (const input of ['\\sqrt{x} = 5', 'x \\neq 5', '2H_2 + O_2 -> H_2O', 'x + y = 5']) {
+    for (const input of ['\\sqrt[3]{x} = 5', 'x \\neq 5', '2H_2 + O_2 -> H_2O', 'x + y = 5']) {
       const r = StemScratchpadService.validateStep('math', input, prev)
       expect(r.status).toBe('unverified')
       expect(r.confidence).toBe(0)
@@ -198,8 +198,26 @@ describe('StemScratchpadService', () => {
     ).toMatchObject({ status: 'valid', isFinalAnswer: true })
   })
 
+  it('căn bậc hai: bình phương thiếu điều kiện → THÊM nghiệm lạ + hỏi điều kiện, không lộ số', () => {
+    const de = { problemLatex: '\\sqrt{x + 3} = x - 3' }
+    const r = StemScratchpadService.validateStep('math', 'x + 3 = (x - 3)^2', [], de)
+    expect(r.status).toBe('invalid')
+    expect(r.feedback).toContain('THÊM nghiệm lạ')
+    expect(r.suggestedCorrection).toContain('giữ lại những điều kiện nào')
+    expect(r.suggestedCorrection ?? '').not.toMatch(/\d/)
+    expect(StemScratchpadService.validateStep('math', 'x = 6', [], de)).toMatchObject({
+      status: 'valid',
+      isFinalAnswer: true,
+    })
+    expect(
+      StemScratchpadService.validateStep('math', 'x = \\pm\\sqrt{2}', [], {
+        problemLatex: 'x^2 = 2',
+      }),
+    ).toMatchObject({ status: 'valid', isFinalAnswer: true })
+  })
+
   it('ngoài phạm vi: câu phạm vi không còn nói "chưa đọc trị tuyệt đối/ký hiệu khoảng"', () => {
-    const r = StemScratchpadService.validateStep('math', '\\sqrt{x} = 2', [], {
+    const r = StemScratchpadService.validateStep('math', '\\sqrt[3]{x} = 2', [], {
       problemLatex: 'x = 4',
     })
     expect(r.status).toBe('unverified')
@@ -258,8 +276,8 @@ describe('StemScratchpadService', () => {
     expect(sai.status).toBe('invalid')
     expect(sai.feedback).toContain('bước 1 của em')
 
-    // Bước 1 không đọc được (căn) → vẫn câu "chưa tự kiểm được" theo phạm vi.
-    expect(StemScratchpadService.validateStep('math', '\\sqrt{x} = 5', []).feedback).toContain(
+    // Bước 1 không đọc được (căn bậc ba) → vẫn câu "chưa tự kiểm được" theo phạm vi.
+    expect(StemScratchpadService.validateStep('math', '\\sqrt[3]{x} = 5', []).feedback).toContain(
       'MỘT ẩn',
     )
   })
