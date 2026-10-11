@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
+  challengeSessionOutcome,
+  countSentences,
   getChallenge,
   startChallenge,
   saveEntry,
@@ -256,5 +258,38 @@ describe('countWords / calcWpm — ca rỗng và chia 0 (mục 4.3)', () => {
     expect(calcWpm(30, 60)).toBe(30) // 30 từ / 1 phút
     expect(calcWpm(25, 30)).toBe(50) // 25 từ / 30s = 50 wpm
     expect(calcWpm(10, 45)).toBe(13) // 13.33 → 13
+  })
+})
+
+describe('challengeSessionOutcome — "sự thật" cho màn kết SessionDone', () => {
+  it('quay/ghi âm: đếm câu theo dấu kết câu', () => {
+    const o = challengeSessionOutcome({
+      day: '2026-10-11',
+      transcript: 'I love Hanoi. The food is great! Do you like pho?',
+      isTyped: false,
+      durationSec: 55,
+    })
+    expect(o).toMatchObject({ kind: 'speaking', steps: 3, contentId: 'challenge:2026-10-11' })
+  })
+
+  it('STT không chấm câu vẫn là 1 câu; chữ rỗng là 0 (không mở màn kết)', () => {
+    expect(countSentences('i went to the market with my mother')).toBe(1)
+    const rong = challengeSessionOutcome({
+      day: 'd',
+      transcript: '   ',
+      isTyped: false,
+      durationSec: 0,
+    })
+    expect(rong.steps).toBe(0)
+  })
+
+  it('gõ chữ: một đoạn đã viết', () => {
+    const o = challengeSessionOutcome({
+      day: 'd',
+      transcript: 'Hôm nay tôi đi chợ. Trời đẹp.',
+      isTyped: true,
+      durationSec: 0,
+    })
+    expect(o).toMatchObject({ kind: 'writing', steps: 1 })
   })
 })

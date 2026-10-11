@@ -37,6 +37,12 @@ export interface SessionDoneProps {
   weeklyGoalJustReached?: boolean
   onClose: () => void // về trang chủ hoặc đóng
   onMore?: () => void // CTA phụ "Ôn k thẻ"
+  /** Nhãn nút chính — mặc định "Về trang chủ". Trang mà nút chỉ ĐÓNG overlay để học tiếp (bài
+   *  Lập trình còn bước "Về nhà", bài STEM còn màn kết quả) truyền nhãn đúng với việc nó làm. */
+  closeLabel?: string
+  /** Mốc riêng của trang, hiện ở tầng (2) cạnh streak/tuần (vd "Tuần trọn vẹn 7/7" của
+   *  Challenge) — gộp vào CÙNG overlay thay vì bật một `Celebration` thứ hai. */
+  milestone?: { icon: string; title: string; subtitle: string }
 }
 
 export default function SessionDone({
@@ -48,6 +54,8 @@ export default function SessionDone({
   weeklyGoalJustReached = false,
   onClose,
   onMore,
+  closeLabel,
+  milestone,
 }: SessionDoneProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const open = outcome.steps > 0
@@ -104,10 +112,19 @@ export default function SessionDone({
         </div>
 
         {/* Tầng (2): streak/tuần nếu vừa đổi — có thể hiện cả hai (AC-3 vẫn 1 dialog) */}
-        {(streakJustChanged || weeklyGoalJustReached) && (
+        {(streakJustChanged || weeklyGoalJustReached || milestone) && (
           <div className="mt-4 space-y-4">
             {streakJustChanged && <StreakCelebrationContent uid={uid} isA={isA} />}
             {weeklyGoalJustReached && <WeeklyGoalCelebrationContent uid={uid} isA={isA} />}
+            {milestone && (
+              <div>
+                <div className="text-4xl" aria-hidden="true">
+                  {milestone.icon}
+                </div>
+                <p className="mt-2 text-lg font-bold text-content">{milestone.title}</p>
+                <p className="mt-1 text-content-secondary">{milestone.subtitle}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -127,7 +144,7 @@ export default function SessionDone({
             onClick={onClose}
             className={buttonClass({ size: 'lg', fullWidth: true })}
           >
-            {isA ? 'Về trang chủ' : 'Home'}
+            {closeLabel ?? (isA ? 'Về trang chủ' : 'Home')}
           </button>
         </div>
       </div>

@@ -6,11 +6,15 @@
 import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import { duongDanMonTiengAnh } from '../../../lib/subjectsHost'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Video, Mic, RotateCcw, Send, Square, Type, Trophy, Check, Volume2 } from 'lucide-react'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import Layout from '../../../components/Layout'
 import { PageShell } from '@core/PageShell'
-import Celebration from '../../../components/Celebration'
+import SessionDone from '../../../components/SessionDone'
+import { useSessionDone } from '../../../lib/session/useSessionDone'
+import { getSRSStats } from '../../../lib/srs'
+import { duongDanHubOnTap } from '../../../lib/reviewRoutes'
 import LeagueSection from '../../../components/LeagueSection'
 import ShareResultCard from '../../../components/ShareResultCard'
 import { buildChallengeShareContent } from '../../../lib/shareContent'
@@ -25,7 +29,6 @@ import { vnDateStr } from '../../../lib/date'
 import { callClaude, parseJson } from '../../../lib/ai'
 import { speak } from '../../../lib/tts'
 import { haptics } from '../../../lib/haptics'
-import { sound } from '../../../lib/sound'
 import { getAuthHeader } from '@core/authHeader'
 import {
   getTopicForDay,
@@ -43,6 +46,7 @@ import {
   getKeepDates,
   countWords,
   calcWpm,
+  challengeSessionOutcome,
   mergeCloudEntries,
   type ChallengeState,
   type ChallengeEntryLocal,
@@ -327,6 +331,11 @@ export default function Challenge() {
   }, [uid])
 
   const todayStr = vnDateStr()
+  const {
+    outcome: ketPhien,
+    open: moKetPhien,
+    close: dongKetPhien,
+  } = useSessionDone(`english:challenge:${todayStr}`)
   const todaysEntry = challenge ? entryForDay(challenge, todayStr) : null
   // 7 ô của tuần hiện tại (Thứ 2 → CN) — nguồn duy nhất cho bảng + tổng kết tuần.
   // (tính trực tiếp mỗi render — hàm thuần, rẻ; React Compiler tự memo hóa)
@@ -364,8 +373,12 @@ export default function Challenge() {
   const [recording, setRecording] = useState<ChallengeRecording | null>(null)
   const [typedText, setTypedText] = useState('')
   const [submitError, setSubmitError] = useState('')
-  // Ăn mừng "tuần trọn vẹn 7/7" — bắn khi bài nộp hôm nay lấp đủ ô cuối cùng của tuần.
+  // Ăn mừng "tuần trọn vẹn 7/7" — bắn khi bài nộp hôm nay lấp đủ ô cuối cùng của tuần. Từ P1-6
+  // (lệnh 8) nó là tầng (2) của màn kết `SessionDone`, không còn là một `Celebration` riêng.
+  // Sau F5 mốc này không phục hồi (như streak/tuần ở TodayLesson): overlay mở lại chỉ còn "sự
+  // thật" của phiên.
   const [celebrateWeek, setCelebrateWeek] = useState(false)
+  const navigate = useNavigate()
 
   const handleRef = useRef<ChallengeRecorderHandle | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -582,9 +595,10 @@ export default function Challenge() {
       })
 
       const nowComplete = getWeekCells(nextChallenge, todayStr).every((c) => c.entry)
-      haptics.success()
-      sound.correct()
       if (!beforeComplete && nowComplete) setCelebrateWeek(true)
+      // Màn kết phiên (P1-6) — SessionDone tự rung/phát âm thanh mừng, không gọi thêm ở đây.
+      // Challenge không ghi "ngày có học" nên không bật tầng streak/mục tiêu tuần học.
+      moKetPhien(challengeSessionOutcome({ day: todayStr, transcript, isTyped, durationSec }))
       // Huy hiệu mới (② M2) — sau khi lưu entry để getTotalSubmitted/hasPerfectWeek thấy bài vừa nộp.
       for (const a of checkNewAchievements(uid)) toast.success(achievementMessage(a, isA))
 
@@ -667,17 +681,33 @@ export default function Challenge() {
         title={isA ? 'Challenge 1 phút mỗi ngày' : 'Daily 1-Minute Challenge'}
         backTo={duongDanMonTiengAnh()}
       />
-      {celebrateWeek && (
-        <Celebration
-          icon="🏆"
-          title={isA ? 'Tuần trọn vẹn 7/7!' : 'Perfect week 7/7!'}
-          subtitle={
-            isA
-              ? 'Bạn đã nộp challenge đủ cả 7 ngày trong tuần — quá xuất sắc!'
-              : 'You submitted a challenge every single day this week — outstanding!'
-          }
-          ctaLabel={isA ? 'Tuyệt vời' : 'Awesome'}
-          onDone={() => setCelebrateWeek(false)}
+      {ketPhien && (
+        <SessionDone
+          outcome={ketPhien}
+          uid={uid}
+          isA={isA}
+          srsDue={getSRSStats(uid).due}
+          closeLabel={isA ? 'Xem nhận xét' : 'See feedback'}
+          {...(celebrateWeek
+            ? {
+                milestone: {
+                  icon: '🏆',
+                  title: isA ? 'Tuần trọn vẹn 7/7!' : 'Perfect week 7/7!',
+                  subtitle: isA
+                    ? 'Bạn đã nộp challenge đủ cả 7 ngày trong tuần — quá xuất sắc!'
+                    : 'You submitted a challenge every single day this week — outstanding!',
+                },
+              }
+            : {})}
+          onClose={() => {
+            dongKetPhien()
+            setCelebrateWeek(false)
+          }}
+          onMore={() => {
+            dongKetPhien()
+            setCelebrateWeek(false)
+            navigate(duongDanHubOnTap())
+          }}
         />
       )}
 

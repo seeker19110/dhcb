@@ -63,6 +63,10 @@ import {
 } from '../../lib/stemLessonAnchors'
 import TrongBaiNav from '../../components/learning/TrongBaiNav'
 import { ketQuaSangManHinh } from '../../lib/stemResultView'
+import SessionDone from '../../components/SessionDone'
+import { useSessionDone } from '../../lib/session/useSessionDone'
+import { getDueStemCardsForSubject } from '../../lib/stemSrs'
+import { duongDanOnTapStem } from '../../lib/reviewRoutes'
 import { useStemCompletionState } from '../../lib/useStemCompletionState'
 import { useIsDesktopViewport } from '../../lib/useIsDesktopViewport'
 import {
@@ -343,6 +347,17 @@ function TuKiemTra({
 
   const uid = owner?.id ?? ''
 
+  // [P1-6, lệnh 8] Màn kết phiên `SessionDone` khi lượt nộp ĐẠT (điểm "hoàn thành" đã có bằng
+  // chứng). Nộp chưa đạt thì không mừng — màn kết quả bên dưới đã mời làm lại. Bài STEM không
+  // ghi "ngày có học" nên không bật tầng streak/mục tiêu tuần (không mừng thứ phiên này không tạo
+  // ra). Đóng overlay thì đưa người học xuống màn kết quả chi tiết.
+  const {
+    outcome: ketPhien,
+    open: moKetPhien,
+    close: dongKetPhien,
+  } = useSessionDone(`${subjectId}:${bai.id}`)
+  const navigate = useNavigate()
+
   // [S09a AC05] Số thứ tự lượt nộp "còn hiệu lực". Đổi người dùng (hoặc rời bài) thì tăng lên,
   // nên response về muộn của người/bài cũ tự nhận ra mình đã lỗi thời và KHÔNG ghi đè màn
   // kết quả của người/bài mới. Đổi bài vốn đã dựng lại component (`key={bai.id}`); ref này che
@@ -408,12 +423,26 @@ function TuKiemTra({
       )
       // Lượt đã lỗi thời (đổi người dùng / rời bài trong lúc chờ): bỏ qua kết quả trên màn
       // hình. Bằng chứng thì đã ghi xong ở `submitStemEvidence` — mục lục vẫn phải đọc lại.
-      if (luot === luotHieuLuc.current) setLuotNop({ ketQua, answers: banChup, uid })
+      if (luot === luotHieuLuc.current) {
+        setLuotNop({ ketQua, answers: banChup, uid })
+        if (ketQua.kind !== 'rejected' && ketQua.evidence.passed) {
+          const { correct, total } = ketQua.evidence
+          moKetPhien({
+            subjectId,
+            contentId: bai.id,
+            kind: 'quiz',
+            steps: total,
+            correct,
+            total,
+            durationSec: 0,
+          })
+        }
+      }
       onSubmitted?.()
     } finally {
       setDangNop(false)
     }
-  }, [uid, dangNop, setDraft, bai, subjectId, dapAnHieuLuc, onSubmitted])
+  }, [uid, dangNop, setDraft, bai, subjectId, dapAnHieuLuc, onSubmitted, moKetPhien])
 
   // Chỉ hiện kết quả của ĐÚNG người đang mở bài: đổi tài khoản thì kết quả người trước biến mất.
   const manKetQua = useMemo(
@@ -426,6 +455,25 @@ function TuKiemTra({
 
   return (
     <>
+      {ketPhien && (
+        <SessionDone
+          outcome={ketPhien}
+          uid={uid}
+          isA
+          srsDue={uid ? getDueStemCardsForSubject(uid, subjectId).length : 0}
+          // Sau F5 overlay mở lại từ kết quả đã nhớ, nhưng màn kết quả chi tiết thì không (chỉ
+          // đến từ lượt nộp trong lần mở này) — khi đó không hứa "Xem kết quả".
+          closeLabel={luotNop ? 'Xem kết quả' : 'Tiếp tục'}
+          onClose={() => {
+            dongKetPhien()
+            onNhay(NEO_TRONG_BAI.ketQua)
+          }}
+          onMore={() => {
+            dongKetPhien()
+            navigate(duongDanOnTapStem(subjectId))
+          }}
+        />
+      )}
       <h2
         id={NEO_TRONG_BAI.tuKiem}
         tabIndex={-1}
