@@ -189,9 +189,8 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   Nội dung còn `draft`, chưa có người duyệt sư phạm. ✅ `0609`: 9 bước apisim của cả T1/T2/T3 có
   `probeCode` — bộ chấm chạy nguyên `api.py` rồi tự gọi API bằng dữ liệu riêng, nên lời giải chỉ in
   sẵn đáp án trượt ca ẩn (đặc tả `docs/specs/2026-10-11-apisim-ca-an-chong-go-cung.md`; vẫn chỉ
-  chấm ở trình duyệt — server không chấm lại bước dự án). Nợ nhỏ còn lại: `requirement` của
-  `p5-s5` dài hơn trần 2000 ký tự của `ProjectStepSchema` (chỉ là kiểu, không parse lúc chạy; T1
-  chưa có test parse như T2).
+  chấm ở trình duyệt — server không chấm lại bước dự án). ✅ `0610`: trần `requirement` 2000 → 3000
+  (`p5-s5` vượt trần), test parse MỌI bước của T1/T2/T3 qua `ProjectStepSchema`.
 
 - **[2026-10-05] 20 khóa AI Engineering**: kế hoạch và ánh xạ 523 mục nguồn đã duyệt (#1236); renderer hoạt họa (#1237) và bài gradient có phát lại (#1241) đã merge. [Goal và bằng chứng](docs/goals/2026-10-05-ai-engineering-from-scratch.md) ghi phần còn thiếu; chưa có phase nào nghiệm thu toàn bộ. Engine Git (#1243) và B1 nội dung/rubric `p3-u11-l1` (#1258) đã merge; B2 hoạt họa Git chờ chuyên gia chốt storyboard. Hai lỗi nội dung cũ FR-3a (convolution "bất biến" → tương đương tịnh tiến ở `cv1-u2-l1`/`cv2-u1-l4`/`mlds-u3-l1`; `llmagent-u1-l1` bỏ hứa "BPE") đã sửa ở changelog `0511`, đã merge (#1261). Ba hoạt họa thí điểm còn lại (convolution, RAG, agent) chờ reviewer nội dung; bài mới cần lát contract chốt ID. Gói bộ chấm #1239 còn Draft chờ quyết định kiến trúc; chủ dự án chưa có staging và yêu cầu chuẩn bị gói trước.
 
