@@ -1574,8 +1574,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `docs/changelog/NNNN-2026-09-19-*.md`] Kho lượt cửa sổ trượt 7 ngày — mô tả "MỒ CÔI" ban đầu là
   SAI, đã đóng nợ chính.** GĐ1 bỏ `consume_rolling_credit`/`refund_rolling_credit` khỏi đường
   enforce (Free chuyển sang hạn mức TỔNG/ngày) — **hai hàm này thật sự không còn lời gọi TS nào**
-  (xác nhận qua `packages/core-billing/usage.test.ts:121,246`), có thể drop ở đợt dọn dẹp sau nếu
-  muốn, không khẩn cấp. Nhưng **bảng `free_daily_credit` + hàm `grant_daily_bonus_rolling` KHÔNG
+  (xác nhận qua `packages/core-billing/usage.test.ts:121,246`) — ✅ **ĐÃ GỠ ở migration `0093`**
+  (changelog `0607`, chủ dự án đồng ý 2026-10-11; cả bốn chữ ký của 0017 + 0029). Nhưng **bảng `free_daily_credit` + hàm `grant_daily_bonus_rolling` KHÔNG
   mồ côi** — rà lại code thật 2026-09-19 phát hiện `apps/server/src/api/_lib/quests.ts`
   (`getCurrentStreak`, nhiệm vụ `streak_5` — "học liên tiếp 5 ngày") đọc trực tiếp
   `free_daily_credit.bonus_earned` và PHỤ THUỘC bảng này được ghi tiếp tục mỗi ngày qua lời gọi
@@ -1871,8 +1871,12 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   (`docs/changelog/0606-*.md`): 90–92, LCP 2,8–3,0 s, TBT 20–120 ms, request JS trước 3 s
   60 → 27 — LCP chưa tách được khỏi nhiễu TTFB đo từ container (0,4–1,5 s, cả `/api/health`).
   CSS chặn hiển thị: đã bỏ ~170 rule rác do Tailwind tự quét cả repo (`0606`, 34,7 → 32,8 KB
-  gzip); phần còn lại là utility dùng thật — bước kế (nếu cần) là CSS tới hạn nội tuyến, cần
-  đo lợi/hại trước; (3) Tầng 9. (Vị trí cuộn khi mở/đóng màn con trang cấp trên mobile — ✅ ĐÃ CHỐT ở `0605`: mở → về đầu,
+  gzip); phần còn lại là utility dùng thật. **CSS tới hạn nội tuyến: ĐÃ ĐO, KHÔNG LÀM** — trên
+  trang đã đăng nhập, CSS về CÙNG lúc JS entry (Từ điển: 1,73 s vs 1,75 s) và nội dung đầu tiên do
+  React vẽ sau khi JS chạy (FCP 2,25 s), nên đường găng là chuỗi JS chứ không phải CSS;
+  trang chủ khách (nơi CSS nằm trên đường găng) đã 97–99 nhờ bản dựng sẵn; (3) Tầng 9 — phần
+  kiểm được từ ngoài đạt (health, redirect, HSTS/CSP/nosniff/x-frame); phần Sentry · `pm2 logs`
+  · dung lượng ổ đĩa là việc tay (phiên không có SSH/token). (Vị trí cuộn khi mở/đóng màn con trang cấp trên mobile — ✅ ĐÃ CHỐT ở `0605`: mở → về đầu,
   đóng → danh sách về chỗ cũ.)
   (Nhánh lỗi khi tải `cefr.json` + chỉ mục ở trang cấp/Lộ trình/trang môn — ✅ ĐÃ SỬA ở
   `docs/changelog/0602-*.md`; Home + `useTodayPlan` vốn đã có nhánh lỗi.)
