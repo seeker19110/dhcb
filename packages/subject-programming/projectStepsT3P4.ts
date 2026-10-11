@@ -94,6 +94,53 @@ for bai in so.sap_den_han(hom_nay):
     print(f"{bai.han} {bai.mon.ten}: {bai.ten}")
 print(f"Qua han: {len(so.qua_han(hom_nay))}")`
 
+// ── Probe của BỘ CHẤM cho hai bước làn apisim (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung) ──
+// Chạy NGUYÊN api.py (runpy, run_name="__main__" để khối kiểm thử bọc trong
+// `if __name__ == "__main__":` vẫn chạy → ca cũ vẫn in), rồi tự gọi API bằng dữ liệu riêng.
+// Mọi request TƯƠNG ĐỐI với trạng thái khối kiểm thử của học viên để lại.
+const P4_S5_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+n0 = len(c.get("/bai-tap").json())
+tao = c.post("/bai-tap", json={"mon": "sinh", "ten": "Bao cao thuc hanh", "han": "2000-01-01"})
+moi = tao.json()["id"]
+u = "/bai-tap/" + str(moi)
+doc = c.get(u)
+ds = c.get("/bai-tap").json()
+print("KT TAO DOC:", tao.status_code, doc.status_code, doc.json()["mon"], doc.json()["xong"], ds[0]["id"] == moi, len(ds) - n0)
+x = c.put(u)
+print("KT XONG:", x.status_code, x.json()["xong"], c.get(u).json()["xong"], c.put("/bai-tap/987654").status_code)
+xoa = c.delete(u)
+print("KT XOA:", xoa.status_code, xoa.json()["da_xoa"] == moi, c.get(u).status_code, len(c.get("/bai-tap").json()) - n0)`
+
+// Môn 2 (van) chưa có điểm sau khối kiểm thử của đề — ca hiện có "CHUA CO: None" đã chốt điều
+// đó — nên probe ghi điểm của nó vào môn này; số điểm vẫn đo bằng HIỆU trước/sau.
+const P4_S6_PROBE = `import runpy
+from fastapi.testclient import TestClient
+
+g = runpy.run_path("api.py", run_name="__main__")
+c = TestClient(g["app"])
+
+
+def gui(du_lieu):
+    return c.post("/diem", json=du_lieu)
+
+
+n0 = c.get("/mon/2/tong-ket").json()["so_diem"]
+a = gui({"mon_id": 2, "diem": 6, "he_so": 1, "dtb": 10, "xep_loai": "Tot"})
+gui({"mon_id": 2, "diem": 8, "he_so": 3})
+tk = c.get("/mon/2/tong-ket").json()
+print("KT DIEM MOI:", a.status_code, "dtb" not in a.json(), tk["so_diem"] - n0)
+print("KT TONG KET:", tk["ten"], tk["dtb"], tk["xep_loai"])
+l1 = gui({"mon_id": 2, "diem": "9", "he_so": 1}).status_code
+l2 = gui({"mon_id": 2, "diem": -0.5, "he_so": 2}).status_code
+l3 = gui({"mon_id": 987654, "diem": 50, "he_so": 1}).status_code
+l4 = gui({"mon_id": 987654, "diem": 5, "he_so": 1}).status_code
+l5 = c.get("/mon/987654/tong-ket").status_code
+print("KT LOI:", l1, l2, l3, l4, l5, c.get("/mon/2/tong-ket").json()["so_diem"] - n0)`
+
 export const T3_P4_PROJECT_STEPS: ProjectStep[] = [
   {
     id: 't3-p4-s1',
@@ -545,6 +592,8 @@ print("XONG:", client.put("/bai-tap/1").json()["xong"])
 print("XONG LA:", client.put("/bai-tap/99").status_code)
 print("XOA:", client.delete("/bai-tap/2").status_code)
 print("CON LAI:", len(client.get("/bai-tap").json()))`,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P4_S5_PROBE,
     checks: [
       tc([], 'DS: 200 3', 'GET /bai-tap trả 200 và đủ 3 bài'),
       tc([], 'GAP NHAT: Nghi luan xa hoi', 'Danh sách sắp theo hạn — bài gấp nhất lên đầu'),
@@ -554,6 +603,24 @@ print("CON LAI:", len(client.get("/bai-tap").json()))`,
       tc([], 'GAP NHAT MOI: On tap chuong 2', 'Bài vừa tạo có hạn sớm hơn → nhảy lên đầu'),
       tc([], 'XONG: True', 'Ca ẩn: PUT đánh dấu xong, trả về True chứ không phải 1', true),
       tc([], 'CON LAI: 3', 'Ca ẩn: thêm 1 xoá 1 thì còn đúng 3 bài (có commit thật)', true),
+      // Đề cửa 3 + 2: "POST /bai-tap … trả bài vừa tạo (mã 201)", "xong là True/False"; cửa 1:
+      // "sắp theo hạn tăng dần (bài gấp nhất lên đầu)" — hạn 2000-01-01 phải đứng đầu.
+      tc(
+        [],
+        'KT TAO DOC: 201 200 sinh False True 1',
+        'Ca ẩn: bài mới (dữ liệu của bộ chấm) đọc lại đúng, hạn sớm nhất lên đầu',
+        true,
+      ),
+      // Đề cửa 4: "PUT /bai-tap/{bai_id} — đánh dấu đã làm xong (xong = 1), trả lại bài đó; không
+      // có thì 404".
+      tc([], 'KT XONG: 200 True True 404', 'Ca ẩn: PUT bài vừa tạo → xong True, id lạ → 404', true),
+      // Đề cửa 5: "DELETE … xoá bài, trả {"da_xoa": bai_id}"; cửa 2: "không có thì … 404".
+      tc(
+        [],
+        'KT XOA: 200 True 404 0',
+        'Ca ẩn: xoá bài vừa tạo, đọc lại 404, danh sách như cũ',
+        true,
+      ),
     ],
   },
   {
@@ -650,6 +717,8 @@ print("DIEM 11:", client.post("/diem", json={"mon_id": 1, "diem": 11, "he_so": 1
 print("HE SO 5:", client.post("/diem", json={"mon_id": 1, "diem": 8, "he_so": 5}).status_code)
 print("MON LA:", client.post("/diem", json={"mon_id": 99, "diem": 8, "he_so": 1}).status_code)
 print("SAU LOI:", client.get("/mon/1/tong-ket").json()["so_diem"])`,
+    // Bộ chấm chạy probe THAY api.py (api.py vẫn nằm trong thư mục làm việc).
+    probeCode: P4_S6_PROBE,
     checks: [
       tc([], 'BAI TAP: 3', 'Vẫn giữ cửa GET /bai-tap của bước 5'),
       tc([], 'TAO: 201 3', 'POST /diem ghi điểm, trả 201 kèm id'),
@@ -663,6 +732,15 @@ print("SAU LOI:", client.get("/mon/1/tong-ket").json()["so_diem"])`,
       tc([], 'HE SO 5: 422', 'Hệ số sai luật bị chặn'),
       tc([], 'MON LA: 404', 'Ca ẩn: môn không có trong CSDL trả 404', true),
       tc([], 'SAU LOI: 3', 'Ca ẩn: ba lượt bị từ chối KHÔNG ghi gì vào CSDL', true),
+      // Đề mục 1: "hợp lệ → ghi, trả {id, mon_id, diem, he_so} (mã 201); trường lạ (như "dtb") bị
+      // BỎ QUA" — hai điểm mới vào môn 2, số điểm tăng đúng 2.
+      tc([], 'KT DIEM MOI: 201 True 2', 'Ca ẩn: điểm của bộ chấm được ghi, trường lạ bị bỏ', true),
+      // Đề mục 2 + LUẬT SỐNG CÒN: "ĐTB và xếp loại do MÁY CHỦ tính từ CSDL … theo luật của sổ (như
+      // MonHoc.dtb và xếp loại ở chặng P1)" — (6×1 + 8×3) / 4 = 7.5 → Kha (bình quân thường là 7).
+      tc([], 'KT TONG KET: van 7.5 Kha', 'Ca ẩn: ĐTB có hệ số tính ở máy chủ cho môn khác', true),
+      // Đề mục 1 "kiểm theo đúng thứ tự": diem không phải số / ngoài 0..10 → 422 (kể cả khi môn
+      // cũng sai), mon_id không có → 404; mục 2: "Không có môn: 404"; lượt lỗi không ghi gì.
+      tc([], 'KT LOI: 422 422 422 404 404 2', 'Ca ẩn: nhánh lỗi đúng thứ tự, không ghi điểm', true),
     ],
   },
 ]

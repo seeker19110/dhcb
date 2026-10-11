@@ -543,7 +543,11 @@ describe('T3 chặng P4 — cấu trúc', () => {
       'apisim',
       'apisim',
     ])
-    expect(T3_P4_PROJECT_STEPS.every((s) => s.probeCode === undefined)).toBe(true)
+    // Bước apisim CÓ probe của bộ chấm (đặc tả 2026-10-11-apisim-ca-an-chong-go-cung); bước
+    // python/pytest của chặng này thì không.
+    for (const s of T3_P4_PROJECT_STEPS) {
+      expect(s.probeCode !== undefined, s.id).toBe(getStepLanguage(s) === 'apisim')
+    }
   })
 
   it('số học: milestone dùng ĐÚNG bộ điểm 8·7·9 của chặng P1 (một dòng chảy, không đề rời)', () => {
