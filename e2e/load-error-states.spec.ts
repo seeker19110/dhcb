@@ -135,3 +135,59 @@ test('mở hội thoại từ mục lục khi tải lỗi → khối lỗi; Th�
   await retry.click()
   await expect(alert).toHaveCount(0, { timeout: 60_000 })
 })
+
+// ── Dữ liệu lộ trình CEFR (changelog 0602) — `cefr.json` + `curriculum-index.json` ───────────────
+// Bản cũ `Promise.all([loadCefr(), loadFoundationIndex()]).then(...)` KHÔNG có nhánh lỗi: trang cấp
+// kẹt khung xương, trang Lộ trình kẹt "Đang tải lộ trình…", trang môn mất thẻ "Học tiếp" — im lặng.
+
+for (const nguon of ['**/data/cefr.json', '**/data/curriculum-index.json'] as const) {
+  test(`trang cấp CEFR: ${nguon.split('/').pop()} lỗi → khối lỗi + Thử lại (không kẹt khung xương)`, async ({
+    page,
+  }) => {
+    await mockLogin(page, 'vi', 'dark-blue')
+    const restore = await failUntilRestored(page, nguon)
+    await page.goto(CAP_A1, { waitUntil: 'domcontentloaded' })
+
+    const { alert, retry } = await expectAccessibleError(page)
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
+
+    await restore()
+    await retry.click()
+    await expect(alert).toHaveCount(0, { timeout: 60_000 })
+    await expect(page.getByText('Phần 1').first()).toBeVisible()
+  })
+}
+
+test('trang Lộ trình: cefr.json lỗi → khối lỗi + Thử lại (không kẹt "Đang tải lộ trình…")', async ({
+  page,
+}) => {
+  await mockLogin(page, 'vi', 'blue-sky')
+  const restore = await failUntilRestored(page, '**/data/cefr.json')
+  await page.goto('/goc-hoc-tap/english/lo-trinh', { waitUntil: 'domcontentloaded' })
+
+  const { alert, retry } = await expectAccessibleError(page)
+  await expect(page.getByText('Đang tải lộ trình…')).toHaveCount(0)
+
+  await restore()
+  await retry.click()
+  await expect(alert).toHaveCount(0, { timeout: 60_000 })
+  await expect(page.getByText('Học xong, bạn có thể…').first()).toBeVisible()
+})
+
+test('trang môn Tiếng Anh: chỉ mục vòng lỗi → khối lỗi ở chỗ "Học tiếp"; Thử lại → nút Học tiếp', async ({
+  page,
+}) => {
+  await mockLogin(page, 'vi', 'dark-blue')
+  const restore = await failUntilRestored(page, '**/data/curriculum-index.json')
+  await page.goto('/goc-hoc-tap/english', { waitUntil: 'domcontentloaded' })
+
+  const { alert, retry } = await expectAccessibleError(page)
+  await restore()
+  await retry.click()
+  await expect(alert).toHaveCount(0, { timeout: 60_000 })
+  await expect(
+    page
+      .getByRole('region', { name: 'Học tập trọng tâm' })
+      .getByRole('button', { name: /Bắt đầu|Học tiếp/ }),
+  ).toBeVisible()
+})

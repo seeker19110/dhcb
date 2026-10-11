@@ -3,7 +3,7 @@
 // [Slice 02, 2026-09-15] Tiếng Anh là MỘT MÔN ngang hàng trong Góc học tập, không còn là "không
 // gian" cấp nền tảng — tiêu đề, breadcrumb (Trang chủ › Góc học tập › Tiếng Anh) và đường dẫn
 // theo đó. Đủ 5 công cụ của `ENGLISH_CHILDREN` (navTree.ts) có nút ở trang này (AC-8).
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../../lib/usePageTitle'
 import {
@@ -53,8 +53,15 @@ import {
 import { useCloudSync } from '../../../lib/useCloudSync'
 import type { CefrLevel } from '../../../data/cefr'
 import type { CircleSummary } from '../../../data/curriculum'
-import { loadCefr } from '../../../data/cefrLoader'
-import { loadFoundationIndex } from '../../../data/curriculumLoader'
+import { loadCefrOverview } from '../../../data/cefrOverviewLoader'
+import { useAsyncLoad } from '../../../lib/useAsyncLoad'
+import LoadError from '../../../components/LoadError'
+import {
+  LOI_LO_TRINH_VI,
+  LOI_LO_TRINH_EN,
+  GOI_Y_LO_TRINH_VI,
+  GOI_Y_LO_TRINH_EN,
+} from '../../../lib/curriculumMessages'
 import { getLearnedWords, getRecentlyLearnedWords } from '../../../lib/vocab'
 import { getDoneGrammar, computeLockedMapFromServer } from '../../../lib/cefrProgress'
 import { englishNext, duongDanCapCefr } from '../../../lib/today/englishNext'
@@ -71,6 +78,9 @@ import {
 
 // Số từ vừa học tối đa gợi ý cho 1 phiên Speaking
 const RECENT_WORDS_FOR_SPEAKING = 8
+// Giá trị rỗng ỔN ĐỊNH khi dữ liệu lộ trình chưa về.
+const NO_LEVELS: CefrLevel[] = []
+const NO_CIRCLES: Record<string, CircleSummary> = {}
 
 export default function EnglishHome() {
   usePageTitle('Tiếng Anh | Đồng Hành Cùng Bạn')
@@ -79,16 +89,18 @@ export default function EnglishHome() {
   const syncVersion = useCloudSync(user?.id)
 
   const dir: Direction = getDirection()
+  const isA = dir === 'A'
   const [comebackClosed, setComebackClosed] = useState(false)
 
-  const [cefrLevels, setCefrLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
-  useEffect(() => {
-    Promise.all([loadCefr(), loadFoundationIndex()]).then(([lv, foundation]) => {
-      setCefrLevels(lv)
-      setCircleById(Object.fromEntries(foundation.map((c) => [c.id, c])))
-    })
-  }, [])
+  // [changelog 0602] Bản cũ `Promise.all(...).then(set)` không có nhánh lỗi: tải hỏng là thẻ
+  // "Học tiếp" biến mất im lặng (+ unhandled rejection). Nay lỗi → khối lỗi + Thử lại ở đúng chỗ đó.
+  const { state: loTrinhState, retry: retryLoTrinh } = useAsyncLoad(loadCefrOverview, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_LO_TRINH_VI : LOI_LO_TRINH_EN,
+  })
+  const loTrinh = loTrinhState.status === 'ready' ? loTrinhState.data : null
+  const cefrLevels = loTrinh?.levels ?? NO_LEVELS
+  const circleById = loTrinh?.circleById ?? NO_CIRCLES
 
   const uid = user?.id ?? ''
   // Đọc từ localStorage mỗi render — bỏ useMemo thủ công vì React Compiler không
@@ -101,8 +113,6 @@ export default function EnglishHome() {
 
   // Quyền mở cấp do SERVER cấp (GĐ2a) — client chỉ đọc danh sách server trả về.
   const lockedMap = computeLockedMapFromServer(uid, cefrLevels, examPassed)
-
-  const isA = dir === 'A'
 
   // [S06-3] MỘT luật "học tiếp" cho cả ba nơi hiển thị (Trang chủ · thẻ "Hôm nay" · trang môn
   // này): adapter `englishNext` bọc `findNextStep`. Trước đây trang chép lại nguyên vòng lặp
@@ -209,6 +219,14 @@ export default function EnglishHome() {
               title={nextLabel || (isA ? 'Bắt đầu bài học mới' : 'Start new lesson')}
               actionLabel={chuaHocGi ? (isA ? 'Bắt đầu' : 'Start') : isA ? 'Học tiếp' : 'Continue'}
               onAction={goToNextStep}
+            />
+          )}
+          {loTrinhState.status === 'error' && (
+            <LoadError
+              message={loTrinhState.message}
+              onRetry={retryLoTrinh}
+              lang={isA ? 'vi' : 'en'}
+              hint={isA ? GOI_Y_LO_TRINH_VI : GOI_Y_LO_TRINH_EN}
             />
           )}
         </section>

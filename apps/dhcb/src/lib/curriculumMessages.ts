@@ -14,3 +14,11 @@ export const LOI_HOI_THOAI_EN =
   'Could not load the sample dialogues. Check your connection and try again.'
 export const GOI_Y_HOI_THOAI_VI = 'Phần còn lại của bài học vẫn dùng được bình thường.'
 export const GOI_Y_HOI_THOAI_EN = 'The rest of the lesson still works.'
+
+// Dữ liệu lộ trình CEFR (`cefr.json` + chỉ mục vòng từ vựng) tải hỏng (changelog 0602) — trang
+// cấp, lộ trình và trang môn không vẽ được tiến độ nếu thiếu nó.
+export const LOI_LO_TRINH_VI = 'Chưa tải được lộ trình học. Kiểm tra kết nối rồi thử lại.'
+export const LOI_LO_TRINH_EN =
+  'Could not load the learning roadmap. Check your connection and try again.'
+export const GOI_Y_LO_TRINH_VI = 'Tiến độ học của bạn vẫn được giữ nguyên.'
+export const GOI_Y_LO_TRINH_EN = 'Your learning progress is kept.'

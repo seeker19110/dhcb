@@ -58,8 +58,8 @@ import { ACCENT, type AccentClasses } from '../../../lib/cefrAccent'
 import type { CefrLevel, CefrUnit, GrammarLesson } from '../../../data/cefr'
 import type { Circle, CircleSummary } from '../../../data/curriculum'
 import type { Dialogue } from '../../../data/dialogues'
-import { loadCefr } from '../../../data/cefrLoader'
-import { loadFoundation, loadFoundationIndex } from '../../../data/curriculumLoader'
+import { loadFoundation } from '../../../data/curriculumLoader'
+import { loadCefrOverview } from '../../../data/cefrOverviewLoader'
 import { getDialogues } from '../../../data/dialoguesLoader'
 import { useAuth } from '../../../context/useAuth'
 import { getDirection } from '../../../lib/storage'
@@ -84,6 +84,10 @@ import {
   LOI_TU_VUNG_EN,
   GOI_Y_TU_VUNG_VI,
   GOI_Y_TU_VUNG_EN,
+  LOI_LO_TRINH_VI,
+  LOI_LO_TRINH_EN,
+  GOI_Y_LO_TRINH_VI,
+  GOI_Y_LO_TRINH_EN,
 } from '../../../lib/curriculumMessages'
 import {
   getDoneGrammar,
@@ -134,6 +138,9 @@ type StudyTab = (typeof STUDY_TABS)[number]
 const MON = 'english'
 // Mảng rỗng DÙNG CHUNG (tham chiếu ổn định) khi hội thoại chưa tải xong / tải lỗi.
 const NO_DIALOGUES: Dialogue[] = []
+// Giá trị rỗng ỔN ĐỊNH khi tổng quan chưa về — để các `useMemo` phụ thuộc không tính lại mỗi render.
+const NO_LEVELS: CefrLevel[] = []
+const NO_CIRCLES: Record<string, CircleSummary> = {}
 // Nội dung của trang không "hết hạn" theo cách nháp code hết hạn: thứ khôi phục là MÃ hoạt
 // động, và mã nào không còn trong dữ liệu cấp thì bị bỏ qua (xem `coHoatDong`). Vì vậy phiên
 // bản nội dung ở đây là hằng — đổi nó chỉ khi khuôn nháp bên dưới đổi.
@@ -204,9 +211,16 @@ export default function CefrLevelPage() {
   // rời trang rồi mở lại. Dưới ngưỡng này: nút "Mục lục cấp học" + panel (S07-3).
   const isDesktop = useIsDesktopViewport()
 
-  const [levels, setLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
-  const [ready, setReady] = useState(false)
+  // Danh sách cấp + bản TÓM TẮT các vòng — đủ để vẽ trang. [changelog 0602] Bản cũ
+  // `Promise.all(...).then(set)` không có nhánh lỗi: tải hỏng là kẹt khung xương vĩnh viễn.
+  const { state: tongQuanState, retry: retryTongQuan } = useAsyncLoad(loadCefrOverview, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_LO_TRINH_VI : LOI_LO_TRINH_EN,
+  })
+  const tongQuan = tongQuanState.status === 'ready' ? tongQuanState.data : null
+  const levels = tongQuan?.levels ?? NO_LEVELS
+  const circleById = tongQuan?.circleById ?? NO_CIRCLES
+  const ready = tongQuan !== null
 
   // Tab đang mở — cho phép mở thẳng qua URL `?tab=` (vd link "Học tiếp" ở Home),
   // mặc định danh sách bài của cấp nếu không có/param không hợp lệ.
@@ -304,14 +318,6 @@ export default function CefrLevelPage() {
   // Khóa invalidation thủ công: bump() để tính lại tiến độ sau khi học/đánh dấu.
   const [refresh, setRefresh] = useState(0)
   const bump = () => setRefresh((k) => k + 1)
-
-  useEffect(() => {
-    Promise.all([loadCefr(), loadFoundationIndex()]).then(([lv, foundation]) => {
-      setLevels(lv)
-      setCircleById(Object.fromEntries(foundation.map((c) => [c.id, c])))
-      setReady(true)
-    })
-  }, [])
 
   const uid = user?.id ?? ''
   const level = levels.find((l) => l.id === (levelId ?? '').toUpperCase())
@@ -766,6 +772,16 @@ export default function CefrLevelPage() {
     )
   }
 
+  if (tongQuanState.status === 'error') {
+    return shell(
+      <LoadError
+        message={tongQuanState.message}
+        onRetry={retryTongQuan}
+        lang={isA ? 'vi' : 'en'}
+        hint={isA ? GOI_Y_LO_TRINH_VI : GOI_Y_LO_TRINH_EN}
+      />,
+    )
+  }
   if (!ready || !level) {
     // Khung xương thay cho một dòng chữ "Đang tải…": nó vẽ sẵn ĐÚNG hình dạng nội dung sắp
     // hiện (thẻ tổng quan có hai thanh tiến độ, rồi danh sách phần), nên khi dữ liệu vào,

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 function response(ok: boolean, data: unknown = []): Response {
-  return { ok, json: async () => data } as Response
+  return { ok, status: ok ? 200 : 503, json: async () => data } as Response
 }
 
 type CleanupCallback = (reason: unknown) => unknown
@@ -49,7 +49,7 @@ describe.each([
       expect(fetch).toHaveBeenCalledWith(url)
       release?.(response(false))
       catchSpy.mockRestore()
-      await expect(first).rejects.toThrow('lộ trình nền tảng')
+      await expect(first).rejects.toThrow(/HTTP 5\d\d/)
       expect(loadFoundation(), 'cleanup bị chặn nên cache cũ vẫn còn').toBe(first)
       const oldAttemptCallbacks = cleanupCallbacks.slice(oldAttemptStart)
       expect(oldAttemptCallbacks).toHaveLength(1)
