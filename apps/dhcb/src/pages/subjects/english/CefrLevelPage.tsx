@@ -47,6 +47,7 @@ import Layout from '../../../components/Layout'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import type { GrammarQuizSource } from '../../../components/StudyTabs'
 import { lazyWithRetry } from '../../../lib/lazyWithRetry'
+import { runWhenPageSettled } from '../../../lib/pageSettled'
 import { ACCENT, type AccentClasses } from '../../../lib/cefrAccent'
 import type { CefrLevel, CefrUnit, GrammarLesson } from '../../../data/cefr'
 import type { Circle, CircleSummary } from '../../../data/curriculum'
@@ -68,6 +69,7 @@ import {
 import { preloadLearnData } from '../../../lib/preloader'
 import { useAsyncLoad } from '../../../lib/useAsyncLoad'
 import LoadError from '../../../components/LoadError'
+import LoadingNotice from '../../../components/LoadingNotice'
 import DialogueLoadError from '../../../components/DialogueLoadError'
 import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import {
@@ -210,15 +212,6 @@ const QuizTab = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.Qui
 const ListeningTab = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.ListeningTab })))
 const CefrExam = lazyWithRetry(napCefrExam)
 
-/** Ô chờ khi chunk của màn con/tab đang về — cùng khuôn ô "Đang tải từ vựng…" của các tab học. */
-function OChoTai({ isA }: { isA: boolean }) {
-  return (
-    <div className="glass rounded-xl p-8 text-center animate-fade-in" aria-busy="true">
-      <p className="text-zinc-400 text-sm">{isA ? 'Đang tải…' : 'Loading…'}</p>
-    </div>
-  )
-}
-
 // Tên mục lục — cũng là nhãn nút mở panel trên mobile (S07-3 AC-20).
 const TEN_MUC_LUC = 'Mục lục cấp học'
 
@@ -325,20 +318,15 @@ export default function CefrLevelPage() {
     },
   )
   const dictReady = isCurriculumReady() || curriculumState.status === 'ready'
-  // Trang đã vẽ → nạp trước JS của màn con + tab học + bài thi lúc rảnh, để cú bấm đầu tiên không
+  // Trang đã vẽ → nạp trước JS của màn con + tab học + bài thi khi trang đã ổn định
+  // (`runWhenPageSettled`, cùng nhịp với việc nền khác của app), để cú bấm đầu tiên thường không
   // phải chờ thêm một lượt mạng. Chỉ là nạp TRƯỚC: lỗi ở đây bỏ qua có chủ đích, vì lần render
   // thật đi qua `lazyWithRetry` + Suspense và tự có nhánh lỗi của nó.
   useEffect(() => {
     if (!ready) return
-    const napTruoc = () => {
+    return runWhenPageSettled(() => {
       for (const nap of [napLessonViews, napStudyTabs, napCefrExam]) void nap().catch(() => {})
-    }
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(napTruoc, { timeout: 3000 })
-      return () => window.cancelIdleCallback(id)
-    }
-    const id = window.setTimeout(napTruoc, 1500)
-    return () => window.clearTimeout(id)
+    })
   }, [ready])
 
   // Màn con đang mở (giữ nguyên mẫu của RoadmapTab cũ: hội thoại đè lên flashcard
@@ -802,7 +790,7 @@ export default function CefrLevelPage() {
     return shell(
       <>
         {trigger && <div className="mb-3">{trigger}</div>}
-        <Suspense fallback={<OChoTai isA={isA} />}>{children}</Suspense>
+        <Suspense fallback={<LoadingNotice isA={isA} />}>{children}</Suspense>
       </>,
       headerBack,
       mucLuc,
@@ -944,7 +932,7 @@ export default function CefrLevelPage() {
   }
   if (examing) {
     return shell(
-      <Suspense fallback={<OChoTai isA={isA} />}>
+      <Suspense fallback={<LoadingNotice isA={isA} />}>
         <CefrExam
           uid={uid}
           isA={isA}
@@ -1154,7 +1142,7 @@ export default function CefrLevelPage() {
         ) : (
           // key={level.id}: đổi cấp (điều hướng giữa các trang cấp) → remount để
           // batch/câu hỏi khởi tạo lại theo đúng từ vựng của cấp mới.
-          <Suspense fallback={<OChoTai isA={isA} />}>
+          <Suspense fallback={<LoadingNotice isA={isA} />}>
             {activeTab === 'today' && (
               <TodayLesson
                 key={level.id}

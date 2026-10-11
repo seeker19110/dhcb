@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, useDeferredValue } from 'react'
+import { Suspense, useMemo, useState, useRef, useEffect, useDeferredValue } from 'react'
 import { duongDanMonTiengAnh } from '../../../lib/subjectsHost'
 import {
   Search,
@@ -18,7 +18,10 @@ import Layout from '../../../components/Layout'
 import { PageShell } from '@core/PageShell'
 import PronounceButton from '../../../components/PronounceButton'
 import VocabMilestone from '../../../components/VocabMilestone'
-import StudyPanel, { type StudyTab } from '../../../components/StudyPanel'
+import type { StudyTab } from '../../../components/StudyPanel'
+import LoadingNotice from '../../../components/LoadingNotice'
+import { lazyWithRetry } from '../../../lib/lazyWithRetry'
+import { runWhenPageSettled } from '../../../lib/pageSettled'
 import KaraokeText from '../../../components/KaraokeText'
 import WordIllustration from '../../../components/WordIllustration'
 import WordFormsBlock from '../../../components/WordFormsBlock'
@@ -41,6 +44,11 @@ const PAGE_SIZE_MOBILE = 5
 type Tab = StudyTab | 'search' | 'pos'
 // Từ tab học (StudyPanel) tách riêng để biết khi nào cần render <StudyPanel>.
 const STUDY_TABS: StudyTab[] = ['today', 'srs', 'hard', 'quiz']
+// [changelog 0604] Tab mặc định là "Tra từ" — 4 tab học (kéo theo toàn bộ `StudyTabs`: FSRS, quiz,
+// chấm phát âm…) chỉ cần khi người học bấm vào, nên nạp LƯỜI thay vì import tĩnh. Trước đây trang
+// phải tải hết JS của chúng mới vẽ được ô tra từ.
+const napStudyPanel = () => import('../../../components/StudyPanel')
+const StudyPanel = lazyWithRetry(napStudyPanel)
 
 // Phát hiện chuỗi tiếng Việt (có dấu)
 function hasVietnamese(s: string) {
@@ -108,6 +116,10 @@ export default function Dictionary() {
   const [posFilter, setPosFilter] = useState<string | null>(null)
   const posRefs = useRef<Record<string, HTMLElement | null>>({})
   const touchStart = useRef({ x: 0, y: 0 })
+
+  // Trang đã ổn định → nạp trước JS 4 tab học, để cú bấm sang tab học thường không phải chờ thêm.
+  // Chỉ là nạp TRƯỚC: lỗi bỏ qua có chủ đích — lần render thật đi qua `lazyWithRetry` + Suspense.
+  useEffect(() => runWhenPageSettled(() => void napStudyPanel().catch(() => {})), [])
 
   // Từ đã thuộc — đọc thẳng từ localStorage mỗi render (learnedKey tăng → re-render
   // → tự đọc bản mới), thay cho state + effect (tránh setState đồng bộ trong effect).
@@ -317,14 +329,23 @@ export default function Dictionary() {
 
           {/* ── Tab học (Hôm nay/Ôn SRS/Từ khó/Kiểm tra) ── */}
           {STUDY_TABS.includes(tab as StudyTab) ? (
-            <StudyPanel
-              uid={user.id}
-              isA={isA}
-              tab={tab as StudyTab}
-              onProgress={() => setLearnedKey((k) => k + 1)}
-              onBadges={setBadges}
-              ageGroup={onboarding?.ageGroup}
-            />
+            <Suspense
+              fallback={
+                <LoadingNotice
+                  isA={isA}
+                  label={isA ? 'Đang tải từ vựng…' : 'Loading vocabulary…'}
+                />
+              }
+            >
+              <StudyPanel
+                uid={user.id}
+                isA={isA}
+                tab={tab as StudyTab}
+                onProgress={() => setLearnedKey((k) => k + 1)}
+                onBadges={setBadges}
+                ageGroup={onboarding?.ageGroup}
+              />
+            </Suspense>
           ) : tab === 'search' ? (
             <>
               {/* Ô tìm kiếm — desktop */}
