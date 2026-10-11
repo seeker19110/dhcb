@@ -9,13 +9,17 @@
 export type { Circle, CircleSummary } from './curriculum'
 import type { Circle, CircleSummary } from './curriculum'
 
-/** Tải JSON một lần, nhớ promise; lỗi thì quên promise để lần gọi sau thử lại. */
-function memoFetchJson<T>(url: string, errorMessage: string): () => Promise<T> {
+/**
+ * Tải JSON một lần, nhớ promise; lỗi thì quên promise để lần gọi sau thử lại.
+ * Lỗi HTTP ném `<nhãn> HTTP <mã>` (cùng khuôn `dialoguesLoader`) để `friendlyError` dịch sang câu
+ * đúng ngôn ngữ giao diện — câu tiếng Việt cố định sẽ hiện nguyên văn cả ở chiều B (changelog 0602).
+ */
+function memoFetchJson<T>(url: string, label: string): () => Promise<T> {
   let cached: Promise<T> | null = null
   return () => {
     if (!cached) {
       const promise = fetch(url).then((response) => {
-        if (!response.ok) throw new Error(errorMessage)
+        if (!response.ok) throw new Error(`${label} HTTP ${response.status}`)
         return response.json() as Promise<T>
       })
       cached = promise
@@ -29,10 +33,10 @@ function memoFetchJson<T>(url: string, errorMessage: string): () => Promise<T> {
 
 export const loadFoundation: () => Promise<Circle[]> = memoFetchJson(
   '/data/curriculum.json',
-  'Không tải được dữ liệu lộ trình nền tảng',
+  'Curriculum',
 )
 
 export const loadFoundationIndex: () => Promise<CircleSummary[]> = memoFetchJson(
   '/data/curriculum-index.json',
-  'Không tải được dữ liệu lộ trình nền tảng',
+  'Curriculum index',
 )

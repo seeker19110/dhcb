@@ -1863,9 +1863,9 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   `curriculum-index.json` + hoãn dữ liệu nặng: đo cục bộ trên đường Slow 4G dùng chung, LCP
   13,7 → 5,4 s. CLS cả ba trang 0–0,012. **Còn mở:** (1) Từ điển + CEFR vẫn trên ngân sách LCP
   2,5 s ở mobile — phần còn lại là chuỗi chunk JS của trang (CEFR ~1,1 MB JS thô trước nội dung),
-  việc tách chunk là đợt riêng; (2) đo lại CEFR trên production sau deploy 0601; (3) Tầng 9;
-  (4) `Promise.all([loadCefr(), loadFoundationIndex()]).then(...)` ở trang cấp CEFR/Home/
-  EnglishHome/RoadmapTab chưa có nhánh lỗi (lỗi mạng → khung xương mãi) — chuyển sang `useAsyncLoad`.
+  việc tách chunk là đợt riêng; (2) đo lại CEFR trên production sau deploy 0601; (3) Tầng 9.
+  (Nhánh lỗi khi tải `cefr.json` + chỉ mục ở trang cấp/Lộ trình/trang môn — ✅ ĐÃ SỬA ở
+  `docs/changelog/0602-*.md`; Home + `useTodayPlan` vốn đã có nhánh lỗi.)
 
   **Cập nhật 2026-09-21 (`docs/changelog/0400-*.md`): một hồi quy CLS THẬT đã lộ ra và được sửa**
   (khác debt gốc ở trên — đây là cổng CI `e2e/home-clarity-evidence.spec.ts` chạy trong sandbox,

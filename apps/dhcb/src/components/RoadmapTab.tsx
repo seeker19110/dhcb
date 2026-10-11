@@ -9,7 +9,7 @@
 // các tab học (Hôm nay/Ôn SRS/Từ khó/Kiểm tra) ở src/components/StudyTabs.tsx.
 // ──────────────────────────────────────────────────────────────────────
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   BookOpen,
@@ -23,8 +23,15 @@ import {
 } from 'lucide-react'
 import type { CefrLevel } from '../data/cefr'
 import type { CircleSummary } from '../data/curriculum'
-import { loadCefr } from '../data/cefrLoader'
-import { loadFoundationIndex } from '../data/curriculumLoader'
+import { loadCefrOverview } from '../data/cefrOverviewLoader'
+import { useAsyncLoad } from '../lib/useAsyncLoad'
+import LoadError from './LoadError'
+import {
+  LOI_LO_TRINH_VI,
+  LOI_LO_TRINH_EN,
+  GOI_Y_LO_TRINH_VI,
+  GOI_Y_LO_TRINH_EN,
+} from '../lib/curriculumMessages'
 import { getLearnedWords } from '../lib/vocab'
 import { duongDanLoTrinh } from '../lib/englishRoutes'
 import {
@@ -40,21 +47,23 @@ import { ACCENT } from '../lib/cefrAccent'
 
 // % an toàn (0 khi total = 0).
 const pct = (done: number, total: number) => (total > 0 ? Math.round((done / total) * 100) : 0)
+// Giá trị rỗng ỔN ĐỊNH khi dữ liệu chưa về — để các `useMemo` phụ thuộc không tính lại mỗi render.
+const NO_LEVELS: CefrLevel[] = []
+const NO_CIRCLES: Record<string, CircleSummary> = {}
 
 export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) {
   const nav = useNavigate()
   const { user } = useAuth()
-  const [levels, setLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    Promise.all([loadCefr(), loadFoundationIndex()]).then(([lv, foundation]) => {
-      setLevels(lv)
-      setCircleById(Object.fromEntries(foundation.map((c) => [c.id, c])))
-      setReady(true)
-    })
-  }, [])
+  // [changelog 0602] Bản cũ `Promise.all(...).then(set)` không có nhánh lỗi: tải hỏng là kẹt
+  // "Đang tải lộ trình…" vĩnh viễn. Nay lỗi → khối lỗi + Thử lại.
+  const { state, retry } = useAsyncLoad(loadCefrOverview, {
+    lang: isA ? 'vi' : 'en',
+    errorMessage: isA ? LOI_LO_TRINH_VI : LOI_LO_TRINH_EN,
+  })
+  const overview = state.status === 'ready' ? state.data : null
+  const levels = overview?.levels ?? NO_LEVELS
+  const circleById = overview?.circleById ?? NO_CIRCLES
+  const ready = overview !== null
 
   // `ready` là khóa invalidation thủ công (dữ liệu đọc từ localStorage)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,6 +91,16 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
     [levels, examPassed],
   )
 
+  if (state.status === 'error') {
+    return (
+      <LoadError
+        message={state.message}
+        onRetry={retry}
+        lang={isA ? 'vi' : 'en'}
+        hint={isA ? GOI_Y_LO_TRINH_VI : GOI_Y_LO_TRINH_EN}
+      />
+    )
+  }
   if (!ready) {
     return (
       <div className="glass rounded-xl p-8 text-center animate-fade-in">
