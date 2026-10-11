@@ -463,8 +463,10 @@ sau đợt 1 + đợt 2 + lệnh 8/9 (9/15 lệnh, chạy bằng subagent Sonnet
 - **Lệnh 4 · P0-3 — ✅ ĐÃ MERGE (#1011).** `GuestHome` (Companion giới thiệu + ĐÚNG MỘT CTA
   "Bắt đầu — chọn việc đầu tiên" + dải môn) thay bố cục đầy đủ cho khách; `GuestBanner` đổi điều
   kiện — chỉ hiện SAU KHI khách có dấu vết học thật (`hasAnyGuestSession()`), không còn hiện ngay
-  lúc mở trang. Nợ mở: AC-8 (ảnh chụp guest 3 theme × 2 bề rộng) cần mở rộng hệ thống 6-màn-mẫu
-  (`ScreenId` khoá cứng 6 giá trị dùng chung 3 file) — để lát riêng.
+  lúc mở trang. ✅ AC-8 (ảnh chụp guest 3 theme × 2 bề rộng) ĐÃ LÀM ở changelog `0600` — không cần mở rộng
+  hệ 6-màn-mẫu: `e2e/guest-home.spec.ts` chụp 1440/390 × 3 theme kèm 4 bất biến đo được (không
+  tràn, CTA trong màn đầu, vùng chạm ≥ 44px, lời chào không bị cắt); phép đo cuối bắt được câu
+  giới thiệu mất chữ "tốt hơn." ở 390px (đã sửa).
 - **Lệnh 7 · P1-5 — ✅ ĐÃ MERGE (#1012).** `WeekRhythm` (7 chấm T2→CN + nhiệm vụ + huy hiệu mới
   nhất, ẩn với khách/tuần rỗng+streak=0) + `latestUnlocked()` mới trong `lib/achievements.ts`.
 - **Lệnh 8 · P1-6 — ✅ ĐÃ MERGE (#1014).** `SessionDone` gộp `StreakCelebration` +
@@ -506,7 +508,7 @@ trong lát lệnh 12. Còn hai việc tay:
 người vận hành phải áp dụng các `location` 301 trên VPS theo `docs/deploy-vps-ubuntu.md`, rồi
 đo Google Search Console sau 14 ngày (2026-10-01) để xác nhận URL cũ đã được thay thế.
 
-**Còn lại:** nợ coverage branch, bundle JS, AC-8 visual, S09-3 conflict UI, read-model `stats`
+**Còn lại:** nợ coverage branch, bundle JS, S09-3 conflict UI, read-model `stats`
 không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelog. Mỗi lát tiếp theo phải có
 đặc tả được duyệt và changelog riêng trước khi sửa mã.
 
@@ -1250,7 +1252,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   không trả `correctId`). Còn lại hai đường, không chặn được bằng seed: (1) đọc đề rồi tra
   `dialogues.json` (đáp án là sự thật trong dữ liệu công khai) — chỉ hết khi dữ liệu hội thoại không
   còn gửi cho giao diện (đổi kiến trúc, tốn nhiều) — **vẫn chờ quyết**; (2) ✅ **đoán mò — đã vá
-  đợt `0559`** (PR (điền sau khi tạo)): trần 5 lượt nộp KHÔNG ĐẠT/24 giờ/(người, hội thoại), hết
+  đợt `0559`** (PR [#1307](https://github.com/seeker19110/dhcb/pull/1307)): trần 5 lượt nộp KHÔNG ĐẠT/24 giờ/(người, hội thoại), hết
   trần → 409 `ATTEMPT_CAP` ở cả mở lượt lẫn nộp. Đo thật: đoán ngẫu nhiên đạt 25–29 %/lượt nên vẫn
   ~77 % đạt trong 5 lượt/ngày — trần chặn VÉT CẠN tự động, không làm đoán mò bất khả. Đặc tả
   `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md` ⑤b + ⑥.
