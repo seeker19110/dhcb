@@ -56,10 +56,10 @@ import {
 } from '../../../components/StudyTabs'
 import { ACCENT, type AccentClasses } from '../../../lib/cefrAccent'
 import type { CefrLevel, CefrUnit, GrammarLesson } from '../../../data/cefr'
-import type { Circle } from '../../../data/curriculum'
+import type { Circle, CircleSummary } from '../../../data/curriculum'
 import type { Dialogue } from '../../../data/dialogues'
 import { loadCefr } from '../../../data/cefrLoader'
-import { loadFoundation } from '../../../data/curriculumLoader'
+import { loadFoundation, loadFoundationIndex } from '../../../data/curriculumLoader'
 import { getDialogues } from '../../../data/dialoguesLoader'
 import { useAuth } from '../../../context/useAuth'
 import { getDirection } from '../../../lib/storage'
@@ -178,6 +178,18 @@ function coHoatDong(level: CefrLevel, hd: CefrActivityRef): boolean {
   return hd.contentId === unit.id
 }
 
+// ── Dữ liệu nặng nạp SAU khi trang đã vẽ nội dung (changelog 0601) ──────────────────────
+// Trang vẽ ngay khi có `cefr.json` + bản TÓM TẮT các vòng (~50 KB nén). Từ điển + vòng đầy đủ
+// (~2 MB nén) chỉ cần cho tab học và thẻ từ vựng — tải sau, để chúng không giành băng thông với
+// nội dung đầu tiên (đo Slow 4G trước khi tách: trang cấp B1 chờ 6,3–7,3 s).
+/** Loader "chưa tải": giữ `useAsyncLoad` ở trạng thái chờ cho tới khi trang sẵn sàng. */
+const CHUA_TAI = (): Promise<never> => new Promise<never>(() => {})
+/** Vòng từ vựng ĐẦY ĐỦ theo id — thẻ từ cần nghĩa, câu ví dụ, phiên âm. */
+async function loadVongDayDuTheoId(): Promise<Record<string, Circle>> {
+  const all = await loadFoundation()
+  return Object.fromEntries(all.map((c) => [c.id, c]))
+}
+
 // Tên mục lục — cũng là nhãn nút mở panel trên mobile (S07-3 AC-20).
 const TEN_MUC_LUC = 'Mục lục cấp học'
 
@@ -193,7 +205,7 @@ export default function CefrLevelPage() {
   const isDesktop = useIsDesktopViewport()
 
   const [levels, setLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, Circle>>({})
+  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
   const [ready, setReady] = useState(false)
 
   // Tab đang mở — cho phép mở thẳng qua URL `?tab=` (vd link "Học tiếp" ở Home),
@@ -261,16 +273,28 @@ export default function CefrLevelPage() {
   // gate riêng để tab "Bài học" vẫn hiện ngay không phải chờ.
   // [changelog 0525] Bản cũ `loadCurriculum().then(() => setDictReady(true))` không có nhánh lỗi:
   // tải từ điển hỏng là 4 tab học (Hôm nay/Ôn/Từ khó/Quiz) kẹt "Đang tải từ vựng…" vĩnh viễn.
-  const { state: curriculumState, retry: retryCurriculum } = useAsyncLoad(loadCurriculum, {
-    lang: isA ? 'vi' : 'en',
-    errorMessage: isA ? LOI_TU_VUNG_VI : LOI_TU_VUNG_EN,
-  })
+  // Chỉ bắt đầu tải khi trang đã `ready` (đã vẽ nội dung) — xem chú thích ở `CHUA_TAI`.
+  const { state: curriculumState, retry: retryCurriculum } = useAsyncLoad(
+    ready ? loadCurriculum : CHUA_TAI,
+    {
+      lang: isA ? 'vi' : 'en',
+      errorMessage: isA ? LOI_TU_VUNG_VI : LOI_TU_VUNG_EN,
+    },
+  )
+  const { state: vongDayDuState, retry: retryVongDayDu } = useAsyncLoad(
+    ready ? loadVongDayDuTheoId : CHUA_TAI,
+    {
+      lang: isA ? 'vi' : 'en',
+      errorMessage: isA ? LOI_TU_VUNG_VI : LOI_TU_VUNG_EN,
+    },
+  )
   const dictReady = isCurriculumReady() || curriculumState.status === 'ready'
 
   // Màn con đang mở (giữ nguyên mẫu của RoadmapTab cũ: hội thoại đè lên flashcard
   // để xem xong hội thoại quay lại đúng màn flashcard).
   const [lesson, setLesson] = useState<GrammarLesson | null>(null)
-  const [circle, setCircle] = useState<Circle | null>(null)
+  // Bản TÓM TẮT của vòng đang mở; thẻ từ tra bản đầy đủ theo id lúc vẽ (`vongDayDuState`).
+  const [circle, setCircle] = useState<CircleSummary | null>(null)
   const [dialogue, setDialogue] = useState<Dialogue | null>(null)
   // Id unit/vòng SỞ HỮU hội thoại đang mở — khoá ghi "đã xem"/"đã học" (`dialogueKey`).
   const [dialogueOwner, setDialogueOwner] = useState('')
@@ -282,7 +306,7 @@ export default function CefrLevelPage() {
   const bump = () => setRefresh((k) => k + 1)
 
   useEffect(() => {
-    Promise.all([loadCefr(), loadFoundation()]).then(([lv, foundation]) => {
+    Promise.all([loadCefr(), loadFoundationIndex()]).then(([lv, foundation]) => {
       setLevels(lv)
       setCircleById(Object.fromEntries(foundation.map((c) => [c.id, c])))
       setReady(true)
@@ -815,16 +839,40 @@ export default function CefrLevelPage() {
     )
   }
   if (circle) {
+    // Thẻ từ cần vòng ĐẦY ĐỦ (tải sau khi trang vẽ xong) — chưa về thì hiện trạng thái chờ.
+    const vongDayDu = vongDayDuState.status === 'ready' ? vongDayDuState.data[circle.id] : undefined
     return manCon(
-      <VocabFlash
-        circle={circle}
-        isA={isA}
-        uid={uid}
-        pool={studyPool}
-        onProgress={bump}
-        onBack={dongVongTuVung}
-        onOpenDialogue={(d) => openDialogue(circle.id, d)}
-      />,
+      vongDayDu ? (
+        <VocabFlash
+          circle={vongDayDu}
+          isA={isA}
+          uid={uid}
+          pool={studyPool}
+          onProgress={bump}
+          onBack={dongVongTuVung}
+          onOpenDialogue={(d) => openDialogue(circle.id, d)}
+        />
+      ) : vongDayDuState.status === 'loading' ? (
+        <div className="glass rounded-xl p-8 text-center animate-fade-in" aria-busy="true">
+          <p className="text-zinc-400 text-sm">
+            {isA ? 'Đang tải từ vựng…' : 'Loading vocabulary…'}
+          </p>
+        </div>
+      ) : (
+        // Lỗi mạng, hoặc (hiếm) chỉ mục có vòng mà bản đầy đủ không có — cả hai đều cho Thử lại.
+        <LoadError
+          message={
+            vongDayDuState.status === 'error'
+              ? vongDayDuState.message
+              : isA
+                ? LOI_TU_VUNG_VI
+                : LOI_TU_VUNG_EN
+          }
+          onRetry={retryVongDayDu}
+          lang={isA ? 'vi' : 'en'}
+          hint={isA ? GOI_Y_TU_VUNG_VI : GOI_Y_TU_VUNG_EN}
+        />
+      ),
       dongVongTuVung,
     )
   }
@@ -1463,7 +1511,7 @@ export function UnitSection({
   index: number
   isA: boolean
   accent: AccentClasses
-  circleById: Record<string, Circle>
+  circleById: Record<string, CircleSummary>
   learned: Set<string>
   doneGrammar: Set<string>
   viewedDialogues: Set<string>
@@ -1473,7 +1521,7 @@ export function UnitSection({
   dialogues: Dialogue[] | undefined
   lessonStartIndex: number
   onOpenLesson: (g: GrammarLesson) => void
-  onOpenCircle: (c: Circle) => void
+  onOpenCircle: (c: CircleSummary) => void
   onOpenDialogue: (ownerId: string, d: Dialogue) => void
 }) {
   // [changelog 0530] Hội thoại do trang cấp tải MỘT lần cho mọi unit (xem `loadLevelDialogues`) —
@@ -1488,8 +1536,8 @@ export function UnitSection({
 
   const circles = unit.vocabCircleIds
     .map((id) => circleById[id])
-    .filter((c): c is Circle => c != null)
-  const isCircleDone = (c: Circle) => circleDoneCount(c, learned) >= c.words.length
+    .filter((c): c is CircleSummary => c != null)
+  const isCircleDone = (c: CircleSummary) => circleDoneCount(c, learned) >= c.words.length
   const isDlgViewed = (d: Dialogue) => viewedDialogues.has(dialogueKey(unit.id, d.titleEn))
   // "Xong" một hội thoại = ĐÃ HỌC (đạt kiểm tra hiểu), không phải chỉ mở ra xem.
   const isDlgLearned = (d: Dialogue) => learnedDialogues.has(dialogueKey(unit.id, d.titleEn))

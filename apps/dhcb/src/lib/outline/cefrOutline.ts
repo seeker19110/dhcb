@@ -12,11 +12,11 @@
 // Ở `apps/` vì dữ liệu cấp (`data/cefrTypes`) và tiến độ (`lib/cefrProgress`) sống trong app;
 // `packages/` không được import `apps/`.
 //
-// KHÔNG FETCH: `cefr.json` và danh sách vòng đã nằm sẵn trong trang (`loadCefr`/`loadFoundation`);
+// KHÔNG FETCH: `cefr.json` và danh sách vòng đã nằm sẵn trong trang (`loadCefr`/`loadFoundationIndex`);
 // adapter chỉ nhận dữ liệu đã có qua `ctx` và là hàm thuần, gọi được trong `useMemo`.
 import type { Outline, OutlineNode } from '@dhcb/core-contracts/outline'
 import type { CefrLevel, CefrUnit } from '../../data/cefrTypes'
-import type { Circle } from '../../data/curriculumTypes'
+import type { CircleSummary } from '../../data/curriculumTypes'
 import { circleDoneCount, dialogueKey } from '../cefrProgress'
 import { duongDanLoTrinh } from '../englishRoutes'
 
@@ -37,8 +37,8 @@ export interface CefrOutlineCtx {
    * (không biết N, không khẳng định "đã học hết", không đẻ mẫu số ảo).
    */
   dialogueTitlesByUnit?: ReadonlyMap<string, readonly string[]>
-  /** Vòng từ vựng theo id (từ `loadFoundation()`). */
-  circles: ReadonlyMap<string, Circle>
+  /** Vòng từ vựng theo id — bản tóm tắt `loadFoundationIndex()` là đủ (chỉ đếm tiến độ). */
+  circles: ReadonlyMap<string, CircleSummary>
   /** Khoá cấp — SERVER là nguồn sự thật (`computeLockedMapFromServer`), adapter không tự tính. */
   lockedMap: ReadonlyMap<CefrLevel['id'], boolean>
   /** Cấp liền trước, để viết đúng câu giải thích khoá như màn khoá hiện có. */

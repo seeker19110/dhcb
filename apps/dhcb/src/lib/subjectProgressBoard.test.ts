@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const m = vi.hoisted(() => ({
   // Tiếng Anh
   loadCefr: vi.fn(),
-  loadFoundation: vi.fn(async () => [{ id: 'c1' }]),
+  loadFoundationIndex: vi.fn(async () => [{ id: 'c1' }]),
   buildCefrOutline: vi.fn(() => ({ kind: 'cefr' })),
   computeLockedMapFromServer: vi.fn(() => ({})),
   getDoneGrammar: vi.fn(() => []),
@@ -38,7 +38,7 @@ const m = vi.hoisted(() => ({
 }))
 
 vi.mock('../data/cefrLoader', () => ({ loadCefr: m.loadCefr }))
-vi.mock('../data/curriculumLoader', () => ({ loadFoundation: m.loadFoundation }))
+vi.mock('../data/curriculumLoader', () => ({ loadFoundationIndex: m.loadFoundationIndex }))
 vi.mock('./outline/cefrOutline', () => ({ buildCefrOutline: m.buildCefrOutline }))
 vi.mock('./cefrProgress', () => ({
   computeLockedMapFromServer: m.computeLockedMapFromServer,

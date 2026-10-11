@@ -55,7 +55,9 @@ import KaraokeText, { KARAOKE_INDENT } from './KaraokeText'
 import VoiceRoleBadge from './VoiceRoleBadge'
 import WordCard from './WordCard'
 import EvaluationResultView from './EvaluationResultView'
-import { InlinePronounce } from '../pages/subjects/english/Lessons'
+// Import THẲNG file con, không qua `Lessons.tsx`: trang Lessons kéo theo `lessons/loader` — module
+// tự tải `/data/lessons/index.json` lúc import, giành băng thông của trang cấp CEFR (changelog 0601).
+import { InlinePronounce } from '../pages/subjects/english/lessons/InlinePronounce'
 import type { GrammarLesson, QuizItem } from '../data/cefr'
 import type { Circle } from '../data/curriculum'
 import type { Dialogue } from '../data/dialogues'

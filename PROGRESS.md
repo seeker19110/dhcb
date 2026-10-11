@@ -1855,8 +1855,17 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   thừa) — đo cục bộ trước/sau: mobile 66 → 89 (LCP 7,3 → 3,1 s), desktop 84 → 99.
   **Tiếp 2026-10-10 (`docs/changelog/0584-*.md`, người dùng chốt prerender):** dựng sẵn HTML
   trang chủ khách (mobile) + nạp JS sau lần vẽ chữ đầu + `llms.txt`/404 `/.well-known/` — đo cục
-  bộ Lighthouse 13.5 mobile 97–99 (FCP = LCP 1,5 s), A11y/BP/SEO/Agentic Browsing 100. **Còn mở:**
-  đo lại PageSpeed sau deploy; Dictionary + trang CEFR; Tầng 9.
+  bộ Lighthouse 13.5 mobile 97–99 (FCP = LCP 1,5 s), A11y/BP/SEO/Agentic Browsing 100.
+  **Tiếp 2026-10-11 (`docs/changelog/0601-*.md`): TẦNG 8 ĐÃ ĐO ĐỦ 3 TRANG trên production**
+  (Lighthouse 13.5 mobile, cấu hình PageSpeed): trang chủ 99 (LCP 1,1 s — xác nhận đợt 0584 sau
+  deploy); Từ điển 91–93 (LCP 2,8–2,9 s); trang cấp CEFR B1 83–85 (LCP 3,1–3,2 s), đo Slow 4G
+  thật thì 6,3–7,3 s vì chờ `curriculum.json` ~1 MB nén → đã tách bản tóm tắt
+  `curriculum-index.json` + hoãn dữ liệu nặng: đo cục bộ trên đường Slow 4G dùng chung, LCP
+  13,7 → 5,4 s. CLS cả ba trang 0–0,012. **Còn mở:** (1) Từ điển + CEFR vẫn trên ngân sách LCP
+  2,5 s ở mobile — phần còn lại là chuỗi chunk JS của trang (CEFR ~1,1 MB JS thô trước nội dung),
+  việc tách chunk là đợt riêng; (2) đo lại CEFR trên production sau deploy 0601; (3) Tầng 9;
+  (4) `Promise.all([loadCefr(), loadFoundationIndex()]).then(...)` ở trang cấp CEFR/Home/
+  EnglishHome/RoadmapTab chưa có nhánh lỗi (lỗi mạng → khung xương mãi) — chuyển sang `useAsyncLoad`.
 
   **Cập nhật 2026-09-21 (`docs/changelog/0400-*.md`): một hồi quy CLS THẬT đã lộ ra và được sửa**
   (khác debt gốc ở trên — đây là cổng CI `e2e/home-clarity-evidence.spec.ts` chạy trong sandbox,

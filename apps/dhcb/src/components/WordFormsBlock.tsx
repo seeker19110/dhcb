@@ -7,14 +7,9 @@ import { loadFormExamples } from '../data/formExamplesLoader'
 import type { ExPair } from '../data/form-examples'
 
 // Cache module-level để không fetch lại /data/form-examples.json mỗi lần component mount.
+// KHÔNG tải sẵn lúc import module (changelog 0601) — cùng lý do với `WordCard.tsx`: lần mount đầu
+// tự nạp trong `useEffect` bên dưới.
 let _formExCache: Record<string, [ExPair, ExPair]> | null = null
-loadFormExamples()
-  .then((d) => {
-    _formExCache = d
-  })
-  .catch(() => {
-    // Lỗi mạng → không có ví dụ, phần chip dạng từ vẫn hiển thị bình thường.
-  })
 
 interface Props {
   forms?: WordForms

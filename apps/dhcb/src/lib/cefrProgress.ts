@@ -15,7 +15,7 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import type { CefrLevel, CefrUnit } from '../data/cefr'
-import type { Circle } from '../data/curriculum'
+import type { CircleSummary } from '../data/curriculum'
 import { UNLOCK_PCT } from '@dhcb/core-learner/unlockThreshold'
 import {
   DIALOGUE_LEARNED_PREFIX,
@@ -140,14 +140,14 @@ export interface Counts {
 
 // Số từ đã thuộc trong 1 vòng — so cả nguyên dạng lẫn chữ thường
 // (learned đọc từ vocab.ts đã lowercase, nhưng giữ kiểm tra kép cho an toàn).
-export function circleDoneCount(circle: Circle, learned: Set<string>): number {
+export function circleDoneCount(circle: CircleSummary, learned: Set<string>): number {
   return circle.words.filter((w) => learned.has(w.word) || learned.has(w.word.toLowerCase())).length
 }
 
 // Từ vựng của 1 unit (cộng các vòng liên kết).
 export function unitVocabCounts(
   unit: CefrUnit,
-  byId: Record<string, Circle>,
+  byId: Record<string, CircleSummary>,
   learned: Set<string>,
 ): Counts {
   let done = 0
@@ -164,7 +164,7 @@ export function unitVocabCounts(
 // Từ vựng của cả cấp.
 export function levelVocabCounts(
   level: CefrLevel,
-  byId: Record<string, Circle>,
+  byId: Record<string, CircleSummary>,
   learned: Set<string>,
 ): Counts {
   return level.units.reduce(
@@ -200,7 +200,7 @@ export function levelGrammarCounts(level: CefrLevel, doneGrammar: Set<string>): 
 // cuối cấp" — cấp sau mở khóa khi THI ĐẠT, xem computeLockedMap.)
 export function isExamEligible(
   level: CefrLevel,
-  byId: Record<string, Circle>,
+  byId: Record<string, CircleSummary>,
   learned: Set<string>,
   doneGrammar: Set<string>,
 ): boolean {
@@ -281,7 +281,7 @@ export interface NextStep {
 
 export function findNextStep(
   level: CefrLevel,
-  byId: Record<string, Circle>,
+  byId: Record<string, CircleSummary>,
   learned: Set<string>,
   doneGrammar: Set<string>,
 ): NextStep | null {

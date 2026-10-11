@@ -17,7 +17,11 @@ function capturePromiseCleanup(callbacks: CleanupCallback[]) {
   })
 }
 
-describe('loadFoundation — cache promise có thể phục hồi', () => {
+// Hai bản (đầy đủ + tóm tắt, changelog 0601) dùng CHUNG một khuôn nhớ promise — canh cả hai.
+describe.each([
+  ['loadFoundation', '/data/curriculum.json'],
+  ['loadFoundationIndex', '/data/curriculum-index.json'],
+] as const)('%s — cache promise có thể phục hồi', (ten, url) => {
   beforeEach(() => {
     vi.resetModules()
     vi.stubGlobal('fetch', vi.fn())
@@ -36,12 +40,13 @@ describe('loadFoundation — cache promise có thể phục hồi', () => {
             release = resolve
           }),
       )
-      const { loadFoundation } = await import('./curriculumLoader')
+      const loadFoundation = (await import('./curriculumLoader'))[ten]
 
       const oldAttemptStart = cleanupCallbacks.length
       const first = loadFoundation()
       expect(loadFoundation()).toBe(first)
       expect(fetch).toHaveBeenCalledTimes(1)
+      expect(fetch).toHaveBeenCalledWith(url)
       release?.(response(false))
       catchSpy.mockRestore()
       await expect(first).rejects.toThrow('lộ trình nền tảng')

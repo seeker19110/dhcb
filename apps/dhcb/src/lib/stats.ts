@@ -4,9 +4,9 @@
 
 import type { DailyUsage } from '../types'
 import { loadCefr } from '../data/cefrLoader'
-import { loadFoundation } from '../data/curriculumLoader'
+import { loadFoundationIndex } from '../data/curriculumLoader'
 import type { CefrLevel } from '../data/cefr'
-import type { Circle } from '../data/curriculum'
+import type { CircleSummary } from '../data/curriculum'
 import { getWritingSubs } from './storage'
 import { parseJson } from './ai'
 import { vnDateStr, vnDayOfWeek } from './date'
@@ -196,15 +196,15 @@ export interface LevelProgress {
 }
 
 // Số từ trong 1 vòng đã thuộc — so cả bản gốc lẫn chữ thường (giống RoadmapTab).
-function circleDone(circle: Circle, learned: Set<string>): number {
+function circleDone(circle: CircleSummary, learned: Set<string>): number {
   return circle.words.filter((w) => learned.has(w.word) || learned.has(w.word.toLowerCase())).length
 }
 
 // % hoàn thành mỗi cấp = số từ đã thuộc / tổng số từ trong các vòng vocab của cấp.
 // Đây CHÍNH là cách RoadmapTab tính tiến độ + mở khóa cấp (ngưỡng 70%) — giữ nhất quán.
 export async function getCefrProgress(learned: Set<string>): Promise<LevelProgress[]> {
-  const [levels, foundation] = await Promise.all([loadCefr(), loadFoundation()])
-  const byId: Record<string, Circle> = {}
+  const [levels, foundation] = await Promise.all([loadCefr(), loadFoundationIndex()])
+  const byId: Record<string, CircleSummary> = {}
   foundation.forEach((c) => {
     byId[c.id] = c
   })

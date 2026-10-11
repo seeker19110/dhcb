@@ -22,9 +22,9 @@ import {
   Sparkles,
 } from 'lucide-react'
 import type { CefrLevel } from '../data/cefr'
-import type { Circle } from '../data/curriculum'
+import type { CircleSummary } from '../data/curriculum'
 import { loadCefr } from '../data/cefrLoader'
-import { loadFoundation } from '../data/curriculumLoader'
+import { loadFoundationIndex } from '../data/curriculumLoader'
 import { getLearnedWords } from '../lib/vocab'
 import { duongDanLoTrinh } from '../lib/englishRoutes'
 import {
@@ -45,11 +45,11 @@ export default function RoadmapTab({ uid, isA }: { uid: string; isA: boolean }) 
   const nav = useNavigate()
   const { user } = useAuth()
   const [levels, setLevels] = useState<CefrLevel[]>([])
-  const [circleById, setCircleById] = useState<Record<string, Circle>>({})
+  const [circleById, setCircleById] = useState<Record<string, CircleSummary>>({})
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    Promise.all([loadCefr(), loadFoundation()]).then(([lv, foundation]) => {
+    Promise.all([loadCefr(), loadFoundationIndex()]).then(([lv, foundation]) => {
       setLevels(lv)
       setCircleById(Object.fromEntries(foundation.map((c) => [c.id, c])))
       setReady(true)

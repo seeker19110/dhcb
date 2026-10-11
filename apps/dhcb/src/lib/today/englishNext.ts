@@ -9,7 +9,7 @@
 import type { TodayItem } from '@dhcb/core-contracts/todayPlan'
 import { todayItemId } from '@dhcb/core-contracts/todayItemId'
 import type { CefrLevel } from '../../data/cefr'
-import type { Circle } from '../../data/curriculum'
+import type { CircleSummary } from '../../data/curriculum'
 import { circleDoneCount, findNextStep } from '../cefrProgress'
 import { duongDanLoTrinh } from '../englishRoutes'
 
@@ -17,7 +17,7 @@ export const ENGLISH_SUBJECT_ID = 'english'
 
 export interface EnglishNextCtx {
   levels: readonly CefrLevel[]
-  circleById: Record<string, Circle>
+  circleById: Record<string, CircleSummary>
   learned: Set<string>
   doneGrammar: Set<string>
   /** `computeLockedMapFromServer` — cấp bị khoá thì bỏ qua, y như Trang chủ đang làm. */

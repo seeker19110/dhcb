@@ -7,15 +7,13 @@ import WordFormsBlock from './WordFormsBlock'
 import type { ExPair } from '../data/extra-examples'
 import { loadExtraExamples } from '../data/extraExamplesLoader'
 
-// Cache module-level để không fetch lại mỗi lần component mount
+// Cache module-level để không fetch lại mỗi lần component mount.
+// KHÔNG tải sẵn lúc import module (changelog 0601): trang cấp CEFR import file này từ đầu, nên tải
+// sẵn ở đây là ~190 KB giành băng thông với nội dung đầu tiên dù người học chưa mở thẻ nào. Thẻ
+// đầu tiên tự nạp trong `useEffect` bên dưới. Ví dụ bổ sung là dữ liệu PHỤ: lỗi tải thì không có
+// ví dụ thêm (thẻ vẫn dùng bình thường); loader không cache lỗi nên lần mount sau tự tải lại
+// (changelog 0530).
 let _extraCache: Record<string, [ExPair, ExPair]> | null = null
-// Ví dụ bổ sung là dữ liệu PHỤ: lỗi tải thì không có ví dụ thêm (thẻ vẫn dùng bình thường); loader
-// không cache lỗi nên lần mount sau tự tải lại (changelog 0530).
-loadExtraExamples()
-  .then((d) => {
-    _extraCache = d
-  })
-  .catch(() => undefined)
 import type { DictEntry } from '../types'
 import { isDifficult, toggleDifficult } from '../lib/vocab'
 import { haptics } from '../lib/haptics'

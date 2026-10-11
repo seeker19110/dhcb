@@ -27,7 +27,7 @@ vi.mock('../../../context/useAuth', () => ({
 }))
 vi.mock('../../../lib/useCloudSync', () => ({ useCloudSync: () => ({ synced: true }) }))
 vi.mock('../../../data/cefrLoader', () => ({ loadCefr: async () => [] }))
-vi.mock('../../../data/curriculumLoader', () => ({ loadFoundation: async () => [] }))
+vi.mock('../../../data/curriculumLoader', () => ({ loadFoundationIndex: async () => [] }))
 
 describe('EnglishHome — trang tổng quan môn Tiếng Anh', () => {
   let container: HTMLDivElement
