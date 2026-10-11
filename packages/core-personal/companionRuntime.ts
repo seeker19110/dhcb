@@ -2,18 +2,30 @@
 // Implements the canonical pipeline from 02-SYSTEM-ARCHITECTURE.md mục 3:
 // Intent/Domain Resolver -> Context Builder -> Companion Planner -> Policy Engine
 // -> Capability/Tool Router -> Result Validator & State Proposal -> Response.
+//
+// [2026-10-11 — nâng cấp Companion GĐ1, `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`]
+// Lượt thoại tách thành ba chặng để stream được THẬT:
+//   prepareCompanionTurn  → ý định · hồ sơ (nhóm tuổi) · ngữ cảnh · LỚP AN TOÀN · kế hoạch · đề xuất
+//   synthesizeCompanionReply → gọi AI, phát từng mẩu chữ qua `onDelta` (Claude) khi có
+//   finalizeCompanionTurn → tách khối câu hỏi tick, lưu transcript, dựng CompanionResponse
+// `executeCompanionTurn` = ba chặng nối liền; `streamCompanionTurn` chen `yield` vào giữa.
+// Prompt hệ thống nằm ở `companionPrompt.ts`; lớp an toàn ở `safetyGuard.ts`.
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { z } from 'zod'
 import { buildContextPackage, type ContextBuildOptions } from './contextEngine.js'
 import { appendCompanionMessage } from './companionMessageService.js'
 import { proposeAction, type ProposeActionInput } from './proposedActionService.js'
+import { buildCompanionSystemPrompt, type ContextBlock } from './companionPrompt.js'
+import { assessSafety, type SafetyAssessment } from './safetyGuard.js'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import { SensitivitySchema, type Sensitivity } from '@dhcb/core-contracts/personalFact'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
+import { AgeGroupSchema, type AgeGroup } from '@dhcb/core-contracts/intake'
+import { buildSafetyNotice, type CompanionSafetyNotice } from '@dhcb/core-contracts/companionSafety'
 import {
   extractInteractiveQuestions,
-  INTERACTIVE_QUESTION_PROMPT_GUIDE,
+  INTERACTIVE_QUESTION_FENCE,
   type InteractiveQuestion,
 } from '@dhcb/core-contracts/interactiveQuestion'
 import {
@@ -36,21 +48,13 @@ import { callGemini } from '@dhcb/core-ai/geminiApi'
 import { GEMINI_CHAT_MODEL, GROQ_CHAT_MODEL, getAnthropicRoute } from '@dhcb/core-ai/aiConfig'
 import { recordAiTokenUsage, type AiTokenUsage } from '@dhcb/core-ai/aiTokenUsage'
 
-export const COMPANION_SYSTEM_PROMPT =
-  'Bạn là Bạn Đồng Hành AI — Người đồng hành trí tuệ, thấu cảm và tận tâm trong nền tảng "Đồng Hành Cùng Bạn".\n\n' +
-  '🌟 SỨ MỆNH & ĐỊNH HƯỚNG CỦA BẠN:\n' +
-  'Đồng hành cùng người dùng trên hành trình tự học, phát triển bản thân và làm chủ cuộc sống xuyên suốt 5 lĩnh vực cốt lõi:\n' +
-  '1. 📚 Học tập (Learning): Làm chủ tiếng Anh (IELTS, phát âm IPA, từ vựng theo ngữ cảnh, giao tiếp tự nhiên) và LẬP TRÌNH từ số 0 (Python, thang bậc P1–P6, học qua một dự án xuyên suốt), cùng phương pháp tự học Socratic và tư duy đa ngành.\n' +
-  '2. 💼 Sự nghiệp (Career): Định hướng phát triển nghề nghiệp, giải mã năng lực cá nhân, xây dựng lộ trình thăng tiến bền vững theo chuẩn quốc tế.\n' +
-  '3. ⚡ Công việc (Work): Giải quyết bài toán chuyên môn, tư duy hệ thống & kiến trúc, nâng cao năng suất và ra quyết định hiệu quả.\n' +
-  '4. 🚀 Khởi nghiệp (Venture): Thẩm định ý tưởng sáng tạo, kiểm chứng giả định thực tế, phản biện logic và xây dựng giải pháp thực thi tinh gọn.\n' +
-  '5. 🌿 Đời sống (Life): Cân bằng thân - tâm - trí, quản lý nhịp sinh học, nuôi dưỡng thói quen tích cực và duy trì trạng thái dòng chảy (Flow State).\n\n' +
-  '💬 PHONG CÁCH GIAO TIẾP & TÍNH CÁCH:\n' +
-  '- Thân thiện, chân thành, ấm áp, giàu năng lượng tích cực và luôn sẵn sàng lắng nghe.\n' +
-  '- Xưng hô linh hoạt, tự nhiên ("tôi" - "bạn" hoặc "Đồng Hành" - "bạn") như một người bạn tri kỷ, một cố vấn đáng tin cậy.\n' +
-  '- Dẫn dắt thông minh bằng phương pháp gợi mở Socratic: không áp đặt câu trả lời cứng nhắc mà đặt những câu hỏi sâu sắc để người dùng tự khám phá tiềm năng.\n' +
-  '- Câu trả lời súc tích, gãy gọn, có cấu trúc mạch lạc, truyền cảm hứng và mang tính hành động cụ thể.\n' +
-  '- Ngôn ngữ: Sử dụng tiếng Việt tự nhiên, chuẩn mực; kết hợp song ngữ Việt - Anh khi hỗ trợ học tiếng Anh để tăng tính tương tác và phản xạ.\n'
+/**
+ * Ngân sách ngữ cảnh mặc định của một lượt Companion (token ước lượng). Trước 2026-10-11 dùng
+ * mặc định 2000 của Context Engine — chỉ đủ khoảng 4–5 lượt lịch sử sau khi trừ hồ sơ/ghi chú,
+ * nên Companion "quên" sớm. 4000 ≈ 0,8¢ token vào mỗi lượt ở Sonnet khi KHÔNG trúng cache
+ * (phần đầu lặp lại được cache 10% giá) — chấp nhận được với hạn mức 30 lượt/ngày.
+ */
+export const COMPANION_DEFAULT_TOKEN_BUDGET = 4000
 
 export const CompanionRequestSchema = z.object({
   personId: z.string().uuid(),
@@ -99,12 +103,23 @@ export interface CompanionResponse {
    * lời AI không hề viết (audit 2026-10-10, E1).
    */
   isFallback: boolean
+  /**
+   * Thẻ hỗ trợ khủng hoảng — chỉ có khi lớp an toàn kết luận `concern`/`imminent`. Mức
+   * `imminent`: `reply` là câu cố định do người viết (không gọi LLM) và handler HOÀN LƯỢT.
+   */
+  safety?: CompanionSafetyNotice
 }
 
 /** Kết quả `synthesizeCompanionReply`: lời văn + có phải câu mẫu dự phòng không. */
 export interface CompanionReplyResult {
   text: string
   isFallback: boolean
+  /**
+   * `true` khi chữ của `text` ĐÃ được phát trọn qua `onDelta` (Claude stream thành công).
+   * `false`/thiếu: nơi gọi phải tự phát `text` (dự phòng Groq/Gemini, câu cố định, hoặc Claude
+   * rớt giữa chừng rồi nhà cung cấp khác trả bản đầy đủ).
+   */
+  streamed?: boolean
 }
 
 /**
@@ -113,6 +128,17 @@ export interface CompanionReplyResult {
  */
 export const AI_UNAVAILABLE_NOTE =
   '(Trợ lý AI đang tạm gián đoạn nên đây là phản hồi tự động; lượt dùng lần này không bị tính. Bạn thử lại sau ít phút nhé.)'
+
+/**
+ * Câu trả lời CỐ ĐỊNH khi lớp an toàn kết luận `imminent` (đang nguy hiểm ngay lúc này). Do
+ * người viết, không qua LLM: ở khoảnh khắc này điều cần là số điện thoại đúng và một người thật,
+ * không phải một câu văn được sinh ra có thể sai. Thẻ 111/115/Ngày Mai hiện kèm ở giao diện.
+ */
+export const IMMINENT_SAFETY_REPLY =
+  'Mình đang ở đây với bạn. Điều bạn vừa nói rất quan trọng, và bạn xứng đáng được giúp ngay lúc này — bởi một người thật.\n\n' +
+  'Nếu bạn đang gặp nguy hiểm, hãy gọi **115** (cấp cứu) hoặc **111** (Tổng đài bảo vệ trẻ em, miễn phí, 24/7) ngay bây giờ. ' +
+  'Nếu có người lớn bạn tin được ở gần — bố mẹ, thầy cô, anh chị — hãy nói với họ.\n\n' +
+  'Mình là AI nên không thể gọi giúp bạn, nhưng mình vẫn ở đây. Bạn muốn kể cho mình nghe chuyện gì đang xảy ra không?'
 
 /**
  * Từ khoá nhận diện 4 trụ Career · Work · Startup · Life trong câu người dùng.
@@ -388,6 +414,18 @@ export function synthesizeReply(
   return parts.join(' ')
 }
 
+/** Tuỳ chọn thêm cho `synthesizeCompanionReply` — đều không bắt buộc để nơi gọi cũ không phải đổi. */
+export interface SynthesizeOptions {
+  /** Nhận từng mẩu chữ khi nhà cung cấp hỗ trợ stream (hiện: Claude). Groq/Gemini không gọi. */
+  onDelta?: (delta: string) => void
+  ageGroup?: AgeGroup | null
+  safety?: SafetyAssessment
+  /** Mốc "bây giờ" cho prompt — truyền vào để test tất định. */
+  now?: Date
+}
+
+const HISTORY_PROVENANCE = /^companion_message:(user|companion):/
+
 /**
  * Sinh câu trả lời bằng nhà cung cấp AI thật (Anthropic → Groq → Gemini). Mọi nhánh lỗi đều GHI
  * LOG; hết nhánh (hoặc không có key nào) thì trả câu mẫu tất định kèm `isFallback: true`.
@@ -398,6 +436,7 @@ export async function synthesizeCompanionReply(
   domain: string,
   proposedActions: ProposedAction[],
   contextPackage: ContextPackage,
+  options: SynthesizeOptions = {},
 ): Promise<CompanionReplyResult> {
   const groqKey = process.env.GROQ_API_KEY
   const geminiKey = process.env.GEMINI_API_KEY
@@ -414,17 +453,16 @@ export async function synthesizeCompanionReply(
 
   const historyItems = contextPackage.items.filter(
     (item) =>
-      item.sourceType === 'recent_episodic_context' &&
-      /^companion_message:(user|companion):/.test(item.provenance),
+      item.sourceType === 'recent_episodic_context' && HISTORY_PROVENANCE.test(item.provenance),
   )
-  const contextDetails = contextPackage.items
+  // Dữ liệu người dùng (hồ sơ, ký ức, ghi chú, tiến độ) → bọc thẻ chống chèn lệnh ở prompt.
+  const contextBlocks: ContextBlock[] = contextPackage.items
     .filter((item) => item.sourceType !== 'current_request' && !historyItems.includes(item))
-    .map((item) => `- [${item.sourceType}]: ${item.content}`)
-    .join('\n')
+    .map((item) => ({ source: item.sourceType, content: item.content }))
 
   const actionsSummary =
     proposedActions.length > 0
-      ? `\n\nCác tác vụ hệ thống liên quan:\n` +
+      ? `Các tác vụ hệ thống liên quan:\n` +
         proposedActions
           .map(
             (a) =>
@@ -433,14 +471,14 @@ export async function synthesizeCompanionReply(
           .join('\n')
       : ''
 
-  const domainContext =
-    domain && domain !== 'general' && domain !== 'all'
-      ? `Lĩnh vực trọng tâm của lượt thoại này: ${domain}.\n`
-      : ''
-
-  const systemPrompt = `${COMPANION_SYSTEM_PROMPT}\n${domainContext}${
-    contextDetails ? `\nThông tin ngữ cảnh người dùng trích xuất:\n${contextDetails}` : ''
-  }${actionsSummary}${INTERACTIVE_QUESTION_PROMPT_GUIDE}\n\nHãy trả lời người dùng với giọng điệu tự nhiên, ấm áp, thông tuệ và truyền cảm hứng dựa trên ngữ cảnh.`
+  const systemPrompt = buildCompanionSystemPrompt({
+    now: options.now ?? new Date(),
+    ageGroup: options.ageGroup ?? null,
+    domain,
+    contextBlocks,
+    actionsSummary,
+    ...(options.safety ? { safety: options.safety } : {}),
+  })
 
   // Lịch sử đứng TRƯỚC tin nhắn hiện tại, đúng thứ tự thời gian — nhà cung cấp LLM nào cũng đọc
   // mảng messages theo thứ tự này để hiểu mạch hội thoại.
@@ -456,13 +494,17 @@ export async function synthesizeCompanionReply(
     },
   ]
 
-  // 1. Nhánh Anthropic Claude (AI chính — nhiệm vụ 'companion' → Sonnet, xem aiConfig.ts)
+  // 1. Nhánh Anthropic Claude (AI chính — nhiệm vụ 'companion' → Sonnet, xem aiConfig.ts).
+  // Stream thật: `onDelta` nhận chữ ngay khi model sinh ra. Nếu Claude hỏng GIỮA CHỪNG (đã phát
+  // vài mẩu rồi mới rớt) thì các nhánh dự phòng vẫn chạy và trả bản đầy đủ — giao diện thay
+  // toàn bộ chữ bằng `reply` cuối ở sự kiện `done`, nên phần dở không gây hại.
   if (anthropicKey) {
     const anthropicRes = await callAnthropicText({
       apiKey: anthropicKey,
       route: getAnthropicRoute('companion'),
       system: systemPrompt,
       messages,
+      ...(options.onDelta ? { onTextDelta: options.onDelta } : {}),
     })
     // Ghi chi phí cả khi response không dùng được (bị cắt/từ chối) — token vẫn bị tính tiền.
     if (anthropicRes.kind === 'success' || anthropicRes.kind === 'unusable') {
@@ -473,7 +515,9 @@ export async function synthesizeCompanionReply(
         usage: anthropicRes.usage,
       })
     }
-    if (anthropicRes.kind === 'success') return { text: anthropicRes.text, isFallback: false }
+    if (anthropicRes.kind === 'success') {
+      return { text: anthropicRes.text, isFallback: false, streamed: Boolean(options.onDelta) }
+    }
     // thất bại → thử Groq/Gemini
     console.warn(`[companion] Anthropic ${describeAnthropicFailure(anthropicRes)}`)
   }
@@ -543,14 +587,50 @@ export async function synthesizeCompanionReply(
   return fallback()
 }
 
+// ─── Chặng 1: chuẩn bị lượt ─────────────────────────────────────────────────────────────────
+
+/** Mọi thứ đã có TRƯỚC khi gọi AI sinh câu trả lời. */
+export interface PreparedCompanionTurn {
+  personId: string
+  userMessage: string
+  intent: string
+  domain: string
+  ageGroup: AgeGroup | null
+  contextPackage: ContextPackage
+  plannedSteps: PlannedStep[]
+  proposedActions: ProposedAction[]
+  executionSummary: CompanionExecutionSummary
+  safety: SafetyAssessment
+}
+
 /**
- * Main Companion Runtime Execution Entrypoint.
- * Connects Intent/Domain Resolution -> Context Builder -> Planner -> Policy Gate -> ProposedActions -> Response.
+ * Đọc `user_id` + nhóm tuổi của person. Hỏng/không có → `personId` thay user_id (giữ hành vi cũ)
+ * và không có nhóm tuổi (prompt bỏ khối theo tuổi, lớp an toàn vẫn chạy bình thường).
  */
-export async function executeCompanionTurn(
+async function readPersonProfile(
+  pool: Pool,
+  personId: string,
+): Promise<{ userId: string; ageGroup: AgeGroup | null }> {
+  try {
+    const res = await pool.query<{ user_id: string; age_group: string | null }>(
+      `select p.user_id, pr.age_group
+         from personal.persons p
+         left join public.profiles pr on pr.id = p.user_id
+        where p.id = $1`,
+      [personId],
+    )
+    const row = res.rows[0]
+    const parsed = AgeGroupSchema.safeParse(row?.age_group)
+    return { userId: row?.user_id ?? personId, ageGroup: parsed.success ? parsed.data : null }
+  } catch {
+    return { userId: personId, ageGroup: null }
+  }
+}
+
+export async function prepareCompanionTurn(
   pool: Pool,
   request: CompanionRequest,
-): Promise<CompanionResponse> {
+): Promise<PreparedCompanionTurn> {
   const validated = CompanionRequestSchema.parse(request)
   const {
     personId,
@@ -564,15 +644,13 @@ export async function executeCompanionTurn(
   // Step 1: Intent & Domain Resolution
   const { intent, domain } = resolveIntentAndDomain(userMessage, explicitIntent, explicitDomain)
 
+  // Step 1b: hồ sơ nền tảng (user_id cho read model, nhóm tuổi cho prompt).
+  const { userId, ageGroup } = await readPersonProfile(pool, personId)
+
   // Step 2: Context Resolution (Context Engine with Domain Read Model)
   let domainState: ContextBuildOptions['domainState'] = undefined
   if (domain === 'learning') {
     try {
-      const personRow = await pool.query<{ user_id: string }>(
-        'select user_id from personal.persons where id = $1',
-        [personId],
-      )
-      const userId = personRow.rows[0]?.user_id ?? personId
       const learningModel = await getLearningReadModel(pool, { personId, userId })
       // Môn Lập trình có khuôn tiến độ riêng (bậc P1–P6, không phải CEFR) nên nối thêm một
       // dòng thay vì nhồi vào LearningReadModel — và chỉ nối khi người học ĐÃ chạm vào môn.
@@ -589,10 +667,10 @@ export async function executeCompanionTurn(
       // Graceful fallback
     }
   } else {
-    // 4 trụ Career/Work/Startup/Life — cùng khuôn "read model nạp vào ngữ cảnh" như Learning.
-    // Hỏng thì đi tiếp với ngữ cảnh rỗng: thiếu một khối tóm tắt vẫn hơn là không trả lời được.
-    // Việc khối này có THỰC SỰ được nạp hay không do cổng `isConsentActive(personId, domain,
-    // purpose)` trong contextEngine quyết định — ở đây KHÔNG lách cổng đó.
+    // Trụ Ghi chú (`work`) — cùng khuôn "read model nạp vào ngữ cảnh" như Learning. Hỏng thì đi
+    // tiếp với ngữ cảnh rỗng: thiếu một khối tóm tắt vẫn hơn là không trả lời được. Việc khối
+    // này có THỰC SỰ được nạp hay không do cổng `isConsentActive(personId, domain, purpose)`
+    // trong contextEngine quyết định — ở đây KHÔNG lách cổng đó.
     try {
       const content = await getDomainReadModelForContext(pool, personId, domain)
       if (content) {
@@ -611,13 +689,25 @@ export async function executeCompanionTurn(
     purpose: 'companion_conversation',
     includeCompanionHistory: true,
     maxSensitivity,
+    tokenBudget: tokenBudget ?? COMPANION_DEFAULT_TOKEN_BUDGET,
     ...(domainState ? { domainState } : {}),
-    ...(tokenBudget !== undefined ? { tokenBudget } : {}),
   }
   const contextPackage = await buildContextPackage(pool, contextOptions)
 
-  // Step 3: Companion Planner
-  const plannedSteps = generatePlan(intent, domain, userMessage)
+  // Step 2b: LỚP AN TOÀN — chạy sau khi có ngữ cảnh để bộ phân loại thấy vài lượt người dùng gần
+  // đây (đã qua cổng consent y như mọi dữ liệu khác). Chi tiết: safetyGuard.ts.
+  const recentUserTurns = contextPackage.items
+    .filter((item) => item.provenance.startsWith('companion_message:user:'))
+    .map((item) => item.content)
+  const safety = await assessSafety({
+    message: userMessage,
+    recentUserTurns,
+    ...(process.env.ANTHROPIC_API_KEY ? { anthropicApiKey: process.env.ANTHROPIC_API_KEY } : {}),
+  })
+
+  // Step 3: Companion Planner. Đang ở lượt khủng hoảng thì KHÔNG đề xuất tác vụ nào: không
+  // "lưu ký ức" chính lời tâm sự, không tra từ, không cập nhật hồ sơ — chỉ con người và số hỗ trợ.
+  const plannedSteps = safety.level === 'none' ? generatePlan(intent, domain, userMessage) : []
 
   // Step 4 & 5: Policy Gate & Capability/Tool Router (State Proposal via proposeAction)
   const proposedActions: ProposedAction[] = []
@@ -647,59 +737,14 @@ export async function executeCompanionTurn(
     }
   }
 
-  // Step 6: Synthesize Read Model / Intelligent LLM Response
-  const { text: rawReply, isFallback } = await synthesizeCompanionReply(
+  return {
+    personId,
     userMessage,
     intent,
     domain,
-    proposedActions,
+    ageGroup,
     contextPackage,
-  )
-
-  // Step 7: Tách khối câu hỏi tick chọn (nếu có) ra khỏi lời văn — khối JSON không bao giờ được
-  // lọt xuống giao diện dưới dạng chữ thô.
-  const { text: reply, questions: interactiveQuestions } = extractInteractiveQuestions(rawReply)
-
-  // Step 8: Lưu cả hai vế của lượt thoại để lần sau mở lại vẫn còn. Ghi lỗi thì KHÔNG làm hỏng
-  // câu trả lời đang trả về cho người dùng — họ vẫn đọc được, chỉ là lượt này không vào lịch sử.
-  const sensitivityLevels: Sensitivity[] = ['public', 'personal', 'sensitive', 'restricted']
-  const transcriptSensitivity =
-    sensitivityLevels[
-      Math.max(
-        1,
-        ...contextPackage.items.map((item) => sensitivityLevels.indexOf(item.sensitivity)),
-      )
-    ] ?? 'sensitive'
-  try {
-    await appendCompanionMessage(pool, {
-      personId,
-      role: 'user',
-      content: userMessage,
-      sensitivity: transcriptSensitivity,
-      domain,
-      intent,
-    })
-    if (reply.trim()) {
-      await appendCompanionMessage(pool, {
-        personId,
-        role: 'companion',
-        content: reply,
-        sensitivity: transcriptSensitivity,
-        domain,
-        intent,
-      })
-    }
-  } catch {
-    // bỏ qua: lịch sử là tiện ích, không phải điều kiện để trả lời
-  }
-
-  return {
-    reply,
-    interactiveQuestions,
-    isFallback,
-    intent,
-    targetDomain: domain,
-    contextPackage,
+    plannedSteps,
     proposedActions,
     executionSummary: {
       plannedSteps: plannedSteps.length,
@@ -707,11 +752,118 @@ export async function executeCompanionTurn(
       pendingConfirmationSteps: pendingCount,
       rejectedSteps: rejectedCount,
     },
+    safety,
   }
+}
+
+// ─── Chặng 2: sinh câu trả lời ──────────────────────────────────────────────────────────────
+
+/** Gọi AI cho lượt đã chuẩn bị; mức `imminent` trả câu cố định, không gọi AI. */
+export async function synthesizePreparedReply(
+  prepared: PreparedCompanionTurn,
+  options: Pick<SynthesizeOptions, 'onDelta' | 'now'> = {},
+): Promise<CompanionReplyResult> {
+  if (prepared.safety.level === 'imminent') {
+    return { text: IMMINENT_SAFETY_REPLY, isFallback: false }
+  }
+  return synthesizeCompanionReply(
+    prepared.userMessage,
+    prepared.intent,
+    prepared.domain,
+    prepared.proposedActions,
+    prepared.contextPackage,
+    {
+      ...options,
+      ageGroup: prepared.ageGroup,
+      ...(prepared.safety.level !== 'none' ? { safety: prepared.safety } : {}),
+    },
+  )
+}
+
+// ─── Chặng 3: hoàn tất ──────────────────────────────────────────────────────────────────────
+
+export async function finalizeCompanionTurn(
+  pool: Pool,
+  prepared: PreparedCompanionTurn,
+  replyResult: CompanionReplyResult,
+): Promise<CompanionResponse> {
+  const { personId, userMessage, intent, domain, contextPackage, proposedActions, safety } =
+    prepared
+
+  // Tách khối câu hỏi tick chọn (nếu có) ra khỏi lời văn — khối JSON không bao giờ được lọt
+  // xuống giao diện dưới dạng chữ thô.
+  const { text: reply, questions: interactiveQuestions } = extractInteractiveQuestions(
+    replyResult.text,
+  )
+
+  // Lưu cả hai vế của lượt thoại để lần sau mở lại vẫn còn. Ghi lỗi thì KHÔNG làm hỏng câu trả
+  // lời đang trả về cho người dùng — họ vẫn đọc được, chỉ là lượt này không vào lịch sử.
+  // Lượt `imminent` KHÔNG lưu: lời tâm sự lúc nguy cấp không thành dữ liệu nằm lại trong CSDL
+  // (và không được nạp lại vào ngữ cảnh lượt sau). Lượt `concern` lưu với độ nhạy ≥ sensitive.
+  const sensitivityLevels: Sensitivity[] = ['public', 'personal', 'sensitive', 'restricted']
+  const transcriptSensitivity =
+    sensitivityLevels[
+      Math.max(
+        safety.level === 'none' ? 1 : 2,
+        ...contextPackage.items.map((item) => sensitivityLevels.indexOf(item.sensitivity)),
+      )
+    ] ?? 'sensitive'
+  if (safety.level !== 'imminent') {
+    try {
+      await appendCompanionMessage(pool, {
+        personId,
+        role: 'user',
+        content: userMessage,
+        sensitivity: transcriptSensitivity,
+        domain,
+        intent,
+      })
+      if (reply.trim()) {
+        await appendCompanionMessage(pool, {
+          personId,
+          role: 'companion',
+          content: reply,
+          sensitivity: transcriptSensitivity,
+          domain,
+          intent,
+        })
+      }
+    } catch {
+      // bỏ qua: lịch sử là tiện ích, không phải điều kiện để trả lời
+    }
+  }
+
+  return {
+    reply,
+    interactiveQuestions,
+    isFallback: replyResult.isFallback,
+    intent,
+    targetDomain: domain,
+    contextPackage,
+    proposedActions,
+    executionSummary: prepared.executionSummary,
+    ...(safety.level !== 'none'
+      ? { safety: buildSafetyNotice(safety.level, safety.category) }
+      : {}),
+  }
+}
+
+/**
+ * Main Companion Runtime Execution Entrypoint.
+ * Connects Intent/Domain Resolution -> Context Builder -> Planner -> Policy Gate -> ProposedActions -> Response.
+ */
+export async function executeCompanionTurn(
+  pool: Pool,
+  request: CompanionRequest,
+): Promise<CompanionResponse> {
+  const prepared = await prepareCompanionTurn(pool, request)
+  const replyResult = await synthesizePreparedReply(prepared)
+  return finalizeCompanionTurn(pool, prepared, replyResult)
 }
 
 export type CompanionStreamEvent =
   | { type: 'meta'; data: { intent: string; targetDomain: string; contextPackage: ContextPackage } }
+  | { type: 'safety'; data: { safety: CompanionSafetyNotice } }
   | { type: 'chunk'; data: { delta: string } }
   | {
       type: 'actions'
@@ -725,33 +877,170 @@ export type CompanionStreamEvent =
   | { type: 'error'; data: { message: string } }
 
 /**
+ * Hàng đợi nối "callback đẩy từng mẩu" với "generator kéo từng mẩu": producer `push`, consumer
+ * `await next()`; `close()` báo hết. Nhỏ gọn có chủ đích — đủ cho một stream văn bản.
+ */
+class AsyncQueue<T> {
+  private items: T[] = []
+  private waiters: Array<() => void> = []
+  private closed = false
+
+  push(item: T): void {
+    this.items.push(item)
+    this.wake()
+  }
+
+  close(): void {
+    this.closed = true
+    this.wake()
+  }
+
+  private wake(): void {
+    const waiters = this.waiters.splice(0)
+    for (const resolve of waiters) resolve()
+  }
+
+  /** `undefined` = đã đóng và rỗng. */
+  async next(): Promise<T | undefined> {
+    while (this.items.length === 0) {
+      if (this.closed) return undefined
+      await new Promise<void>((resolve) => this.waiters.push(resolve))
+    }
+    return this.items.shift()
+  }
+}
+
+const QUESTION_FENCE_OPEN = '```' + INTERACTIVE_QUESTION_FENCE
+
+/**
+ * Giữ lại khối ```dhcb-questions``` khi stream: người dùng KHÔNG được thấy JSON thô chạy qua
+ * màn hình rồi biến mất. Mọi dấu ``` khác (code block thường) vẫn đi qua bình thường.
+ *
+ * Cách làm: gặp ``` thì giữ lại cho tới khi biết chắc nó có phải mở khối câu hỏi không; là khối
+ * câu hỏi → nuốt tất cả từ đó về sau (khối luôn đứng cuối câu trả lời theo prompt); không phải →
+ * nhả ra và quét tiếp.
+ */
+export class QuestionFenceGuard {
+  private pending = ''
+  private swallowing = false
+
+  constructor(private readonly emit: (delta: string) => void) {}
+
+  push(delta: string): void {
+    if (this.swallowing) return
+    this.pending += delta
+    this.drain(false)
+  }
+
+  /** Hết stream: phần đang giữ mà chưa thành khối câu hỏi thì nhả nốt. */
+  end(): void {
+    if (this.swallowing) return
+    this.drain(true)
+  }
+
+  private drain(final: boolean): void {
+    for (;;) {
+      const idx = this.pending.indexOf('```')
+      if (idx === -1) {
+        // Một–hai dấu ` ở cuối có thể là đầu của ``` đang đến theo mẩu sau → giữ lại (trừ khi hết).
+        const trailing = final ? 0 : (/`{1,2}$/.exec(this.pending)?.[0].length ?? 0)
+        const emitUpTo = this.pending.length - trailing
+        if (emitUpTo > 0) this.emit(this.pending.slice(0, emitUpTo))
+        this.pending = this.pending.slice(emitUpTo)
+        return
+      }
+      if (idx > 0) {
+        this.emit(this.pending.slice(0, idx))
+        this.pending = this.pending.slice(idx)
+      }
+      if (this.pending.startsWith(QUESTION_FENCE_OPEN)) {
+        this.swallowing = true
+        this.pending = ''
+        return
+      }
+      if (QUESTION_FENCE_OPEN.startsWith(this.pending)) {
+        // Mới thấy một phần đầu ("```dh…") — chờ thêm, trừ khi stream đã hết.
+        if (final) {
+          this.emit(this.pending)
+          this.pending = ''
+        }
+        return
+      }
+      // Dấu ``` của code block thường → nhả ra, quét tiếp phần sau.
+      this.emit('```')
+      this.pending = this.pending.slice(3)
+    }
+  }
+}
+
+/**
  * Async generator for Streaming Companion responses over Server-Sent Events (SSE).
- * Yields meta -> text chunks -> proposed actions -> final done response.
+ * Yields meta -> (safety) -> text chunks -> proposed actions -> (questions) -> final done response.
+ *
+ * Chữ phát ra là STREAM THẬT từ Claude (`onDelta`); nhà cung cấp dự phòng (Groq/Gemini) và câu
+ * cố định không stream được thì phát theo từng từ sau khi có bản đầy đủ (hành vi cũ).
  */
 export async function* streamCompanionTurn(
   pool: Pool,
   request: CompanionRequest,
 ): AsyncGenerator<CompanionStreamEvent, CompanionResponse, unknown> {
-  // Execute the turn logic
-  const response = await executeCompanionTurn(pool, request)
+  const prepared = await prepareCompanionTurn(pool, request)
 
   // 1. Emit metadata event
   yield {
     type: 'meta',
     data: {
-      intent: response.intent,
-      targetDomain: response.targetDomain,
-      contextPackage: response.contextPackage,
+      intent: prepared.intent,
+      targetDomain: prepared.domain,
+      contextPackage: prepared.contextPackage,
     },
   }
 
-  // 2. Emit streaming text chunks (word by word / clause by clause)
-  const words = response.reply.split(' ')
-  for (let i = 0; i < words.length; i++) {
-    const chunk = (i === 0 ? '' : ' ') + words[i]
+  // 1b. Thẻ hỗ trợ đi TRƯỚC chữ: giao diện hiện số điện thoại ngay cả khi AI chậm/hỏng.
+  if (prepared.safety.level !== 'none') {
     yield {
-      type: 'chunk',
-      data: { delta: chunk },
+      type: 'safety',
+      data: { safety: buildSafetyNotice(prepared.safety.level, prepared.safety.category) },
+    }
+  }
+
+  // 2. Chữ: producer (AI) đẩy vào hàng đợi qua bộ giữ khối câu hỏi; generator kéo ra và yield.
+  const queue = new AsyncQueue<string>()
+  const guard = new QuestionFenceGuard((delta) => queue.push(delta))
+  const replyPromise = synthesizePreparedReply(prepared, {
+    onDelta: (delta) => guard.push(delta),
+  }).then(
+    (result) => {
+      guard.end()
+      queue.close()
+      return result
+    },
+    (err: unknown) => {
+      queue.close()
+      throw err
+    },
+  )
+  // Lỗi được ném lại ở `await replyPromise` bên dưới; dòng này chỉ tránh "unhandled rejection"
+  // trong khoảng generator còn đang kéo hàng đợi.
+  replyPromise.catch(() => {})
+
+  for (;;) {
+    const delta = await queue.next()
+    if (delta === undefined) break
+    yield { type: 'chunk', data: { delta } }
+  }
+
+  const replyResult = await replyPromise
+  const response = await finalizeCompanionTurn(pool, prepared, replyResult)
+
+  // Không stream được trọn (dự phòng / câu cố định / Claude rớt giữa chừng) → phát theo từng
+  // từ từ bản đầy đủ. Mẩu dở đã phát (nếu có) không rút lại được; giao diện thay toàn bộ chữ
+  // bằng `reply` ở sự kiện `done`.
+  if (!replyResult.streamed) {
+    const words = response.reply.split(' ')
+    for (let i = 0; i < words.length; i++) {
+      const chunk = (i === 0 ? '' : ' ') + words[i]
+      yield { type: 'chunk', data: { delta: chunk } }
     }
   }
 

@@ -172,6 +172,16 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-10-11] Nâng cấp "Bạn Đồng Hành" 4 giai đoạn** (nghiên cứu
+  `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`, chủ dự án chốt làm lần lượt cả 4, mỗi GĐ
+  một PR). **GĐ1 ĐÃ LÀM** (`docs/changelog/0614-*.md`, đặc tả
+  `docs/specs/2026-10-11-ban-dong-hanh-gd1-stream-an-toan.md`): stream thật từ Claude, lịch sử giữ
+  lượt mới nhất, prompt mới (2 trụ, giờ VN, nhóm tuổi, chống xu nịnh, bọc dữ liệu), lớp an toàn
+  khủng hoảng (từ khoá + Haiku, thẻ 111/115/Ngày Mai). **Kế tiếp: GĐ2 trí nhớ thông minh** (có
+  migration — cần `/contract` + `/consult` chọn embedding, Anthropic không có API embedding), rồi
+  GĐ3 tác tử dùng công cụ chỉ-đọc thật, GĐ4 bản tin chủ động bằng dữ liệu thật. Việc tay: kiểm
+  stream + bộ phân loại với key thật trên production.
+
 - **[2026-10-10] Sửa theo audit toàn diện** ([báo cáo](docs/audit/2026-10-10-audit-toan-dien-va-toi-uu.md),
   `docs/changelog/0580-*.md`). Đợt đầu (JS khởi động −15,9 kB, chunk trang xếp lớp 2,95 MB → 11 kB) đã
   làm. **E1 lỗi im lặng server ĐÃ LÀM** (mục 1–8 ở `docs/changelog/0581-*.md`, mục 9 mức thấp ở

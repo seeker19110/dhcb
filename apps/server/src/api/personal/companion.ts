@@ -124,8 +124,14 @@ export default async function handler(req: Request): Promise<Response> {
           }
           try {
             for await (const event of streamCompanionTurn(pool, turnInput)) {
-              // Không AI nào trả lời được (câu mẫu dự phòng) → hoàn lượt như khi lỗi.
-              if (event.type === 'done' && event.data.isFallback) refundOnce()
+              // Không AI nào trả lời được (câu mẫu dự phòng) → hoàn lượt như khi lỗi. Lượt
+              // khủng hoảng mức `imminent` trả câu cố định (không gọi AI sinh lời) → cũng hoàn.
+              if (
+                event.type === 'done' &&
+                (event.data.isFallback || event.data.safety?.level === 'imminent')
+              ) {
+                refundOnce()
+              }
               // Metadata công khai chỉ chứa số liệu, không gửi raw context qua SSE.
               const data =
                 event.type === 'meta'
@@ -164,6 +170,9 @@ export default async function handler(req: Request): Promise<Response> {
           'Content-Type': 'text/event-stream; charset=utf-8',
           'Cache-Control': 'no-cache, no-transform',
           Connection: 'keep-alive',
+          // Nginx mặc định gom đệm response của proxy — với stream thật (từng mẩu chữ từ Claude)
+          // thì đệm làm chữ dồn cục; header này tắt đệm cho riêng response SSE.
+          'X-Accel-Buffering': 'no',
         },
       })
     }
@@ -171,7 +180,10 @@ export default async function handler(req: Request): Promise<Response> {
     const response = await executeCompanionTurn(pool, turnInput)
     // Câu mẫu dự phòng (mọi nhà cung cấp AI đều hỏng) không phải câu trả lời AI → hoàn lượt
     // (audit 2026-10-10, E1). Lượt vẫn trả 200 vì hành động đề xuất/đã chạy là kết quả thật.
-    if (response.isFallback) refundUsage(auth.userId, 'chat', gate.day).catch(() => {})
+    // Lượt khủng hoảng `imminent` (câu cố định, không gọi AI sinh lời) → cũng hoàn.
+    if (response.isFallback || response.safety?.level === 'imminent') {
+      refundUsage(auth.userId, 'chat', gate.day).catch(() => {})
+    }
 
     return jsonResponse(
       { ...response, contextPackage: { ...response.contextPackage, items: [] } },

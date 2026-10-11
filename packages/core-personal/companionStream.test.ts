@@ -22,6 +22,19 @@ vi.mock('./proposedActionService.js', () => ({
   proposeAction: (...a: unknown[]) => proposedActionMock.proposeAction(...a),
 }))
 
+// Lớp an toàn: mặc định "không có dấu hiệu" để các test luồng chính không gọi bộ phân loại Haiku;
+// ca khủng hoảng tự đặt `safetyMock.assessSafety` riêng.
+const safetyMock = vi.hoisted(() => ({
+  assessSafety: vi.fn<(...a: unknown[]) => Promise<unknown>>(async () => ({
+    level: 'none',
+    category: 'none',
+    source: 'none',
+  })),
+}))
+vi.mock('./safetyGuard.js', () => ({
+  assessSafety: (...a: unknown[]) => safetyMock.assessSafety(...a),
+}))
+
 const pool = {} as Pool
 
 beforeEach(() => {

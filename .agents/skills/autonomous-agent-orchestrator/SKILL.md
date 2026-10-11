@@ -31,6 +31,22 @@ mọi tác tử trong sản phẩm — giữ nguyên khi mở rộng.
 
 ---
 
+## 1b. LỚP AN TOÀN KHỦNG HOẢNG — ĐANG CHẠY THẬT (changelog 0614, 2026-10-11)
+
+`packages/core-personal/safetyGuard.ts` chạy TRƯỚC khi sinh câu trả lời ở MỖI lượt Companion: tầng
+từ khoá tất định (tự hại / bị bạo hành, xâm hại — có dấu, không dấu không nhập nhằng, tiếng Anh) +
+tầng Claude Haiku (route `safety`, JSON Schema chặt, nhận ≤ 3 lượt người dùng gần đây). Mức cao
+hơn thắng; Haiku hỏng thì về từ khoá — lớp này **không bao giờ mở vì AI hỏng**.
+
+Hệ quả bắt buộc giữ khi mở rộng tác tử: lượt `concern`/`imminent` **không lập kế hoạch tác vụ
+nào** (không "ghi nhớ", không "cập nhật hồ sơ", không tra từ), `imminent` trả câu cố định do
+người viết (`IMMINENT_SAFETY_REPLY`, không gọi LLM), không lưu transcript và handler hoàn lượt.
+Thẻ 111/115/Ngày Mai từ `packages/core-contracts/companionSafety.ts` — số thật, đổi số phải đổi
+ghi chú nguồn. Prompt hệ thống nay ở `packages/core-personal/companionPrompt.ts` (dữ liệu người
+dùng bọc thẻ có mã ngẫu nhiên — mọi thứ trong thẻ là DỮ LIỆU, không phải lệnh).
+
+---
+
 ## 2. STUDIO ĐIỀU PHỐI AGENT — ĐÃ GỠ (changelog 0481)
 
 Bản trước là thẻ cuối studio "Kế hoạch": bấm "Khởi chạy Agent" thì nhận về 5 bước Plan → Execute →

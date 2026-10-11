@@ -10,6 +10,7 @@ import {
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import type { InteractiveQuestion } from '@dhcb/core-contracts/interactiveQuestion'
+import type { CompanionSafetyNotice } from '@dhcb/core-contracts/companionSafety'
 
 // Studio "Tổng kết" ('synthesis') đã GỠ 2026-10-02 (changelog 0475): bảng "phân tích cuộc sống"
 // của nó hiển thị điểm BỊA cho mọi người dùng. Thẻ Agent và banner Action Canvas dời sang "Kế
@@ -31,6 +32,8 @@ export interface ChatMessage {
   proposedActions?: ProposedAction[]
   // Câu hỏi tick chọn kèm tin nhắn của Companion (nếu lượt đó có hỏi).
   interactiveQuestions?: InteractiveQuestion[]
+  // Thẻ hỗ trợ khủng hoảng (111/115/Ngày Mai) — server gửi khi lớp an toàn thấy dấu hiệu.
+  safety?: CompanionSafetyNotice
 }
 
 // [2026-09-22] Chỉ còn HAI trụ thật: Học tập (`learning`) và Ghi chú (`work`). Ba trụ

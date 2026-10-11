@@ -324,3 +324,123 @@ describe('callAnthropicText — lỗi & thử lại', () => {
     expect(format).toEqual({ type: 'json_schema', schema: getGradingSchema('interview_feedback') })
   })
 })
+
+// ─── Stream thật (onTextDelta) ─────────────────────────────────────────────────────────────────
+// Dựng một body `text/event-stream` đúng thứ tự sự kiện của Anthropic (message_start →
+// content_block_* → message_delta → message_stop) để đi qua TOÀN BỘ bộ đọc stream của SDK.
+function sseResponse(events: Array<Record<string, unknown>>, status = 200) {
+  const body = events
+    .map((ev) => `event: ${String(ev.type)}\ndata: ${JSON.stringify(ev)}\n\n`)
+    .join('')
+  return new Response(body, {
+    status,
+    headers: { 'content-type': 'text/event-stream', 'retry-after-ms': '0' },
+  })
+}
+
+function sseMessage(
+  textDeltas: string[],
+  overrides: { stop_reason?: string; model?: string; leadingThinking?: boolean } = {},
+) {
+  const events: Array<Record<string, unknown>> = [
+    {
+      type: 'message_start',
+      message: {
+        ...message({ content: [], model: overrides.model ?? 'claude-sonnet-5-5' }),
+        stop_reason: null,
+        usage: { input_tokens: 100, output_tokens: 0, cache_read_input_tokens: 50 },
+      },
+    },
+  ]
+  let index = 0
+  if (overrides.leadingThinking) {
+    events.push(
+      { type: 'content_block_start', index, content_block: { type: 'thinking', thinking: '' } },
+      {
+        type: 'content_block_delta',
+        index,
+        delta: { type: 'thinking_delta', thinking: 'nghĩ…' },
+      },
+      { type: 'content_block_stop', index },
+    )
+    index++
+  }
+  events.push({ type: 'content_block_start', index, content_block: { type: 'text', text: '' } })
+  for (const text of textDeltas) {
+    events.push({ type: 'content_block_delta', index, delta: { type: 'text_delta', text } })
+  }
+  events.push(
+    { type: 'content_block_stop', index },
+    {
+      type: 'message_delta',
+      delta: { stop_reason: overrides.stop_reason ?? 'end_turn', stop_sequence: null },
+      usage: { output_tokens: 20 },
+    },
+    { type: 'message_stop' },
+  )
+  return events
+}
+
+describe('callAnthropicText — stream thật qua onTextDelta', () => {
+  it('phát từng mẩu chữ theo thứ tự, bỏ qua khối thinking, rồi trả kết quả đầy đủ', async () => {
+    const fetchImpl = fakeFetch(
+      sseResponse(sseMessage(['Xin ', 'chào ', 'bạn!'], { leadingThinking: true })),
+    )
+    const deltas: string[] = []
+    const r = await callAnthropicText({
+      ...BASE,
+      route: SMART,
+      fetchImpl,
+      onTextDelta: (d) => deltas.push(d),
+    })
+    expect(deltas).toEqual(['Xin ', 'chào ', 'bạn!'])
+    expect(r).toMatchObject({ kind: 'success', text: 'Xin chào bạn!', model: 'claude-sonnet-5-5' })
+    // Body gửi đi là body stream (SDK tự bật `stream: true`), vẫn mang đủ tham số nhiệm vụ.
+    const body = sentBody(fetchImpl)
+    expect(body.stream).toBe(true)
+    expect(body.model).toBe(SMART.model)
+    expect(body.fallbacks).toBe('default')
+    // Usage gộp từ message_start + message_delta (cộng cả token đọc cache).
+    expect(r.kind === 'success' && r.usage).toEqual({
+      promptTokens: 150,
+      completionTokens: 20,
+      cacheReadTokens: 50,
+      cacheWriteTokens: 0,
+    })
+  })
+
+  it('stream bị cắt vì max_tokens → unusable, KHÔNG phải success (dù đã phát chữ)', async () => {
+    const fetchImpl = fakeFetch(sseResponse(sseMessage(['dở '], { stop_reason: 'max_tokens' })))
+    const deltas: string[] = []
+    const r = await callAnthropicText({ ...BASE, fetchImpl, onTextDelta: (d) => deltas.push(d) })
+    expect(deltas).toEqual(['dở '])
+    expect(r).toMatchObject({ kind: 'unusable', reason: 'max_tokens' })
+  })
+
+  it('HTTP lỗi khi mở stream → api_error như đường không stream', async () => {
+    const fetchImpl = fakeFetch(
+      jsonResponse(
+        { type: 'error', error: { type: 'invalid_request_error', message: 'xấu' } },
+        400,
+      ),
+    )
+    const r = await callAnthropicText({ ...BASE, fetchImpl, onTextDelta: () => {} })
+    expect(r).toMatchObject({ kind: 'api_error', status: 400 })
+  })
+
+  it('có outputSchema thì KHÔNG stream (JSON chỉ dùng được khi trọn vẹn)', async () => {
+    const json = '{"score":80,"feedback":"Tốt","correction":""}'
+    const fetchImpl = fakeFetch(jsonResponse(message({ content: [{ type: 'text', text: json }] })))
+    const onTextDelta = vi.fn()
+    const r = await callAnthropicText({
+      ...BASE,
+      route: SMART,
+      outputSchema: getGradingSchema('interview_feedback'),
+      onTextDelta,
+      fetchImpl,
+    })
+    expect(r).toMatchObject({ kind: 'success', text: json })
+    expect(onTextDelta).not.toHaveBeenCalled()
+    expect(sentBody(fetchImpl).stream).toBeUndefined()
+  })
+})
