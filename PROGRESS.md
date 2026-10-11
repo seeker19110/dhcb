@@ -1574,8 +1574,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `docs/changelog/NNNN-2026-09-19-*.md`] Kho lượt cửa sổ trượt 7 ngày — mô tả "MỒ CÔI" ban đầu là
   SAI, đã đóng nợ chính.** GĐ1 bỏ `consume_rolling_credit`/`refund_rolling_credit` khỏi đường
   enforce (Free chuyển sang hạn mức TỔNG/ngày) — **hai hàm này thật sự không còn lời gọi TS nào**
-  (xác nhận qua `packages/core-billing/usage.test.ts:121,246`), có thể drop ở đợt dọn dẹp sau nếu
-  muốn, không khẩn cấp. Nhưng **bảng `free_daily_credit` + hàm `grant_daily_bonus_rolling` KHÔNG
+  (xác nhận qua `packages/core-billing/usage.test.ts:121,246`) — ✅ **ĐÃ GỠ ở migration `0093`**
+  (changelog `0607`, chủ dự án đồng ý 2026-10-11; cả bốn chữ ký của 0017 + 0029). Nhưng **bảng `free_daily_credit` + hàm `grant_daily_bonus_rolling` KHÔNG
   mồ côi** — rà lại code thật 2026-09-19 phát hiện `apps/server/src/api/_lib/quests.ts`
   (`getCurrentStreak`, nhiệm vụ `streak_5` — "học liên tiếp 5 ngày") đọc trực tiếp
   `free_daily_credit.bonus_earned` và PHỤ THUỘC bảng này được ghi tiếp tục mỗi ngày qua lời gọi
