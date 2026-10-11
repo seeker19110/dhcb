@@ -75,6 +75,10 @@ describe('GuestHome', () => {
     expect(container.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
     expect(container.textContent).toContain('Học điều bạn muốn. Hiểu điều bạn học.')
     expect(container.textContent).toContain('tự học tốt hơn')
+    // Ở 390px câu giới thiệu cần 3 dòng — bong bóng không được cắt (E2E AC-8 đo bằng trình duyệt).
+    expect(
+      container.querySelector('[data-testid="guest-companion-full-copy"]')?.className,
+    ).toContain('[&_p]:!line-clamp-none')
   })
 
   it('STEM nói rõ xem trước, không hứa hoàn thiện ngang môn đã mở', () => {

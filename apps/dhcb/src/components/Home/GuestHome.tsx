@@ -45,7 +45,13 @@ export default function GuestHome() {
       {/* ── Khối 1: Companion tự giới thiệu ── */}
       <div className="flex items-start gap-3">
         <CompanionAvatar mood="idle" decorative />
-        <div className="flex-1 min-w-0">
+        {/* CompanionBubble mặc định cắt 2 dòng; ở 390px câu giới thiệu (84 ký tự) cần 3 dòng nên
+            chữ cuối bị cắt thành "…" — đúng câu khách đọc đầu tiên. Hiện trọn như Home người đã
+            đăng nhập (`HomeAiBriefingCard`, cùng cách override cục bộ). */}
+        <div
+          data-testid="guest-companion-full-copy"
+          className="flex-1 min-w-0 [&_p]:!line-clamp-none"
+        >
           <CompanionBubble variant="home" lead={GUEST_LEAD} detail={GUEST_DETAIL} />
         </div>
       </div>
