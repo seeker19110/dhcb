@@ -22,6 +22,7 @@ import type {
 import {
   checkMathStep,
   describeMathStep,
+  readsAsMathStatement,
   type MathStepCheck,
   type MathStepShape,
 } from '@dhcb/core-grading/stepCheckMath'
@@ -54,15 +55,23 @@ const BAT_DAU_PHUONG_TRINH_TOAN =
   'Ẩn cần tìm là gì, và những hạng tử nào đang chứa ẩn? Muốn ẩn đứng một mình, em định làm gì ' +
   'với các hạng tử còn lại?'
 
+/**
+ * Bước HỢP LỆ mà `describeMathStep` không mô tả được hình dạng (bất phương trình, nhiều mệnh đề
+ * "hoặc") nhưng bộ kiểm vẫn ĐỌC được — không được nói "viết lại để bộ kiểm đọc được" (sai sự thật).
+ */
+const HOI_CAU_TRUC_CHUNG =
+  'Ẩn đã đứng một mình ở một vế chưa? Nếu chưa, hạng tử nào còn chuyển vế được? Với bất phương ' +
+  'trình: khi nhân hay chia hai vế cho một số âm, chiều của dấu phải thế nào?'
+
 const BAT_DAU_CAN_BANG =
   'Mỗi vế có những chất nào? Nguyên tố nào chỉ nằm trong MỘT chất ở mỗi vế — bắt đầu cân bằng ' +
   'từ nguyên tố đó được không?'
 
 const CHUA_DOC_DUOC: Record<StemSubjectType, string> = {
   math:
-    'Em có thể viết bước này thành một phương trình chỉ có MỘT ẩn (dùng +, −, ·, /, phân số, luỹ ' +
-    'thừa) để bộ kiểm đọc được không? Nếu chưa, hãy tự thay giá trị vào đề: hai vế có bằng nhau ' +
-    'không?',
+    'Em có thể viết bước này thành một phương trình hoặc bất phương trình chỉ có MỘT ẩn (dùng +, ' +
+    '−, ·, /, phân số, luỹ thừa; đáp số dạng x > a thay cho ký hiệu khoảng) để bộ kiểm đọc được ' +
+    'không? Nếu chưa, hãy tự thay giá trị vào đề: hai vế có bằng nhau không?',
   physics:
     'Đơn vị ở hai vế của bước vừa viết có khớp nhau không? Em đã đổi mọi đại lượng về cùng một hệ ' +
     'đơn vị (SI) trước khi thay số chưa?',
@@ -74,6 +83,40 @@ const CHUA_DOC_DUOC: Record<StemSubjectType, string> = {
 
 // ── Toán ────────────────────────────────────────────────────────────────────
 
+/**
+ * Câu hỏi cho bước BẤT phương trình làm đổi tập nghiệm (đặc tả 2026-10-11-kiem-buoc-bat-phuong-trinh
+ * ①). Câu "đổi chiều" CHỈ dùng khi bộ kiểm chứng minh tập mới là phần bù của tập đúng trên mọi
+ * khoảng — dấu vết của việc nhân/chia cho số âm mà giữ nguyên chiều. Không chứa nghiệm/khoảng.
+ */
+export function cauHoiBatPhuongTrinh(
+  kq: Extract<MathStepCheck, { verdict: 'changed' }>,
+): string | null {
+  if (kq.inequality === undefined) return null
+  if (kq.inequality.complementOnIntervals) {
+    return (
+      'Khi nhân hay chia hai vế của bất đẳng thức cho một số âm, chiều của nó thay đổi thế nào? ' +
+      'Ở bước vừa rồi em đã nhân hay chia cho số nào?'
+    )
+  }
+  if (kq.lost && kq.extra) {
+    return (
+      'Đặt bước này cạnh bước liền trước: hạng tử nào vừa đổi vế, dấu của nó đã đổi chưa? Nếu ' +
+      'vừa nhân hay chia hai vế, số đó âm hay dương?'
+    )
+  }
+  if (kq.lost) {
+    return (
+      'Tập nghiệm vừa bị thu hẹp. Em có vừa đổi “≤” thành “<” (bỏ mất đầu mút), hoặc chia hai vế ' +
+      'cho một biểu thức chứa ẩn không? Biểu thức đó có luôn dương không?'
+    )
+  }
+  return (
+    'Tập nghiệm vừa bị nới rộng. Em có vừa nhân hai vế với một biểu thức chứa ẩn chưa biết dấu, ' +
+    'bỏ mất điều kiện xác định (mẫu số khác không), hoặc lấy căn hai vế mà chỉ giữ một phía không? Thử ' +
+    'một giá trị thuộc bước này nhưng ở thật xa: nó có thoả đề không?'
+  )
+}
+
 /** Bước cuối SAI → bậc 3: hỏi đúng loại lỗi bộ kiểm vừa chứng minh. */
 function hoiLoiToan(kq: MathStepCheck, deCoDKXD: boolean): string | null {
   if (kq.verdict === 'division_by_zero') {
@@ -83,6 +126,8 @@ function hoiLoiToan(kq: MathStepCheck, deCoDKXD: boolean): string | null {
   const truoc = kq.sameAsPrevious
     ? 'Bước này cùng tập nghiệm với bước liền trước, nên chỗ sai nằm ở bước ✗ ĐẦU TIÊN. '
     : ''
+  const batPhuongTrinh = cauHoiBatPhuongTrinh(kq)
+  if (batPhuongTrinh !== null) return truoc + batPhuongTrinh
   if (kq.lost && kq.extra) {
     return (
       truoc +
@@ -162,7 +207,11 @@ function goiYToan(problem: StemProblemState, buocCuoi: string): MicroHint {
     if (kq.verdict === 'unsupported') return { hintText: CHUA_DOC_DUOC.math, level: 1 }
   }
   const shape = describeMathStep(buocCuoi)
-  if (shape === null) return { hintText: CHUA_DOC_DUOC.math, level: 1 }
+  if (shape === null) {
+    return readsAsMathStatement(buocCuoi)
+      ? { hintText: HOI_CAU_TRUC_CHUNG, level: 2 }
+      : { hintText: CHUA_DOC_DUOC.math, level: 1 }
+  }
   return { hintText: hoiCauTrucToan(shape), level: 2 }
 }
 

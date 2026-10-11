@@ -1,6 +1,7 @@
 # Đặc tả — Bảng nháp STEM: kiểm bước giải BẤT PHƯƠNG TRÌNH một ẩn (chính xác)
 
-- **Ngày:** 2026-10-11 · **Trạng thái:** Draft — chờ chủ dự án duyệt
+- **Ngày:** 2026-10-11 · **Trạng thái:** Approved for implementation (chủ dự án duyệt 2026-10-11,
+  phạm vi lõi; hai câu hỏi ở ⑥ đều chốt "để đợt sau")
 - **Nguồn việc:** nợ "Bảng nháp STEM" trong `PROGRESS.md`, mục còn lại (2) "Toán ngoài phạm vi: căn,
   lượng giác, log, π, bất phương trình, nhiều ẩn". Chủ dự án chọn "mở rộng kiểm bước Toán" ngày
   2026-10-11.
@@ -88,6 +89,10 @@ giác/log KHÔNG làm bằng lấy mẫu số. Lấy mẫu số chỉ cho kết 
 | Sửa  | `packages/core-grading/stepCheckMath.test.ts`    | ca mới (mục ④)                                                |
 | Sửa  | `packages/core-ai/stemScratchpadService.ts`      | câu chữ `changed` cho bất phương trình, gợi ý "đổi chiều"     |
 | Sửa  | `packages/core-ai/stemScratchpadService.test.ts` | gợi ý không lộ đáp án (mở rộng test bất biến 0551)            |
+| Mới  | `packages/core-grading/mathSolutionSet.ts`       | công thức dấu + phân hoạch trục số (bổ sung khi thi hành)     |
+| Sửa  | `packages/core-grading/polynomial.ts`            | xuất `polyEval`, `sturmChain`, `signChanges` (bổ sung)        |
+| Sửa  | `packages/core-ai/stemMicroHint.ts`              | nút "Gợi ý" dùng chung câu hỏi bất phương trình (bổ sung)     |
+| Sửa  | `packages/core-ai/stemMicroHint.test.ts`         | đề bất phương trình vào test bất biến "không lộ nghiệm"       |
 
 Nếu `stepCheckMath.ts` vượt ~900 dòng thì tách phần tập nghiệm sang
 `packages/core-grading/mathSolutionSet.ts`. Đây là file mới, chỉ `stepCheckMath.ts` import.
@@ -145,7 +150,7 @@ npx vitest run packages/core-grading packages/core-ai/stemScratchpadService.test
 | Kết luận phương trình hiện có không đổi              | `packages/core-grading/stepCheckMath.test.ts`             |
 | Bộ kiểm bước không vào bundle client                 | `npm run size` + không export qua `core-grading/index.ts` |
 
-## ⑥ Câu hỏi cho chủ dự án trước khi duyệt
+## ⑥ Câu hỏi cho chủ dự án trước khi duyệt — ĐÃ CHỐT 2026-10-11: cả hai "để đợt sau"
 
 1. **Ký hiệu khoảng kiểu Việt Nam** (`S = (2; +∞)`) — học sinh hay viết đáp số bất phương trình theo
    lối này. Đợt này đề xuất trả "?" cho dạng đó (vì `;` đang nghĩa "hoặc"). Có cần làm ngay trong

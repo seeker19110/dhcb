@@ -142,6 +142,50 @@ describe('StemScratchpadService', () => {
     expect(ion.feedback).toContain('vế trái +1, vế phải +2')
   })
 
+  // Đặc tả docs/specs/2026-10-11-kiem-buoc-bat-phuong-trinh.md: câu chữ riêng cho bất phương
+  // trình; câu "đổi chiều" chỉ khi tập mới là PHẦN BÙ của tập đúng; gợi ý không lộ nghiệm/khoảng.
+  it('bất phương trình: quên đổi chiều → hỏi về chiều khi chia cho số âm, không lộ đáp án', () => {
+    const de = { problemLatex: '-2x < 6' }
+    const quen = StemScratchpadService.validateStep('math', 'x < -3', [], de)
+    expect(quen.status).toBe('invalid')
+    expect(quen.feedback).toContain('vừa mất một phần tập nghiệm')
+    expect(quen.suggestedCorrection).toContain('chiều của nó thay đổi thế nào')
+    const dung = StemScratchpadService.validateStep('math', 'x > -3', [], de)
+    expect(dung).toMatchObject({ status: 'valid', isFinalAnswer: true })
+
+    // Không phải phần bù → KHÔNG được gợi "đổi chiều" (sẽ dạy sai chỗ lỗi).
+    const nuaDuoi = StemScratchpadService.validateStep('math', 'x < 2', [], {
+      problemLatex: 'x^2 < 4',
+    })
+    expect(nuaDuoi.feedback).toContain('THÊM giá trị không phải nghiệm')
+    expect(nuaDuoi.suggestedCorrection).not.toContain('chiều')
+    const dauMut = StemScratchpadService.validateStep('math', 'x < 2', [], {
+      problemLatex: 'x \\le 2',
+    })
+    expect(dauMut.feedback).toContain('MẤT một phần tập nghiệm')
+    expect(dauMut.suggestedCorrection).toContain('đầu mút')
+
+    for (const r of [quen, nuaDuoi, dauMut]) {
+      // Gợi ý không chứa con số nào — tức không lộ mốc/khoảng nghiệm (-3, 2, -2…).
+      expect(r.suggestedCorrection ?? '').not.toMatch(/\d/)
+    }
+  })
+
+  it('bất phương trình: ký hiệu khoảng → "chưa tự kiểm", nói rõ cách viết đáp số', () => {
+    const r = StemScratchpadService.validateStep('math', 'S = (-3; +\\infty)', [], {
+      problemLatex: '-2x < 6',
+    })
+    expect(r.status).toBe('unverified')
+    expect(r.feedback).toContain('ký hiệu khoảng')
+  })
+
+  it('đề lời văn: bước 1 là bất phương trình cũng được nhận làm MỐC', () => {
+    expect(StemScratchpadService.validateStep('math', '3x + 2 > 11', []).feedback).toContain('MỐC')
+    const prev = [{ stepNumber: 1, latexInput: '3x + 2 > 11', createdAt: new Date().toISOString() }]
+    expect(StemScratchpadService.validateStep('math', 'x > 3', prev).status).toBe('valid')
+    expect(StemScratchpadService.validateStep('math', 'x < 3', prev).status).toBe('invalid')
+  })
+
   it('lỗi mang từ bước trước được chỉ ra', () => {
     const toan = { problemLatex: '2x + 5 = 15' }
     const prev = [{ stepNumber: 1, latexInput: '2x = 20', createdAt: new Date().toISOString() }]

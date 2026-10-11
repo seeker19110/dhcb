@@ -140,6 +140,16 @@ const DE_TOAN: ReadonlyArray<{ de: string; chuoi: readonly string[][] }> = [
     de: '\\frac{x}{3} + 2 = 4',
     chuoi: [[], ['\\frac{x}{3} = 2'], ['\\frac{x}{3} = 6']],
   },
+  // Bất phương trình (đặc tả 2026-10-11-kiem-buoc-bat-phuong-trinh): `nghiemCuaDe` lấy mọi số
+  // nguyên ứng viên thuộc tập nghiệm (x = c không có nghiệm lạ) — gợi ý không được chứa số nào.
+  {
+    de: '-2x + 1 < 7',
+    chuoi: [[], ['-2x < 6'], ['x < -3'], ['x > -3'], ['-2x < 6', 'x < -3']],
+  },
+  {
+    de: 'x^2 - 4 < 0',
+    chuoi: [[], ['x^2 < 4'], ['x < 2'], ['-2 < x < 2'], ['x \\le 2']],
+  },
 ]
 
 const DE_HOA: ReadonlyArray<{ de: string; chuoi: readonly string[][] }> = [
@@ -253,6 +263,18 @@ describe('generateSocraticHint — đúng loại bước/lỗi', () => {
     expect(goiY('2x + 5 = 15', ['x = 10/0']).hintText).toContain('mẫu số nào đang bằng 0')
     // Lỗi mang từ bước trước.
     expect(goiY('2x + 5 = 15', ['2x = 20', 'x = 10']).hintText).toContain('ĐẦU TIÊN')
+  })
+
+  it('bất phương trình: quên đổi chiều → bậc 3 hỏi về chiều; bước hợp lệ → bậc 2, không đòi viết lại', () => {
+    const quen = goiY('-2x < 6', ['x < -3'])
+    expect(quen.level).toBe(3)
+    expect(quen.hintText).toContain('chiều của nó thay đổi thế nào')
+    const nuaDuoi = goiY('x^2 < 4', ['x < 2'])
+    expect(nuaDuoi.level).toBe(3)
+    expect(nuaDuoi.hintText).not.toContain('chiều')
+    const hopLe = goiY('-2x + 1 < 7', ['-2x < 6'])
+    expect(hopLe.level).toBe(2)
+    expect(hopLe.hintText).not.toContain('bộ kiểm đọc được')
   })
 
   it('bước HỢP LỆ → bậc 2, hỏi về cấu trúc của chính bước đó', () => {
