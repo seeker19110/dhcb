@@ -2,6 +2,7 @@ import { Trophy } from 'lucide-react'
 import type { Direction, EvaluationResult } from '../types'
 import ShareResultCard from './ShareResultCard'
 import { buildEvaluationShareContent } from '../lib/shareContent'
+import { CONVERSATION_SCORE_GRADIENT, GRADIENT_TEXT, scoreBand } from '@dhcb/core-ui/gradientText'
 
 // Thanh điểm 0–9 dùng chung — tách riêng vì Chat/Speaking đều cần (giống ScoreBar ở Writing.tsx
 // nhưng đặt ở component dùng chung để không lặp code giữa 2 trang).
@@ -51,12 +52,7 @@ export default function EvaluationResultView({
   const Khung = landmark ? 'main' : 'div'
   const { scores } = evaluation
   const overall = scores.overall
-  const scoreGradient =
-    overall >= 7
-      ? 'from-accent-400 to-accent-300'
-      : overall >= 5
-        ? 'from-amber-400 to-yellow-300'
-        : 'from-red-400 to-orange-300'
+  const scoreGradient = CONVERSATION_SCORE_GRADIENT[scoreBand(overall)]
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
@@ -69,7 +65,7 @@ export default function EvaluationResultView({
             {isA ? 'Điểm đánh giá hội thoại' : 'Conversation score'}
           </p>
           <div
-            className={`text-7xl font-black bg-gradient-to-b ${scoreGradient} bg-clip-text text-transparent leading-none py-2`}
+            className={`text-7xl font-black bg-gradient-to-b ${scoreGradient} ${GRADIENT_TEXT} leading-none py-2`}
           >
             {overall}
           </div>

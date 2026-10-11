@@ -297,6 +297,104 @@ export function auditWarmTokenPairs(root: string): ContrastCheck[] {
   ])
 }
 
+// ── CHỮ GRADIENT (`bg-clip-text`) ───────────────────────────────────────────────────────────
+// axe-core không đo được chữ gradient, nên E2E cho qua (changelog 0598, 0599). Mọi bộ màu chữ
+// gradient sống ở `packages/core-ui/gradientText.ts`; hai hàm dưới đây (1) đo TẤT CẢ các bộ đó
+// ở 3 theme × 3 bề mặt và (2) cấm `.tsx` tự viết `bg-clip-text` — phải dùng hằng của module, để
+// không bộ màu nào nằm ngoài phép đo.
+
+/** Ngưỡng của chữ gradient: chỉ dùng cho chữ LỚN → AAA chữ lớn 4,5:1 (CLAUDE.md mục 4.5). */
+export const GRADIENT_TEXT_MIN = 4.5
+
+const STOP_RE = /^(theme-light:)?(from|via|to)-([a-z]+)-([0-9]{2,3})$/
+
+export type GradientTextFinding = {
+  name: string
+  theme: string
+  surface: string
+  stop: string
+  ratio: number
+}
+
+/** Màu thật của một điểm dừng ở một theme: `accent` là token theo theme, họ cố định đọc bảng màu. */
+function stopRgb(family: string, step: string, tokens: Record<string, Rgb>): Rgb {
+  const rgb =
+    family === 'accent'
+      ? tokens[`a-${step}`]
+      : (FIXED_FAMILIES as readonly string[]).includes(family)
+        ? (tokens[`color-${family}-${step}`] ?? paletteRgb(family, step))
+        : undefined
+  // Không đọc được → NÉM LỖI: bỏ qua là cổng báo xanh mà chưa đo (xem paletteRgb).
+  if (!rgb) throw new Error(`Chữ gradient: không đọc được màu điểm dừng \`${family}-${step}\``)
+  return rgb
+}
+
+/** Đo các bộ màu chữ gradient; trả mọi cặp (bộ × theme × bề mặt) dưới ngưỡng. */
+export function auditGradientTextColors(
+  sets: ReadonlyArray<{ name: string; classes: string }>,
+  themes: Record<string, Record<string, Rgb>>,
+): GradientTextFinding[] {
+  const found: GradientTextFinding[] = []
+  for (const set of sets) {
+    const base = new Map<string, [string, string]>()
+    const light = new Map<string, [string, string]>()
+    for (const token of set.classes.split(/\s+/).filter(Boolean)) {
+      const m = STOP_RE.exec(token)
+      if (!m) throw new Error(`Chữ gradient ${set.name}: class lạ "${token}" (chỉ nhận điểm dừng)`)
+      ;(m[1] ? light : base).set(m[2] as string, [m[3] as string, m[4] as string])
+    }
+    if (!base.has('from') || !base.has('to')) {
+      throw new Error(`Chữ gradient ${set.name}: thiếu điểm dừng from-/to- cho theme tối`)
+    }
+    for (const theme of [...DARK_THEMES, ...LIGHT_THEMES]) {
+      const tokens = themes[theme]
+      if (!tokens) throw new Error(`Chữ gradient: theme.css không có theme ${theme}`)
+      const isLight = (LIGHT_THEMES as readonly string[]).includes(theme)
+      for (const pos of ['from', 'via', 'to']) {
+        // Theme sáng: `theme-light:` ghi đè TỪNG vị trí; vị trí không ghi đè giữ màu gốc.
+        const stop = (isLight ? light.get(pos) : undefined) ?? base.get(pos)
+        if (!stop) continue
+        const [family, step] = stop
+        const fg = stopRgb(family, step, tokens)
+        for (const surface of SURFACES) {
+          const bg = tokens[surface.token]
+          if (!bg) continue
+          const ratio = contrastRatio(fg, bg)
+          if (ratio < GRADIENT_TEXT_MIN) {
+            found.push({
+              name: set.name,
+              theme,
+              surface: surface.name,
+              stop: `${pos}-${family}-${step}`,
+              ratio,
+            })
+          }
+        }
+      }
+    }
+  }
+  return found
+}
+
+/** Các dòng `.tsx` tự viết `bg-clip-text` thay vì dùng `GRADIENT_TEXT` của module. */
+export function findRawGradientText(root: string): string[] {
+  const files = [
+    ...walk(join(root, 'apps', 'dhcb', 'src')),
+    ...walk(join(root, 'apps', 'hub', 'src')),
+    ...walk(join(root, 'packages', 'core-ui')),
+  ]
+  const out: string[] = []
+  for (const file of files) {
+    const rel = relative(root, file).split('\\').join('/')
+    readFileSync(file, 'utf-8')
+      .split('\n')
+      .forEach((text, i) => {
+        if (/\bbg-clip-text\b/.test(text)) out.push(`${rel}:${i + 1}`)
+      })
+  }
+  return out
+}
+
 if (process.argv[1]?.endsWith('fixed-color-contrast-audit.ts')) {
   const findings = auditRepo(process.cwd())
   const byClass = new Map<string, Finding[]>()

@@ -21,6 +21,7 @@ import { useEdgeAi } from '../../../lib/edgeAi/useEdgeAi.js'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { MAIN_CONTENT_ID, PageShell } from '@core/PageShell'
 import { TwoPane } from '@core/TwoPane'
+import { GRADIENT_TEXT, scoreBand, WRITING_SCORE_GRADIENT } from '@core/gradientText'
 import EdgeAiIndicator from '../../../components/EdgeAi/EdgeAiIndicator'
 
 // Đề bài mẫu — Chiều A: đề IELTS tiếng Anh | Chiều B: đề viết tiếng Việt
@@ -90,12 +91,7 @@ function ResultPanel({
   const [showSample, setShowSample] = useState(false)
   const isA = dir === 'A'
   const overall = feedback.scores.overall
-  const scoreGradient =
-    overall >= 7
-      ? 'from-emerald-400 via-teal-300 to-cyan-300'
-      : overall >= 5
-        ? 'from-amber-400 via-yellow-300 to-amber-200'
-        : 'from-rose-500 via-red-400 to-orange-400'
+  const scoreGradient = WRITING_SCORE_GRADIENT[scoreBand(overall)]
 
   return (
     <div className="space-y-4.5 animate-fade-up">
@@ -107,7 +103,7 @@ function ResultPanel({
           {isA ? 'Điểm ước lượng IELTS Overall' : 'Estimated IELTS Band'}
         </p>
         <div
-          className={`text-7xl sm:text-8xl font-black bg-gradient-to-b ${scoreGradient} bg-clip-text text-transparent leading-none py-2 tracking-tight drop-shadow-sm`}
+          className={`text-7xl sm:text-8xl font-black bg-gradient-to-b ${scoreGradient} ${GRADIENT_TEXT} leading-none py-2 tracking-tight drop-shadow-sm`}
         >
           {overall}
         </div>

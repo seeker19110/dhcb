@@ -11,10 +11,13 @@ import {
   ALLOWLIST,
   auditRepo,
   auditLine,
+  auditGradientTextColors,
   auditWarmTokenPairs,
+  findRawGradientText,
   walk,
 } from './fixed-color-contrast-audit.js'
-import { AA, AAA, parseThemeTokens } from './lib/contrast.js'
+import { ALL_GRADIENT_TEXT_COLORS } from '../packages/core-ui/gradientText.js'
+import { AA, AAA, parseThemeTokens, type Rgb } from './lib/contrast.js'
 
 const ROOT = process.cwd()
 
@@ -149,5 +152,52 @@ describe('màu Tailwind cố định dùng làm màu chữ', () => {
     expect(
       auditLine('x.tsx', 1, '<span className="bg-amber-400 text-slate-950">x</span>', themes),
     ).toEqual([])
+  })
+})
+
+// ── Chữ gradient (`bg-clip-text`) — điểm mù của axe (changelog 0598, 0599) ──────────────────
+describe('chữ gradient', () => {
+  const themes = () =>
+    parseThemeTokens(
+      readFileSync(`${ROOT}/packages/core-ui/theme.css`, 'utf-8'),
+    ) as unknown as Record<string, Record<string, Rgb>>
+
+  it('mọi bộ màu ở packages/core-ui/gradientText.ts đạt 4,5:1 ở 3 theme × 3 bề mặt', () => {
+    const findings = auditGradientTextColors(ALL_GRADIENT_TEXT_COLORS, themes())
+    expect(
+      findings.map((f) => `${f.name} [${f.theme}/${f.surface}] ${f.stop} ${f.ratio.toFixed(2)}`),
+    ).toEqual([])
+  })
+
+  it('không .tsx nào tự viết bg-clip-text — phải dùng GRADIENT_TEXT để bộ màu nằm trong phép đo', () => {
+    expect(findRawGradientText(ROOT)).toEqual([])
+  })
+
+  // Bằng chứng phép đo có răng: chính các bộ màu TRƯỚC khi sửa phải bị bắt — gồm cả lỗi ở theme
+  // TỐI (`rose-500` của điểm thấp bài viết chỉ 3,28:1), không chỉ theme sáng.
+  it('bắt được các bộ màu cũ đã từng lên production', () => {
+    const cu = [
+      { name: 'hub', classes: 'from-accent-400 via-accent-300 to-accent-200' },
+      { name: 'hoi-thoai-kha', classes: 'from-amber-400 to-yellow-300' },
+      { name: 'bai-viet-thap', classes: 'from-rose-500 via-red-400 to-orange-400' },
+    ]
+    const found = auditGradientTextColors(cu, themes())
+    const where = new Set(found.map((f) => `${f.name}@${f.theme}`))
+    expect(where).toContain('hub@blue-sky')
+    expect(where).toContain('hoi-thoai-kha@kid')
+    expect(where).toContain('bai-viet-thap@dark-blue')
+    expect(where).not.toContain('hub@dark-blue')
+  })
+
+  it('class lạ hoặc thiếu điểm dừng thì NÉM LỖI, không lặng lẽ cho qua', () => {
+    expect(() =>
+      auditGradientTextColors([{ name: 'x', classes: 'from-accent-400 font-bold' }], themes()),
+    ).toThrow(/class lạ/)
+    expect(() =>
+      auditGradientTextColors([{ name: 'x', classes: 'theme-light:from-accent-800' }], themes()),
+    ).toThrow(/thiếu điểm dừng/)
+    expect(() =>
+      auditGradientTextColors([{ name: 'x', classes: 'from-brand-400 to-brand-300' }], themes()),
+    ).toThrow(/không đọc được màu/)
   })
 })
