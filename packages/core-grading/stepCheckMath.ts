@@ -12,7 +12,8 @@
 //     "unsupported" để giao diện nói thật "? Chưa tự kiểm được" — tuyệt đối không đoán.
 // Ký hiệu tập (`S = (2; +∞)`, `x ∈ [1; 3)`) và trị tuyệt đối (`|2x - 1| < 5`, chia trường hợp):
 // docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md.
-// Căn bậc hai (`\sqrt{x + 3} = x - 3`, `x = \pm\sqrt{2}`): docs/specs/2026-10-11-can-bac-hai.md.
+// Căn bậc hai (`\sqrt{x + 3} = x - 3`, `x = \pm\sqrt{2}`): docs/specs/2026-10-11-can-bac-hai.md;
+// hai căn khác nhau (`\sqrt{x + 5} + \sqrt{x} = 5`): docs/specs/2026-10-11-hai-can-khac-nhau.md.
 // Khi MỌI đoạn đều là phương trình, đi đúng nhánh cũ (finite/cofinite) — kết luận không đổi. Có
 // bất phương trình ở bất kỳ đâu thì so bằng phân hoạch trục số (`compareFormulas`).
 
@@ -818,18 +819,132 @@ const fnAtom = (r: RatFn, rel: Rel): SetFormula => ({
   rel,
 })
 
-// ── Căn bậc hai: docs/specs/2026-10-11-can-bac-hai.md ───────────────────────
+// ── Căn bậc hai: docs/specs/2026-10-11-can-bac-hai.md + 2026-10-11-hai-can-khac-nhau.md ───
 
 /**
- * Một biểu thức có MỘT căn `s = √f`: `A + B·s` với A, B, f là phân thức của ẩn. Mọi phép tính
- * dùng `s² = f` nên vẫn CHÍNH XÁC (không làm tròn √2 thành 1,414…).
+ * "Tháp căn": mỗi tầng thêm MỘT căn `r = √g` lên tầng dưới, phần tử là `a + b·r` với a, b thuộc
+ * tầng dưới; tầng 0 là phân thức hữu tỉ. Mọi phép tính dùng `r² = g` nên vẫn CHÍNH XÁC (không làm
+ * tròn √2 thành 1,414…). Hai căn khác nhau = hai tầng: `(A + B√f) + (C + D√f)·√g`.
  */
-type Surd = { a: RatFn; b: RatFn }
+type Ring<T> = {
+  zero: T
+  one: T
+  /** Phân thức hữu tỉ → phần tử của tầng này. */
+  lift: (r: RatFn) => T
+  /** Căn thứ `i` (đếm từ 0, theo thứ tự tầng) như một phần tử của tầng này. */
+  root: (i: number) => T
+  add: (p: T, q: T) => T
+  sub: (p: T, q: T) => T
+  mul: (p: T, q: T) => T
+  neg: (p: T) => T
+  /** Chia, ghi mọi điều kiện "mẫu ≠ 0" (về tới đa thức) vào `domain`. */
+  div: (p: T, q: T, domain: Poly[]) => T
+  /** Bằng 0 về CẤU TRÚC (luôn kéo theo bằng 0 thật) — chỉ dùng để rút gọn. */
+  isZero: (p: T) => boolean
+  /** `p rel 0` → công thức dấu chính xác (giả định mọi biểu thức dưới căn ≥ 0, ghi riêng). */
+  sign: (p: T, rel: Rel) => SetFormula
+}
 
 const ZERO_FN: RatFn = { num: [], den: ONE_POLY }
 const ONE_FN: RatFn = { num: ONE_POLY, den: ONE_POLY }
 
 const sameFn = (p: RatFn, q: RatFn): boolean => isZeroPoly(fnSub(p, q).num)
+
+const RATIONAL: Ring<RatFn> = {
+  zero: ZERO_FN,
+  one: ONE_FN,
+  lift: (r) => r,
+  root: () => {
+    throw new Unsupported('too_complex') // không xảy ra: tầng 0 không có căn
+  },
+  add: fnAdd,
+  sub: fnSub,
+  mul: fnMul,
+  neg: fnNeg,
+  div: fnDiv,
+  isZero: (p) => isZeroPoly(p.num),
+  sign: fnAtom,
+}
+
+type Radical<T> = { a: T; b: T }
+
+/** Thêm căn `√g` (g là phân thức) lên tầng `base` — căn này có chỉ số `index`. */
+function adjoinRoot<T>(base: Ring<T>, g: RatFn, index: number): Ring<Radical<T>> {
+  const gBase = base.lift(g)
+  const of = (a: T, b: T = base.zero): Radical<T> => ({ a, b })
+  const neg = (p: Radical<T>) => of(base.neg(p.a), base.neg(p.b))
+  // (a + b√g)(c + d√g) = (ac + bd·g) + (ad + bc)√g.
+  const mul = (p: Radical<T>, q: Radical<T>) =>
+    of(
+      base.add(base.mul(p.a, q.a), base.mul(base.mul(p.b, q.b), gBase)),
+      base.add(base.mul(p.a, q.b), base.mul(p.b, q.a)),
+    )
+  const and = (...parts: SetFormula[]): SetFormula => ({ kind: 'and', parts })
+
+  /**
+   * `a + b·√g rel 0` (g ≥ 0 ghi riêng). Đặt P = a² − b²g = (a + b√g)(a − b√g):
+   *  - `= 0` ⇔ P = 0 và a·b ≤ 0 (a, b√g trái dấu hoặc cùng bằng 0);
+   *  - `> 0` ⇔ (a > 0, b ≥ 0) hoặc (a > 0, P > 0) hoặc (a ≤ 0, b > 0, P < 0);
+   *  - `≥ 0` ⇔ (a ≥ 0, b ≥ 0) hoặc (a ≥ 0, P ≥ 0) hoặc (a ≤ 0, b ≥ 0, P ≤ 0);
+   *  - `<`, `≤`: đổi dấu a, b rồi dùng `>`, `≥`.
+   * Dấu của a, b, P, a·b lại do tầng dưới tính — đệ quy tới phân thức.
+   */
+  const sign = (d: Radical<T>, rel: Rel): SetFormula => {
+    const { a, b } = d
+    if (base.isZero(b)) return base.sign(a, rel)
+    if (rel === '<') return sign(neg(d), '>')
+    if (rel === '≤') return sign(neg(d), '≥')
+    const p = base.sub(base.mul(a, a), base.mul(base.mul(b, b), gBase))
+    const s = base.sign
+    if (rel === '=') return and(s(p, '='), s(base.mul(a, b), '≤'))
+    if (rel === '>') {
+      return {
+        kind: 'or',
+        parts: [
+          and(s(a, '>'), s(b, '≥')),
+          and(s(a, '>'), s(p, '>')),
+          and(s(a, '≤'), s(b, '>'), s(p, '<')),
+        ],
+      }
+    }
+    return {
+      kind: 'or',
+      parts: [
+        and(s(a, '≥'), s(b, '≥')),
+        and(s(a, '≥'), s(p, '≥')),
+        and(s(a, '≤'), s(b, '≥'), s(p, '≤')),
+      ],
+    }
+  }
+
+  return {
+    zero: of(base.zero),
+    one: of(base.one),
+    lift: (r) => of(base.lift(r)),
+    root: (i) => (i === index ? of(base.zero, base.one) : of(base.root(i))),
+    add: (p, q) => of(base.add(p.a, q.a), base.add(p.b, q.b)),
+    sub: (p, q) => of(base.sub(p.a, q.a), base.sub(p.b, q.b)),
+    mul,
+    neg,
+    /**
+     * Chia cho `c` (không chứa căn của tầng này) hoặc cho `d·√g` (thuần căn):
+     * `x / (d√g) = x·√g / (d·g)`, điều kiện d ≠ 0 và g ≠ 0 — đúng bằng điều kiện `d√g ≠ 0`. Mẫu
+     * `c + d√g` (cả hai khác 0) cần trục căn, có thể đẻ thêm điểm loại trừ sai → `too_complex`.
+     */
+    div: (p, q, domain) => {
+      if (base.isZero(q.b)) return of(base.div(p.a, q.a, domain), base.div(p.b, q.a, domain))
+      if (!base.isZero(q.a)) throw new Unsupported('too_complex')
+      const dg = base.mul(q.b, gBase)
+      if (base.isZero(dg)) throw new DivisionByZero()
+      return of(base.div(p.b, q.b, domain), base.div(p.a, dg, domain))
+    },
+    isZero: (p) => base.isZero(p.a) && base.isZero(p.b),
+    sign,
+  }
+}
+
+/** Trần số biểu thức dưới căn KHÁC NHAU trong một quan hệ — mỗi căn thêm một tầng, bậc ×2. */
+const MAX_RADICANDS = 2
 
 /** Mọi nút `sqrt(…)` của cây. */
 function sqrtNodes(node: ExprNode, out: Extract<ExprNode, { type: 'call' }>[]): void {
@@ -851,10 +966,9 @@ function sqrtNodes(node: ExprNode, out: Extract<ExprNode, { type: 'call' }>[]): 
 }
 
 /**
- * `a rel b` có căn bậc hai → các phần của công thức dấu. Hai dạng đọc được:
- *  - MỘT biểu thức dưới căn (có thể lặp lại: `√x + 2√x`): đưa `a − b` về `A + B·√f`;
- *  - `√f rel √g` (mỗi vế đúng một căn): căn đồng biến trên [0; +∞) nên ⇔ f ≥ 0, g ≥ 0, f rel g.
- * Căn lồng nhau, hai căn khác nhau ở dạng khác → `too_complex` ("?").
+ * `a rel b` có căn bậc hai → các phần của công thức dấu: "mọi biểu thức dưới căn ≥ 0" (giữ cả
+ * khi căn triệt tiêu, `√x − √x = 0` ⇔ x ≥ 0) và dấu của `a − b` tính trên tháp căn. Căn lồng
+ * nhau, quá `MAX_RADICANDS` căn khác nhau → `too_complex` ("?").
  */
 function radicalFormula(
   a: ExprNode,
@@ -872,114 +986,59 @@ function radicalFormula(
     const f = toRatFn(n.arg, variable, domain)
     if (!radicands.some((r) => sameFn(r, f))) radicands.push(f)
   }
+  if (radicands.length > MAX_RADICANDS) throw new Unsupported('too_complex')
   const nonNegative = radicands.map((f) => fnAtom(f, '≥'))
   const [f, g] = radicands
   if (f === undefined) throw new Unsupported('too_complex') // không xảy ra: nơi gọi đã thấy căn
-  if (g === undefined) {
-    const d = surdSub(toSurd(a, variable, domain, f), toSurd(b, variable, domain, f))
-    return [...nonNegative, surdSign(d, f, rel)]
-  }
-  const lone = (n: ExprNode) => n.type === 'call' && n.name === 'sqrt'
-  if (radicands.length === 2 && lone(a) && lone(b)) {
-    return [...nonNegative, fnAtom(fnSub(f, g), rel)]
-  }
-  throw new Unsupported('too_complex')
+  const one = adjoinRoot(RATIONAL, f, 0)
+  const ctx = { variable, domain, radicands }
+  const signOf = <T>(ring: Ring<T>) =>
+    ring.sign(ring.sub(toRadical(a, ring, ctx), toRadical(b, ring, ctx)), rel)
+  return [...nonNegative, g === undefined ? signOf(one) : signOf(adjoinRoot(one, g, 1))]
 }
 
-const surdSub = (p: Surd, q: Surd): Surd => ({ a: fnSub(p.a, q.a), b: fnSub(p.b, q.b) })
+type RadicalContext = { variable: string | null; domain: Poly[]; radicands: readonly RatFn[] }
 
-/** Biểu thức (chỉ chứa căn `√f`) → `A + B·√f`. */
-function toSurd(node: ExprNode, variable: string | null, domain: Poly[], f: RatFn): Surd {
-  if (!containsSqrt(node)) return { a: toRatFn(node, variable, domain), b: ZERO_FN }
+/** Cây biểu thức → phần tử của tháp căn `ring`. */
+function toRadical<T>(node: ExprNode, ring: Ring<T>, ctx: RadicalContext): T {
+  const { variable, domain } = ctx
+  if (!containsSqrt(node)) return ring.lift(toRatFn(node, variable, domain))
   switch (node.type) {
-    case 'call':
+    case 'call': {
       if (node.name !== 'sqrt') throw new Unsupported('non_polynomial')
-      if (!sameFn(toRatFn(node.arg, variable, domain), f)) throw new Unsupported('too_complex')
-      return { a: ZERO_FN, b: ONE_FN }
+      const f = toRatFn(node.arg, variable, domain)
+      const index = ctx.radicands.findIndex((r) => sameFn(r, f))
+      if (index < 0) throw new Unsupported('too_complex') // không xảy ra: đã gom đủ căn
+      return ring.root(index)
+    }
     case 'unary': {
-      const arg = toSurd(node.arg, variable, domain, f)
-      return node.op === '-' ? { a: fnNeg(arg.a), b: fnNeg(arg.b) } : arg
+      const arg = toRadical(node.arg, ring, ctx)
+      return node.op === '-' ? ring.neg(arg) : arg
     }
     case 'binary': {
-      const p = toSurd(node.left, variable, domain, f)
+      const p = toRadical(node.left, ring, ctx)
       if (node.op === '^') {
         const k = integerExponent(node.right, variable, domain)
-        let base = p
-        if (k < 0) base = surdDiv({ a: ONE_FN, b: ZERO_FN }, p, f, domain)
-        let out: Surd = { a: ONE_FN, b: ZERO_FN }
-        for (let i = 0; i < Math.abs(k); i++) out = surdMul(out, base, f)
+        const base = k < 0 ? ring.div(ring.one, p, domain) : p
+        let out = ring.one
+        for (let i = 0; i < Math.abs(k); i++) out = ring.mul(out, base)
         return out
       }
-      const q = toSurd(node.right, variable, domain, f)
+      const q = toRadical(node.right, ring, ctx)
       switch (node.op) {
         case '+':
-          return { a: fnAdd(p.a, q.a), b: fnAdd(p.b, q.b) }
+          return ring.add(p, q)
         case '-':
-          return surdSub(p, q)
+          return ring.sub(p, q)
         case '*':
-          return surdMul(p, q, f)
+          return ring.mul(p, q)
         case '/':
-          return surdDiv(p, q, f, domain)
+          return ring.div(p, q, domain)
       }
     }
   }
   // `num`/`var` không chứa căn — đã trả ở đầu hàm; tới đây là cây lạ.
   throw new Unsupported('too_complex')
-}
-
-/** (A + B√f)(C + D√f) = (AC + BDf) + (AD + BC)√f. */
-const surdMul = (p: Surd, q: Surd, f: RatFn): Surd => ({
-  a: fnAdd(fnMul(p.a, q.a), fnMul(fnMul(p.b, q.b), f)),
-  b: fnAdd(fnMul(p.a, q.b), fnMul(p.b, q.a)),
-})
-
-/**
- * Chia cho `C` (không căn) hoặc cho `D·√f` (thuần căn): `x / (D√f) = x·√f / (D·f)`, điều kiện
- * D ≠ 0 và f ≠ 0 — đúng bằng điều kiện mẫu `D√f ≠ 0`. Mẫu dạng `C + D√f` (cả hai khác 0) cần
- * trục căn, có thể đẻ thêm điểm loại trừ sai → `too_complex`, không đoán.
- */
-function surdDiv(p: Surd, q: Surd, f: RatFn, domain: Poly[]): Surd {
-  if (isZeroPoly(q.b.num)) return { a: fnDiv(p.a, q.a, domain), b: fnDiv(p.b, q.a, domain) }
-  if (!isZeroPoly(q.a.num)) throw new Unsupported('too_complex')
-  const df = fnMul(q.b, f)
-  if (isZeroPoly(df.num)) throw new DivisionByZero()
-  return { a: fnDiv(p.b, q.b, domain), b: fnDiv(p.a, df, domain) }
-}
-
-/**
- * `A + B·√f rel 0` (với f ≥ 0 đã ghi riêng) → công thức dấu CHÍNH XÁC. Đặt P = A² − B²f =
- * (A + B√f)(A − B√f):
- *  - `= 0` ⇔ P = 0 và A·B ≤ 0 (A, B√f trái dấu hoặc cùng bằng 0);
- *  - `> 0` ⇔ (A > 0, B ≥ 0) hoặc (A > 0, P > 0) hoặc (A ≤ 0, B > 0, P < 0);
- *  - `≥ 0` ⇔ (A ≥ 0, B ≥ 0) hoặc (A ≥ 0, P ≥ 0) hoặc (A ≤ 0, B ≥ 0, P ≤ 0);
- *  - `<`, `≤`: đổi dấu cả A, B rồi dùng `>`, `≥`.
- */
-function surdSign(d: Surd, f: RatFn, rel: Rel): SetFormula {
-  const { a, b } = d
-  if (isZeroPoly(b.num)) return fnAtom(a, rel)
-  if (rel === '<') return surdSign({ a: fnNeg(a), b: fnNeg(b) }, f, '>')
-  if (rel === '≤') return surdSign({ a: fnNeg(a), b: fnNeg(b) }, f, '≥')
-  const p = fnSub(fnMul(a, a), fnMul(fnMul(b, b), f))
-  const and = (...parts: SetFormula[]): SetFormula => ({ kind: 'and', parts })
-  if (rel === '=') return and(fnAtom(p, '='), fnAtom(fnMul(a, b), '≤'))
-  if (rel === '>') {
-    return {
-      kind: 'or',
-      parts: [
-        and(fnAtom(a, '>'), fnAtom(b, '≥')),
-        and(fnAtom(a, '>'), fnAtom(p, '>')),
-        and(fnAtom(a, '≤'), fnAtom(b, '>'), fnAtom(p, '<')),
-      ],
-    }
-  }
-  return {
-    kind: 'or',
-    parts: [
-      and(fnAtom(a, '≥'), fnAtom(b, '≥')),
-      and(fnAtom(a, '≥'), fnAtom(p, '≥')),
-      and(fnAtom(a, '≤'), fnAtom(b, '≥'), fnAtom(p, '≤')),
-    ],
-  }
 }
 
 function statementFormula(statement: Statement, variable: string | null): SetFormula {

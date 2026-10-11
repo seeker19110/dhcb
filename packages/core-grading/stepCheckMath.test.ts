@@ -781,8 +781,7 @@ describe('checkMathStep — căn bậc hai', () => {
 
   it.each([
     ['\\sqrt{\\sqrt{x}} = 2'], // căn lồng căn
-    ['\\sqrt{x + 5} + \\sqrt{x} = 5'], // hai căn khác nhau cộng nhau
-    ['2\\sqrt{x} = \\sqrt{x + 3}'], // hai căn, một vế có hệ số
+    ['\\sqrt{x} + \\sqrt{x + 1} + \\sqrt{x + 2} = 3'], // ba căn khác nhau
     ['\\frac{x}{\\sqrt{x} + 1} = 1'], // mẫu dạng C + D√f — cần trục căn
   ])('ngoài phạm vi %s → too_complex ("?")', (step) => {
     expect(checkMathStep(step, 'x = 1')).toEqual({ verdict: 'unsupported', reason: 'too_complex' })
@@ -808,5 +807,71 @@ describe('checkMathStep — căn bậc hai', () => {
 
   it('describeMathStep không mô tả phương trình có căn', () => {
     expect(describeMathStep('\\sqrt{x} = 3')).toBeNull()
+  })
+})
+
+// docs/specs/2026-10-11-hai-can-khac-nhau.md — hai căn khác nhau: tháp hai tầng, vẫn chính xác.
+describe('checkMathStep — hai căn khác nhau', () => {
+  it.each([
+    ['x = 4', '\\sqrt{x + 5} + \\sqrt{x} = 5'],
+    ['\\sqrt{x + 5} = 5 - \\sqrt{x}', '\\sqrt{x + 5} + \\sqrt{x} = 5'], // chuyển vế
+    ['x + 5 = 25 - 10\\sqrt{x} + x', '\\sqrt{x + 5} + \\sqrt{x} = 5'], // bình phương đúng
+    ['10\\sqrt{x} = 20', '\\sqrt{x + 5} + \\sqrt{x} = 5'],
+    ['\\sqrt{x} = 2', '\\sqrt{x + 5} + \\sqrt{x} = 5'],
+    ['x = 4', '2\\sqrt{x} = \\sqrt{x + 12}'], // một vế có hệ số
+    ['x = 1', '\\sqrt{x + 3} - \\sqrt{x} = 1'],
+    ['x = 6', '\\sqrt{x + 3} - \\sqrt{x - 2} = 1'],
+    ['x = 6', '\\sqrt{x + 3} + \\sqrt{x - 2} = 5'],
+    ['S = \\emptyset', '\\sqrt{x - 3} + \\sqrt{1 - x} = 1'], // hai điều kiện rời nhau
+    ['x \\ge 4', '\\sqrt{x + 5} + \\sqrt{x} \\ge 5'],
+    ['0 \\le x < 4', '\\sqrt{x + 5} + \\sqrt{x} < 5'],
+    ['0 \\le x < \\frac{1}{16}', '\\sqrt{x} + 2 < \\sqrt{x + 5}'], // nhánh (a ≤ 0, b > 0, P < 0)
+    ['x = \\frac{\\sqrt{6}}{6}', 'x = \\frac{1}{\\sqrt{2} \\cdot \\sqrt{3}}'], // chia cho √2·√3
+    // Đáp số có hai căn: bốn nghiệm ±√2 ± √3 của x⁴ − 10x² + 1 = 0.
+    [
+      'x = \\sqrt{2} + \\sqrt{3} hoặc x = \\sqrt{2} - \\sqrt{3} hoặc x = -\\sqrt{2} + \\sqrt{3} hoặc x = -\\sqrt{2} - \\sqrt{3}',
+      'x^4 - 10x^2 + 1 = 0',
+    ],
+  ])('%s  (đề: %s) → tương đương', (step, anchor) => {
+    expect(checkMathStep(step, anchor).verdict).toBe('equivalent')
+  })
+
+  it('bình phương sai khi còn hai căn → mất nghiệm, có cờ bỏ căn', () => {
+    // (5 − √x)² viết thành 25 + x: thiếu hạng tử −10√x.
+    expect(checkMathStep('x + 5 = 25 + x', '\\sqrt{x + 5} + \\sqrt{x} = 5')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      squareRoot: { removed: true },
+    })
+  })
+
+  it('thiếu nghiệm vô tỉ có căn → mất nghiệm (không làm tròn)', () => {
+    expect(checkMathStep('x = \\sqrt{2} + \\sqrt{3}', 'x^4 - 10x^2 + 1 = 0')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      extra: false,
+    })
+  })
+
+  it('bỏ đầu mút khi bất phương trình có hai căn → mất nghiệm', () => {
+    expect(checkMathStep('x > 4', '\\sqrt{x + 5} + \\sqrt{x} \\ge 5')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      extra: false,
+    })
+  })
+
+  it('cùng một biểu thức dưới căn viết khác nhau vẫn là MỘT căn', () => {
+    expect(checkMathStep('x = 3', '\\sqrt{x + 1} + \\sqrt{1 + x} = 4').verdict).toBe('equivalent')
+  })
+
+  it('mẫu có căn ở tầng trên chia được khi thuần căn', () => {
+    expect(checkMathStep('x = 1', '\\frac{\\sqrt{x + 3}}{\\sqrt{x}} = 2').verdict).toBe(
+      'equivalent',
+    )
+    expect(checkMathStep('x = 1', '\\frac{1}{\\sqrt{x + 3} - \\sqrt{x}} = 1')).toEqual({
+      verdict: 'unsupported',
+      reason: 'anchor_unsupported',
+    })
   })
 })
