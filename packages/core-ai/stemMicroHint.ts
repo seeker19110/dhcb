@@ -70,7 +70,8 @@ const BAT_DAU_CAN_BANG =
 const CHUA_DOC_DUOC: Record<StemSubjectType, string> = {
   math:
     'Em có thể viết bước này thành một phương trình hoặc bất phương trình chỉ có MỘT ẩn (dùng +, ' +
-    '−, ·, /, phân số, luỹ thừa, trị tuyệt đối |…|; đáp số viết x > a hoặc S = (a; +∞)) để bộ ' +
+    '−, ·, /, phân số, luỹ thừa, trị tuyệt đối |…|, căn bậc hai √; đáp số viết x > a hoặc ' +
+    'S = (a; +∞)) để bộ ' +
     'kiểm đọc được không? Nếu chưa, hãy tự thay giá trị vào đề: hai vế có bằng nhau không?',
   physics:
     'Đơn vị ở hai vế của bước vừa viết có khớp nhau không? Em đã đổi mọi đại lượng về cùng một hệ ' +
@@ -137,6 +138,26 @@ export function cauHoiTriTuyetDoi(
   )
 }
 
+/**
+ * Câu hỏi khi mốc có căn bậc hai mà bước đã bỏ căn (bình phương hai vế) và làm đổi tập nghiệm
+ * (đặc tả 2026-10-11-can-bac-hai ①). Bình phương không làm MẤT nghiệm, nên "chỉ thêm" là quên
+ * điều kiện; "mất" là bình phương sai (thường ở khai triển). Không chứa số.
+ */
+export function cauHoiCanThuc(kq: Extract<MathStepCheck, { verdict: 'changed' }>): string | null {
+  if (kq.squareRoot === undefined) return null
+  if (kq.extra && !kq.lost) {
+    return (
+      'Khi bình phương hai vế để bỏ căn, em đã giữ lại những điều kiện nào: biểu thức dưới căn ' +
+      'không âm, và vế còn lại có cần không âm không? Thay giá trị vừa tìm vào phương trình có ' +
+      'căn: hai vế có thật sự bằng nhau không?'
+    )
+  }
+  return (
+    'Bình phương hai vế không làm mất nghiệm, nên chỗ lệch nằm ở phép bình phương. Em đã bình ' +
+    'phương CẢ vế chưa — bình phương của một tổng (a + b)² khai triển ra mấy hạng tử?'
+  )
+}
+
 /** Bước cuối SAI → bậc 3: hỏi đúng loại lỗi bộ kiểm vừa chứng minh. */
 function hoiLoiToan(kq: MathStepCheck, deCoDKXD: boolean): string | null {
   if (kq.verdict === 'division_by_zero') {
@@ -146,7 +167,7 @@ function hoiLoiToan(kq: MathStepCheck, deCoDKXD: boolean): string | null {
   const truoc = kq.sameAsPrevious
     ? 'Bước này cùng tập nghiệm với bước liền trước, nên chỗ sai nằm ở bước ✗ ĐẦU TIÊN. '
     : ''
-  const rieng = cauHoiTriTuyetDoi(kq) ?? cauHoiBatPhuongTrinh(kq)
+  const rieng = cauHoiTriTuyetDoi(kq) ?? cauHoiCanThuc(kq) ?? cauHoiBatPhuongTrinh(kq)
   if (rieng !== null) return truoc + rieng
   if (kq.lost && kq.extra) {
     return (

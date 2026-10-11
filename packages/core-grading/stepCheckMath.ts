@@ -8,10 +8,11 @@
 // thực bằng dãy Sturm — KHÔNG lấy mẫu số ngẫu nhiên, KHÔNG làm tròn, nên:
 //   - "tương đương" là CHỨNG MINH được (mới được báo ✓);
 //   - "đổi nghiệm" cũng chứng minh được (có nghiệm thực bị mất hoặc sinh thêm) → ✗;
-//   - mọi thứ ngoài phạm vi (căn, lượng giác, log, π, nhiều ẩn, LaTeX lạ, quá lớn) →
+//   - mọi thứ ngoài phạm vi (căn bậc ≥ 3, lượng giác, log, π, nhiều ẩn, LaTeX lạ, quá lớn) →
 //     "unsupported" để giao diện nói thật "? Chưa tự kiểm được" — tuyệt đối không đoán.
 // Ký hiệu tập (`S = (2; +∞)`, `x ∈ [1; 3)`) và trị tuyệt đối (`|2x - 1| < 5`, chia trường hợp):
 // docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md.
+// Căn bậc hai (`\sqrt{x + 3} = x - 3`, `x = \pm\sqrt{2}`): docs/specs/2026-10-11-can-bac-hai.md.
 // Khi MỌI đoạn đều là phương trình, đi đúng nhánh cũ (finite/cofinite) — kết luận không đổi. Có
 // bất phương trình ở bất kỳ đâu thì so bằng phân hoạch trục số (`compareFormulas`).
 
@@ -46,7 +47,7 @@ export type MathUnsupportedReason =
   | 'not_equation' // không có dấu `=` hay dấu bất đẳng thức (biểu thức trơn)
   | 'unknown_notation' // lệnh LaTeX/ký hiệu bộ đọc không hiểu
   | 'multi_variable' // nhiều hơn một ẩn, hoặc tên ẩn không phải một chữ cái
-  | 'non_polynomial' // căn, lượng giác, log, π, số mũ không nguyên…
+  | 'non_polynomial' // lượng giác, log, π, số mũ không nguyên…
   | 'too_complex' // vượt trần bậc/độ lớn hệ số
   | 'anchor_unsupported' // chính đề bài (hoặc bước mốc) không đọc được
 
@@ -67,6 +68,8 @@ export type MathStepCheck =
       inequality?: { complementOnIntervals: boolean }
       /** Mốc có trị tuyệt đối còn bước thì không — người học đang chia trường hợp. */
       absoluteValue?: { casesSplit: true }
+      /** Mốc có căn bậc hai còn bước thì không — người học vừa bình phương để bỏ căn. */
+      squareRoot?: { removed: true }
     }
   | { verdict: 'division_by_zero' }
   | { verdict: 'unsupported'; reason: MathUnsupportedReason }
@@ -198,33 +201,45 @@ function toRatFn(node: ExprNode, variable: string | null, domain: Poly[]): RatFn
       const b = toRatFn(node.right, variable, domain)
       switch (node.op) {
         case '+':
-          return reduce(
-            polyAdd(polyMul(a.num, b.den), polyMul(b.num, a.den)),
-            polyMul(a.den, b.den),
-          )
+          return fnAdd(a, b)
         case '-':
-          return reduce(
-            polySub(polyMul(a.num, b.den), polyMul(b.num, a.den)),
-            polyMul(a.den, b.den),
-          )
+          return fnSub(a, b)
         case '*':
-          return reduce(polyMul(a.num, b.num), polyMul(a.den, b.den))
+          return fnMul(a, b)
         case '/':
-          if (isZeroPoly(b.num)) throw new DivisionByZero()
-          if (!isConstant(b.num)) domain.push(b.num)
-          return reduce(polyMul(a.num, b.den), polyMul(a.den, b.num))
+          return fnDiv(a, b, domain)
       }
     }
   }
 }
 
-/** Luỹ thừa: chỉ nhận số mũ là hằng số NGUYÊN (âm thì thành phân thức, ghi điều kiện ≠ 0). */
-function powerNode(base: RatFn, exponentNode: ExprNode, variable: string | null, domain: Poly[]) {
+const fnAdd = (a: RatFn, b: RatFn): RatFn =>
+  reduce(polyAdd(polyMul(a.num, b.den), polyMul(b.num, a.den)), polyMul(a.den, b.den))
+const fnSub = (a: RatFn, b: RatFn): RatFn =>
+  reduce(polySub(polyMul(a.num, b.den), polyMul(b.num, a.den)), polyMul(a.den, b.den))
+const fnMul = (a: RatFn, b: RatFn): RatFn => reduce(polyMul(a.num, b.num), polyMul(a.den, b.den))
+const fnNeg = (a: RatFn): RatFn => ({ num: polyNeg(a.num), den: a.den })
+
+/** a / b, ghi tử của b vào điều kiện xác định (khác 0). */
+function fnDiv(a: RatFn, b: RatFn, domain: Poly[]): RatFn {
+  if (isZeroPoly(b.num)) throw new DivisionByZero()
+  if (!isConstant(b.num)) domain.push(b.num)
+  return reduce(polyMul(a.num, b.den), polyMul(a.den, b.num))
+}
+
+/** Số mũ phải là hằng số NGUYÊN, |số mũ| ≤ trần bậc. */
+function integerExponent(exponentNode: ExprNode, variable: string | null, domain: Poly[]): number {
   const e = toRatFn(exponentNode, variable, domain)
   if (!isConstant(e.num) || !isConstant(e.den)) throw new Unsupported('non_polynomial')
   const value = isZeroPoly(e.num) ? 0 : toSmallInteger(ratDiv(leading(e.num), leading(e.den)))
   if (value === null) throw new Unsupported('non_polynomial') // x^(1/2) = căn → ngoài phạm vi
   if (Math.abs(value) > MAX_DEGREE) throw new Unsupported('too_complex')
+  return value
+}
+
+/** Luỹ thừa: chỉ nhận số mũ là hằng số NGUYÊN (âm thì thành phân thức, ghi điều kiện ≠ 0). */
+function powerNode(base: RatFn, exponentNode: ExprNode, variable: string | null, domain: Poly[]) {
+  const value = integerExponent(exponentNode, variable, domain)
   if (value === 0) {
     if (isZeroPoly(base.num)) throw new Unsupported('non_polynomial') // 0^0
     return { num: ONE_POLY, den: ONE_POLY }
@@ -287,12 +302,32 @@ function latexToPlain(input: string): string | null {
     // tỉ lệ `a:b` (hình học/xác suất/Sinh) ở đây cũng đọc là a/b — cùng giá trị nên không sai nghĩa.
     // `::`, `:` đầu/cuối thành `//`, `/` thừa → bộ phân tích báo không đọc được như với `/`.
     .replace(/:/g, '/')
-  const expanded = expandFractions(s)
+  const fractions = expandFractions(s)
+  const expanded = fractions === null ? null : expandSquareRoots(fractions)
   if (expanded === null) return null
   s = expanded.replace(/\{/g, '(').replace(/\}/g, ')')
-  if (s.includes('\\')) return null // LaTeX lạ (\sqrt, \sin, \pi, \neq, \le…) — không đoán
+  if (s.includes('\\')) return null // LaTeX lạ (\sin, \pi, \neq, \sqrt[3]…) — không đoán
   if (/pi|π/.test(s)) return null // π không phải số hữu tỉ
-  return absBarsToCalls(s)
+  // `√x²`, `√2^3`: căn của bình phương hay bình phương của căn? Viết tay không phân biệt được.
+  if (/√\s*(?:[0-9.]+|[a-zA-Z])\s*(?:\^|[⁰¹²³⁴-⁹])/.test(s)) return null
+  // `√` gõ tay: thêm khoảng trắng TRƯỚC để `2x√x` không dính thành tên biến `xsqrt`.
+  return absBarsToCalls(s.replace(/√/g, ' sqrt '))
+}
+
+/**
+ * `\sqrt{a}` → ` sqrt((a))`, xử lý lồng nhau. Chỉ nhận dạng có ngoặc nhọn: `\sqrt[3]{…}` (căn bậc
+ * khác) và `\sqrt 23` (LaTeX hiểu là √2·3, dễ đọc nhầm) → null, không đoán.
+ */
+function expandSquareRoots(input: string): string | null {
+  let s = input
+  for (let guard = 0; guard < 50; guard++) {
+    const m = /\\sqrt(?![a-zA-Z])\s*/.exec(s)
+    if (m === null) return s
+    const radicand = readBraceGroup(s, m.index + m[0].length)
+    if (radicand === null) return null
+    s = `${s.slice(0, m.index)} sqrt((${radicand[0]}))${s.slice(radicand[1])}`
+  }
+  return null
 }
 
 /**
@@ -307,7 +342,7 @@ function absBarsToCalls(s: string): string | null {
   for (const ch of s) {
     if (ch === '|') {
       if (open === 0 || prev !== 'operand') {
-        out += 'abs('
+        out += ' abs(' // khoảng trắng trước: `2x|x|` không dính thành tên biến `xabs`
         open++
         prev = 'operator'
       } else {
@@ -367,9 +402,13 @@ function parseClause(raw: string): Clause {
   return { sides, rels }
 }
 
-/** Mệnh đề chỉ toàn dấu `=` và không có trị tuyệt đối — đi nhánh so tập nghiệm cũ. */
+/** Mệnh đề chỉ toàn dấu `=`, không có trị tuyệt đối hay căn — đi nhánh so tập nghiệm cũ. */
 const isEquationOnly = (st: Statement): boolean =>
-  st.every((clause) => clause.rels.every((r) => r === '=') && !clause.sides.some(containsAbs))
+  st.every(
+    (clause) =>
+      clause.rels.every((r) => r === '=') &&
+      !clause.sides.some((n) => containsAbs(n) || containsSqrt(n)),
+  )
 
 /** Có dấu bất đẳng thức ở đâu đó — để chọn câu phản hồi của bất phương trình. */
 const hasInequality = (st: Statement): boolean =>
@@ -377,6 +416,9 @@ const hasInequality = (st: Statement): boolean =>
 
 const statementHasAbs = (st: Statement): boolean =>
   st.some((clause) => clause.sides.some(containsAbs))
+
+const statementHasSqrt = (st: Statement): boolean =>
+  st.some((clause) => clause.sides.some(containsSqrt))
 
 /** Một đoạn (giữa hai dấu ⇒) → các mệnh đề "hoặc", đã khai triển ±. */
 function parseStatement(raw: string): Statement {
@@ -617,18 +659,22 @@ const MAX_ABS_PER_CLAUSE = 4
 
 const isAbs = (node: ExprNode): boolean => node.type === 'call' && node.name === 'abs'
 
-function containsAbs(node: ExprNode): boolean {
+/** Cây có gọi hàm `name` ở đâu đó không. */
+function containsCall(node: ExprNode, name: string): boolean {
   switch (node.type) {
     case 'call':
-      return isAbs(node) || containsAbs(node.arg)
+      return node.name === name || containsCall(node.arg, name)
     case 'unary':
-      return containsAbs(node.arg)
+      return containsCall(node.arg, name)
     case 'binary':
-      return containsAbs(node.left) || containsAbs(node.right)
+      return containsCall(node.left, name) || containsCall(node.right, name)
     default:
       return false
   }
 }
+
+const containsAbs = (node: ExprNode): boolean => containsCall(node, 'abs')
+const containsSqrt = (node: ExprNode): boolean => containsCall(node, 'sqrt')
 
 /** Mọi nút `abs(…)` của cây (để đếm số trị tuyệt đối khác nhau). */
 function absNodes(node: ExprNode, out: ExprNode[]): void {
@@ -725,10 +771,7 @@ function clauseFormula(clause: Clause, variable: string | null): SetFormula {
     parts: splitAbsolute(clause.sides).map((branch) => ({
       kind: 'and',
       parts: [
-        ...branch.guards.map((g): SetFormula => {
-          const f = toRatFn(g.arg, variable, [])
-          return { kind: 'atom', num: f.num, den: f.den, rel: g.rel }
-        }),
+        ...branch.guards.map((g) => relationFormula(g.arg, ZERO_NODE, g.rel, variable)),
         plainClauseFormula(branch.sides, clause.rels, variable),
       ],
     })),
@@ -741,19 +784,202 @@ function plainClauseFormula(
   rels: readonly Rel[],
   variable: string | null,
 ): SetFormula {
-  const domain: Poly[] = []
-  const fns = sides.map((node) => toRatFn(node, variable, domain))
   const parts: SetFormula[] = []
   rels.forEach((rel, i) => {
-    const a = fns[i]
-    const b = fns[i + 1]
+    const a = sides[i]
+    const b = sides[i + 1]
     if (a === undefined || b === undefined) return
-    // a rel b ⇔ (a − b) rel 0, với a − b = (a.num·b.den − b.num·a.den) / (a.den·b.den).
-    const num = polySub(polyMul(a.num, b.den), polyMul(b.num, a.den))
-    parts.push({ kind: 'atom', num, den: polyMul(a.den, b.den), rel })
+    parts.push(relationFormula(a, b, rel, variable))
   })
+  return { kind: 'and', parts }
+}
+
+const ZERO_NODE: ExprNode = { type: 'num', value: 0 }
+
+/**
+ * `a rel b` (hai vế không còn trị tuyệt đối) → công thức dấu, kèm "mọi mẫu số ≠ 0" và "mọi biểu
+ * thức dưới căn ≥ 0". Căn bậc hai: xem `radicalFormula`.
+ */
+function relationFormula(a: ExprNode, b: ExprNode, rel: Rel, variable: string | null): SetFormula {
+  const domain: Poly[] = []
+  const parts =
+    containsSqrt(a) || containsSqrt(b)
+      ? radicalFormula(a, b, rel, variable, domain)
+      : [fnAtom(fnSub(toRatFn(a, variable, domain), toRatFn(b, variable, domain)), rel)]
   for (const d of domain) if (!isConstant(d)) parts.push({ kind: 'nonzero', poly: d })
   return { kind: 'and', parts }
+}
+
+/** `R rel 0` với R là phân thức (mẫu ≠ 0 do điều kiện xác định lo). */
+const fnAtom = (r: RatFn, rel: Rel): SetFormula => ({
+  kind: 'atom',
+  num: r.num,
+  den: r.den,
+  rel,
+})
+
+// ── Căn bậc hai: docs/specs/2026-10-11-can-bac-hai.md ───────────────────────
+
+/**
+ * Một biểu thức có MỘT căn `s = √f`: `A + B·s` với A, B, f là phân thức của ẩn. Mọi phép tính
+ * dùng `s² = f` nên vẫn CHÍNH XÁC (không làm tròn √2 thành 1,414…).
+ */
+type Surd = { a: RatFn; b: RatFn }
+
+const ZERO_FN: RatFn = { num: [], den: ONE_POLY }
+const ONE_FN: RatFn = { num: ONE_POLY, den: ONE_POLY }
+
+const sameFn = (p: RatFn, q: RatFn): boolean => isZeroPoly(fnSub(p, q).num)
+
+/** Mọi nút `sqrt(…)` của cây. */
+function sqrtNodes(node: ExprNode, out: Extract<ExprNode, { type: 'call' }>[]): void {
+  switch (node.type) {
+    case 'call':
+      if (node.name === 'sqrt') out.push(node)
+      sqrtNodes(node.arg, out)
+      return
+    case 'unary':
+      sqrtNodes(node.arg, out)
+      return
+    case 'binary':
+      sqrtNodes(node.left, out)
+      sqrtNodes(node.right, out)
+      return
+    default:
+      return
+  }
+}
+
+/**
+ * `a rel b` có căn bậc hai → các phần của công thức dấu. Hai dạng đọc được:
+ *  - MỘT biểu thức dưới căn (có thể lặp lại: `√x + 2√x`): đưa `a − b` về `A + B·√f`;
+ *  - `√f rel √g` (mỗi vế đúng một căn): căn đồng biến trên [0; +∞) nên ⇔ f ≥ 0, g ≥ 0, f rel g.
+ * Căn lồng nhau, hai căn khác nhau ở dạng khác → `too_complex` ("?").
+ */
+function radicalFormula(
+  a: ExprNode,
+  b: ExprNode,
+  rel: Rel,
+  variable: string | null,
+  domain: Poly[],
+): SetFormula[] {
+  const nodes: Extract<ExprNode, { type: 'call' }>[] = []
+  sqrtNodes(a, nodes)
+  sqrtNodes(b, nodes)
+  const radicands: RatFn[] = []
+  for (const n of nodes) {
+    if (containsSqrt(n.arg)) throw new Unsupported('too_complex') // căn lồng căn
+    const f = toRatFn(n.arg, variable, domain)
+    if (!radicands.some((r) => sameFn(r, f))) radicands.push(f)
+  }
+  const nonNegative = radicands.map((f) => fnAtom(f, '≥'))
+  const [f, g] = radicands
+  if (f === undefined) throw new Unsupported('too_complex') // không xảy ra: nơi gọi đã thấy căn
+  if (g === undefined) {
+    const d = surdSub(toSurd(a, variable, domain, f), toSurd(b, variable, domain, f))
+    return [...nonNegative, surdSign(d, f, rel)]
+  }
+  const lone = (n: ExprNode) => n.type === 'call' && n.name === 'sqrt'
+  if (radicands.length === 2 && lone(a) && lone(b)) {
+    return [...nonNegative, fnAtom(fnSub(f, g), rel)]
+  }
+  throw new Unsupported('too_complex')
+}
+
+const surdSub = (p: Surd, q: Surd): Surd => ({ a: fnSub(p.a, q.a), b: fnSub(p.b, q.b) })
+
+/** Biểu thức (chỉ chứa căn `√f`) → `A + B·√f`. */
+function toSurd(node: ExprNode, variable: string | null, domain: Poly[], f: RatFn): Surd {
+  if (!containsSqrt(node)) return { a: toRatFn(node, variable, domain), b: ZERO_FN }
+  switch (node.type) {
+    case 'call':
+      if (node.name !== 'sqrt') throw new Unsupported('non_polynomial')
+      if (!sameFn(toRatFn(node.arg, variable, domain), f)) throw new Unsupported('too_complex')
+      return { a: ZERO_FN, b: ONE_FN }
+    case 'unary': {
+      const arg = toSurd(node.arg, variable, domain, f)
+      return node.op === '-' ? { a: fnNeg(arg.a), b: fnNeg(arg.b) } : arg
+    }
+    case 'binary': {
+      const p = toSurd(node.left, variable, domain, f)
+      if (node.op === '^') {
+        const k = integerExponent(node.right, variable, domain)
+        let base = p
+        if (k < 0) base = surdDiv({ a: ONE_FN, b: ZERO_FN }, p, f, domain)
+        let out: Surd = { a: ONE_FN, b: ZERO_FN }
+        for (let i = 0; i < Math.abs(k); i++) out = surdMul(out, base, f)
+        return out
+      }
+      const q = toSurd(node.right, variable, domain, f)
+      switch (node.op) {
+        case '+':
+          return { a: fnAdd(p.a, q.a), b: fnAdd(p.b, q.b) }
+        case '-':
+          return surdSub(p, q)
+        case '*':
+          return surdMul(p, q, f)
+        case '/':
+          return surdDiv(p, q, f, domain)
+      }
+    }
+  }
+  // `num`/`var` không chứa căn — đã trả ở đầu hàm; tới đây là cây lạ.
+  throw new Unsupported('too_complex')
+}
+
+/** (A + B√f)(C + D√f) = (AC + BDf) + (AD + BC)√f. */
+const surdMul = (p: Surd, q: Surd, f: RatFn): Surd => ({
+  a: fnAdd(fnMul(p.a, q.a), fnMul(fnMul(p.b, q.b), f)),
+  b: fnAdd(fnMul(p.a, q.b), fnMul(p.b, q.a)),
+})
+
+/**
+ * Chia cho `C` (không căn) hoặc cho `D·√f` (thuần căn): `x / (D√f) = x·√f / (D·f)`, điều kiện
+ * D ≠ 0 và f ≠ 0 — đúng bằng điều kiện mẫu `D√f ≠ 0`. Mẫu dạng `C + D√f` (cả hai khác 0) cần
+ * trục căn, có thể đẻ thêm điểm loại trừ sai → `too_complex`, không đoán.
+ */
+function surdDiv(p: Surd, q: Surd, f: RatFn, domain: Poly[]): Surd {
+  if (isZeroPoly(q.b.num)) return { a: fnDiv(p.a, q.a, domain), b: fnDiv(p.b, q.a, domain) }
+  if (!isZeroPoly(q.a.num)) throw new Unsupported('too_complex')
+  const df = fnMul(q.b, f)
+  if (isZeroPoly(df.num)) throw new DivisionByZero()
+  return { a: fnDiv(p.b, q.b, domain), b: fnDiv(p.a, df, domain) }
+}
+
+/**
+ * `A + B·√f rel 0` (với f ≥ 0 đã ghi riêng) → công thức dấu CHÍNH XÁC. Đặt P = A² − B²f =
+ * (A + B√f)(A − B√f):
+ *  - `= 0` ⇔ P = 0 và A·B ≤ 0 (A, B√f trái dấu hoặc cùng bằng 0);
+ *  - `> 0` ⇔ (A > 0, B ≥ 0) hoặc (A > 0, P > 0) hoặc (A ≤ 0, B > 0, P < 0);
+ *  - `≥ 0` ⇔ (A ≥ 0, B ≥ 0) hoặc (A ≥ 0, P ≥ 0) hoặc (A ≤ 0, B ≥ 0, P ≤ 0);
+ *  - `<`, `≤`: đổi dấu cả A, B rồi dùng `>`, `≥`.
+ */
+function surdSign(d: Surd, f: RatFn, rel: Rel): SetFormula {
+  const { a, b } = d
+  if (isZeroPoly(b.num)) return fnAtom(a, rel)
+  if (rel === '<') return surdSign({ a: fnNeg(a), b: fnNeg(b) }, f, '>')
+  if (rel === '≤') return surdSign({ a: fnNeg(a), b: fnNeg(b) }, f, '≥')
+  const p = fnSub(fnMul(a, a), fnMul(fnMul(b, b), f))
+  const and = (...parts: SetFormula[]): SetFormula => ({ kind: 'and', parts })
+  if (rel === '=') return and(fnAtom(p, '='), fnAtom(fnMul(a, b), '≤'))
+  if (rel === '>') {
+    return {
+      kind: 'or',
+      parts: [
+        and(fnAtom(a, '>'), fnAtom(b, '≥')),
+        and(fnAtom(a, '>'), fnAtom(p, '>')),
+        and(fnAtom(a, '≤'), fnAtom(b, '>'), fnAtom(p, '<')),
+      ],
+    }
+  }
+  return {
+    kind: 'or',
+    parts: [
+      and(fnAtom(a, '≥'), fnAtom(b, '≥')),
+      and(fnAtom(a, '≥'), fnAtom(p, '≥')),
+      and(fnAtom(a, '≤'), fnAtom(b, '≥'), fnAtom(p, '≤')),
+    ],
+  }
 }
 
 function statementFormula(statement: Statement, variable: string | null): SetFormula {
@@ -912,6 +1138,7 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
   const useFormula = ![anchorStmt, ...stepStmts].every(isEquationOnly)
   const withInequality = [anchorStmt, ...stepStmts].some(hasInequality)
   const anchorHasAbs = statementHasAbs(anchorStmt)
+  const anchorHasSqrt = statementHasSqrt(anchorStmt)
   const anchorSet = guarded(() => comparableOf(anchorStmt, variable, useFormula))
   if (anchorSet === 'div0' || 'verdict' in anchorSet) {
     return { verdict: 'unsupported', reason: 'anchor_unsupported' }
@@ -937,6 +1164,9 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
         ...(outcome.diff.inequality === undefined ? {} : { inequality: outcome.diff.inequality }),
         ...(anchorHasAbs && !statementHasAbs(stmt)
           ? { absoluteValue: { casesSplit: true as const } }
+          : {}),
+        ...(anchorHasSqrt && !statementHasSqrt(stmt)
+          ? { squareRoot: { removed: true as const } }
           : {}),
       }
     }
@@ -1050,7 +1280,8 @@ function describeMathStepUnsafe(step: string): MathStepShape | null {
     const clause = stmt[0]
     // Hình dạng chỉ mô tả PHƯƠNG TRÌNH hai vế; bất phương trình → câu gợi ý chung.
     if (clause === undefined || clause.sides.length !== 2 || clause.rels[0] !== '=') return null
-    if (clause.fromSet === true || clause.sides.some(containsAbs)) return null
+    if (clause.fromSet === true) return null
+    if (clause.sides.some((n) => containsAbs(n) || containsSqrt(n))) return null
     const vars = statementVars([stmt])
     if (vars.size > 1) return null
     const variable = vars.size === 1 ? ([...vars][0] ?? null) : null

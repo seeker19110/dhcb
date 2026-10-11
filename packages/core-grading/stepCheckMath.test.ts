@@ -158,7 +158,7 @@ describe('checkMathStep — chia cho 0', () => {
 
 describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', () => {
   it.each([
-    ['\\sqrt{x} = 2', 'x = 4', 'unknown_notation'],
+    ['\\sqrt[3]{x} = 2', 'x = 4', 'unknown_notation'], // căn bậc khác 2
     ['\\sin x = 0', 'x = 0', 'unknown_notation'],
     ['x = \\pi', 'x = 3', 'unknown_notation'],
     ['x = π', 'x = 3', 'unknown_notation'],
@@ -185,7 +185,7 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
       verdict: 'unsupported',
       reason: 'multi_variable',
     })
-    expect(checkMathStep('x = 2', '\\sqrt{x} = 2')).toEqual({
+    expect(checkMathStep('x = 2', '\\sqrt[3]{x} = 2')).toEqual({
       verdict: 'unsupported',
       reason: 'anchor_unsupported',
     })
@@ -197,7 +197,7 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
 
   it('chuỗi ⇒ có đoạn rỗng hoặc đoạn không đọc được thì không khẳng định ✓', () => {
     expect(verdict('2x = 10 \\implies', '2x + 5 = 15')).toBe('unsupported')
-    expect(verdict('2x = 10 \\implies \\sqrt{x} = 5', '2x + 5 = 15')).toBe('unsupported')
+    expect(verdict('2x = 10 \\implies \\sqrt[3]{x} = 5', '2x + 5 = 15')).toBe('unsupported')
   })
 
   it('các nhánh hiếm của tập nghiệm/điều kiện xác định', () => {
@@ -220,8 +220,8 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
       verdict: 'unsupported',
       reason: 'non_polynomial',
     })
-    // Hàm gõ không dấu \ (sqrt x) vẫn là ngoài phạm vi đa thức.
-    expect(checkMathStep('sqrt(x) = 2', 'x = 4')).toEqual({
+    // Hàm gõ không dấu \ (sin x) vẫn là ngoài phạm vi đa thức.
+    expect(checkMathStep('sin(x) = 0', 'x = 0')).toEqual({
       verdict: 'unsupported',
       reason: 'non_polynomial',
     })
@@ -241,7 +241,7 @@ describe('checkMathStep — ngoài phạm vi ⇒ unsupported (KHÔNG đoán)', (
     expect(checkMathStep('x = 10', '2x + 5 = 15', 'y = 10')).toMatchObject({
       sameAsPrevious: false,
     })
-    expect(checkMathStep('x = 10', '2x + 5 = 15', '\\sqrt{x} = 5')).toMatchObject({
+    expect(checkMathStep('x = 10', '2x + 5 = 15', '\\sqrt[3]{x} = 5')).toMatchObject({
       sameAsPrevious: false,
     })
     expect(checkMathStep('x = 10', '2x + 5 = 15', '2x = 30 \\implies 2x = 20')).toMatchObject({
@@ -424,8 +424,8 @@ describe('checkMathStep — bất phương trình: đọc ký hiệu', () => {
 })
 
 describe('checkMathStep — bất phương trình: chính xác ở nghiệm vô tỉ và đầu mút (④)', () => {
-  it('x² < 2: căn chưa đọc → "?", dạng đa thức thì so chính xác', () => {
-    expect(verdict('-\\sqrt{2} < x < \\sqrt{2}', 'x^2 < 2')).toBe('unsupported')
+  it('x² < 2: đáp số có căn và dạng đa thức đều so chính xác', () => {
+    expect(verdict('-\\sqrt{2} < x < \\sqrt{2}', 'x^2 < 2')).toBe('equivalent')
     expect(verdict('x^2 - 2 < 0', 'x^2 < 2')).toBe('equivalent')
     expect(checkMathStep('x^2 < 3', 'x^2 < 2')).toMatchObject({
       verdict: 'changed',
@@ -672,5 +672,141 @@ describe('checkMathStep — trị tuyệt đối (chia trường hợp)', () => 
 
   it('describeMathStep không mô tả phương trình có trị tuyệt đối', () => {
     expect(describeMathStep('|x - 1| = 3')).toBeNull()
+  })
+})
+
+// docs/specs/2026-10-11-can-bac-hai.md — căn bậc hai, vẫn CHÍNH XÁC (A + B·√f, không làm tròn).
+describe('checkMathStep — căn bậc hai', () => {
+  it.each([
+    ['x = 6', '\\sqrt{x + 3} = x - 3'],
+    ['x = 4', '\\sqrt{x} = 2'],
+    ['x = 4', '√x = 2'],
+    ['x = 4', '√(x) = 2'],
+    ['x = 4', 'sqrt(x) = 2'],
+    ['x = \\sqrt{2} hoặc x = -\\sqrt{2}', 'x^2 = 2'],
+    ['x = \\pm\\sqrt{2}', 'x^2 = 2'],
+    ['x = ±√2', 'x^2 = 2'],
+    ['x = \\frac{1 \\pm \\sqrt{5}}{2}', 'x^2 - x - 1 = 0'], // công thức nghiệm
+    ['x = 2 \\pm 2\\sqrt{2}', 'x^2 - 4x - 4 = 0'],
+    ['S = \\emptyset', '\\sqrt{x} = -1'],
+    ['x = 3', '\\sqrt{2x + 1} = \\sqrt{x + 4}'], // √f = √g
+    ['S = \\emptyset', '\\sqrt{x - 5} = \\sqrt{1 - x}'], // f = g nhưng ngoài điều kiện
+    ['0 \\le x < 4', '\\sqrt{x} < 2'],
+    ['x > 5', '\\sqrt{x - 1} > 2'],
+    ['x \\ge 1', '\\sqrt{x - 1} + 1 > 0'],
+    ['0 \\le x \\le 1', 'x - \\sqrt{x} \\le 0'], // hệ số âm trước căn
+    ['x > 4', 'x - 2 > \\sqrt{x}'],
+    ['0 \\le x \\le 4', '\\sqrt{x} \\ge x - 2'],
+    ['0 \\le x < 4', 'x - 2 < \\sqrt{x}'],
+    ['x \\le -1 hoặc x \\ge 1', '\\sqrt{x^2 - 1} \\ge 0'],
+    ['-1 \\le x < 3', '\\sqrt{x + 1} < 2'],
+    ['x \\ge 0', '\\sqrt{x}^2 = x'], // (√x)² = x đúng trên tập xác định
+    ['S = \\mathbb{R}', '\\sqrt{x^2} = |x|'], // √(x²) = |x|
+    ['x = 1', '\\frac{1}{\\sqrt{x}} = 1'], // chia cho căn thuần
+    ['x = 4', '\\frac{x}{\\sqrt{x}} = 2'],
+    ['x = 4', '\\sqrt{x} + 2\\sqrt{x} = 6'], // cùng một căn lặp lại
+    ['x = 4', '2x\\sqrt{x} = 16'], // `2x√x` không dính thành tên biến
+    ['x = 3', '2x|x| = 18'], // tương tự với trị tuyệt đối
+    ['x = 3 hoặc x = -3', '\\sqrt{|x| + 1} = 2'], // trị tuyệt đối dưới căn
+  ])('%s  (đề: %s) → tương đương', (step, anchor) => {
+    expect(checkMathStep(step, anchor).verdict).toBe('equivalent')
+  })
+
+  it('đáp số có căn được nhận là dạng đáp số', () => {
+    expect(checkMathStep('x = \\pm\\sqrt{2}', 'x^2 = 2')).toEqual({
+      verdict: 'equivalent',
+      isFinalAnswer: true,
+    })
+  })
+
+  it('bình phương hai vế quên điều kiện → THÊM nghiệm lạ, có cờ bỏ căn', () => {
+    const kq = checkMathStep('x + 3 = (x - 3)^2', '\\sqrt{x + 3} = x - 3')
+    expect(kq).toEqual({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+      sameAsPrevious: false,
+      squareRoot: { removed: true },
+    })
+    expect(checkMathStep('x = 1 hoặc x = 6', '\\sqrt{x + 3} = x - 3')).toMatchObject({
+      lost: false,
+      extra: true,
+    })
+  })
+
+  it('bình phương sai (khai triển thiếu hạng tử) → mất nghiệm, có cờ bỏ căn', () => {
+    expect(checkMathStep('x + 3 = x^2 - 9', '\\sqrt{x + 3} = x - 3')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      squareRoot: { removed: true },
+    })
+  })
+
+  it('bất phương trình bỏ căn quên điều kiện dưới căn → thêm khoảng', () => {
+    expect(checkMathStep('x < 4', '\\sqrt{x} < 2')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+      inequality: { complementOnIntervals: false },
+      squareRoot: { removed: true },
+    })
+    // Bỏ mất đầu mút.
+    expect(checkMathStep('x \\ge 5', '\\sqrt{x - 1} > 2')).toMatchObject({ extra: true })
+  })
+
+  it('điều kiện dưới căn giữ cả khi căn triệt tiêu: √x − √x = 0 chỉ đúng với x ≥ 0', () => {
+    expect(checkMathStep('S = \\mathbb{R}', '\\sqrt{x} - \\sqrt{x} = 0')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+    })
+    expect(checkMathStep('x \\ge 0', '\\sqrt{x} - \\sqrt{x} = 0').verdict).toBe('equivalent')
+  })
+
+  it('nghiệm vô tỉ đúng một nửa → mất nghiệm (không làm tròn)', () => {
+    expect(checkMathStep('x = \\sqrt{2}', 'x^2 = 2')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      extra: false,
+    })
+    // √2 ≈ 1,41421356…: hai số hữu tỉ sát √2 KHÔNG phải nghiệm.
+    expect(checkMathStep('x = 1.41421356', 'x = \\sqrt{2}')).toMatchObject({ verdict: 'changed' })
+  })
+
+  it('bước còn căn thì không gắn cờ bỏ căn', () => {
+    expect(checkMathStep('\\sqrt{x + 3} = x', '\\sqrt{x + 3} = x - 3')).not.toHaveProperty(
+      'squareRoot',
+    )
+  })
+
+  it.each([
+    ['\\sqrt{\\sqrt{x}} = 2'], // căn lồng căn
+    ['\\sqrt{x + 5} + \\sqrt{x} = 5'], // hai căn khác nhau cộng nhau
+    ['2\\sqrt{x} = \\sqrt{x + 3}'], // hai căn, một vế có hệ số
+    ['\\frac{x}{\\sqrt{x} + 1} = 1'], // mẫu dạng C + D√f — cần trục căn
+  ])('ngoài phạm vi %s → too_complex ("?")', (step) => {
+    expect(checkMathStep(step, 'x = 1')).toEqual({ verdict: 'unsupported', reason: 'too_complex' })
+  })
+
+  it.each([
+    ['\\sqrt[3]{x} = 2'], // căn bậc ba
+    ['\\sqrt x = 2'], // \sqrt không ngoặc nhọn: `\sqrt 23` dễ đọc nhầm
+    ['√x² = 4'], // căn của bình phương hay bình phương của căn?
+    ['√2^3 = x'],
+  ])('ký hiệu %s → unknown_notation', (step) => {
+    expect(checkMathStep(step, 'x = 1')).toEqual({
+      verdict: 'unsupported',
+      reason: 'unknown_notation',
+    })
+  })
+
+  it('chia cho căn của 0 → chia cho 0', () => {
+    expect(checkMathStep('x = \\frac{1}{\\sqrt{0}}', 'x = 1')).toEqual({
+      verdict: 'division_by_zero',
+    })
+  })
+
+  it('describeMathStep không mô tả phương trình có căn', () => {
+    expect(describeMathStep('\\sqrt{x} = 3')).toBeNull()
   })
 })

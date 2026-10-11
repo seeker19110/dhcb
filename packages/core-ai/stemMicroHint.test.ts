@@ -140,6 +140,11 @@ const DE_TOAN: ReadonlyArray<{ de: string; chuoi: readonly string[][] }> = [
     de: '\\frac{x}{3} + 2 = 4',
     chuoi: [[], ['\\frac{x}{3} = 2'], ['\\frac{x}{3} = 6']],
   },
+  // Căn bậc hai (đặc tả 2026-10-11-can-bac-hai): bình phương thiếu điều kiện, bình phương sai.
+  {
+    de: '\\sqrt{x + 3} = x - 3',
+    chuoi: [[], ['x + 3 = (x - 3)^2'], ['x + 3 = x^2 - 9'], ['x^2 - 7x + 6 = 0'], ['x = 6']],
+  },
   // Bất phương trình (đặc tả 2026-10-11-kiem-buoc-bat-phuong-trinh): `nghiemCuaDe` lấy mọi số
   // nguyên ứng viên thuộc tập nghiệm (x = c không có nghiệm lạ) — gợi ý không được chứa số nào.
   {
@@ -304,6 +309,19 @@ describe('generateSocraticHint — đúng loại bước/lỗi', () => {
     expect(goiY('|x - 1| = 3', ['|x - 1| = 4']).hintText).not.toContain('trường hợp')
   })
 
+  it('căn bậc hai: bình phương thiếu điều kiện → hỏi điều kiện; bình phương sai → hỏi khai triển', () => {
+    const thieuDK = goiY('\\sqrt{x + 3} = x - 3', ['x + 3 = (x - 3)^2'])
+    expect(thieuDK.level).toBe(3)
+    expect(thieuDK.hintText).toContain('giữ lại những điều kiện nào')
+    const saiKhaiTrien = goiY('\\sqrt{x + 3} = x - 3', ['x + 3 = x^2 - 9'])
+    expect(saiKhaiTrien.level).toBe(3)
+    expect(saiKhaiTrien.hintText).toContain('bình phương CẢ vế')
+    // Bước còn căn → không phải câu bỏ căn.
+    expect(goiY('\\sqrt{x + 3} = x - 3', ['\\sqrt{x + 3} = x']).hintText).not.toContain(
+      'bình phương',
+    )
+  })
+
   it('bước HỢP LỆ → bậc 2, hỏi về cấu trúc của chính bước đó', () => {
     const h = (steps: string[], de = '2x + 5 = 15') => goiY(de, steps)
     expect(h(['2x + 5 - 5 = 15 - 5'])).toMatchObject({ level: 2 })
@@ -325,7 +343,7 @@ describe('generateSocraticHint — đúng loại bước/lỗi', () => {
   })
 
   it('bước ngoài phạm vi → nói thật là chưa đọc được, hỏi cách viết lại', () => {
-    const r = goiY('2x + 5 = 15', ['\\sqrt{x} = 5'])
+    const r = goiY('2x + 5 = 15', ['\\sqrt[3]{x} = 5'])
     expect(r.level).toBe(1)
     expect(r.hintText).toContain('MỘT ẩn')
     expect(goiY(undefined, ['x + y = 5']).hintText).toContain('MỘT ẩn')
