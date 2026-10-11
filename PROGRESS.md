@@ -1865,8 +1865,11 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   2,5 s ở mobile — phần còn lại là chuỗi chunk JS của trang. **CEFR đã tách ở
   `docs/changelog/0603-*.md`** (nạp lười màn con/tab học/bài thi: JS tĩnh thêm trước nội dung
   425 → 180 KB thô); **Từ điển đã tách ở `docs/changelog/0604-*.md`** (nạp lười 4 tab học:
-  317 → 138 KB thô); (2) đo lại CEFR + Từ điển trên production sau deploy 0601/0603/0604; (3) Tầng 9; (4) vị trí cuộn khi mở màn con trang cấp chưa nhất quán (lần đầu
-  về đầu trang, các lần sau giữ vị trí — xem 0603).
+  317 → 138 KB thô); (2) **CEFR B1 đã đo lại sau deploy 0601+0603** (`docs/changelog/0605-*.md`):
+  điểm 90–92, LCP 2,9–3,1 s, TBT 70–80 ms (trước 83–85 · 3,1–3,2 s · 190–280 ms) — LCP còn lại
+  chủ yếu là CSS chặn hiển thị (~450 ms) + TTFB; **Từ điển cần đo lại sau deploy 0604**;
+  (3) Tầng 9. (Vị trí cuộn khi mở/đóng màn con trang cấp trên mobile — ✅ ĐÃ CHỐT ở `0605`: mở → về đầu,
+  đóng → danh sách về chỗ cũ.)
   (Nhánh lỗi khi tải `cefr.json` + chỉ mục ở trang cấp/Lộ trình/trang môn — ✅ ĐÃ SỬA ở
   `docs/changelog/0602-*.md`; Home + `useTodayPlan` vốn đã có nhánh lỗi.)
 

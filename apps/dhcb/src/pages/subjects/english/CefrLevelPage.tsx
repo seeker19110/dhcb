@@ -18,7 +18,7 @@
 //   ẩn thanh tab.
 // ──────────────────────────────────────────────────────────────────────
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
 import { useParams, useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import { duongDanLoTrinh } from '../../../lib/englishRoutes'
@@ -339,6 +339,48 @@ export default function CefrLevelPage() {
   const [dialogueOwner, setDialogueOwner] = useState('')
   // Đang làm bài thi cuối cấp (màn thi toàn màn hình đè lên trang cấp).
   const [examing, setExaming] = useState(false)
+
+  // [changelog 0605] Mở một màn con (vòng từ vựng · bài ngữ pháp · hội thoại · bài thi) trên
+  // mobile thì về ĐẦU màn. Trước đây trang giữ nguyên vị trí cuộn của danh sách: bấm một vòng ở
+  // cuối danh sách là màn mới mở ra lưng chừng, nút "Mục lục cấp học" bị header che. Từ 0603 màn con
+  // nạp lười nên lần mở ĐẦU lại về đầu (ô chờ làm trang co lại) còn các lần sau thì không — chốt
+  // một hành vi. Đóng màn con thì trả danh sách về ĐÚNG chỗ đang đọc lúc bấm mở (không bắt cuộn
+  // lại từ đầu). Desktop giữ nguyên: màn con nằm trong bố cục hai cột, cột trái là mục lục.
+  const manConDangMo = dialogue
+    ? `hoi-thoai:${dialogue.titleEn}`
+    : circle
+      ? `vong:${circle.id}`
+      : lesson
+        ? `ngu-phap:${lesson.id}`
+        : examing
+          ? 'bai-thi'
+          : null
+  const manConTruocRef = useRef<string | null>(null)
+  // Vị trí cuộn của DANH SÁCH — ghi liên tục khi danh sách đang hiện. KHÔNG đọc `scrollY` lúc mở
+  // màn con: màn con (hoặc ô chờ nạp lười) ngắn hơn danh sách nên trình duyệt đã KẸP `scrollY`
+  // xuống trước khi effect kịp đọc. Cờ `dangODanhSachRef` đổi trong layout effect — trước khung
+  // hình kế tiếp — nên cú cuộn do kẹp đó không ghi đè vị trí đã lưu.
+  const cuonDanhSachRef = useRef(0)
+  const dangODanhSachRef = useRef(true)
+  useLayoutEffect(() => {
+    dangODanhSachRef.current = manConDangMo === null
+  }, [manConDangMo])
+  useEffect(() => {
+    if (isDesktop) return
+    const ghi = () => {
+      if (dangODanhSachRef.current) cuonDanhSachRef.current = window.scrollY
+    }
+    window.addEventListener('scroll', ghi, { passive: true })
+    return () => window.removeEventListener('scroll', ghi)
+  }, [isDesktop])
+  useEffect(() => {
+    const truoc = manConTruocRef.current
+    if (manConDangMo === truoc) return
+    manConTruocRef.current = manConDangMo
+    if (isDesktop) return
+    if (manConDangMo) window.scrollTo({ top: 0 })
+    else if (truoc !== null) window.scrollTo({ top: cuonDanhSachRef.current })
+  }, [manConDangMo, isDesktop])
 
   // Khóa invalidation thủ công: bump() để tính lại tiến độ sau khi học/đánh dấu.
   const [refresh, setRefresh] = useState(0)
