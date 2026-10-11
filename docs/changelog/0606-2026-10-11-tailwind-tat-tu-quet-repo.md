@@ -65,3 +65,30 @@ App có đúng một file CSS dùng chung cho mọi trang: 283 KB thô / 34,7 KB
     nhiễu của đường mạng đi qua proxy, không phải của trang. Phần "độ trễ vẽ phần tử" (~930 ms)
     giữ nguyên so với trước.
   - Phần tử LCP vẫn là placeholder của ô tra từ.
+
+## Đo thêm: nội tuyến CSS tới hạn — KHÔNG làm (chủ dự án duyệt cho đo, 2026-10-11)
+
+Mốc mạng QUAN SÁT được trong lượt Lighthouse production (mobile):
+
+| Trang         | CSS xong | JS entry xong | Chunk trang xong | FCP    | LCP    |
+| ------------- | -------- | ------------- | ---------------- | ------ | ------ |
+| Từ điển       | 1,73 s   | 1,75 s        | 2,28 s           | 2,25 s | 2,55 s |
+| Cấp CEFR (B1) | 0,78 s   | 0,81 s        | 1,30 s           | 1,28 s | 2,78 s |
+
+- CSS và JS entry tải song song, JS về muộn hơn.
+- Nội dung đầu tiên do React vẽ, tức là chỉ có sau khi JS entry đã tải và chạy. CSS đã về TRƯỚC
+  mốc đó, nên CSS về sớm hơn không kéo FCP hay LCP sớm hơn: đường găng là chuỗi JS.
+- Con số "tiết kiệm ~300–450 ms" mà Lighthouse báo cho CSS chặn hiển thị là ước lượng mô phỏng.
+  Trên các trang này nó không thành hiện thực.
+- Nhúng 33 KB CSS vào HTML lại làm HTML nặng thêm ở MỌI lượt tải, và mất cache dùng chung giữa các
+  trang.
+- Trang chủ khách, nơi CSS thật sự nằm trên đường găng vì HTML dựng sẵn, đã đạt 97–99 (đợt 0584).
+
+## Tầng 9 — phần kiểm được từ ngoài
+
+- `/api/health` trả `ok`.
+- `http://donghanhcungban.org` và `https://donghanhcungban.com` đều 301 về `https://www.donghanhcungban.org/`.
+- Đủ header: HSTS (`max-age=63072000; includeSubDomains; preload`), CSP (kèm bản Report-Only chặt
+  hơn), `nosniff`, `x-frame-options: SAMEORIGIN`, `referrer-policy`, `permissions-policy`.
+- Chứng chỉ TLS không kiểm được từ container (proxy chặn giữa và ký lại).
+- Sentry, `pm2 logs`, số lần restart và dung lượng ổ đĩa cần SSH/token → vẫn là việc tay.
