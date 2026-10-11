@@ -33,7 +33,9 @@ export const ProjectStepSchema = z
      *  hai ngôn ngữ đó, cấm với các ngôn ngữ khác (refine bên dưới kiểm). */
     domHtml: z.string().max(6000).optional(),
     /** Yêu cầu bước — nói rõ hợp đồng nhập/xuất để chấm được. */
-    requirement: z.string().min(1).max(2000),
+    // Trần 3000 (nới từ 2000, changelog 0610): đề bước chốt chặng làn apisim kèm nguyên khối
+    // kiểm thử phải dán (`p5-s5` 2265 ký tự) — trần cũ lặng lẽ sai vì T1 chưa có test parse.
+    requirement: z.string().min(1).max(3000),
     /** Gợi ý khi kẹt (1 mức — gợi ý bậc thang đầy đủ nằm ở bài học unit tương ứng). */
     hint: z.string().min(1).max(500),
     /** Code tham chiếu của bước (phao — mở được, đánh dấu đã xem). */

@@ -6,6 +6,7 @@ import {
   P2_PROJECT_STEPS,
   PROJECT_STAGES,
   ProjectStepSchema,
+  getProjectStages,
   getProjectStep,
   getStepFiles,
   getStepMainFile,
@@ -195,4 +196,22 @@ describe('ProjectStepSchema — probeCode theo làn và trần số ca', () => {
     expect(ProjectStepSchema.safeParse({ ...apisim, checks: nCa(12) }).success).toBe(true)
     expect(ProjectStepSchema.safeParse({ ...apisim, checks: nCa(13) }).success).toBe(false)
   })
+})
+
+// changelog 0610 — trước đây chỉ T2 parse từng bước qua schema; `p5-s5` (T1) vượt trần
+// `requirement` mà không test nào đỏ. Nay parse MỌI bước của cả ba dự án trục.
+describe('ProjectStepSchema — mọi bước của T1/T2/T3 đều hợp lệ', () => {
+  for (const track of ['T1', 'T2', 'T3'] as const) {
+    it(`dự án ${track}`, () => {
+      for (const stage of getProjectStages(track)) {
+        for (const step of stage.steps) {
+          const r = ProjectStepSchema.safeParse(step)
+          expect(
+            r.success,
+            `${step.id}: ${r.error?.issues.map((i) => i.path.join('.')).join(', ')}`,
+          ).toBe(true)
+        }
+      }
+    })
+  }
 })
