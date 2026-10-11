@@ -18,7 +18,7 @@
 //   ẩn thanh tab.
 // ──────────────────────────────────────────────────────────────────────
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
 import { useParams, useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import { duongDanLoTrinh } from '../../../lib/englishRoutes'
@@ -45,15 +45,8 @@ import {
 } from 'lucide-react'
 import Layout from '../../../components/Layout'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
-import { GrammarDetail, VocabFlash, DialogueView } from '../../../components/CefrLessonViews'
-import {
-  TodayLesson,
-  SRSReview,
-  HardWords,
-  QuizTab,
-  ListeningTab,
-  type GrammarQuizSource,
-} from '../../../components/StudyTabs'
+import type { GrammarQuizSource } from '../../../components/StudyTabs'
+import { lazyWithRetry } from '../../../lib/lazyWithRetry'
 import { ACCENT, type AccentClasses } from '../../../lib/cefrAccent'
 import type { CefrLevel, CefrUnit, GrammarLesson } from '../../../data/cefr'
 import type { Circle, CircleSummary } from '../../../data/curriculum'
@@ -106,7 +99,6 @@ import {
   UNLOCK_PCT,
 } from '../../../lib/cefrProgress'
 import { getExamMap } from '../../../lib/cefrExam'
-import CefrExam from '../../../components/CefrExam'
 import { useOnboarding } from '../../../lib/onboarding'
 import { docCapTuQueryTuyChon } from '../../../lib/reviewRoutes'
 import { useOutlinePane } from '../../../components/useOutlinePane'
@@ -195,6 +187,36 @@ const CHUA_TAI = (): Promise<never> => new Promise<never>(() => {})
 async function loadVongDayDuTheoId(): Promise<Record<string, Circle>> {
   const all = await loadFoundation()
   return Object.fromEntries(all.map((c) => [c.id, c]))
+}
+
+// ── Màn con + tab học + bài thi nạp LƯỜI (changelog 0603) ──────────────────────────────────
+// Ba khối này chỉ hiện khi người học bấm vào (mở vòng/bài/hội thoại, đổi tab, làm bài thi), nhưng
+// trước đây được import tĩnh nên trang phải tải hết JS của chúng mới vẽ được danh sách bài.
+// `lazyWithRetry` (không phải React.lazy trần): sau deploy, chunk cũ mất → tự tải lại trang 1 lần.
+const napLessonViews = () => import('../../../components/CefrLessonViews')
+const napStudyTabs = () => import('../../../components/StudyTabs')
+const napCefrExam = () => import('../../../components/CefrExam')
+const GrammarDetail = lazyWithRetry(() =>
+  napLessonViews().then((m) => ({ default: m.GrammarDetail })),
+)
+const VocabFlash = lazyWithRetry(() => napLessonViews().then((m) => ({ default: m.VocabFlash })))
+const DialogueView = lazyWithRetry(() =>
+  napLessonViews().then((m) => ({ default: m.DialogueView })),
+)
+const TodayLesson = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.TodayLesson })))
+const SRSReview = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.SRSReview })))
+const HardWords = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.HardWords })))
+const QuizTab = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.QuizTab })))
+const ListeningTab = lazyWithRetry(() => napStudyTabs().then((m) => ({ default: m.ListeningTab })))
+const CefrExam = lazyWithRetry(napCefrExam)
+
+/** Ô chờ khi chunk của màn con/tab đang về — cùng khuôn ô "Đang tải từ vựng…" của các tab học. */
+function OChoTai({ isA }: { isA: boolean }) {
+  return (
+    <div className="glass rounded-xl p-8 text-center animate-fade-in" aria-busy="true">
+      <p className="text-zinc-400 text-sm">{isA ? 'Đang tải…' : 'Loading…'}</p>
+    </div>
+  )
 }
 
 // Tên mục lục — cũng là nhãn nút mở panel trên mobile (S07-3 AC-20).
@@ -303,6 +325,21 @@ export default function CefrLevelPage() {
     },
   )
   const dictReady = isCurriculumReady() || curriculumState.status === 'ready'
+  // Trang đã vẽ → nạp trước JS của màn con + tab học + bài thi lúc rảnh, để cú bấm đầu tiên không
+  // phải chờ thêm một lượt mạng. Chỉ là nạp TRƯỚC: lỗi ở đây bỏ qua có chủ đích, vì lần render
+  // thật đi qua `lazyWithRetry` + Suspense và tự có nhánh lỗi của nó.
+  useEffect(() => {
+    if (!ready) return
+    const napTruoc = () => {
+      for (const nap of [napLessonViews, napStudyTabs, napCefrExam]) void nap().catch(() => {})
+    }
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(napTruoc, { timeout: 3000 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const id = window.setTimeout(napTruoc, 1500)
+    return () => window.clearTimeout(id)
+  }, [ready])
 
   // Màn con đang mở (giữ nguyên mẫu của RoadmapTab cũ: hội thoại đè lên flashcard
   // để xem xong hội thoại quay lại đúng màn flashcard).
@@ -765,7 +802,7 @@ export default function CefrLevelPage() {
     return shell(
       <>
         {trigger && <div className="mb-3">{trigger}</div>}
-        {children}
+        <Suspense fallback={<OChoTai isA={isA} />}>{children}</Suspense>
       </>,
       headerBack,
       mucLuc,
@@ -907,21 +944,23 @@ export default function CefrLevelPage() {
   }
   if (examing) {
     return shell(
-      <CefrExam
-        uid={uid}
-        isA={isA}
-        level={level}
-        accent={accent}
-        ageGroup={onboarding?.ageGroup}
-        onClose={() => {
-          setExaming(false)
-          bump() // cập nhật kết quả thi + mở khóa cấp sau nếu vừa đạt
-        }}
-        onOpenLesson={(id) => {
-          setExaming(false)
-          openLessonById(id)
-        }}
-      />,
+      <Suspense fallback={<OChoTai isA={isA} />}>
+        <CefrExam
+          uid={uid}
+          isA={isA}
+          level={level}
+          accent={accent}
+          ageGroup={onboarding?.ageGroup}
+          onClose={() => {
+            setExaming(false)
+            bump() // cập nhật kết quả thi + mở khóa cấp sau nếu vừa đạt
+          }}
+          onOpenLesson={(id) => {
+            setExaming(false)
+            openLessonById(id)
+          }}
+        />
+      </Suspense>,
       () => setExaming(false),
     )
   }
@@ -1115,7 +1154,7 @@ export default function CefrLevelPage() {
         ) : (
           // key={level.id}: đổi cấp (điều hướng giữa các trang cấp) → remount để
           // batch/câu hỏi khởi tạo lại theo đúng từ vựng của cấp mới.
-          <>
+          <Suspense fallback={<OChoTai isA={isA} />}>
             {activeTab === 'today' && (
               <TodayLesson
                 key={level.id}
@@ -1171,7 +1210,7 @@ export default function CefrLevelPage() {
                 dialogues={levelDialogues}
               />
             )}
-          </>
+          </Suspense>
         ))}
 
       {activeTab === 'lessons' && (
