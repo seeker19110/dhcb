@@ -406,7 +406,10 @@ function Hero({ stats }: { stats: HubStats | null }) {
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15] mb-6">
           Học điều bạn muốn. <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-accent-400 via-accent-300 to-accent-200 bg-clip-text text-transparent">
+          {/* Chữ gradient (`bg-clip-text`) axe KHÔNG đo được tương phản — phải tự tính. Bậc 200–400
+              trên nền sáng chỉ 1,3–2,2:1, nên theme sáng đổi sang bậc 800→700: ≥ 5,68:1 (Blue sky)
+              và ≥ 7,05:1 (Nhi đồng), đạt AAA chữ lớn (4,5:1). Theme tối giữ bậc nhạt (≥ 9,9:1). */}
+          <span className="bg-gradient-to-r from-accent-400 via-accent-300 to-accent-200 theme-light:from-accent-800 theme-light:via-accent-700 theme-light:to-accent-700 bg-clip-text text-transparent">
             Hiểu điều bạn học.
           </span>{' '}
           Từng bước tự học tốt hơn.
