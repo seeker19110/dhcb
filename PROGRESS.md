@@ -174,7 +174,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-10-11] Nâng cấp "Bạn Đồng Hành" 4 giai đoạn** (nghiên cứu
   `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`, chủ dự án chốt làm lần lượt cả 4, mỗi GĐ
-  một PR). **GĐ1 ĐÃ LÀM** (`docs/changelog/0614-*.md`, đặc tả
+  một PR). **GĐ1 ĐÃ LÀM** (PR #1369, `docs/changelog/0614-*.md`, đặc tả
   `docs/specs/2026-10-11-ban-dong-hanh-gd1-stream-an-toan.md`): stream thật từ Claude, lịch sử giữ
   lượt mới nhất, prompt mới (2 trụ, giờ VN, nhóm tuổi, chống xu nịnh, bọc dữ liệu), lớp an toàn
   khủng hoảng (từ khoá + Haiku, thẻ 111/115/Ngày Mai). **Kế tiếp: GĐ2 trí nhớ thông minh** (có

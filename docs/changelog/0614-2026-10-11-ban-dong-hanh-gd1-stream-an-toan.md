@@ -1,6 +1,6 @@
 # 0614 — Bạn Đồng Hành GĐ1: stream thật · nhớ đúng lượt mới · prompt mới · lớp an toàn
 
-- **Ngày:** 2026-10-11 · **PR:** (xem mô tả PR) · **Loại:** `feat(companion)`
+- **Ngày:** 2026-10-11 · **PR:** #1369 · **Loại:** `feat(companion)`
 - **Đặc tả:** `docs/specs/2026-10-11-ban-dong-hanh-gd1-stream-an-toan.md` (Approved for
   implementation). **Nghiên cứu:** `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`.
 - **Nguồn việc:** yêu cầu chủ dự án "nghiên cứu các repo GitHub và AI agent nổi tiếng, nâng cấp
@@ -66,7 +66,7 @@ chừng → `streamed: false`→ phát theo từng từ từ bản đầy đủ 
   `companionPrompt.test.ts` → 11 passed (2 snapshot); `contextEngine.test.ts` → 26 passed.
 - `apps/server/src/api/personal/companion.test.ts` → 24 passed; client
   (`CompanionStudios`, `pages/companion`, `companionApi.test.ts`) → xanh.
-- Cổng đầy đủ: xem mô tả PR (typecheck · lint 0 cảnh báo · format · test:coverage · build ·
+- Cổng đầy đủ: xem mô tả PR #1369 (typecheck · lint 0 cảnh báo · format · test:coverage · build ·
   check:specs).
 - Hỏng có chủ đích: bỏ `[...history].reverse()` ở contextEngine → 1 test đỏ ("giữ hai lượt MỚI
   nhất"); bỏ nhánh `safety.level === 'none' ? generatePlan : []` → test "concern: KHÔNG lập kế
