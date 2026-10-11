@@ -171,12 +171,40 @@ describe('StemScratchpadService', () => {
     }
   })
 
-  it('bất phương trình: ký hiệu khoảng → "chưa tự kiểm", nói rõ cách viết đáp số', () => {
-    const r = StemScratchpadService.validateStep('math', 'S = (-3; +\\infty)', [], {
-      problemLatex: '-2x < 6',
+  // Đặc tả docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md.
+  it('ký hiệu khoảng: S = (-3; +∞) là đáp số đúng, chiều sai thì ✗', () => {
+    const de = { problemLatex: '-2x < 6' }
+    expect(StemScratchpadService.validateStep('math', 'S = (-3; +\\infty)', [], de)).toMatchObject({
+      status: 'valid',
+      isFinalAnswer: true,
+    })
+    const sai = StemScratchpadService.validateStep('math', 'S = (-\\infty; -3)', [], de)
+    expect(sai.status).toBe('invalid')
+    expect(sai.suggestedCorrection).toContain('chiều của nó thay đổi thế nào')
+  })
+
+  it('trị tuyệt đối: phương trình bỏ một trường hợp → câu PHƯƠNG TRÌNH + hỏi hai trường hợp', () => {
+    const r = StemScratchpadService.validateStep('math', 'x - 1 = 3', [], {
+      problemLatex: '|x - 1| = 3',
+    })
+    expect(r.status).toBe('invalid')
+    expect(r.feedback).toContain('MẤT nghiệm')
+    expect(r.suggestedCorrection).toContain('HAI trường hợp')
+    expect(r.suggestedCorrection ?? '').not.toMatch(/\d/)
+    expect(
+      StemScratchpadService.validateStep('math', 'x = 4 hoặc x = -2', [], {
+        problemLatex: '|x - 1| = 3',
+      }),
+    ).toMatchObject({ status: 'valid', isFinalAnswer: true })
+  })
+
+  it('ngoài phạm vi: câu phạm vi không còn nói "chưa đọc trị tuyệt đối/ký hiệu khoảng"', () => {
+    const r = StemScratchpadService.validateStep('math', '\\sqrt{x} = 2', [], {
+      problemLatex: 'x = 4',
     })
     expect(r.status).toBe('unverified')
-    expect(r.feedback).toContain('ký hiệu khoảng')
+    expect(r.feedback).toContain('S = (2; +∞)')
+    expect(r.feedback).not.toMatch(/chưa đọc[^.]*trị tuyệt đối/)
   })
 
   it('đề lời văn: bước 1 là bất phương trình cũng được nhận làm MỐC', () => {

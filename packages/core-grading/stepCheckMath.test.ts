@@ -382,12 +382,7 @@ describe('checkMathStep — bất phương trình (bảng ③)', () => {
     expect(verdict('x^2 < -1', 'x^2 + 1 < 0')).toBe('equivalent')
   })
 
-  it('ký hiệu khoảng S = (2; +∞) và lượng giác → "?"', () => {
-    expect(checkMathStep('S = (2; +\\infty)', '2x > 4')).toEqual({
-      verdict: 'unsupported',
-      reason: 'unknown_notation',
-    })
-    expect(checkMathStep('x \\in (2; 3)', '2x > 4').verdict).toBe('unsupported')
+  it('lượng giác → "?"', () => {
     expect(checkMathStep('\\sin x > 0', 'x > 0')).toEqual({
       verdict: 'unsupported',
       reason: 'unknown_notation',
@@ -511,5 +506,171 @@ describe('checkMathStep — bất phương trình: đáp số và bước trư�
 
   it('kết luận phương trình KHÔNG mang trường inequality', () => {
     expect(checkMathStep('x = 1', 'x^2 = x')).not.toHaveProperty('inequality')
+  })
+})
+
+// Đặc tả docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md ③.
+describe('checkMathStep — ký hiệu khoảng/tập', () => {
+  it.each([
+    ['S = (2; +\\infty)', '2x - 4 > 0'],
+    ['S=(2;+∞)', '2x - 4 > 0'],
+    ['S = \\left(2; +\\infty\\right)', '2x - 4 > 0'],
+    ['S = (2, +inf)', '2x - 4 > 0'], // dấu phẩy ngăn đầu mút khi không có `;`
+    ['x \\in (2; +\\infty)', '2x - 4 > 0'],
+    ['x ∈ (\\frac{4}{2}; +\\infty)', '2x - 4 > 0'],
+    ['S = (-\\infty; 1) \\cup (3; +\\infty)', 'x^2 - 4x + 3 > 0'],
+    ['S = (-∞; 1) ∪ (3; +∞)', 'x^2 - 4x + 3 > 0'],
+    ['S = (-inf; 1) U (3; +inf)', 'x^2 - 4x + 3 > 0'],
+    ['S = [1; 3]', 'x^2 - 4x + 3 \\le 0'],
+    ['S = \\{2; -2\\}', 'x^2 = 4'],
+    ['S = {-2, 2}', 'x^2 = 4'],
+    ['S = \\{5\\}', '2x + 5 = 15'],
+    ['S = \\emptyset', 'x^2 + 1 < 0'],
+    ['S = ∅', 'x^2 + 1 = 0'],
+    ['S = \\mathbb{R}', 'x^2 + 1 > 0'],
+    ['S = \\mathbb{R} \\setminus \\{2\\}', '(x-2)^2 > 0'],
+    ['S = R \\ {3; -1}', '(x-3)^2 (x+1)^2 > 0'],
+    ['x \\in [1; 3) \\cup \\{5\\}', '\\frac{(x - 1)(x - 5)^2}{x - 3} \\le 0'],
+    ['S = (2,5; +\\infty)', '2x - 5 > 0'], // dấu phẩy thập phân kiểu Việt khi đã ngăn bằng `;`
+  ])('%s  (đề: %s) → tương đương, là đáp số', (step, anchor) => {
+    expect(checkMathStep(step, anchor)).toEqual({ verdict: 'equivalent', isFinalAnswer: true })
+  })
+
+  it('đầu mút đóng/mở sai → đổi tập nghiệm', () => {
+    expect(checkMathStep('S = [2; +\\infty)', '2x - 4 > 0')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+    })
+    expect(
+      checkMathStep('x \\in (-\\infty; 1) U [3; +\\infty)', 'x^2 - 4x + 3 \\ge 0'),
+    ).toMatchObject({ verdict: 'changed', lost: true, extra: false })
+    expect(checkMathStep('S = \\{2\\}', 'x^2 = 4')).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+    })
+  })
+
+  it.each([
+    ['S = [2; +\\infty]'], // ngoặc vuông ở vô cực
+    ['S = (5; 2)'], // đầu mút ngược
+    ['S = (2; 2)'],
+    ['S = (+\\infty; 2)'],
+    ['S = (2; -\\infty)'],
+    ['S = (2; 3; 4)'],
+    ['x \\in \\mathbb{Z}'],
+    ['S = ]2; +\\infty['], // ngoặc kiểu Pháp
+  ])('ký hiệu sai/chưa hỗ trợ %s → "?"', (step) => {
+    expect(checkMathStep(step, '2x - 4 > 0').verdict).toBe('unsupported')
+  })
+
+  it('không có tiền tố S =/x ∈ → luật `;` = "hoặc" giữ nguyên', () => {
+    expect(checkMathStep('x = 2; x = -2', 'x^2 = 4')).toEqual({
+      verdict: 'equivalent',
+      isFinalAnswer: true,
+    })
+    // Khoảng đứng trơn (có thể là toạ độ) không đọc như tập.
+    expect(checkMathStep('(2; +\\infty)', '2x - 4 > 0').verdict).toBe('unsupported')
+    // Tập xác định D = … không phải tập nghiệm.
+    expect(checkMathStep('D = \\mathbb{R} \\setminus \\{1\\}', 'x > 1').verdict).toBe('unsupported')
+  })
+
+  it('ẩn nêu sau ∈ khác ẩn của đề → nhiều ẩn', () => {
+    expect(checkMathStep('y \\in (2; +\\infty)', '2x - 4 > 0')).toEqual({
+      verdict: 'unsupported',
+      reason: 'multi_variable',
+    })
+  })
+
+  it('S = … khi S là ẩn của phương trình vẫn đọc như phương trình', () => {
+    expect(checkMathStep('S = 5', '2S = 10')).toEqual({
+      verdict: 'equivalent',
+      isFinalAnswer: true,
+    })
+    expect(checkMathStep('S = (1 + 4)', '2S = 10').verdict).toBe('equivalent')
+  })
+
+  it('chuỗi suy ra kết thúc bằng ký hiệu tập', () => {
+    expect(
+      checkMathStep('2x > 4 \\implies x > 2 \\implies S = (2; +\\infty)', '2x - 4 > 0'),
+    ).toEqual({ verdict: 'equivalent', isFinalAnswer: true })
+  })
+
+  it('describeMathStep không mô tả ký hiệu tập', () => {
+    expect(describeMathStep('S = \\{5\\}')).toBeNull()
+  })
+})
+
+describe('checkMathStep — trị tuyệt đối (chia trường hợp)', () => {
+  it.each([
+    ['-5 < 2x - 1 < 5', '|2x - 1| < 5'],
+    ['-2 < x < 3', '\\left|2x - 1\\right| < 5'],
+    ['-2 < x < 3', '\\lvert 2x - 1 \\rvert < 5'],
+    ['-2 < x < 3', 'abs(2x - 1) < 5'],
+    ['x = 4 hoặc x = -2', '|x - 1| = 3'],
+    ['x - 1 = 3 \\text{ hoặc } x - 1 = -3', '|x - 1| = 3'],
+    ['S = \\emptyset', '|x| = -1'],
+    ['S = (-\\infty; 0] \\cup [2; +\\infty)', '|x - 1| \\ge 1'],
+    ['x \\le \\frac{1}{2}', '|x - 1| \\ge x'], // ẩn ở ngoài trị tuyệt đối
+    ['x = 0', '|x| + |x| = 0'],
+    ['x \\ge 0', '|x| = x'],
+    ['x \\ge 1 hoặc x \\le -1', '||x| - 1| = |x| - 1'], // lồng nhau
+    ['S = \\mathbb{R}', '2|x - 1||x + 1| = 16|x^2 - 1| - 14|x^2 - 1|'], // hằng đẳng thức
+    ['|x - 1| < 3', '-2 < x < 4'], // viết ngược lại cũng so được
+  ])('%s  (đề: %s) → tương đương', (step, anchor) => {
+    expect(checkMathStep(step, anchor).verdict).toBe('equivalent')
+  })
+
+  it('bỏ một trường hợp → mất nghiệm, có cờ trị tuyệt đối, không phải câu bất phương trình', () => {
+    const kq = checkMathStep('x - 1 = 3', '|x - 1| = 3')
+    expect(kq).toMatchObject({
+      verdict: 'changed',
+      lost: true,
+      extra: false,
+      absoluteValue: { casesSplit: true },
+    })
+    expect(kq).not.toHaveProperty('inequality')
+  })
+
+  it('bất phương trình bỏ trị tuyệt đối sai → thêm khoảng, có cờ trị tuyệt đối', () => {
+    expect(checkMathStep('2x - 1 < 5', '|2x - 1| < 5')).toMatchObject({
+      verdict: 'changed',
+      lost: false,
+      extra: true,
+      inequality: { complementOnIntervals: false },
+      absoluteValue: { casesSplit: true },
+    })
+  })
+
+  it('bước còn trị tuyệt đối thì không gắn cờ chia trường hợp', () => {
+    expect(checkMathStep('|x - 1| = 4', '|x - 1| = 3')).not.toHaveProperty('absoluteValue')
+  })
+
+  it('lệch số | → "?"', () => {
+    expect(checkMathStep('|x - 1 = 3', 'x = 4')).toEqual({
+      verdict: 'unsupported',
+      reason: 'unknown_notation',
+    })
+    expect(checkMathStep('x = 4', '|x - 1| = 3|')).toEqual({
+      verdict: 'unsupported',
+      reason: 'anchor_unsupported',
+    })
+  })
+
+  it('quá 4 trị tuyệt đối khác nhau → too_complex, không treo', () => {
+    expect(checkMathStep('x = 0', '|x| + |x - 1| + |x - 2| + |x - 3| + |x - 4| = 10')).toEqual({
+      verdict: 'unsupported',
+      reason: 'anchor_unsupported',
+    })
+    expect(checkMathStep('|x| + |x - 1| + |x - 2| + |x - 3| + |x - 4| = 10', 'x = 0')).toEqual({
+      verdict: 'unsupported',
+      reason: 'too_complex',
+    })
+    // Đúng 4 thì vẫn kiểm.
+    expect(checkMathStep('|x| + |x - 1| + |x - 2| + |x - 3| = 10', 'x = 0').verdict).toBe('changed')
+  }, 2000)
+
+  it('describeMathStep không mô tả phương trình có trị tuyệt đối', () => {
+    expect(describeMathStep('|x - 1| = 3')).toBeNull()
   })
 })

@@ -17,15 +17,20 @@ import {
   type DimensionMismatch,
   type PhysicsStepCheck,
 } from '@dhcb/core-grading/stepCheckPhysics'
-import { cauHoiBatPhuongTrinh, generateSocraticHint, type MicroHint } from './stemMicroHint.js'
+import {
+  cauHoiBatPhuongTrinh,
+  cauHoiTriTuyetDoi,
+  generateSocraticHint,
+  type MicroHint,
+} from './stemMicroHint.js'
 import { bangBienCuaDe } from './stemPhysicsVariables.js'
 
 /** Nói rõ bộ kiểm đọc được gì — để "chưa tự kiểm được" không mơ hồ. */
 const PHAM_VI_KIEM: Record<StemSubjectType, string> = {
   math:
     'Bộ kiểm hiện đọc được phương trình và bất phương trình đại số MỘT ẩn (cộng, trừ, nhân, chia, ' +
-    'phân số, luỹ thừa số nguyên); chưa đọc căn, lượng giác, log, π, trị tuyệt đối, nhiều ẩn hay ' +
-    'ký hiệu khoảng như S = (2; +∞) — đáp số bất phương trình hãy viết dạng x > 2.',
+    'phân số, luỹ thừa số nguyên, trị tuyệt đối |…|) và đáp số dạng x > 2, S = (2; +∞), ' +
+    'x ∈ [1; 3), S = {2; 5}; chưa đọc căn, lượng giác, log, π, dấu ≠ hay nhiều ẩn.',
   chemistry:
     'Bộ kiểm hiện đọc được phương trình hoá học dạng `2H_2 + O_2 -> 2H_2O` (ngoặc, ngậm nước ·, ' +
     'ion có điện tích, electron e^-).',
@@ -75,7 +80,7 @@ function ketLuanToan(kq: MathStepCheck, moc: MocSo): ScratchpadStepValidation | 
         confidence: 1,
       }
     case 'changed': {
-      const batPhuongTrinh = cauHoiBatPhuongTrinh(kq)
+      const cauHoiRieng = cauHoiTriTuyetDoi(kq) ?? cauHoiBatPhuongTrinh(kq)
       const doi =
         kq.inequality !== undefined
           ? kq.lost && kq.extra
@@ -89,7 +94,7 @@ function ketLuanToan(kq: MathStepCheck, moc: MocSo): ScratchpadStepValidation | 
               ? `Bước này làm MẤT nghiệm: có giá trị thoả ${tenMoc} nhưng không thoả bước này.`
               : `Bước này làm THÊM nghiệm lạ: có giá trị thoả bước này nhưng không thoả ${tenMoc}.`
       const goiY =
-        batPhuongTrinh ??
+        cauHoiRieng ??
         (kq.lost && kq.extra
           ? 'Thử kiểm lại từng vế: khi chuyển một hạng tử sang vế bên kia, dấu của nó đổi thế nào? ' +
             'Khi nhân/chia, em đã làm cho CẢ HAI vế và cho mọi hạng tử chưa?'

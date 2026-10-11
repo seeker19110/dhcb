@@ -8,8 +8,10 @@
 // thực bằng dãy Sturm — KHÔNG lấy mẫu số ngẫu nhiên, KHÔNG làm tròn, nên:
 //   - "tương đương" là CHỨNG MINH được (mới được báo ✓);
 //   - "đổi nghiệm" cũng chứng minh được (có nghiệm thực bị mất hoặc sinh thêm) → ✗;
-//   - mọi thứ ngoài phạm vi (căn, lượng giác, trị tuyệt đối, ký hiệu khoảng, nhiều ẩn, LaTeX lạ,
-//     quá lớn) → "unsupported" để giao diện nói thật "? Chưa tự kiểm được" — tuyệt đối không đoán.
+//   - mọi thứ ngoài phạm vi (căn, lượng giác, log, π, nhiều ẩn, LaTeX lạ, quá lớn) →
+//     "unsupported" để giao diện nói thật "? Chưa tự kiểm được" — tuyệt đối không đoán.
+// Ký hiệu tập (`S = (2; +∞)`, `x ∈ [1; 3)`) và trị tuyệt đối (`|2x - 1| < 5`, chia trường hợp):
+// docs/specs/2026-10-11-ky-hieu-khoang-va-tri-tuyet-doi.md.
 // Khi MỌI đoạn đều là phương trình, đi đúng nhánh cũ (finite/cofinite) — kết luận không đổi. Có
 // bất phương trình ở bất kỳ đâu thì so bằng phân hoạch trục số (`compareFormulas`).
 
@@ -36,7 +38,7 @@ import {
   removeFactorsOf,
   squareFree,
 } from './polynomial.js'
-import { div as ratDiv, ONE } from './rational.js'
+import { div as ratDiv, ONE, ZERO, sign, sub as ratSub } from './rational.js'
 import { compareFormulas, type Rel, type SetFormula } from './mathSolutionSet.js'
 
 /** Vì sao bộ kiểm KHÔNG kết luận được — để phản hồi nói rõ giới hạn, không nói chung chung. */
@@ -63,6 +65,8 @@ export type MathStepCheck =
        * bù của tập đúng trên mọi khoảng (chỉ có thể trùng ở đầu mút) — dấu hiệu "quên đổi chiều".
        */
       inequality?: { complementOnIntervals: boolean }
+      /** Mốc có trị tuyệt đối còn bước thì không — người học đang chia trường hợp. */
+      absoluteValue?: { casesSplit: true }
     }
   | { verdict: 'division_by_zero' }
   | { verdict: 'unsupported'; reason: MathUnsupportedReason }
@@ -180,7 +184,7 @@ function toRatFn(node: ExprNode, variable: string | null, domain: Poly[]): RatFn
       return { num: constPoly(c), den: ONE_POLY }
     }
     case 'var':
-      if (node.name !== variable) throw new Unsupported('multi_variable')
+      if (node.name !== variable && node.name !== SET_VAR) throw new Unsupported('multi_variable')
       return { num: X_POLY, den: ONE_POLY }
     case 'unary': {
       const arg = toRatFn(node.arg, variable, domain)
@@ -274,6 +278,7 @@ function expandFractions(input: string): string | null {
 function latexToPlain(input: string): string | null {
   let s = input
     .replace(/\\(?:left|right)(?![a-zA-Z])/g, '')
+    .replace(/\\[lr]?vert(?![a-zA-Z])/g, '|')
     .replace(/\\[,;:! ]/g, ' ')
     .replace(/\\(?:cdot|times|ast)(?![a-zA-Z])/g, '*')
     .replace(/\\div(?![a-zA-Z])/g, '/')
@@ -287,11 +292,45 @@ function latexToPlain(input: string): string | null {
   s = expanded.replace(/\{/g, '(').replace(/\}/g, ')')
   if (s.includes('\\')) return null // LaTeX lạ (\sqrt, \sin, \pi, \neq, \le…) — không đoán
   if (/pi|π/.test(s)) return null // π không phải số hữu tỉ
-  return s
+  return absBarsToCalls(s)
+}
+
+/**
+ * `|f|` → `abs(f)`. Một `|` là dấu MỞ khi chưa có `|` nào đang mở, hoặc ngay trước nó (bỏ khoảng
+ * trắng) là đầu chuỗi, toán tử, dấu quan hệ, ngoặc mở hay một `|` mở; còn lại là dấu ĐÓNG. Nhờ
+ * vậy `2|x - 1|`, `|x||y|`, `||x| - 1|` đều đọc đúng. Lệch số `|` → null (không đoán).
+ */
+function absBarsToCalls(s: string): string | null {
+  let out = ''
+  let open = 0
+  let prev: 'start' | 'operator' | 'operand' = 'start'
+  for (const ch of s) {
+    if (ch === '|') {
+      if (open === 0 || prev !== 'operand') {
+        out += 'abs('
+        open++
+        prev = 'operator'
+      } else {
+        out += ')'
+        open--
+        prev = 'operand'
+      }
+      continue
+    }
+    out += ch
+    if (ch === ' ' || ch === '\t') continue
+    prev = '+-*/^(=<>≤≥'.includes(ch) ? 'operator' : 'operand'
+  }
+  return open === 0 ? out : null
 }
 
 /** Các vế nối nhau bằng quan hệ: `a = b = c`, `a < x \le b` (`rels[i]` nằm giữa vế i và i+1). */
-type Clause = { sides: ExprNode[]; rels: Rel[] }
+type Clause = {
+  sides: ExprNode[]
+  rels: Rel[]
+  /** Mệnh đề dựng từ ký hiệu tập (`S = (2; +∞)`) — luôn là dạng đáp số. */
+  fromSet?: true
+}
 type Statement = Clause[] // các mệnh đề nối bằng "hoặc"
 
 /**
@@ -328,12 +367,22 @@ function parseClause(raw: string): Clause {
   return { sides, rels }
 }
 
-/** Mệnh đề chỉ toàn dấu `=` (phương trình) — đi nhánh so tập nghiệm cũ. */
+/** Mệnh đề chỉ toàn dấu `=` và không có trị tuyệt đối — đi nhánh so tập nghiệm cũ. */
 const isEquationOnly = (st: Statement): boolean =>
-  st.every((clause) => clause.rels.every((r) => r === '='))
+  st.every((clause) => clause.rels.every((r) => r === '=') && !clause.sides.some(containsAbs))
+
+/** Có dấu bất đẳng thức ở đâu đó — để chọn câu phản hồi của bất phương trình. */
+const hasInequality = (st: Statement): boolean =>
+  st.some((clause) => clause.rels.some((r) => r !== '='))
+
+const statementHasAbs = (st: Statement): boolean =>
+  st.some((clause) => clause.sides.some(containsAbs))
 
 /** Một đoạn (giữa hai dấu ⇒) → các mệnh đề "hoặc", đã khai triển ±. */
 function parseStatement(raw: string): Statement {
+  // Ký hiệu tập đọc TRƯỚC khi tách "hoặc": trong `(a; b)` dấu `;` là dấu ngăn đầu mút.
+  const asSet = parseSetStatement(raw)
+  if (asSet !== null) return asSet
   const clauses: Clause[] = []
   for (const part of raw.split(OR)) {
     const pm = part.match(PLUS_MINUS)?.length ?? 0
@@ -344,6 +393,165 @@ function parseStatement(raw: string): Statement {
     } else {
       clauses.push(parseClause(part))
     }
+  }
+  return clauses
+}
+
+// ── Ký hiệu tập: `S = (2; +∞)`, `x ∈ [1; 3) ∪ {5}`, `S = ℝ \ {2}` ───────────────
+
+/**
+ * Tên ẩn tạm cho tập viết `S = …` (không nêu tên ẩn): `toRatFn` coi nó là ẩn của đề, còn
+ * `statementVars` bỏ qua nó. Ký tự NUL không thể có trong tên do bộ tách token sinh ra.
+ */
+const SET_VAR = '\u0000S'
+
+/** Tiền tố bắt buộc: `S =` hoặc `<ẩn> \in` / `<ẩn> ∈` (nhóm 1 = tên ẩn). */
+const SET_PREFIX = /^\s*(?:S\s*=|([a-zA-Z])\s*(?:\\in(?![a-zA-Z])|∈))\s*/
+const SET_UNION = /\\cup(?![a-zA-Z])|∪|\bU\b/
+const EMPTY_SET = /^(?:\\emptyset|\\varnothing|∅|Ø|\\\{\s*\\\}|\{\s*\})$/
+const REALS = String.raw`(?:\\mathbb\s*\{\s*R\s*\}|\\mathbb\s+R|ℝ|R)`
+const REALS_ONLY = new RegExp(`^${REALS}$`)
+const REALS_MINUS = new RegExp(String.raw`^${REALS}\s*(?:\\setminus|\\backslash|\\)\s*(.+)$`)
+const FINITE_SET = /^\\?\{(.*?)\\?\}$/
+const INFINITY = /^([+-]?)\s*(?:\\infty|∞|inf)$/i
+
+type Endpoint =
+  { kind: 'inf'; sign: '+' | '-' | '' } | { kind: 'num'; node: ExprNode; value: Rational }
+
+/** Một đầu mút: vô cực, hoặc biểu thức HẰNG hữu tỉ. Không đọc được → null. */
+function parseEndpoint(raw: string): Endpoint | null {
+  const text = raw.trim()
+  const inf = INFINITY.exec(text)
+  if (inf !== null) return { kind: 'inf', sign: (inf[1] ?? '') as '+' | '-' | '' }
+  const plain = latexToPlain(text)
+  const node = plain === null ? null : parseExpression(plain)
+  if (node === null) return null
+  try {
+    const fn = toRatFn(node, null, [])
+    if (!isConstant(fn.num) || !isConstant(fn.den)) return null
+    const value = isZeroPoly(fn.num) ? ZERO : ratDiv(leading(fn.num), leading(fn.den))
+    return { kind: 'num', node, value }
+  } catch (err) {
+    if (err instanceof Unsupported || err instanceof DivisionByZero) return null
+    throw err
+  }
+}
+
+/** Tách các phần tử ở mức ngoặc ngoài cùng: theo `;`, hoặc theo `,` khi không có `;`. */
+function splitItems(inner: string): string[] {
+  const at = (sep: string) => {
+    const parts: string[] = []
+    let depth = 0
+    let start = 0
+    for (let i = 0; i < inner.length; i++) {
+      const ch = inner.charAt(i)
+      if ('([{'.includes(ch)) depth++
+      else if (')]}'.includes(ch)) depth--
+      else if (ch === sep && depth === 0 && inner.charAt(i - 1) !== '\\') {
+        parts.push(inner.slice(start, i))
+        start = i + 1
+      }
+    }
+    parts.push(inner.slice(start))
+    return parts
+  }
+  const bySemicolon = at(';')
+  return bySemicolon.length > 1 ? bySemicolon : at(',')
+}
+
+const lessThan = (a: Rational, b: Rational): boolean => sign(ratSub(a, b)) < 0
+
+/** `x = a` cho từng phần tử của tập hữu hạn; phần tử không phải hằng → null. */
+function finitePoints(inner: string): Extract<Endpoint, { kind: 'num' }>[] | null {
+  const points: Extract<Endpoint, { kind: 'num' }>[] = []
+  for (const item of splitItems(inner)) {
+    const p = parseEndpoint(item)
+    if (p === null || p.kind !== 'num') return null
+    points.push(p)
+  }
+  return points
+}
+
+/** Một hạng của biểu thức tập → các mệnh đề "hoặc" (rỗng = tập rỗng). Không phải tập → null. */
+function parseSetTerm(term: string, x: ExprNode): Clause[] | null {
+  const allReals: Clause = { sides: [x, x], rels: ['='], fromSet: true }
+  const between = (lo: ExprNode | null, hi: ExprNode | null, rLo: Rel, rHi: Rel): Clause => {
+    if (lo !== null && hi !== null) return { sides: [lo, x, hi], rels: [rLo, rHi], fromSet: true }
+    if (lo !== null) return { sides: [lo, x], rels: [rLo], fromSet: true }
+    if (hi !== null) return { sides: [x, hi], rels: [rHi], fromSet: true }
+    return allReals
+  }
+
+  if (EMPTY_SET.test(term)) return []
+  if (REALS_ONLY.test(term)) return [allReals]
+
+  const minus = REALS_MINUS.exec(term)
+  if (minus !== null) {
+    // ℝ \ {p₁; …; pₙ} = (−∞; p₁) ∪ (p₁; p₂) ∪ … ∪ (pₙ; +∞), đầu mút sắp xếp CHÍNH XÁC.
+    const set = FINITE_SET.exec((minus[1] ?? '').trim())
+    const points = set === null ? null : finitePoints(set[1] ?? '')
+    if (points === null || points.length === 0) return null
+    const sorted = [...points].sort((a, b) => sign(ratSub(a.value, b.value)))
+    const unique = sorted.filter(
+      (p, i) => i === 0 || lessThan(sorted[i - 1]?.value ?? p.value, p.value),
+    )
+    const cuts = [null, ...unique.map((p) => p.node), null]
+    return cuts.slice(1).map((hi, i) => between(cuts[i] ?? null, hi, '<', '<'))
+  }
+
+  const finite = FINITE_SET.exec(term)
+  if (finite !== null) {
+    const points = finitePoints(finite[1] ?? '')
+    if (points === null) return null
+    return points.map((p) => ({ sides: [x, p.node], rels: ['='], fromSet: true }))
+  }
+
+  const interval = /^([[(])(.*)([\])])$/.exec(term)
+  if (interval === null) return null
+  const items = splitItems(interval[2] ?? '')
+  if (items.length !== 2) return null
+  const lo = parseEndpoint(items[0] ?? '')
+  const hi = parseEndpoint(items[1] ?? '')
+  if (lo === null || hi === null) return null
+  const openLo = interval[1] === '('
+  const openHi = interval[3] === ')'
+  // Vô cực chỉ đứng sau ngoặc tròn, −∞ chỉ ở trái, +∞ chỉ ở phải; đầu mút trái < phải.
+  if (lo.kind === 'inf' && (lo.sign !== '-' || !openLo)) return null
+  if (hi.kind === 'inf' && (hi.sign === '-' || !openHi)) return null
+  if (lo.kind === 'num' && hi.kind === 'num' && !lessThan(lo.value, hi.value)) return null
+  return [
+    between(
+      lo.kind === 'num' ? lo.node : null,
+      hi.kind === 'num' ? hi.node : null,
+      openLo ? '<' : '≤',
+      openHi ? '<' : '≤',
+    ),
+  ]
+}
+
+/**
+ * Đoạn viết bằng ký hiệu tập → các mệnh đề "hoặc" (một khoảng = chuỗi kép `a < x ≤ b`). Không có
+ * tiền tố `S =`/`x ∈`, hoặc phần sau không phải biểu thức tập hợp lệ → null (đi đường cũ).
+ */
+function parseSetStatement(raw: string): Statement | null {
+  const prefix = SET_PREFIX.exec(raw)
+  if (prefix === null) return null
+  const x: ExprNode = { type: 'var', name: prefix[1] ?? SET_VAR }
+  const body = raw
+    .slice(prefix[0].length)
+    .replace(/\\(?:left|right)(?![a-zA-Z])/g, '')
+    .replace(/\\[,;:! ](?![a-zA-Z{])/g, ' ')
+  const clauses: Clause[] = []
+  for (const term of body.split(SET_UNION)) {
+    const parsed = parseSetTerm(term.trim(), x)
+    if (parsed === null) return null
+    clauses.push(...parsed)
+  }
+  // Toàn tập rỗng → mệnh đề luôn sai `0 = 1`.
+  if (clauses.length === 0) {
+    const zero: ExprNode = { type: 'num', value: 0 }
+    const one: ExprNode = { type: 'num', value: 1 }
+    return [{ sides: [zero, one], rels: ['='], fromSet: true }]
   }
   return clauses
 }
@@ -371,6 +579,7 @@ function statementVars(statements: readonly Statement[]): Set<string> {
   for (const st of statements) {
     for (const clause of st) for (const n of clause.sides) collectVars(n, vars)
   }
+  vars.delete(SET_VAR)
   return vars
 }
 
@@ -400,12 +609,142 @@ function clauseSetOf(clause: Clause, variable: string | null): SolutionSet {
 
 // ── Công thức dấu cho nhánh bất phương trình (mathSolutionSet.ts) ──────────
 
-/** Một mệnh đề → "mọi cặp vế liền nhau thoả quan hệ" VÀ "mọi mẫu số ≠ 0". */
+/**
+ * Trần số trị tuyệt đối KHÁC NHAU trong một mệnh đề — mỗi cái nhân đôi số nhánh (4 → 16 nhánh).
+ * Bài phổ thông hiếm khi quá 2.
+ */
+const MAX_ABS_PER_CLAUSE = 4
+
+const isAbs = (node: ExprNode): boolean => node.type === 'call' && node.name === 'abs'
+
+function containsAbs(node: ExprNode): boolean {
+  switch (node.type) {
+    case 'call':
+      return isAbs(node) || containsAbs(node.arg)
+    case 'unary':
+      return containsAbs(node.arg)
+    case 'binary':
+      return containsAbs(node.left) || containsAbs(node.right)
+    default:
+      return false
+  }
+}
+
+/** Mọi nút `abs(…)` của cây (để đếm số trị tuyệt đối khác nhau). */
+function absNodes(node: ExprNode, out: ExprNode[]): void {
+  switch (node.type) {
+    case 'call':
+      if (isAbs(node)) out.push(node)
+      absNodes(node.arg, out)
+      return
+    case 'unary':
+      absNodes(node.arg, out)
+      return
+    case 'binary':
+      absNodes(node.left, out)
+      absNodes(node.right, out)
+      return
+    default:
+      return
+  }
+}
+
+/** Một `abs(g)` mà `g` không còn trị tuyệt đối nào (trong cùng) — tách nó trước. */
+function innermostAbs(node: ExprNode): Extract<ExprNode, { type: 'call' }> | null {
+  switch (node.type) {
+    case 'call':
+      return innermostAbs(node.arg) ?? (node.name === 'abs' ? node : null)
+    case 'unary':
+      return innermostAbs(node.arg)
+    case 'binary':
+      return innermostAbs(node.left) ?? innermostAbs(node.right)
+    default:
+      return null
+  }
+}
+
+/** Thay MỌI `abs(…)` giống hệt `key` (so cấu trúc) bằng `replacement`. */
+function replaceAbs(node: ExprNode, key: string, replacement: ExprNode): ExprNode {
+  switch (node.type) {
+    case 'call':
+      if (isAbs(node) && JSON.stringify(node) === key) return replacement
+      return { ...node, arg: replaceAbs(node.arg, key, replacement) }
+    case 'unary':
+      return { ...node, arg: replaceAbs(node.arg, key, replacement) }
+    case 'binary':
+      return {
+        ...node,
+        left: replaceAbs(node.left, key, replacement),
+        right: replaceAbs(node.right, key, replacement),
+      }
+    default:
+      return node
+  }
+}
+
+/** Một nhánh sau khi bỏ trị tuyệt đối: các vế không còn `abs` + điều kiện dấu của nhánh. */
+type AbsBranch = { sides: ExprNode[]; guards: { arg: ExprNode; rel: '≥' | '<' }[] }
+
+/**
+ * Chia trường hợp CHÍNH XÁC: `|g|` = `g` khi `g ≥ 0`, = `−g` khi `g < 0`. Tách từ trong ra ngoài
+ * nên `g` của mỗi điều kiện đã sạch trị tuyệt đối.
+ */
+function splitAbsolute(sides: ExprNode[], guards: AbsBranch['guards'] = []): AbsBranch[] {
+  let target: Extract<ExprNode, { type: 'call' }> | null = null
+  for (const side of sides) {
+    target = innermostAbs(side)
+    if (target !== null) break
+  }
+  if (target === null) return [{ sides, guards }]
+  const { arg } = target
+  const key = JSON.stringify(target)
+  const negArg: ExprNode = { type: 'unary', op: '-', arg }
+  return [
+    ...splitAbsolute(
+      sides.map((s) => replaceAbs(s, key, arg)),
+      [...guards, { arg, rel: '≥' }],
+    ),
+    ...splitAbsolute(
+      sides.map((s) => replaceAbs(s, key, negArg)),
+      [...guards, { arg, rel: '<' }],
+    ),
+  ]
+}
+
+/** Một mệnh đề → công thức dấu; có trị tuyệt đối thì "hoặc" của các nhánh chia trường hợp. */
 function clauseFormula(clause: Clause, variable: string | null): SetFormula {
+  if (!clause.sides.some(containsAbs))
+    return plainClauseFormula(clause.sides, clause.rels, variable)
+  const found: ExprNode[] = []
+  for (const side of clause.sides) absNodes(side, found)
+  if (new Set(found.map((n) => JSON.stringify(n))).size > MAX_ABS_PER_CLAUSE) {
+    throw new Unsupported('too_complex')
+  }
+  return {
+    kind: 'or',
+    parts: splitAbsolute(clause.sides).map((branch) => ({
+      kind: 'and',
+      parts: [
+        ...branch.guards.map((g): SetFormula => {
+          const f = toRatFn(g.arg, variable, [])
+          return { kind: 'atom', num: f.num, den: f.den, rel: g.rel }
+        }),
+        plainClauseFormula(branch.sides, clause.rels, variable),
+      ],
+    })),
+  }
+}
+
+/** Các vế (không còn trị tuyệt đối) → "mọi cặp vế liền nhau thoả quan hệ" VÀ "mọi mẫu số ≠ 0". */
+function plainClauseFormula(
+  sides: readonly ExprNode[],
+  rels: readonly Rel[],
+  variable: string | null,
+): SetFormula {
   const domain: Poly[] = []
-  const fns = clause.sides.map((node) => toRatFn(node, variable, domain))
+  const fns = sides.map((node) => toRatFn(node, variable, domain))
   const parts: SetFormula[] = []
-  clause.rels.forEach((rel, i) => {
+  rels.forEach((rel, i) => {
     const a = fns[i]
     const b = fns[i + 1]
     if (a === undefined || b === undefined) return
@@ -444,20 +783,27 @@ function setToFormula(set: SolutionSet): SetFormula {
 const asFormula = (c: Comparable): SetFormula =>
   c.kind === 'formula' ? c.formula : setToFormula(c.set)
 
-/** So hai tập: cả hai là phương trình → nhánh cũ (y hệt trước đây); còn lại → phân hoạch. */
+/**
+ * So hai tập: cả hai là phương trình → nhánh cũ (y hệt trước đây); còn lại → phân hoạch.
+ * `inequality` chỉ gắn khi `withInequality` (có dấu bất đẳng thức thật) — phương trình có trị
+ * tuyệt đối cũng đi phân hoạch nhưng phản hồi vẫn là câu của phương trình.
+ */
 function compareComparable(
   a: Comparable,
   b: Comparable,
+  withInequality: boolean,
 ): { lost: boolean; extra: boolean; inequality?: { complementOnIntervals: boolean } } {
   if (a.kind === 'set' && b.kind === 'set') return compareSets(a.set, b.set)
   const { lost, extra, complementOnIntervals } = compareFormulas(asFormula(a), asFormula(b))
-  return { lost, extra, inequality: { complementOnIntervals } }
+  return withInequality ? { lost, extra, inequality: { complementOnIntervals } } : { lost, extra }
 }
 
 /** Đoạn cuối có ở dạng đáp số chưa — mỗi mệnh đề là một trong:
- *  `ẩn <qh> hằng số`, `hằng số <qh> ẩn` (qh là `=` hoặc dấu bất đẳng thức), hoặc
- *  `a <qh> ẩn <qh> b` với hai dấu CÙNG chiều (`a < x \le b`), a, b là hằng số. */
+ *  `ẩn <qh> hằng số`, `hằng số <qh> ẩn` (qh là `=` hoặc dấu bất đẳng thức),
+ *  `a <qh> ẩn <qh> b` với hai dấu CÙNG chiều (`a < x \le b`), a, b là hằng số, hoặc
+ *  viết bằng ký hiệu tập (`S = (2; +∞)`). */
 function isAnswerForm(statement: Statement, variable: string | null): boolean {
+  if (statement.every((clause) => clause.fromSet === true)) return true
   if (variable === null) return false
   const isVar = (n: ExprNode) => n.type === 'var' && n.name === variable
   const hasNoVar = (n: ExprNode) => {
@@ -561,8 +907,11 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
     return { verdict: 'unsupported', reason: 'multi_variable' }
   }
 
-  // Có bất phương trình ở đề hoặc ở bất kỳ đoạn nào → cả bước so bằng công thức dấu.
+  // Có bất phương trình (hoặc trị tuyệt đối) ở đề hay ở bất kỳ đoạn nào → cả bước so bằng công
+  // thức dấu.
   const useFormula = ![anchorStmt, ...stepStmts].every(isEquationOnly)
+  const withInequality = [anchorStmt, ...stepStmts].some(hasInequality)
+  const anchorHasAbs = statementHasAbs(anchorStmt)
   const anchorSet = guarded(() => comparableOf(anchorStmt, variable, useFormula))
   if (anchorSet === 'div0' || 'verdict' in anchorSet) {
     return { verdict: 'unsupported', reason: 'anchor_unsupported' }
@@ -571,7 +920,7 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
   for (const stmt of stepStmts) {
     const outcome = guarded(() => {
       const set = comparableOf(stmt, variable, useFormula)
-      return { set, diff: compareComparable(anchorSet, set) }
+      return { set, diff: compareComparable(anchorSet, set, withInequality) }
     })
     if (outcome === 'div0') return { verdict: 'division_by_zero' }
     if ('verdict' in outcome) {
@@ -586,6 +935,9 @@ function checkMathStepUnsafe(step: string, anchor: string, previous?: string): M
         sameAsPrevious:
           previous !== undefined && sameSetAsPrevious(outcome.set, previous, variable),
         ...(outcome.diff.inequality === undefined ? {} : { inequality: outcome.diff.inequality }),
+        ...(anchorHasAbs && !statementHasAbs(stmt)
+          ? { absoluteValue: { casesSplit: true as const } }
+          : {}),
       }
     }
   }
@@ -698,6 +1050,7 @@ function describeMathStepUnsafe(step: string): MathStepShape | null {
     const clause = stmt[0]
     // Hình dạng chỉ mô tả PHƯƠNG TRÌNH hai vế; bất phương trình → câu gợi ý chung.
     if (clause === undefined || clause.sides.length !== 2 || clause.rels[0] !== '=') return null
+    if (clause.fromSet === true || clause.sides.some(containsAbs)) return null
     const vars = statementVars([stmt])
     if (vars.size > 1) return null
     const variable = vars.size === 1 ? ([...vars][0] ?? null) : null
@@ -775,7 +1128,7 @@ function sameSetAsPrevious(
     // Bước trước dùng ẩn khác → không so được, coi như khác.
     for (const name of statementVars([stmt])) if (name !== variable) return false
     const asFormula = stepSet.kind === 'formula' || !isEquationOnly(stmt)
-    const diff = compareComparable(comparableOf(stmt, variable, asFormula), stepSet)
+    const diff = compareComparable(comparableOf(stmt, variable, asFormula), stepSet, false)
     return !diff.lost && !diff.extra
   })
   return result === true
