@@ -50,6 +50,8 @@ describe('[S09a] màn kết quả STEM trong trang bài', () => {
 
   beforeEach(async () => {
     localStorage.clear()
+    sessionStorage.clear()
+    window.history.replaceState(null, '', '/')
     __resetSessionMemory()
     container = document.createElement('div')
     document.body.appendChild(container)
@@ -158,7 +160,7 @@ describe('[S09a] màn kết quả STEM trong trang bài', () => {
     })
   }
 
-  async function serverTraLoi(post: PostTreo, ownerId = NGUOI_A.id) {
+  async function serverTraLoi(post: PostTreo, ownerId = NGUOI_A.id, dat = false) {
     await act(async () => {
       post.traLoi({
         schemaVersion: 1,
@@ -169,15 +171,17 @@ describe('[S09a] màn kết quả STEM trong trang bài', () => {
         clientAt: '2026-09-24T00:00:00.000Z',
         ownerId,
         evidenceKind: 'server_graded',
-        correct: 2,
+        correct: dat ? 3 : 2,
         total: 3,
-        ratio: 2 / 3,
-        passed: false,
+        ratio: dat ? 1 : 2 / 3,
+        passed: dat,
         serverAt: '2026-09-24T00:00:01.000Z',
         items: [
           { questionIndex: 0, correct: true, reason: 'CORRECT' },
           { questionIndex: 1, correct: true, reason: 'CORRECT' },
-          { questionIndex: 2, correct: false, reason: 'WRONG_CHOICE' },
+          dat
+            ? { questionIndex: 2, correct: true, reason: 'CORRECT' }
+            : { questionIndex: 2, correct: false, reason: 'WRONG_CHOICE' },
         ],
       })
       await new Promise((r) => setTimeout(r, 0))
@@ -187,6 +191,34 @@ describe('[S09a] màn kết quả STEM trong trang bài', () => {
   function khungKetQua() {
     return container.querySelector('section[aria-label="Kết quả lượt nộp"]')
   }
+
+  const hopThoai = () => document.body.querySelectorAll('[role="dialog"]')
+
+  it('[P1-6] lượt nộp ĐẠT → đúng MỘT màn kết SessionDone kể số câu đúng; đóng thì về màn kết quả', async () => {
+    await moBai()
+    traLoiTron()
+    await bamNop()
+    await serverTraLoi(posts[0]!, NGUOI_A.id, true)
+    expect(hopThoai()).toHaveLength(1)
+    expect(hopThoai()[0]!.textContent).toContain('đúng 3/3 câu')
+    expect(window.location.search).toBe('?xong=1')
+    const nut = [...hopThoai()[0]!.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Xem kết quả',
+    )!
+    act(() => nut.click())
+    expect(hopThoai()).toHaveLength(0)
+    expect(window.location.search).toBe('')
+    expect(khungKetQua()).not.toBeNull()
+  })
+
+  it('[P1-6] lượt nộp CHƯA ĐẠT → không màn kết (chỉ mừng thành tựu thật)', async () => {
+    await moBai()
+    traLoiTron()
+    await bamNop()
+    await serverTraLoi(posts[0]!)
+    expect(khungKetQua()).not.toBeNull()
+    expect(hopThoai()).toHaveLength(0)
+  })
 
   it('AC05: sửa nháp TRONG LÚC CHỜ và SAU khi có kết quả không đổi câu đã trả lời của lượt nộp', async () => {
     await moBai()

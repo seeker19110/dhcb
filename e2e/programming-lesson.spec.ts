@@ -43,8 +43,17 @@ test('luồng 1 bài học end-to-end: predict → parsons → make đạt hết
   await page.getByRole('button', { name: 'Chấm bài' }).click()
   await expect(page.getByText('Đạt toàn bộ test!')).toBeVisible({ timeout: 120_000 })
 
+  // [P1-6] Đạt bài → màn kết SessionDone kể ĐỦ 5 bước đã làm (Dự đoán + Xếp code đều làm
+  // đúng ở trên); "Tiếp tục bài" đóng màn kết và đưa sang bước ⑦ "Về nhà".
+  const ketPhien = page.getByRole('dialog')
+  await expect(ketPhien).toBeVisible()
+  await expect(ketPhien).toContainText('hoàn thành 5 bước')
+  await expect(page).toHaveURL(/[?&]xong=1(&|#|$)/)
+  await ketPhien.getByRole('button', { name: 'Tiếp tục bài' }).click()
+  await expect(ketPhien).toBeHidden()
+  await expect(page).not.toHaveURL(/xong=/)
+
   // ⑦ Về nhà: xác nhận trạng thái hoàn thành
-  await page.getByRole('button', { name: 'Về nhà' }).click()
   await expect(page.getByText('Bài học đã hoàn thành')).toBeVisible()
 })
 

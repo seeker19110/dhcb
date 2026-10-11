@@ -150,6 +150,7 @@ vi.mock('../../../lib/programmingProgress', async () => {
 const themSrs = vi.fn()
 vi.mock('../../../lib/programmingSrs', () => ({
   addLessonCardsToSrs: (...args: unknown[]) => themSrs(...args),
+  getDueProgCards: () => [],
 }))
 // PHẢI trả về CÙNG MỘT object mỗi lần gọi: `useProgrammingOutlineCtx` có effect phụ thuộc
 // `[user]`, mock trả object mới mỗi lượt render là vòng lặp render vô tận (đã dính thật).
@@ -244,6 +245,10 @@ function chu(): string {
 
 beforeEach(() => {
   localStorage.clear()
+  // Màn kết SessionDone nhớ kết quả trong sessionStorage + `?xong=1` trên URL thật (jsdom) —
+  // dọn để overlay của test trước không mở lại ở test sau.
+  sessionStorage.clear()
+  window.history.replaceState(null, '', '/')
   __resetSessionMemory()
   luuTienDo.mockClear()
   themSrs.mockClear()
@@ -430,6 +435,36 @@ describe('ProgrammingLessonPage — phiên học (S08-2)', () => {
     expect(luuTienDo.mock.calls.some((c) => c[2] === 'completed')).toBe(true)
     const conKhoa = Object.keys(localStorage).filter((k) => k.startsWith(LEARNING_SESSION_PREFIX))
     expect(conKhoa).toEqual([])
+  })
+
+  it('[P1-6] đạt bài Make → đúng MỘT màn kết SessionDone; chấm lại không bật lần hai; đóng thì sang "Về nhà"', async () => {
+    mo()
+    bam('Tự viết')
+    goCode('print("xong")')
+    vi.useRealTimers()
+    const hopThoai = () => document.body.querySelectorAll('[role="dialog"]')
+    expect(hopThoai()).toHaveLength(0)
+    act(() => nut('Chấm bài').click())
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 100))
+    })
+    expect(hopThoai()).toHaveLength(1)
+    // Bỏ qua Dự đoán + Xếp code → chỉ đếm 3 bước đã làm thật.
+    expect(hopThoai()[0]!.textContent).toContain('hoàn thành 3 bước')
+    const tiepTuc = [...hopThoai()[0]!.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Tiếp tục bài',
+    )!
+    act(() => tiepTuc.click())
+    expect(hopThoai()).toHaveLength(0)
+    expect(dinhTuyen.loc?.hash).toBe('#done')
+
+    // Chấm lại sau khi đã đạt: không mừng lần hai trong cùng lần mở bài.
+    act(() => bam('Tự viết'))
+    act(() => nut('Chấm bài').click())
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 100))
+    })
+    expect(hopThoai()).toHaveLength(0)
   })
 })
 

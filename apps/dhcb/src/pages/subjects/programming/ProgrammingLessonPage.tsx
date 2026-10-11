@@ -66,7 +66,9 @@ import { clearSession, contentFingerprint, type SessionOwner } from '../../../li
 import { useLearningSession } from '../../../lib/useLearningSession'
 import { runLessonCode, resetLessonRunners, laBaiDongLenh } from '../../../lib/codeRunner'
 import { saveLessonProgress } from '../../../lib/programmingProgress'
-import { addLessonCardsToSrs } from '../../../lib/programmingSrs'
+import { addLessonCardsToSrs, getDueProgCards } from '../../../lib/programmingSrs'
+import SessionDone from '../../../components/SessionDone'
+import { useSessionDone } from '../../../lib/session/useSessionDone'
 import type { ProgrammingLesson } from '@dhcb/subject-programming/lessonTypes'
 import { useProgrammingLesson } from '../../../lib/useProgrammingLesson'
 import { buildSlugSegment, idFromSlugSegment } from '@core/slug'
@@ -244,6 +246,16 @@ function LessonBody({
     theHeOwnerRef.current += 1 // vô hiệu hoá mọi lượt chạy/chấm đang dở của owner cũ
   }, [ownerKey])
 
+  // [P1-6, lệnh 8] Màn kết phiên `SessionDone` khi bài Make ĐẠT đủ test lần đầu trong lần mở bài
+  // này (chấm lại sau khi đã đạt không bật lại). Bài Lập trình không ghi "ngày có học" nên không
+  // bật tầng streak/mục tiêu tuần. Đóng overlay thì sang bước "Về nhà" — bài chưa hết ở bước Make.
+  const {
+    outcome: ketPhien,
+    open: moKetPhien,
+    close: dongKetPhien,
+  } = useSessionDone(`programming:${lesson.id}`)
+  const daMungRef = useRef(false)
+
   // ③ Ví dụ mẫu. Luật N4: 3 trạng thái rõ ràng, không có ca "chạy xong mà màn hình trống".
   const [viDu, setViDu] = useState<{ owner: string; state: RunState; output: string } | null>(null)
   const viDuCuaOwner = viDu && viDu.owner === ownerKey ? viDu : null
@@ -392,6 +404,19 @@ function LessonBody({
       // lịch ôn đầu tiên tính từ đây mới đúng. Gọi nhiều lần cũng vô hại — addToSRS bỏ qua
       // thẻ đã có trong kho, không đặt lại lịch của thẻ đang ôn dở.
       addLessonCardsToSrs(user.id, lesson.id)
+      if (!daMungRef.current) {
+        daMungRef.current = true
+        // "Sự thật" của phiên = số bước đã làm THẬT: Khái niệm + Ví dụ + Tự viết luôn có, Dự
+        // đoán/Xếp code chỉ tính khi người học đã làm (bỏ qua thì không đếm).
+        const soBuoc = 3 + (predictRevealed ? 1 : 0) + (parsonsResult === 'correct' ? 1 : 0)
+        moKetPhien({
+          subjectId: 'programming',
+          contentId: lesson.id,
+          kind: 'project-step',
+          steps: soBuoc,
+          durationSec: 0,
+        })
+      }
     }
   }
 
@@ -552,6 +577,23 @@ function LessonBody({
         crumbs={[...crumbs, { label: lesson.title, to: '' }]}
         focus
       />
+      {ketPhien && user && (
+        <SessionDone
+          outcome={ketPhien}
+          uid={user.id}
+          isA
+          srsDue={getDueProgCards(user.id).length}
+          closeLabel="Tiếp tục bài"
+          onClose={() => {
+            dongKetPhien()
+            goToStep(STEPS.length - 1)
+          }}
+          onMore={() => {
+            dongKetPhien()
+            nav(`${PROGRAMMING_PREFIX}/on-tap`)
+          }}
+        />
+      )}
 
       {/* [2026-09-02, đợt 1 thiết kế lại desktop] Trước đây trang này là MỘT cột `max-w-4xl`
           căn giữa ở mọi bề rộng màn hình: trên màn 1440px học viên thấy một cột chữ hẹp và

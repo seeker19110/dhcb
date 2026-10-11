@@ -13,6 +13,7 @@
 // feedback và tiến độ — dữ liệu chính, nhẹ (vài KB), an toàn khi mất video local.
 
 import { vnDateStr, addDays, weekStartOf } from './date'
+import type { SessionOutcome } from './session/sessionFact'
 
 // ── Hằng số thử thách ────────────────────────────────────────────────────────
 // Số ngày 1 tuần challenge (Thứ 2 → CN).
@@ -228,6 +229,31 @@ export function countWords(transcript: string): number {
   const trimmed = transcript.trim()
   if (!trimmed) return 0
   return trimmed.split(/\s+/).length
+}
+
+/** Số câu trong bài nói/viết: tách theo dấu kết câu; có chữ mà không có dấu (STT không chấm
+ *  câu) vẫn tính là 1 câu — không bao giờ khoe con số người học không làm. */
+export function countSentences(transcript: string): number {
+  const cau = transcript.split(/[.!?…]+/).filter((c) => c.trim().length > 0)
+  return cau.length
+}
+
+/** Kết quả phiên Challenge cho màn kết `SessionDone` (P1-6): quay/ghi âm → đếm CÂU đã nói; gõ
+ *  chữ → MỘT đoạn đã viết. Nộp rỗng → `steps: 0` (SessionDone không mở). */
+export function challengeSessionOutcome(input: {
+  day: string
+  transcript: string
+  isTyped: boolean
+  durationSec: number
+}): SessionOutcome {
+  const coChu = input.transcript.trim().length > 0
+  return {
+    subjectId: 'english',
+    contentId: `challenge:${input.day}`,
+    kind: input.isTyped ? 'writing' : 'speaking',
+    steps: !coChu ? 0 : input.isTyped ? 1 : countSentences(input.transcript),
+    durationSec: input.durationSec,
+  }
 }
 
 // Nhịp nói (từ/phút), làm tròn; chống chia 0 (chưa có thời lượng → 0).

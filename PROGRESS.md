@@ -472,9 +472,12 @@ sau đợt 1 + đợt 2 + lệnh 8/9 (9/15 lệnh, chạy bằng subagent Sonnet
   `buildSessionFact` (thuần, ≥ 12 ca) sinh câu "sự thật" luôn có số đếm, cấm "%"/"band"/"trình
   độ"/"Tuyệt vời!" trơ; `?xong=1` đồng bộ URL qua `history.replaceState`; nối vào
   `TodayLesson.tsx` (điểm gọi duy nhất của 2 celebration cũ, xác nhận bằng grep toàn repo). AC-3/AC-4/AC-7 ĐÃ CÓ TEST (changelog `0595`: tích hợp
-  qua `TodayLesson` thật, E2E `?xong=1` qua reload, a11y-modals 3 theme × 1440/390). Nợ mở: `Challenge.tsx`/
-  `Lesson*.tsx` (Lập trình)/`StemLessonView.tsx` CHƯA nối `SessionDone` (hiện các trang này không
-  gọi celebration cũ nên không hồi quy, nhưng cũng chưa có overlay mới) — để lát riêng.
+  qua `TodayLesson` thật, E2E `?xong=1` qua reload, a11y-modals 3 theme × 1440/390). ✅ **[changelog
+  `0597`] Đã nối `SessionDone` vào `Challenge.tsx` (thay `Celebration` "Tuần trọn vẹn 7/7" — nay
+  là tầng 2 cùng hộp), bài Lập trình (đạt Make) và bài STEM (lượt nộp đạt)**; kết quả phiên nhớ
+  trong `sessionStorage` (`useSessionDone`) nên F5 mở lại đúng số liệu, `?xong=1` mồ côi không mở
+  màn rỗng. Còn lại: nhãn nút chính "Về trang chủ" ở `TodayLesson` thật ra chỉ ĐÓNG overlay — chờ
+  chủ dự án chọn nhãn.
 - **Lệnh 9 · P1-7 — ✅ ĐÃ MERGE (#1016).** `DesktopSidebar` 10→7 mục cấp 1: gộp `career` +
   `worklife` thành nhóm "Sự nghiệp & Đời sống ▾", gỡ "Luyện tập" khỏi menu chính (route
   `/luyen-tap` vẫn sống), "Nâng cấp" thành dòng nhỏ dưới avatar. `BottomNav` tab 4 đổi "Luyện

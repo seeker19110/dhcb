@@ -97,4 +97,21 @@ describe('SessionDone', () => {
     act(() => mainBtn?.click())
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('closeLabel thay nhãn nút chính — nút chỉ đóng overlay thì không hứa "Về trang chủ"', () => {
+    render({ closeLabel: 'Tiếp tục bài' })
+    const buttons = dialog()?.querySelectorAll('button') ?? []
+    expect(buttons.length).toBe(1)
+    expect(buttons[0]?.textContent).toBe('Tiếp tục bài')
+  })
+
+  it('milestone hiện ở tầng (2) TRONG cùng một dialog (không bật overlay thứ hai)', () => {
+    render({
+      streakJustChanged: true,
+      milestone: { icon: '🏆', title: 'Tuần trọn vẹn 7/7!', subtitle: 'Đủ 7 ngày.' },
+    })
+    expect(document.body.querySelectorAll('[role="dialog"]').length).toBe(1)
+    expect(dialog()?.textContent).toContain('Tuần trọn vẹn 7/7!')
+    expect(dialog()?.textContent).toContain('Chuỗi')
+  })
 })
