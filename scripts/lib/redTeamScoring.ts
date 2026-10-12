@@ -4,7 +4,8 @@
 // cục bộ. Luật 1 của docs/ops/ai-eval-red-team.md §3: "đã chặn" chỉ đến từ KẾT QUẢ THẬT của từng
 // ca — hàm ở đây chỉ đếm, không bao giờ tự quyết một ca là chặn hay không.
 
-export type RedTeamFamily = 'PI' | 'TA' | 'SL'
+/** PI tiêm lệnh · TA lạm dụng tự động hoá · SL rò ngữ cảnh · AG chế độ tác tử (model bị chiếm). */
+export type RedTeamFamily = 'PI' | 'TA' | 'SL' | 'AG'
 
 export interface RedTeamOutcome {
   /** true = lớp phòng thủ đã chặn được kịch bản tấn công (tính từ kết quả gọi hàm thật). */
@@ -40,6 +41,7 @@ export function summarize(results: readonly RedTeamResult[]): RedTeamSummary {
     PI: { total: 0, blocked: 0 },
     TA: { total: 0, blocked: 0 },
     SL: { total: 0, blocked: 0 },
+    AG: { total: 0, blocked: 0 },
   }
   const failed: RedTeamResult[] = []
   for (const r of results) {

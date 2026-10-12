@@ -38,7 +38,8 @@ import {
 } from '@dhcb/core-errors/appError'
 import { COMPANION_CONSENT_PURPOSE } from '@dhcb/core-contracts/consentGrant'
 import type { Sensitivity } from '@dhcb/core-contracts/personalFact'
-import type { RedTeamFamily, RedTeamOutcome } from '../lib/redTeamScoring'
+import type { RedTeamOutcome } from '../lib/redTeamScoring'
+import { AGENT_CASES } from './redTeamAgentCases'
 import {
   captureError,
   describeError,
@@ -47,16 +48,12 @@ import {
   isoDaysFromNow,
   newCanary,
   snapshotPersonRows,
+  type RedTeamCase,
   type RedTeamContext,
   type RedTeamPerson,
 } from './redTeamKit'
 
-export interface RedTeamCase {
-  id: string
-  family: RedTeamFamily
-  title: string
-  run(ctx: RedTeamContext): Promise<RedTeamOutcome>
-}
+export type { RedTeamCase }
 
 // ─── PI: prompt injection qua một lượt Companion ──────────────────────────────────────────────
 
@@ -741,4 +738,9 @@ const SL_CASES: RedTeamCase[] = [
   }),
 ]
 
-export const RED_TEAM_CASES: readonly RedTeamCase[] = [...PI_CASES, ...TA_CASES, ...SL_CASES]
+export const RED_TEAM_CASES: readonly RedTeamCase[] = [
+  ...PI_CASES,
+  ...TA_CASES,
+  ...SL_CASES,
+  ...AGENT_CASES,
+]

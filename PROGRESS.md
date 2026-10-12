@@ -1281,13 +1281,14 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`] Red-team AI: phần Companion V2 ĐÃ KIỂM
+- 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`] Red-team AI: phần Companion V2 ĐÃ KIỂM
   THẬT, còn các mặt khác.** ✅ `eval:v2:red-team` viết lại chạy trên Postgres thật, chặn CI (job
-  `sql-prepare`): **39/39** (PI 14 · TA 13 · SL 12) — lần chạy đầu bắt được lỗi sản phẩm (DENY + tự chạy
+  `sql-prepare`): **53/53** (PI 14 · TA 13 · SL 12 · AG 14) — lần chạy đầu bắt được lỗi sản phẩm (DENY + tự chạy
   của `proposeAction` sập vì khoá ngoại), đã sửa cùng PR. ✅ `0624`: byte NUL trong body JSON → 400 ở
   `readJsonBody` (mọi handler) + schema Companion; `DOMAIN_KEYWORDS` không còn trả domain ma
-  `career`/`startup`/`life`. **Còn mở:** (1) chế độ tác tử (Claude chọn công cụ) chưa có ca — harness
-  chỉ đo đường từ khoá; (2) `eval:tutor` + `eval:companion` có **0** ca injection, chấm bài viết chưa có
+  `career`/`startup`/`life`. **Còn mở:** (1) ✅ `0626`: chế độ tác tử đã có họ ca AG (14 ca, kịch bản gọi
+  công cụ đóng vai Claude, tầng công cụ trên Postgres thật) — còn lại: Claude THẬT có bị dụ gọi công cụ
+  không (cần key AI); (2) `eval:tutor` + `eval:companion` có **0** ca injection, chấm bài viết chưa có
   eval (`docs/ops/ai-eval-red-team.md` §5); (3) ✅ `0625`: `eval:v2:permissions` nay chạy Postgres thật (21 ca,
   chặn CI) — lộ và sửa lỗi đặt policy đồng thời → 500; (3b) **CẦN CHỦ DỰ ÁN QUYẾT:** policy `AUTOMATE` đã
   quá `review_at` vẫn được `resolveAuthority` coi là hiệu lực (migration 0042 ghi "quyền tự động phải có

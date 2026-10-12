@@ -21,6 +21,8 @@ dòng trong CSDL, chuỗi canary), và chạy chặn trong CI.
   `resumeAutomationGrant` · `buildContextPackage`, chấm từ kết quả.
 - Ba họ ca, mỗi họ ≥ 10: **PI** (prompt injection qua lượt Companion), **TA** (lạm dụng tự động hoá),
   **SL** (rò dữ liệu vào ngữ cảnh). Ca viết bằng TS (cần bước gieo dữ liệu), thay 3 file fixture JSON.
+  **Bổ sung changelog `0626`:** họ thứ tư **AG** (chế độ tác tử) — "kịch bản" gọi công cụ đóng vai
+  Claude, chạy thẳng `createCompanionToolSession(…).execute` trên Postgres thật, không cần key AI.
 - Hàm chấm thuần + kiểm `DATABASE_URL` chỉ trỏ máy cục bộ, có unit test.
 - Thêm bước chạy vào job CI `sql-prepare` (đã có Postgres 16 + đủ migration) → chặn merge qua `quality`.
 - Đính chính lại `docs/research/kien-truc-va-ha-tang.md`, cập nhật `docs/ops/ai-eval-red-team.md`, nợ
@@ -30,7 +32,8 @@ dòng trong CSDL, chuỗi canary), và chạy chặn trong CI.
 
 - Không gọi LLM: harness xoá mọi biến môi trường `ANTHROPIC_*`/`GROQ_*`/`GEMINI_*`/`OPENAI_*` lúc khởi
   động → đo đường từ khoá (đường mặc định khi không có Claude) + mọi cổng sau planner. Chế độ tác tử
-  (Claude gọi công cụ) KHÔNG nằm trong đợt này — ghi rõ ở nợ.
+  (Claude gọi công cụ) KHÔNG nằm trong đợt này — ghi rõ ở nợ. (Đã phủ ở TẦNG CÔNG CỤ trong changelog
+  `0626` bằng họ AG; việc Claude THẬT có bị dụ gọi công cụ hay không vẫn cần key AI.)
 - Không thêm ca injection cho `eval:tutor`/`eval:companion`/chấm bài viết (nợ riêng, cần key AI).
 - Không sửa mã sản phẩm. Ca nào ĐỎ thật thì báo, không "chữa" bằng cách đổi ca.
   **Ngoại lệ đã thi hành (changelog `0623`):** harness lộ lỗi thật ở `proposeAction` — ghi
@@ -45,6 +48,7 @@ dòng trong CSDL, chuỗi canary), và chạy chặn trong CI.
 | ---- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | Sửa  | `scripts/red-team/eval-red-team.ts`                                                             | Harness: guard, xoá key AI, chạy ca, dọn dữ liệu, mã thoát |
 | Thêm | `scripts/red-team/redTeamCases.ts`                                                              | 3 họ ca, mỗi ca `run(ctx)` → `{ blocked, evidence }`       |
+| Thêm | `scripts/red-team/redTeamAgentCases.ts`                                                         | Họ AG (changelog `0626`): kịch bản gọi công cụ tác tử      |
 | Thêm | `scripts/red-team/redTeamKit.ts`                                                                | Gieo dữ liệu bằng hàm dịch vụ, `captureError`              |
 | Thêm | `scripts/lib/redTeamScoring.ts`                                                                 | Hàm thuần: tổng hợp, `isLocalDatabaseUrl`                  |
 | Thêm | `scripts/lib/redTeamScoring.test.ts`                                                            | Unit test hàm thuần                                        |
@@ -57,7 +61,7 @@ dòng trong CSDL, chuỗi canary), và chạy chặn trong CI.
 ## ③ Hợp đồng dữ liệu
 
 ```ts
-type Family = 'PI' | 'TA' | 'SL'
+type Family = 'PI' | 'TA' | 'SL' | 'AG' // AG thêm ở changelog 0626
 interface RedTeamCase {
   id: string
   family: Family
