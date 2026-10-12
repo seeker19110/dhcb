@@ -147,32 +147,49 @@ describe('resolveIntentAndDomain', () => {
   // 'learning' thì Companion nạp ngữ cảnh học tập và nói với LLM "lĩnh vực trọng tâm: learning"
   // kể cả khi người dùng đang hỏi chuyện khác. 'general' là giá trị trung tính đã được
   // synthesizeCompanionReply xử lý sẵn (bỏ dòng "lĩnh vực trọng tâm").
-  // Bốn trụ ngoài Learning: trước đây KHÔNG có mẫu nào nhận ra chúng, mọi câu hỏi về sự
-  // nghiệp/công việc/khởi nghiệp/đời sống đều rơi vào mặc định 'learning'.
+  // Trụ Work (Ghi chú) có từ khoá riêng → domain_conversation + 'work'.
   it.each([
-    ['Tôi muốn thăng tiến trong sự nghiệp', 'career'],
-    ['Chuẩn bị phỏng vấn thế nào?', 'career'],
     ['Dự án này sắp tới deadline rồi', 'work'],
     ['Làm sao tăng năng suất công việc', 'work'],
-    ['Tôi đang khởi nghiệp mảng edtech', 'startup'],
-    ['Cần kiểm chứng giả định về khách hàng mục tiêu', 'startup'],
-    ['Tôi muốn xây thói quen dậy sớm', 'life'],
-    ['Dạo này giấc ngủ của tôi kém', 'life'],
   ])('nhận diện đúng trụ cho câu %s', (msg, domain) => {
     const res = resolveIntentAndDomain(msg)
     expect(res.domain).toBe(domain)
     expect(res.intent).toBe('domain_conversation')
   })
 
-  // "mục tiêu" là từ chung của mọi trụ. Nhánh nhận diện trụ phải chạy TRƯỚC nhánh mục tiêu,
-  // nếu không câu này bị gán 'learning' và nạp nhầm ngữ cảnh học tập.
+  // [changelog 0624] Career · Startup · Life đã XOÁ HẲN (2026-09-20). Câu về các chủ đề đó vẫn
+  // được NHẬN RA (để không rơi nhầm vào nhánh "mục tiêu học tập"), nhưng về cặp
+  // general_conversation/general — khớp đúng `normalizeRoutedIntent` của bộ định tuyến LLM, để hai
+  // đường (từ khoá / LLM) cho cùng kết quả, không còn domain ma 'career'/'startup'/'life'.
+  it.each([
+    'Tôi muốn thăng tiến trong sự nghiệp',
+    'Chuẩn bị phỏng vấn thế nào?',
+    'Tôi đang khởi nghiệp mảng edtech',
+    'Cần kiểm chứng giả định về khách hàng mục tiêu',
+    'Tôi muốn xây thói quen dậy sớm',
+    'Dạo này giấc ngủ của tôi kém',
+  ])('chủ đề của trụ đã xoá → general_conversation/general: %s', (msg) => {
+    expect(resolveIntentAndDomain(msg)).toEqual({
+      intent: 'general_conversation',
+      domain: 'general',
+    })
+  })
+
+  // "mục tiêu" là từ chung. Câu nói về chủ đề ngoài học tập KHÔNG được thành mục tiêu học tập.
   it('câu có chữ "mục tiêu" nhưng nói về sự nghiệp thì KHÔNG rơi vào learning', () => {
-    expect(resolveIntentAndDomain('Mục tiêu sự nghiệp của tôi là gì?').domain).toBe('career')
+    expect(resolveIntentAndDomain('Mục tiêu sự nghiệp của tôi là gì?')).toEqual({
+      intent: 'general_conversation',
+      domain: 'general',
+    })
+  })
+
+  it('cân bằng công việc giữ trụ Work (Work đứng trước nhóm đời sống trong bảng)', () => {
+    expect(resolveIntentAndDomain('cân bằng cuộc sống và công việc').domain).toBe('work')
   })
 
   it('explicit domain luôn thắng bảng từ khoá', () => {
-    const res = resolveIntentAndDomain('Tôi muốn thăng tiến trong sự nghiệp', undefined, 'life')
-    expect(res.domain).toBe('life')
+    const res = resolveIntentAndDomain('Tôi muốn thăng tiến trong sự nghiệp', undefined, 'work')
+    expect(res.domain).toBe('work')
   })
 
   it('detectDomainByKeyword trả null khi không có từ khoá nào', () => {

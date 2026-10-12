@@ -1281,17 +1281,18 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`] Red-team AI: phần Companion V2 ĐÃ KIỂM THẬT, còn
-  các mặt khác.** ✅ `eval:v2:red-team` viết lại chạy trên Postgres thật, chặn CI (job `sql-prepare`):
-  **39/39** (PI 14 · TA 13 · SL 12) — lần chạy đầu bắt được lỗi sản phẩm (DENY + tự chạy của
-  `proposeAction` sập vì khoá ngoại), đã sửa cùng PR. **Còn mở:** (1) chế độ tác tử (Claude chọn công cụ)
-  chưa có ca — harness chỉ đo đường từ khoá; (2) `eval:tutor` + `eval:companion` có **0** ca injection,
-  chấm bài viết chưa có eval (`docs/ops/ai-eval-red-team.md` §5); (3) byte NUL trong tin nhắn Companion
-  ra `DatabaseError` 500 thay vì 400 (không lọt dữ liệu — ca `rt-pi-12` vẫn chặn); (4)
-  `DOMAIN_KEYWORDS` (`packages/core-personal/companionRuntime.ts`) còn từ khoá trụ `career`/`startup`/
-  `life` đã xoá 2026-09-20; (5) `eval:v2:permissions` dùng `pg` giả tự lọc policy bằng JS — kiểm mock
-  chứ không kiểm câu SQL thật (nên chuyển sang Postgres thật như red-team). _Xem lại khi:_ trước khi
-  Companion/planner nhận thêm quyền ghi dữ liệu, hoặc khi có PR đổi prompt `/api/agent`.
+- 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`] Red-team AI: phần Companion V2 ĐÃ KIỂM
+  THẬT, còn các mặt khác.** ✅ `eval:v2:red-team` viết lại chạy trên Postgres thật, chặn CI (job
+  `sql-prepare`): **39/39** (PI 14 · TA 13 · SL 12) — lần chạy đầu bắt được lỗi sản phẩm (DENY + tự chạy
+  của `proposeAction` sập vì khoá ngoại), đã sửa cùng PR. ✅ `0624`: byte NUL trong body JSON → 400 ở
+  `readJsonBody` (mọi handler) + schema Companion; `DOMAIN_KEYWORDS` không còn trả domain ma
+  `career`/`startup`/`life`. **Còn mở:** (1) chế độ tác tử (Claude chọn công cụ) chưa có ca — harness
+  chỉ đo đường từ khoá; (2) `eval:tutor` + `eval:companion` có **0** ca injection, chấm bài viết chưa có
+  eval (`docs/ops/ai-eval-red-team.md` §5); (3) `eval:v2:permissions` dùng `pg` giả tự lọc policy bằng JS
+  — kiểm mock chứ không kiểm câu SQL thật; (4) `metacognitiveReflectionService.ts`,
+  `proactiveAgentService.ts`, `subconsciousService.ts` (+ API `learning/metacognitive-reflection.ts`) vẫn
+  nhận/sinh domain `career`/`startup`/`life` của trụ đã xoá. _Xem lại khi:_ trước khi Companion/planner
+  nhận thêm quyền ghi dữ liệu, hoặc khi có PR đổi prompt `/api/agent`.
 - 🟡 **[2026-10-09 — sau changelog `0558`, rà bảo mật độc lập] Kiểm tra hiểu hội thoại CEFR: script
   vẫn TRA được đáp án từ đề công khai + `dialogues.json` — CẦN CHỦ DỰ ÁN QUYẾT.** Đợt `0558` đã
   chặn tính đáp án trước khi mở lượt, replay cùng lượt, và xem đáp án câu sai (token HMAC, seed ẩn,

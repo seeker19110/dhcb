@@ -864,3 +864,33 @@ bỏ nháy trong MỘT lượt, vỏ bọc chạy chuỗi thì chỉ bỏ ký t�
 token của đoạn `git push` (refspec `+…`, `-[A-Za-z]*f…`, đích `src:dst` chuẩn hoá); `--no-verify`
 chỉ tính khi cùng đoạn với `commit`. Test bảng: `scripts/claude-hooks.test.ts` (describe
 "block-dangerous-git.sh" + "pre-commit-gate.sh — rào main/bí mật/file lớn").
+
+## 23. `pg` giả trả `rows: []` cho mọi câu → che lỗi THỨ TỰ ghi và khoá ngoại; `check:sql` cũng không thấy
+
+**Ngày/PR:** 2026-10-12, PR #1385 (changelog `0623`). Lỗi nằm trong `main` từ V2-08 (migration
+`0045`, 2026-08-17) tới khi harness red-team chạy trên Postgres thật lần đầu.
+
+**Khuôn lỗi:** `proposeAction` ghi `personal.tool_execution_audit_log` TRƯỚC khi chèn dòng
+`personal.proposed_actions` mà cột `proposed_action_id` trỏ khoá ngoại tới (không deferrable).
+Postgres thật ném `violates foreign key constraint` ⇒ lượt Companion 500 ở nhánh DENY và nhánh tự
+chạy (cả câu "tra từ hello" ở đường từ khoá). Mọi cổng vẫn XANH:
+
+- Unit test dùng pool giả trả `{ rows: [] }` cho mọi câu SQL — không có ràng buộc nào, nên thứ tự
+  ghi sai vẫn "chạy được".
+- `npm run check:sql` chỉ `PREPARE` từng câu riêng lẻ — bắt sai cột/kiểu, KHÔNG chạy câu, không
+  thấy quan hệ giữa hai câu.
+- Test tích hợp không có cho luồng này.
+
+**Cách rà:** luồng nào ghi ≥ 2 bảng có khoá ngoại giữa chúng (dò:
+`grep -n "references" postgres/migrations/*.sql`) mà chỉ có unit test mock `pg` → coi như CHƯA
+kiểm thứ tự ghi. Đọc thứ tự `insert` trong mã: bảng con (bên có cột `…_id references`) phải ghi SAU
+bảng cha, và chung một transaction nếu hai dòng phải cùng có hoặc cùng không.
+
+**Cổng chốt chặn:**
+
+- Luồng đó phải có ca chạy trên Postgres THẬT: `npm run eval:v2:red-team` (CI job `sql-prepare`,
+  Postgres 16 đã áp mọi migration) cho Companion/tự động hoá/ngữ cảnh; hoặc test
+  `*.integration.test.ts` như `personErasureService.integration.test.ts`.
+- Unit test hồi quy cho đúng luồng này dùng mock ĐÓNG VAI khoá ngoại (ném lỗi khi ghi bảng con
+  trỏ tới id chưa chèn) — `packages/core-personal/proposedActionService.test.ts`, describe "nhật
+  ký chỉ được ghi SAU khi đã có dòng đề xuất (khoá ngoại)".
