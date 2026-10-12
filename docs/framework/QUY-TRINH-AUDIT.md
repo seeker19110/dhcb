@@ -602,6 +602,24 @@ KẾT LUẬN: Sẵn sàng / Cần xử lý: [..]
 
 Bất kỳ mục ❌ ở Tầng 1–2 (chặn) → nêu rõ trong kết luận là "Cần xử lý", không kết luận "Sẵn sàng".
 
+### 3b. Truy vết & HỘI TỤ (bổ sung 2026-10-12, changelog 0620 — lấy từ khung `seeker19110/project-template`)
+
+Báo cáo audit là ĐIỂM BẮT ĐẦU, không phải điểm kết thúc. Để lượt sửa sau audit không bỏ rơi phát hiện:
+
+- **ID cố định:** mỗi phát hiện mang `F-001`, `F-002`… + `file:dòng` + mức (Cao/Trung/Thấp) + rủi ro nếu để
+  nguyên. Mỗi việc sửa mang `W-001`… và ghi rõ đóng những `F-` nào. Truy vết đủ: `F-` → `W-` → PR → bằng chứng.
+  Không có `W-` mồ côi (sửa ngoài kế hoạch đã duyệt), không có `F-` bị bỏ rơi (mọi `F-` phải có kết cục).
+- **Quét lại sau mỗi đợt sửa** — chỉ các tầng BỊ ẢNH HƯỞNG bởi đợt đó: xác nhận `F-` đã đóng thật, và việc sửa
+  không đẻ phát hiện mới. Sau đợt cuối, quét lại toàn bộ một lượt.
+- **Tiêu chí thoát (hội tụ):** (1) 0 phát hiện mức Cao còn mở; (2) mọi Trung/Thấp còn lại có quyết định ghi nhận
+  — "sửa đợt sau" hoặc "chấp nhận rủi ro" (vào mục nợ của `PROGRESS.md`, kèm lý do + điều kiện xem lại);
+  (3) lượt quét cuối không phát sinh phát hiện Cao mới (có → mở đợt bổ sung, lặp lại).
+- **Deletion test cho module nghi "nông"** (interface đơn giản mà bên trong rối, một khái niệm rải nhiều file):
+  giả định xoá module đó — độ phức tạp CHỈ DỜI CHỖ sang nơi gọi → không đáng động; độ phức tạp DỒN LẠI một chỗ
+  rõ hơn → đáng gộp/đào sâu. Ghi kết quả ("dời chỗ"/"dồn lại") vào cột lý do.
+- **Dòng "net" cho mục tối ưu/vệ sinh:** kết phần Tầng 3 bằng MỘT dòng `net: -<N> dòng, -<M> dependency có thể
+bỏ` — ước lượng từ chính các mục đã liệt kê, không phải con số chung chung.
+
 ---
 
 ## 4. Ghi chú vận hành

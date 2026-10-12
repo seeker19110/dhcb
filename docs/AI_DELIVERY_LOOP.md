@@ -93,6 +93,12 @@ AI được lặp tối đa 3 lần cho cùng một lỗi xác định:
 3. chạy lại test thất bại rồi gate liên quan;
 4. nếu cùng lỗi còn sau 3 lần, hoặc sửa đòi đổi contract/scope, dừng và ghi blocker.
 
+**Trước lần sửa thứ 2** cho cùng một lỗi: ghi một dòng "lỗi nằm ở tầng **đặc tả / thiết kế / code /
+cổng** vì …" rồi quay về đúng tầng đó — lần sửa đầu không ăn thường nghĩa là đang vá sai tầng (sửa
+code khi đặc tả mâu thuẫn, sửa test khi cổng đo sai). `.claude/hooks/pre-commit-gate.sh` đếm chuỗi đỏ
+cùng chữ ký ở `.claude/.gate-red-streak` và nhắc đúng mốc lần 2 / lần 3 (khung project-template,
+changelog `0619`).
+
 Không làm test xanh bằng cách xóa/skip test, hạ threshold, nới validation hoặc che lỗi nếu spec
 không cho phép. Flaky test phải được chứng minh bằng nhiều lần chạy và có issue xử lý.
 

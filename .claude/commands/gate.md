@@ -32,10 +32,18 @@ Diff thêm/đổi bài học trong `packages/subject-programming/` → chạy `n
 
 ```
 Build ✅/❌ | Type ✅/❌ (lỗi:..) | Lint ✅/❌ (cảnh báo:..) | Format ✅/❌ | Test ✅/❌ (X/Y)
+Đỏ-trước ✅/n-a (fix:/logic mới có test ĐỎ trước khi sửa, hoặc ngoại lệ số ..)
 Tự review diff ✅ | Không bí mật/rác ✅ | Tiêu chí chấp nhận ✅ | DoD ✅
 Rủi ro/ảnh hưởng: .. | Góp ý cải tiến: ..
 KẾT LUẬN: Sẵn sàng  /  Cần xử lý: [..]
 ```
+
+**Dòng "Đỏ-trước"** (lấy từ khung project-template, changelog 0620 — trước đây luật đỏ-trước chỉ có
+trong `/debug`): commit `fix:` phải có test TÁI HIỆN lỗi, đã chạy cho thấy ĐỎ trước khi sửa; code mới có
+logic rẽ nhánh cũng vậy. Ghi `n-a` kèm số ngoại lệ khi rơi vào danh sách ĐÓNG: (1) chỉ tài liệu/chú
+thích; (2) đổi cấu hình/hằng không có logic; (3) đổi tên/di chuyển thuần cơ học (test cũ vẫn phủ);
+(4) mã chỉ chạy tay một lần (script di trú dữ liệu đã chạy xong); (5) giao diện thuần trình bày —
+bằng chứng là ảnh chụp Tầng 8b thay cho test. Ngoài 5 ca này mà không có test đỏ-trước → ❌.
 
 **Bất kỳ mục ❌ → sửa trước, chạy lại TOÀN BỘ, KHÔNG commit/merge** (CLAUDE.md mục 10). Lint phải **0 cảnh báo** (`--max-warnings 0`).
 

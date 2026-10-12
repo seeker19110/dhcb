@@ -118,6 +118,13 @@ Cho mỗi lựa chọn (framework, CSDL, hosting, thư viện lõi), chấm theo
 > các file cấu hình trong bộ khung này (CI, hook, env, theme) đang giả định.
 > **Không dùng máy móc:** với mỗi ý tưởng, AI phải đối chiếu PHẦN B và _biện minh lại_ (hoặc đề xuất khác).
 > **Phiên bản bên dưới là ảnh chụp ngày 2026-06-29 — XÁC MINH LẠI tại thời điểm khởi tạo dự án.**
+>
+> **DHCB KHÔNG dùng bảng này** (ghi chú 2026-10-12, changelog 0620): bảng là mặc định của khung cho dự án MỚI.
+> Stack thật của DHCB là React 19 + Vite 8 (SPA, không Next.js) · Express 5 · PostgreSQL tự host qua `pg` +
+> auth tự viết (đã rời Supabase, `docs/migration-thoat-ly-supabase.md`) · VPS Ubuntu + PM2 + Nginx (không
+> Vercel) · TypeScript 5.x (TS 6/7 chưa nâng vì ràng buộc thật) · Vitest 5 · Sentry `@sentry/react` +
+> `@sentry/node`. Nguồn sự thật: `CLAUDE.md` mục 6 + `package.json`. Khi tư vấn nâng cấp/đổi công nghệ cho
+> DHCB, so với stack THẬT đó, không so với bảng dưới.
 
 | Vai trò                | Lựa chọn                  | Phiên bản (xác minh 2026-06-29)                  | Vì sao (cân bằng phổ biến ↔ năng lực)                                           |
 | ---------------------- | ------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |

@@ -25,6 +25,8 @@ Nới cổng (ngưỡng coverage, luật ESLint, `.prettierignore`, test canh lu
 `eslint-disable`/`.skip`, `--no-verify`, xoá `package-lock.json`, push commit rỗng để chạy lại CI.
 Lỗi không thuộc PR này → nêu rõ đang đỏ cái gì, vì sao không phải của PR, đề xuất bản vá.
 
+**Lần sửa thứ 2 cho cùng một lỗi** → trước khi sửa, ghi một dòng "lỗi nằm ở tầng đặc tả / thiết kế / code / cổng vì …" và quay về đúng tầng; lần 3 vẫn đỏ → dừng, báo người dùng (`docs/AI_DELIVERY_LOOP.md` §5; hook cổng commit tự đếm và nhắc).
+
 ## Xong khi
 
 Lệnh đỏ ban đầu chạy lại ra exit code 0, `npm run typecheck` + `npm run lint` vẫn xanh, và báo

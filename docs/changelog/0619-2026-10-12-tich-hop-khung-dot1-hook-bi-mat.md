@@ -1,6 +1,6 @@
 # 0619 — Tích hợp khung project-template (đợt 1): vá hook chặn git nguy hiểm · rào bí mật trước commit
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo PR) · **Loại:** `fix(hooks)`
+- **Ngày:** 2026-10-12 · **PR:** #1381 · **Loại:** `fix(hooks)`
 - **Nguồn việc:** chủ dự án: "chờ project-template merge xong rồi tích hợp sâu những cái hay, ưu
   điểm vào dự án" → "đọc toàn bộ luôn" → "xong tích hợp luôn".
 - **Khung đối chiếu:** `seeker19110/project-template` @ `59bd1d1` (sau PR #289 của khung), đọc HẾT
