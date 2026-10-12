@@ -1,6 +1,6 @@
 # 0625 — `eval:v2:permissions` chạy trên Postgres thật (21 ca, chặn CI) · sửa đặt policy đồng thời ra 500
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo) · **Loại:** `fix(personal)`
+- **Ngày:** 2026-10-12 · **PR:** #1387 · **Loại:** `fix(personal)`
 - **Nguồn việc:** nợ (3) trong mục red-team của `PROGRESS.md` (changelog `0623`); chủ dự án: "tất cả theo
   khuyến nghị".
 
