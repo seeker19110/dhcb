@@ -78,7 +78,13 @@ export const COMPANION_DEFAULT_TOKEN_BUDGET = 4000
 
 export const CompanionRequestSchema = z.object({
   personId: z.string().uuid(),
-  userMessage: z.string().min(1).max(2000),
+  // Postgres không lưu được ký tự NUL (mã điểm 0) — từ chối ngay ở schema thay vì để vỡ 500 ở câu
+  // SQL lưu transcript (red-team `rt-pi-12`). Viết bằng mã điểm, không escape (TRAPS.md mục 8).
+  userMessage: z
+    .string()
+    .min(1)
+    .max(2000)
+    .refine((m) => !m.includes(String.fromCharCode(0)), 'Tin nhắn chứa ký tự NUL không hợp lệ'),
   intent: z.string().max(100).optional(),
   targetDomain: z.string().max(100).optional(),
   tokenBudget: z.number().int().positive().max(8000).optional(),
@@ -170,32 +176,47 @@ export const IMMINENT_SAFETY_REPLY =
   'Mình là AI nên không thể gọi giúp bạn, nhưng mình vẫn ở đây. Bạn muốn kể cho mình nghe chuyện gì đang xảy ra không?'
 
 /**
- * Từ khoá nhận diện 4 trụ Career · Work · Startup · Life trong câu người dùng.
+ * Từ khoá nhận diện chủ đề trong câu người dùng: trụ Work (Ghi chú), và nhóm chủ đề NGOÀI học
+ * tập (sự nghiệp · khởi nghiệp · đời sống) — ba trụ đó đã XOÁ HẲN 2026-09-20, nên nhóm này trả
+ * `'general'` (changelog 0624), khớp `normalizeRoutedIntent` của bộ định tuyến LLM. Vẫn giữ từ
+ * khoá của chúng vì một lý do: câu "mục tiêu sự nghiệp của tôi" không được rơi vào nhánh
+ * "đặt mục tiêu HỌC TẬP".
  *
  * Cố ý dùng bảng từ khoá TẤT ĐỊNH thay vì hỏi LLM: bước này chạy trước cả khi dựng ngữ cảnh,
  * nên nó phải rẻ, nhanh và cho ra cùng một kết quả mỗi lần với cùng một câu (test kiểm được).
- * Nhận diện sai thì hậu quả chỉ là nạp thiếu/thừa một khối tóm tắt, không phá hỏng lượt thoại.
  *
- * GIỚI HẠN đã biết: câu gọi tên NHIỀU trụ cùng lúc (vd "cân bằng cuộc sống và công việc") sẽ
- * lấy trụ đứng trước trong bảng — ở đây là Work. Không có đáp án đúng duy nhất cho loại câu đó,
- * nên bảng cố ý KHÔNG cố xử lý; nếu người dùng cần trụ khác thì giao diện vẫn truyền
- * `targetDomain` tường minh và giá trị đó luôn thắng bảng từ khoá.
+ * Thứ tự dòng là thứ tự ưu tiên: câu gọi tên nhiều chủ đề (vd "cân bằng cuộc sống và công việc")
+ * lấy dòng đứng trước — Work đứng trước nhóm đời sống, như bảng cũ. `targetDomain` tường minh
+ * từ giao diện luôn thắng bảng này.
  */
-const DOMAIN_KEYWORDS: ReadonlyArray<readonly [domain: string, keywords: readonly string[]]> = [
+const DOMAIN_KEYWORDS: ReadonlyArray<
+  readonly [domain: 'work' | 'general', keywords: readonly string[]]
+> = [
   [
-    'career',
-    ['sự nghiệp', 'nghề nghiệp', 'thăng tiến', 'tuyển dụng', 'phỏng vấn', 'cv ', 'career'],
-  ],
-  [
-    'startup',
-    ['khởi nghiệp', 'startup', 'venture', 'gọi vốn', 'mvp', 'giả định', 'khách hàng mục tiêu'],
+    'general', // sự nghiệp + khởi nghiệp (trụ đã xoá)
+    [
+      'sự nghiệp',
+      'nghề nghiệp',
+      'thăng tiến',
+      'tuyển dụng',
+      'phỏng vấn',
+      'cv ',
+      'career',
+      'khởi nghiệp',
+      'startup',
+      'venture',
+      'gọi vốn',
+      'mvp',
+      'giả định',
+      'khách hàng mục tiêu',
+    ],
   ],
   [
     'work',
     ['công việc', 'dự án', 'deadline', 'cuộc họp', 'task', 'kanban', 'năng suất', 'công ty'],
   ],
   [
-    'life',
+    'general', // đời sống (trụ đã xoá)
     [
       'đời sống',
       'cuộc sống',
@@ -209,11 +230,18 @@ const DOMAIN_KEYWORDS: ReadonlyArray<readonly [domain: string, keywords: readonl
   ],
 ]
 
-export function detectDomainByKeyword(lowerCaseMessage: string): string | null {
+export function detectDomainByKeyword(lowerCaseMessage: string): 'work' | 'general' | null {
   for (const [domain, keywords] of DOMAIN_KEYWORDS) {
     if (keywords.some((k) => lowerCaseMessage.includes(k))) return domain
   }
   return null
+}
+
+/** Cặp (intent, domain) cho câu nhận ra bằng từ khoá — `'general'` đi với general_conversation. */
+function keywordRoute(domain: 'work' | 'general'): { intent: string; domain: string } {
+  return domain === 'general'
+    ? { intent: 'general_conversation', domain: 'general' }
+    : { intent: 'domain_conversation', domain }
 }
 
 /**
@@ -231,7 +259,7 @@ export function resolveIntentAndDomain(
 
   const msg = userMessage.trim().toLowerCase()
 
-  // Bảng từ khoá 4 trụ. Tính sẵn ở đây nhưng CHỈ dùng ở hai chỗ có kiểm soát bên dưới —
+  // Bảng từ khoá chủ đề. Tính sẵn ở đây nhưng CHỈ dùng ở hai chỗ có kiểm soát bên dưới —
   // KHÔNG cho nó chặn đầu mọi nhánh, vì các ý định HÀNH ĐỘNG (tra từ, ghi nhớ, cập nhật hồ sơ)
   // phải được ưu tiên: câu "ghi nhớ giúp tôi cuộc họp ngày mai" chứa từ khoá trụ Work nhưng
   // việc người dùng muốn là LƯU GHI NHỚ, không phải bàn chuyện công việc.
@@ -249,9 +277,10 @@ export function resolveIntentAndDomain(
     // về trụ nào khác — nếu không, câu "mục tiêu sự nghiệp của tôi là gì" sẽ bị gán
     // domain='learning' và Companion nạp nhầm ngữ cảnh học tập.
     if (domainByKeyword) {
+      const route = keywordRoute(domainByKeyword)
       return {
-        intent: explicitIntent ?? 'domain_conversation',
-        domain: explicitDomain ?? domainByKeyword,
+        intent: explicitIntent ?? route.intent,
+        domain: explicitDomain ?? route.domain,
       }
     }
     return {
@@ -304,9 +333,10 @@ export function resolveIntentAndDomain(
 
   // Không khớp ý định hành động nào — giờ mới tới lượt bảng từ khoá trụ.
   if (domainByKeyword) {
+    const route = keywordRoute(domainByKeyword)
     return {
-      intent: explicitIntent ?? 'domain_conversation',
-      domain: explicitDomain ?? domainByKeyword,
+      intent: explicitIntent ?? route.intent,
+      domain: explicitDomain ?? route.domain,
     }
   }
 

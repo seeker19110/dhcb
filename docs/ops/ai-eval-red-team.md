@@ -39,7 +39,8 @@ test là `expect(true).toBe(true)`. Chạy thật trên `main` ra `29/30 … ❌
   chạy. Đã sửa cùng PR — kết quả **39/39**.
 
 **Chưa phủ (nợ trong `PROGRESS.md`):** chế độ tác tử (Claude chọn công cụ) · injection cho
-`eval:tutor`/`eval:companion`/chấm bài viết · byte NUL trong tin nhắn Companion ra 500 thay vì 400.
+`eval:tutor`/`eval:companion`/chấm bài viết. (Byte NUL ra 500 đã sửa ở changelog `0624` — `rt-pi-12`
+nay đòi bị từ chối ở schema, không chấp nhận vỡ ở CSDL.)
 
 ## 3. Luật viết ca red-team (áp cho mọi eval mới hoặc sửa)
 

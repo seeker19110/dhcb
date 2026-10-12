@@ -11,16 +11,36 @@ export interface ApiError {
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 
-// Đọc raw text rồi parse JSON. Trả lỗi 400 nếu không phải JSON hợp lệ.
+// Ký tự NUL viết bằng mã điểm, không bằng escape trong chuỗi (TRAPS.md mục 8).
+const NUL = String.fromCharCode(0)
+
+/** Có chuỗi nào (giá trị hoặc tên khoá, ở mọi tầng lồng) chứa ký tự NUL không. */
+function containsNul(value: unknown): boolean {
+  if (typeof value === 'string') return value.includes(NUL)
+  if (Array.isArray(value)) return value.some(containsNul)
+  if (value !== null && typeof value === 'object') {
+    return Object.entries(value).some(([k, v]) => k.includes(NUL) || containsNul(v))
+  }
+  return false
+}
+
+// Đọc raw text rồi parse JSON. Trả lỗi 400 nếu không phải JSON hợp lệ, hoặc nếu chứa ký tự NUL:
+// Postgres (text lẫn jsonb) không lưu được NUL — để lọt xuống CSDL thì vỡ thành 500 ở tận câu
+// SQL (red-team `rt-pi-12`, changelog 0623). Chặn ở cửa chung cho mọi handler đọc body.
 export async function readJsonBody(
   req: Request,
 ): Promise<{ ok: true; raw: unknown } | { ok: false; error: ApiError }> {
   const rawText = await req.text()
+  let raw: unknown
   try {
-    return { ok: true, raw: JSON.parse(rawText) }
+    raw = JSON.parse(rawText)
   } catch {
     return { ok: false, error: { status: 400, message: 'Body không hợp lệ (cần JSON)' } }
   }
+  if (containsNul(raw)) {
+    return { ok: false, error: { status: 400, message: 'Body chứa ký tự NUL không hợp lệ' } }
+  }
+  return { ok: true, raw }
 }
 
 // Validate `raw` theo Zod schema. Lỗi ĐẦU TIÊN được dùng làm message trả về client.

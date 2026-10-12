@@ -300,22 +300,22 @@
     "expectedDomain": "general"
   },
   {
-    "id": "dom-career-1",
+    "id": "gen-career-1",
     "input": "Tôi muốn thăng tiến trong sự nghiệp",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "career"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-career-2",
+    "id": "gen-career-2",
     "input": "Chuẩn bị phỏng vấn vị trí mới thế nào",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "career"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-career-3",
+    "id": "gen-career-3",
     "input": "Mục tiêu sự nghiệp của tôi là gì?",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "career"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
     "id": "dom-work-1",
@@ -336,39 +336,39 @@
     "expectedDomain": "work"
   },
   {
-    "id": "dom-startup-1",
+    "id": "gen-startup-1",
     "input": "Tôi đang khởi nghiệp mảng edtech",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "startup"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-startup-2",
+    "id": "gen-startup-2",
     "input": "Cần kiểm chứng giả định về khách hàng mục tiêu",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "startup"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-startup-3",
+    "id": "gen-startup-3",
     "input": "Khi nào thì nên gọi vốn",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "startup"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-life-1",
+    "id": "gen-life-1",
     "input": "Tôi muốn xây thói quen dậy sớm",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "life"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-life-2",
+    "id": "gen-life-2",
     "input": "Dạo này giấc ngủ của tôi kém",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "life"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   },
   {
-    "id": "dom-life-3",
+    "id": "gen-life-3",
     "input": "Tôi hay bị stress vào cuối tuần",
-    "expectedIntent": "domain_conversation",
-    "expectedDomain": "life"
+    "expectedIntent": "general_conversation",
+    "expectedDomain": "general"
   }
 ]
