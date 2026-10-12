@@ -31,7 +31,7 @@ GĐ2b "⛔ HOÃN". Những gì #1320 đã đưa vào (đã có test đơn vị +
 | `apps/dhcb/src/components/CefrExam.tsx` + `cefrAssessmentApi.ts`                        | trình duyệt lấy đề từ server, nộp lựa chọn thô, hiện kết quả server trả                                                                                                                          |
 | `apps/server/src/api/_lib/cefrAssessment.test.ts` · `e2e/audit-cefr-assessment.spec.ts` | 10 ca server (giấu đáp án, cấp khoá, token người khác, hết hạn, nộp đồng thời, rollback) + E2E 3 theme × 2 khổ                                                                                   |
 
-Đợt này (changelog `0615`) **không viết lại** phần đó. Việc còn lại: (1) trả lời đủ năm câu hỏi §⑦
+Đợt này (changelog `0616`) **không viết lại** phần đó. Việc còn lại: (1) trả lời đủ năm câu hỏi §⑦
 và ghi quyết định; (2) vá hai lỗ hổng #1320 để lại (mất quyền của người đã thi đạt theo cách cũ;
 mất giọng Nghe ngẫu nhiên); (3) đồng bộ tài liệu/`PROGRESS.md`.
 
@@ -48,14 +48,14 @@ mất giọng Nghe ngẫu nhiên); (3) đồng bộ tài liệu/`PROGRESS.md`.
 **Kết quả thi cũ (câu hỏi thứ sáu, phát hiện khi rà):** sổ server bắt đầu rỗng; mọi bài đạt theo
 cách cũ (client chấm, cột `english.learning_progress.cefr_exams`) từ 2026-09-12 (sau `0077`) đến
 2026-10-10 **mất quyền mở cấp sau**, và cột cũ bị ghi đè bằng sổ server ở lần đồng bộ kế tiếp.
-→ Migration `0094` grandfather (xem §③). Chấp nhận giữ cả bài "đạt" giả mạo trước 2026-10-10 —
+→ Migration `0095` grandfather (xem §③). Chấp nhận giữ cả bài "đạt" giả mạo trước 2026-10-10 —
 cùng đánh đổi `0077` đã chấp nhận; lỗ đóng từ nay về sau.
 
-## ② Phạm vi đợt 0615
+## ② Phạm vi đợt 0616
 
 **LÀM:**
 
-- Migration `0094_cefr_exams_legacy_grandfather.sql`: suy cấp L(n+1) từ mọi mục `passed = true`
+- Migration `0095_cefr_exams_legacy_grandfather.sql`: suy cấp L(n+1) từ mọi mục `passed = true`
   còn trong `cefr_exams` cũ, cộng vào `cefr_unlocked_grandfathered`. Chỉ dựa cột `cefr_exams`,
   KHÔNG dựa bản chụp `cefr_unlocked` (VIP có đủ 6 cấp — đóng băng là phát quyền vĩnh viễn, phá
   tiêu chí 6 GĐ2a). Lũy đẳng.
@@ -63,8 +63,8 @@ cùng đánh đổi `0077` đã chấp nhận; lỗ đóng từ nay về sau.
 randomVoice()` cho câu `listening` của đề server (server không chọn giọng vì giọng không ảnh hưởng
   chấm). `randomVoice` xuất khẩu từ `lib/cefrExam.ts` + test.
 - Chú thích đầu file `lib/cefrExam.ts`/`CefrExam.tsx` nói đúng hiện trạng (trước nói client lưu +
-  chấm). `postgres/migrations/README.md` thêm dòng `0094`. `PROGRESS.md` đóng mục 2b. Changelog
-  `0615`.
+  chấm). `postgres/migrations/README.md` thêm dòng `0095`. `PROGRESS.md` đóng mục 2b. Changelog
+  `0616`.
 
 **KHÔNG LÀM:**
 
@@ -79,8 +79,8 @@ randomVoice()` cho câu `listening` của đề server (server không chọn gi�
 
 | Việc | Đường dẫn file                                               | Ghi chú                                         |
 | ---- | ------------------------------------------------------------ | ----------------------------------------------- |
-| Thêm | `postgres/migrations/0094_cefr_exams_legacy_grandfather.sql` | grandfather từ cột `cefr_exams` cũ              |
-| Sửa  | `postgres/migrations/README.md`                              | dòng `0094`                                     |
+| Thêm | `postgres/migrations/0095_cefr_exams_legacy_grandfather.sql` | grandfather từ cột `cefr_exams` cũ              |
+| Sửa  | `postgres/migrations/README.md`                              | dòng `0095`                                     |
 | Sửa  | `apps/dhcb/src/lib/cefrExam.ts`                              | export `randomVoice`, chú thích đúng hiện trạng |
 | Sửa  | `apps/dhcb/src/lib/cefrExam.test.ts`                         | 2 ca `randomVoice`                              |
 | Sửa  | `apps/dhcb/src/components/CefrExam.tsx`                      | gắn giọng ngẫu nhiên câu Nghe                   |
@@ -92,7 +92,7 @@ randomVoice()` cho câu `listening` của đề server (server không chọn gi�
 ## ④ Tiêu chí chấp nhận
 
 1. Dòng `learning_progress` có `cefr_exams = {"A1":{"passed":true,…}}` và grandfather `[]` → sau
-   `0094`: grandfather `["A2"]`; chạy lại migration → không đổi. Dòng VIP có `cefr_unlocked` đủ 6
+   `0095`: grandfather `["A2"]`; chạy lại migration → không đổi. Dòng VIP có `cefr_unlocked` đủ 6
    cấp nhưng `cefr_exams = {}` → grandfather KHÔNG đổi. Giá trị rác (`cefr_exams` không phải
    object, `passed` không phải boolean true) → bỏ qua, không lỗi. (CI `sql-prepare` áp migration
    trên Postgres 16.)
@@ -108,13 +108,13 @@ randomVoice()` cho câu `listening` của đề server (server không chọn gi�
 | --------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Client không bao giờ nhận `correct` trước khi nộp               | `cefrAssessment.test.ts` "start giấu correct"                            |
 | Chỉ sổ server quyết `cefrUnlocked`; `cefrExams` client bị vứt   | `progress.test.ts` + `cefrAssessment.test.ts` "chỉ đọc namespace server" |
-| Không ai mất quyền đã có (grandfather chỉ TĂNG)                 | migration `0094` lũy đẳng, `computeUnlockedLevels` union                 |
-| VIP hết hạn bị khoá lại đúng lúc (không đóng băng bản chụp VIP) | `0094` không đọc `cefr_unlocked`                                         |
+| Không ai mất quyền đã có (grandfather chỉ TĂNG)                 | migration `0095` lũy đẳng, `computeUnlockedLevels` union                 |
+| VIP hết hạn bị khoá lại đúng lúc (không đóng băng bản chụp VIP) | `0095` không đọc `cefr_unlocked`                                         |
 | Mỗi lượt chấm một lần, nộp đồng thời không tăng `attempts` kép  | `cefrAssessment.test.ts`                                                 |
 
 ## ⑥ Giới hạn đã biết (trung thực)
 
-- Dòng đã đồng bộ `/api/progress` trong 2026-10-10 → ngày chạy `0094` đã bị ghi đè cột cũ —
+- Dòng đã đồng bộ `/api/progress` trong 2026-10-10 → ngày chạy `0095` đã bị ghi đè cột cũ —
   không cứu được từ migration; cần tra backup trước 2026-10-10 nếu có người thật phản ánh.
 - Đề là nội dung bài học công khai: script đọc JSON tra được đáp án (như nợ hội thoại CEFR).
   Server-side chỉ chặn "bịa kết quả" và "tự chấm", không chặn "biết đáp án".

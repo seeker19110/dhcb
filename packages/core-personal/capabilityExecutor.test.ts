@@ -46,6 +46,15 @@ function memoryRow(over: Record<string, unknown> = {}) {
     created_at: NOW,
     updated_at: NOW,
     retain_until: null,
+    // Cột GĐ2a (migration 0094) — `rowToMemoryRecord` parse theo hợp đồng v2.
+    importance: 5,
+    last_accessed_at: null,
+    access_count: 0,
+    valid_from: NOW,
+    valid_to: null,
+    superseded_by: null,
+    source_message_id: null,
+    has_embedding: false,
     ...over,
   }
 }

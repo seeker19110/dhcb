@@ -31,6 +31,8 @@ export interface SendCompanionMessageParams {
   intent?: string
   domain?: string
   tokenBudget?: number
+  /** Phiên tạm: server không đọc ký ức/lịch sử và không lưu lượt này. */
+  ephemeral?: boolean
 }
 
 export interface CompanionStreamCallbacks {

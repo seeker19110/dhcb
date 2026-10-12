@@ -66,6 +66,8 @@ import { downgradeExpiredPlans } from './api/_lib/planExpiry.js'
 import { purgeOldSyncReceipts } from './api/_lib/syncReceipt.js'
 import { purgeExpiredAuthRows, purgeOldAnalyticsEvents } from './api/_lib/retentionCleanup.js'
 import { startDailyJob } from './dailyJob.js'
+import { backfillMemoryEmbeddings, purgeExpiredMemories } from '@dhcb/core-personal/memoryService'
+import { getEmbeddingProvider } from '@dhcb/core-ai/embeddings'
 import {
   ledgerConfigProblem,
   purgeExpiredErasedBenefits,
@@ -427,6 +429,26 @@ function startRetentionCleanup() {
   })
 }
 
+// ── Ký ức Bạn Đồng Hành: dọn bản hết hạn + bổ sung embedding (1 lần/ngày) ───
+// GĐ2a (changelog 0615): `purgeExpiredMemories` có từ V2-06 nhưng CHƯA từng được lên lịch — ký ức
+// quá `retain_until` và bản `merged` cũ nằm mãi trong bảng. `backfillMemoryEmbeddings` vá dần
+// bản ghi chưa có embedding (ghi lúc Gemini lỗi/không có key); không có key thì bỏ qua êm.
+function startCompanionMemoryMaintenance() {
+  startDailyJob({
+    run: async () => {
+      const pool = getPgPool()
+      const purged = await purgeExpiredMemories(pool)
+      if (purged > 0) console.log(`[companion-memory] Đã dọn ${purged} ký ức hết hạn`)
+      const embedded = await backfillMemoryEmbeddings(pool, getEmbeddingProvider())
+      if (embedded > 0) console.log(`[companion-memory] Đã bổ sung embedding cho ${embedded} ký ức`)
+    },
+    onError: (err) => {
+      console.error('[companion-memory] lỗi bảo trì ký ức:', err)
+      captureServerException(err, { context: 'companion-memory-maintenance' })
+    },
+  })
+}
+
 // ── Dọn vị trí của chuyến "Đi chung" đã hết hạn (mỗi 15 phút) ───────────────
 // Vị trí là dữ liệu nhạy cảm nhất trong app: chuyến hết hạn/kết thúc thì toạ độ phải biến mất
 // mà không cần ai bấm nút. Xem packages/core-location/locationService.ts#purgeExpiredPositions.
@@ -462,6 +484,7 @@ const server = app.listen(PORT, () => {
     startSyncReceiptCleanup()
     startErasedBenefitLedgerCleanup()
     startRetentionCleanup()
+    startCompanionMemoryMaintenance()
     startLocationPurgeScheduler()
     startWeeklyReportScheduler()
     // Kiểm Redis CHỈ ở instance 0: cấu hình REDIS_URL giống hệt nhau ở mọi instance nên một

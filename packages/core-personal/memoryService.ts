@@ -9,6 +9,7 @@ import {
   type MemoryNamespace,
 } from '@dhcb/core-contracts/personalMemory'
 import type { Sensitivity } from '@dhcb/core-contracts/personalFact'
+import { embedForStorage, type EmbeddingProvider } from '@dhcb/core-ai/embeddings'
 
 type Runner = Pick<Pool | PoolClient, 'query'>
 
@@ -25,6 +26,15 @@ export interface MemoryRecordRow {
   created_at: Date
   updated_at: Date
   retain_until: Date | null
+  // GĐ2a (migration 0094) — điểm truy xuất + hai trục thời gian + vector nghĩa.
+  importance: number
+  last_accessed_at: Date | null
+  access_count: number
+  valid_from: Date
+  valid_to: Date | null
+  superseded_by: string | null
+  source_message_id: string | null
+  has_embedding: boolean
 }
 
 export interface MemoryCandidate {
@@ -34,6 +44,25 @@ export interface MemoryCandidate {
   sensitivity: Sensitivity
   confidence?: number
   retainUntil?: string
+  /** 1–10, mặc định 5. Chấm một lần lúc ghi; không hiện ra giao diện như "điểm". */
+  importance?: number
+  /** Lượt thoại (`personal.companion_messages.id`) sinh ra ký ức này, nếu có. */
+  sourceMessageId?: string
+}
+
+/** Hàm tính vector nghĩa cho nội dung ký ức — `null` = không có provider hoặc lỗi (vẫn lưu). */
+export type MemoryEmbedFn = (content: string) => Promise<{ vector: number[]; model: string } | null>
+
+export interface MemoryWriteOptions {
+  /** Mặc định: Gemini qua `embedForStorage` (không có key → null). Test truyền hàm giả. */
+  embed?: MemoryEmbedFn
+}
+
+const DEFAULT_IMPORTANCE = 5
+
+function clampImportance(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) return DEFAULT_IMPORTANCE
+  return Math.min(10, Math.max(1, Math.round(value)))
 }
 
 export interface CandidateEvaluation {
@@ -43,8 +72,10 @@ export interface CandidateEvaluation {
   mergedContent?: string
 }
 
+// KHÔNG select cột `embedding` (768 số thực/dòng) ở đường đọc thường — chỉ cờ "đã có vector";
+// memoryRetrieval.ts tự đọc vector khi cần so nghĩa.
 const MEMORY_COLUMNS =
-  'id, person_id, namespace, content, provenance, sensitivity, status, merged_from_id, version, created_at, updated_at, retain_until'
+  'id, person_id, namespace, content, provenance, sensitivity, status, merged_from_id, version, created_at, updated_at, retain_until, importance, last_accessed_at, access_count, valid_from, valid_to, superseded_by, source_message_id, (embedding is not null) as has_embedding'
 
 export function rowToMemoryRecord(row: MemoryRecordRow): MemoryRecord {
   return MemoryRecordSchema.parse({
@@ -58,8 +89,29 @@ export function rowToMemoryRecord(row: MemoryRecordRow): MemoryRecord {
     mergedFromId: row.merged_from_id ?? undefined,
     createdAt: row.created_at.toISOString(),
     retainUntil: row.retain_until ? row.retain_until.toISOString() : undefined,
+    version: row.version,
+    importance: row.importance,
+    lastAccessedAt: row.last_accessed_at ? row.last_accessed_at.toISOString() : undefined,
+    validFrom: row.valid_from.toISOString(),
+    validTo: row.valid_to ? row.valid_to.toISOString() : undefined,
+    supersededBy: row.superseded_by ?? undefined,
+    sourceMessageId: row.source_message_id ?? undefined,
+    hasEmbedding: row.has_embedding === true,
     schemaVersion: PERSONAL_MEMORY_SCHEMA_VERSION,
   })
+}
+
+/** Vector lúc ghi — mọi lỗi đã được lớp embedding nuốt thành `null`; ở đây chỉ thêm một lớp chắn
+ * nữa để một hàm `embed` do nơi gọi truyền vào mà ném cũng không làm hỏng việc lưu ký ức. */
+async function safeEmbed(
+  embed: MemoryEmbedFn | undefined,
+  content: string,
+): Promise<{ vector: number[]; model: string } | null> {
+  try {
+    return await (embed ?? embedForStorage)(content)
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -146,9 +198,10 @@ export async function ingestMemory(
   personId: string,
   candidate: MemoryCandidate,
   actor = 'system',
+  options: MemoryWriteOptions = {},
 ): Promise<{ record: MemoryRecord; evaluation: CandidateEvaluation }> {
   return withTransaction(pool, (client) =>
-    ingestMemoryWithClient(client, personId, candidate, actor),
+    ingestMemoryWithClient(client, personId, candidate, actor, options),
   )
 }
 
@@ -162,6 +215,7 @@ export async function ingestMemoryWithClient(
   personId: string,
   candidate: MemoryCandidate,
   actor = 'system',
+  options: MemoryWriteOptions = {},
 ): Promise<{ record: MemoryRecord; evaluation: CandidateEvaluation }> {
   const evaluation = await evaluateMemoryCandidate(client, personId, candidate)
 
@@ -176,6 +230,8 @@ export async function ingestMemoryWithClient(
     if (!evaluation.mergedContent) {
       throw new Error('mergedContent phải có giá trị khi outcome=MERGE')
     }
+    // Nội dung đổi ⇒ vector cũ không còn đúng: tính lại (null thì xoá vector, job đêm bù).
+    const embedding = await safeEmbed(options.embed, evaluation.mergedContent)
     // Merge into existing record
     const { rows } = await client.query<MemoryRecordRow>(
       `update personal.memory_records
@@ -185,10 +241,18 @@ export async function ingestMemoryWithClient(
                array_position(array['public', 'personal', 'sensitive', 'restricted']::text[], sensitivity),
                array_position(array['public', 'personal', 'sensitive', 'restricted']::text[], $4)
              )
-           ]
+           ],
+           embedding = $5::real[], embedding_model = $6
        where id = $2 and person_id = $3
        returning ${MEMORY_COLUMNS}`,
-      [evaluation.mergedContent, evaluation.existingRecordId, personId, candidate.sensitivity],
+      [
+        evaluation.mergedContent,
+        evaluation.existingRecordId,
+        personId,
+        candidate.sensitivity,
+        embedding?.vector ?? null,
+        embedding?.model ?? null,
+      ],
     )
     const row = rows[0]
     if (!row) throw new NotFoundError('Target memory record to merge was not found')
@@ -209,18 +273,25 @@ export async function ingestMemoryWithClient(
   }
 
   // ACCEPT -> Insert new record
+  const content = candidate.content.trim()
+  const embedding = await safeEmbed(options.embed, content)
   const { rows } = await client.query<MemoryRecordRow>(
     `insert into personal.memory_records
-       (person_id, namespace, content, provenance, sensitivity, status, retain_until)
-     values ($1, $2, $3, $4, $5, 'accepted', $6)
+       (person_id, namespace, content, provenance, sensitivity, status, retain_until,
+        importance, source_message_id, embedding, embedding_model)
+     values ($1, $2, $3, $4, $5, 'accepted', $6, $7, $8, $9::real[], $10)
      returning ${MEMORY_COLUMNS}`,
     [
       personId,
       candidate.namespace,
-      candidate.content.trim(),
+      content,
       candidate.provenance.trim(),
       candidate.sensitivity,
       candidate.retainUntil ? new Date(candidate.retainUntil) : null,
+      clampImportance(candidate.importance),
+      candidate.sourceMessageId ?? null,
+      embedding?.vector ?? null,
+      embedding?.model ?? null,
     ],
   )
 
@@ -284,6 +355,128 @@ export async function listMemoryRecords(
   )
 
   return rows.map(rowToMemoryRecord)
+}
+
+/**
+ * Người dùng SỬA nội dung một ký ức trên trang "Bạn Đồng Hành nhớ gì về tôi" (GĐ2a). Giữ id và
+ * lịch sử; `version + 1`, audit `UPDATE`, tính lại vector. `expectedVersion` lệch ⇒ 409 (hai tab
+ * cùng sửa).
+ */
+export async function updateMemoryContent(
+  pool: Pool,
+  personId: string,
+  recordId: string,
+  content: string,
+  expectedVersion: number,
+  actor = 'system',
+  options: MemoryWriteOptions = {},
+): Promise<MemoryRecord> {
+  const trimmed = content.trim()
+  if (!trimmed || trimmed.length > 2000) {
+    throw new ValidationError('Nội dung ký ức phải từ 1 đến 2000 ký tự')
+  }
+  return withTransaction(pool, async (client) => {
+    const { rows: currentRows } = await client.query<MemoryRecordRow>(
+      `select ${MEMORY_COLUMNS} from personal.memory_records
+       where id = $1 and person_id = $2
+       for update`,
+      [recordId, personId],
+    )
+    const current = currentRows[0]
+    if (!current) throw new NotFoundError('Memory record not found')
+    if (current.version !== expectedVersion) {
+      throw new ConflictError('Memory record version mismatch; please reload before editing')
+    }
+    if (current.status === 'expired') {
+      throw new ValidationError('Ký ức đã được quên, không sửa được')
+    }
+
+    const embedding = await safeEmbed(options.embed, trimmed)
+    const { rows } = await client.query<MemoryRecordRow>(
+      `update personal.memory_records
+       set content = $1, updated_at = now(), version = version + 1,
+           embedding = $4::real[], embedding_model = $5
+       where id = $2 and person_id = $3
+       returning ${MEMORY_COLUMNS}`,
+      [trimmed, recordId, personId, embedding?.vector ?? null, embedding?.model ?? null],
+    )
+    const row = rows[0]
+    if (!row) throw new NotFoundError('Memory record not found')
+
+    await client.query(
+      `insert into personal.memory_records_audit_log
+         (record_id, person_id, action, changes, changed_by)
+       values ($1, $2, 'UPDATE', $3, $4)`,
+      [
+        recordId,
+        personId,
+        JSON.stringify({ previousContent: current.content, newContent: row.content }),
+        actor,
+      ],
+    )
+    return rowToMemoryRecord(row)
+  })
+}
+
+/**
+ * Đánh dấu "vừa được dùng" cho các ký ức đã vào prompt — `last_accessed_at` nuôi thành phần
+ * recency của điểm truy xuất (Generative Agents: recency tính từ lần TRUY XUẤT, không phải lần
+ * tạo). Không ghi audit: đây là tín hiệu sử dụng, không phải thay đổi nội dung.
+ */
+export async function touchMemoryAccess(
+  runner: Runner,
+  personId: string,
+  recordIds: readonly string[],
+): Promise<void> {
+  if (recordIds.length === 0) return
+  await runner.query(
+    `update personal.memory_records
+     set last_accessed_at = now(), access_count = access_count + 1
+     where person_id = $1 and id = any($2::uuid[])`,
+    [personId, [...recordIds]],
+  )
+}
+
+export const BACKFILL_EMBEDDING_BATCH = 20
+
+/**
+ * Job đêm: tính vector cho ký ức chưa có (ghi lúc Gemini lỗi, hoặc trước khi có key). Mỗi lần
+ * tối đa `limit` dòng, gửi theo lô `BACKFILL_EMBEDDING_BATCH`; dòng embed hỏng thì bỏ qua, lần
+ * sau thử lại. Trả số dòng đã có vector.
+ */
+export async function backfillMemoryEmbeddings(
+  pool: Pool,
+  provider: EmbeddingProvider | null,
+  limit = 200,
+): Promise<number> {
+  if (!provider) return 0
+  const { rows } = await pool.query<{ id: string; content: string }>(
+    `select id, content from personal.memory_records
+     where embedding is null and status <> 'expired' and valid_to is null
+     order by importance desc, created_at desc
+     limit $1`,
+    [Math.min(Math.max(1, limit), 1000)],
+  )
+  let done = 0
+  for (let i = 0; i < rows.length; i += BACKFILL_EMBEDDING_BATCH) {
+    const batch = rows.slice(i, i + BACKFILL_EMBEDDING_BATCH)
+    const vectors = await provider.embed(
+      batch.map((r) => r.content),
+      'document',
+    )
+    for (let j = 0; j < batch.length; j++) {
+      const vector = vectors[j]
+      if (!vector) continue
+      await pool.query(
+        `update personal.memory_records
+         set embedding = $2::real[], embedding_model = $3
+         where id = $1 and embedding is null`,
+        [batch[j]!.id, vector, provider.model],
+      )
+      done++
+    }
+  }
+  return done
 }
 
 export async function expireMemoryRecord(

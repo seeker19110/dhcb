@@ -1,4 +1,4 @@
-# 0615 — GĐ2b: chấm thi cuối cấp CEFR ở server — đặc tả, grandfather kết quả cũ, giọng Nghe ngẫu nhiên
+# 0616 — GĐ2b: chấm thi cuối cấp CEFR ở server — đặc tả, grandfather kết quả cũ, giọng Nghe ngẫu nhiên
 
 - **Ngày:** 2026-10-12 · **PR:** (xem mô tả PR) · **Loại:** `feat(english)`
 - **Đặc tả:** `docs/specs/2026-10-12-gd2b-cham-thi-cefr-server.md` (Approved for implementation —
@@ -29,7 +29,7 @@ thiết kế §⑦, vá hai lỗ #1320 để lại và đồng bộ tài liệu.
 
 ## Đã làm
 
-- **Migration `0094_cefr_exams_legacy_grandfather.sql`:** suy cấp L(n+1) từ mọi mục
+- **Migration `0095_cefr_exams_legacy_grandfather.sql`:** suy cấp L(n+1) từ mọi mục
   `passed = true` còn trong cột `cefr_exams` cũ, cộng (union) vào `cefr_unlocked_grandfathered`.
   Cố ý KHÔNG đọc bản chụp `cefr_unlocked`: người VIP có đủ 6 cấp trong đó, đóng băng là phát quyền
   vĩnh viễn cho VIP sắp hết hạn (phá tiêu chí 6 GĐ2a). Lũy đẳng (`is distinct from`), bỏ qua giá
@@ -52,11 +52,11 @@ thiết kế §⑦, vá hai lỗ #1320 để lại và đồng bộ tài liệu.
 | Trần thi lại               | **Không thêm trần ngày** — 24 câu × 4 phương án, đạt ≥ 70 % ⇒ đoán mò ≈ 10⁻⁷/lượt; đề là bài học người đó đã hoàn thành nên "dò" không cho gì chưa có. Giữ 10 lượt/phút. |
 | Đang thi dở lúc deploy     | Lượt nằm trong DB, hạn 60 phút; `start` lại trả đúng lượt đang mở (đã có, test canh).                                                                                    |
 | Offline/PWA                | Chấp nhận mất thi offline cho người đã đăng nhập (đánh đổi chủ dự án chốt khi mở lại GĐ2b). Bài xếp lớp vẫn tại máy.                                                     |
-| Kết quả thi cũ (phát sinh) | Grandfather qua `0094`; chấp nhận giữ cả bài "đạt" giả trước 2026-10-10 (cùng đánh đổi `0077`).                                                                          |
+| Kết quả thi cũ (phát sinh) | Grandfather qua `0095`; chấp nhận giữ cả bài "đạt" giả trước 2026-10-10 (cùng đánh đổi `0077`).                                                                          |
 
 ## Giới hạn đã biết
 
-- Dòng đã đồng bộ `/api/progress` sau 2026-10-10 → cột cũ đã bị ghi đè, `0094` không cứu được;
+- Dòng đã đồng bộ `/api/progress` sau 2026-10-10 → cột cũ đã bị ghi đè, `0095` không cứu được;
   có người thật phản ánh thì tra backup trước ngày đó.
 - Đề là dữ liệu công khai: script tra JSON vẫn trả lời đúng được — cùng nợ 🟡 "Kiểm tra hiểu hội
   thoại CEFR" chờ chủ dự án quyết đổi kiến trúc dữ liệu.
@@ -75,4 +75,4 @@ Chạy ở máy sau `npm ci` (2026-10-12):
   export, không đổi chữ ký.
 - Kho đề đo thật bằng script đọc `cefr/curriculum/dialogues.json`: A1→C2 ngữ pháp
   180/140/150/140/33/20 câu, hội thoại ≥3 dòng 18/15/17/17/6/6, từ vựng 916–3243 — đủ 24 câu/cấp.
-- Migration `0094` không chạy được ở máy (không có Postgres); CI `sql-prepare` áp trên Postgres 16.
+- Migration `0095` không chạy được ở máy (không có Postgres); CI `sql-prepare` áp trên Postgres 16.

@@ -174,13 +174,19 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 - **[2026-10-11] Nâng cấp "Bạn Đồng Hành" 4 giai đoạn** (nghiên cứu
   `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`, chủ dự án chốt làm lần lượt cả 4, mỗi GĐ
-  một PR). **GĐ1 ĐÃ LÀM** (`docs/changelog/0614-*.md`, đặc tả
+  một PR). **GĐ1 ĐÃ LÀM** (PR #1369, `docs/changelog/0614-*.md`, đặc tả
   `docs/specs/2026-10-11-ban-dong-hanh-gd1-stream-an-toan.md`): stream thật từ Claude, lịch sử giữ
   lượt mới nhất, prompt mới (2 trụ, giờ VN, nhóm tuổi, chống xu nịnh, bọc dữ liệu), lớp an toàn
-  khủng hoảng (từ khoá + Haiku, thẻ 111/115/Ngày Mai). **Kế tiếp: GĐ2 trí nhớ thông minh** (có
-  migration — cần `/contract` + `/consult` chọn embedding, Anthropic không có API embedding), rồi
-  GĐ3 tác tử dùng công cụ chỉ-đọc thật, GĐ4 bản tin chủ động bằng dữ liệu thật. Việc tay: kiểm
-  stream + bộ phân loại với key thật trên production.
+  khủng hoảng (từ khoá + Haiku, thẻ 111/115/Ngày Mai). **GĐ2a ĐÃ LÀM** (PR #1375,
+  `docs/changelog/0615-*.md`, đặc tả `docs/specs/2026-10-11-ban-dong-hanh-gd2a-tri-nho-truy-xuat.md`,
+  ADR-0015): sửa lỗi im lặng consent scope không cấp được (Companion chưa từng đọc ký ức/hồ sơ/lịch
+  sử), hai công tắc = hai consent chuẩn, migration 0094 (FTS unaccent + embedding Gemini `real[]`,
+  không pgvector), truy xuất lai RRF + điểm 3 thành phần, trang `/ban-dong-hanh/ky-uc`, phiên không
+  lưu. **Kế tiếp: GĐ2b** (trích xuất ký ức sau phiên qua ProposedAction, khối lõi + tóm tắt cuộn —
+  cần đặc tả riêng), rồi GĐ3 tác tử dùng công cụ chỉ-đọc thật, GĐ4 bản tin chủ động bằng dữ liệu
+  thật. Việc tay: sau deploy chạy `migrate:pg` (0094 cần extension `unaccent`), kiểm
+  `GEMINI_API_KEY` production, bật hai công tắc trên tài khoản thật rồi thử "ghi nhớ…"; kiểm
+  stream + bộ phân loại GĐ1 với key thật.
 
 - **[2026-10-10] Sửa theo audit toàn diện** ([báo cáo](docs/audit/2026-10-10-audit-toan-dien-va-toi-uu.md),
   `docs/changelog/0580-*.md`). Đợt đầu (JS khởi động −15,9 kB, chunk trang xếp lớp 2,95 MB → 11 kB) đã
@@ -332,7 +338,7 @@ Chia giai đoạn, mỗi giai đoạn MỘT PR, dừng xin duyệt giữa các g
 | --- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | 1   | `docs/specs/2026-09-12-gd1-xoa-goi-pro.md`            | Xoá **cả Pro lẫn Plus**; Free hưởng hạn mức Plus cũ (30/ngày); người đang trả còn hạn → nâng VIP giữ nguyên hạn                                  | ✅ **ĐÃ THI HÀNH** (PR GĐ1, `docs/changelog/0289-*.md`)                                                               |
 | 2a  | `docs/specs/2026-09-12-gd2-vip-hoc-tu-do-mon-anh.md`  | Khoá theo **cấp CEFR A1–C2**; chốt chặn **ở SERVER** (không phải chỉ giao diện)                                                                  | ✅ **ĐÃ THI HÀNH** (PR #887, `docs/changelog/0290-*.md`)                                                              |
-| 2b  | `docs/specs/2026-10-12-gd2b-cham-thi-cefr-server.md`  | Chuyển **chấm thi** về server để bịt nốt lỗ `cefrExams`; bộ đề tĩnh trên server; không thêm trần ngày; chấp nhận mất thi offline                 | ✅ **ĐÃ THI HÀNH** (lõi lẫn trong PR #1320 2026-10-10 không ghi chép; hoàn tất + đặc tả ở `docs/changelog/0615-*.md`) |
+| 2b  | `docs/specs/2026-10-12-gd2b-cham-thi-cefr-server.md`  | Chuyển **chấm thi** về server để bịt nốt lỗ `cefrExams`; bộ đề tĩnh trên server; không thêm trần ngày; chấp nhận mất thi offline                 | ✅ **ĐÃ THI HÀNH** (lõi lẫn trong PR #1320 2026-10-10 không ghi chép; hoàn tất + đặc tả ở `docs/changelog/0616-*.md`) |
 | 3   | `docs/specs/2026-09-12-gd3-khoa-bai-mon-lap-trinh.md` | Khoá theo **bậc P1→P6** (dễ→nâng cao); mở bậc sau khi **≥70% bài** bậc trước; **chỉ** xương sống, không khoá hướng chuyên sâu/khoá ngắn/lộ trình | ✅ **ĐÃ THI HÀNH** (PR #888, `docs/changelog/0291-*.md`)                                                              |
 | 4   | `docs/specs/2026-09-12-gd4-khoa-bai-4-tru.md`         | **KHÔNG khoá gì ở 4 trụ** — chúng là công cụ, không phải giáo trình                                                                              | ⛔ **ĐÓNG, không thi hành**                                                                                           |
 
@@ -349,7 +355,7 @@ Chia giai đoạn, mỗi giai đoạn MỘT PR, dừng xin duyệt giữa các g
    ở GĐ2a (2026-09-12):** **quyền mở cấp** nay do server tính (`packages/core-learner/cefrUnlock.ts`
    - migration `0077` giữ grandfather); `/api/progress` KHÔNG nhận `cefrUnlocked` từ client nữa, nên
      sửa localStorage hay POST thẳng mảng giả không vượt được. ✅ **ĐÓNG NỐT ở GĐ2b (2026-10-12,
-     changelog `0615`):** đề + đáp án + chấm ở server (`/api/cefr-assessment`, sổ thi
+     changelog `0616`):** đề + đáp án + chấm ở server (`/api/cefr-assessment`, sổ thi
      `platform.feature_state`), `/api/progress` vứt `cefrExams` client gửi — bịa kết quả thi không
      còn mở được cấp.
 
@@ -357,13 +363,13 @@ Chia giai đoạn, mỗi giai đoạn MỘT PR, dừng xin duyệt giữa các g
 người học thật trước). Đã nêu với chủ dự án; chủ dự án vẫn chọn làm. Ghi lại để sau này biết vì
 sao ưu tiên 1 bị chen ngang.
 
-**GĐ2b — ĐÃ LÀM (chủ dự án mở lại 2026-10-12, changelog `0615`; từng HOÃN 2026-09-12 vì mất thi
+**GĐ2b — ĐÃ LÀM (chủ dự án mở lại 2026-10-12, changelog `0616`; từng HOÃN 2026-09-12 vì mất thi
 offline + năm câu hỏi §⑦ để ngỏ).** Phát hiện khi khảo sát: lõi (server dựng đề từ bộ đề tĩnh, giữ
 đáp án, chấm, ghi sổ `platform.feature_state`; `progress.ts` chỉ đọc sổ đó) **đã vào mã từ PR
-#1320 ngày 2026-10-10 mà không có đặc tả/changelog/ghi chú** — đợt 0615 bổ sung đặc tả, trả lời đủ
+#1320 ngày 2026-10-10 mà không có đặc tả/changelog/ghi chú** — đợt 0616 bổ sung đặc tả, trả lời đủ
 năm câu hỏi (bộ đề tĩnh · `start` không trả đáp án · KHÔNG thêm trần ngày vì 24 câu đoán mò ≈ 10⁻⁷
 và đề là bài học đã mở cho người thi · lượt thi nằm trong DB nên deploy không mất · chấp nhận mất
-thi offline), vá hai lỗ #1320 để lại: migration `0094` grandfather bài đạt theo cách cũ
+thi offline), vá hai lỗ #1320 để lại: migration `0095` grandfather bài đạt theo cách cũ
 (2026-09-12 → 2026-10-10) và khôi phục giọng Nghe ngẫu nhiên. Giới hạn còn lại: script tra JSON
 công khai vẫn trả lời đúng được — cùng nợ 🟡 "Kiểm tra hiểu hội thoại CEFR" ở mục nợ, chờ quyết.
 

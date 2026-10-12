@@ -23,6 +23,7 @@ import AvatarEmbodimentSelector, { EmbodimentMode } from '../Companion3D/AvatarE
 import EdgeAiIndicator from '../EdgeAi/EdgeAiIndicator'
 import InteractiveQuestionCard from './InteractiveQuestionCard'
 import CrisisSupportCard from './CrisisSupportCard'
+import MemoryConsentCard, { type MemoryConsentCardProps } from './MemoryConsentCard'
 import ChatProse from './ChatProse'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
@@ -73,6 +74,8 @@ interface StudioDialogueProps {
   // SỰ có thể null (trước lần render đầu, sau khi node bị gỡ).
   messagesEndRef: React.RefObject<HTMLDivElement | null>
   inputRef: React.RefObject<HTMLTextAreaElement | null>
+  // [GĐ2a] Ký ức & phiên không lưu — tuỳ chọn để các test/màn cũ không phải truyền.
+  memory?: MemoryConsentCardProps
 }
 
 export default function StudioDialogue({
@@ -95,6 +98,7 @@ export default function StudioDialogue({
   getDomainLabel,
   messagesEndRef,
   inputRef,
+  memory,
 }: StudioDialogueProps) {
   const lastUserMsg = [...messages].reverse().find((m) => m.sender === 'user')
   const lastCompanionMsg = [...messages].reverse().find((m) => m.sender === 'companion')
@@ -591,6 +595,9 @@ export default function StudioDialogue({
                 <Send className="w-4 h-4" aria-hidden="true" />
               </button>
             </form>
+            {/* [GĐ2a] Thanh ký ức + phiên không lưu nằm DƯỚI ô nhập, trong khung chat cao cố định —
+                lấy chỗ từ vùng cuộn, không đẩy hàng gợi ý nhanh khỏi màn đầu 1440×900. */}
+            {memory && <MemoryConsentCard {...memory} />}
           </div>
         </div>
       )}

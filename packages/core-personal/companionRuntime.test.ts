@@ -1427,3 +1427,94 @@ describe('lớp an toàn trong lượt thoại', () => {
     expect(system).toContain('THIẾU NIÊN')
   })
 })
+
+// ─── [GĐ2a] Phiên tạm (ephemeral): "nói chuyện mà không lưu" ────────────────────────────────
+describe('executeCompanionTurn — phiên tạm (ephemeral, GĐ2a)', () => {
+  function recordingPool() {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes('select') && sql.includes('companion_messages')) return { rows: [] }
+      // Hàng trả về của insert phải đủ cột để `toMessage` không ném (ném thì bị nuốt im lặng).
+      return {
+        rows: [
+          {
+            id: SOURCE_ID,
+            role: 'user',
+            content: 'x',
+            domain: null,
+            intent: null,
+            created_at: new Date(),
+            user_id: 'user-123',
+          },
+        ],
+      }
+    })
+    return { pool: { query } as unknown as Pool, query }
+  }
+
+  beforeEach(() => {
+    process.env.GROQ_API_KEY = 'test-groq-key'
+    chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValue({
+      kind: 'success',
+      text: 'Mình nghe đây.',
+      latencyMs: 10,
+    })
+  })
+
+  it('không nạp ngữ cảnh cá nhân lẫn lịch sử, KHÔNG ghi transcript', async () => {
+    const { pool: livePool, query } = recordingPool()
+    const res = await executeCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'Hôm nay mình hơi mệt',
+      targetDomain: 'life',
+      ephemeral: true,
+    })
+    expect(res.reply).toBe('Mình nghe đây.')
+    expect(contextEngineMock.buildContextPackage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ includePersonalContext: false, includeCompanionHistory: false }),
+    )
+    const inserts = query.mock.calls.filter((c) =>
+      String(c[0]).includes('insert into personal.companion_messages'),
+    )
+    expect(inserts).toHaveLength(0)
+  })
+
+  it('câu "ghi nhớ…" trong phiên tạm → KHÔNG tạo bước memory.create_record, không đề xuất hành động', async () => {
+    const { pool: livePool } = recordingPool()
+    const res = await executeCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'Ghi nhớ giúp tôi cuộc họp ngày mai',
+      ephemeral: true,
+    })
+    expect(res.intent).toBe('create_memory')
+    expect(res.executionSummary.plannedSteps).toBe(0)
+    expect(proposedActionMock.proposeAction).not.toHaveBeenCalled()
+  })
+
+  it('mặc định (không ephemeral) vẫn nạp ngữ cảnh cá nhân + lịch sử và lưu transcript', async () => {
+    const { pool: livePool, query } = recordingPool()
+    await executeCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'Hôm nay mình hơi mệt',
+      targetDomain: 'life',
+    })
+    expect(contextEngineMock.buildContextPackage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ includePersonalContext: true, includeCompanionHistory: true }),
+    )
+    const inserts = query.mock.calls.filter((c) =>
+      String(c[0]).includes('insert into personal.companion_messages'),
+    )
+    expect(inserts).toHaveLength(2)
+  })
+
+  it('lớp an toàn VẪN chạy trong phiên tạm', async () => {
+    const { pool: livePool } = recordingPool()
+    await executeCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'Hôm nay mình hơi mệt',
+      ephemeral: true,
+    })
+    expect(safetyMock.assessSafety).toHaveBeenCalledTimes(1)
+  })
+})

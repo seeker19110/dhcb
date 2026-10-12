@@ -1,4 +1,4 @@
--- 0094_cefr_exams_legacy_grandfather.sql
+-- 0095_cefr_exams_legacy_grandfather.sql
 -- GĐ2b — chấm thi cuối cấp CEFR ở SERVER: giữ quyền cho người đã thi đạt theo cách CŨ.
 -- Đặc tả: docs/specs/2026-10-12-gd2b-cham-thi-cefr-server.md §③
 --
@@ -16,7 +16,7 @@
 -- vĩnh viễn cho người VIP sắp hết hạn (phá tiêu chí 6 của GĐ2a).
 --
 -- Dòng đã đồng bộ SAU 2026-10-10 thì cột cũ đã bị ghi đè — không còn gì để cứu từ đây (muốn
--- cứu phải tra bản backup trước ngày đó). Ghi rõ ở changelog 0615.
+-- cứu phải tra bản backup trước ngày đó). Ghi rõ ở changelog 0616.
 --
 -- Lũy đẳng: chỉ ghi khi mảng sau khi gộp KHÁC mảng đang có; chạy lại không đổi gì.
 

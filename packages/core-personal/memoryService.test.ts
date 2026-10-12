@@ -1,6 +1,16 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Pool } from 'pg'
-import { ConflictError, ValidationError } from '@dhcb/core-errors/appError'
+import { ConflictError, NotFoundError, ValidationError } from '@dhcb/core-errors/appError'
+// Lớp embedding: mặc định trả null (không có key) để test không đụng mạng; từng ca bật lên qua
+// `embedMock` để kiểm vector được ghi vào đúng tham số.
+const embedMock = vi.hoisted(() => ({
+  embedForStorage:
+    vi.fn<(content: string) => Promise<{ vector: number[]; model: string } | null>>(),
+}))
+vi.mock('@dhcb/core-ai/embeddings', () => ({
+  embedForStorage: (content: string) => embedMock.embedForStorage(content),
+}))
+
 import {
   evaluateMemoryCandidate,
   ingestMemory,
@@ -9,7 +19,16 @@ import {
   expireMemoryRecord,
   deleteMemoryRecord,
   purgeExpiredMemories,
+  updateMemoryContent,
+  touchMemoryAccess,
+  backfillMemoryEmbeddings,
+  BACKFILL_EMBEDDING_BATCH,
 } from './memoryService.js'
+
+beforeEach(() => {
+  embedMock.embedForStorage.mockReset()
+  embedMock.embedForStorage.mockResolvedValue(null)
+})
 
 const NOW = new Date('2026-08-17T00:00:00Z')
 const PERSON = '11111111-1111-4111-8111-111111111111'
@@ -29,6 +48,15 @@ function memoryRow(over: Record<string, unknown> = {}) {
     created_at: NOW,
     updated_at: NOW,
     retain_until: null,
+    // GĐ2a (0094)
+    importance: 5,
+    last_accessed_at: null,
+    access_count: 0,
+    valid_from: NOW,
+    valid_to: null,
+    superseded_by: null,
+    source_message_id: null,
+    has_embedding: false,
     ...over,
   }
 }
@@ -254,7 +282,15 @@ describe('ingestMemory', () => {
     const client = await pool.connect()
     expect(client.query).toHaveBeenCalledWith(
       expect.stringMatching(/sensitivity = .*\[\s*greatest\(/s),
-      ['User prefers concise feedback about private health', RECORD_ID, PERSON, 'sensitive'],
+      // GĐ2a: thêm 2 tham số vector/model (null khi không có provider).
+      [
+        'User prefers concise feedback about private health',
+        RECORD_ID,
+        PERSON,
+        'sensitive',
+        null,
+        null,
+      ],
     )
     expect(record.sensitivity).toBe('sensitive')
   })
@@ -480,5 +516,189 @@ describe('memoryService — nhánh biên', () => {
   it('purgeExpiredMemories trả 0 khi rowCount là null', async () => {
     const pool = mockPool(async () => ({ rowCount: null }) as unknown as { rows: unknown[] })
     expect(await purgeExpiredMemories(pool)).toBe(0)
+  })
+
+  it('v2: bản ghi trả version/importance/validFrom/hasEmbedding; last_accessed_at → ISO', async () => {
+    const runner = {
+      query: vi.fn().mockResolvedValue({
+        rows: [
+          memoryRow({ version: 3, importance: 8, last_accessed_at: NOW, has_embedding: true }),
+        ],
+      }),
+    }
+    const rec = await getMemoryRecord(runner, PERSON, RECORD_ID)
+    expect(rec).toMatchObject({
+      version: 3,
+      importance: 8,
+      lastAccessedAt: NOW.toISOString(),
+      validFrom: NOW.toISOString(),
+      hasEmbedding: true,
+    })
+  })
+})
+
+describe('memoryService — GĐ2a: embedding lúc ghi, sửa nội dung, đánh dấu đã dùng, bù vector', () => {
+  function recordingPool(
+    onQuery?: (
+      sql: string,
+      params: unknown[],
+    ) => { rows?: unknown[]; rowCount?: number } | undefined,
+  ) {
+    const calls: Array<{ sql: string; params: unknown[] }> = []
+    const handler = async (sql: string, params: unknown[] = []) => {
+      calls.push({ sql, params })
+      const custom = onQuery?.(sql, params)
+      if (custom) return custom
+      if (sql.trim().toLowerCase().startsWith('select')) return { rows: [] }
+      if (sql.includes('insert into personal.memory_records\n')) return { rows: [memoryRow()] }
+      if (sql.includes('update personal.memory_records'))
+        return { rows: [memoryRow({ version: 2 })] }
+      return { rows: [] }
+    }
+    return {
+      pool: mockPool(handler as unknown as (sql: string) => Promise<{ rows?: unknown[] }>),
+      calls,
+    }
+  }
+
+  it('ingest: vector + model đi vào đúng tham số; importance kẹp 1–10; sourceMessageId ghi theo', async () => {
+    embedMock.embedForStorage.mockResolvedValue({ vector: [0.6, 0.8], model: 'gemini-embedding-2' })
+    const { pool, calls } = recordingPool()
+    await ingestMemory(pool, PERSON, {
+      namespace: 'semantic',
+      content: 'Mục tiêu IELTS 6.5',
+      provenance: 'companion:conversation',
+      sensitivity: 'personal',
+      importance: 42,
+      sourceMessageId: '55555555-5555-4555-8555-555555555555',
+    })
+    const insert = calls.find((c) => c.sql.includes('insert into personal.memory_records\n'))!
+    expect(embedMock.embedForStorage).toHaveBeenCalledWith('Mục tiêu IELTS 6.5')
+    expect(insert.params[6]).toBe(10) // importance kẹp về 10
+    expect(insert.params[7]).toBe('55555555-5555-4555-8555-555555555555')
+    expect(insert.params[8]).toEqual([0.6, 0.8])
+    expect(insert.params[9]).toBe('gemini-embedding-2')
+  })
+
+  it('ingest: embedding trả null hoặc NÉM → vẫn lưu, vector null (bất biến: embedding không làm hỏng ghi)', async () => {
+    const { pool, calls } = recordingPool()
+    await ingestMemory(
+      pool,
+      PERSON,
+      { namespace: 'semantic', content: 'Không có key', provenance: 'p', sensitivity: 'personal' },
+      'system',
+      {
+        embed: async () => {
+          throw new Error('Gemini sập')
+        },
+      },
+    )
+    const insert = calls.find((c) => c.sql.includes('insert into personal.memory_records\n'))!
+    expect(insert.params[6]).toBe(5) // mặc định
+    expect(insert.params[8]).toBeNull()
+    expect(insert.params[9]).toBeNull()
+  })
+
+  it('MERGE: nội dung mới → tính lại vector và ghi vào câu update', async () => {
+    embedMock.embedForStorage.mockResolvedValue({ vector: [1, 0], model: 'm' })
+    const { pool, calls } = recordingPool((sql) =>
+      sql.trim().toLowerCase().startsWith('select')
+        ? { rows: [memoryRow({ content: 'Thích học buổi tối' })] }
+        : undefined,
+    )
+    await ingestMemory(pool, PERSON, {
+      namespace: 'semantic',
+      content: 'Thích học buổi tối sau 20h',
+      provenance: 'p',
+      sensitivity: 'personal',
+    })
+    const update = calls.find((c) => c.sql.includes("status = 'merged'"))!
+    expect(update.params[4]).toEqual([1, 0])
+    expect(update.params[5]).toBe('m')
+  })
+
+  it('updateMemoryContent: khoá dòng, version khớp → update + audit UPDATE + vector mới', async () => {
+    embedMock.embedForStorage.mockResolvedValue({ vector: [0, 1], model: 'm' })
+    const { pool, calls } = recordingPool((sql) =>
+      sql.includes('for update') ? { rows: [memoryRow({ version: 1, content: 'cũ' })] } : undefined,
+    )
+    const rec = await updateMemoryContent(pool, PERSON, RECORD_ID, '  mới  ', 1, 'user:u1')
+    expect(rec.version).toBe(2)
+    const update = calls.find((c) =>
+      c.sql.includes('set content = $1, updated_at = now(), version = version + 1'),
+    )!
+    expect(update.params).toEqual(['mới', RECORD_ID, PERSON, [0, 1], 'm'])
+    const audit = calls.find((c) => c.sql.includes('memory_records_audit_log'))!
+    expect(audit.sql).toContain("'UPDATE'")
+    expect(JSON.parse(String(audit.params[2]))).toEqual({
+      previousContent: 'cũ',
+      newContent: 'User prefers concise feedback',
+    })
+    expect(audit.params[3]).toBe('user:u1')
+  })
+
+  it('updateMemoryContent: version lệch → ConflictError; không có dòng → NotFoundError; đã quên → ValidationError; rỗng/quá dài → ValidationError', async () => {
+    const { pool: p1 } = recordingPool((sql) =>
+      sql.includes('for update') ? { rows: [memoryRow({ version: 2 })] } : undefined,
+    )
+    await expect(updateMemoryContent(p1, PERSON, RECORD_ID, 'x', 1)).rejects.toBeInstanceOf(
+      ConflictError,
+    )
+    const { pool: p2 } = recordingPool()
+    await expect(updateMemoryContent(p2, PERSON, RECORD_ID, 'x', 1)).rejects.toBeInstanceOf(
+      NotFoundError,
+    )
+    const { pool: p3 } = recordingPool((sql) =>
+      sql.includes('for update') ? { rows: [memoryRow({ status: 'expired' })] } : undefined,
+    )
+    await expect(updateMemoryContent(p3, PERSON, RECORD_ID, 'x', 1)).rejects.toBeInstanceOf(
+      ValidationError,
+    )
+    await expect(updateMemoryContent(p3, PERSON, RECORD_ID, '   ', 1)).rejects.toBeInstanceOf(
+      ValidationError,
+    )
+    await expect(
+      updateMemoryContent(p3, PERSON, RECORD_ID, 'a'.repeat(2001), 1),
+    ).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('touchMemoryAccess: rỗng → không query; có id → một UPDATE lọc person_id + any(uuid[])', async () => {
+    const runner = { query: vi.fn().mockResolvedValue({ rows: [] }) }
+    await touchMemoryAccess(runner, PERSON, [])
+    expect(runner.query).not.toHaveBeenCalled()
+    await touchMemoryAccess(runner, PERSON, [RECORD_ID])
+    expect(runner.query).toHaveBeenCalledTimes(1)
+    const [sql, params] = runner.query.mock.calls[0] as [string, unknown[]]
+    expect(sql).toContain('last_accessed_at = now(), access_count = access_count + 1')
+    expect(sql).toContain('person_id = $1 and id = any($2::uuid[])')
+    expect(params).toEqual([PERSON, [RECORD_ID]])
+  })
+
+  it('backfillMemoryEmbeddings: không provider → 0; có → gửi theo lô, chỉ update dòng embed được', async () => {
+    const pool = mockPool(async () => ({ rows: [] }))
+    expect(await backfillMemoryEmbeddings(pool, null)).toBe(0)
+
+    const n = BACKFILL_EMBEDDING_BATCH + 1
+    const pending = Array.from({ length: n }, (_, i) => ({ id: `id-${i}`, content: `ký ức ${i}` }))
+    const updates: unknown[][] = []
+    const pool2 = mockPool((async (sql: string, params: unknown[] = []) => {
+      if (sql.includes('where embedding is null and')) return { rows: pending }
+      if (sql.includes('set embedding = $2::real[]')) {
+        updates.push(params)
+        return { rows: [], rowCount: 1 }
+      }
+      return { rows: [] }
+    }) as unknown as (sql: string) => Promise<{ rows?: unknown[] }>)
+    const provider = {
+      model: 'gemini-embedding-2',
+      embed: vi.fn(async (texts: string[]) => texts.map((t, i) => (i === 0 ? null : [t.length]))),
+    }
+    const done = await backfillMemoryEmbeddings(pool2, provider, 500)
+    expect(provider.embed).toHaveBeenCalledTimes(2) // 21 dòng → lô 20 + lô 1
+    expect(provider.embed.mock.calls[0]![0]).toHaveLength(BACKFILL_EMBEDDING_BATCH)
+    // Phần tử đầu mỗi lô trả null → bỏ qua: 21 − 2 = 19 dòng cập nhật.
+    expect(done).toBe(n - 2)
+    expect(updates).toHaveLength(n - 2)
+    expect(updates[0]![2]).toBe('gemini-embedding-2')
   })
 })

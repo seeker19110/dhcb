@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Pool } from 'pg'
-import { buildContextPackage } from './contextEngine.js'
+import { COMPANION_CONSENT_SCOPES } from '@dhcb/core-contracts/consentGrant'
+import { buildContextPackage, MEMORY_RETRIEVAL_LIMIT } from './contextEngine.js'
 
 const PERSON = '11111111-1111-4111-8111-111111111111'
 const GOAL_NODE = '22222222-2222-4222-8222-222222222222'
@@ -35,12 +36,22 @@ vi.mock('./personService.js', () => ({
   listFacts: (...a: unknown[]) => personService.listFacts(...a),
 }))
 
-const memoryService = vi.hoisted(() => ({
-  listMemoryRecords: vi.fn(),
+// GĐ2a: ký ức đi qua bộ truy xuất lai (`searchMemories`), không còn `listMemoryRecords`.
+const memoryRetrieval = vi.hoisted(() => ({
+  searchMemories: vi.fn(),
 }))
-vi.mock('./memoryService.js', () => ({
-  listMemoryRecords: (...a: unknown[]) => memoryService.listMemoryRecords(...a),
+vi.mock('./memoryRetrieval.js', () => ({
+  searchMemories: (...a: unknown[]) => memoryRetrieval.searchMemories(...a),
 }))
+
+/** Bọc một bản ghi thành kết quả của `searchMemories` — điểm số không quan trọng với test này. */
+const scored = (record: Record<string, unknown>) => ({
+  record,
+  score: 1,
+  recency: 1,
+  importance: 0.5,
+  relevance: 0,
+})
 
 const mockPool = {} as Pool
 
@@ -69,37 +80,28 @@ beforeEach(() => {
       supersededBy: null,
     },
   ])
-  memoryService.listMemoryRecords.mockImplementation(async (_pool, _personId, opts) => {
-    if (opts?.namespace === 'semantic') {
-      return [
-        {
-          id: MEMORY_ID,
-          namespace: 'semantic',
-          content: 'Prefers reading articles about technology',
-          provenance: 'user_declared',
-          sensitivity: 'personal',
-        },
-      ]
-    }
-    return []
-  })
+  memoryRetrieval.searchMemories.mockResolvedValue([
+    scored({
+      id: MEMORY_ID,
+      namespace: 'semantic',
+      content: 'Prefers reading articles about technology',
+      provenance: 'user_declared',
+      sensitivity: 'personal',
+    }),
+  ])
 })
 
 describe('ContextEngine - buildContextPackage', () => {
   it('không cho provenance tự nhập giả làm lịch sử Companion, và đếm cả nhãn nguồn', async () => {
-    memoryService.listMemoryRecords.mockImplementation(async (_pool, _personId, opts) =>
-      opts?.namespace === 'episodic'
-        ? [
-            {
-              id: MEMORY_ID,
-              namespace: 'episodic',
-              content: 'Nội dung tự nhập',
-              provenance: 'companion_message:companion:learning',
-              sensitivity: 'personal',
-            },
-          ]
-        : [],
-    )
+    memoryRetrieval.searchMemories.mockResolvedValue([
+      scored({
+        id: MEMORY_ID,
+        namespace: 'episodic',
+        content: 'Nội dung tự nhập',
+        provenance: 'companion_message:companion:learning',
+        sensitivity: 'personal',
+      }),
+    ])
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
       requestId: 'spoofed-provenance',
@@ -141,11 +143,10 @@ describe('ContextEngine - buildContextPackage', () => {
   })
 
   it('omits items when consent is revoked / inactive (GATE V2-04)', async () => {
-    consents.isConsentActive.mockImplementation(async (_pool, _personId, scope) => {
-      // Life graph consent revoked
-      if (scope === 'life_graph') return false
-      return true
-    })
+    consents.isConsentActive.mockImplementation(
+      // Công tắc "ký ức" tắt → đồ thị mục tiêu + sự thật + ký ức đều đóng.
+      async (_pool, _personId, scope) => scope !== COMPANION_CONSENT_SCOPES.memory,
+    )
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -154,8 +155,81 @@ describe('ContextEngine - buildContextPackage', () => {
       purpose: 'tutoring',
     })
 
-    const hasGoal = pkg.items.some((i) => i.sourceType === 'active_goal_or_project')
-    expect(hasGoal).toBe(false)
+    expect(pkg.items.map((i) => i.sourceType)).toEqual(['current_request'])
+    expect(lifeGraph.listNodes).not.toHaveBeenCalled()
+    expect(personService.listFacts).not.toHaveBeenCalled()
+    expect(memoryRetrieval.searchMemories).not.toHaveBeenCalled()
+  })
+
+  it('chỉ hỏi consent theo HAI scope chuẩn có dấu chấm (bẫy scope không cấp được, 2026-10-11)', async () => {
+    await buildContextPackage(mockPool, {
+      personId: PERSON,
+      requestId: 'req-scopes',
+      requestText: 'Hello',
+      purpose: 'tutoring',
+      includeCompanionHistory: true,
+    })
+    const scopes = consents.isConsentActive.mock.calls.map((call) => call[2])
+    expect(scopes).toEqual([COMPANION_CONSENT_SCOPES.memory, COMPANION_CONSENT_SCOPES.history])
+    for (const call of consents.isConsentActive.mock.calls) {
+      expect(call[0]).toBe(mockPool)
+      expect(call[1]).toBe(PERSON)
+      expect(call[3]).toBe('tutoring')
+    }
+  })
+
+  it('truy xuất ký ức theo đúng câu đang hỏi, giới hạn và ngưỡng nhạy cảm; lỗi truy xuất không làm hỏng gói', async () => {
+    await buildContextPackage(mockPool, {
+      personId: PERSON,
+      requestId: 'req-search',
+      requestText: '  Thi IELTS tháng 12  ',
+      purpose: 'tutoring',
+      maxSensitivity: 'personal',
+    })
+    expect(memoryRetrieval.searchMemories).toHaveBeenCalledWith(mockPool, PERSON, {
+      query: 'Thi IELTS tháng 12',
+      limit: MEMORY_RETRIEVAL_LIMIT,
+      maxSensitivity: 'personal',
+    })
+
+    memoryRetrieval.searchMemories.mockRejectedValue(new Error('embedding timeout'))
+    const pkg = await buildContextPackage(mockPool, {
+      personId: PERSON,
+      requestId: 'req-search-fail',
+      requestText: 'Hello',
+      purpose: 'tutoring',
+    })
+    expect(pkg.items.map((i) => i.sourceType)).toEqual([
+      'current_request',
+      'active_goal_or_project',
+      'user_declared_fact',
+    ])
+  })
+
+  it('includePersonalContext=false (phiên không lưu) → không hỏi consent, không đọc gì cá nhân, vẫn có tóm tắt môn học', async () => {
+    const query = vi.fn(async () => ({ rows: [] }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, {
+      personId: PERSON,
+      requestId: 'req-ephemeral',
+      requestText: 'Hello',
+      purpose: 'companion_conversation',
+      includeCompanionHistory: true,
+      includePersonalContext: false,
+      domainState: {
+        sourceId: '55555555-5555-4555-8555-555555555555',
+        content: 'CEFR B1, 5-day streak',
+        provenance: 'learning_profile:state',
+      },
+    })
+    expect(consents.isConsentActive).not.toHaveBeenCalled()
+    expect(lifeGraph.listNodes).not.toHaveBeenCalled()
+    expect(personService.listFacts).not.toHaveBeenCalled()
+    expect(memoryRetrieval.searchMemories).not.toHaveBeenCalled()
+    expect(query).not.toHaveBeenCalled()
+    expect(pkg.items.map((i) => i.sourceType)).toEqual([
+      'current_request',
+      'authoritative_domain_state',
+    ])
   })
 
   it('omits items with sensitivity exceeding maxSensitivity threshold', async () => {
@@ -212,20 +286,15 @@ describe('ContextEngine - buildContextPackage', () => {
   })
 
   it('includes recent episodic context when episodic memories exist', async () => {
-    memoryService.listMemoryRecords.mockImplementation(async (_pool, _personId, opts) => {
-      if (opts?.namespace === 'episodic') {
-        return [
-          {
-            id: MEMORY_ID,
-            namespace: 'episodic',
-            content: 'Discussed past simple vs continuous',
-            provenance: 'conversation:session-1',
-            sensitivity: 'personal',
-          },
-        ]
-      }
-      return []
-    })
+    memoryRetrieval.searchMemories.mockResolvedValue([
+      scored({
+        id: MEMORY_ID,
+        namespace: 'episodic',
+        content: 'Discussed past simple vs continuous',
+        provenance: 'conversation:session-1',
+        sensitivity: 'personal',
+      }),
+    ])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -242,20 +311,15 @@ describe('ContextEngine - buildContextPackage', () => {
 // Nhánh biên: câu hỏi rỗng, bộ nhớ episodic, lọc node/fact không hợp lệ, cắt bớt nội dung khi thiếu budget.
 describe('buildContextPackage — nhánh biên', () => {
   it('nạp cả bộ nhớ episodic khi có bản ghi', async () => {
-    memoryService.listMemoryRecords.mockImplementation(async (_pool, _personId, opts) => {
-      if (opts?.namespace === 'episodic') {
-        return [
-          {
-            id: MEMORY_ID,
-            namespace: 'episodic',
-            content: 'Buổi học hôm qua nói về thì hiện tại hoàn thành',
-            provenance: 'session_log',
-            sensitivity: 'personal',
-          },
-        ]
-      }
-      return []
-    })
+    memoryRetrieval.searchMemories.mockResolvedValue([
+      scored({
+        id: MEMORY_ID,
+        namespace: 'episodic',
+        content: 'Buổi học hôm qua nói về thì hiện tại hoàn thành',
+        provenance: 'session_log',
+        sensitivity: 'personal',
+      }),
+    ])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -272,7 +336,7 @@ describe('buildContextPackage — nhánh biên', () => {
   it('câu hỏi rỗng (chỉ khoảng trắng) → không có mục current_request', async () => {
     lifeGraph.listNodes.mockResolvedValue([])
     personService.listFacts.mockResolvedValue([])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -298,7 +362,7 @@ describe('buildContextPackage — nhánh biên', () => {
       { value: { id: GOAL_NODE, type: 'Skill', label: 'SQL', archivedAt: null } },
     ])
     personService.listFacts.mockResolvedValue([])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -322,7 +386,7 @@ describe('buildContextPackage — nhánh biên', () => {
         supersededBy: null,
       },
     ])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -334,33 +398,34 @@ describe('buildContextPackage — nhánh biên', () => {
     expect(pkg.items.some((i) => i.sourceType === 'user_declared_fact')).toBe(false)
   })
 
-  it('có domainState nhưng chưa đồng ý chia sẻ domain đó → bỏ qua trạng thái domain', async () => {
-    consents.isConsentActive.mockImplementation(
-      async (_pool, _personId, scope) => scope !== 'career',
-    )
+  it('domainState là dữ liệu app (không qua công tắc ký ức) → vẫn có dù mọi consent đều tắt', async () => {
+    consents.isConsentActive.mockResolvedValue(false)
     lifeGraph.listNodes.mockResolvedValue([])
     personService.listFacts.mockResolvedValue([])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
       requestId: 'req-10',
       requestText: 'Xin chào',
       purpose: 'tutoring',
-      domain: 'career',
+      domain: 'learning',
       domainState: {
         sourceId: '55555555-5555-4555-8555-555555555555',
-        content: 'Mục tiêu: Tech Lead',
-        provenance: 'career:profile',
+        content: 'CEFR B1, chuỗi 5 ngày',
+        provenance: 'learning_profile:state',
       },
     })
 
-    expect(pkg.items.some((i) => i.sourceType === 'authoritative_domain_state')).toBe(false)
+    expect(pkg.items.map((i) => i.sourceType)).toEqual([
+      'current_request',
+      'authoritative_domain_state',
+    ])
   })
 
   it('không đồng ý chia sẻ bộ nhớ cá nhân → bỏ cả memory suy ra lẫn episodic', async () => {
     consents.isConsentActive.mockImplementation(
-      async (_pool, _personId, scope) => scope !== 'personal_memory',
+      async (_pool, _personId, scope) => scope !== COMPANION_CONSENT_SCOPES.memory,
     )
     lifeGraph.listNodes.mockResolvedValue([])
     personService.listFacts.mockResolvedValue([])
@@ -372,14 +437,14 @@ describe('buildContextPackage — nhánh biên', () => {
       purpose: 'tutoring',
     })
 
-    expect(memoryService.listMemoryRecords).not.toHaveBeenCalled()
+    expect(memoryRetrieval.searchMemories).not.toHaveBeenCalled()
     expect(pkg.items.every((i) => i.sourceType === 'current_request')).toBe(true)
   })
 
   it('câu hỏi dài hơn cả budget → cắt bớt nội dung thay vì bỏ hẳn', async () => {
     lifeGraph.listNodes.mockResolvedValue([])
     personService.listFacts.mockResolvedValue([])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -409,7 +474,7 @@ describe('buildContextPackage — lưới an toàn cho mức nhạy cảm lạ',
         supersededBy: null,
       },
     ])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -435,7 +500,7 @@ describe('buildContextPackage — lưới an toàn cho mức nhạy cảm lạ',
         supersededBy: null,
       },
     ])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
 
     const pkg = await buildContextPackage(mockPool, {
       personId: PERSON,
@@ -469,7 +534,7 @@ describe('lịch sử Companion đi qua Context Engine', () => {
   beforeEach(() => {
     lifeGraph.listNodes.mockResolvedValue([])
     personService.listFacts.mockResolvedValue([])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
   })
 
   it('cùng miền, đủ consent và budget → ghi provenance, tính token', async () => {
@@ -487,18 +552,26 @@ describe('lịch sử Companion đi qua Context Engine', () => {
     ])
   })
 
-  it.each(['personal_memory', 'learning'])(
-    'consent %s bị thu hồi → không truy vấn lịch sử',
-    async (scope) => {
-      consents.isConsentActive.mockImplementation(
-        async (_pool, _person, queriedScope) => queriedScope !== scope,
-      )
-      const query = vi.fn(async () => ({ rows: [message] }))
-      const pkg = await buildContextPackage({ query } as unknown as Pool, options)
-      expect(query).not.toHaveBeenCalled()
-      expect(pkg.items.some((item) => item.provenance.startsWith('companion_message:'))).toBe(false)
-    },
-  )
+  it('công tắc "lịch sử" tắt → không truy vấn lịch sử', async () => {
+    consents.isConsentActive.mockImplementation(
+      async (_pool, _person, scope) => scope !== COMPANION_CONSENT_SCOPES.history,
+    )
+    const query = vi.fn(async () => ({ rows: [message] }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+    expect(query).not.toHaveBeenCalled()
+    expect(pkg.items.some((item) => item.provenance.startsWith('companion_message:'))).toBe(false)
+  })
+
+  it('hai công tắc độc lập: tắt "ký ức" nhưng bật "lịch sử" → vẫn đọc lịch sử', async () => {
+    consents.isConsentActive.mockImplementation(
+      async (_pool, _person, scope) => scope !== COMPANION_CONSENT_SCOPES.memory,
+    )
+    const query = vi.fn(async () => ({ rows: [message] }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, options)
+    expect(query).toHaveBeenCalledTimes(1)
+    expect(memoryRetrieval.searchMemories).not.toHaveBeenCalled()
+    expect(pkg.items.some((item) => item.provenance.startsWith('companion_message:'))).toBe(true)
+  })
 
   it('lọc chéo miền, null domain và policy DENY', async () => {
     const query = vi.fn(async () => ({
@@ -543,7 +616,7 @@ describe('lịch sử Companion đi qua Context Engine', () => {
 it('history cùng người nhưng khác miền/thiếu miền không bao giờ vào context', async () => {
   lifeGraph.listNodes.mockResolvedValue([])
   personService.listFacts.mockResolvedValue([])
-  memoryService.listMemoryRecords.mockResolvedValue([])
+  memoryRetrieval.searchMemories.mockResolvedValue([])
   const row = {
     id: '55555555-5555-4555-8555-555555555555',
     role: 'user',
@@ -595,7 +668,7 @@ describe('lịch sử Companion — hết ngân sách thì giữ lượt MỚI N
   beforeEach(() => {
     lifeGraph.listNodes.mockResolvedValue([])
     personService.listFacts.mockResolvedValue([])
-    memoryService.listMemoryRecords.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
   })
 
   it('ngân sách chỉ đủ 2 lượt → giữ hai lượt MỚI nhất, vẫn xếp cũ → mới cho LLM', async () => {

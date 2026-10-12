@@ -19,6 +19,7 @@ import {
   listMemoryRecords,
   expireMemoryRecord,
   deleteMemoryRecord,
+  updateMemoryContent,
 } from '@dhcb/core-personal/memoryService'
 import { MemoryNamespaceSchema } from '@dhcb/core-contracts/personalMemory'
 import { SensitivitySchema } from '@dhcb/core-contracts/personalFact'
@@ -40,6 +41,16 @@ const MemoryCandidateSchema = z
 const PostSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('evaluate'), candidate: MemoryCandidateSchema }).strict(),
   z.object({ action: z.literal('ingest'), candidate: MemoryCandidateSchema }).strict(),
+  // GĐ2a: người dùng sửa nội dung ký ức trên trang "Bạn Đồng Hành nhớ gì về tôi".
+  // `expectedVersion` chống ghi đè khi hai tab cùng sửa (409 nếu lệch).
+  z
+    .object({
+      action: z.literal('update'),
+      id: z.string().uuid(),
+      content: z.string().min(1).max(2000),
+      expectedVersion: z.number().int().positive(),
+    })
+    .strict(),
 ])
 
 const PatchSchema = z
@@ -158,6 +169,24 @@ export default async function handler(req: Request): Promise<Response> {
           }
         }
         return jsonResponse({ evaluation }, 200, headers)
+      }
+
+      if (body.data.action === 'update') {
+        const record = await updateMemoryContent(
+          pool,
+          person.id,
+          body.data.id,
+          body.data.content,
+          body.data.expectedVersion,
+          `user:${auth.userId}`,
+        )
+        // Sửa là thao tác của chính chủ trên nội dung họ vừa gõ: không ép 2FA, nhưng không đọc
+        // ngược nội dung mức nhạy cảm cao về client.
+        const visibleRecord =
+          record.sensitivity === 'sensitive' || record.sensitivity === 'restricted'
+            ? { id: record.id, status: record.status, version: record.version }
+            : record
+        return jsonResponse({ record: visibleRecord }, 200, headers)
       }
 
       const result = await ingestMemory(pool, person.id, body.data.candidate, `user:${auth.userId}`)
