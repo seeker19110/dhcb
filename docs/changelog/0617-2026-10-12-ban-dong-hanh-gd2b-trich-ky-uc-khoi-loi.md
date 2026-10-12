@@ -1,6 +1,6 @@
 # 0617 — Bạn Đồng Hành GĐ2b: gợi ý ký ức sau buổi trò chuyện (chờ duyệt) · ghi nhớ cố định · tóm tắt cuộn
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo) · **Loại:** `feat(companion)`
+- **Ngày:** 2026-10-12 · **PR:** #1377 · **Loại:** `feat(companion)`
 - **Đặc tả:** `docs/specs/2026-10-12-ban-dong-hanh-gd2b-trich-ky-uc-khoi-loi.md` (Approved for
   implementation). **Nghiên cứu:** `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md` (GĐ2 tách
   2a/2b). Nối tiếp GĐ2a (changelog `0615`, PR #1375).
