@@ -82,8 +82,10 @@
   → 39 passed. Client: `companionMemoryApi.test.ts` → 8 passed; `CompanionMemory.test.tsx` → 8
   passed; `pages/companion` + `CompanionStudios` → 52 passed.
 - `npm run check:specs` → OK (180 đặc tả). Cổng đầy đủ + ảnh chụp 1440/390 (Tầng 8b): xem mô tả PR.
-- `MemoryConsentCard.test.tsx` → 4 passed; `e2e/companion-history.spec.ts` → 4/4 xanh ở máy sau khi dời
-  thanh xuống dưới ô nhập (ca 1440×900 từng đỏ trên CI).
+- `MemoryConsentCard.test.tsx` → 3 passed; `e2e/companion-history.spec.ts` → 4/4 xanh ở máy sau khi dời
+  thanh xuống dưới ô nhập (ca 1440×900 từng đỏ trên CI). CI mảnh 1 + 6 còn bắt link "Bạn Đồng Hành
+  nhớ gì về tôi?": AAA blue-sky 6,96:1 (< 7) và đích chạm 165×16 → đổi sang
+  `theme-light:text-accent-900` và `min-h-11`; chạy lại `a11y-aaa` (3 theme × 2 ca) + `u9-touch-target` 390/768 + 1440×900 → 9/9 xanh.
 
 ## Chưa làm / tiếp theo
 

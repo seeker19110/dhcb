@@ -145,9 +145,11 @@ export default function MemoryConsentCard({
           </button>
         </div>
       )}
+      {/* `min-h-11` = vùng chạm ≥ 44px (cổng u9); `theme-light:text-accent-900` vì accent-800 trên
+          nền sáng chỉ đạt 6.96:1, dưới sàn AAA 7:1 cho chữ đọc (cùng cặp màu với CrisisSupportCard). */}
       <Link
         to={COMPANION_MEMORY_PATH}
-        className="ml-auto flex items-center gap-1.5 underline underline-offset-2 text-accent-300 theme-light:text-accent-800 whitespace-nowrap"
+        className="ml-auto inline-flex items-center gap-1.5 min-h-11 underline underline-offset-2 text-accent-300 theme-light:text-accent-900 whitespace-nowrap"
       >
         <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         Bạn Đồng Hành nhớ gì về tôi?
