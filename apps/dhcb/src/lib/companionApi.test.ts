@@ -58,6 +58,16 @@ describe('companionApi', () => {
       expect(res.intent).toBe('general_conversation')
     })
 
+    it('phiên tạm: gửi kèm ephemeral: true (GĐ2a)', async () => {
+      const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+        expect(JSON.parse(init?.body as string)).toEqual({ message: 'Xin chào', ephemeral: true })
+        return new Response(JSON.stringify(MOCK_COMPANION_RESPONSE), { status: 200 })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      await sendCompanionMessage({ message: 'Xin chào', ephemeral: true })
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
+
     it('báo lỗi khi API trả lỗi 401/500', async () => {
       vi.stubGlobal(
         'fetch',

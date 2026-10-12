@@ -29,6 +29,8 @@ const CompanionApiRequestSchema = z
     domain: z.string().max(100).optional(),
     tokenBudget: z.number().int().positive().max(8000).optional(),
     stream: z.boolean().optional(),
+    // Phiên tạm (GĐ2a): không nhớ, không lưu — xem CompanionRequestSchema.
+    ephemeral: z.boolean().optional(),
   })
   .strict()
 
@@ -108,6 +110,7 @@ export default async function handler(req: Request): Promise<Response> {
       targetDomain: validation.data.domain,
       tokenBudget: validation.data.tokenBudget,
       maxSensitivity: privateAccess ? ('sensitive' as const) : ('personal' as const),
+      ephemeral: validation.data.ephemeral === true,
     }
 
     if (validation.data.stream) {

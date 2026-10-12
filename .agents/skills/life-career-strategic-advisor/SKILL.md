@@ -94,7 +94,9 @@ description: 'Rào chắn & phạm vi còn lại của mảng "chiến lược c
 `personal.life_graph_*` được **cố ý giữ lại**.
 
 Lý do: đây là đồ thị cá nhân/học tập, không phải trụ "Đời sống". Learning goal chiếu vào đó, và
-`contextEngine` đọc theo consent `life_graph`.
+`contextEngine` đọc theo công tắc ký ức `COMPANION_CONSENT_SCOPES.memory` (`personal_memory.read`,
+`packages/core-contracts/consentGrant.ts` — từ GĐ2a 2026-10-12; scope `life_graph` cũ không bao giờ
+cấp được).
 
 Xoá phần này sẽ gãy luồng Learning + Companion — đang chờ quyết định riêng (ghi trong
 `PROGRESS.md`).

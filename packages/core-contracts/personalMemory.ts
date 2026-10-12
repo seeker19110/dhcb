@@ -16,7 +16,11 @@ import { versionedObject } from './version.js'
 import { IsoDateTimeSchema, UuidSchema } from './shared.js'
 import { SensitivitySchema } from './personalFact.js'
 
-export const PERSONAL_MEMORY_SCHEMA_VERSION = 1
+// v2 (2026-10-11, GĐ2a trí nhớ): thêm `version` (client cần để sửa/quên có kiểm phiên bản),
+// `importance`/`lastAccessedAt` (điểm truy xuất 3 thành phần), hai trục thời gian
+// `validFrom`/`validTo` + `supersededBy` (vô hiệu thay vì xoá — GĐ2b mới ghi), `sourceMessageId`
+// (ký ức nối về lượt thoại sinh ra nó) và `hasEmbedding` (đã có vector tìm theo nghĩa chưa).
+export const PERSONAL_MEMORY_SCHEMA_VERSION = 2
 
 export const MemoryNamespaceSchema = z.enum([
   'semantic',
@@ -45,6 +49,18 @@ export const MemoryRecordSchema = versionedObject(
     // fact; đây là hạn PHẢI XOÁ theo chính sách retention, có thể ngắn hơn nhiều so với thời
     // gian fact còn "đúng").
     retainUntil: IsoDateTimeSchema.optional(),
+    // Tăng 1 mỗi lần sửa/gộp/quên — client gửi lại làm `expectedVersion` (optimistic lock).
+    version: z.number().int().positive(),
+    // 1–10, chấm một lần lúc ghi (Generative Agents); mặc định 5. KHÔNG hiện ra giao diện như một
+    // "điểm" — chỉ dùng để xếp thứ tự truy xuất.
+    importance: z.number().int().min(1).max(10),
+    lastAccessedAt: IsoDateTimeSchema.optional(),
+    // Trục "đúng từ lúc nào tới lúc nào" (khác `retainUntil` là hạn PHẢI XOÁ theo retention).
+    validFrom: IsoDateTimeSchema,
+    validTo: IsoDateTimeSchema.optional(),
+    supersededBy: UuidSchema.optional(),
+    sourceMessageId: UuidSchema.optional(),
+    hasEmbedding: z.boolean(),
   },
   PERSONAL_MEMORY_SCHEMA_VERSION,
 )

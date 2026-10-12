@@ -23,6 +23,7 @@ import AvatarEmbodimentSelector, { EmbodimentMode } from '../Companion3D/AvatarE
 import EdgeAiIndicator from '../EdgeAi/EdgeAiIndicator'
 import InteractiveQuestionCard from './InteractiveQuestionCard'
 import CrisisSupportCard from './CrisisSupportCard'
+import MemoryConsentCard, { type MemoryConsentCardProps } from './MemoryConsentCard'
 import ChatProse from './ChatProse'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
@@ -73,6 +74,8 @@ interface StudioDialogueProps {
   // SỰ có thể null (trước lần render đầu, sau khi node bị gỡ).
   messagesEndRef: React.RefObject<HTMLDivElement | null>
   inputRef: React.RefObject<HTMLTextAreaElement | null>
+  // [GĐ2a] Ký ức & phiên không lưu — tuỳ chọn để các test/màn cũ không phải truyền.
+  memory?: MemoryConsentCardProps
 }
 
 export default function StudioDialogue({
@@ -95,6 +98,7 @@ export default function StudioDialogue({
   getDomainLabel,
   messagesEndRef,
   inputRef,
+  memory,
 }: StudioDialogueProps) {
   const lastUserMsg = [...messages].reverse().find((m) => m.sender === 'user')
   const lastCompanionMsg = [...messages].reverse().find((m) => m.sender === 'companion')
@@ -179,6 +183,10 @@ export default function StudioDialogue({
           </div>
         )}
       </div>
+
+      {/* [GĐ2a] Thẻ ký ức nằm NGOÀI khung chat cao cố định: nằm trong thì ăn mất vùng cuộn tin
+          nhắn trên màn hẹp (đo ảnh 390px khi dựng). */}
+      {memory && <MemoryConsentCard {...memory} />}
 
       {viewMode === 'voice' ? (
         /* Voice Mode Panel — pipeline STT → LLM → TTS: ghi âm → nhận diện → gửi AI → đọc trả lời */
@@ -552,6 +560,15 @@ export default function StudioDialogue({
               cao giới hạn; ở đây khung chat chính là container đó, và ô nhập là item cuối cùng
               của cột flex nên tự nhiên nằm ở đáy). */}
           <div className="pt-2 shrink-0 bg-zinc-950 pb-[calc(0.5rem+var(--bnav-h))]">
+            {memory?.ephemeral && (
+              <p
+                role="status"
+                className="mb-2 text-xs text-amber-200 theme-light:text-amber-900 flex items-center gap-1.5"
+              >
+                <Shield className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                Phiên không lưu: lượt này không đọc ký ức và không lưu lại gì.
+              </p>
+            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault()

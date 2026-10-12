@@ -94,6 +94,7 @@ import memoriesHandler from './api/personal/memories.js'
 import contextPackageHandler from './api/personal/context-package.js'
 import proposedActionsHandler from './api/personal/proposed-actions.js'
 import companionHandler from './api/personal/companion.js'
+import companionMemoryHandler from './api/personal/companion-memory.js'
 import decisionLedgerHandler from './api/personal/decision-ledger.js'
 import learningReadModelHandler from './api/learning/learning-read-model.js'
 import subjectsHandler from './api/learning/subjects.js'
@@ -336,6 +337,7 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/proposed-actions', wrapEdge(proposedActionsHandler))
   // Companion Runtime (V2-09) — Intent -> Context -> Planner -> Policy -> Actions -> Response.
   app.all('/api/companion', wrapEdge(companionHandler))
+  app.all('/api/companion-memory', wrapEdge(companionMemoryHandler))
   // Decision Ledger + Outcome Loop (V2-10) — Structured decision records & evidence loop.
   app.all('/api/decision-ledger', wrapEdge(decisionLedgerHandler))
   // Learning Read Model (V2-11) — Typed Learning domain read model for Companion.

@@ -98,9 +98,9 @@ const ABUSE_EN: RegExp[] = [
 ]
 
 /** Bỏ dấu tiếng Việt để khớp cụm không dấu: "muốn chết" → "muon chet". */
-export function stripVietnameseDiacritics(text: string): string {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
-}
+// Dời sang vietnameseText.ts (truy xuất ký ức cũng cần) — re-export để nơi gọi cũ không đổi.
+import { stripVietnameseDiacritics } from './vietnameseText.js'
+export { stripVietnameseDiacritics }
 
 /** Tầng 1 — trả loại tình huống khi câu khớp từ khoá, `null` khi không. */
 export function prefilterCrisis(text: string): Exclude<SafetyCategory, 'none' | 'other'> | null {

@@ -14,7 +14,8 @@ import { isConsentActive } from './consentService.js'
 import { resolveAuthority } from './policyService.js'
 import { listNodes } from './lifeGraphService.js'
 import { listFacts } from './personService.js'
-import { listMemoryRecords } from './memoryService.js'
+import { searchMemories } from './memoryRetrieval.js'
+import { COMPANION_CONSENT_SCOPES } from '@dhcb/core-contracts/consentGrant'
 import { listRecentCompanionMessages, COMPANION_HISTORY_TURNS } from './companionMessageService.js'
 
 type ContextItemSource = z.infer<typeof ContextItemSourceSchema>
@@ -29,6 +30,12 @@ export interface ContextBuildOptions {
   maxSensitivity?: Sensitivity
   /** Chỉ lịch sử đúng miền, đã qua consent/policy và dùng chung ngân sách ngữ cảnh. */
   includeCompanionHistory?: boolean
+  /**
+   * `false` = PHIÊN TẠM (GĐ2a): không đọc ký ức, hồ sơ, đồ thị mục tiêu, lịch sử — dù consent đang
+   * bật. Tóm tắt môn học (`domainState`, dữ liệu app người dùng vẫn thấy ở bảng điều khiển) vẫn
+   * được nạp. Mặc định `true`.
+   */
+  includePersonalContext?: boolean
   domainState?: {
     sourceId: string
     content: string
@@ -51,6 +58,9 @@ const SENSITIVITY_RANK: Record<Sensitivity, number> = {
   sensitive: 2,
   restricted: 3,
 }
+
+/** Số ký ức tối đa đưa vào một lượt (trước khi gói ngân sách). */
+export const MEMORY_RETRIEVAL_LIMIT = 10
 
 export function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 3.5))
@@ -98,6 +108,7 @@ export async function buildContextPackage(
     tokenBudget = 2000,
     maxSensitivity = 'sensitive',
     domainState,
+    includePersonalContext = true,
   } = options
 
   const maxRank = SENSITIVITY_RANK[maxSensitivity] ?? SENSITIVITY_RANK.sensitive
@@ -116,9 +127,19 @@ export async function buildContextPackage(
     })
   }
 
-  // 2. Active goals or projects from Life Graph
-  const hasLifeGraphConsent = await isConsentActive(pool, personId, 'life_graph', purpose)
-  if (hasLifeGraphConsent) {
+  // Cổng consent — HAI scope chuẩn (`COMPANION_CONSENT_SCOPES`, có dấu chấm, cấp được qua
+  // /api/companion-memory). Trước 2026-10-11 ở đây kiểm `life_graph` / `personal_facts` /
+  // `personal_memory` / `<domain>` — không scope nào cấp được qua API nên mọi cổng luôn đóng.
+  const hasMemoryConsent =
+    includePersonalContext &&
+    (await isConsentActive(pool, personId, COMPANION_CONSENT_SCOPES.memory, purpose))
+  const hasHistoryConsent =
+    includePersonalContext &&
+    Boolean(options.includeCompanionHistory) &&
+    (await isConsentActive(pool, personId, COMPANION_CONSENT_SCOPES.history, purpose))
+
+  // 2. Active goals or projects from Life Graph (công tắc "ký ức")
+  if (hasMemoryConsent) {
     const nodeWrappers = await listNodes(pool, personId)
     const activeGoalsAndProjects = nodeWrappers
       .map((w) => w.value)
@@ -136,24 +157,22 @@ export async function buildContextPackage(
     }
   }
 
-  // 3. Authoritative domain state
+  // 3. Authoritative domain state — tóm tắt tiến độ môn học do app tổng hợp từ dữ liệu người
+  // dùng tự tạo khi học; KHÔNG qua công tắc ký ức (phiên tạm vẫn nạp) nhưng vẫn qua policy +
+  // ngân sách như mọi mục khác.
   if (domainState) {
-    const hasDomainConsent = await isConsentActive(pool, personId, domain, purpose)
-    if (hasDomainConsent) {
-      candidates.push({
-        sourceType: 'authoritative_domain_state',
-        sourceId: domainState.sourceId,
-        content: domainState.content,
-        provenance: domainState.provenance,
-        sensitivity: 'personal',
-        tokenEstimate: estimateTokens(domainState.content),
-      })
-    }
+    candidates.push({
+      sourceType: 'authoritative_domain_state',
+      sourceId: domainState.sourceId,
+      content: domainState.content,
+      provenance: domainState.provenance,
+      sensitivity: 'personal',
+      tokenEstimate: estimateTokens(domainState.content),
+    })
   }
 
-  // 4. Relevant user-declared facts
-  const hasFactsConsent = await isConsentActive(pool, personId, 'personal_facts', purpose)
-  if (hasFactsConsent) {
+  // 4. Relevant user-declared facts (công tắc "ký ức")
+  if (hasMemoryConsent) {
     const facts: PersonalFact[] = await listFacts(pool, personId)
     const userDeclaredFacts = facts.filter((f) => f.origin === 'user_declared')
     for (const fact of userDeclaredFacts) {
@@ -169,55 +188,40 @@ export async function buildContextPackage(
     }
   }
 
-  // 5. Validated derived memory (semantic / preference / domain)
-  const hasMemoryConsent = await isConsentActive(pool, personId, 'personal_memory', purpose)
+  // 5 + 6. Ký ức đã lưu (mọi namespace) — truy xuất LAI theo câu đang hỏi (GĐ2a): chữ + nghĩa +
+  // điểm 3 thành phần, thay cho "10 bản mới nhất" trước đây. Thứ tự đã là thứ tự điểm giảm dần,
+  // nên khi hết ngân sách thì ký ức ít liên quan nhất rụng trước. Lỗi truy xuất ⇒ bỏ qua nhóm
+  // này, lượt thoại vẫn tiếp tục (ký ức là tiện ích, không phải điều kiện để trả lời).
   if (hasMemoryConsent) {
-    const semanticMemories = await listMemoryRecords(pool, personId, {
-      namespace: 'semantic',
-      limit: 10,
-    })
-    const preferenceMemories = await listMemoryRecords(pool, personId, {
-      namespace: 'preference',
-      limit: 10,
-    })
-    const derivedMemories = [...semanticMemories, ...preferenceMemories]
-
-    for (const memory of derivedMemories) {
-      candidates.push({
-        sourceType: 'validated_derived_memory',
-        sourceId: memory.id,
-        content: `[${memory.namespace}] ${memory.content}`,
-        // Provenance của bản ghi do người dùng nhập không được giả mạo nguồn transcript.
-        provenance: `personal_memory:${memory.provenance}`.slice(0, 200),
-        sensitivity: memory.sensitivity,
-        tokenEstimate: estimateTokens(`[${memory.namespace}] ${memory.content}`),
+    try {
+      const scored = await searchMemories(pool, personId, {
+        query: reqContent,
+        limit: MEMORY_RETRIEVAL_LIMIT,
+        maxSensitivity,
       })
-    }
-
-    // 6. Recent episodic context
-    const episodicMemories = await listMemoryRecords(pool, personId, {
-      namespace: 'episodic',
-      limit: 5,
-    })
-    for (const memory of episodicMemories) {
-      candidates.push({
-        sourceType: 'recent_episodic_context',
-        sourceId: memory.id,
-        content: `[episodic] ${memory.content}`,
-        provenance: `personal_memory:${memory.provenance}`.slice(0, 200),
-        sensitivity: memory.sensitivity,
-        tokenEstimate: estimateTokens(`[episodic] ${memory.content}`),
-      })
+      for (const { record: memory } of scored) {
+        const content = `[${memory.namespace}] ${memory.content}`
+        candidates.push({
+          sourceType:
+            memory.namespace === 'episodic'
+              ? 'recent_episodic_context'
+              : 'validated_derived_memory',
+          sourceId: memory.id,
+          content,
+          // Provenance của bản ghi do người dùng nhập không được giả mạo nguồn transcript.
+          provenance: `personal_memory:${memory.provenance}`.slice(0, 200),
+          sensitivity: memory.sensitivity,
+          tokenEstimate: estimateTokens(content),
+        })
+      }
+    } catch {
+      // bỏ qua: không đọc được ký ức thì trả lời bằng phần ngữ cảnh còn lại
     }
   }
 
-  // Lịch sử cũng là dữ liệu cá nhân: chỉ đọc khi consent cho bộ nhớ VÀ miền còn hiệu lực.
-  // Không nhận lịch sử thô từ runtime để tránh đường vòng vượt Context Engine.
-  if (
-    options.includeCompanionHistory &&
-    hasMemoryConsent &&
-    (await isConsentActive(pool, personId, domain, purpose))
-  ) {
+  // Lịch sử cũng là dữ liệu cá nhân: công tắc "lịch sử" riêng. Không nhận lịch sử thô từ
+  // runtime để tránh đường vòng vượt Context Engine.
+  if (hasHistoryConsent) {
     try {
       const history = await listRecentCompanionMessages(
         pool,

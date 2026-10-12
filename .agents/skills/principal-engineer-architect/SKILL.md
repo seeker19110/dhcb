@@ -70,9 +70,15 @@ Hành.
 - **ĐANG CÓ:** ngữ cảnh cá nhân đưa vào prompt đi qua `packages/core-personal/contextEngine.ts`
   (Context Builder: chọn mục theo consent và mức nhạy cảm, đóng gói theo
   `packages/core-contracts/contextPackage.ts`). Thêm nguồn ngữ cảnh mới thì đi qua lớp này để giữ
-  ranh giới consent.
-- **CHƯA CÓ:** Hybrid RAG (dense + BM25) và Reciprocal Rank Fusion. Bản cũ của skill nhắc
-  `hybridRagEngine.ts` — file đó không tồn tại. Muốn làm thì cần đặc tả + đo chất lượng trước.
+  ranh giới consent. Consent là HAI công tắc chuẩn `COMPANION_CONSENT_SCOPES`
+  (`packages/core-contracts/consentGrant.ts`: `personal_memory.read` · `companion_history.read`,
+  purpose `companion_conversation`, cấp/thu hồi qua `/api/companion-memory`) — GĐ2a 2026-10-12,
+  changelog 0615; tóm tắt môn học (`domainState`) không qua công tắc.
+- **ĐANG CÓ (GĐ2a, ADR-0015):** truy xuất ký ức LAI ở `packages/core-personal/memoryRetrieval.ts`
+  — FTS Postgres bỏ dấu (`search_tsv`, `unaccent`) + cosine trong Node trên embedding Gemini
+  (`packages/core-ai/embeddings.ts`, `real[]`, KHÔNG pgvector) gộp bằng Reciprocal Rank Fusion
+  (k=60), điểm = (recency · importance · relevance)/3. Không có `GEMINI_API_KEY` thì chỉ còn FTS.
+- **CHƯA CÓ:** trích xuất ký ức tự động sau phiên, khối lõi, tóm tắt cuộn (GĐ2b — cần đặc tả).
 
 ---
 
