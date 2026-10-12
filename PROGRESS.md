@@ -177,7 +177,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   một PR). **GĐ1 ĐÃ LÀM** (PR #1369, `docs/changelog/0614-*.md`, đặc tả
   `docs/specs/2026-10-11-ban-dong-hanh-gd1-stream-an-toan.md`): stream thật từ Claude, lịch sử giữ
   lượt mới nhất, prompt mới (2 trụ, giờ VN, nhóm tuổi, chống xu nịnh, bọc dữ liệu), lớp an toàn
-  khủng hoảng (từ khoá + Haiku, thẻ 111/115/Ngày Mai). **GĐ2a ĐÃ LÀM** (PR GĐ2a,
+  khủng hoảng (từ khoá + Haiku, thẻ 111/115/Ngày Mai). **GĐ2a ĐÃ LÀM** (PR #1375,
   `docs/changelog/0615-*.md`, đặc tả `docs/specs/2026-10-11-ban-dong-hanh-gd2a-tri-nho-truy-xuat.md`,
   ADR-0015): sửa lỗi im lặng consent scope không cấp được (Companion chưa từng đọc ký ức/hồ sơ/lịch
   sử), hai công tắc = hai consent chuẩn, migration 0094 (FTS unaccent + embedding Gemini `real[]`,

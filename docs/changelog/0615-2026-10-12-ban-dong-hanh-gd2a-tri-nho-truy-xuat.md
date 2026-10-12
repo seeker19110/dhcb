@@ -1,6 +1,6 @@
 # 0615 — Bạn Đồng Hành GĐ2a: ký ức thật sự được đọc · truy xuất lai · trang "nhớ gì về tôi" · phiên không lưu
 
-- **Ngày:** 2026-10-12 · **PR:** (điền sau khi tạo) · **Loại:** `feat(companion)`
+- **Ngày:** 2026-10-12 · **PR:** #1375 · **Loại:** `feat(companion)`
 - **Đặc tả:** `docs/specs/2026-10-11-ban-dong-hanh-gd2a-tri-nho-truy-xuat.md` (Approved for
   implementation). **ADR:** `docs/adr/0015-tri-nho-companion-lai-fts-embedding-khong-pgvector.md`.
   **Nghiên cứu:** `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md` (mục GĐ2 tách 2a/2b).
