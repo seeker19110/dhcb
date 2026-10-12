@@ -1,8 +1,10 @@
 blank_issues_enabled: false
 # Link Discussions cũ đã CHẾT: repo không bật Discussions (API `has_discussions: false`, kiểm 2026-10-12,
 # changelog 0621). Thay bằng kênh báo lỗ hổng riêng tư — đúng hướng dẫn ở SECURITY.md (đừng mở issue
-# công khai cho lỗ hổng).
+# công khai cho lỗ hổng). Trỏ về SECURITY.md chứ KHÔNG trỏ thẳng `security/advisories/new`: API
+# `private-vulnerability-reporting` báo `enabled: false` (kiểm 2026-10-12, changelog 0622) nên link
+# advisories không dùng được cho người ngoài; SECURITY.md còn kênh email dự phòng.
 contact_links:
   - name: Báo lỗ hổng bảo mật (riêng tư)
-    url: https://github.com/seeker19110/dhcb/security/advisories/new
+    url: https://github.com/seeker19110/dhcb/blob/main/SECURITY.md
     about: Lộ dữ liệu, bypass thanh toán/gói, chiếm quyền… — báo riêng tư, KHÔNG mở issue công khai (xem SECURITY.md).

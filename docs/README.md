@@ -18,7 +18,7 @@
 | `specs/`                                              | Đặc tả từng tính năng đã/đang thi hành (cổng `feat(` cần link)                                             |
 | `research/`                                           | Đặc tả nghiên cứu: năng lực theo tuổi, đồng hành, thanh toán…                                              |
 | `adr/`                                                | Quyết định kiến trúc lớn, đánh số tăng dần (xem `ls docs/adr/`; mới nhất: 0013 tích hợp ECC)               |
-| `templates/`                                          | Khuôn đặc tả tính năng + khuôn DESIGN_SPEC + khuôn ADR                                                     |
+| `templates/`                                          | Khuôn đặc tả tính năng + DESIGN_SPEC + ADR + mô hình mối đe doạ + quản trị dữ liệu                         |
 | `AI_DEVELOPMENT_PROTOCOL.md`                          | Quy trình "kín" 5 vai: state machine, hợp đồng artifact, khoá file, cổng QA, quyền sửa, điều kiện PR/merge |
 | `AI_DEVELOPMENT_PIPELINES.md`                         | Chọn model/effort theo rủi ro cho từng bước (bổ sung cho PROTOCOL, không thay)                             |
 | `framework/QUY-TRINH-AUDIT.md`                        | Quy trình audit toàn diện 11 tầng (+ 8b ảnh chụp trang)                                                    |
@@ -35,7 +35,9 @@
 `huong-dan-tu-host-scale-50k.md` · `system-requirements.md` · `migration-thoat-ly-supabase.md`
 (lịch sử rời Supabase + chính sách cache TTS) · `doi-ten-mien-chinh-org.md` ·
 `runbook-platform-v2-production-deployment.md` · `ops/COMPREHENSIVE-AUDIT-STATUS.md` (bảng
-trạng thái lượt audit gần nhất) · `FEATURE-MAP.md` (**sinh tự động**, `npm run gen:feature-map`).
+trạng thái lượt audit gần nhất) · `ops/repository-settings.md` (thiết lập repo GitHub + lệnh kiểm) ·
+`ops/postmortem/` (post-mortem, mỗi sự cố một file) · `ops/ai-eval-red-team.md` (độ phủ red-team eval AI) ·
+`ops/supply-chain.md` · `FEATURE-MAP.md` (**sinh tự động**, `npm run gen:feature-map`).
 
 ## 3. THAM KHẢO — KHÔNG phải backlog đang chạy
 

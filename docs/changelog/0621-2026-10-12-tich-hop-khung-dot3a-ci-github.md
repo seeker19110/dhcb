@@ -1,6 +1,6 @@
 # 0621 — Tích hợp khung project-template (đợt 3a): CI gom `needs` đủ · trần thời gian · token chỉ đọc · cổng soi từng commit · CodeQL
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo PR) · **Loại:** `ci(github)`
+- **Ngày:** 2026-10-12 · **PR:** #1383 · **Loại:** `ci(github)`
 - **Nguồn việc:** tiếp đợt 1 (`0619`, PR #1381) và đợt 2 (`0620`, PR #1382) — chủ dự án: "tích hợp sâu những
   cái hay, ưu điểm vào dự án" → "xong tích hợp luôn". Đợt 3 tách đôi: **3a** = `.github/` (file này), **3b** =
   tài liệu vận hành.

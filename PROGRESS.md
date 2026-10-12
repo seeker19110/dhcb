@@ -1248,6 +1248,10 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Sự cố hạ tầng đã xử lý (post-mortem ngắn)
 
+> Từ 2026-10-12 (changelog `0622`): post-mortem SEV1/SEV2 MỚI là một file ở `docs/ops/postmortem/`
+> (khuôn trong `README.md` của thư mục đó); mục này chỉ giữ MỘT dòng trỏ tới file. Bản ghi dưới đây là
+> định dạng cũ, để nguyên.
+
 - 🟢 **[2026-08-30 16:20 UTC → 2026-09-02 ~03:00 UTC, ĐÃ XỬ LÝ] VPS mất kết nối outbound tới
   GitHub — auto-deploy fail liên tục ~34 giờ, production đứng ở code cũ.**
 
@@ -1277,6 +1281,14 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🟡 **[2026-10-12 — changelog `0622`, tích hợp khung đợt 3b] `eval:v2:red-team` xanh do cách dựng — KHÔNG
+  phải bằng chứng an toàn.** 20/30 ca cộng thẳng không chạy, 2 ca qua nhờ đọc nhãn fixture, chạy thật trên
+  `main` ra `29/30 ❌` (thoát 1, không ở CI nên không ai thấy); test đi kèm chỉ `expect(true)`. Con số "30/30"
+  ở `docs/research/kien-truc-va-ha-tang.md` đã đính chính tại chỗ. Ngoài ra `eval:tutor` + `eval:companion`
+  có **0** ca prompt injection, chấm bài viết chưa có eval. **Gỡ:** viết lại harness theo 5 luật ở
+  `docs/ops/ai-eval-red-team.md` §3 (mẫu chuẩn: `scripts/lib/actionCanvasScoring.ts` + canary), rồi thêm ca
+  §5. _Xem lại khi:_ trước khi Companion/planner nhận thêm quyền ghi dữ liệu, hoặc khi có PR đổi prompt
+  `/api/agent`.
 - 🟡 **[2026-10-09 — sau changelog `0558`, rà bảo mật độc lập] Kiểm tra hiểu hội thoại CEFR: script
   vẫn TRA được đáp án từ đề công khai + `dialogues.json` — CẦN CHỦ DỰ ÁN QUYẾT.** Đợt `0558` đã
   chặn tính đáp án trước khi mở lượt, replay cùng lượt, và xem đáp án câu sai (token HMAC, seed ẩn,

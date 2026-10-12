@@ -87,6 +87,13 @@ npm run typecheck && npm run lint && npm test && npm run build
 <!-- Chưa có test canh thì VIẾT TEST TRƯỚC khi giao việc. Đây là cách duy nhất chứng minh bên thi
      hành không phá thứ đang chạy. -->
 
+**Hai mục bổ sung, chỉ khi chạm đúng vùng** (thêm 2026-10-12, changelog `0622`):
+
+- Chạm auth · SePay · đếm lượt AI · dữ liệu cá nhân · quyền Companion → thêm mục
+  `## Mô hình mối đe doạ` theo `docs/templates/threat-model.md`.
+- Thêm bảng/cột chứa dữ liệu người dùng, hoặc gửi dữ liệu cho bên thứ ba mới → thêm mục
+  `## Quản trị dữ liệu` theo `docs/templates/data-governance.md`.
+
 ## ⑥ Quy ước dự án liên quan
 
 <!-- Bên thi hành KHÔNG thấy hội thoại trước đó. Nhắc lại đúng những quy ước đợt này chạm tới. -->
