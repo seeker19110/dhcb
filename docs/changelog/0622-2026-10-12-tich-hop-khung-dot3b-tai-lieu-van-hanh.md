@@ -1,6 +1,6 @@
 # 0622 — Tích hợp khung project-template (đợt 3b): thang SEV + nơi lưu post-mortem cố định · thiết lập repo đo thật · khuôn mối đe doạ/quản trị dữ liệu · red-team eval AI (phát hiện harness xanh giả)
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo PR) · **Loại:** `docs(ops)`
+- **Ngày:** 2026-10-12 · **PR:** #1384 · **Loại:** `docs(ops)`
 - **Nguồn việc:** đợt cuối của chuỗi tích hợp khung — `0619` (#1381), `0620` (#1382), `0621` (#1383). Chủ dự
   án: "tích hợp sâu những cái hay, ưu điểm vào dự án" → "xong tích hợp luôn".
 - **Khung đối chiếu:** `seeker19110/project-template` @ `59bd1d1` — `docs/ops/{incident-response,
