@@ -43,6 +43,8 @@ function orbStateFor(
 
 interface StudioDialogueProps {
   loading: boolean
+  /** [GĐ3] Nhãn công cụ Bạn Đồng Hành đang chạy (vd "Đang xem tiến độ học…"); không có ⇒ câu chờ mặc định. */
+  toolStatus?: string | null
   messages: ChatMessage[]
   input: string
   setInput: (val: string) => void
@@ -80,6 +82,7 @@ interface StudioDialogueProps {
 
 export default function StudioDialogue({
   loading,
+  toolStatus = null,
   messages,
   input,
   setInput,
@@ -521,9 +524,16 @@ export default function StudioDialogue({
                 <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-accent-600 to-accent-400 flex items-center justify-center shrink-0 shadow-md">
                   <Bot className="w-4.5 h-4.5 text-white" />
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800/80 rounded-3xl px-5 py-3.5 text-zinc-300 text-sm flex items-center gap-2.5 shadow-sm">
-                  <RefreshCw className="w-4 h-4 animate-spin text-accent-400 theme-light:text-accent-800" />
-                  Đang suy nghĩ & tra cứu ngữ cảnh đa miền...
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="bg-zinc-900 border border-zinc-800/80 rounded-3xl px-5 py-3.5 text-zinc-300 text-sm flex items-center gap-2.5 shadow-sm"
+                >
+                  <RefreshCw
+                    aria-hidden="true"
+                    className="w-4 h-4 animate-spin text-accent-400 theme-light:text-accent-800"
+                  />
+                  {toolStatus ?? 'Đang suy nghĩ & tra cứu ngữ cảnh đa miền...'}
                 </div>
               </div>
             )}

@@ -91,7 +91,7 @@ const SERVER_FALLBACK_BETA = 'server-side-fallback-2026-07-01'
 // Một client cho mỗi API key (SDK giữ kết nối keep-alive — tạo lại mỗi lượt là phí).
 const clientCache = new Map<string, Anthropic>()
 
-function getClient(apiKey: string, fetchImpl?: typeof fetch): Anthropic {
+export function getAnthropicClient(apiKey: string, fetchImpl?: typeof fetch): Anthropic {
   // Test truyền fetch giả → client riêng, không dính cache của lượt khác.
   if (fetchImpl) return new Anthropic({ apiKey, fetch: fetchImpl, maxRetries: 1 })
   let client = clientCache.get(apiKey)
@@ -139,12 +139,30 @@ export function buildAnthropicRequest(
 
 // Ghép mọi khối text (bỏ thinking/fallback/…). Response có server-side fallback có thể chia
 // câu trả lời thành nhiều khối text quanh khối `fallback`.
-function extractText(content: Anthropic.Beta.Messages.BetaContentBlock[]): string {
+export function extractText(content: Anthropic.Beta.Messages.BetaContentBlock[]): string {
   return content
     .filter((b): b is Anthropic.Beta.Messages.BetaTextBlock => b.type === 'text')
     .map((b) => b.text)
     .join('')
     .trim()
+}
+
+/** Lỗi ném ra từ SDK → dạng kết quả thất bại (dùng chung cho vòng công cụ `anthropicToolLoop`). */
+export function describeAnthropicError(
+  err: unknown,
+  latencyMs: number,
+): Extract<AnthropicTextResult, { kind: 'api_error' | 'network_error' }> {
+  if (err instanceof Anthropic.APIUserAbortError) {
+    return { kind: 'network_error', message: 'Hết thời gian chờ Anthropic', latencyMs }
+  }
+  if (err instanceof Anthropic.APIConnectionError) {
+    return { kind: 'network_error', message: err.message, latencyMs }
+  }
+  if (err instanceof Anthropic.APIError && typeof err.status === 'number') {
+    return { kind: 'api_error', status: err.status, message: err.message, latencyMs }
+  }
+  const message = err instanceof Error ? err.message : String(err)
+  return { kind: 'network_error', message, latencyMs }
 }
 
 /**
@@ -178,7 +196,7 @@ export async function callAnthropicText(params: {
     // `signal` là HẠN CHÓT TỔNG cho cả lần thử lại; `timeout` chỉ áp từng lần thử. Không có
     // signal, timeout + 1 lần thử lại có thể kéo gấp đôi và vượt mốc 60s của Nginx.
     const options = { timeout: route.timeoutMs, signal: AbortSignal.timeout(route.timeoutMs) }
-    const client = getClient(apiKey, fetchImpl)
+    const client = getAnthropicClient(apiKey, fetchImpl)
     if (onTextDelta && !outputSchema) {
       // Stream: SDK gom các sự kiện SSE thành đúng một BetaMessage ở `finalMessage()` (kể cả
       // usage và stop_reason trong `message_delta`), nên phần đọc kết quả bên dưới dùng chung.
@@ -191,17 +209,7 @@ export async function callAnthropicText(params: {
       response = await client.beta.messages.create(request, options)
     }
   } catch (err) {
-    if (err instanceof Anthropic.APIUserAbortError) {
-      return { kind: 'network_error', message: 'Hết thời gian chờ Anthropic', latencyMs: latency() }
-    }
-    if (err instanceof Anthropic.APIConnectionError) {
-      return { kind: 'network_error', message: err.message, latencyMs: latency() }
-    }
-    if (err instanceof Anthropic.APIError && typeof err.status === 'number') {
-      return { kind: 'api_error', status: err.status, message: err.message, latencyMs: latency() }
-    }
-    const message = err instanceof Error ? err.message : String(err)
-    return { kind: 'network_error', message, latencyMs: latency() }
+    return describeAnthropicError(err, latency())
   }
 
   const usage = parseAnthropicUsage(response)

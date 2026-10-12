@@ -13,6 +13,7 @@ import {
 } from '@dhcb/core-auth/security'
 import { getOrCreatePerson } from '@dhcb/core-personal/personService'
 import { executeCompanionTurn, streamCompanionTurn } from '@dhcb/core-personal/companionRuntime'
+import { getCompanionToolkit } from '../_lib/companionToolkit.js'
 import {
   listRecentCompanionMessages,
   COMPANION_HISTORY_PAGE_SIZE,
@@ -112,6 +113,8 @@ export default async function handler(req: Request): Promise<Response> {
       maxSensitivity: privateAccess ? ('sensitive' as const) : ('personal' as const),
       ephemeral: validation.data.ephemeral === true,
     }
+    // Chế độ tác tử (GĐ3): Claude tự tra công cụ chỉ-đọc + tạo đề xuất chờ duyệt.
+    const toolkit = getCompanionToolkit()
 
     if (validation.data.stream) {
       const stream = new ReadableStream({
@@ -126,7 +129,7 @@ export default async function handler(req: Request): Promise<Response> {
             refundUsage(auth.userId, 'chat', gate.day).catch(() => {})
           }
           try {
-            for await (const event of streamCompanionTurn(pool, turnInput)) {
+            for await (const event of streamCompanionTurn(pool, turnInput, toolkit)) {
               // Không AI nào trả lời được (câu mẫu dự phòng) → hoàn lượt như khi lỗi. Lượt
               // khủng hoảng mức `imminent` trả câu cố định (không gọi AI sinh lời) → cũng hoàn.
               if (
@@ -180,7 +183,7 @@ export default async function handler(req: Request): Promise<Response> {
       })
     }
 
-    const response = await executeCompanionTurn(pool, turnInput)
+    const response = await executeCompanionTurn(pool, turnInput, toolkit)
     // Câu mẫu dự phòng (mọi nhà cung cấp AI đều hỏng) không phải câu trả lời AI → hoàn lượt
     // (audit 2026-10-10, E1). Lượt vẫn trả 200 vì hành động đề xuất/đã chạy là kết quả thật.
     // Lượt khủng hoảng `imminent` (câu cố định, không gọi AI sinh lời) → cũng hoàn.

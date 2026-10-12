@@ -187,11 +187,19 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   giờ 10 phút, công tắc thứ ba "Gợi ý điều nên nhớ", 1 lượt AI/lần, trần 4 lần/ngày) CHỈ đề xuất
   ký ức thêm/cập nhật/vô hiệu thành gợi ý chờ duyệt (không gì được ghi khi chưa bấm), vô hiệu
   bằng `valid_to` + `superseded_by` không xoá; hai khối ghi nhớ cố định người dùng tự viết; tóm tắt
-  cuộn theo miền (cửa sổ 20 tin, đủ 14 tin chưa tóm tắt thì gập 10 tin cũ nhất), migration 0096. **Kế tiếp: GĐ3**
-  tác tử dùng công cụ chỉ-đọc thật, rồi GĐ4 bản tin chủ động bằng dữ liệu thật. Việc tay: sau
-  deploy chạy `migrate:pg` (0094 cần extension `unaccent`; 0096 ba bảng mới), kiểm
-  `GEMINI_API_KEY` production, bật ba công tắc trên tài khoản thật, trò chuyện rồi chờ ≥ 15 phút
-  xem gợi ý hiện ở `/ban-dong-hanh/ky-uc`; kiểm stream + bộ phân loại GĐ1 với key thật.
+  cuộn theo miền (cửa sổ 20 tin, đủ 14 tin chưa tóm tắt thì gập 10 tin cũ nhất), migration 0096.
+  **GĐ3 ĐÃ LÀM** (`docs/changelog/0618-*.md`, đặc tả
+  `docs/specs/2026-10-12-ban-dong-hanh-gd3-tac-tu-cong-cu.md`, không migration): định tuyến Haiku
+  (`intent_route`, fallback từ khoá), vòng công cụ viết tay (≤ 4 bước, ≤ 6 lần thi hành, hạn chót
+  45 giây) với 4 công cụ chỉ-đọc + 3 công cụ CHỈ tạo đề xuất chờ duyệt, kiểm câu trả lời cuối tất
+  định, nhãn "đang tra cứu" trên giao diện; công tắc lùi `COMPANION_TOOLS=off`. **Kế tiếp: GĐ4**
+  bản tin chủ động bằng dữ liệu thật. Việc tay: sau deploy chạy `migrate:pg` (0094 cần extension
+  `unaccent`; 0096 ba bảng mới), kiểm `GEMINI_API_KEY` production, bật ba công tắc trên tài khoản
+  thật, trò chuyện rồi chờ ≥ 15 phút xem gợi ý hiện ở `/ban-dong-hanh/ky-uc`; kiểm stream + bộ phân
+  loại GĐ1 với key thật; **GĐ3:** chạy `npm run eval:companion` và
+  `npm run eval:v2:routing -- --haiku` với key thật, theo dõi chi phí token mode `companion` +
+  `intent_route` một tuần sau deploy (vòng công cụ gọi Sonnet tới 5 lần/lượt — trần cứng ở mã);
+  tăng vọt thì đặt `COMPANION_TOOLS=off` trong `.env` rồi `pm2 reload`.
 
 - **[2026-10-10] Sửa theo audit toàn diện** ([báo cáo](docs/audit/2026-10-10-audit-toan-dien-va-toi-uu.md),
   `docs/changelog/0580-*.md`). Đợt đầu (JS khởi động −15,9 kB, chunk trang xếp lớp 2,95 MB → 11 kB) đã

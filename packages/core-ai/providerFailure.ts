@@ -9,9 +9,13 @@
 import type { AnthropicTextResult } from './anthropicClient.js'
 import type { ChatCallResult } from './chatProviders.js'
 
-export function describeAnthropicFailure(
-  r: Exclude<AnthropicTextResult, { kind: 'success' }>,
-): string {
+/** Phần chung của mọi kết quả thất bại Anthropic — cả `callAnthropicText` lẫn vòng công cụ. */
+type AnthropicFailureLike =
+  | Pick<Extract<AnthropicTextResult, { kind: 'network_error' }>, 'kind' | 'message'>
+  | Pick<Extract<AnthropicTextResult, { kind: 'api_error' }>, 'kind' | 'status' | 'message'>
+  | Pick<Extract<AnthropicTextResult, { kind: 'unusable' }>, 'kind' | 'reason' | 'detail'>
+
+export function describeAnthropicFailure(r: AnthropicFailureLike): string {
   if (r.kind === 'network_error') return `lỗi mạng/timeout: ${r.message}`
   if (r.kind === 'api_error') return `HTTP ${r.status}: ${r.message.slice(0, 200)}`
   return `không dùng được (${r.reason}: ${r.detail})`

@@ -6,6 +6,7 @@ import {
   confirmAction,
   rejectAction,
   listProposedActions,
+  findPendingDuplicate,
 } from './proposedActionService.js'
 
 const PERSON = '11111111-1111-4111-8111-111111111111'
@@ -617,5 +618,53 @@ describe('CỔNG CỨNG: ghi hồ sơ/ký ức luôn chờ người dùng xác n
 
     const sqlCalls = vi.mocked(pool.query).mock.calls.map((c) => String(c[0]))
     expect(sqlCalls.some((sql) => sql.includes("'committed'"))).toBe(false)
+  })
+})
+
+describe('GĐ3 — chống trùng đề xuất + duyệt lũy đẳng', () => {
+  it('findPendingDuplicate so payload jsonb, chỉ trong pending của đúng người + capability', async () => {
+    const query = vi.fn(async () => ({ rows: [actionRow()] }))
+    const found = await findPendingDuplicate(
+      { query } as unknown as Pool,
+      PERSON,
+      'memory.create_record',
+      {
+        content: 'Thi thứ 5',
+      },
+    )
+    expect(found?.id).toBe(ACTION_ID)
+    const [sql, params] = query.mock.calls[0] as unknown as [string, unknown[]]
+    expect(sql).toContain("status = 'pending'")
+    expect(sql).toContain('payload = $3::jsonb')
+    expect(params).toEqual([PERSON, 'memory.create_record', '{"content":"Thi thứ 5"}'])
+  })
+
+  it('findPendingDuplicate trả null khi không có bản trùng', async () => {
+    const query = vi.fn(async () => ({ rows: [] }))
+    expect(await findPendingDuplicate({ query } as unknown as Pool, PERSON, 'x', {})).toBeNull()
+  })
+
+  it('xác nhận HAI lần: lần hai 409, dữ liệu chỉ được ghi MỘT lần', async () => {
+    let current = actionRow({ status: 'pending', version: 1 })
+    const pool = mockPool(async (sql) => {
+      if (sql.includes('select') && sql.includes('for update')) return { rows: [current] }
+      if (sql.includes('update personal.proposed_actions')) {
+        current = actionRow({ status: 'committed', version: 2, resolved_by: 'user:123' })
+        return { rows: [current] }
+      }
+      return { rows: [] }
+    })
+    await confirmAction(pool, PERSON, ACTION_ID, 1, 'user:123')
+    await expect(confirmAction(pool, PERSON, ACTION_ID, 1, 'user:123')).rejects.toBeInstanceOf(
+      ConflictError,
+    )
+    // Đếm số lần ghi fact THẬT trên client của transaction (mockPool trả cùng một client).
+    const client = await (
+      pool.connect as unknown as () => Promise<{ query: { mock: { calls: unknown[][] } } }>
+    )()
+    const factInserts = client.query.mock.calls.filter((c) =>
+      String(c[0]).includes('insert into personal.personal_facts'),
+    ).length
+    expect(factInserts).toBe(1)
   })
 })

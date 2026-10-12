@@ -71,6 +71,8 @@ export default function Companion() {
   const [input, setInput] = useState('')
   const [selectedDomain, setSelectedDomain] = useState('all')
   const [loading, setLoading] = useState(false)
+  // Chế độ tác tử (GĐ3): nhãn công cụ đang chạy ở server, vd "Đang xem tiến độ học…".
+  const [toolStatus, setToolStatus] = useState<string | null>(null)
   const [activeContext, setActiveContext] = useState<ContextPackage | null>(null)
   // Hộp thoại "Minh Bạch Ngữ Cảnh" nội tuyến — bổ sung 6 hành vi a11y bắt buộc.
   const closeContext = useCallback(() => setActiveContext(null), [])
@@ -394,7 +396,12 @@ export default function Companion() {
             }
             setMessages((prev) => prev.map((m) => (m.id === botMsgId ? { ...m, ...botMeta } : m)))
           },
+          onTool: (label) => {
+            if (!controller.signal.aborted) setToolStatus(label)
+          },
           onChunk: (delta) => {
+            // Đã có chữ ⇒ bước tra cứu đã xong, bỏ nhãn công cụ.
+            setToolStatus(null)
             streamedText += delta
             setMessages((prev) =>
               prev.map((m) => (m.id === botMsgId ? { ...m, text: streamedText } : m)),
@@ -476,7 +483,10 @@ export default function Companion() {
       if (sendAbortRef.current === controller) sendAbortRef.current = null
       // Trang đã rời thì không setState nữa (lượt huỷ đã `return` ở nhánh catch, nhưng
       // `finally` vẫn chạy).
-      if (!controller.signal.aborted) setLoading(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+        setToolStatus(null)
+      }
     }
   }
 
@@ -614,6 +624,7 @@ export default function Companion() {
           {activeStudio === 'dialogue' && (
             <StudioDialogue
               loading={loading}
+              toolStatus={toolStatus}
               messages={messages}
               input={input}
               setInput={setInput}

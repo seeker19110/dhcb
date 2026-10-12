@@ -59,3 +59,25 @@ export function getAllEntries(): DictEntry[] {
   _all = files.flatMap((f) => JSON.parse(readFileSync(join(DICT_DIR, f), 'utf8')) as DictEntry[])
   return _all
 }
+
+// Phát hiện chuỗi tiếng Việt (có dấu) — tra theo nghĩa tiếng Việt thay vì theo từ tiếng Anh.
+export function hasVietnamese(s: string): boolean {
+  return /[àáảãạăắặẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(s)
+}
+
+/**
+ * Tìm trong từ điển theo một từ khoá đã chuẩn hoá (trim + lowercase). Có dấu tiếng Việt ⇒ tìm
+ * trong nghĩa `vi`; không dấu ⇒ ưu tiên từ BẮT ĐẦU bằng từ khoá rồi mới tới từ CHỨA từ khoá.
+ * Dùng chung cho `/api/dictionary` và công cụ `lookup_dictionary` của Bạn Đồng Hành (GĐ3).
+ */
+export function searchDictionaryEntries(entries: DictEntry[], query: string): DictEntry[] {
+  if (hasVietnamese(query)) return entries.filter((e) => e.vi.toLowerCase().includes(query))
+  const starts: DictEntry[] = []
+  const contains: DictEntry[] = []
+  for (const e of entries) {
+    const w = e.word.toLowerCase()
+    if (w.startsWith(query)) starts.push(e)
+    else if (w.includes(query)) contains.push(e)
+  }
+  return [...starts, ...contains]
+}

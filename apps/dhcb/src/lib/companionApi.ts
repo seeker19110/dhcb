@@ -45,6 +45,8 @@ export interface CompanionStreamCallbacks {
   onQuestions?: (questions: InteractiveQuestion[]) => void
   // Sự kiện `safety` đến TRƯỚC chữ — hiện thẻ ngay, không chờ AI nói xong.
   onSafety?: (safety: CompanionSafetyNotice) => void
+  // Chế độ tác tử (GĐ3): một công cụ vừa bắt đầu chạy — nhãn tiếng Việt kiểu "Đang xem tiến độ học…".
+  onTool?: (label: string) => void
   onDone?: (response: CompanionResponse) => void
   onError?: (error: Error) => void
 }
@@ -172,6 +174,8 @@ export async function sendCompanionMessageStream(
             callbacks.onQuestions?.(parsed.interactiveQuestions)
           } else if (eventType === 'safety') {
             callbacks.onSafety?.(parsed.safety)
+          } else if (eventType === 'tool') {
+            if (typeof parsed.label === 'string') callbacks.onTool?.(parsed.label)
           } else if (eventType === 'done') {
             finalResponse = parsed as CompanionResponse
             callbacks.onDone?.(finalResponse)

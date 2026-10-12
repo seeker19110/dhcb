@@ -137,6 +137,34 @@ describe('companionApi', () => {
       expect(doneReceived).toBe(true)
       expect(res.reply).toBe(MOCK_COMPANION_RESPONSE.reply)
     })
+    it('sự kiện `tool` (GĐ3) gọi onTool theo đúng thứ tự trước chữ; dữ liệu lạ bị bỏ qua', async () => {
+      const sseBody = [
+        'event: tool\ndata: {"label":"Đang xem tiến độ học…"}\n\n',
+        'event: tool\ndata: {"label":42}\n\n',
+        'event: chunk\ndata: {"delta":"Bạn đã học 3 bài."}\n\n',
+        `event: done\ndata: ${JSON.stringify(MOCK_COMPANION_RESPONSE)}\n\n`,
+      ].join('')
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(sseBody))
+          controller.close()
+        },
+      })
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => new Response(stream, { status: 200 })),
+      )
+
+      const order: string[] = []
+      await sendCompanionMessageStream(
+        { message: 'Tuần này mình học gì?' },
+        {
+          onTool: (label) => order.push(`tool:${label}`),
+          onChunk: (delta) => order.push(`chunk:${delta}`),
+        },
+      )
+      expect(order).toEqual(['tool:Đang xem tiến độ học…', 'chunk:Bạn đã học 3 bài.'])
+    })
   })
 
   describe('listProposedActions', () => {
