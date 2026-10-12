@@ -1,4 +1,5 @@
-// companion-memory.test.ts — hai công tắc ký ức = hai consent chuẩn (GĐ2a ⑤).
+// companion-memory.test.ts — ba công tắc ký ức = ba consent chuẩn (GĐ2a ⑤ + GĐ2b), khối ghi
+// nhớ cố định và tóm tắt cuộn (GĐ2b ④).
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   COMPANION_CONSENT_PURPOSE,
@@ -30,11 +31,26 @@ vi.mock('@dhcb/core-personal/consentService', () =>
   Object.fromEntries(Object.entries(consents).map(([k, fn]) => [k, (...a: unknown[]) => fn(...a)])),
 )
 
+const blocks = vi.hoisted(() => ({
+  listCoreBlocks: vi.fn(),
+  setCoreBlock: vi.fn(),
+  listConversationSummaries: vi.fn(),
+  clearConversationSummary: vi.fn(),
+}))
+vi.mock('@dhcb/core-personal/coreMemoryBlocks', () =>
+  Object.fromEntries(Object.entries(blocks).map(([k, fn]) => [k, (...a: unknown[]) => fn(...a)])),
+)
+
 import handler from './companion-memory.js'
 
 const PERSON = '11111111-1111-4111-8111-111111111111'
 const MEMORY_GRANT = '22222222-2222-4222-8222-222222222222'
 const HISTORY_GRANT = '33333333-3333-4333-8333-333333333333'
+const SUGGEST_GRANT = '44444444-4444-4444-8444-444444444444'
+const EMPTY_BLOCKS = [
+  { id: null, label: 'about_me', content: '', version: 0 },
+  { id: null, label: 'current_focus', content: '', version: 0 },
+]
 
 function req(method: string, body?: unknown) {
   return new Request('http://localhost/api/companion-memory', {
@@ -46,7 +62,7 @@ function req(method: string, body?: unknown) {
 }
 
 /** Giả lập bảng consent: trạng thái active theo scope, listConsents lọc đúng scope. */
-function seedConsents(active: Partial<Record<'memory' | 'history', boolean>>) {
+function seedConsents(active: Partial<Record<'memory' | 'history' | 'suggest', boolean>>) {
   consents.listConsents.mockImplementation(async (_pool, _person, opts: { scope?: string }) => {
     const rows = []
     if (active.memory && opts.scope === COMPANION_CONSENT_SCOPES.memory) {
@@ -65,6 +81,14 @@ function seedConsents(active: Partial<Record<'memory' | 'history', boolean>>) {
         status: 'active',
       })
     }
+    if (active.suggest && opts.scope === COMPANION_CONSENT_SCOPES.suggest) {
+      rows.push({
+        id: SUGGEST_GRANT,
+        scope: opts.scope,
+        purpose: COMPANION_CONSENT_PURPOSE,
+        status: 'active',
+      })
+    }
     return rows
   })
 }
@@ -77,6 +101,8 @@ beforeEach(() => {
   seedConsents({})
   consents.grantConsent.mockResolvedValue({ id: 'new' })
   consents.revokeConsent.mockResolvedValue(undefined)
+  blocks.listCoreBlocks.mockResolvedValue(EMPTY_BLOCKS)
+  blocks.listConversationSummaries.mockResolvedValue([])
 })
 
 describe('auth / rate limit / method', () => {
@@ -96,10 +122,21 @@ describe('GET /api/companion-memory', () => {
   it('phản ánh consent thật: mặc định cả hai tắt; chỉ đọc đúng scope chuẩn', async () => {
     const res = await handler(req('GET'))
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ settings: { rememberMemories: false, useHistory: false } })
+    expect(await res.json()).toEqual({
+      settings: { rememberMemories: false, useHistory: false, suggestMemories: false },
+      coreBlocks: [
+        { label: 'about_me', content: '', version: 0 },
+        { label: 'current_focus', content: '', version: 0 },
+      ],
+      summaries: [],
+    })
     const scopes = consents.listConsents.mock.calls.map((c) => (c[2] as { scope: string }).scope)
     expect(scopes.sort()).toEqual(
-      [COMPANION_CONSENT_SCOPES.memory, COMPANION_CONSENT_SCOPES.history].sort(),
+      [
+        COMPANION_CONSENT_SCOPES.memory,
+        COMPANION_CONSENT_SCOPES.history,
+        COMPANION_CONSENT_SCOPES.suggest,
+      ].sort(),
     )
   })
 
@@ -113,13 +150,52 @@ describe('GET /api/companion-memory', () => {
       },
     ])
     const res = await handler(req('GET'))
-    expect(await res.json()).toEqual({ settings: { rememberMemories: false, useHistory: false } })
+    expect(((await res.json()) as { settings: unknown }).settings).toEqual({
+      rememberMemories: false,
+      useHistory: false,
+      suggestMemories: false,
+    })
   })
 
-  it('cả hai bật', async () => {
-    seedConsents({ memory: true, history: true })
+  it('cả ba bật', async () => {
+    seedConsents({ memory: true, history: true, suggest: true })
     const res = await handler(req('GET'))
-    expect(await res.json()).toEqual({ settings: { rememberMemories: true, useHistory: true } })
+    expect(((await res.json()) as { settings: unknown }).settings).toEqual({
+      rememberMemories: true,
+      useHistory: true,
+      suggestMemories: true,
+    })
+  })
+
+  it('trả khối cố định không lộ id nội bộ; chỉ tóm tắt còn nội dung, không lộ con trỏ', async () => {
+    blocks.listCoreBlocks.mockResolvedValue([
+      {
+        id: 'b1',
+        label: 'about_me',
+        content: 'Lớp 10',
+        version: 2,
+        updatedAt: '2026-10-12T00:00:00.000Z',
+      },
+      EMPTY_BLOCKS[1],
+    ])
+    blocks.listConversationSummaries.mockResolvedValue([
+      {
+        id: 's1',
+        domain: 'learning',
+        summary: 'Đã ôn Nghe.',
+        updatedAt: '2026-10-12T00:00:00.000Z',
+        through: { at: new Date(), id: 'm1' },
+      },
+      { id: 's2', domain: 'work', summary: '', updatedAt: '2026-10-12T00:00:00.000Z' },
+    ])
+    const body = (await (await handler(req('GET'))).json()) as Record<string, unknown>
+    expect(body.coreBlocks).toEqual([
+      { label: 'about_me', content: 'Lớp 10', version: 2, updatedAt: '2026-10-12T00:00:00.000Z' },
+      { label: 'current_focus', content: '', version: 0 },
+    ])
+    expect(body.summaries).toEqual([
+      { domain: 'learning', summary: 'Đã ôn Nghe.', updatedAt: '2026-10-12T00:00:00.000Z' },
+    ])
   })
 })
 
@@ -173,7 +249,9 @@ describe('POST /api/companion-memory set_settings', () => {
       return { id: MEMORY_GRANT }
     })
     const res = await handler(req('POST', { action: 'set_settings', rememberMemories: true }))
-    expect(await res.json()).toEqual({ settings: { rememberMemories: true, useHistory: false } })
+    expect(await res.json()).toEqual({
+      settings: { rememberMemories: true, useHistory: false, suggestMemories: false },
+    })
   })
 
   it('body sai (action lạ / trường thừa / JSON hỏng) → 400', async () => {
@@ -196,5 +274,94 @@ describe('POST /api/companion-memory set_settings', () => {
     consents.revokeConsent.mockRejectedValue(new ConflictError('Consent đã được thu hồi'))
     const res = await handler(req('POST', { action: 'set_settings', rememberMemories: false }))
     expect(res.status).toBe(409)
+  })
+})
+
+describe('POST /api/companion-memory — GĐ2b', () => {
+  it('bật "gợi ý ký ức" → grantConsent đúng scope memory_suggestion.create', async () => {
+    const res = await handler(req('POST', { action: 'set_settings', suggestMemories: true }))
+    expect(res.status).toBe(200)
+    expect(consents.grantConsent).toHaveBeenCalledWith(expect.anything(), {
+      personId: PERSON,
+      scope: COMPANION_CONSENT_SCOPES.suggest,
+      purpose: COMPANION_CONSENT_PURPOSE,
+    })
+  })
+
+  it('tắt "gợi ý ký ức" → thu hồi bản active', async () => {
+    seedConsents({ suggest: true })
+    await handler(req('POST', { action: 'set_settings', suggestMemories: false }))
+    expect(consents.revokeConsent).toHaveBeenCalledWith(expect.anything(), PERSON, SUGGEST_GRANT)
+  })
+
+  it('set_core_block → setCoreBlock đúng người/nhãn/phiên bản, trả khối không có id', async () => {
+    blocks.setCoreBlock.mockResolvedValue({
+      id: 'b1',
+      label: 'current_focus',
+      content: 'Ôn thi giữa kỳ',
+      version: 1,
+      updatedAt: '2026-10-12T00:00:00.000Z',
+    })
+    const res = await handler(
+      req('POST', {
+        action: 'set_core_block',
+        label: 'current_focus',
+        content: 'Ôn thi giữa kỳ',
+        expectedVersion: 0,
+      }),
+    )
+    expect(res.status).toBe(200)
+    expect(blocks.setCoreBlock).toHaveBeenCalledWith(
+      expect.anything(),
+      PERSON,
+      'current_focus',
+      'Ôn thi giữa kỳ',
+      0,
+    )
+    expect(await res.json()).toEqual({
+      block: {
+        label: 'current_focus',
+        content: 'Ôn thi giữa kỳ',
+        version: 1,
+        updatedAt: '2026-10-12T00:00:00.000Z',
+      },
+    })
+  })
+
+  it('set_core_block: nhãn lạ / phiên bản âm / quá dài → 400; lệch phiên bản → 409', async () => {
+    for (const bad of [
+      { action: 'set_core_block', label: 'secret', content: 'x', expectedVersion: 0 },
+      { action: 'set_core_block', label: 'about_me', content: 'x', expectedVersion: -1 },
+      {
+        action: 'set_core_block',
+        label: 'about_me',
+        content: 'a'.repeat(2000),
+        expectedVersion: 0,
+      },
+    ]) {
+      expect((await handler(req('POST', bad))).status).toBe(400)
+    }
+    const { ConflictError } = await import('@dhcb/core-errors/appError')
+    blocks.setCoreBlock.mockRejectedValue(new ConflictError('đã đổi'))
+    const res = await handler(
+      req('POST', {
+        action: 'set_core_block',
+        label: 'about_me',
+        content: 'x',
+        expectedVersion: 3,
+      }),
+    )
+    expect(res.status).toBe(409)
+  })
+
+  it('clear_summary → xoá nội dung đúng miền, trả danh sách đọc lại', async () => {
+    const res = await handler(req('POST', { action: 'clear_summary', domain: 'learning' }))
+    expect(res.status).toBe(200)
+    expect(blocks.clearConversationSummary).toHaveBeenCalledWith(
+      expect.anything(),
+      PERSON,
+      'learning',
+    )
+    expect(await res.json()).toEqual({ summaries: [] })
   })
 })

@@ -9,7 +9,7 @@ function html(over: Partial<React.ComponentProps<typeof MemoryConsentCard>> = {}
   return renderToStaticMarkup(
     <MemoryRouter>
       <MemoryConsentCard
-        settings={{ rememberMemories: false, useHistory: false }}
+        settings={{ rememberMemories: false, useHistory: false, suggestMemories: false }}
         ephemeral={false}
         onEphemeralChange={vi.fn()}
         onEnableMemory={vi.fn(async () => {})}
@@ -37,9 +37,9 @@ describe('MemoryConsentCard', () => {
   })
 
   it('ký ức đã bật hoặc chưa tải được cài đặt → không mời; đang bật → nút "Đang bật…" bị khoá', () => {
-    expect(html({ settings: { rememberMemories: true, useHistory: true } })).not.toContain(
-      'Bật ký ức',
-    )
+    expect(
+      html({ settings: { rememberMemories: true, useHistory: true, suggestMemories: false } }),
+    ).not.toContain('Bật ký ức')
     expect(html({ settings: null })).not.toContain('Bật ký ức')
     const busy = html({ enabling: true })
     expect(busy).toContain('Đang bật…')

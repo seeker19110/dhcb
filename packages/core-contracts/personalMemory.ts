@@ -66,3 +66,38 @@ export const MemoryRecordSchema = versionedObject(
 )
 
 export type MemoryRecord = z.infer<typeof MemoryRecordSchema>
+
+// ─── GĐ2b (2026-10-12): khối ghi nhớ cố định + tóm tắt cuộn ──────────────────────────────────
+// Đặc tả `docs/specs/2026-10-12-ban-dong-hanh-gd2b-trich-ky-uc-khoi-loi.md` §③.
+
+/** Trần ký tự của một khối ghi nhớ cố định (Letta core memory: khối nhỏ, luôn nạp). */
+export const CORE_MEMORY_BLOCK_MAX_CHARS = 1500
+
+/** Trần ký tự của một bản tóm tắt cuộn theo miền. */
+export const CONVERSATION_SUMMARY_MAX_CHARS = 1500
+
+/** Hai khối cố định: "Về tôi" và "Đang tập trung" — người dùng tự viết trên trang ký ức. */
+export const CoreMemoryBlockLabelSchema = z.enum(['about_me', 'current_focus'])
+export type CoreMemoryBlockLabel = z.infer<typeof CoreMemoryBlockLabelSchema>
+
+export const CoreMemoryBlockSchema = z
+  .object({
+    label: CoreMemoryBlockLabelSchema,
+    // Chuỗi rỗng = chưa viết (hoặc đã xoá).
+    content: z.string().max(CORE_MEMORY_BLOCK_MAX_CHARS),
+    // 0 = khối chưa từng được lưu; client gửi lại làm `expectedVersion`.
+    version: z.number().int().nonnegative(),
+    updatedAt: IsoDateTimeSchema.optional(),
+  })
+  .strict()
+export type CoreMemoryBlock = z.infer<typeof CoreMemoryBlockSchema>
+
+export const ConversationSummarySchema = z
+  .object({
+    domain: z.string().min(1).max(100),
+    // Chuỗi rỗng = người dùng đã xoá bản tóm tắt (con trỏ vẫn giữ ở server).
+    summary: z.string().max(CONVERSATION_SUMMARY_MAX_CHARS),
+    updatedAt: IsoDateTimeSchema,
+  })
+  .strict()
+export type ConversationSummary = z.infer<typeof ConversationSummarySchema>

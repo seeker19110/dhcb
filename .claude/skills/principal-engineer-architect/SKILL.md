@@ -78,7 +78,14 @@ Hành.
   — FTS Postgres bỏ dấu (`search_tsv`, `unaccent`) + cosine trong Node trên embedding Gemini
   (`packages/core-ai/embeddings.ts`, `real[]`, KHÔNG pgvector) gộp bằng Reciprocal Rank Fusion
   (k=60), điểm = (recency · importance · relevance)/3. Không có `GEMINI_API_KEY` thì chỉ còn FTS.
-- **CHƯA CÓ:** trích xuất ký ức tự động sau phiên, khối lõi, tóm tắt cuộn (GĐ2b — cần đặc tả).
+- **ĐANG CÓ (GĐ2b, changelog 0617):** bộ phản tỉnh sau buổi
+  `packages/core-personal/memoryReflectionService.ts` (hẹn giờ 10 phút ở instance 0, công tắc thứ ba
+  `memory_suggestion.create`, đếm/hoàn lượt qua `checkAndConsumeUsage`) — AI CHỈ đề xuất
+  ADD/UPDATE/vô hiệu thành ProposedAction `pending` (`memory.create_record` ·
+  `memory.supersede_record` · `memory.invalidate_record`, đều trong
+  `CONFIRMATION_REQUIRED_CAPABILITIES`); thay/vô hiệu đặt `valid_to` + `superseded_by`, KHÔNG xoá.
+  Khối ghi nhớ cố định (người dùng tự viết) + tóm tắt cuộn theo miền ở
+  `packages/core-personal/coreMemoryBlocks.ts`, nạp vào ngữ cảnh qua `contextEngine`.
 
 ---
 

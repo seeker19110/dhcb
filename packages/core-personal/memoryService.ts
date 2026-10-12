@@ -419,6 +419,154 @@ export async function updateMemoryContent(
 }
 
 /**
+ * Khoá rồi kiểm một ký ức CÒN HIỆU LỰC của đúng người đó, đúng phiên bản — dùng chung cho hai thao
+ * tác GĐ2b bên dưới. Gợi ý của AI được tạo từ một phiên bản cụ thể; nếu người dùng đã sửa/quên ký
+ * ức đó, hoặc nó đã bị thay bởi gợi ý khác, thì gợi ý cũ không còn đúng ngữ cảnh ⇒ 409.
+ */
+async function lockLiveMemory(
+  client: PoolClient,
+  personId: string,
+  recordId: string,
+  expectedVersion: number,
+): Promise<MemoryRecordRow> {
+  const { rows } = await client.query<MemoryRecordRow>(
+    `select ${MEMORY_COLUMNS} from personal.memory_records
+     where id = $1 and person_id = $2
+     for update`,
+    [recordId, personId],
+  )
+  const current = rows[0]
+  if (!current) throw new NotFoundError('Memory record not found')
+  if (current.status === 'expired' || current.valid_to !== null) {
+    throw new ConflictError('Ký ức này đã được quên hoặc đã được thay — gợi ý không còn áp dụng')
+  }
+  if (current.version !== expectedVersion) {
+    throw new ConflictError('Ký ức vừa được sửa sau khi có gợi ý — gợi ý không còn áp dụng')
+  }
+  return current
+}
+
+export interface SupersedeMemoryInput {
+  recordId: string
+  expectedVersion: number
+  content: string
+  provenance: string
+  importance?: number
+  sourceMessageId?: string
+}
+
+/**
+ * GĐ2b — THAY một ký ức bằng phiên bản mới mà KHÔNG xoá bản cũ (hai trục thời gian, Zep/Graphiti):
+ * bản mới được tạo (giữ namespace + độ nhạy của bản cũ), bản cũ nhận `valid_to = now()` và
+ * `superseded_by = <id mới>`. Truy xuất chỉ đọc bản `valid_to is null`, nên Companion dùng điều
+ * mới nhưng lịch sử "trước đây bạn nhắm 6.5…" vẫn còn để tra. Chạy TRONG transaction của nơi gọi
+ * (capability `memory.supersede_record` lúc người dùng bấm duyệt).
+ */
+export async function supersedeMemoryWithClient(
+  client: PoolClient,
+  personId: string,
+  input: SupersedeMemoryInput,
+  actor = 'system',
+  options: MemoryWriteOptions = {},
+): Promise<{ record: MemoryRecord; previous: MemoryRecord }> {
+  const content = input.content.trim()
+  if (!content || content.length > 2000) {
+    throw new ValidationError('Nội dung ký ức phải từ 1 đến 2000 ký tự')
+  }
+  const current = await lockLiveMemory(client, personId, input.recordId, input.expectedVersion)
+  const embedding = await safeEmbed(options.embed, content)
+
+  const { rows: inserted } = await client.query<MemoryRecordRow>(
+    `insert into personal.memory_records
+       (person_id, namespace, content, provenance, sensitivity, status,
+        importance, source_message_id, embedding, embedding_model)
+     values ($1, $2, $3, $4, $5, 'accepted', $6, $7, $8::real[], $9)
+     returning ${MEMORY_COLUMNS}`,
+    [
+      personId,
+      current.namespace,
+      content,
+      input.provenance.trim(),
+      current.sensitivity,
+      clampImportance(input.importance ?? current.importance),
+      input.sourceMessageId ?? null,
+      embedding?.vector ?? null,
+      embedding?.model ?? null,
+    ],
+  )
+  const fresh = inserted[0]
+  if (!fresh) throw new Error('Failed to insert superseding memory record')
+
+  const { rows: closed } = await client.query<MemoryRecordRow>(
+    `update personal.memory_records
+     set valid_to = now(), superseded_by = $1, updated_at = now(), version = version + 1
+     where id = $2 and person_id = $3
+     returning ${MEMORY_COLUMNS}`,
+    [fresh.id, current.id, personId],
+  )
+  const previous = closed[0]
+  if (!previous) throw new NotFoundError('Memory record not found')
+
+  await client.query(
+    `insert into personal.memory_records_audit_log
+       (record_id, person_id, action, changes, changed_by)
+     values ($1, $2, 'INSERT', $3, $4), ($5, $2, 'UPDATE', $6, $4)`,
+    [
+      fresh.id,
+      personId,
+      JSON.stringify({
+        namespace: fresh.namespace,
+        content: fresh.content,
+        supersedes: current.id,
+      }),
+      actor,
+      current.id,
+      JSON.stringify({ supersededBy: fresh.id, validTo: previous.valid_to }),
+    ],
+  )
+
+  return { record: rowToMemoryRecord(fresh), previous: rowToMemoryRecord(previous) }
+}
+
+/**
+ * GĐ2b — VÔ HIỆU một ký ức (người dùng nói điều cũ không còn đúng): chỉ đặt `valid_to = now()`,
+ * KHÔNG xoá, KHÔNG đổi `status` — khác "Quên" (`expireMemoryRecord`) là thao tác người dùng tự
+ * bấm để bỏ hẳn. Chạy TRONG transaction của nơi gọi.
+ */
+export async function invalidateMemoryWithClient(
+  client: PoolClient,
+  personId: string,
+  recordId: string,
+  expectedVersion: number,
+  actor = 'system',
+  reason = '',
+): Promise<MemoryRecord> {
+  await lockLiveMemory(client, personId, recordId, expectedVersion)
+  const { rows } = await client.query<MemoryRecordRow>(
+    `update personal.memory_records
+     set valid_to = now(), updated_at = now(), version = version + 1
+     where id = $1 and person_id = $2
+     returning ${MEMORY_COLUMNS}`,
+    [recordId, personId],
+  )
+  const row = rows[0]
+  if (!row) throw new NotFoundError('Memory record not found')
+
+  await client.query(
+    `insert into personal.memory_records_audit_log
+       (record_id, person_id, action, changes, changed_by)
+     values ($1, $2, 'UPDATE', $3, $4)`,
+    [
+      recordId,
+      personId,
+      JSON.stringify({ invalidated: true, reason: reason.slice(0, 300) }),
+      actor,
+    ],
+  )
+  return rowToMemoryRecord(row)
+}
+
+/**
  * Đánh dấu "vừa được dùng" cho các ký ức đã vào prompt — `last_accessed_at` nuôi thành phần
  * recency của điểm truy xuất (Generative Agents: recency tính từ lần TRUY XUẤT, không phải lần
  * tạo). Không ghi audit: đây là tín hiệu sử dụng, không phải thay đổi nội dung.

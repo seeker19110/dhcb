@@ -68,6 +68,10 @@ import { purgeExpiredAuthRows, purgeOldAnalyticsEvents } from './api/_lib/retent
 import { startDailyJob } from './dailyJob.js'
 import { backfillMemoryEmbeddings, purgeExpiredMemories } from '@dhcb/core-personal/memoryService'
 import { getEmbeddingProvider } from '@dhcb/core-ai/embeddings'
+import { runReflectionSweep } from '@dhcb/core-personal/memoryReflectionService'
+import { REFLECTION_COST_MODE } from '@dhcb/core-personal/memoryReflectionPrompt'
+import { generateChatText } from '@dhcb/core-ai/chatFallback'
+import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
 import {
   ledgerConfigProblem,
   purgeExpiredErasedBenefits,
@@ -449,6 +453,56 @@ function startCompanionMemoryMaintenance() {
   })
 }
 
+// ── Bạn Đồng Hành: phản tỉnh sau buổi trò chuyện (mỗi 10 phút) ──────────────
+// GĐ2b (changelog 0617, đặc tả docs/specs/2026-10-12-ban-dong-hanh-gd2b-trich-ky-uc-khoi-loi.md):
+// người dùng im ≥ 15 phút thì AI đọc lại buổi vừa xong để ĐỀ XUẤT điều nên nhớ (ProposedAction
+// `pending`, người dùng duyệt) và gộp tóm tắt cuộn. Chỉ chạy với người đã bật công tắc; mỗi lần có
+// gọi AI trừ một lượt (fail-closed, hoàn khi AI hỏng). Cờ `running` chặn hai lượt quét chồng nhau
+// (một lượt có thể dài vì mỗi người một lời gọi AI tuần tự).
+const REFLECTION_SWEEP_INTERVAL_MS = 10 * 60_000
+
+function startCompanionReflectionScheduler() {
+  let running = false
+  const sweep = () => {
+    if (running) return
+    running = true
+    void runReflectionSweep(
+      {
+        pool: getPgPool(),
+        consumeUsage: (userId) => checkAndConsumeUsage(userId, 'chat'),
+        refundUsage: (userId, day) => refundUsage(userId, 'chat', day),
+        generate: (prompt) =>
+          generateChatText({
+            system: prompt.system,
+            userMessage: prompt.userMessage,
+            maxTokens: prompt.maxTokens,
+            mode: REFLECTION_COST_MODE,
+            task: 'memory_reflect',
+            outputSchema: prompt.outputSchema,
+          }),
+      },
+      (err) => {
+        console.error('[companion-reflection] lỗi phản tỉnh một người:', err)
+        captureServerException(err, { context: 'companion-reflection' })
+      },
+    )
+      .then((r) => {
+        if (r.persons > 0)
+          console.log(
+            `[companion-reflection] ${r.persons} người: đề xuất ${r.proposed}, tóm tắt ${r.summarized}, lỗi ${r.failed} ${JSON.stringify(r.byStatus)}`,
+          )
+      })
+      .catch((err) => {
+        console.error('[companion-reflection] lỗi lượt quét:', err)
+        captureServerException(err, { context: 'companion-reflection-sweep' })
+      })
+      .finally(() => {
+        running = false
+      })
+  }
+  setInterval(sweep, REFLECTION_SWEEP_INTERVAL_MS)
+}
+
 // ── Dọn vị trí của chuyến "Đi chung" đã hết hạn (mỗi 15 phút) ───────────────
 // Vị trí là dữ liệu nhạy cảm nhất trong app: chuyến hết hạn/kết thúc thì toạ độ phải biến mất
 // mà không cần ai bấm nút. Xem packages/core-location/locationService.ts#purgeExpiredPositions.
@@ -485,6 +539,7 @@ const server = app.listen(PORT, () => {
     startErasedBenefitLedgerCleanup()
     startRetentionCleanup()
     startCompanionMemoryMaintenance()
+    startCompanionReflectionScheduler()
     startLocationPurgeScheduler()
     startWeeklyReportScheduler()
     // Kiểm Redis CHỈ ở instance 0: cấu hình REDIS_URL giống hệt nhau ở mọi instance nên một

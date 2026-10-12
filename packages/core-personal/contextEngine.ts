@@ -17,6 +17,13 @@ import { listFacts } from './personService.js'
 import { searchMemories } from './memoryRetrieval.js'
 import { COMPANION_CONSENT_SCOPES } from '@dhcb/core-contracts/consentGrant'
 import { listRecentCompanionMessages, COMPANION_HISTORY_TURNS } from './companionMessageService.js'
+import { listCoreBlocks, getConversationSummary } from './coreMemoryBlocks.js'
+
+/** Nhãn hiển thị của khối cố định trong ngữ cảnh gửi AI. */
+const CORE_BLOCK_TITLE: Record<string, string> = {
+  about_me: 'Về tôi (người dùng tự viết)',
+  current_focus: 'Đang tập trung (người dùng tự viết)',
+}
 
 type ContextItemSource = z.infer<typeof ContextItemSourceSchema>
 
@@ -138,6 +145,28 @@ export async function buildContextPackage(
     Boolean(options.includeCompanionHistory) &&
     (await isConsentActive(pool, personId, COMPANION_CONSENT_SCOPES.history, purpose))
 
+  // 1b. Khối ghi nhớ cố định (GĐ2b, Letta core memory) — người dùng TỰ VIẾT nên đứng ngay sau câu
+  // đang hỏi: điều cốt lõi không bao giờ rụng vì hết ngân sách hay vì câu hỏi không khớp chữ.
+  // Đọc lỗi ⇒ bỏ nhóm này, lượt thoại vẫn tiếp tục.
+  if (hasMemoryConsent) {
+    try {
+      for (const block of await listCoreBlocks(pool, personId)) {
+        if (!block.id || !block.content.trim()) continue
+        const content = `[${CORE_BLOCK_TITLE[block.label] ?? block.label}] ${block.content}`
+        candidates.push({
+          sourceType: 'user_declared_fact',
+          sourceId: block.id,
+          content,
+          provenance: `core_block:${block.label}`,
+          sensitivity: 'personal',
+          tokenEstimate: estimateTokens(content),
+        })
+      }
+    } catch {
+      // bỏ qua: khối cố định là tiện ích, không phải điều kiện để trả lời
+    }
+  }
+
   // 2. Active goals or projects from Life Graph (công tắc "ký ức")
   if (hasMemoryConsent) {
     const nodeWrappers = await listNodes(pool, personId)
@@ -251,6 +280,26 @@ export async function buildContextPackage(
       }
     } catch {
       // Không đọc được lịch sử thì bỏ qua; tuyệt đối không fallback sang truy vấn bỏ scope.
+    }
+
+    // Tóm tắt cuộn của đúng miền (GĐ2b) — đứng SAU lịch sử gần nhất trong thứ tự gói ngân sách:
+    // hết chỗ thì bản tóm tắt rụng trước, lượt vừa nói luôn được giữ. Không khớp HISTORY_PROVENANCE
+    // nên đi vào khối dữ liệu bọc thẻ của prompt, không bị coi là một tin nhắn.
+    try {
+      const summary = await getConversationSummary(pool, personId, domain)
+      if (summary) {
+        const content = `[Tóm tắt các buổi trò chuyện trước] ${summary.summary}`
+        candidates.push({
+          sourceType: 'recent_episodic_context',
+          sourceId: summary.id,
+          content,
+          provenance: `companion_summary:${domain}`.slice(0, 200),
+          sensitivity: 'personal',
+          tokenEstimate: estimateTokens(content),
+        })
+      }
+    } catch {
+      // bỏ qua: không đọc được tóm tắt thì trả lời bằng phần ngữ cảnh còn lại
     }
   }
 

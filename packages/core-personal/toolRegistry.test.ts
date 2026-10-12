@@ -28,8 +28,21 @@ describe('toolRegistry', () => {
       'dictionary.lookup',
       'learning.update_goal',
       'memory.create_record',
+      'memory.invalidate_record',
+      'memory.supersede_record',
       'profile.update_fact',
     ])
+  })
+
+  it('GĐ2b: thay/vô hiệu ký ức là việc ghi và cần quyền ghi ký ức', () => {
+    for (const id of ['memory.supersede_record', 'memory.invalidate_record'] as const) {
+      const tool = getToolManifest(id)
+      expect(tool.sideEffect).not.toBe('none')
+      expect(tool.requiredPermissions).toEqual(['memory.write'])
+    }
+    // Thay tạo bản ghi MỚI mỗi lần → không idempotent; vô hiệu hai lần cho cùng kết quả.
+    expect(getToolManifest('memory.supersede_record').idempotent).toBe(false)
+    expect(getToolManifest('memory.invalidate_record').idempotent).toBe(true)
   })
 
   it('tool chỉ đọc (dictionary.lookup) không có side effect và không đòi quyền', () => {

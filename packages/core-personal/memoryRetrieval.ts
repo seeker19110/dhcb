@@ -44,6 +44,11 @@ export interface SearchMemoriesOptions {
   embeddingProvider?: EmbeddingProvider | null
   /** Tắt tìm nghĩa dù có provider (vd phiên tạm hoặc câu quá ngắn). */
   skipSemantic?: boolean
+  /**
+   * `false` = KHÔNG đánh dấu "vừa được dùng" (GĐ2b: bộ phản tỉnh nền tìm ký ức giống để so —
+   * không phải Companion dùng ký ức để trả lời, nên không được đẩy recency). Mặc định `true`.
+   */
+  touch?: boolean
 }
 
 export interface ScoredMemory {
@@ -204,6 +209,7 @@ export async function searchMemories(
   scored.sort((a, b) => b.score - a.score || a.record.id.localeCompare(b.record.id))
   const chosen = scored.slice(0, limit)
 
+  if (options.touch === false) return chosen
   // Đánh dấu đã dùng — nếu lỗi (CSDL bận) vẫn trả kết quả, lượt thoại không được chết vì tín
   // hiệu phụ.
   try {

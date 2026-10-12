@@ -203,6 +203,11 @@ export const PERSON_TABLES = [
       'created_at',
       'updated_at',
       'retain_until',
+      'importance',
+      'valid_from',
+      'valid_to',
+      'superseded_by',
+      'source_message_id',
     ],
     orderBy: 'created_at, id',
   },
@@ -255,6 +260,41 @@ export const PERSON_TABLES = [
       'updated_at',
     ],
     orderBy: 'created_at, id',
+  },
+  // GĐ2b (migration 0096): khối ghi nhớ cố định, tóm tắt cuộn, con trỏ phản tỉnh — cascade theo
+  // person nhưng vẫn liệt kê để bản xuất "biết gì về tôi" có đủ và xoá phủ đúng tập bảng.
+  {
+    exportKey: 'companionCoreBlocks',
+    table: 'personal.companion_core_blocks',
+    columns: ['id', 'label', 'content', 'version', 'updated_at'],
+    orderBy: 'label, id',
+  },
+  {
+    exportKey: 'companionConversationSummaries',
+    table: 'personal.companion_conversation_summaries',
+    columns: [
+      'id',
+      'domain',
+      'summary',
+      'summarized_through_at',
+      'summarized_through_id',
+      'version',
+      'updated_at',
+    ],
+    orderBy: 'domain, id',
+  },
+  {
+    exportKey: 'companionReflectionState',
+    table: 'personal.companion_reflection_state',
+    columns: [
+      'extracted_through_at',
+      'extracted_through_id',
+      'last_attempt_at',
+      'runs_day',
+      'runs_count',
+      'updated_at',
+    ],
+    orderBy: 'updated_at',
   },
   {
     exportKey: 'companionMessages',
