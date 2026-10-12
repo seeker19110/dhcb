@@ -29,7 +29,9 @@ set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập ph
 # EPIPE — CI của PR #1206 đỏ vì đúng lỗi này (changelog 0472).
 payload="$(cat)"
 [ "${ALLOW_GATE_EDIT:-0}" = "1" ] && exit 0
-command -v jq >/dev/null 2>&1 || exit 0
+# Thiếu jq → không đọc được payload. Fail-open nhưng NÓI RA (changelog 0619): hook im lặng thoát là "xanh giả" —
+# người dùng tưởng cổng đang canh trong khi nó đã tắt.
+command -v jq >/dev/null 2>&1 || { echo "[config-protection] không có jq → KHÔNG canh được file cổng ở máy này." >&2; exit 0; }
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 file="$(printf '%s' "$payload" | jq -r '.tool_input.file_path // empty' 2>/dev/null)"
@@ -63,8 +65,16 @@ case "$rel" in
     reason="cấu hình lint/format/ngân sách bundle — sửa CODE cho đạt luật, đừng nới luật" ;;
   vitest.config.ts)
     reason="giữ ngưỡng coverage và danh sách test được quét — hạ ngưỡng/bớt include là nới cổng" ;;
-  tsconfig.base.json)
-    reason="chứa compilerOptions chung (strict) — CLAUDE.md mục 4.1" ;;
+  tsconfig*.json)
+    # Mọi tsconfig ở gốc (changelog 0619): ngoài base (strict), các file còn lại quyết định `npm run typecheck`
+    # QUÉT những gì — bớt `include` là nới cổng y như hạ strict.
+    reason="cấu hình TypeScript (strict + phạm vi typecheck) — CLAUDE.md mục 4.1" ;;
+  playwright.config.ts)
+    reason="cấu hình E2E/a11y (dự án, shard, retry) — bớt dự án hay tăng retry là nới cổng e2e" ;;
+  .github/dependabot.yml)
+    reason="luật nâng phụ thuộc tự động — CLAUDE.md mục 6 ghim phiên bản có ràng buộc thật" ;;
+  scripts/check-*.sh | scripts/check-*.ts | scripts/_commit-guard.sh | scripts/sql-prepare-allowlist.json)
+    reason="script cổng (check:specs/check:sql/docs/progress…), mẫu bí mật dùng chung, hoặc allowlist mở lối thoát khỏi cổng" ;;
   scripts/*-policy.test.ts | scripts/no-control-chars.test.ts | scripts/agent-config-security.test.ts)
     reason="test canh luật dự án — CLAUDE.md mục 11.1: sửa cho đúng luật, ĐỪNG sửa test cho vừa" ;;
   e2e/a11y.spec.ts | e2e/a11y-aaa.spec.ts | scripts/lib/contrast.ts)

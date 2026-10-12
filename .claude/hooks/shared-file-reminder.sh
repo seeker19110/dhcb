@@ -16,7 +16,7 @@ set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập ph
 NGUONG=20
 
 payload="$(cat)"   # đọc HẾT stdin trước mọi `exit` sớm (tránh EPIPE cho bên gọi, changelog 0472)
-command -v jq >/dev/null 2>&1 || exit 0
+command -v jq >/dev/null 2>&1 || { echo "[shared-file-reminder] không có jq → không nhắc được codemap impact." >&2; exit 0; }
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 ROOT="${ROOT//\\//}"
 GRAPH="$ROOT/.codemap/graph.json"

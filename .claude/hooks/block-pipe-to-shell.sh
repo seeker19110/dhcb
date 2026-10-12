@@ -22,7 +22,7 @@ set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập ph
 # Đọc HẾT stdin TRƯỚC mọi `exit` sớm — xem chú thích cùng chỗ trong config-protection.sh.
 payload="$(cat)"
 [ "${ALLOW_PIPE_TO_SHELL:-0}" = "1" ] && exit 0
-command -v jq >/dev/null 2>&1 || exit 0
+command -v jq >/dev/null 2>&1 || { echo "[block-pipe-to-shell] không có jq → không đọc được lệnh, bỏ qua kiểm tra." >&2; exit 0; }
 
 cmd="$(printf '%s' "$payload" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 [ -n "$cmd" ] || exit 0

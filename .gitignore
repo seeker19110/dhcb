@@ -2,6 +2,9 @@ node_modules
 dist
 dist-server
 .env
+# Mọi biến thể .env.* (.env.production, .env.staging…) — chỉ .env.example được commit (changelog 0619).
+.env.*
+!.env.example
 logs/
 
 # Vitest coverage — báo cáo sinh tự động (text + html), không commit

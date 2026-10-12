@@ -16,7 +16,7 @@
 set -uo pipefail   # cố ý KHÔNG -e: hook lỗi không được làm sập phiên
 
 payload="$(cat)"   # đọc HẾT stdin trước mọi `exit` sớm (tránh EPIPE cho bên gọi, changelog 0472)
-command -v jq >/dev/null 2>&1 || exit 0
+command -v jq >/dev/null 2>&1 || { echo "[auto-format] không có jq → không tự chạy Prettier; nhớ chạy npm run format." >&2; exit 0; }
 ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 PRETTIER="$ROOT/node_modules/.bin/prettier"
 [ -x "$PRETTIER" ] || exit 0   # chưa `npm ci` → im lặng, lint-staged/CI vẫn là tuyến sau
