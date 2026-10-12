@@ -159,7 +159,10 @@ describe.runIf(hasJq || process.env.CI)('shared-file-reminder.sh', () => {
 describe.runIf(hasJq || process.env.CI)(
   'mọi hook đọc hết stdin trước khi thoát (không EPIPE)',
   () => {
-    const hooks = readdirSync(resolve(ROOT, '.claude/hooks')).filter((f) => f.endsWith('.sh'))
+    // `_*.sh` (vd `_lib.sh`) là thư viện để `source`, không phải hook nhận stdin.
+    const hooks = readdirSync(resolve(ROOT, '.claude/hooks')).filter(
+      (f) => f.endsWith('.sh') && !f.startsWith('_'),
+    )
     const emptyProject = mkdtempSync(join(tmpdir(), 'hook-epipe-'))
     afterAll(() => rmSync(emptyProject, { recursive: true, force: true }))
     const bigPayload = JSON.stringify({
@@ -208,7 +211,8 @@ describe.runIf(hasJq || process.env.CI)('pre-commit-gate.sh — chọn thư mụ
   mkdirSync(repo)
   mkdirSync(other)
   for (const d of [repo, other]) {
-    git(d, 'init', '-q')
+    // Nhánh KHÔNG phải main: từ changelog 0619 cổng chặn commit trên main/master, kể cả khi dry-run.
+    git(d, 'init', '-q', '-b', 'work')
     git(d, '-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'x')
   }
   git(repo, 'worktree', 'add', '-q', wt)
@@ -260,5 +264,171 @@ describe.runIf(hasJq || process.env.CI)('pre-commit-gate.sh — chọn thư mụ
   it('lệnh không phải commit, hoặc --no-verify → không đụng tới', () => {
     expect(gate('git status', wt, false).status).toBe(0)
     expect(gate('git commit --no-verify -m x', wt, false).status).toBe(0)
+  })
+})
+
+// changelog 0619 (TRAPS.md mục 22): đo thật 2026-10-12, bản cũ của block-dangerous-git để LỌT các biến thể
+// dưới — bộ lọc "bỏ dữ liệu" nay dùng chung ở `.claude/hooks/_lib.sh`, lấy từ seeker19110/project-template.
+describe.runIf(hasJq || process.env.CI)('block-dangerous-git.sh', () => {
+  const run = (command: string, env: Record<string, string> = {}) =>
+    runHook(
+      'block-dangerous-git.sh',
+      { tool_input: { command } },
+      { ALLOW_DANGEROUS_GIT: '', ...env },
+    )
+
+  it.each([
+    // force-push MỌI nhánh (DHCB chặt hơn khung: cấm cả nhánh riêng)
+    'git push --force',
+    'git push -f origin "main"',
+    'git -C . push --force',
+    'git push --force-with-lease origin feat/x',
+    'git push -fu origin feat/x',
+    'git push origin +feat/x',
+    'git push origin +HEAD:main',
+    'git push origin +refs/heads/main',
+    // xoá nhánh chính
+    'git push origin :main',
+    'git push origin --delete main',
+    // mất thay đổi chưa commit
+    'git reset --hard',
+    'git clean -fd',
+    'git branch -D x',
+    'git checkout .',
+    'git checkout -- .',
+    'git restore .',
+    'git restore -- .',
+    'git restore --staged --worktree .',
+    'git stash clear',
+    'git stash drop',
+    'git merge --abort',
+    // vỏ bọc + bẫy bộ lọc nháy/heredoc
+    "bash -c 'git reset --hard'",
+    'sh -c "git clean -fdx"',
+    `git commit -m "don't" && git reset --hard && echo "it's"`,
+    'cat <<-EOF\n\tx\n\tEOF\ngit reset --hard',
+    'echo "x <<EOF" && git reset --hard',
+  ])('chặn: %s', (command) => {
+    const r = run(command)
+    expect(r.status).toBe(2)
+    expect(r.stderr).toContain('block-dangerous-git')
+  })
+
+  it.each([
+    "git commit -m 'quay lại: git reset --hard cho sạch'",
+    'git commit -F - <<EOF\nfix: git push --force main\nEOF',
+    'git push -u origin claude/nifty-dirac-u5g4x1',
+    // TRAPS.md mục 21 cần đúng lệnh xoá nhánh feature đã squash-merge
+    'git push origin --delete claude/old-branch',
+    'git restore --staged .',
+    'git restore src/a.ts',
+    'git checkout -- src/a.ts',
+    'git checkout -b feat/x',
+    'git stash',
+    'git stash pop',
+    'git branch -d x',
+    'git reset HEAD~1',
+    'git clean -n',
+    'rm -rf dist && git status',
+    'git status && ls -d .',
+    'git fetch origin main && git merge origin/main',
+  ])('cho qua: %s', (command) => {
+    expect(run(command).status).toBe(0)
+  })
+
+  it('ALLOW_DANGEROUS_GIT=1 tắt hook có chủ đích', () => {
+    expect(run('git reset --hard', { ALLOW_DANGEROUS_GIT: '1' }).status).toBe(0)
+  })
+})
+
+// Khoá GIẢ dựng lúc chạy (nối chuỗi) để chính file test này không chứa chuỗi khớp mẫu — nếu không, cổng
+// commit và gitleaks sẽ chặn file test (TRAPS.md mục 21: gitleaks từng đỏ vì khoá giả viết liền).
+const FAKE = {
+  anthropic: 'sk-' + 'ant-api03-' + 'a'.repeat(30),
+  google: 'AI' + 'za' + 'B'.repeat(35),
+  githubPat: 'github_' + 'pat_' + 'C'.repeat(30),
+  aws: 'AK' + 'IA' + 'D'.repeat(16),
+}
+
+describe.runIf(hasJq || process.env.CI)('_commit-guard.sh — mẫu bí mật dùng chung', () => {
+  const matches = (text: string): boolean =>
+    spawnSync(
+      'bash',
+      ['-c', 'source scripts/_commit-guard.sh && grep -Eq "$COMMIT_GUARD_SECRET_RE"'],
+      { cwd: ROOT, input: text },
+    ).status === 0
+
+  it.each(Object.entries(FAKE))('bắt khoá %s', (_name, key) => {
+    expect(matches(`const k = "${key}"`)).toBe(true)
+  })
+
+  it.each([
+    'task-ant-api03-' + 'a'.repeat(30), // tiền tố nằm giữa từ thường
+    'password = process.env.DB_PASSWORD',
+    'sk-short',
+  ])('không chặn oan: %s', (text) => {
+    expect(matches(text)).toBe(false)
+  })
+})
+
+describe.runIf(hasJq || process.env.CI)('pre-commit-gate.sh — rào main/bí mật/file lớn', () => {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'gate-guard-')))
+  afterAll(() => rmSync(base, { recursive: true, force: true }))
+  const git = (...args: string[]) =>
+    execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...args], {
+      cwd: base,
+      stdio: 'ignore',
+    })
+  git('init', '-q', '-b', 'work')
+  git('commit', '-q', '--allow-empty', '-m', 'init')
+
+  const gate = (command: string, env: Record<string, string> = {}) =>
+    runHook(
+      'pre-commit-gate.sh',
+      { cwd: base, tool_input: { command } },
+      { CLAUDE_PROJECT_DIR: base, PRE_COMMIT_GATE_DRY_RUN: '1', ALLOW_COMMIT_ON_MAIN: '', ...env },
+    )
+  const reset = () => {
+    git('reset', '-q')
+    for (const f of readdirSync(base)) if (f !== '.git') rmSync(join(base, f), { recursive: true })
+  }
+
+  it('bí mật đã stage → chặn; --no-verify của commit → cho qua', () => {
+    writeFileSync(join(base, 'a.ts'), `export const k = "${FAKE.anthropic}"\n`)
+    git('add', 'a.ts')
+    expect(gate('git commit -m x').status).toBe(2)
+    expect(gate('git commit --no-verify -m x').status).toBe(0)
+    // `--no-verify` của LỆNH KHÁC không được coi là bỏ cổng
+    expect(gate('git commit -m x && rm --no-verify').status).toBe(2)
+    reset()
+  })
+
+  it('bí mật chưa stage: commit thường cho qua, `git add … && git commit` thì chặn', () => {
+    writeFileSync(join(base, 'b.ts'), `export const k = "${FAKE.google}"\n`)
+    expect(gate('git commit -m x').status).toBe(0)
+    expect(gate('git add b.ts && git commit -m x').status).toBe(2)
+    reset()
+  })
+
+  it('file MỚI > 1 MB → chặn; SỬA file lớn đã có → cho qua', () => {
+    const big = 'x'.repeat(1_100_000)
+    writeFileSync(join(base, 'big.txt'), big)
+    expect(gate('git add big.txt && git commit -m x').status).toBe(2)
+    git('add', 'big.txt')
+    git('commit', '-q', '--no-verify', '-m', 'big')
+    writeFileSync(join(base, 'big.txt'), big + 'y')
+    git('add', 'big.txt')
+    expect(gate('git commit -m x').status).toBe(0)
+    git('commit', '-q', '--no-verify', '-m', 'big2')
+  })
+
+  it('đứng trên main → chặn; ALLOW_COMMIT_ON_MAIN=1 → cho qua; heredoc vẫn là commit', () => {
+    git('switch', '-q', '-c', 'main')
+    expect(gate('git commit -m x').status).toBe(2)
+    expect(gate('git commit -F - <<EOF\nfix: x\nEOF').status).toBe(2)
+    expect(gate('git commit -m x', { ALLOW_COMMIT_ON_MAIN: '1' }).status).toBe(0)
+    // chữ "git commit" chỉ nằm trong commit message của lệnh khác → không phải commit
+    expect(gate("echo 'git commit -m x'").status).toBe(0)
+    git('switch', '-q', 'work')
   })
 })

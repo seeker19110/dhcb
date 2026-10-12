@@ -148,15 +148,29 @@ sweep_hygiene() {
   [ -n "$envs" ] && red "Bí mật" "file .env nằm trong git: $envs" "git rm --cached <file> + thêm vào .gitignore + xoay vòng bí mật"
   # Loại .md khỏi quét PEM/khoá: tài liệu vận hành (vd docs/ke-hoach-khoi-phuc-su-co-server.md)
   # thường TRÍCH DẪN khuôn "-----BEGIN ... PRIVATE KEY-----" để giải thích, không phải khoá thật.
-  hits="$(tracked | grep -zvE '\.(example|sample|md)$|maintenance-sweep\.sh$' \
-    | xargs -0 grep -nIE '(AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{32,}|xox[baprs]-[A-Za-z0-9-]{10,})' 2>/dev/null | head -n 10 || true)"
+  # Mẫu bí mật lấy từ MỘT nguồn chung với cổng commit (scripts/_commit-guard.sh — changelog 0619). Bản cũ tự
+  # chép regex riêng và sót `sk-ant-` (Anthropic — AI chính), `AIza` (Google TTS/Gemini), `github_pat_`.
+  # shellcheck source=scripts/_commit-guard.sh
+  source "$ROOT/scripts/_commit-guard.sh"
+  # CHỈ in `đường-dẫn:dòng` — KHÔNG in nội dung dòng: báo cáo này được dán vào issue/PR, in khoá ra là
+  # làm lộ chính khoá đang cảnh báo (bản cũ in tới 160 ký tự mỗi dòng khớp).
+  hits="$(tracked | grep -zvE '\.(example|sample|md)$|maintenance-sweep\.sh$|_commit-guard\.sh$' \
+    | xargs -0 grep -nIE "$COMMIT_GUARD_SECRET_RE" 2>/dev/null | cut -d: -f1,2 | head -n 10 || true)"
   if [ -n "$hits" ]; then
-    line "- Chuỗi giống bí mật:"; block <<<"$(printf '%s\n' "$hits" | cut -c1-160)"
-    red "Bí mật" "$(printf '%s\n' "$hits" | wc -l | tr -d ' ') dòng giống khoá/token thật trong file được git theo dõi" "xoá khỏi lịch sử + xoay vòng khoá; cân nhắc gitleaks"
+    line "- Chuỗi giống bí mật (chỉ vị trí, nội dung đã che):"; block <<<"$(sed 's/$/ [redacted]/' <<<"$hits")"
+    red "Bí mật" "$(printf '%s\n' "$hits" | wc -l | tr -d ' ') dòng giống khoá/token thật trong file được git theo dõi" "xoá khỏi lịch sử + xoay vòng khoá; khoá GIẢ trong test thì dựng bằng nối chuỗi"
   else
-    line "- Chuỗi giống bí mật (AWS/PEM/GitHub/OpenAI/Slack): không"
+    line "- Chuỗi giống bí mật (Anthropic/Google/GitHub/AWS/PEM/JWT/…): không"
   fi
-  big="$(tracked | xargs -0 -I{} sh -c 'f="{}"; s=$(wc -c <"$f" 2>/dev/null || echo 0); [ "$s" -gt 2097152 ] && echo "$f ($((s/1024)) KB)"' 2>/dev/null || true)"
+  # Đọc tên file bằng `read -d ''` — KHÔNG chèn tên file vào chuỗi `sh -c "…{}…"` (tên file chứa `"`/`$(…)` sẽ
+  # thành lệnh chạy được).
+  big=""
+  local f s
+  while IFS= read -r -d '' f; do
+    [ -f "$f" ] || continue
+    s="$(wc -c <"$f" 2>/dev/null || echo 0)"
+    [ "$s" -gt 2097152 ] && big="${big}${big:+$'\n'}$f ($((s / 1024)) KB)"
+  done < <(tracked)
   line "- File > 2 MB được theo dõi: ${big:-không}"
   [ -n "$big" ] && yel "Vệ sinh" "file lớn trong git: $(printf '%s' "$big" | tr '\n' ' ')" "cân nhắc Git LFS hoặc loại khỏi repo"
 }

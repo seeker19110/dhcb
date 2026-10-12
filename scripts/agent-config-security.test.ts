@@ -238,6 +238,16 @@ describe.runIf(hasJq || process.env.CI)('config-protection.sh', () => {
     '.husky/pre-commit',
     '.claude/settings.json',
     '.claude/hooks/block-dangerous-git.sh',
+    // changelog 0619: cổng còn sót trước đây
+    '.claude/hooks/_lib.sh',
+    'tsconfig.json',
+    'tsconfig.e2e.json',
+    'playwright.config.ts',
+    '.github/dependabot.yml',
+    'scripts/check-spec-paths.ts',
+    'scripts/check-progress-freshness.sh',
+    'scripts/_commit-guard.sh',
+    'scripts/sql-prepare-allowlist.json',
   ])('chạm cổng %s lần đầu trong phiên → bị từ chối kèm lý do', (rel) => {
     expect(decision(run(resolve(ROOT, rel)))).toBe('deny')
   })

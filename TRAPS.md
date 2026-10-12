@@ -825,3 +825,28 @@ trên remote:
 2. Xin chủ dự án xác nhận xoá nhánh remote đó (CLAUDE.md mục 9: chỉ xoá nhánh khi người dùng xác
    nhận rõ ràng): `git push origin --delete <nhánh>`. PR cũ đã merge nên không mất gì.
 3. Tạo lại nhánh: `git switch -C <nhánh> origin/main`, rồi push thường.
+
+## 22. Hook chặn lệnh nguy hiểm so khớp trên chuỗi THÔ → lọt biến thể (refspec `+`, cờ gộp, `bash -c`, nháy lồng)
+
+**Ngày/PR:** 2026-10-12, đợt `0619` (đối chiếu khung `seeker19110/project-template` @ `59bd1d1`,
+TRAPS mục 53/62 của khung). Đo thật bằng payload JSON giống Claude Code, KHÔNG phải đọc mã đoán.
+
+**Khuôn lỗi:** hook PreToolUse (`block-dangerous-git.sh`, `pre-commit-gate.sh`) dò lệnh bằng regex
+trên chuỗi lệnh sau một bước "bỏ phần trong nháy" tự viết. Bản cũ để LỌT 10 biến thể:
+`git push origin +HEAD:main` / `+refs/heads/main` (force bằng refspec, không có chữ `--force`),
+`git push origin :main` / `--delete main`, `git push -fu` (cờ gộp), `bash -c 'git reset --hard'`
+(lệnh nằm TRONG nháy của vỏ bọc), `"don't" && git reset --hard && echo "it's"` (bỏ nháy đơn trước
+nên cặp `'…'` ghép từ hai chuỗi nháy kép nuốt mất lệnh giữa), heredoc `<<-EOF` có dòng kết thúc
+thụt tab (mọi dòng sau bị coi là thân heredoc), `git checkout -- .`, `git stash clear/drop`.
+Cùng họ: `pre-commit-gate` coi `git commit -m x && rm --no-verify` là bỏ cổng (cờ của lệnh khác).
+Hai hook giữ HAI bản sao bộ lọc đã lệch nhau — sửa một chỗ, chỗ kia vẫn hở.
+
+**Cách rà:** hook "chặn được X" chỉ tin khi có test bảng gồm cả biến thể (refspec, cờ gộp, vỏ bọc,
+nháy lồng, heredoc thụt tab) VÀ ca không được chặn oan. Thấy hai hook tự chép cùng một bộ lọc →
+nghi lệch nhau.
+
+**Cổng chốt chặn:** bộ lọc một nguồn `.claude/hooks/_lib.sh` (`hook_scan_text`: bỏ thân heredoc,
+bỏ nháy trong MỘT lượt, vỏ bọc chạy chuỗi thì chỉ bỏ ký tự nháy); `block-dangerous-git.sh` so từng
+token của đoạn `git push` (refspec `+…`, `-[A-Za-z]*f…`, đích `src:dst` chuẩn hoá); `--no-verify`
+chỉ tính khi cùng đoạn với `commit`. Test bảng: `scripts/claude-hooks.test.ts` (describe
+"block-dangerous-git.sh" + "pre-commit-gate.sh — rào main/bí mật/file lớn").
