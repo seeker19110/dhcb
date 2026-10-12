@@ -111,8 +111,24 @@ async function seedPerson(pool: Pool, tag: string): Promise<{ userId: string; pe
      values ($1, $2, 'self', 'create') returning id`,
     [decision, p],
   )
-  await q(
+  const message = await q(
     `insert into personal.companion_messages (person_id, role, content) values ($1, 'user', 'xin chào') returning id`,
+    [p],
+  )
+  // GĐ2b (0096): khối cố định, tóm tắt cuộn, con trỏ phản tỉnh.
+  await q(
+    `insert into personal.companion_core_blocks (person_id, label, content) values ($1, 'about_me', 'Về tôi') returning id`,
+    [p],
+  )
+  await q(
+    `insert into personal.companion_conversation_summaries
+       (person_id, domain, summary, summarized_through_at, summarized_through_id)
+     values ($1, 'learning', 'Tóm tắt', now(), $2) returning id`,
+    [p, message],
+  )
+  await q(
+    `insert into personal.companion_reflection_state (person_id, last_attempt_at)
+     values ($1, now()) returning person_id as id`,
     [p],
   )
   const project = await q(

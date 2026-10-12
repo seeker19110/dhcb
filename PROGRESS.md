@@ -182,11 +182,16 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   ADR-0015): sửa lỗi im lặng consent scope không cấp được (Companion chưa từng đọc ký ức/hồ sơ/lịch
   sử), hai công tắc = hai consent chuẩn, migration 0094 (FTS unaccent + embedding Gemini `real[]`,
   không pgvector), truy xuất lai RRF + điểm 3 thành phần, trang `/ban-dong-hanh/ky-uc`, phiên không
-  lưu. **Kế tiếp: GĐ2b** (trích xuất ký ức sau phiên qua ProposedAction, khối lõi + tóm tắt cuộn —
-  cần đặc tả riêng), rồi GĐ3 tác tử dùng công cụ chỉ-đọc thật, GĐ4 bản tin chủ động bằng dữ liệu
-  thật. Việc tay: sau deploy chạy `migrate:pg` (0094 cần extension `unaccent`), kiểm
-  `GEMINI_API_KEY` production, bật hai công tắc trên tài khoản thật rồi thử "ghi nhớ…"; kiểm
-  stream + bộ phân loại GĐ1 với key thật.
+  lưu. **GĐ2b ĐÃ LÀM** (PR #1377, `docs/changelog/0617-*.md`, đặc tả
+  `docs/specs/2026-10-12-ban-dong-hanh-gd2b-trich-ky-uc-khoi-loi.md`): bộ phản tỉnh sau buổi (hẹn
+  giờ 10 phút, công tắc thứ ba "Gợi ý điều nên nhớ", 1 lượt AI/lần, trần 4 lần/ngày) CHỈ đề xuất
+  ký ức thêm/cập nhật/vô hiệu thành gợi ý chờ duyệt (không gì được ghi khi chưa bấm), vô hiệu
+  bằng `valid_to` + `superseded_by` không xoá; hai khối ghi nhớ cố định người dùng tự viết; tóm tắt
+  cuộn theo miền (cửa sổ 20 tin, đủ 14 tin chưa tóm tắt thì gập 10 tin cũ nhất), migration 0096. **Kế tiếp: GĐ3**
+  tác tử dùng công cụ chỉ-đọc thật, rồi GĐ4 bản tin chủ động bằng dữ liệu thật. Việc tay: sau
+  deploy chạy `migrate:pg` (0094 cần extension `unaccent`; 0096 ba bảng mới), kiểm
+  `GEMINI_API_KEY` production, bật ba công tắc trên tài khoản thật, trò chuyện rồi chờ ≥ 15 phút
+  xem gợi ý hiện ở `/ban-dong-hanh/ky-uc`; kiểm stream + bộ phân loại GĐ1 với key thật.
 
 - **[2026-10-10] Sửa theo audit toàn diện** ([báo cáo](docs/audit/2026-10-10-audit-toan-dien-va-toi-uu.md),
   `docs/changelog/0580-*.md`). Đợt đầu (JS khởi động −15,9 kB, chunk trang xếp lớp 2,95 MB → 11 kB) đã

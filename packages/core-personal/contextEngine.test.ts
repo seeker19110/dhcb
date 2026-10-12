@@ -44,6 +44,16 @@ vi.mock('./memoryRetrieval.js', () => ({
   searchMemories: (...a: unknown[]) => memoryRetrieval.searchMemories(...a),
 }))
 
+// GĐ2b: khối cố định + tóm tắt cuộn — mặc định rỗng để các ca cũ không đổi.
+const coreBlocks = vi.hoisted(() => ({
+  listCoreBlocks: vi.fn(),
+  getConversationSummary: vi.fn(),
+}))
+vi.mock('./coreMemoryBlocks.js', () => ({
+  listCoreBlocks: (...a: unknown[]) => coreBlocks.listCoreBlocks(...a),
+  getConversationSummary: (...a: unknown[]) => coreBlocks.getConversationSummary(...a),
+}))
+
 /** Bọc một bản ghi thành kết quả của `searchMemories` — điểm số không quan trọng với test này. */
 const scored = (record: Record<string, unknown>) => ({
   record,
@@ -57,6 +67,8 @@ const mockPool = {} as Pool
 
 beforeEach(() => {
   vi.clearAllMocks()
+  coreBlocks.listCoreBlocks.mockResolvedValue([])
+  coreBlocks.getConversationSummary.mockResolvedValue(null)
   consents.isConsentActive.mockResolvedValue(true)
   policies.resolveAuthority.mockResolvedValue(null)
   lifeGraph.listNodes.mockResolvedValue([
@@ -699,5 +711,133 @@ describe('lịch sử Companion — hết ngân sách thì giữ lượt MỚI N
       'companion_message:user:learning',
       'companion_message:companion:learning',
     ])
+  })
+})
+
+describe('GĐ2b — khối ghi nhớ cố định + tóm tắt cuộn', () => {
+  const BLOCK_ID = '55555555-5555-4555-8555-555555555555'
+  const SUMMARY_ID = '66666666-6666-4666-8666-666666666666'
+  const base = {
+    personId: PERSON,
+    requestId: 'gd2b',
+    requestText: 'Hôm nay học gì?',
+    domain: 'learning',
+    purpose: 'companion_conversation',
+  }
+
+  beforeEach(() => {
+    coreBlocks.listCoreBlocks.mockResolvedValue([
+      { id: BLOCK_ID, label: 'about_me', content: 'Lớp 10, thích vẽ', version: 1 },
+      { id: null, label: 'current_focus', content: '', version: 0 },
+    ])
+    coreBlocks.getConversationSummary.mockResolvedValue({
+      id: SUMMARY_ID,
+      domain: 'learning',
+      summary: 'Đã ôn phần Nghe IELTS.',
+      updatedAt: '2026-10-12T00:00:00.000Z',
+      through: { at: new Date(), id: SUMMARY_ID },
+    })
+  })
+
+  it('bật "ký ức" → khối cố định đứng NGAY sau câu hỏi; khối rỗng/chưa viết không nạp', async () => {
+    const pkg = await buildContextPackage(mockPool, base)
+    expect(pkg.items[0]?.sourceType).toBe('current_request')
+    expect(pkg.items[1]).toMatchObject({
+      sourceType: 'user_declared_fact',
+      sourceId: BLOCK_ID,
+      provenance: 'core_block:about_me',
+      content: '[Về tôi (người dùng tự viết)] Lớp 10, thích vẽ',
+    })
+    expect(pkg.items.filter((i) => i.provenance.startsWith('core_block:'))).toHaveLength(1)
+  })
+
+  it('tắt "ký ức" → không đọc khối cố định', async () => {
+    consents.isConsentActive.mockImplementation(
+      async (_p: unknown, _id: unknown, scope: string) => scope !== COMPANION_CONSENT_SCOPES.memory,
+    )
+    const pkg = await buildContextPackage(mockPool, base)
+    expect(coreBlocks.listCoreBlocks).not.toHaveBeenCalled()
+    expect(pkg.items.some((i) => i.provenance.startsWith('core_block:'))).toBe(false)
+  })
+
+  it('bật "lịch sử" → tóm tắt đúng miền, đứng sau lịch sử trong thứ tự gói; không bị coi là tin nhắn', async () => {
+    const query = vi.fn(async () => ({
+      rows: [
+        {
+          id: '77777777-7777-4777-8777-777777777777',
+          role: 'user',
+          content: 'chào',
+          domain: 'learning',
+          intent: null,
+          created_at: new Date(),
+          sensitivity: 'personal',
+        },
+      ],
+    }))
+    const pkg = await buildContextPackage({ query } as unknown as Pool, {
+      ...base,
+      includeCompanionHistory: true,
+    })
+    expect(coreBlocks.getConversationSummary).toHaveBeenCalledWith(
+      expect.anything(),
+      PERSON,
+      'learning',
+    )
+    const summary = pkg.items.find((i) => i.sourceId === SUMMARY_ID)
+    expect(summary).toMatchObject({
+      sourceType: 'recent_episodic_context',
+      provenance: 'companion_summary:learning',
+      content: '[Tóm tắt các buổi trò chuyện trước] Đã ôn phần Nghe IELTS.',
+    })
+  })
+
+  it('ngân sách chỉ đủ lịch sử → tóm tắt rụng trước, lượt vừa nói được giữ', async () => {
+    const query = vi.fn(async () => ({
+      rows: [
+        {
+          id: '77777777-7777-4777-8777-777777777777',
+          role: 'user',
+          content: 'chào bạn nhé',
+          domain: 'learning',
+          intent: null,
+          created_at: new Date(),
+          sensitivity: 'personal',
+        },
+      ],
+    }))
+    coreBlocks.listCoreBlocks.mockResolvedValue([])
+    memoryRetrieval.searchMemories.mockResolvedValue([])
+    lifeGraph.listNodes.mockResolvedValue([])
+    personService.listFacts.mockResolvedValue([])
+    const pkg = await buildContextPackage({ query } as unknown as Pool, {
+      ...base,
+      requestText: 'hi',
+      includeCompanionHistory: true,
+      tokenBudget: 1 + 4 + 2,
+    })
+    expect(pkg.items.some((i) => i.provenance.startsWith('companion_message:'))).toBe(true)
+    expect(pkg.items.some((i) => i.sourceId === SUMMARY_ID)).toBe(false)
+  })
+
+  it('tắt "lịch sử" → không đọc tóm tắt; phiên tạm → không đọc cả hai', async () => {
+    await buildContextPackage(mockPool, base)
+    expect(coreBlocks.getConversationSummary).not.toHaveBeenCalled()
+    coreBlocks.listCoreBlocks.mockClear()
+
+    await buildContextPackage(mockPool, {
+      ...base,
+      includeCompanionHistory: true,
+      includePersonalContext: false,
+    })
+    expect(coreBlocks.listCoreBlocks).not.toHaveBeenCalled()
+    expect(coreBlocks.getConversationSummary).not.toHaveBeenCalled()
+  })
+
+  it('đọc khối cố định / tóm tắt lỗi → bỏ nhóm đó, gói vẫn dựng được', async () => {
+    coreBlocks.listCoreBlocks.mockRejectedValue(new Error('db down'))
+    coreBlocks.getConversationSummary.mockRejectedValue(new Error('db down'))
+    const pkg = await buildContextPackage(mockPool, { ...base, includeCompanionHistory: true })
+    expect(pkg.items[0]?.sourceType).toBe('current_request')
+    expect(pkg.items.some((i) => i.provenance.startsWith('core_block:'))).toBe(false)
   })
 })

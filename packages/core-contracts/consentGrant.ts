@@ -54,16 +54,22 @@ export const COMPANION_CONSENT_SCOPES = {
   memory: 'personal_memory.read',
   /** Lịch sử trò chuyện gần đây với Bạn Đồng Hành. */
   history: 'companion_history.read',
+  /**
+   * GĐ2b (2026-10-12): cho phép AI đọc lại buổi trò chuyện đã xong để ĐỀ XUẤT điều nên nhớ
+   * (người dùng vẫn phải bấm duyệt từng gợi ý). Chỉ có tác dụng khi `memory` cũng bật.
+   */
+  suggest: 'memory_suggestion.create',
 } as const
 
 export type CompanionConsentScope =
   (typeof COMPANION_CONSENT_SCOPES)[keyof typeof COMPANION_CONSENT_SCOPES]
 
-/** Hai công tắc trên trang "Bạn Đồng Hành nhớ gì về tôi" — phản ánh đúng hai consent ở trên. */
+/** Ba công tắc trên trang "Bạn Đồng Hành nhớ gì về tôi" — phản ánh đúng ba consent ở trên. */
 export const CompanionMemorySettingsSchema = z
   .object({
     rememberMemories: z.boolean(),
     useHistory: z.boolean(),
+    suggestMemories: z.boolean(),
   })
   .strict()
 

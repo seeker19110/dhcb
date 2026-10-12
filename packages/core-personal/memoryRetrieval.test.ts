@@ -141,6 +141,25 @@ describe('searchMemories', () => {
     expect(touch.params).toEqual([PERSON, [id(1), id(2)]])
   })
 
+  it('touch: false (bộ phản tỉnh GĐ2b) → trả kết quả nhưng KHÔNG đánh dấu đã dùng', async () => {
+    const { pool, calls } = poolFor({ lexical: [id(1)], base: [row(1), row(2)] })
+    const out = await searchMemories(pool, PERSON, {
+      query: 'ký ức',
+      now: NOW,
+      embeddingProvider: null,
+      touch: false,
+    })
+    expect(out).toHaveLength(2)
+    expect(calls.some((c) => c.sql.includes('last_accessed_at = now()'))).toBe(false)
+  })
+
+  it('chỉ ký ức còn hiệu lực (valid_to is null) vào tập ứng viên — bản đã bị thay/vô hiệu không lọt', async () => {
+    const { pool, calls } = poolFor({ base: [row(1)] })
+    await searchMemories(pool, PERSON, { query: 'x', now: NOW, embeddingProvider: null })
+    const base = calls.find((c) => c.sql.includes('order by importance desc'))!
+    expect(base.sql).toContain('valid_to is null')
+  })
+
   it('nhánh nghĩa: cosine trong Node, RRF gộp — ký ức có mặt cả hai danh sách đứng đầu', async () => {
     embeddings.embedQuery.mockResolvedValue([1, 0])
     const { pool } = poolFor({

@@ -1,10 +1,12 @@
 // api/personal/companion-memory.ts — Cài đặt ký ức của Bạn Đồng Hành (GĐ2a, đặc tả
-// `docs/specs/2026-10-11-ban-dong-hanh-gd2a-tri-nho-truy-xuat.md`).
+// `docs/specs/2026-10-11-ban-dong-hanh-gd2a-tri-nho-truy-xuat.md`; mở rộng GĐ2b
+// `docs/specs/2026-10-12-ban-dong-hanh-gd2b-trich-ky-uc-khoi-loi.md`).
 //
-// Hai công tắc trên trang "Bạn Đồng Hành nhớ gì về tôi" = hai consent chuẩn
+// Ba công tắc trên trang "Bạn Đồng Hành nhớ gì về tôi" = ba consent chuẩn
 // (`COMPANION_CONSENT_SCOPES`, purpose `COMPANION_CONSENT_PURPOSE`). GET đọc trạng thái consent
-// thật; POST bật → `grantConsent`, tắt → `revokeConsent` bản đang active. personId luôn suy từ
-// token, không nhận từ client.
+// thật + hai khối ghi nhớ cố định + các bản tóm tắt cuộn; POST bật → `grantConsent`, tắt →
+// `revokeConsent` bản đang active; `set_core_block` ghi khối (khoá phiên bản); `clear_summary` xoá
+// nội dung một bản tóm tắt. personId luôn suy từ token, không nhận từ client.
 import { z } from 'zod'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import type { Pool } from 'pg'
@@ -22,17 +24,62 @@ import {
   COMPANION_CONSENT_SCOPES,
   type CompanionMemorySettings,
 } from '@dhcb/core-contracts/consentGrant'
+import {
+  CORE_MEMORY_BLOCK_MAX_CHARS,
+  CoreMemoryBlockLabelSchema,
+  type CoreMemoryBlock,
+  type ConversationSummary,
+} from '@dhcb/core-contracts/personalMemory'
+import {
+  listCoreBlocks,
+  setCoreBlock,
+  listConversationSummaries,
+  clearConversationSummary,
+  type StoredCoreBlock,
+} from '@dhcb/core-personal/coreMemoryBlocks'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
-const PostSchema = z
-  .object({
-    action: z.literal('set_settings'),
-    rememberMemories: z.boolean().optional(),
-    useHistory: z.boolean().optional(),
-  })
-  .strict()
+const PostSchema = z.discriminatedUnion('action', [
+  z
+    .object({
+      action: z.literal('set_settings'),
+      rememberMemories: z.boolean().optional(),
+      useHistory: z.boolean().optional(),
+      suggestMemories: z.boolean().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('set_core_block'),
+      label: CoreMemoryBlockLabelSchema,
+      // Rỗng = xoá khối. Trần kiểm ở đây (trước trim) rộng thêm chút cho khoảng trắng đầu/cuối;
+      // setCoreBlock kiểm lại đúng 1.500 sau trim.
+      content: z.string().max(CORE_MEMORY_BLOCK_MAX_CHARS + 200),
+      expectedVersion: z.number().int().nonnegative(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('clear_summary'),
+      domain: z.string().min(1).max(100),
+    })
+    .strict(),
+])
+
+/** Bỏ `id` nội bộ trước khi trả ra client — client định danh khối bằng `label`. */
+function publicBlock(block: StoredCoreBlock): CoreMemoryBlock {
+  const { label, content, version, updatedAt } = block
+  return updatedAt ? { label, content, version, updatedAt } : { label, content, version }
+}
+
+/** Chỉ bản tóm tắt CÒN nội dung, không lộ con trỏ nội bộ. */
+async function readSummaries(pool: Pool, personId: string): Promise<ConversationSummary[]> {
+  return (await listConversationSummaries(pool, personId))
+    .filter((s) => s.summary.trim())
+    .map(({ domain, summary, updatedAt }) => ({ domain, summary, updatedAt }))
+}
 
 /** Consent đang active của một scope (đúng purpose Companion), nếu có. */
 async function findActiveConsent(pool: Pool, personId: string, scope: string) {
@@ -41,11 +88,16 @@ async function findActiveConsent(pool: Pool, personId: string, scope: string) {
 }
 
 async function readSettings(pool: Pool, personId: string): Promise<CompanionMemorySettings> {
-  const [memory, history] = await Promise.all([
+  const [memory, history, suggest] = await Promise.all([
     findActiveConsent(pool, personId, COMPANION_CONSENT_SCOPES.memory),
     findActiveConsent(pool, personId, COMPANION_CONSENT_SCOPES.history),
+    findActiveConsent(pool, personId, COMPANION_CONSENT_SCOPES.suggest),
   ])
-  return { rememberMemories: Boolean(memory), useHistory: Boolean(history) }
+  return {
+    rememberMemories: Boolean(memory),
+    useHistory: Boolean(history),
+    suggestMemories: Boolean(suggest),
+  }
 }
 
 /** Đưa một công tắc về trạng thái mong muốn — lũy đẳng: đã đúng trạng thái thì không ghi gì. */
@@ -81,7 +133,16 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     if (req.method === 'GET') {
-      return jsonResponse({ settings: await readSettings(pool, person.id) }, 200, headers)
+      const [settings, blocks, summaries] = await Promise.all([
+        readSettings(pool, person.id),
+        listCoreBlocks(pool, person.id),
+        readSummaries(pool, person.id),
+      ])
+      return jsonResponse(
+        { settings, coreBlocks: blocks.map(publicBlock), summaries },
+        200,
+        headers,
+      )
     }
 
     const parsed = await readJsonBody(req)
@@ -90,16 +151,30 @@ export default async function handler(req: Request): Promise<Response> {
     const body = validateBody(PostSchema, parsed.raw)
     if (!body.ok) return jsonResponse({ error: body.error.message }, body.error.status, headers)
 
-    if (body.data.rememberMemories !== undefined) {
-      await applySwitch(
+    const data = body.data
+    if (data.action === 'set_core_block') {
+      const block = await setCoreBlock(
         pool,
         person.id,
-        COMPANION_CONSENT_SCOPES.memory,
-        body.data.rememberMemories,
+        data.label,
+        data.content,
+        data.expectedVersion,
       )
+      return jsonResponse({ block: publicBlock(block) }, 200, headers)
     }
-    if (body.data.useHistory !== undefined) {
-      await applySwitch(pool, person.id, COMPANION_CONSENT_SCOPES.history, body.data.useHistory)
+    if (data.action === 'clear_summary') {
+      await clearConversationSummary(pool, person.id, data.domain)
+      return jsonResponse({ summaries: await readSummaries(pool, person.id) }, 200, headers)
+    }
+
+    if (data.rememberMemories !== undefined) {
+      await applySwitch(pool, person.id, COMPANION_CONSENT_SCOPES.memory, data.rememberMemories)
+    }
+    if (data.useHistory !== undefined) {
+      await applySwitch(pool, person.id, COMPANION_CONSENT_SCOPES.history, data.useHistory)
+    }
+    if (data.suggestMemories !== undefined) {
+      await applySwitch(pool, person.id, COMPANION_CONSENT_SCOPES.suggest, data.suggestMemories)
     }
     return jsonResponse({ settings: await readSettings(pool, person.id) }, 200, headers)
   } catch (err) {

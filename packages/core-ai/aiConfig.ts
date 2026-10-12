@@ -26,7 +26,14 @@ export const DEFAULT_ANTHROPIC_SMART_MODEL = 'claude-sonnet-5-5'
 
 /** Nhiệm vụ AI — server chọn model/effort/trần token theo đây. */
 export type AiTask =
-  'converse' | 'grade' | 'companion' | 'code_feedback' | 'action_canvas' | 'debate' | 'safety'
+  | 'converse'
+  | 'grade'
+  | 'companion'
+  | 'code_feedback'
+  | 'action_canvas'
+  | 'debate'
+  | 'safety'
+  | 'memory_reflect'
 
 /** Nhiệm vụ mà CLIENT được phép xin qua /api/agent (các nhiệm vụ còn lại chỉ server tự gọi). */
 export const CLIENT_AI_TASKS: ReadonlySet<AiTask> = new Set<AiTask>(['converse', 'grade'])
@@ -60,6 +67,10 @@ const ROUTE_TABLE: Record<AiTask, { tier: Tier } & Omit<AnthropicRoute, 'model'>
   // Lớp an toàn Companion (phân loại dấu hiệu khủng hoảng, trả JSON ngắn): chạy MỖI lượt, song
   // song với dựng ngữ cảnh → Haiku, nghĩ ít, hạn chót ngắn (quá hạn thì rơi về bộ lọc từ khoá).
   safety: { tier: 'fast', effort: 'low', maxTokens: 1024, timeoutMs: 8_000 },
+  // Phản tỉnh sau buổi trò chuyện của Companion (GĐ2b — trích gợi ý ký ức + tóm tắt cuộn, trả
+  // JSON): chạy NỀN sau khi người dùng im ≥ 15 phút, không ai đứng chờ → Haiku, nghĩ ít. Trần
+  // token đủ cho ≤ 5 thao tác + tóm tắt ≤ 1.500 ký tự (cộng phần nghĩ).
+  memory_reflect: { tier: 'fast', effort: 'low', maxTokens: 4096, timeoutMs: 30_000 },
 }
 
 // Đọc env LÚC GỌI (không phải lúc import) — test đổi env được, và PM2 reload đọc giá trị mới.

@@ -12,7 +12,11 @@
 import type { PoolClient } from 'pg'
 import { ValidationError } from '@dhcb/core-errors/appError'
 import { declareFactWithClient } from './personService.js'
-import { ingestMemoryWithClient } from './memoryService.js'
+import {
+  ingestMemoryWithClient,
+  invalidateMemoryWithClient,
+  supersedeMemoryWithClient,
+} from './memoryService.js'
 
 /**
  * Những capability GHI vào hồ sơ/ký ức cá nhân — LUÔN phải hỏi người dùng xác nhận trước khi
@@ -24,6 +28,9 @@ import { ingestMemoryWithClient } from './memoryService.js'
 export const CONFIRMATION_REQUIRED_CAPABILITIES = new Set([
   'profile.update_fact',
   'memory.create_record',
+  // GĐ2b (2026-10-12): bộ phản tỉnh sau buổi chỉ ĐỀ XUẤT thay/vô hiệu ký ức — người dùng duyệt.
+  'memory.supersede_record',
+  'memory.invalidate_record',
 ])
 
 export function requiresUserConfirmation(capabilityId: string): boolean {
@@ -45,6 +52,46 @@ function readString(payload: Record<string, unknown>, key: string): string | und
   if (typeof value !== 'string') return undefined
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : undefined
+}
+
+/** Rút số nguyên dương (vd `targetVersion`); trả undefined nếu thiếu hoặc sai kiểu. */
+function readPositiveInt(payload: Record<string, unknown>, key: string): number | undefined {
+  const value = payload[key]
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : undefined
+}
+
+/** `importance` 1–10 do bộ phản tỉnh chấm; ngoài khoảng/sai kiểu thì bỏ (memoryService dùng mặc định). */
+function readImportance(payload: Record<string, unknown>): number | undefined {
+  const value = payload.importance
+  return typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 10
+    ? value
+    : undefined
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * `sourceMessageId` chỉ được ghi khi tin nhắn đó TỒN TẠI và là của CHÍNH người này — payload nằm
+ * trong bảng đề xuất, không được dùng nó để nối ký ức vào tin nhắn của người khác; tin đã bị xoá
+ * (lịch sử bị dọn) thì bỏ liên kết thay vì làm hỏng cả lần xác nhận vì khoá ngoại.
+ */
+async function resolveSourceMessageId(
+  client: PoolClient,
+  personId: string,
+  payload: Record<string, unknown>,
+): Promise<string | undefined> {
+  const raw = readString(payload, 'sourceMessageId')
+  if (!raw || !UUID_RE.test(raw)) return undefined
+  const { rows } = await client.query<{ id: string }>(
+    `select id from personal.companion_messages where id = $1 and person_id = $2`,
+    [raw, personId],
+  )
+  return rows[0]?.id
+}
+
+/** Nhãn nguồn của ký ức: gợi ý sau buổi (`origin: 'reflection'`) khác câu "ghi nhớ…" trong lượt. */
+function memoryProvenance(payload: Record<string, unknown>): string {
+  return payload.origin === 'reflection' ? 'companion:reflection' : 'companion:conversation'
 }
 
 /**
@@ -104,14 +151,18 @@ export async function executeCapability(
         throw new ValidationError('Thiếu nội dung để lưu vào ký ức (content)')
       }
 
+      const importance = readImportance(payload)
+      const sourceMessageId = await resolveSourceMessageId(client, personId, payload)
       const { record, evaluation } = await ingestMemoryWithClient(
         client,
         personId,
         {
           namespace: (readString(payload, 'namespace') ?? 'semantic') as 'semantic',
           content,
-          provenance: 'companion:conversation',
+          provenance: memoryProvenance(payload),
           sensitivity: (readString(payload, 'sensitivity') ?? 'personal') as 'personal',
+          ...(importance !== undefined ? { importance } : {}),
+          ...(sourceMessageId ? { sourceMessageId } : {}),
         },
         actor,
       )
@@ -121,6 +172,58 @@ export async function executeCapability(
         toolId: capabilityId,
         executedAt,
         detail: { recordId: record.id, outcome: evaluation.outcome },
+      }
+    }
+
+    case 'memory.supersede_record': {
+      const recordId = readString(payload, 'targetRecordId')
+      const expectedVersion = readPositiveInt(payload, 'targetVersion')
+      const content = readString(payload, 'content')
+      if (!recordId || !expectedVersion || !content) {
+        throw new ValidationError('Thiếu targetRecordId/targetVersion/content để thay ký ức')
+      }
+      const importance = readImportance(payload)
+      const sourceMessageId = await resolveSourceMessageId(client, personId, payload)
+      const { record, previous } = await supersedeMemoryWithClient(
+        client,
+        personId,
+        {
+          recordId,
+          expectedVersion,
+          content,
+          provenance: memoryProvenance(payload),
+          ...(importance !== undefined ? { importance } : {}),
+          ...(sourceMessageId ? { sourceMessageId } : {}),
+        },
+        actor,
+      )
+      return {
+        status: 'ok',
+        toolId: capabilityId,
+        executedAt,
+        detail: { recordId: record.id, supersededRecordId: previous.id },
+      }
+    }
+
+    case 'memory.invalidate_record': {
+      const recordId = readString(payload, 'targetRecordId')
+      const expectedVersion = readPositiveInt(payload, 'targetVersion')
+      if (!recordId || !expectedVersion) {
+        throw new ValidationError('Thiếu targetRecordId/targetVersion để bỏ ký ức cũ')
+      }
+      const record = await invalidateMemoryWithClient(
+        client,
+        personId,
+        recordId,
+        expectedVersion,
+        actor,
+        readString(payload, 'reason') ?? '',
+      )
+      return {
+        status: 'ok',
+        toolId: capabilityId,
+        executedAt,
+        detail: { recordId: record.id, validTo: record.validTo ?? null },
       }
     }
 

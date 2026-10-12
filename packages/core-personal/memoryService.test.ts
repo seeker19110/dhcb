@@ -23,7 +23,10 @@ import {
   touchMemoryAccess,
   backfillMemoryEmbeddings,
   BACKFILL_EMBEDDING_BATCH,
+  supersedeMemoryWithClient,
+  invalidateMemoryWithClient,
 } from './memoryService.js'
+import type { PoolClient } from 'pg'
 
 beforeEach(() => {
   embedMock.embedForStorage.mockReset()
@@ -700,5 +703,132 @@ describe('memoryService — GĐ2a: embedding lúc ghi, sửa nội dung, đánh 
     expect(done).toBe(n - 2)
     expect(updates).toHaveLength(n - 2)
     expect(updates[0]![2]).toBe('gemini-embedding-2')
+  })
+})
+
+describe('memoryService — GĐ2b: thay và vô hiệu ký ức (không xoá)', () => {
+  const NEW_ID = '33333333-3333-4333-8333-333333333333'
+
+  function clientWith(lockRow: Record<string, unknown> | null) {
+    const calls: Array<{ sql: string; params: unknown[] }> = []
+    const query = vi.fn(async (sql: string, params: unknown[] = []) => {
+      calls.push({ sql, params })
+      if (sql.includes('for update')) return { rows: lockRow ? [lockRow] : [] }
+      if (sql.includes('insert into personal.memory_records\n'))
+        return { rows: [memoryRow({ id: NEW_ID, content: params[2], importance: params[5] })] }
+      if (sql.includes('set valid_to = now(), superseded_by'))
+        return { rows: [memoryRow({ valid_to: NOW, superseded_by: NEW_ID, version: 2 })] }
+      if (sql.includes('set valid_to = now(), updated_at'))
+        return { rows: [memoryRow({ valid_to: NOW, version: 2 })] }
+      return { rows: [] }
+    })
+    return { client: { query } as unknown as PoolClient, calls }
+  }
+
+  it('supersede: bản mới giữ namespace + độ nhạy bản cũ; bản cũ có valid_to + superseded_by; audit INSERT + UPDATE', async () => {
+    embedMock.embedForStorage.mockResolvedValue({ vector: [0.1, 0.2], model: 'm' })
+    const { client, calls } = clientWith(
+      memoryRow({ namespace: 'preference', sensitivity: 'sensitive', importance: 6 }),
+    )
+    const out = await supersedeMemoryWithClient(
+      client,
+      PERSON,
+      {
+        recordId: RECORD_ID,
+        expectedVersion: 1,
+        content: '  Nhắm IELTS 7.0  ',
+        provenance: 'companion:reflection',
+      },
+      'user:1',
+    )
+    expect(out.record.id).toBe(NEW_ID)
+    expect(out.record.content).toBe('Nhắm IELTS 7.0')
+    expect(out.previous.validTo).toBe(NOW.toISOString())
+    expect(out.previous.supersededBy).toBe(NEW_ID)
+    const insert = calls.find((c) => c.sql.includes('insert into personal.memory_records\n'))!
+    expect(insert.params.slice(0, 6)).toEqual([
+      PERSON,
+      'preference',
+      'Nhắm IELTS 7.0',
+      'companion:reflection',
+      'sensitive',
+      6, // không truyền importance → giữ của bản cũ
+    ])
+    expect(insert.params[7]).toEqual([0.1, 0.2])
+    const audit = calls.find((c) => c.sql.includes('memory_records_audit_log'))!
+    expect(audit.sql).toContain("'INSERT'")
+    expect(audit.sql).toContain("'UPDATE'")
+    expect(calls.some((c) => c.sql.includes('delete from'))).toBe(false)
+  })
+
+  it('supersede: importance truyền vào được kẹp 1–10; sourceMessageId ghi vào bản mới', async () => {
+    const { client, calls } = clientWith(memoryRow())
+    await supersedeMemoryWithClient(client, PERSON, {
+      recordId: RECORD_ID,
+      expectedVersion: 1,
+      content: 'x',
+      provenance: 'p',
+      importance: 99,
+      sourceMessageId: NEW_ID,
+    })
+    const insert = calls.find((c) => c.sql.includes('insert into personal.memory_records\n'))!
+    expect(insert.params[5]).toBe(10)
+    expect(insert.params[6]).toBe(NEW_ID)
+  })
+
+  it('supersede: nội dung rỗng/quá dài → ValidationError trước khi khoá dòng', async () => {
+    const { client, calls } = clientWith(memoryRow())
+    for (const content of ['   ', 'a'.repeat(2001)]) {
+      await expect(
+        supersedeMemoryWithClient(client, PERSON, {
+          recordId: RECORD_ID,
+          expectedVersion: 1,
+          content,
+          provenance: 'p',
+        }),
+      ).rejects.toThrow(ValidationError)
+    }
+    expect(calls).toHaveLength(0)
+  })
+
+  it('bản gốc không tồn tại → 404; đã quên / đã bị thay / lệch version → 409', async () => {
+    const input = { recordId: RECORD_ID, expectedVersion: 1, content: 'x', provenance: 'p' }
+    await expect(supersedeMemoryWithClient(clientWith(null).client, PERSON, input)).rejects.toThrow(
+      NotFoundError,
+    )
+    for (const lock of [
+      memoryRow({ status: 'expired' }),
+      memoryRow({ valid_to: NOW }),
+      memoryRow({ version: 3 }),
+    ]) {
+      await expect(
+        supersedeMemoryWithClient(clientWith(lock).client, PERSON, input),
+      ).rejects.toThrow(ConflictError)
+      await expect(
+        invalidateMemoryWithClient(clientWith(lock).client, PERSON, RECORD_ID, 1),
+      ).rejects.toThrow(ConflictError)
+    }
+  })
+
+  it('invalidate: đặt valid_to, giữ status, audit UPDATE có lý do cắt ≤ 300 ký tự', async () => {
+    const { client, calls } = clientWith(memoryRow())
+    const out = await invalidateMemoryWithClient(
+      client,
+      PERSON,
+      RECORD_ID,
+      1,
+      'user:1',
+      'r'.repeat(500),
+    )
+    expect(out.validTo).toBe(NOW.toISOString())
+    expect(out.status).toBe('accepted')
+    const audit = calls.find((c) => c.sql.includes('memory_records_audit_log'))!
+    expect(audit.sql).toContain("'UPDATE'")
+    const changes = JSON.parse(audit.params[2] as string) as {
+      invalidated: boolean
+      reason: string
+    }
+    expect(changes.invalidated).toBe(true)
+    expect(changes.reason).toHaveLength(300)
   })
 })

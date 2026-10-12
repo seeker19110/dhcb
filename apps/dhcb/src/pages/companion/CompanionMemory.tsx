@@ -1,14 +1,22 @@
-// CompanionMemory.tsx — Trang "Bạn Đồng Hành nhớ gì về tôi" (`/ban-dong-hanh/ky-uc`, GĐ2a).
+// CompanionMemory.tsx — Trang "Bạn Đồng Hành nhớ gì về tôi" (`/ban-dong-hanh/ky-uc`, GĐ2a + GĐ2b).
 //
-// Người dùng thấy đúng những gì Companion đang nhớ, sửa hoặc "quên" từng mục, và hai công tắc
-// (ký ức · lịch sử) phản ánh đúng hai consent ở server. Bốn trạng thái tách bạch: tải / rỗng /
+// Người dùng thấy đúng những gì Companion đang nhớ, sửa hoặc "quên" từng mục, và ba công tắc
+// (ký ức · lịch sử · gợi ý ký ức) phản ánh đúng ba consent ở server. GĐ2b thêm: gợi ý ký ức chờ
+// duyệt, hai khối ghi nhớ cố định tự viết, bản tóm tắt các buổi trước (xem/xoá), và tách ký ức
+// đã được thay bằng thông tin mới ra khỏi danh sách chính. Bốn trạng thái tách bạch: tải / rỗng /
 // lỗi / danh sách; ký ức mức nhạy cảm cần 2FA → hiện lối đi, không quay vòng. KHÔNG hiện
 // `importance` — đó là tham số xếp hạng, không phải "điểm" của người (Luật số 1 sản phẩm).
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 import type { CompanionMemorySettings } from '@dhcb/core-contracts/consentGrant'
-import type { MemoryNamespace, MemoryRecord } from '@dhcb/core-contracts/personalMemory'
+import type {
+  ConversationSummary,
+  CoreMemoryBlock,
+  MemoryNamespace,
+  MemoryRecord,
+} from '@dhcb/core-contracts/personalMemory'
+import Disclosure from '../../components/Disclosure'
 import Layout from '../../components/Layout'
 import LoadError from '../../components/LoadError'
 import { MemorySwitch } from '../../components/CompanionStudios/MemoryConsentCard'
@@ -18,12 +26,16 @@ import { useToast } from '@core/ToastProvider'
 import { usePageTitle } from '../../lib/usePageTitle'
 import {
   CompanionMemoryApiError,
-  fetchCompanionMemorySettings,
+  clearConversationSummary,
+  fetchCompanionMemoryOverview,
   fetchMemories,
+  fetchMemorySuggestions,
   forgetMemory,
   updateCompanionMemorySettings,
   updateMemory,
+  type MemorySuggestion,
 } from '../../lib/companionMemoryApi'
+import { CoreBlockEditor, MemorySuggestions } from './CompanionMemorySections'
 
 const NAMESPACE_LABEL: Record<MemoryNamespace, string> = {
   semantic: 'Về bạn',
@@ -34,6 +46,16 @@ const NAMESPACE_LABEL: Record<MemoryNamespace, string> = {
 }
 
 const MAX_CONTENT = 2000
+
+/** Tên miền hiển thị cho bản tóm tắt cuộn (miền lạ thì hiện nguyên tên). */
+const DOMAIN_LABEL: Record<string, string> = {
+  learning: 'Học tập',
+  work: 'Ghi chú',
+  general: 'Trò chuyện chung',
+}
+
+type SuggestionState =
+  { kind: 'loading' } | { kind: 'ready'; items: MemorySuggestion[] } | { kind: 'error' }
 
 type ListState =
   | { kind: 'loading' }
@@ -53,6 +75,10 @@ export default function CompanionMemory() {
   usePageTitle('Bạn Đồng Hành nhớ gì về tôi | Đồng Hành Cùng Bạn')
   const toast = useToast()
   const [settings, setSettings] = useState<CompanionMemorySettings | null>(null)
+  const [coreBlocks, setCoreBlocks] = useState<CoreMemoryBlock[] | null>(null)
+  const [summaries, setSummaries] = useState<ConversationSummary[]>([])
+  const [clearingDomain, setClearingDomain] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<SuggestionState>({ kind: 'loading' })
   const [settingsError, setSettingsError] = useState(false)
   const [savingSwitch, setSavingSwitch] = useState(false)
   const [list, setList] = useState<ListState>({ kind: 'loading' })
@@ -69,14 +95,22 @@ export default function CompanionMemory() {
 
   useEffect(() => {
     let mounted = true
-    void fetchCompanionMemorySettings()
-      .then((s) => mounted && setSettings(s))
+    void fetchCompanionMemoryOverview()
+      .then((o) => {
+        if (!mounted) return
+        setSettings(o.settings)
+        setCoreBlocks(o.coreBlocks)
+        setSummaries(o.summaries)
+      })
       .catch(() => mounted && setSettingsError(true))
+    void fetchMemorySuggestions()
+      .then((items) => mounted && setSuggestions({ kind: 'ready', items }))
+      .catch(() => mounted && setSuggestions({ kind: 'error' }))
     const loadList = async () => {
       try {
         const records = await fetchMemories()
         if (!mounted) return
-        setList({ kind: 'ready', records: records.filter((r) => r.status !== 'expired') })
+        setList({ kind: 'ready', records })
       } catch (err) {
         if (!mounted) return
         if (err instanceof CompanionMemoryApiError && err.code) {
@@ -91,6 +125,36 @@ export default function CompanionMemory() {
       mounted = false
     }
   }, [reloadKey])
+
+  // Gợi ý vừa được quyết: gỡ khỏi danh sách; "Ghi nhớ" thì tải lại ký ức để thấy ngay điều mới.
+  const onSuggestionDecided = (id: string, decision: 'confirm' | 'reject') => {
+    setSuggestions((prev) =>
+      prev.kind === 'ready'
+        ? { kind: 'ready', items: prev.items.filter((s) => s.id !== id) }
+        : prev,
+    )
+    if (decision === 'confirm') {
+      void fetchMemories()
+        .then((records) => setList({ kind: 'ready', records }))
+        .catch(() => {
+          // giữ danh sách đang có; người dùng tải lại trang là thấy
+        })
+    }
+  }
+
+  const clearSummary = async (domain: string) => {
+    if (clearingDomain) return
+    if (!window.confirm('Xoá bản tóm tắt này? Bạn Đồng Hành sẽ không dùng nó nữa.')) return
+    setClearingDomain(domain)
+    try {
+      setSummaries(await clearConversationSummary(domain))
+      toast.success('Đã xoá bản tóm tắt.')
+    } catch {
+      toast.error('Chưa xoá được. Thử lại nhé.')
+    } finally {
+      setClearingDomain(null)
+    }
+  }
 
   const changeSwitch = async (patch: Partial<CompanionMemorySettings>) => {
     if (savingSwitch) return
@@ -156,6 +220,13 @@ export default function CompanionMemory() {
     }
   }
 
+  // Ký ức đã "Quên" không hiện; ký ức đã được thay bằng thông tin mới (validTo) tách xuống mục
+  // lịch sử thu gọn — Companion không còn dùng chúng.
+  const visible = list.kind === 'ready' ? list.records.filter((r) => r.status !== 'expired') : []
+  const live = visible.filter((r) => !r.validTo)
+  const replaced = visible.filter((r) => r.validTo)
+  const pendingSuggestions = suggestions.kind === 'ready' ? suggestions.items : []
+
   return (
     <>
       <Layout back={true} title="Bạn Đồng Hành nhớ gì về tôi" />
@@ -167,7 +238,7 @@ export default function CompanionMemory() {
           className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 space-y-4"
         >
           <h2 id="memory-settings-heading" className="text-base font-semibold text-white">
-            Hai công tắc
+            Cài đặt ký ức
           </h2>
           {settingsError && !settings ? (
             <LoadError
@@ -191,10 +262,22 @@ export default function CompanionMemory() {
               <MemorySwitch
                 id="switch-history"
                 label="Dùng lịch sử trò chuyện"
-                description="Bạn Đồng Hành đọc lại vài lượt gần nhất để nối tiếp câu chuyện."
+                description="Bạn Đồng Hành đọc lại vài lượt gần nhất và giữ một bản tóm tắt ngắn các buổi trước để nối tiếp câu chuyện."
                 checked={settings?.useHistory ?? false}
                 disabled={!settings || savingSwitch}
                 onChange={(next) => void changeSwitch({ useHistory: next })}
+              />
+              <MemorySwitch
+                id="switch-suggest"
+                label="Gợi ý điều nên nhớ"
+                description={
+                  settings?.rememberMemories
+                    ? 'Sau mỗi buổi trò chuyện, Bạn Đồng Hành đề xuất vài điều nên nhớ để bạn duyệt. Không điều gì được lưu khi bạn chưa bấm "Ghi nhớ".'
+                    : 'Cần bật "Nhớ về tôi" trước: gợi ý phải so với những điều đã nhớ.'
+                }
+                checked={settings?.suggestMemories ?? false}
+                disabled={!settings || savingSwitch || !settings.rememberMemories}
+                onChange={(next) => void changeSwitch({ suggestMemories: next })}
               />
             </>
           )}
@@ -203,13 +286,61 @@ export default function CompanionMemory() {
             quên. Muốn một lượt không để lại gì, bật "Phiên không lưu" trong{' '}
             <Link
               to="/ban-dong-hanh"
-              className="underline underline-offset-2 text-accent-300 theme-light:text-accent-800"
+              className="underline underline-offset-2 text-accent-300 theme-light:text-accent-900"
             >
               phòng trò chuyện
             </Link>
-            .
+            . Mỗi lần Bạn Đồng Hành tóm tắt hoặc gợi ý sau buổi trò chuyện dùng 1 lượt AI trong
+            ngày.
           </p>
         </section>
+
+        {(pendingSuggestions.length > 0 || suggestions.kind === 'error') && (
+          <section aria-labelledby="memory-suggestions-heading" className="mt-6 space-y-3">
+            <h2 id="memory-suggestions-heading" className="text-base font-semibold text-white">
+              Gợi ý chờ bạn duyệt
+            </h2>
+            {suggestions.kind === 'error' ? (
+              <LoadError
+                message="Không tải được gợi ý ký ức."
+                onRetry={() => {
+                  setSuggestions({ kind: 'loading' })
+                  setList({ kind: 'loading' })
+                  setReloadKey((k) => k + 1)
+                }}
+              />
+            ) : (
+              <MemorySuggestions suggestions={pendingSuggestions} onDecided={onSuggestionDecided} />
+            )}
+          </section>
+        )}
+
+        {coreBlocks && (
+          <section
+            aria-labelledby="core-blocks-heading"
+            className="mt-6 bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 space-y-4"
+          >
+            <div>
+              <h2 id="core-blocks-heading" className="text-base font-semibold text-white">
+                Ghi nhớ cố định
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">
+                Bạn tự viết. Khi "Nhớ về tôi" bật, hai khối này luôn có trong mỗi lượt trò chuyện.
+              </p>
+            </div>
+            {coreBlocks.map((block) => (
+              <CoreBlockEditor
+                key={`${block.label}-${block.version}`}
+                block={block}
+                onSaved={(saved) =>
+                  setCoreBlocks((prev) =>
+                    prev ? prev.map((b) => (b.label === saved.label ? saved : b)) : prev,
+                  )
+                }
+              />
+            ))}
+          </section>
+        )}
 
         <section aria-labelledby="memory-list-heading" className="mt-6 space-y-3">
           <h2 id="memory-list-heading" className="text-base font-semibold text-white">
@@ -243,18 +374,19 @@ export default function CompanionMemory() {
             </div>
           )}
 
-          {list.kind === 'ready' && list.records.length === 0 && (
+          {list.kind === 'ready' && live.length === 0 && (
             <div className="rounded-2xl border border-dashed border-zinc-700 p-6 text-center">
               <p className="text-sm text-zinc-200">Chưa có ký ức nào.</p>
               <p className="text-xs text-zinc-400 mt-1">
-                Khi bạn nói "ghi nhớ…" trong phòng trò chuyện và xác nhận, ký ức sẽ xuất hiện ở đây.
+                Khi bạn nói "ghi nhớ…" trong phòng trò chuyện hoặc duyệt một gợi ý, ký ức sẽ xuất
+                hiện ở đây.
               </p>
             </div>
           )}
 
-          {list.kind === 'ready' && list.records.length > 0 && (
+          {list.kind === 'ready' && live.length > 0 && (
             <ul className="space-y-2">
-              {list.records.map((record) => {
+              {live.map((record) => {
                 const isEditing = editing?.id === record.id
                 const busy = busyId === record.id
                 return (
@@ -332,7 +464,68 @@ export default function CompanionMemory() {
               })}
             </ul>
           )}
+
+          {replaced.length > 0 && (
+            <Disclosure
+              summary={`Thông tin cũ đã được thay (${replaced.length})`}
+              className="rounded-2xl border border-zinc-800/80"
+            >
+              <p className="text-xs text-zinc-400">
+                Bạn Đồng Hành không dùng những điều này nữa, chỉ giữ lại để bạn biết đã thay đổi gì.
+              </p>
+              <ul className="space-y-2">
+                {replaced.map((record) => (
+                  <li key={record.id} className="text-sm text-zinc-300">
+                    <span className="line-through">{record.content}</span>{' '}
+                    <span className="text-xs text-zinc-400">
+                      (đến <time dateTime={record.validTo}>{formatDate(record.validTo ?? '')}</time>
+                      )
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Disclosure>
+          )}
         </section>
+
+        {(summaries.length > 0 || settings?.useHistory) && (
+          <section aria-labelledby="memory-summaries-heading" className="mt-6 space-y-3">
+            <h2 id="memory-summaries-heading" className="text-base font-semibold text-white">
+              Tóm tắt các buổi trước
+            </h2>
+            {summaries.length === 0 ? (
+              <p className="text-sm text-zinc-300">
+                Chưa có bản tóm tắt. Sau vài buổi trò chuyện, bản tóm tắt ngắn sẽ hiện ở đây.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {summaries.map((summary) => (
+                  <li
+                    key={summary.domain}
+                    className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2 text-xs text-zinc-400">
+                      <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-zinc-200">
+                        {DOMAIN_LABEL[summary.domain] ?? summary.domain}
+                      </span>
+                      <time dateTime={summary.updatedAt}>{formatDate(summary.updatedAt)}</time>
+                    </div>
+                    <p className="text-sm text-zinc-100 whitespace-pre-wrap">{summary.summary}</p>
+                    <button
+                      type="button"
+                      disabled={clearingDomain !== null}
+                      onClick={() => void clearSummary(summary.domain)}
+                      className={buttonClass({ variant: 'outline', size: 'sm' })}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      Xoá bản tóm tắt
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
       </PageShell>
     </>
   )
