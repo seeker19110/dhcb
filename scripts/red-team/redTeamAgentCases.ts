@@ -298,6 +298,34 @@ export const AGENT_CASES: RedTeamCase[] = [
       }
     },
   ),
+  // Changelog 0627: AUTOMATE đã quá `review_at` không được tự chạy nữa. Đối chứng = cùng kịch bản,
+  // policy còn hạn ⇒ PHẢI tự chạy (committed); không thì ca không đo được gì.
+  agCase(
+    'rt-ag-15',
+    'AUTOMATE cho mục tiêu học đã QUÁ hạn duyệt lại → đề xuất chờ xác nhận, không tự chạy',
+    async (ctx) => {
+      const statusWith = async (reviewAt: string) => {
+        const p = await ctx.newPerson()
+        await setPolicy(ctx.pool, {
+          personId: p.personId,
+          subject: 'learning.update_goal',
+          action: 'update_goal',
+          resourceScope: 'learning',
+          authority: 'AUTOMATE',
+          purpose: 'red-team',
+          reviewAt,
+        })
+        const o = await runScript(ctx, p, [['propose_learning_goal', { goal: 'IELTS 7.0' }]])
+        return o.session.proposals[0]?.status ?? 'không có'
+      }
+      const control = await statusWith(isoDaysFromNow(30))
+      const attack = await statusWith(isoDaysFromNow(-1))
+      return {
+        blocked: control === 'committed' && attack === 'pending',
+        evidence: `đối chứng (còn hạn): ${control} · quá hạn: ${attack} (mong đợi committed · pending)`,
+      }
+    },
+  ),
   agCase('rt-ag-11', 'search_notes không đọc được ghi chú của NGƯỜI KHÁC', async (ctx) => {
     const victim = await ctx.newPerson()
     const attacker = await ctx.newPerson()

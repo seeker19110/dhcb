@@ -729,7 +729,8 @@ Status:             PASSED (Ready for Production Deployment)
   - Zero DENY-bypasses (0/40 adversarial attempts) and 0 sensitive leakage in `eval:v2:permissions` and `eval:v2:context`.
     > ⚠️ **ĐÍNH CHÍNH 2026-10-12 (changelog `0625`):** "40/40" của `eval:v2:permissions` đo trên `pg` GIẢ tự lọc
     > policy bằng JS — kiểm mock, không kiểm SQL. Đo lại trên Postgres thật (chặn CI, job `sql-prepare`): 21/21,
-    > và lộ một lỗi thật (đặt policy đồng thời → 500), đã sửa.
+    > và lộ một lỗi thật (đặt policy đồng thời → 500), đã sửa. Changelog `0627`: AUTOMATE quá `review_at` nay
+    > hạ về chờ xác nhận (trước đó có hiệu lực vĩnh viễn) ⇒ **23/23**.
 - **Result**: **PASS**
 
 ### Invariant 4: Knowledge Fabric Inspect / Correct / Delete
@@ -784,7 +785,8 @@ Status:             PASSED (Ready for Production Deployment)
     > đường từ khoá, KHÔNG gồm chế độ tác tử Claude — xem `docs/ops/ai-eval-red-team.md` §2.
     >
     > **Bổ sung changelog `0626`:** họ AG (14 ca) kiểm tầng công cụ của chế độ tác tử bằng kịch bản gọi
-    > công cụ, vẫn Postgres thật, không key AI ⇒ **53/53**.
+    > công cụ, vẫn Postgres thật, không key AI ⇒ **53/53**; thêm `rt-ag-15` (AUTOMATE quá hạn duyệt lại,
+    > changelog `0627`) ⇒ **54/54**.
   - Database backup to Cloudflare R2 (`backup:r2`) and system configuration backup (`backup:system`) verified with recovery runbooks.
 - **Result**: **PASS**
 
@@ -792,19 +794,19 @@ Status:             PASSED (Ready for Production Deployment)
 
 ## 3. Platform V2 Test Suite & Quality Gate Summary
 
-| Check                                        | Target                 | Result                                                                           | Status                  |
-| -------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- | ----------------------- |
-| Unit & Integration Tests                     | 100% pass              | **3934 / 3934 passed** (261 test files)                                          | **PASS**                |
-| TypeScript Typecheck                         | 0 errors               | **0 errors** (strict mode across all apps & packages)                            | **PASS**                |
-| ESLint Linting                               | max-warnings 0         | **0 errors, 0 warnings**                                                         | **PASS**                |
-| Code Formatting                              | prettier --check       | **100% conformant**                                                              | **PASS**                |
-| Routing Accuracy (`eval:v2:routing`)         | $\ge 85\%$             | **98.00%** (49/50)                                                               | **PASS**                |
-| Context Precision (`eval:v2:context`)        | 0 leaks, 0 DENY bypass | **100.00%** (20/20)                                                              | **PASS**                |
-| Memory Accuracy (`eval:v2:memory`)           | $< 5\%$ false memory   | **0.00% false memory, 100% correction**                                          | **PASS**                |
-| Permission Authority (`eval:v2:permissions`) | 0 bypasses             | ~~40/40 (`pg` giả)~~ → **21/21 trên Postgres thật** (2026-10-12, changelog 0625) | **PASS**                |
-| Red-Team Harness (`eval:v2:red-team`)        | 100% blocked           | **53/53** trên Postgres thật (2026-10-12, changelog 0623 + 0626, Invariant 8)    | **PASS** (từ khoá + AG) |
-| Privacy Drills (`eval:v2:privacy`)           | 100% pass              | **100.00%** (7/7 drills)                                                         | **PASS**                |
-| Final Acceptance Audit (`eval:v2:audit`)     | 8/8 criteria           | **8/8 criteria PASSED (100%)**                                                   | **PASS**                |
+| Check                                        | Target                 | Result                                                                      | Status                  |
+| -------------------------------------------- | ---------------------- | --------------------------------------------------------------------------- | ----------------------- |
+| Unit & Integration Tests                     | 100% pass              | **3934 / 3934 passed** (261 test files)                                     | **PASS**                |
+| TypeScript Typecheck                         | 0 errors               | **0 errors** (strict mode across all apps & packages)                       | **PASS**                |
+| ESLint Linting                               | max-warnings 0         | **0 errors, 0 warnings**                                                    | **PASS**                |
+| Code Formatting                              | prettier --check       | **100% conformant**                                                         | **PASS**                |
+| Routing Accuracy (`eval:v2:routing`)         | $\ge 85\%$             | **98.00%** (49/50)                                                          | **PASS**                |
+| Context Precision (`eval:v2:context`)        | 0 leaks, 0 DENY bypass | **100.00%** (20/20)                                                         | **PASS**                |
+| Memory Accuracy (`eval:v2:memory`)           | $< 5\%$ false memory   | **0.00% false memory, 100% correction**                                     | **PASS**                |
+| Permission Authority (`eval:v2:permissions`) | 0 bypasses             | ~~40/40 (`pg` giả)~~ → **23/23 trên Postgres thật** (changelog 0625 + 0627) | **PASS**                |
+| Red-Team Harness (`eval:v2:red-team`)        | 100% blocked           | **54/54** trên Postgres thật (changelog 0623 + 0626 + 0627, Invariant 8)    | **PASS** (từ khoá + AG) |
+| Privacy Drills (`eval:v2:privacy`)           | 100% pass              | **100.00%** (7/7 drills)                                                    | **PASS**                |
+| Final Acceptance Audit (`eval:v2:audit`)     | 8/8 criteria           | **8/8 criteria PASSED (100%)**                                              | **PASS**                |
 
 ---
 

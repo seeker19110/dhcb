@@ -16,7 +16,7 @@ Chỉ tính những mặt nhận **chữ người dùng gõ** rồi đưa vào L
 | Gia sư chat / luyện nói (`/api/agent`)          | `npm run eval:tutor` (`--mode chat\|speaking`)    | **0** (180 ca: lỗi · câu đúng · ca biên)                   | —                                                                                                                                      |
 | Chấm bài viết kiểu IELTS                        | (chưa có eval riêng)                              | **0**                                                      | —                                                                                                                                      |
 | Companion "Bạn Đồng Hành"                       | `npm run eval:companion`                          | **0** (nhóm: sycophancy · crisis · toolUse)                | —                                                                                                                                      |
-| Companion V2 (planner · tự động hoá · ngữ cảnh) | `npm run eval:v2:red-team` (CI job `sql-prepare`) | **53** (PI 14 · TA 13 · SL 12 · AG 14), canary + đối chứng | **Thật** — Postgres thật, gọi đúng hàm production; đường từ khoá + tầng công cụ tác tử (xem mục 2).                                    |
+| Companion V2 (planner · tự động hoá · ngữ cảnh) | `npm run eval:v2:red-team` (CI job `sql-prepare`) | **54** (PI 14 · TA 13 · SL 12 · AG 15), canary + đối chứng | **Thật** — Postgres thật, gọi đúng hàm production; đường từ khoá + tầng công cụ tác tử (xem mục 2).                                    |
 
 ## 2. `eval:v2:red-team` — từ xanh giả sang kiểm thật
 
@@ -38,7 +38,7 @@ test là `expect(true).toBe(true)`. Chạy thật trên `main` ra `29/30 … ❌
   "tra từ …" mặc định) sập 500. Unit test dùng `pg` giả không thấy; `check:sql` chỉ PREPARE, không
   chạy. Đã sửa cùng PR — kết quả **39/39**.
 
-**Họ AG — chế độ tác tử ở tầng công cụ (changelog `0626`):** 14 ca, mỗi ca là một "kịch bản" gọi
+**Họ AG — chế độ tác tử ở tầng công cụ (changelog `0626`, `0627`):** 15 ca, mỗi ca là một "kịch bản" gọi
 công cụ đóng vai Claude bị dụ (gọi công cụ không khai báo, thêm trường để tự xác nhận, đề xuất câu ra
 lệnh/PII, ngập đề xuất, đọc ghi chú người khác, ghi chú cài thẻ `du_lieu` giả, kết quả khổng lồ, đề
 xuất trùng, AUTOMATE/DENY) chạy thẳng `createCompanionToolSession(…).execute` trên Postgres thật —

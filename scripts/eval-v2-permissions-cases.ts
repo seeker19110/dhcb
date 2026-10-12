@@ -227,6 +227,48 @@ export const PERMISSION_CASES: readonly PermissionCase[] = [
       evidence: `${describeError(err)} · hiệu lực ${active} dòng`,
     }
   }),
+  // Changelog 0627: AUTOMATE quá hạn duyệt lại hạ về chờ xác nhận — `review_at` trước đây không
+  // được đọc ở đâu, AUTOMATE có hiệu lực vĩnh viễn. Hai ca đi cặp: quá hạn (hạ mức) + ngay sát hạn
+  // về phía tương lai (giữ nguyên) để chắc phép so dùng đúng chiều.
+  permCase(
+    'perm-automate-review-due',
+    'AUTOMATE đã quá review_at → hạ về EXECUTE_WITH_CONFIRMATION, dòng giữ nguyên',
+    async (ctx) => {
+      const p = await ctx.newPerson()
+      await setPolicy(ctx.pool, {
+        personId: p.personId,
+        subject: SUBJECT,
+        action: ACTION,
+        resourceScope: SCOPE,
+        authority: 'AUTOMATE',
+        purpose: 'eval-permissions',
+        reviewAt: isoDaysFromNow(-1),
+      })
+      const out = expectAuthority(await resolve(ctx.pool, p), 'EXECUTE_WITH_CONFIRMATION')
+      const stored = (await listPolicies(ctx.pool, p.personId))[0]?.authority
+      return {
+        pass: out.pass && stored === 'AUTOMATE',
+        evidence: `${out.evidence} · dòng lưu: ${stored ?? 'không có'}`,
+      }
+    },
+  ),
+  permCase(
+    'perm-automate-review-ahead',
+    'AUTOMATE còn hạn review_at → vẫn AUTOMATE',
+    async (ctx) => {
+      const p = await ctx.newPerson()
+      await setPolicy(ctx.pool, {
+        personId: p.personId,
+        subject: SUBJECT,
+        action: ACTION,
+        resourceScope: SCOPE,
+        authority: 'AUTOMATE',
+        purpose: 'eval-permissions',
+        reviewAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      return expectAuthority(await resolve(ctx.pool, p), 'AUTOMATE')
+    },
+  ),
   permCase('perm-invalid-level', 'Mức thẩm quyền lạ ("ROOT") → CSDL từ chối', async (ctx) => {
     const p = await ctx.newPerson()
     // Ép kiểu có chủ đích: mô phỏng giá trị lọt qua tầng trên (bỏ qua Zod của API).
