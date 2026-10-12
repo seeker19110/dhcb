@@ -1,6 +1,7 @@
 // packages/core-contracts/neuralCurriculum.ts — Hợp đồng Lộ trình Vi mô Thần kinh & Mạng lưới Collocations V4.3.
 import { z } from 'zod'
 import { IsoDateTimeSchema, UuidSchema } from './shared.js'
+import { PillarDomainSchema } from './pillarDomain.js'
 
 export const NEURAL_CURRICULUM_VERSION = 'v4.3.0'
 
@@ -29,7 +30,7 @@ export const CollocationNodeSchema = z
     strength: z.number().min(0).max(100).default(80),
     exampleSentenceEn: z.string().min(1).max(500),
     exampleSentenceVi: z.string().min(1).max(500),
-    domain: z.enum(['learning', 'career', 'work', 'startup', 'life']).default('learning'),
+    domain: PillarDomainSchema.default('learning'),
     relatedWords: z.array(z.string()).default([]),
   })
   .strict()
@@ -54,7 +55,7 @@ export const MicroCurriculumModuleSchema = z
   .object({
     moduleId: UuidSchema,
     title: z.string().min(1).max(200),
-    targetDomain: z.enum(['learning', 'career', 'work', 'startup', 'life']),
+    targetDomain: PillarDomainSchema,
     cefrLevel: CefrLevelSchema,
     gapReason: z.string().min(1).max(300),
     collocations: z.array(CollocationNodeSchema).min(1),
@@ -115,7 +116,7 @@ export type NeuralDrillReview = z.infer<typeof NeuralDrillReviewSchema>
 export const GenerateNeuralModuleSchema = z
   .object({
     topicOrKeyword: z.string().trim().min(1).max(100).default('Giao Tiếp & Đàm Thoại'),
-    targetDomain: z.enum(['learning', 'career', 'work', 'startup', 'life']).default('learning'),
+    targetDomain: PillarDomainSchema.default('learning'),
     cefrLevel: CefrLevelSchema.default('B2'),
   })
   .strict()

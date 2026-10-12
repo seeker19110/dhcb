@@ -7,6 +7,7 @@ import type {
   ProactiveAgentState,
   ProactiveNudge,
 } from '@dhcb/core-contracts/proactiveAgent'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 const defaultConfig: ProactiveAgentConfig = {
   nudgeFrequency: 'balanced',
@@ -66,7 +67,7 @@ export function evaluateProactiveState(
         personId,
         nudgeType: 'neuro_burnout_prevention',
         priority: 'urgent',
-        domain: 'life',
+        domain: 'general',
         title: 'Chỉ số căng thẳng tăng cao (Stress > 75%)',
         message:
           'Đồng Hành nhận thấy nhịp điệu làm việc đang căng thẳng. Hãy kích hoạt bài tập thở 2 phút hoặc nghỉ ngơi để bảo vệ dòng chảy.',
@@ -187,7 +188,7 @@ export function generateGoalAutoPilotPlan(
   personId: string,
   goalId: string,
   goalTitle: string,
-  domain: 'learning' | 'career' | 'work' | 'startup' | 'life' = 'learning',
+  domain: PillarDomain = 'learning',
 ): GoalAutoPilotPlan {
   const now = new Date()
   const nextMilestone = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()

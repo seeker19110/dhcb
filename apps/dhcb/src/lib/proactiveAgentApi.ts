@@ -6,6 +6,7 @@ import type {
   ProactiveAgentConfig,
   ProactiveAgentState,
 } from '@dhcb/core-contracts/proactiveAgent'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 export async function fetchProactiveAgentState(
   params?: {
@@ -105,7 +106,7 @@ export async function updateProactiveConfigApi(
 export async function createAutoPilotPlanApi(params: {
   goalId: string
   goalTitle: string
-  domain?: 'learning' | 'career' | 'work' | 'startup' | 'life'
+  domain?: PillarDomain
 }): Promise<GoalAutoPilotPlan> {
   const res = await fetch('/api/proactive-agent?action=create_plan', {
     method: 'POST',

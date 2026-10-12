@@ -5,9 +5,10 @@ import type {
   SocraticDailyPrompt,
   MetacognitiveSummary,
 } from '@dhcb/core-contracts/metacognitiveReflection'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 export async function fetchDailySocraticPrompt(
-  domain: 'learning' | 'career' | 'work' | 'startup' | 'life' = 'learning',
+  domain: PillarDomain = 'learning',
   contextAnchor?: string,
 ): Promise<SocraticDailyPrompt> {
   const q = new URLSearchParams({ action: 'daily_prompt', domain })
@@ -50,7 +51,7 @@ export async function fetchMetacognitiveSummary(): Promise<{
 
 export async function submitMetacognitiveReflectionApi(params: {
   title?: string
-  domain: 'learning' | 'career' | 'work' | 'startup' | 'life'
+  domain: PillarDomain
   reflectionPrompt: string
   userReflection: string
 }): Promise<MetacognitiveReflection> {

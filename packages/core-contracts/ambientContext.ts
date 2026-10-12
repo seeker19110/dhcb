@@ -1,6 +1,7 @@
 // packages/core-contracts/ambientContext.ts — Hợp đồng dữ liệu cho Ambient Vision & Screen Grounding V3.
 import { z } from 'zod'
 import { IsoDateTimeSchema } from './shared.js'
+import { PillarDomainSchema } from './pillarDomain.js'
 
 export const AMBIENT_SCHEMA_VERSION = 'v3.0.0'
 
@@ -21,9 +22,7 @@ export const AmbientScreenCaptureSchema = z
     imageDataBase64: z.string().min(1),
     detectedAppType: AppTypeSchema.optional(),
     activeWindowHint: z.string().max(200).optional(),
-    domainContext: z
-      .enum(['learning', 'career', 'work', 'startup', 'life', 'general'])
-      .default('general'),
+    domainContext: PillarDomainSchema.default('general'),
   })
   .strict()
 
@@ -52,7 +51,7 @@ export const AmbientContextInsightSchema = z
     timestamp: IsoDateTimeSchema,
     detectedApp: AppTypeSchema,
     summaryOfWork: z.string().min(1).max(1000),
-    relevantDomain: z.enum(['learning', 'career', 'work', 'startup', 'life', 'general']),
+    relevantDomain: PillarDomainSchema,
     tips: z.array(ContextTipSchema).max(5),
     extractedKeywords: z.array(z.string().min(1).max(100)).max(10),
     schemaVersion: z.literal(AMBIENT_SCHEMA_VERSION),

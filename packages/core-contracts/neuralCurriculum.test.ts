@@ -80,6 +80,9 @@ describe('Neural Curriculum Contracts (V4.3)', () => {
     const parsed = MicroCurriculumModuleSchema.parse(validModule)
     expect(parsed.title).toContain('Thuyết trình Dự án')
     expect(parsed.estimatedMinutes).toBe(2)
+    // Changelog 0628: module LƯU trước khi gỡ trụ Career vẫn đọc được — miền về `general`, không 500.
+    expect(parsed.targetDomain).toBe('general')
+    expect(parsed.collocations[0]?.domain).toBe('general')
   })
 
   it('validates NeuralCurriculumStateSchema', () => {

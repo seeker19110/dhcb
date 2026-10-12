@@ -6,6 +6,7 @@ import {
   AmbientContextInsightSchema,
   AMBIENT_SCHEMA_VERSION,
 } from '@dhcb/core-contracts/ambientContext'
+import { normalizePillarDomain, type PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 const AMBIENT_TIMEOUT_MS = 25_000
 
@@ -25,7 +26,7 @@ export function cleanBase64Image(raw: string): { data: string; mimeType: string 
 export function parseAmbientVisionText(aiText: string): {
   detectedApp: AppType
   summaryOfWork: string
-  relevantDomain: 'learning' | 'career' | 'work' | 'startup' | 'life' | 'general'
+  relevantDomain: PillarDomain
   tips: Array<{
     title: string
     description: string
@@ -44,8 +45,8 @@ export function parseAmbientVisionText(aiText: string): {
       return {
         detectedApp: (parsed.detectedApp || 'browser') as AppType,
         summaryOfWork: String(parsed.summaryOfWork),
-        relevantDomain: (parsed.relevantDomain || 'general') as
-          'learning' | 'career' | 'work' | 'startup' | 'life' | 'general',
+        // Kết quả AI là dữ liệu ngoài: giá trị lạ → 'general', trụ đã xoá → 'general' (changelog 0628).
+        relevantDomain: normalizePillarDomain(parsed.relevantDomain),
         tips: parsed.tips.map(
           (t: {
             title?: string
@@ -120,7 +121,7 @@ Hãy trả về DUY NHẤT một JSON hợp lệ dạng:
 {
   "detectedApp": "browser" | "code_editor" | "document_editor" | "presentation" | "chat_app" | "general_desktop",
   "summaryOfWork": "Tóm tắt ngắn 1 câu người dùng đang làm gì",
-  "relevantDomain": "learning" | "career" | "work" | "startup" | "life" | "general",
+  "relevantDomain": "learning" | "work" | "general",
   "tips": [
     {
       "title": "Tên gợi ý",

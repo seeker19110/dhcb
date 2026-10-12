@@ -66,7 +66,8 @@ const featureSchema = z.object({
   feature: z.object({
     id: z.string().min(1),
     name: z.string().min(1),
-    pillar: z.enum(['learning', 'career', 'work', 'startup', 'life', 'platform']),
+    // Trụ Career · Startup · Life đã gỡ 2026-09-20 — đặc tả mới không được gắn vào trụ ma (0628).
+    pillar: z.enum(['learning', 'work', 'platform']),
     subject: z.string().optional(),
   }),
   goal: z.object({ user: z.string().min(1), objective: z.string().min(1) }),

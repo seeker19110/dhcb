@@ -40,35 +40,52 @@ describe('Metacognitive Reflection API Handler (/api/metacognitive-reflection)',
     expect(res.status).toBe(401)
   })
 
-  it('GET daily_prompt: domain hợp lệ (career) + contextAnchor', async () => {
+  it('GET daily_prompt: domain hợp lệ (work) + contextAnchor', async () => {
     authOk()
     const res = await handler(
       new Request(
-        'http://localhost/api/metacognitive-reflection?action=daily_prompt&domain=career&contextAnchor=phong-van',
+        'http://localhost/api/metacognitive-reflection?action=daily_prompt&domain=work&contextAnchor=phong-van',
         { method: 'GET' },
       ),
     )
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.success).toBe(true)
-    expect(data.prompt).toBeDefined()
+    expect(data.prompt.domain).toBe('work')
+    expect(data.prompt.contextAnchor).toBe('phong-van')
+  })
+
+  // Changelog 0628: liên kết cũ còn mang trụ đã xoá → miền `general`, không lỗi.
+  it('GET daily_prompt: trụ đã xoá (career/startup/life) → general', async () => {
+    authOk()
+    for (const domain of ['career', 'startup', 'life']) {
+      const res = await handler(
+        new Request(
+          `http://localhost/api/metacognitive-reflection?action=daily_prompt&domain=${domain}`,
+          { method: 'GET' },
+        ),
+      )
+      expect(res.status).toBe(200)
+      expect((await res.json()).prompt.domain).toBe('general')
+    }
   })
 
   it('GET daily_prompt: domain không hợp lệ hoặc thiếu → mặc định learning', async () => {
     authOk()
-    const res = await handler(
-      new Request('http://localhost/api/metacognitive-reflection?action=daily_prompt', {
-        method: 'GET',
-      }),
-    )
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.prompt).toBeDefined()
+    for (const query of ['', '&domain=hack']) {
+      const res = await handler(
+        new Request(`http://localhost/api/metacognitive-reflection?action=daily_prompt${query}`, {
+          method: 'GET',
+        }),
+      )
+      expect(res.status).toBe(200)
+      expect((await res.json()).prompt.domain).toBe('learning')
+    }
   })
 
-  it('GET daily_prompt: các domain còn lại work/startup/life đều hợp lệ', async () => {
+  it('GET daily_prompt: các miền còn thật learning/work/general đều hợp lệ', async () => {
     authOk()
-    for (const domain of ['work', 'startup', 'life']) {
+    for (const domain of ['learning', 'work', 'general']) {
       const res = await handler(
         new Request(
           `http://localhost/api/metacognitive-reflection?action=daily_prompt&domain=${domain}`,

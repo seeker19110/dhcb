@@ -7,6 +7,7 @@ import {
   fetchMetacognitiveSummary,
   submitMetacognitiveReflectionApi,
 } from '../../lib/metacognitiveReflectionApi.js'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 import {
   COGNITIVE_BIAS_LABELS,
   type SocraticDailyPrompt,
@@ -30,13 +31,18 @@ interface MetacognitiveReflectionModalProps {
   onClose: () => void
 }
 
+// Chỉ hai trụ còn thật + "chung" — Sự nghiệp · Khởi nghiệp · Đời sống đã gỡ 2026-09-20 (changelog 0628).
+const DOMAIN_OPTIONS: { id: PillarDomain; label: string }[] = [
+  { id: 'learning', label: '🎓 Học tập & Ngôn ngữ' },
+  { id: 'work', label: '📝 Ghi chú & Công việc' },
+  { id: 'general', label: '🌱 Bản thân & Thói quen' },
+]
+
 export default function MetacognitiveReflectionModal({
   initialPrompt,
   onClose,
 }: MetacognitiveReflectionModalProps) {
-  const [domain, setDomain] = useState<'learning' | 'career' | 'work' | 'startup' | 'life'>(
-    'learning',
-  )
+  const [domain, setDomain] = useState<PillarDomain>('learning')
   const [prompt, setPrompt] = useState<SocraticDailyPrompt | null>(initialPrompt || null)
   const [userText, setUserText] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -148,21 +154,11 @@ export default function MetacognitiveReflectionModal({
             <>
               {/* Domain Selector */}
               <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'learning', label: '🎓 Học tập & Ngôn ngữ' },
-                  { id: 'career', label: '💼 Sự nghiệp' },
-                  { id: 'work', label: '⚡ Công việc' },
-                  { id: 'startup', label: '🚀 Khởi nghiệp' },
-                  { id: 'life', label: '🌱 Đời sống & Thói quen' },
-                ].map((d) => (
+                {DOMAIN_OPTIONS.map((d) => (
                   <button
                     key={d.id}
                     type="button"
-                    onClick={() =>
-                      handleDomainChange(
-                        d.id as 'learning' | 'career' | 'work' | 'startup' | 'life',
-                      )
-                    }
+                    onClick={() => handleDomainChange(d.id)}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
                       domain === d.id
                         ? 'bg-teal-500/20 border-teal-400 text-teal-300 theme-light:text-teal-900 shadow-sm'
