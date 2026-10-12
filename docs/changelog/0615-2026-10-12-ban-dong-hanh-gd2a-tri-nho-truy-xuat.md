@@ -49,9 +49,12 @@
     không ghi transcript; **lớp an toàn vẫn chạy**.
 - **Giao diện:** trang `/ban-dong-hanh/ky-uc` "Bạn Đồng Hành nhớ gì về tôi" (hai công tắc
   `role="switch"`, danh sách sửa/quên với `expectedVersion`, 4 trạng thái tải/rỗng/lỗi/cần 2FA,
-  KHÔNG hiện `importance`); thẻ `MemoryConsentCard` trong studio trò chuyện (mời bật ký ức một
-  nút = cấp cả hai consent; công tắc "Phiên không lưu" giữ trong `sessionStorage`; nhãn
-  `role="status"` cạnh ô nhập khi đang bật).
+  KHÔNG hiện `importance`); thanh gọn `MemoryConsentCard` NGAY DƯỚI ô nhập trong studio trò
+  chuyện (mời bật ký ức một nút = cấp cả hai consent; công tắc "Phiên không lưu" giữ trong
+  `sessionStorage`; nhãn `role="status"` đổi chữ khi đang bật). Vị trí chốt sau hai lần đổi do
+  NHÌN ảnh + CI: đặt thành thẻ to TRONG khung chat thì ăn vùng cuộn ở 390px; đặt NGOÀI khung thì
+  đẩy nút gợi ý nhanh ra khỏi màn 1440×900 (`e2e/companion-history.spec.ts:95` đỏ trên CI, đo
+  thật chỉ dư ~37px) → thanh một dòng dưới ô nhập không thêm chiều cao bố cục.
 - **Job ngày** `startCompanionMemoryMaintenance` (server.ts): `purgeExpiredMemories` +
   `backfillMemoryEmbeddings(…, 200)`. `.env.example` thêm `GEMINI_EMBEDDING_MODEL` (tuỳ chọn).
 - Dọn: `stripVietnameseDiacritics` dời sang `vietnameseText.ts` (safetyGuard re-export);
@@ -79,6 +82,8 @@
   → 39 passed. Client: `companionMemoryApi.test.ts` → 8 passed; `CompanionMemory.test.tsx` → 8
   passed; `pages/companion` + `CompanionStudios` → 52 passed.
 - `npm run check:specs` → OK (180 đặc tả). Cổng đầy đủ + ảnh chụp 1440/390 (Tầng 8b): xem mô tả PR.
+- `MemoryConsentCard.test.tsx` → 4 passed; `e2e/companion-history.spec.ts` → 4/4 xanh ở máy sau khi dời
+  thanh xuống dưới ô nhập (ca 1440×900 từng đỏ trên CI).
 
 ## Chưa làm / tiếp theo
 

@@ -184,10 +184,6 @@ export default function StudioDialogue({
         )}
       </div>
 
-      {/* [GĐ2a] Thẻ ký ức nằm NGOÀI khung chat cao cố định: nằm trong thì ăn mất vùng cuộn tin
-          nhắn trên màn hẹp (đo ảnh 390px khi dựng). */}
-      {memory && <MemoryConsentCard {...memory} />}
-
       {viewMode === 'voice' ? (
         /* Voice Mode Panel — pipeline STT → LLM → TTS: ghi âm → nhận diện → gửi AI → đọc trả lời */
         <div className="flex-1 flex flex-col items-center justify-center py-6 px-4 space-y-6">
@@ -560,15 +556,6 @@ export default function StudioDialogue({
               cao giới hạn; ở đây khung chat chính là container đó, và ô nhập là item cuối cùng
               của cột flex nên tự nhiên nằm ở đáy). */}
           <div className="pt-2 shrink-0 bg-zinc-950 pb-[calc(0.5rem+var(--bnav-h))]">
-            {memory?.ephemeral && (
-              <p
-                role="status"
-                className="mb-2 text-xs text-amber-200 theme-light:text-amber-900 flex items-center gap-1.5"
-              >
-                <Shield className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                Phiên không lưu: lượt này không đọc ký ức và không lưu lại gì.
-              </p>
-            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -608,6 +595,9 @@ export default function StudioDialogue({
                 <Send className="w-4 h-4" aria-hidden="true" />
               </button>
             </form>
+            {/* [GĐ2a] Thanh ký ức + phiên không lưu nằm DƯỚI ô nhập, trong khung chat cao cố định —
+                lấy chỗ từ vùng cuộn, không đẩy hàng gợi ý nhanh khỏi màn đầu 1440×900. */}
+            {memory && <MemoryConsentCard {...memory} />}
           </div>
         </div>
       )}

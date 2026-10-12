@@ -5,7 +5,7 @@
 // đúng hai consent chuẩn) và công tắc "Phiên không lưu" (ephemeral: không đọc gì cá nhân, không
 // lưu gì — kể cả câu "ghi nhớ…"). Công tắc là `role="switch"` + `aria-checked` (WCAG 4.1.2).
 import { Link } from 'react-router-dom'
-import { Brain, EyeOff } from 'lucide-react'
+import { Brain, EyeOff, Shield } from 'lucide-react'
 import type { CompanionMemorySettings } from '@dhcb/core-contracts/consentGrant'
 import { buttonClass } from '@core/buttonStyles'
 
@@ -72,6 +72,12 @@ export interface MemoryConsentCardProps {
   enabling?: boolean
 }
 
+/**
+ * Thanh ký ức GỌN, nằm ngay DƯỚI ô nhập trong khung chat cao cố định. Vì sao ở đó: khung chat
+ * `h-[min(68dvh,640px)]` nên thanh này lấy chỗ từ vùng cuộn tin nhắn, KHÔNG đẩy hàng gợi ý nhanh
+ * ra khỏi màn đầu ở 1440×900 (`e2e/companion-history.spec.ts` canh điều này; bản đặt phía trên
+ * khung chat đã làm cổng đó đỏ — đo được chỉ dư ~37px). Một dòng ở desktop, tự xuống dòng ở 390px.
+ */
 export default function MemoryConsentCard({
   settings,
   ephemeral,
@@ -80,51 +86,72 @@ export default function MemoryConsentCard({
   enabling = false,
 }: MemoryConsentCardProps) {
   const memoryOff = settings !== null && !settings.rememberMemories
+  const switchId = 'companion-ephemeral'
   return (
-    <section
+    <div
+      role="group"
       aria-label="Ký ức và quyền riêng tư"
-      className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 space-y-3"
+      className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pt-1 text-xs"
     >
+      <div className="flex items-center gap-2">
+        <label htmlFor={switchId} className="font-semibold text-zinc-200 whitespace-nowrap">
+          Phiên không lưu
+        </label>
+        <button
+          id={switchId}
+          type="button"
+          role="switch"
+          aria-checked={ephemeral}
+          aria-describedby={`${switchId}-desc`}
+          onClick={() => onEphemeralChange(!ephemeral)}
+          className="tap-44 flex items-center justify-center rounded-full shrink-0"
+        >
+          <span
+            aria-hidden="true"
+            className={`relative w-11 h-6 rounded-full transition ${ephemeral ? 'bg-accent-500' : 'bg-zinc-700'}`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${ephemeral ? 'translate-x-5' : ''}`}
+            />
+          </span>
+        </button>
+      </div>
+      {/* Mô tả công tắc: ẩn (chỉ cho trình đọc màn hình) khi tắt; hiện rõ màu cảnh báo khi đang bật. */}
+      <span
+        id={`${switchId}-desc`}
+        role="status"
+        className={
+          ephemeral
+            ? 'flex items-center gap-1.5 text-amber-200 theme-light:text-amber-900'
+            : 'sr-only'
+        }
+      >
+        {ephemeral && <Shield className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+        {ephemeral
+          ? 'Đang bật: lượt này không đọc ký ức/lịch sử và không lưu lại gì.'
+          : 'Bật khi muốn nói chuyện mà không để lại dấu vết nào.'}
+      </span>
       {memoryOff && !ephemeral && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex items-start gap-2 min-w-0 flex-1">
-            <Brain className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-sm text-zinc-200">
-              Bạn Đồng Hành đang <strong className="text-white">không nhớ gì</strong> giữa các lần
-              trò chuyện. Bật ký ức để mỗi lần quay lại không phải kể lại từ đầu — bạn xem, sửa,
-              quên từng ký ức bất cứ lúc nào.
-            </p>
-          </div>
+        <div className="flex items-center gap-2">
+          <Brain className="w-3.5 h-3.5 text-accent-400 shrink-0" aria-hidden="true" />
+          <span className="text-zinc-300">Chưa nhớ gì giữa các lần trò chuyện.</span>
           <button
             type="button"
             onClick={() => void onEnableMemory()}
             disabled={enabling}
-            className={buttonClass({ variant: 'primary', size: 'sm' })}
+            className={buttonClass({ variant: 'secondary', size: 'sm' })}
           >
             {enabling ? 'Đang bật…' : 'Bật ký ức'}
           </button>
         </div>
       )}
-      <MemorySwitch
-        id="companion-ephemeral"
-        label="Phiên không lưu"
-        description={
-          ephemeral
-            ? 'Đang bật: lượt này không đọc ký ức/lịch sử và không lưu gì lại.'
-            : 'Bật khi muốn nói chuyện mà không để lại dấu vết nào.'
-        }
-        checked={ephemeral}
-        onChange={onEphemeralChange}
-      />
-      <p className="text-xs text-zinc-400 flex items-center gap-1.5">
+      <Link
+        to={COMPANION_MEMORY_PATH}
+        className="ml-auto flex items-center gap-1.5 underline underline-offset-2 text-accent-300 theme-light:text-accent-800 whitespace-nowrap"
+      >
         <EyeOff className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-        <Link
-          to={COMPANION_MEMORY_PATH}
-          className="underline underline-offset-2 text-accent-300 theme-light:text-accent-800"
-        >
-          Bạn Đồng Hành nhớ gì về tôi?
-        </Link>
-      </p>
-    </section>
+        Bạn Đồng Hành nhớ gì về tôi?
+      </Link>
+    </div>
   )
 }
