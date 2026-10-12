@@ -548,7 +548,7 @@ báo lỗi**; hễ xác minh pass thì dừng, không cần chạy tiếp các b
 
 2. Nếu dòng lỗi là `dial tcp ***:22: i/o timeout` → secret `VPS_HOST` đang trỏ IP cũ:
    - Vào **Settings → Secrets and variables → Actions** → sửa secret `VPS_HOST` = IP hiện
-     tại của VPS (vd `103.81.87.174`).
+     tại của VPS (vd `103.118.29.58`).
    - Nếu user SSH cũng đổi, sửa luôn secret `VPS_USER`.
    - Quay lại bước 6 (rerun) để xác minh.
 

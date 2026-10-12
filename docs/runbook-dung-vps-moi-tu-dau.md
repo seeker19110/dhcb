@@ -6,8 +6,8 @@
 > `docs/deploy-vps-ubuntu.md`, `docs/setup-postgresql-vps.md`, `docs/ke-hoach-khoi-phuc-su-co.md`,
 > `docs/ke-hoach-khoi-phuc-su-co-server.md`.
 >
-> ⚠️ Đây là thao tác thật trên hạ tầng. Nếu VPS hiện tại (`103.81.87.174`,
-> `en-vi.donghanhcungban.com`) **vẫn đang chạy bình thường**, KHÔNG chạy các lệnh xoá/ghi đè trong
+> ⚠️ Đây là thao tác thật trên hạ tầng. Nếu VPS hiện tại (`103.118.29.58`,
+> `en-vi.donghanhcungban.org`) **vẫn đang chạy bình thường**, KHÔNG chạy các lệnh xoá/ghi đè trong
 > file này nhắm vào nó. Chỉ áp dụng cho **VPS mới, trống**.
 >
 > Mọi lệnh `sudo`/SSH dưới đây phải chạy **trên VPS thật** — AI không có quyền SSH vào VPS

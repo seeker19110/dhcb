@@ -447,6 +447,59 @@ describe('ProposedActionService — nhánh biên proposeAction', () => {
       'Không thể tạo ProposedAction pending',
     )
   })
+
+  // Hồi quy (changelog 0623): `tool_execution_audit_log.proposed_action_id` là KHOÁ NGOẠI tới
+  // `proposed_actions(id)`, không deferrable. Ghi nhật ký TRƯỚC khi tạo dòng đề xuất ⇒ Postgres
+  // thật ném lỗi FK ⇒ cả lượt Companion sập (500), kể cả câu "tra từ hello" mặc định. Mock cũ trả
+  // `rows: []` cho mọi câu nên không bao giờ thấy — mock dưới đây đóng vai ràng buộc FK.
+  describe('nhật ký chỉ được ghi SAU khi đã có dòng đề xuất (khoá ngoại)', () => {
+    function fkEnforcingPool(status: string, resolvedBy: string): Pool {
+      const insertedIds = new Set<string>()
+      return mockPool(async (sql, params) => {
+        if (sql.includes('insert into personal.proposed_actions')) {
+          const id = String(params?.[0])
+          insertedIds.add(id)
+          return { rows: [actionRow({ id, status, resolved_by: resolvedBy })] }
+        }
+        if (sql.includes('insert into personal.tool_execution_audit_log')) {
+          const actionId = params?.[2]
+          if (actionId !== null && !insertedIds.has(String(actionId))) {
+            throw new Error(
+              'violates foreign key constraint tool_execution_audit_log_proposed_action_id_fkey',
+            )
+          }
+          return { rows: [] }
+        }
+        return { rows: [] }
+      })
+    }
+
+    it('nhánh DENY: tạo dòng rejected rồi mới ghi nhật ký rejected_by_policy', async () => {
+      policies.resolveAuthority.mockResolvedValue('DENY')
+      const res = await proposeAction(fkEnforcingPool('rejected', 'policy:deny'), {
+        personId: PERSON,
+        capabilityId: 'learning.update_goal',
+        action: 'update_goal',
+        targetDomain: 'learning',
+        payload: { goal: 'IELTS 7.5' },
+        riskLevel: 'low',
+      })
+      expect(res.action.status).toBe('rejected')
+    })
+
+    it('nhánh tự chạy (tra từ, không policy): tạo dòng committed rồi mới ghi nhật ký', async () => {
+      const res = await proposeAction(fkEnforcingPool('committed', 'system:automate'), {
+        personId: PERSON,
+        capabilityId: 'dictionary.lookup',
+        action: 'lookup',
+        targetDomain: 'learning',
+        payload: { word: 'hello' },
+        riskLevel: 'low',
+      })
+      expect(res.autoExecuted).toBe(true)
+      expect(res.action.status).toBe('committed')
+    })
+  })
 })
 
 describe('ProposedActionService — nhánh biên confirm/reject/list', () => {

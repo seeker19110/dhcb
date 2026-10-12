@@ -113,28 +113,34 @@ export async function proposeAction(
   if (authority === 'DENY') {
     const id = randomUUID()
     const startTime = Date.now()
-    await recordToolAudit(
-      pool,
-      personId,
-      capabilityId,
-      id,
-      payload,
-      null,
-      'rejected_by_policy',
-      Date.now() - startTime,
-      'Bị từ chối bởi Personal Policy (DENY)',
-    )
 
-    const res = await pool.query<ActionRow>(
-      `insert into personal.proposed_actions
-        (id, person_id, capability_id, action, target_domain, payload, risk_level, status, version, resolved_at, resolved_by)
-       values ($1, $2, $3, $4, $5, $6, $7, 'rejected', 1, now(), 'policy:deny')
-       returning ${ACTION_COLUMNS}`,
-      [id, personId, capabilityId, action, targetDomain, JSON.stringify(payload), riskLevel],
-    )
-    const row = res.rows[0]
-    if (!row) throw new Error('Không thể tạo ProposedAction rejected')
-    return { action: toProposedAction(row), autoExecuted: false }
+    // Tạo dòng đề xuất TRƯỚC rồi mới ghi nhật ký: `tool_execution_audit_log.proposed_action_id`
+    // là khoá ngoại tới dòng này (changelog 0623 — đảo thứ tự từng làm sập cả lượt Companion).
+    // Gói chung một transaction để không bao giờ có dòng rejected mà thiếu nhật ký.
+    return await withTransaction(pool, async (client) => {
+      const res = await client.query<ActionRow>(
+        `insert into personal.proposed_actions
+          (id, person_id, capability_id, action, target_domain, payload, risk_level, status, version, resolved_at, resolved_by)
+         values ($1, $2, $3, $4, $5, $6, $7, 'rejected', 1, now(), 'policy:deny')
+         returning ${ACTION_COLUMNS}`,
+        [id, personId, capabilityId, action, targetDomain, JSON.stringify(payload), riskLevel],
+      )
+      const row = res.rows[0]
+      if (!row) throw new Error('Không thể tạo ProposedAction rejected')
+
+      await recordToolAudit(
+        client,
+        personId,
+        capabilityId,
+        id,
+        payload,
+        null,
+        'rejected_by_policy',
+        Date.now() - startTime,
+        'Bị từ chối bởi Personal Policy (DENY)',
+      )
+      return { action: toProposedAction(row), autoExecuted: false }
+    })
   }
 
   const isHighRisk = riskLevel === 'high' || riskLevel === 'restricted'
@@ -164,17 +170,7 @@ export async function proposeAction(
       )
       const duration = Date.now() - startTime
 
-      await recordToolAudit(
-        client,
-        personId,
-        capabilityId,
-        id,
-        payload,
-        execResult,
-        'success',
-        duration,
-      )
-
+      // Ghi dòng 'committed' TRƯỚC, nhật ký SAU — nhật ký trỏ khoá ngoại tới dòng này.
       const res = await client.query<ActionRow>(
         `insert into personal.proposed_actions
           (id, person_id, capability_id, action, target_domain, payload, risk_level, status, version, resolved_at, resolved_by, execution_result)
@@ -193,6 +189,17 @@ export async function proposeAction(
       )
       const row = res.rows[0]
       if (!row) throw new Error('Không thể tạo ProposedAction committed')
+
+      await recordToolAudit(
+        client,
+        personId,
+        capabilityId,
+        id,
+        payload,
+        execResult,
+        'success',
+        duration,
+      )
       return { action: toProposedAction(row), autoExecuted: true }
     })
   }

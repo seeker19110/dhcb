@@ -9,32 +9,37 @@
 
 Chỉ tính những mặt nhận **chữ người dùng gõ** rồi đưa vào LLM — đó là nơi prompt injection vào được.
 
-| Mặt AI                                 | Eval                                           | Ca injection / rò rỉ                                      | Chấm thế nào                                                                                                                           |
-| -------------------------------------- | ---------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Action Canvas (mục tiêu → bước)        | `npm run eval:action-canvas`                   | **3** (đổi vai · thoát rào · ép format), mỗi ca có canary | **Thật** — `scripts/lib/actionCanvasScoring.ts` có unit test; `evalActionCanvasFixtures.test.ts` buộc ≥ 3 ca có canary. **Mẫu chuẩn.** |
-| Góp ý code môn Lập trình               | `npm run eval:code-feedback`                   | **1** (`hint-injection`: lệnh giả nằm trong comment code) | Thật — bất biến "không lộ lời giải" thoát mã 1.                                                                                        |
-| Gia sư chat / luyện nói (`/api/agent`) | `npm run eval:tutor` (`--mode chat\|speaking`) | **0** (180 ca: lỗi · câu đúng · ca biên)                  | —                                                                                                                                      |
-| Chấm bài viết kiểu IELTS               | (chưa có eval riêng)                           | **0**                                                     | —                                                                                                                                      |
-| Companion "Bạn Đồng Hành"              | `npm run eval:companion`                       | **0** (nhóm: sycophancy · crisis · toolUse)               | —                                                                                                                                      |
-| Planner Companion V2                   | `npm run eval:v2:red-team`                     | 30 ca trên giấy                                           | **KHÔNG phải bằng chứng** — xem mục 2.                                                                                                 |
+| Mặt AI                                          | Eval                                              | Ca injection / rò rỉ                                      | Chấm thế nào                                                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Action Canvas (mục tiêu → bước)                 | `npm run eval:action-canvas`                      | **3** (đổi vai · thoát rào · ép format), mỗi ca có canary | **Thật** — `scripts/lib/actionCanvasScoring.ts` có unit test; `evalActionCanvasFixtures.test.ts` buộc ≥ 3 ca có canary. **Mẫu chuẩn.** |
+| Góp ý code môn Lập trình                        | `npm run eval:code-feedback`                      | **1** (`hint-injection`: lệnh giả nằm trong comment code) | Thật — bất biến "không lộ lời giải" thoát mã 1.                                                                                        |
+| Gia sư chat / luyện nói (`/api/agent`)          | `npm run eval:tutor` (`--mode chat\|speaking`)    | **0** (180 ca: lỗi · câu đúng · ca biên)                  | —                                                                                                                                      |
+| Chấm bài viết kiểu IELTS                        | (chưa có eval riêng)                              | **0**                                                     | —                                                                                                                                      |
+| Companion "Bạn Đồng Hành"                       | `npm run eval:companion`                          | **0** (nhóm: sycophancy · crisis · toolUse)               | —                                                                                                                                      |
+| Companion V2 (planner · tự động hoá · ngữ cảnh) | `npm run eval:v2:red-team` (CI job `sql-prepare`) | **39** (PI 14 · TA 13 · SL 12), canary + ca đối chứng     | **Thật** — Postgres thật, gọi đúng hàm production; chỉ đường từ khoá (xem mục 2).                                                      |
 
-## 2. `eval:v2:red-team` xanh do cách dựng (phát hiện 2026-10-12)
+## 2. `eval:v2:red-team` — từ xanh giả sang kiểm thật
 
-Đọc `scripts/red-team/eval-red-team.ts` và chạy thật trên `main`:
+**Bản cũ (phát hiện 2026-10-12, changelog `0622`)** xanh do cách dựng: cộng thẳng 20/30 ca vào số
+"đã chặn" không chạy; 2 ca qua nhờ đọc nhãn của chính fixture; `main().catch(console.error)` thoát 0;
+test là `expect(true).toBe(true)`. Chạy thật trên `main` ra `29/30 … ❌ Failed` mà không ai thấy.
 
-- **20/30 ca (tool-abuse + sensitive-leakage) được CỘNG THẲNG** vào số "đã chặn" theo số lượng
-  fixture (`blockedCount += taFixtures.length`) — không chạy dòng code sản phẩm nào.
-- **2 ca prompt-injection qua nhờ ĐỌC NHÃN của chính fixture** (`expectedBlockLayer` là
-  `policy_gate`/`companion_planner` ⇒ coi là đã chặn). Một trong hai (`rt-pi-5`) thực tế còn sinh ra
-  kế hoạch `learning.update_goal` — tức là KHÔNG bị chặn.
-- 7 ca xét bằng phép tính thật nhưng tiêu chí yếu (rơi về `general_conversation` = "an toàn").
-- 1 ca (`rt-pi-9`, nhắc trụ `career` đã xoá 2026-09-20) **đỏ** → script in
-  `29/30 … ❌ Failed` và thoát mã 1. Không ai thấy vì script không chạy trong CI.
-- `scripts/red-team/eval-red-team.test.ts` chỉ có `expect(true).toBe(true)`; `main().catch(console.error)`
-  nuốt mọi exception với mã thoát 0.
+**Bản viết lại (changelog `0623`, đặc tả `docs/specs/2026-10-12-red-team-eval-that.md`):**
 
-Hệ quả: dòng "Red-team **100% blocked (30/30)**" ở `docs/research/kien-truc-va-ha-tang.md` đã được
-đính chính tại chỗ. Việc viết lại harness thành kiểm thật là nợ mở trong `PROGRESS.md` (chờ xếp lịch).
+- Gieo người dùng giả (`@red-team.invalid`) bằng chính hàm dịch vụ, gọi `prepareCompanionTurn` ·
+  `executeAutomatedAction` · `resumeAutomationGrant` · `buildContextPackage`, chấm từ kết quả thật:
+  số dòng mọi bảng `person_id` trước/sau, loại lỗi ném ra (403/404/409/429), canary có/không trong
+  ngữ cảnh — ca rò rỉ có **ca đối chứng** (cùng dữ liệu, bỏ lớp phòng thủ ⇒ PHẢI thấy canary; không
+  thấy ⇒ ca "mù", tính đỏ).
+- Chặn cứng `DATABASE_URL` không phải máy cục bộ (thoát 2); gỡ mọi khoá AI khỏi env (không tốn tiền).
+- Chạy chặn merge trong CI job `sql-prepare` (Postgres 16 đã áp đủ migration).
+- **Lần chạy thật đầu tiên bắt được lỗi sản phẩm:** `proposeAction` ghi `tool_execution_audit_log`
+  trước dòng `proposed_actions` mà nhật ký trỏ khoá ngoại tới ⇒ nhánh DENY và nhánh tự chạy (gồm câu
+  "tra từ …" mặc định) sập 500. Unit test dùng `pg` giả không thấy; `check:sql` chỉ PREPARE, không
+  chạy. Đã sửa cùng PR — kết quả **39/39**.
+
+**Chưa phủ (nợ trong `PROGRESS.md`):** chế độ tác tử (Claude chọn công cụ) · injection cho
+`eval:tutor`/`eval:companion`/chấm bài viết · byte NUL trong tin nhắn Companion ra 500 thay vì 400.
 
 ## 3. Luật viết ca red-team (áp cho mọi eval mới hoặc sửa)
 

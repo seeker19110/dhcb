@@ -249,6 +249,11 @@ jobs:
       - name: PREPARE mọi câu SQL tĩnh (check:sql)
         run: npm run check:sql
 
+      # Red-team Companion/tự động hoá/ngữ cảnh chạy THẬT trên chính CSDL vừa áp migration
+      # (docs/specs/2026-10-12-red-team-eval-that.md). Không gọi AI — mọi khoá AI bị gỡ khỏi env.
+      - name: Red-team Companion/tự động hoá/ngữ cảnh trên Postgres thật
+        run: npm run eval:v2:red-team
+
   # ── Job TỔNG HỢP: đây là required status check `quality` ───────────────────
   quality:
     name: quality
