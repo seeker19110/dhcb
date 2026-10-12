@@ -55,9 +55,10 @@ là tác tử AI xuyên suốt. App chính: `apps/dhcb` (gói `@dhcb/app`). Ki�
   dung sau P5.
 
 - `docs/templates/dac-ta-tinh-nang.md` + `docs/templates/adr.md` — **khuôn đặc tả giao việc và
-  khuôn ADR**. Dùng khi cần viết đặc tả cho AI/người khác thi hành: 6 ô bắt buộc (phạm vi có mục
-  "KHÔNG làm" · điểm chạm file · hợp đồng vào-ra · tiêu chí chấp nhận đo được · bất biến + test
-  canh · quy ước dự án) và ô nghiệm thu. Cơ sở lý thuyết ở đặc tả hướng chuyên sâu §2.5.
+  khuôn ADR**. Dùng khi cần viết đặc tả cho AI/người khác thi hành: 7 ô bắt buộc (phạm vi có mục
+  "KHÔNG làm" · điểm chạm file · hợp đồng vào-ra · tiêu chí chấp nhận đo được, đánh mã AC-n kèm
+  cột bằng chứng · bất biến + test canh · quy ước dự án · khối "Luật chung" dán nguyên vào brief
+  subagent — changelog 0620) và ô nghiệm thu. Cơ sở lý thuyết ở đặc tả hướng chuyên sâu §2.5.
 
 - `docs/ke-hoach-khoi-phuc-su-co-server.md` — **quy trình khôi phục khi server sập/gặp sự cố** (chẩn đoán nhanh → kịch bản xử lý → restore backup → post-mortem). Đọc khi có sự cố thật hoặc chuẩn bị runbook. Khác `docs/DEPLOY.md` (deploy + fix nhanh) và `docs/rollback-runbook.md` (rollback cấu hình theo PR cụ thể).
 
@@ -193,6 +194,14 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   `seeker19110/projects-template`) — đối chiếu máy hai chiều lệnh ↔ CLAUDE.md và subagent
   frontmatter `name:` ↔ tên file, bắt lỗi kiểu "thêm lệnh mà quên khai trong CLAUDE.md". Chạy
   trước khi thêm/xoá `.claude/commands/`hoặc `.claude/agents/`.
+
+- **Dấu nợ có điều kiện xem lại (2026-10-12, changelog 0620 — lấy từ khung `seeker19110/project-template`).**
+  Chỗ CỐ Ý dừng ở một trần đã biết (khoá toàn cục, quét O(n²), heuristic thô, giới hạn cứng) phải để lại
+  dấu ngay tại chỗ theo đúng khuôn: `DEBT: <đã giản lược gì> | trần: <giới hạn> | xem lại khi: <điều kiện
+quay lại>`. Thiếu `xem lại khi:` là khoản nợ không có đường quay lại — mục âm thầm. `npm run maintain`
+  (`scripts/maintenance-sweep.sh`) đếm mọi dấu `DEBT:` trong mã và cảnh báo 🟡 đúng các dấu thiếu điều
+  kiện. Phân vai: `TODO` = việc còn dở · `DEBT:` = cố ý dừng ở một trần · mục "Nợ kỹ thuật còn mở" của
+  `PROGRESS.md` = nợ cấp dự án · ADR = quyết định kiến trúc.
 
 - **Quy ước URL mang tiêu đề (chốt 2026-09-01, PR #795 mở rộng cho môn Lập trình).** Route nào
   có tham số là id một nội dung có tiêu đề (bài học, bậc học, hướng chuyên sâu, khoá học, lộ

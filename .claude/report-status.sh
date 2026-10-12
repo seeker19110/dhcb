@@ -30,13 +30,22 @@ else
   echo "   (chưa có docs/changelog/)"
 fi
 
-echo ""
-echo "✅ ĐÃ XONG (xác nhận qua audit 2026-08-01, xem CLAUDE.md mục 13 + PROGRESS.md):"
-echo "   Prettier, ESLint, TS strict, Husky, commitlint, CI, coverage gate, E2E+a11y, bundle-size budget"
-echo "   Sentry (DSN đã điền, xác nhận 2026-07-27) · Branch protection (xác nhận 2026-07-11)"
-echo "   Thanh toán Pro/VIP qua SePay (xác nhận 2026-07-27) · Đã rời hẳn Supabase → Postgres tự host"
-echo "   Domain mặc định .org + redirect .com/apex → www.org (2026-07-31)"
-echo "   Backup + restore R2 (DB/.env/Nginx+crontab+PM2) — kiểm chứng cả 2 chiều (2026-08-01)"
+# Vừa NÉN ngữ cảnh (hook PreCompact `precompact-checkpoint.sh`, changelog 0620) → nhắc file checkpoint nếu nó còn
+# mới (≤ 60 phút). File cũ hơn là của phiên trước, không nhắc để khỏi gây nhầm.
+CHECKPOINT="${CLAUDE_PROJECT_DIR:-.}/.claude/.compact-checkpoint"
+if [ -f "$CHECKPOINT" ] && [ -n "$(find "$CHECKPOINT" -mmin -60 2>/dev/null)" ]; then
+  echo ""
+  echo "🧷 VỪA NÉN NGỮ CẢNH — trạng thái chụp ngay trước khi nén: .claude/.compact-checkpoint"
+fi
+
+# (Khối "ĐÃ XONG" chép tay đã BỎ ở changelog 0620: nó lỗi thời lần thứ ba — vẫn ghi "Thanh toán
+# Pro/VIP" sau khi gói Pro bị xoá (2026-09-12). Tóm tắt một dòng nằm ở CLAUDE.md mục 13.)
+
+# Phiên MỚI → xoá dấu "đã nhắc wind-down" của usage-guard.sh. Trước đây không chỗ nào xoá dấu này:
+# trên máy cố định, sau lần nhắc đầu tiên thì KHÔNG BAO GIỜ nhắc lại (đối chiếu khung
+# seeker19110/project-template `session-resume.sh`, changelog 0620). Phiên cloud thì container mới
+# nên vô hại.
+rm -f "${CLAUDE_PROJECT_DIR:-.}/.claude/.winddown-nudged" 2>/dev/null || true
 
 echo ""
 echo "📝 NỢ KỸ THUẬT CÒN MỞ (đọc thẳng từ PROGRESS.md — nguồn thật, không chép tay):"

@@ -54,6 +54,11 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "hooks": [{ "type": "command", "command": "bash .claude/hooks/precompact-checkpoint.sh" }]
+      }
+    ],
     "Stop": [
       {
         "hooks": [{ "type": "command", "command": "bash .claude/hooks/usage-guard.sh" }]

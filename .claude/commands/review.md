@@ -35,6 +35,14 @@ kèm lý do. Dùng luật của nhóm file làm checklist khi đọc diff ở B�
 Dùng `Skill(code-review)` ở effort phù hợp độ rủi ro của diff (mặc định `medium`; nâng `high`
 nếu diff chạm nhiều file/luồng nghiệp vụ chính, ví dụ đổi luồng AI/thanh toán/nhiều trang).
 
+## Bước 2b — Đối chiếu diff với `TRAPS.md` (sổ bẫy đã mắc THẬT)
+
+`TRAPS.md` chỉ có giá trị khi được TRA lúc review (đối chiếu khung `seeker19110/project-template`,
+changelog `0620`: trước đợt này `/review` và agent `reviewer` không nhắc tới nó lần nào). Với mỗi
+file/luồng diff chạm tới: `grep -n "^## " TRAPS.md` + tìm theo tên file/khái niệm (hook, worktree,
+`PROGRESS.md`, overlay, stdin, gitleaks…). Mục nào khớp → đọc "Cách rà" của mục đó và kiểm diff
+theo đúng cách rà ấy; nêu rõ trong báo cáo "TRAPS mục N: đã kiểm, sạch / VI PHẠM ở `path:line`".
+
 ## Bước 3 — Gọi thêm subagent `security-reviewer` nếu chạm vùng nhạy cảm
 
 Diff đụng auth, thanh toán SePay, dữ liệu người dùng thật, quyền truy cập (`validateAuth()`),
@@ -42,6 +50,11 @@ hoặc input từ bên ngoài chưa rõ đã validate → giao thêm `Agent(secu
 CLAUDE.md mục 12).
 
 ## Bước 4 — Xử lý phát hiện
+
+Mỗi phát hiện PHẢI trỏ `path:line` có thật + bằng chứng (dòng mã, lệnh tái hiện, output) — phát
+hiện không trỏ được vào mã là ý kiến, không phải lỗi. Phân loại để biết sửa ở đâu: `defect` (mã
+sai) · `missing-evidence` (có thể đúng nhưng chưa chứng minh — thiếu test/đo) · `missing-input`
+(đặc tả thiếu/mâu thuẫn → hỏi, không tự chế) · `cleanup` (đơn giản hoá, không đổi hành vi).
 
 - Lỗi **correctness/bảo mật** xác nhận thật → sửa ngay, chạy lại `/gate`, review lại phần đã
   sửa.

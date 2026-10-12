@@ -132,6 +132,30 @@ Dự án bạn đã có i18n → **đừng thay nếu đang chạy tốt.** Đá
 
 ---
 
+## PHẦN D — Học tiếp từ khung / repo / skill BÊN NGOÀI (phương pháp ba cột)
+
+> Bổ sung 2026-10-12 (changelog 0620), rút gọn từ `docs/framework/adopt-from-outside.md` của khung
+> `seeker19110/project-template`. Dùng khi chủ dự án đưa một nguồn ngoài và bảo "lấy cái hay về" — kể cả khi
+> nguồn đó là chính bộ khung này ở phiên bản mới hơn. Đọc TRƯỚC khi chép một dòng nào.
+
+1. **Xếp mỗi hạng mục vào đúng MỘT cột:** _Đã có và SÂU HƠN_ (không lấy; ghi một câu mạnh hơn ở đâu) ·
+   _Đã có nhưng NÔNG HƠN_ (chỉ lấy đúng điểm yếu hơn, không chép cả hạng mục) · _CHƯA CÓ_ (lấy khi qua cổng ở
+   bước 2). Không có cột "hay quá, lấy luôn" — chép một luật vào chỗ đã có luật đó là tạo **nguồn lệch mới**.
+2. **Cổng "tốt hơn RÒNG bản đang chạy", chứng minh được:** bắt thêm một lớp lỗi (nêu được ca cụ thể bản hiện có
+   cho lọt — `TRAPS.md`/bug/PR làm lại là bằng chứng mạnh nhất) · cùng kết quả mà ít code/bước/dependency hơn ·
+   biến luật văn xuôi thành cổng máy · nhanh/rẻ hơn đo được. Trừ đi cái nó mang thêm (một luật phải nhớ, một
+   file phải đồng bộ). Không chứng minh được → "chưa cần" + **điều kiện xem lại**.
+3. **Grep CỔNG ĐANG CHẠY, đừng đọc văn xuôi.** Tài liệu nói "chưa có" chỉ là giả thuyết — tìm test/script/job
+   CI/hằng số ngưỡng (`grep -rn "TRAN_\|THRESHOLD\|BASELINE"`, `.github/workflows/`, `scripts/*.test.ts`) mới là
+   dữ kiện. ĐO trên repo thật trước khi kết luận cả hai chiều (một luật tưởng hay có thể ra toàn dương tính giả —
+   vd ngưỡng file lớn của khung sẽ chặn 5 file dữ liệu > 1 MB DHCB sửa thường xuyên, changelog 0619).
+4. **Kiểm MÂU THUẪN luật, không chỉ trùng lặp:** luật nào ở DHCB nói ngược hạng mục sắp lấy? Có → không lấy,
+   hoặc đưa ra cho chủ dự án quyết; với DHCB, luật **chặt hơn** của mình luôn thắng (vd chặn MỌI force-push).
+5. **Đầu ra:** bản đối chiếu lưu lại (changelog của đợt tích hợp là đủ) — thứ đã lấy, thứ bỏ kèm một câu lý do
+   bác lại được, thứ "chưa cần" kèm điều kiện xem lại. Tiền lệ: changelog `0292`, `0294`, `0619`, `0620`.
+
+---
+
 ## Cổng "đã áp khung xong cho dự án cũ"
 
 - [ ] `PROJECT.md` (ngược) + `PROGRESS.md` + `CLAUDE.md` (điền thật) đã có.

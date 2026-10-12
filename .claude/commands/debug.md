@@ -38,6 +38,8 @@ Mỗi phép đo nhắm đúng một giả thuyết, **đổi một biến một 
 
 Viết test hồi quy **trước** khi sửa — nhưng chỉ khi có **seam đúng** (test chạm đúng đường đi thật gây bug, không phải seam nông giả tạo cho xanh). Không có seam đúng → đó tự nó là một phát hiện quan trọng (kiến trúc đang cản việc khóa chặt bug này) — ghi lại, để dành cho Pha 6. Có seam: viết test thất bại → xác nhận đỏ → sửa → xác nhận xanh → chạy lại lệnh gốc ở Pha 1 (chưa thu nhỏ) để chắc chắn.
 
+**Lần sửa thứ 2 cho cùng một lỗi** → trước khi sửa, ghi một dòng "lỗi nằm ở tầng đặc tả / thiết kế / code / cổng vì …" và quay về đúng tầng; lần 3 vẫn đỏ → dừng, báo người dùng (`docs/AI_DELIVERY_LOOP.md` §5; hook cổng commit tự đếm và nhắc).
+
 ## Pha 6 — Dọn dẹp + rút kinh nghiệm
 
 Trước khi coi là xong: repro gốc hết tái hiện · test hồi quy xanh (hoặc đã ghi rõ lý do không có seam) · gỡ sạch mọi log `[DEBUG-...]` (`grep` tiền tố để chắc) · xóa prototype tạm dùng để chẩn đoán · ghi giả thuyết đúng vào changelog PR (`docs/changelog/`) để người debug sau học được.
