@@ -14,8 +14,10 @@ import {
   buildExam,
   buildListeningQuestions,
   levelGrammarSources,
+  randomVoice,
   type GrammarExamSource,
 } from './cefrExam'
+import { VOICE_OPTIONS } from './voiceTiers'
 import type { DictEntry } from '../types'
 import type { Dialogue } from '../data/dialogues'
 import type { CefrLevel, CefrUnit, GrammarLesson } from '../data/cefr'
@@ -358,5 +360,18 @@ describe('levelGrammarSources — gom quiz từ mọi unit, bỏ qua bài không
 
     const sources = levelGrammarSources(level)
     expect(sources.map((s) => s.lessonId)).toEqual(['g1', 'g1', 'g3'])
+  })
+})
+
+describe('randomVoice — giọng ngẫu nhiên cho câu Nghe (GĐ2b: CefrExam.tsx gắn vào đề server)', () => {
+  it('luôn trả một giọng có trong VOICE_OPTIONS', () => {
+    const ids = new Set(VOICE_OPTIONS.map((v) => v.id))
+    for (let i = 0; i < 50; i++) expect(ids.has(randomVoice())).toBe(true)
+  })
+
+  it('không dính một giọng duy nhất (50 lần rút ra ≥ 2 giọng khác nhau)', () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 50; i++) seen.add(randomVoice())
+    expect(seen.size).toBeGreaterThanOrEqual(2)
   })
 })

@@ -2,9 +2,10 @@
 // BÀI THI CUỐI CẤP — màn thi toàn màn hình (1 câu/màn)
 //
 // Máy chủ dựng đề xáo trộn 4 phần (Từ vựng · Ngữ pháp · Nghe · Đọc hiểu) từ kho của
-// cấp (lib/cefrExam.ts buildExam). Đạt ≥70% → "qua cấp" (lưu kết quả, mở khóa
-// cấp sau ở computeLockedMap). Trượt → xem câu sai + mở lại bài ngữ pháp + thi lại
-// (đề MỚI). Máy chủ chấm và lưu biên nhận trước khi cấp quyền.
+// cấp (apps/server/src/api/_lib/cefrAssessment.ts — GĐ2b, đặc tả
+// docs/specs/2026-10-12-gd2b-cham-thi-cefr-server.md) và trả đề KHÔNG kèm đáp án. Đạt ≥70% →
+// "qua cấp" (server ghi sổ thi, tính lại cấp được mở). Trượt → xem câu sai + mở lại bài ngữ
+// pháp + thi lại (đề MỚI). Máy chủ chấm và lưu biên nhận trước khi cấp quyền.
 //
 // Điều kiện DỰ THI do trang cấp (CefrLevelPage) kiểm tra trước khi cho vào đây.
 // ──────────────────────────────────────────────────────────────────────
@@ -15,7 +16,7 @@ import type { CefrLevel } from '../data/cefr'
 import type { AgeGroup } from '../types'
 import type { AccentClasses } from '../lib/cefrAccent'
 import { stopSpeaking, speak } from '../lib/tts'
-import { scoreExam, EXAM_PASS_PCT, type ExamQuestion } from '../lib/cefrExam'
+import { scoreExam, EXAM_PASS_PCT, randomVoice, type ExamQuestion } from '../lib/cefrExam'
 import ExamQuestionCard from './ExamQuestionCard'
 import { PART_META } from '../lib/examParts'
 import { checkNewAchievements, achievementMessage } from '../lib/achievements'
@@ -67,7 +68,13 @@ export default function CefrExam({
       .then((exam) => {
         if (!alive) return
         setAttemptId(exam.attemptId)
-        setQuestions(exam.questions)
+        // Câu Nghe: giọng NGẪU NHIÊN mỗi câu (chống học vẹt theo 1 giọng quen — đặc tả mục ③
+        // N2). Server không chọn giọng (giọng không ảnh hưởng chấm), nên gắn ở đây.
+        setQuestions(
+          exam.questions.map((question) =>
+            question.part === 'listening' ? { ...question, audioVoice: randomVoice() } : question,
+          ),
+        )
         setCurrent(0)
         setSelected(null)
         setAnswers([])
