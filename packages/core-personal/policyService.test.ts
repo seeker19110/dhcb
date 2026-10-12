@@ -213,6 +213,31 @@ describe('resolveAuthority', () => {
     ])
   })
 
+  // Changelog 0627: AUTOMATE quá hạn duyệt lại hạ về chờ xác nhận. Phép so `review_at <= now()`
+  // chạy trong Postgres (đo thật ở `eval:v2:permissions` ca perm-automate-review-due); ở đây chỉ
+  // kiểm nhánh TS đọc cờ `review_due` đúng.
+  it('AUTOMATE đã quá review_at → EXECUTE_WITH_CONFIRMATION', async () => {
+    const { pool, query } = mockPool(() => [{ authority: 'AUTOMATE', review_due: true }])
+    expect(
+      await resolveAuthority(pool, PERSON_ID, 'calendar', 'create_event', 'personal_calendar'),
+    ).toBe('EXECUTE_WITH_CONFIRMATION')
+    expect(String(query.mock.calls[0]?.[0])).toContain('review_at <= now()')
+  })
+
+  it('AUTOMATE còn hạn → giữ AUTOMATE', async () => {
+    const { pool } = mockPool(() => [{ authority: 'AUTOMATE', review_due: false }])
+    expect(
+      await resolveAuthority(pool, PERSON_ID, 'calendar', 'create_event', 'personal_calendar'),
+    ).toBe('AUTOMATE')
+  })
+
+  it('mức khác AUTOMATE quá review_at → giữ nguyên (DENY không bao giờ bị nới)', async () => {
+    const { pool } = mockPool(() => [{ authority: 'DENY', review_due: true }])
+    expect(
+      await resolveAuthority(pool, PERSON_ID, 'calendar', 'create_event', 'personal_calendar'),
+    ).toBe('DENY')
+  })
+
   it('chưa có policy nào → null (caller tự quyết mặc định, service KHÔNG bịa)', async () => {
     const { pool } = mockPool(() => [])
     expect(await resolveAuthority(pool, PERSON_ID, 'email', 'send', 'inbox')).toBeNull()

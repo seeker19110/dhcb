@@ -199,6 +199,12 @@ export async function revokePolicy(pool: Pool, personId: string, policyId: strin
  * Trả `null` khi CHƯA có policy nào — cố ý KHÔNG tự suy ra mức mặc định ở đây. Mặc định an toàn
  * là quyết định của tầng gọi (mỗi loại tool có mức đáy khác nhau), và trộn hai việc đó vào một
  * hàm sẽ khiến "chưa cấu hình" không phân biệt được với "đã cấu hình đúng mức đó".
+ *
+ * AUTOMATE đã quá `review_at` → trả 'EXECUTE_WITH_CONFIRMATION' (changelog 0627, chủ dự án chốt
+ * 2026-10-12): mục 7 bắt quyền tự động "phải có expiry/review", nhưng trước đây không chỗ nào đọc
+ * `review_at` nên AUTOMATE có hiệu lực vĩnh viễn. Hạ mức thay vì coi như không có policy: người
+ * dùng vẫn được đề xuất, chỉ là phải bấm xác nhận — cho tới khi họ đặt lại policy. Không đụng dòng
+ * trong CSDL (policy append-only). So bằng `now()` của Postgres để mọi tầng dùng chung một đồng hồ.
  */
 export async function resolveAuthority(
   pool: Pool,
@@ -207,15 +213,20 @@ export async function resolveAuthority(
   action: string,
   resourceScope: string,
 ): Promise<AuthorityLevel | null> {
-  const res = await pool.query<{ authority: string }>(
-    `select authority from personal.personal_policies
+  const res = await pool.query<{ authority: string; review_due: boolean }>(
+    `select authority, (review_at is not null and review_at <= now()) as review_due
+       from personal.personal_policies
       where person_id = $1 and subject = $2 and action = $3 and resource_scope = $4
         and revoked_at is null
       limit 1`,
     [personId, subject, action, resourceScope],
   )
   const row = res.rows[0]
+  if (!row) return null
   // Parse qua Zod: giá trị lạ trong DB (migration tay, dữ liệu cũ) không được lọt ra ngoài dưới
   // dạng AuthorityLevel giả — thà ném lỗi còn hơn cấp nhầm quyền.
-  return row ? AuthorityLevelSchema.parse(row.authority) : null
+  const authority = AuthorityLevelSchema.parse(row.authority)
+  return authority === 'AUTOMATE' && row.review_due === true
+    ? 'EXECUTE_WITH_CONFIRMATION'
+    : authority
 }
