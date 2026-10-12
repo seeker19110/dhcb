@@ -1,6 +1,6 @@
 # 0623 — Red-team Companion chạy THẬT trên Postgres (39 ca, chặn CI) · sửa `proposeAction` sập vì khoá ngoại · IP VPS cũ · TRAPS U+FFFD
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo) · **Loại:** `fix(companion)`
+- **Ngày:** 2026-10-12 · **PR:** #1385 · **Loại:** `fix(companion)`
 - **Nguồn việc:** nợ đầu bảng `PROGRESS.md` (changelog `0622`: `eval:v2:red-team` xanh do cách dựng) +
   hai việc tồn đọng của đợt `0622` (IP VPS cũ trong 3 tài liệu, bẫy công cụ Edit giải mã `\uFFFD`). Chủ dự
   án: "theo khuyến nghị".
