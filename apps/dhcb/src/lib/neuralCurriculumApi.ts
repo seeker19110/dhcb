@@ -9,6 +9,7 @@ import {
   NeuralDrillReviewSchema,
   type NeuralDrillReview,
 } from '@dhcb/core-contracts/neuralCurriculum'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 export async function fetchNeuralCurriculum(): Promise<NeuralCurriculumState> {
   const res = await fetch('/api/neural-curriculum', {
@@ -27,7 +28,7 @@ export async function fetchNeuralCurriculum(): Promise<NeuralCurriculumState> {
 
 export async function generateMicroModule(params: {
   topicOrKeyword: string
-  targetDomain?: 'learning' | 'career' | 'work' | 'startup' | 'life'
+  targetDomain?: PillarDomain
   cefrLevel?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 }): Promise<{ module: MicroCurriculumModule; state: NeuralCurriculumState }> {
   const res = await fetch('/api/neural-curriculum?action=generate_module', {

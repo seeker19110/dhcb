@@ -108,7 +108,7 @@ header:
 feature:
   id: STUDY_PLAN_001 # CHỮ_HOA_SNAKE + số; là khoá tra cứu trong PLAN.md, changelog, PR
   name: AI Study Planner
-  pillar: learning # learning | career | work | startup | life | platform
+  pillar: learning # learning | work | platform  (career · startup · life đã gỡ 2026-09-20)
   subject: english # chỉ khi pillar=learning; english | programming | math | ...
 goal:
   user: student # persona; KHÔNG dùng giới tính làm trục (luật CLAUDE.md mục 2)

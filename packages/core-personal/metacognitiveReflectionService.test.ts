@@ -53,25 +53,38 @@ describe('MetacognitiveReflectionService', () => {
     expect(summary.recentAhaMoments.length).toBeGreaterThan(0)
   })
 
-  it('generates prompts across all 5 domains with contextAnchor', () => {
-    const domains = ['career', 'work', 'startup', 'life'] as const
+  it('sinh câu hỏi cho đủ 3 miền còn thật, kèm contextAnchor', () => {
+    const domains = ['learning', 'work', 'general'] as const
     for (const d of domains) {
       const p = MetacognitiveReflectionService.generateDailySocraticPrompt(d, 'anchor-1')
       expect(p.domain).toBe(d)
       expect(p.contextAnchor).toBe('anchor-1')
+      expect(p.promptText.length).toBeGreaterThan(0)
+    }
+  })
+
+  // Changelog 0628: trụ Career · Startup · Life đã xoá — không còn câu hỏi nào về sự nghiệp/gọi vốn.
+  it('không câu hỏi nào nhắc trụ đã xoá', () => {
+    for (const d of ['learning', 'work', 'general'] as const) {
+      for (let i = 0; i < 10; i++) {
+        const p = MetacognitiveReflectionService.generateDailySocraticPrompt(d)
+        expect(`${p.theme} ${p.promptText} ${p.deepDivingQuestion}`).not.toMatch(
+          /sự nghiệp|khởi nghiệp|khách hàng|pivot/i,
+        )
+      }
     }
   })
 
   it('detects imposter syndrome and sunk cost biases', () => {
     const imposter = MetacognitiveReflectionService.analyzeReflection('u1', {
-      domain: 'career',
+      domain: 'work',
       reflectionPrompt: 'Prompt',
       userReflection: 'Tôi chỉ may mắn thôi và cảm thấy không xứng đáng với vị trí này.',
     })
     expect(imposter.identifiedBiases.some((b) => b.biasType === 'imposter_syndrome')).toBe(true)
 
     const sunk = MetacognitiveReflectionService.analyzeReflection('u1', {
-      domain: 'startup',
+      domain: 'learning',
       reflectionPrompt: 'Prompt',
       userReflection: 'Rất tiếc công vì đã bỏ ra nhiều tháng phát triển, không thể bỏ được.',
     })
@@ -81,7 +94,7 @@ describe('MetacognitiveReflectionService', () => {
   it('bài không có dấu hiệu bẫy nào → danh sách bẫy RỖNG (không có bẫy "none" giữ chỗ), câu hỏi mở chung', () => {
     const neutral = MetacognitiveReflectionService.analyzeReflection('u1', {
       title: 'Custom Title',
-      domain: 'life',
+      domain: 'general',
       reflectionPrompt: 'Prompt',
       userReflection: 'Hôm nay tôi muốn cải thiện và học hỏi cách quản lý cảm xúc tốt hơn.',
     })

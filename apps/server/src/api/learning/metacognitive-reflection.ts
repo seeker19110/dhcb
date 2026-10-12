@@ -10,6 +10,7 @@ import {
   type MetacognitiveReflection,
   type StoredMetacognitiveReflection,
 } from '@dhcb/core-contracts/metacognitiveReflection'
+import { PillarDomainSchema } from '@dhcb/core-contracts/pillarDomain'
 import { getFeatureState, setFeatureState } from '@dhcb/core-db/featureState'
 
 const FEATURE = 'metacognitive_reflection'
@@ -51,14 +52,9 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'GET') {
     if (action === 'daily_prompt') {
       const rawDomain = url.searchParams.get('domain')
-      const domain = (
-        rawDomain === 'career' ||
-        rawDomain === 'work' ||
-        rawDomain === 'startup' ||
-        rawDomain === 'life'
-          ? rawDomain
-          : 'learning'
-      ) as MetacognitiveReflection['domain']
+      // Miền lạ/thiếu → 'learning'; liên kết cũ còn mang trụ đã xoá → 'general' (changelog 0628).
+      const parsedDomain = PillarDomainSchema.safeParse(rawDomain)
+      const domain = parsedDomain.success ? parsedDomain.data : 'learning'
       const contextAnchor = url.searchParams.get('contextAnchor') || undefined
       const prompt = MetacognitiveReflectionService.generateDailySocraticPrompt(
         domain,

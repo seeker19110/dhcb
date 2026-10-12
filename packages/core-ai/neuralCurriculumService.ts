@@ -8,6 +8,7 @@ import {
   type NeuralDrillSubmission,
 } from '@dhcb/core-contracts/neuralCurriculum'
 import { shuffle } from '@dhcb/core-contracts/shuffle'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 export class NeuralCurriculumService {
   /**
@@ -15,7 +16,7 @@ export class NeuralCurriculumService {
    */
   static generateMicroCurriculumModule(params: {
     moduleId: string
-    targetDomain: 'learning' | 'career' | 'work' | 'startup' | 'life'
+    targetDomain: PillarDomain
     topicOrKeyword: string
     cefrLevel?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
   }): MicroCurriculumModule {
@@ -53,7 +54,7 @@ export class NeuralCurriculumService {
    * Lấy danh sách collocations đắt giá mẫu theo miền và từ khóa
    */
   static getCuratedCollocations(
-    domain: 'learning' | 'career' | 'work' | 'startup' | 'life',
+    domain: PillarDomain,
     _keyword: string,
     level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2',
   ): CollocationNode[] {
@@ -148,7 +149,7 @@ export class NeuralCurriculumService {
     const now = new Date().toISOString()
     const defaultModule = this.generateMicroCurriculumModule({
       moduleId: '11111111-1111-4111-8111-111111111111',
-      targetDomain: 'career',
+      targetDomain: 'work',
       topicOrKeyword: 'Giao Tiếp Quốc Tế & Phản Xạ Công Việc',
       cefrLevel: 'B2',
     })

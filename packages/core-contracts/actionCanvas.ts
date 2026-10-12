@@ -1,6 +1,12 @@
 // packages/core-contracts/actionCanvas.ts — Hợp đồng Không gian làm việc Tương tác & Sơ đồ Tư duy Đa miền V4.2.
 import { z } from 'zod'
 import { IsoDateTimeSchema, UuidSchema } from './shared.js'
+import {
+  PILLAR_DOMAINS,
+  PILLAR_DOMAIN_LABELS,
+  PillarDomainSchema,
+  type PillarDomain,
+} from './pillarDomain.js'
 
 export const ACTION_CANVAS_VERSION = 'v4.2.0'
 
@@ -16,19 +22,12 @@ export const CanvasNodeTypeSchema = z.enum([
 
 export type CanvasNodeType = z.infer<typeof CanvasNodeTypeSchema>
 
-// Miền của một nút: hai trụ còn thật (Learning, Ghi chú = `work`) + `general`. Ba trụ Career ·
-// Startup · Life đã gỡ 2026-09-20 — canvas người dùng LƯU từ trước vẫn có thể chứa ba giá trị đó,
-// nên chúng được đổi về `general` khi đọc thay vì bị từ chối (lưu lại canvas cũ không lỗi 400).
-// Changelog 0485.
-export const CANVAS_DOMAINS = ['learning', 'work', 'general'] as const
-const LEGACY_CANVAS_DOMAINS = new Set(['career', 'startup', 'life'])
-
-export const CanvasDomainSchema = z.preprocess(
-  (value) => (typeof value === 'string' && LEGACY_CANVAS_DOMAINS.has(value) ? 'general' : value),
-  z.enum(CANVAS_DOMAINS),
-)
-
-export type CanvasDomain = z.infer<typeof CanvasDomainSchema>
+// Miền của một nút: hai trụ còn thật (Learning, Ghi chú = `work`) + `general`. Canvas người dùng
+// LƯU từ trước vẫn có thể chứa trụ đã xoá (career/startup/life) — đổi về `general` khi đọc, không
+// từ chối (changelog 0485). Nguồn chung: `pillarDomain.ts` (changelog 0628).
+export const CANVAS_DOMAINS = PILLAR_DOMAINS
+export const CanvasDomainSchema = PillarDomainSchema
+export type CanvasDomain = PillarDomain
 
 export const CanvasNodeStatusSchema = z.enum(['draft', 'in_progress', 'blocked', 'completed'])
 
@@ -36,11 +35,7 @@ export type CanvasNodeStatus = z.infer<typeof CanvasNodeStatusSchema>
 
 // [2026-10-05, audit M11, đợt U5] Nhãn HIỂN THỊ tiếng Việt cho mã enum — dùng chung cho thẻ trên
 // canvas và bản xuất Markdown, để người dùng không thấy mã thô ("in progress", "LEARNING", "You").
-export const CANVAS_DOMAIN_LABELS: Record<CanvasDomain, string> = {
-  learning: 'Học tập',
-  work: 'Ghi chú',
-  general: 'Chung',
-}
+export const CANVAS_DOMAIN_LABELS: Record<CanvasDomain, string> = PILLAR_DOMAIN_LABELS
 
 export const CANVAS_STATUS_LABELS: Record<CanvasNodeStatus, string> = {
   draft: 'Bản nháp',

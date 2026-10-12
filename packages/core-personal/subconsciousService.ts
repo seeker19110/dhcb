@@ -44,9 +44,9 @@ export async function runNightlyConsolidation(
   if (graph.nodes.some((n) => n.type === 'Skill')) {
     hypotheses.push({
       hypothesis:
-        'Kỹ năng đang phát triển có thể tạo đòn bẩy trực tiếp cho các dự án và mục tiêu sự nghiệp.',
+        'Kỹ năng đang phát triển có thể tạo đòn bẩy trực tiếp cho việc học và các ghi chú công việc.',
       confidence: 0.9,
-      domain: 'career',
+      domain: 'learning',
       evidenceCount: graph.edges.length,
       actionProposed: 'Tận dụng kỹ năng đã học để giải quyết task quan trọng nhất ngày mai.',
     })
@@ -92,7 +92,7 @@ export async function runNightlyConsolidation(
         : [],
     recommendedMindset:
       'Tập trung sâu (Flow State), ưu tiên giải quyết nhiệm vụ quan trọng trước 11h sáng.',
-    targetDomainFocus: graph.nodes.some((n) => n.type === 'Goal') ? 'career' : 'learning',
+    targetDomainFocus: graph.nodes.some((n) => n.type === 'Goal') ? 'general' : 'learning',
   }
 
   const log: SubconsciousThoughtLog = {

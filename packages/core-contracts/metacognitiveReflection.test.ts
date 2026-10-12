@@ -120,6 +120,13 @@ describe('toPublicReflection — chiếu bản ghi CSDL sang client', () => {
     createdAt: '2026-10-01T00:00:00.000Z',
   }
 
+  // Changelog 0628: bản ghi lưu trước khi gỡ trụ có thể mang `career`/`startup`/`life`.
+  it('bản ghi cũ mang trụ đã xoá → domain general, giá trị lạ → general', () => {
+    expect(toPublicReflection({ ...legacy, domain: 'career' }).domain).toBe('general')
+    expect(toPublicReflection({ ...legacy, domain: 'hack' }).domain).toBe('general')
+    expect(toPublicReflection({ ...legacy, domain: 'work' }).domain).toBe('work')
+  })
+
   it('bỏ hai số giả, bỏ bẫy "none" giữ chỗ, bù triggerPhrases rỗng — và qua được schema strict', () => {
     const pub = toPublicReflection(legacy)
     expect(JSON.stringify(pub)).not.toMatch(/metacognitiveIndex|growthMindsetScore/)

@@ -1281,7 +1281,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`, `0627`] Red-team AI: phần Companion V2 ĐÃ KIỂM
+- 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`, `0627`, `0628`] Red-team AI: phần Companion V2 ĐÃ KIỂM
   THẬT, còn các mặt khác.** ✅ `eval:v2:red-team` viết lại chạy trên Postgres thật, chặn CI (job
   `sql-prepare`): **54/54** (PI 14 · TA 13 · SL 12 · AG 15) — lần chạy đầu bắt được lỗi sản phẩm (DENY + tự chạy
   của `proposeAction` sập vì khoá ngoại), đã sửa cùng PR. ✅ `0624`: byte NUL trong body JSON → 400 ở
@@ -1292,9 +1292,9 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   eval (`docs/ops/ai-eval-red-team.md` §5); (3) ✅ `0625`: `eval:v2:permissions` nay chạy Postgres thật (21 ca,
   chặn CI) — lộ và sửa lỗi đặt policy đồng thời → 500; (3b) ✅ `0627`: policy `AUTOMATE` đã quá
   `review_at` nay được `resolveAuthority` hạ về `EXECUTE_WITH_CONFIRMATION` (chờ xác nhận), dòng policy
-  giữ nguyên — chủ dự án chốt "theo khuyến nghị"; (4) `metacognitiveReflectionService.ts`,
-  `proactiveAgentService.ts`, `subconsciousService.ts` (+ API `learning/metacognitive-reflection.ts`) vẫn
-  nhận/sinh domain `career`/`startup`/`life` của trụ đã xoá. _Xem lại khi:_ trước khi Companion/planner
+  giữ nguyên — chủ dự án chốt "theo khuyến nghị"; (4) ✅ `0628`: domain `career`/`startup`/`life` đã gỡ
+  khỏi 6 contract + 5 service + modal phản tỉnh, dùng chung `packages/core-contracts/pillarDomain.ts`
+  (dữ liệu lưu cũ mang trụ đã xoá đọc ra `general`, không lỗi). _Xem lại khi:_ trước khi Companion/planner
   nhận thêm quyền ghi dữ liệu, hoặc khi có PR đổi prompt `/api/agent`.
 - 🟡 **[2026-10-09 — sau changelog `0558`, rà bảo mật độc lập] Kiểm tra hiểu hội thoại CEFR: script
   vẫn TRA được đáp án từ đề công khai + `dialogues.json` — CẦN CHỦ DỰ ÁN QUYẾT.** Đợt `0558` đã

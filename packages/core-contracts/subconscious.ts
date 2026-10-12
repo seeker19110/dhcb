@@ -1,6 +1,7 @@
 // packages/core-contracts/subconscious.ts — Hợp đồng dữ liệu cho Subconscious Engine V3.
 import { z } from 'zod'
 import { IsoDateTimeSchema, UuidSchema } from './shared.js'
+import { PillarDomainSchema } from './pillarDomain.js'
 
 export const SUBCONSCIOUS_SCHEMA_VERSION = 'v3.0.0'
 
@@ -9,7 +10,7 @@ export const PreComputedMorningStrategySchema = z
     vitalTasks: z.array(z.string().min(1).max(300)).min(1).max(5),
     potentialObstacles: z.array(z.string().min(1).max(300)).max(5),
     recommendedMindset: z.string().min(1).max(500),
-    targetDomainFocus: z.enum(['learning', 'career', 'work', 'startup', 'life', 'general']),
+    targetDomainFocus: PillarDomainSchema,
   })
   .strict()
 

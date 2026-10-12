@@ -523,42 +523,39 @@ describe('executeCompanionTurn — nhánh ngữ cảnh & đếm trạng thái', 
     expect(ctxOptions.tokenBudget).toBe(COMPANION_DEFAULT_TOKEN_BUDGET)
   })
 
-  // [2026-08-27] Companion "xuyên suốt 5 trụ": trước đây CHỈ trụ Learning có read model nạp vào
-  // ngữ cảnh, nên hỏi về sự nghiệp/công việc/khởi nghiệp/đời sống thì AI không thấy dữ liệu
-  // người dùng đã nhập ở đúng những trụ đó.
-  it.each(['career', 'work', 'startup', 'life'])(
-    'trụ %s → nạp read model của trụ đó vào ngữ cảnh',
-    async (domain) => {
-      domainReadModelMock.getDomainReadModelForContext.mockResolvedValue(
-        `[Domain: ${domain}] tóm tắt`,
-      )
-      const queryMock = vi.fn().mockResolvedValue({ rows: [] })
-      const livePool = { query: queryMock } as unknown as Pool
+  // [2026-08-27] Companion "xuyên suốt các trụ": trước đây CHỈ trụ Learning có read model nạp vào
+  // ngữ cảnh. Ba trụ Career · Startup · Life đã gỡ (2026-09-20) — chỉ còn trụ Ghi chú (`work`)
+  // ngoài Learning (changelog 0628).
+  it.each(['work'])('trụ %s → nạp read model của trụ đó vào ngữ cảnh', async (domain) => {
+    domainReadModelMock.getDomainReadModelForContext.mockResolvedValue(
+      `[Domain: ${domain}] tóm tắt`,
+    )
+    const queryMock = vi.fn().mockResolvedValue({ rows: [] })
+    const livePool = { query: queryMock } as unknown as Pool
 
-      await executeCompanionTurn(livePool, {
-        personId: PERSON_ID,
-        userMessage: 'Kể tôi nghe tình hình',
-        targetDomain: domain,
-        intent: 'domain_conversation',
-      })
+    await executeCompanionTurn(livePool, {
+      personId: PERSON_ID,
+      userMessage: 'Kể tôi nghe tình hình',
+      targetDomain: domain,
+      intent: 'domain_conversation',
+    })
 
-      expect(domainReadModelMock.getDomainReadModelForContext).toHaveBeenCalledWith(
-        livePool,
-        PERSON_ID,
-        domain,
-      )
-      const ctxOptions = contextEngineMock.buildContextPackage.mock.calls[0]![1] as {
-        domainState?: { content: string; provenance: string }
-      }
-      expect(ctxOptions.domainState?.content).toBe(`[Domain: ${domain}] tóm tắt`)
-      expect(ctxOptions.domainState?.provenance).toBe(`${domain}:read_model`)
-      // KHÔNG chạm vào nhánh Learning Read Model (câu tra `personal.persons` còn lại là câu đọc
-      // hồ sơ/nhóm tuổi, chạy ở mọi miền từ 2026-10-11).
-      expect(
-        queryMock.mock.calls.map((c) => String(c[0])).some((q) => /learner|lesson|srs/.test(q)),
-      ).toBe(false)
-    },
-  )
+    expect(domainReadModelMock.getDomainReadModelForContext).toHaveBeenCalledWith(
+      livePool,
+      PERSON_ID,
+      domain,
+    )
+    const ctxOptions = contextEngineMock.buildContextPackage.mock.calls[0]![1] as {
+      domainState?: { content: string; provenance: string }
+    }
+    expect(ctxOptions.domainState?.content).toBe(`[Domain: ${domain}] tóm tắt`)
+    expect(ctxOptions.domainState?.provenance).toBe(`${domain}:read_model`)
+    // KHÔNG chạm vào nhánh Learning Read Model (câu tra `personal.persons` còn lại là câu đọc
+    // hồ sơ/nhóm tuổi, chạy ở mọi miền từ 2026-10-11).
+    expect(
+      queryMock.mock.calls.map((c) => String(c[0])).some((q) => /learner|lesson|srs/.test(q)),
+    ).toBe(false)
+  })
 
   it('read model của trụ hỏng → vẫn trả lời được, chỉ là thiếu ngữ cảnh', async () => {
     domainReadModelMock.getDomainReadModelForContext.mockRejectedValue(new Error('db sập'))

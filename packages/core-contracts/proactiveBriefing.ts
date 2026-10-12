@@ -8,14 +8,8 @@ export type ProactiveBriefingType = z.infer<typeof ProactiveBriefingTypeSchema>
 export const ProactiveBriefingPrioritySchema = z.enum(['urgent', 'high', 'normal'])
 export type ProactiveBriefingPriority = z.infer<typeof ProactiveBriefingPrioritySchema>
 
-export const ProactiveBriefingDomainSchema = z.enum([
-  'learning',
-  'career',
-  'work',
-  'startup',
-  'life',
-  'personal',
-])
+// Trụ Career · Startup · Life đã gỡ 2026-09-20 — bản tin chỉ sinh mục cho trụ còn thật (changelog 0628).
+export const ProactiveBriefingDomainSchema = z.enum(['learning', 'work', 'personal'])
 export type ProactiveBriefingDomain = z.infer<typeof ProactiveBriefingDomainSchema>
 
 export const ProactiveBriefingItemSchema = z.object({

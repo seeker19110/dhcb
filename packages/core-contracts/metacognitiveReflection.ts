@@ -7,6 +7,7 @@
 // liệu thật): server chỉ thôi đọc/ghi, và lọc chúng ra qua `toPublicReflection` trước khi trả về.
 import { z } from 'zod'
 import { IsoDateTimeSchema } from './shared.js'
+import { PillarDomainSchema, normalizePillarDomain } from './pillarDomain.js'
 
 export const CognitiveBiasTypeSchema = z.enum([
   'dunning_kruger',
@@ -53,7 +54,7 @@ export const MetacognitiveReflectionSchema = z.object({
   id: z.string().min(1),
   personId: z.string().min(1),
   title: z.string().min(1).max(200),
-  domain: z.enum(['learning', 'career', 'work', 'startup', 'life']),
+  domain: PillarDomainSchema,
   reflectionPrompt: z.string().min(1).max(500),
   userReflection: z.string().min(1).max(4000),
   ahaMoments: z.array(z.string()).default([]),
@@ -69,7 +70,12 @@ export type MetacognitiveReflection = z.infer<typeof MetacognitiveReflectionSche
  * bẫy "none" giữ chỗ; bẫy cũ chưa có `triggerPhrases`. Chỉ dùng ở server để đọc rồi chiếu sang
  * `MetacognitiveReflection` — không bao giờ trả thẳng kiểu này cho client.
  */
-export type StoredMetacognitiveReflection = Omit<MetacognitiveReflection, 'identifiedBiases'> & {
+export type StoredMetacognitiveReflection = Omit<
+  MetacognitiveReflection,
+  'identifiedBiases' | 'domain'
+> & {
+  /** Bản ghi cũ có thể mang trụ đã xoá (career/startup/life) — chuẩn hoá khi đọc (changelog 0628). */
+  domain: string
   identifiedBiases?: Array<Omit<IdentifiedBias, 'triggerPhrases'> & { triggerPhrases?: string[] }>
   /** @deprecated số giả (changelog 0539) — chỉ còn trong bản ghi cũ, KHÔNG đọc. */
   metacognitiveIndex?: number
@@ -87,7 +93,7 @@ export function toPublicReflection(stored: StoredMetacognitiveReflection): Metac
     id: stored.id,
     personId: stored.personId,
     title: stored.title,
-    domain: stored.domain,
+    domain: normalizePillarDomain(stored.domain),
     reflectionPrompt: stored.reflectionPrompt,
     userReflection: stored.userReflection,
     ahaMoments: stored.ahaMoments ?? [],
@@ -110,7 +116,7 @@ export function toPublicReflection(stored: StoredMetacognitiveReflection): Metac
 /** Thân yêu cầu `POST ?action=submit_reflection` — validate ở server trước khi phân tích. */
 export const SubmitReflectionRequestSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
-  domain: z.enum(['learning', 'career', 'work', 'startup', 'life']).default('learning'),
+  domain: PillarDomainSchema.default('learning'),
   reflectionPrompt: z.string().trim().min(1).max(500),
   userReflection: z.string().trim().min(1).max(4000),
 })
@@ -118,7 +124,7 @@ export type SubmitReflectionRequest = z.infer<typeof SubmitReflectionRequestSche
 
 export const SocraticDailyPromptSchema = z.object({
   id: z.string().min(1),
-  domain: z.enum(['learning', 'career', 'work', 'startup', 'life']),
+  domain: PillarDomainSchema,
   theme: z.string().min(1),
   promptText: z.string().min(1),
   deepDivingQuestion: z.string().min(1),

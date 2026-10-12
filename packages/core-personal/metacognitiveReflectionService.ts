@@ -8,6 +8,7 @@ import {
   type MetacognitiveSummary,
   type CognitiveBiasType,
 } from '@dhcb/core-contracts/metacognitiveReflection'
+import type { PillarDomain } from '@dhcb/core-contracts/pillarDomain'
 
 // ── Bảng luật dò bẫy tư duy ─────────────────────────────────────────────────
 // Câu chữ viết theo giọng "có thể bạn đang…" (skill memory-palace-cognitive-scaffolder §3): bộ dò
@@ -67,11 +68,11 @@ export class MetacognitiveReflectionService {
    * Sinh câu hỏi phản tỉnh Socratic hàng ngày dựa trên miền chuyên sâu và ngữ cảnh gần nhất.
    */
   static generateDailySocraticPrompt(
-    domain: 'learning' | 'career' | 'work' | 'startup' | 'life',
+    domain: PillarDomain,
     contextAnchor?: string,
   ): SocraticDailyPrompt {
     const promptLibrary: Record<
-      string,
+      PillarDomain,
       { theme: string; promptText: string; deepDivingQuestion: string }[]
     > = {
       learning: [
@@ -90,15 +91,6 @@ export class MetacognitiveReflectionService {
             'Phản xạ đó đang giúp bạn tiến bộ hay đang là một cơ chế né tránh cảm giác khó chịu?',
         },
       ],
-      career: [
-        {
-          theme: 'Định vị giá trị & Quyết định phát triển',
-          promptText:
-            'Quyết định sự nghiệp gần nhất của bạn được thúc đẩy bởi mong muốn tạo giá trị thực chất hay nỗi sợ bị tụt hậu?',
-          deepDivingQuestion:
-            'Lựa chọn nào sẽ mang lại quyền tự quyết cao nhất cho bạn trong 2 năm tới?',
-        },
-      ],
       work: [
         {
           theme: 'Tối ưu hóa dòng chảy công việc & Quản trị năng lượng',
@@ -108,16 +100,8 @@ export class MetacognitiveReflectionService {
             'Nếu chỉ được giữ lại 20% đầu việc để tạo ra 80% kết quả, bạn sẽ loại bỏ tác vụ nào ngay lập tức?',
         },
       ],
-      startup: [
-        {
-          theme: 'Kiểm chứng giả định thị trường',
-          promptText:
-            'Giả định cốt lõi nào trong mô hình của bạn chưa từng được kiểm chứng bằng hành vi trả tiền thực tế của khách hàng?',
-          deepDivingQuestion:
-            'Bằng chứng nghịch đảo (Counter-evidence) nào nếu xuất hiện sẽ buộc bạn phải đổi hướng (pivot)?',
-        },
-      ],
-      life: [
+      // Trụ Career · Startup · Life đã gỡ (changelog 0628): bộ câu hỏi "đời sống" cũ nay là `general`.
+      general: [
         {
           theme: 'Cân bằng nội tại & Khả năng phục hồi',
           promptText:
@@ -164,7 +148,7 @@ export class MetacognitiveReflectionService {
     personId: string,
     params: {
       title?: string
-      domain: 'learning' | 'career' | 'work' | 'startup' | 'life'
+      domain: PillarDomain
       reflectionPrompt: string
       userReflection: string
     },

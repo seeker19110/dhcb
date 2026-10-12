@@ -1,6 +1,7 @@
 // packages/core-contracts/proactiveAgent.ts — V5 Flagship Autonomous Proactive Agent Contracts.
 import { z } from 'zod'
 import { IsoDateTimeSchema, UuidSchema } from './shared.js'
+import { PillarDomainSchema } from './pillarDomain.js'
 
 export const ProactiveNudgeTypeSchema = z.enum([
   'circadian_peak',
@@ -39,7 +40,7 @@ export const ProactiveNudgeSchema = z.object({
   personId: UuidSchema,
   nudgeType: ProactiveNudgeTypeSchema,
   priority: ProactiveNudgePrioritySchema,
-  domain: z.enum(['learning', 'career', 'work', 'startup', 'life']),
+  domain: PillarDomainSchema,
   title: z.string().min(1).max(200),
   message: z.string().min(1).max(1000),
   suggestedAction: ProactiveActionSchema.optional(),
@@ -54,7 +55,7 @@ export const GoalAutoPilotStepSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().min(1).max(500),
   estimatedMinutes: z.number().int().min(1).max(180),
-  domain: z.enum(['learning', 'career', 'work', 'startup', 'life']),
+  domain: PillarDomainSchema,
   status: z.enum(['pending', 'in_progress', 'completed']),
   actionRoute: z.string().min(1).max(200),
 })
@@ -65,7 +66,7 @@ export const GoalAutoPilotPlanSchema = z.object({
   personId: UuidSchema,
   goalId: z.string().min(1),
   goalTitle: z.string().min(1).max(200),
-  domain: z.enum(['learning', 'career', 'work', 'startup', 'life']),
+  domain: PillarDomainSchema,
   progressPercentage: z.number().min(0).max(100),
   steps: z.array(GoalAutoPilotStepSchema),
   recommendedPacePerDay: z.number().min(1).max(10),
