@@ -1,6 +1,6 @@
 # 0626 — Red-team họ ca AG: chế độ tác tử (Claude chọn công cụ) kiểm ở tầng công cụ, 53/53
 
-- **Ngày:** 2026-10-12 · **PR:** #PENDING · **Loại:** `test(red-team)`
+- **Ngày:** 2026-10-12 · **PR:** #1388 · **Loại:** `test(red-team)`
 - **Nguồn việc:** nợ (1) trong mục red-team của `PROGRESS.md` ("chế độ tác tử chưa có ca"); chủ dự án:
   "tất cả theo khuyến nghị".
 
