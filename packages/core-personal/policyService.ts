@@ -70,7 +70,8 @@ export interface SetPolicyInput {
 }
 
 /** Khoá row policy đang hiệu lực của (person, subject, action, resourceScope) — chống hai request
- * cùng đặt policy một lúc, cả hai cùng insert và đụng partial unique index của 0042. */
+ * cùng đặt policy một lúc khi ĐÃ có bản hiệu lực. Chưa có bản nào thì không có gì để khoá: ca đó
+ * do chỉ mục duy nhất của 0042 chặn, `setPolicy` đổi lỗi thành 409 (changelog 0625). */
 async function lockActivePolicy(
   client: PoolClient,
   input: SetPolicyInput,
@@ -83,6 +84,12 @@ async function lockActivePolicy(
     [input.personId, input.subject, input.action, input.resourceScope],
   )
   return res.rows[0]
+}
+
+/** Lỗi unique_violation (23505) đúng ở chỉ mục "một policy hiệu lực mỗi bộ ba" của migration 0042. */
+function isActivePolicyConflict(err: unknown): boolean {
+  const e = err as { code?: unknown; constraint?: unknown } | null
+  return e?.code === '23505' && e.constraint === 'idx_personal_policies_active'
 }
 
 /**
@@ -103,21 +110,32 @@ export async function setPolicy(pool: Pool, input: SetPolicyInput): Promise<Pers
       ])
     }
 
-    const res = await client.query<PolicyRow>(
-      `insert into personal.personal_policies
-         (person_id, subject, action, resource_scope, authority, purpose, review_at)
-       values ($1, $2, $3, $4, $5, $6, $7)
-       returning ${POLICY_COLUMNS}`,
-      [
-        input.personId,
-        input.subject,
-        input.action,
-        input.resourceScope,
-        input.authority,
-        input.purpose,
-        input.reviewAt ?? null,
-      ],
-    )
+    let res
+    try {
+      res = await client.query<PolicyRow>(
+        `insert into personal.personal_policies
+           (person_id, subject, action, resource_scope, authority, purpose, review_at)
+         values ($1, $2, $3, $4, $5, $6, $7)
+         returning ${POLICY_COLUMNS}`,
+        [
+          input.personId,
+          input.subject,
+          input.action,
+          input.resourceScope,
+          input.authority,
+          input.purpose,
+          input.reviewAt ?? null,
+        ],
+      )
+    } catch (err) {
+      // `for update` ở trên chỉ khoá được khi ĐÃ có dòng hiệu lực. Chưa có thì hai lần đặt đồng
+      // thời cùng insert và chỉ mục duy nhất `idx_personal_policies_active` chặn một bên (đo trên
+      // Postgres thật — changelog 0625). Bên thua nhận 409 "thử lại" thay vì 500.
+      if (isActivePolicyConflict(err)) {
+        throw new ConflictError('Policy vừa được đặt bởi thao tác khác, thử lại')
+      }
+      throw err
+    }
     const row = res.rows[0]
     if (!row) throw new ConflictError('Không ghi được policy, thử lại')
     return toPolicy(row)

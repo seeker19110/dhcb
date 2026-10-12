@@ -107,6 +107,34 @@ describe('setPolicy', () => {
     expect(insertCall?.[1]?.[6]).toBe(REVIEW_AT.toISOString())
   })
 
+  // Hồi quy (changelog 0625, đo trên Postgres thật bằng `eval:v2:permissions` ca perm-concurrent):
+  // khi CHƯA có policy hiệu lực, `select … for update` không khoá được dòng nào → hai lần đặt đồng
+  // thời cùng insert, chỉ mục duy nhất chặn một bên. Bên thua phải nhận 409 "thử lại", không phải
+  // DatabaseError thô (thành 500 ở API).
+  it('đụng chỉ mục duy nhất do đặt đồng thời → ConflictError, không lộ DatabaseError', async () => {
+    const { pool } = mockPool((sql) => {
+      if (sql.includes('insert')) {
+        throw Object.assign(new Error('duplicate key value violates unique constraint'), {
+          code: '23505',
+          constraint: 'idx_personal_policies_active',
+        })
+      }
+      return []
+    })
+    await expect(setPolicy(pool, INPUT)).rejects.toBeInstanceOf(ConflictError)
+  })
+
+  it('lỗi CSDL khác khi insert → ném nguyên, không đổi thành 409', async () => {
+    const { pool } = mockPool((sql) => {
+      if (sql.includes('insert')) {
+        throw Object.assign(new Error('violates check constraint'), { code: '23514' })
+      }
+      return []
+    })
+    await expect(setPolicy(pool, INPUT)).rejects.toThrow('violates check constraint')
+    await expect(setPolicy(pool, INPUT)).rejects.not.toBeInstanceOf(ConflictError)
+  })
+
   it('AUTOMATE thiếu reviewAt → contract Zod chặn khi parse hàng trả về (lưới cuối cùng)', async () => {
     const { pool } = mockPool((sql) =>
       sql.includes('insert') ? [policyRow({ authority: 'AUTOMATE', review_at: null })] : [],

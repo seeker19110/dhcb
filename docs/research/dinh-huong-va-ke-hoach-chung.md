@@ -1318,7 +1318,7 @@ Tested `memoryService.evaluateMemoryCandidate()` across 30 candidates with varie
 
 Tested `policyService.resolveAuthority()` against 40 policy configurations:
 
-- **Resolution Accuracy:** $100.00\%$ (40/40)
+- **Resolution Accuracy:** $100.00\%$ (40/40) — ⚠️ đo trên `pg` giả; đo lại trên Postgres thật 2026-10-12: 21/21 (changelog `0625`, xem `docs/research/kien-truc-va-ha-tang.md`)
 - **DENY Bypasses:** 0 (Target: 0)
 
 ---
