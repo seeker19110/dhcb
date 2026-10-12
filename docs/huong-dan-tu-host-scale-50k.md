@@ -14,7 +14,7 @@
       mục 5 (các quyết định đã chốt) — hiểu RÕ vì sao chọn tự host, không phải managed.
 - [ ] Có quyền truy cập tài khoản nhà cung cấp VPS (Hetzner/Vultr/DigitalOcean — cỡ nào cũng
       được, miễn trong ngân sách) để tạo máy mới.
-- [ ] Có quyền SSH vào VPS app hiện tại (`103.81.87.174` theo `docs/deploy-vps-ubuntu.md`).
+- [ ] Có quyền SSH vào VPS app hiện tại (`103.118.29.58` theo `docs/deploy-vps-ubuntu.md`).
 - [ ] Đã backup thủ công 1 bản Postgres hiện tại TRƯỚC khi động vào bất cứ gì (an toàn):
       `pg_dump dhcb | gzip > ~/backup-truoc-khi-scale.sql.gz` (chạy trên VPS app hiện tại).
 

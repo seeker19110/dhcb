@@ -67,6 +67,11 @@ Test coverage (CI-safe, no API keys):
 
 ### Slice 2 — Red-Team Fixtures + Harness
 
+> **THAY THẾ 2026-10-12 (changelog 0623):** harness dựng theo mục này xanh GIẢ — cộng sẵn 20/30
+> ca không chạy, chấm 2 ca bằng nhãn của chính fixture, nuốt lỗi với mã thoát 0. Đã viết lại chạy
+> trên Postgres thật theo `docs/specs/2026-10-12-red-team-eval-that.md`; ba file JSON fixture dưới
+> đây ĐÃ XOÁ (ca giờ là mã trong `scripts/red-team/redTeamCases.ts`). Phần dưới chỉ còn là lịch sử.
+
 Build structured red-team scenarios covering prompt-injection, tool-abuse, and sensitive-data leakage. Fixtures are static JSON; the harness runs against mock service boundaries (not live LLM — CI-safe).
 
 Files to create:

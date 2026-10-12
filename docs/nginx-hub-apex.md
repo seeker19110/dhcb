@@ -79,7 +79,7 @@ donghanhcungban.com www.donghanhcungban.org; # managed by Certbot`, thay bằng:
    # Lớp 1: Express có phục vụ đúng app theo Host không (bỏ qua hẳn Nginx)
    curl -s -H "Host: donghanhcungban.com" http://localhost:3001/ | grep -o "<title>[^<]*</title>"
    # Lớp 2: Nginx + SSL ở origin có route đúng không (bỏ qua Cloudflare, gọi thẳng IP VPS)
-   curl -s -k --resolve donghanhcungban.com:443:103.81.87.174 https://donghanhcungban.com/ \
+   curl -s -k --resolve donghanhcungban.com:443:103.118.29.58 https://donghanhcungban.com/ \
      | grep -o "<title>[^<]*</title>"
    # Lớp 3: qua Cloudflare thật (domain thật, không bypass)
    curl -s -o /dev/null -w "%{http_code}\n" https://donghanhcungban.com/

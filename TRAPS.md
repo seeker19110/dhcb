@@ -361,6 +361,20 @@ vô hình trên mọi file nguồn (cho phép riêng ZWJ U+200D vì emoji ghép 
 dò; `scripts/agent-config-security.test.ts` quét riêng cấu hình tác tử và prompt gửi AI (không
 cho phép cả ZWJ).
 
+**Tái phát 2026-10-12 — biến thể U+FFFD** (PR #1383, changelog `0621`). Viết regex chặn mojibake
+trong `.github/workflows/pr-policy.yml` bằng escape gạch chéo ngược + `uFFFD` qua công cụ Edit thì
+file nhận **ký tự thay thế THẬT** (3 byte `EF BF BD`): regex vẫn chạy đúng, nhưng mã nguồn mang
+đúng thứ ký tự nó đang chặn, và trông y hệt chữ hỏng mã hoá. Không cổng nào ở trên bắt: U+FFFD
+không phải byte C0 cũng không thuộc họ vô hình, `git diff` vẫn là chữ. Bắt được nhờ tự soát diff.
+Lặp lại ngay khi viết changelog `0623` (công cụ Write, chỉ là câu NHẮC tới escape đó trong văn
+xuôi) — tức là không riêng regex: mọi chuỗi escape `\u` gõ qua công cụ đều có thể bị giải mã.
+
+- Sau khi gõ escape `\u…` qua công cụ của tác tử, kiểm byte:
+  `grep -c $'\xef\xbf\xbd' <file>` phải ra `0` (đổi dãy byte theo ký tự đang viết).
+- Sửa bằng script ghi BYTE (Python `bytes.replace`), không gõ lại qua cùng công cụ đó.
+- Cổng tự động cho U+FFFD **chưa có** — repo còn một chỗ cố ý chứa nó (comment ở
+  `packages/subject-programming/lessonsPython.test.ts` mô tả chữ hỏng), phải viết lại chỗ đó trước.
+
 ## 9. Margin âm trên phần tử DÍNH → che mất dòng đầu của phần tử sau, và KHÔNG cổng nào bắt được
 
 **Ngày/PR:** mắc từ khi có `Modal` sticky header; vá cục bộ hai lần — S07-2 (#944, panel Mục lục)
