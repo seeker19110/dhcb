@@ -1,0 +1,58 @@
+name: CodeQL
+
+# SAST (phân tích tĩnh tìm lỗ hổng) cho mã chạy thật của DHCB — changelog 0621, đối chiếu khung
+# seeker19110/project-template `codeql.yml`. Trước đây DHCB không có SAST nào: `npm audit` chỉ soi lỗ hổng
+# của GÓI phụ thuộc, eslint không soi luồng dữ liệu (input người dùng → SQL/đường dẫn/HTML). Repo public →
+# CodeQL miễn phí.
+#
+# KHÔNG phải required check (CLAUDE.md §11 chỉ có quality/e2e/metadata): cảnh báo hiện ở tab Security →
+# Code scanning và chú thích trên PR, người đọc quyết. Muốn biến thành cổng chặn → quyết riêng, ghi ADR.
+#
+# Khác khung: khung dò ngôn ngữ qua API /languages; DHCB chỉ có TypeScript/JavaScript nên ghi cứng —
+# cùng kết quả, bớt một job và một lần gọi API. `actions` quét chính các workflow (injection qua
+# `${{ }}`, quyền token quá rộng…).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 20 * * 0' # 03:17 thứ Hai giờ VN — bắt truy vấn mới của CodeQL trên mã cũ
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write # tải SARIF lên tab Security → Code scanning
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+          # Dữ liệu tĩnh (từ điển, bài học sinh sẵn) không phải mã chạy — bỏ để quét nhanh, đỡ nhiễu.
+          config: |
+            paths-ignore:
+              - apps/dhcb/public/data
+              - '**/*.json'
+      - uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          category: '/language:${{ matrix.language }}'

@@ -50,6 +50,12 @@ jobs:
             if (!conventional.test(title)) {
               core.setFailed("Tiêu đề PR phải theo Conventional Commits, ví dụ: feat(learn): add review queue");
             }
+            // Ký tự điều khiển / U+FFFD (mojibake) trong tiêu đề: regex trên chỉ soi TIỀN TỐ nên tiêu đề
+            // hỏng vẫn qua, rồi thành tiêu đề commit trên main (changelog 0621, khung project-template).
+            const CONTROL_OR_MOJIBAKE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\uFFFD]/;
+            if (CONTROL_OR_MOJIBAKE.test(title)) {
+              core.setFailed("Tiêu đề PR chứa ký tự điều khiển hoặc U+FFFD (mojibake).");
+            }
 
             if (pr.draft) {
               core.info("Draft PR: chưa bắt buộc hoàn tất evidence.");
@@ -78,7 +84,53 @@ jobs:
               core.setFailed(`PR Ready for review còn thiếu: ${missing.join(", ")}`);
             }
 
-            if (/^feat(\(|:)/.test(title)) {
+            // SOI TỪNG COMMIT, không chỉ tiêu đề PR (changelog 0621, khung project-template B-01).
+            // Repo đặt `squash_merge_commit_title = COMMIT_OR_PR_TITLE` (đọc qua API 2026-10-12): PR có
+            // MỘT commit thì squash lấy TIÊU ĐỀ COMMIT làm tiêu đề trên main, không lấy tiêu đề PR. Nên
+            // PR đặt tiêu đề `refactor:` mà commit duy nhất ghi `feat:` sẽ đưa `feat:` lên main mà KHÔNG
+            // qua cổng đặc tả bên dưới; commit gõ `--no-verify` (bỏ commitlint ở máy) cũng lọt.
+            // Bỏ qua merge commit (>1 cha): CLAUDE.md §11 cho gộp main vào nhánh khi xung đột, tiêu đề
+            // "Merge branch 'main'…" không bao giờ thành tiêu đề squash. Trần 100 ký tự = commitlint ở máy.
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+            const commitSubjects = commits
+              .filter((c) => (c.parents || []).length <= 1)
+              .map((c) => (c.commit.message || "").split("\n")[0]);
+            const badSubjects = commitSubjects.filter(
+              (s) => !conventional.test(s) || s.length > 100 || CONTROL_OR_MOJIBAKE.test(s)
+            );
+            if (badSubjects.length) {
+              core.setFailed(
+                "Mọi commit (trừ merge commit) phải theo Conventional Commits, ≤ 100 ký tự, không ký tự " +
+                  "điều khiển — PR một commit thì squash lấy tiêu đề COMMIT lên main. Vi phạm: " +
+                  badSubjects.join(" | ")
+              );
+            }
+
+            // fix: không chạm TRAPS.md → chỉ CẢNH BÁO, không chặn: bug là một KHUÔN (sẽ tái phát) thì ghi
+            // TRAPS.md trong cùng PR; lỗi gõ một lần thì không cần (`/learn`, changelog 0621).
+            if ([title, ...commitSubjects].some((s) => /^fix(\(|:)/.test(s))) {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                per_page: 100,
+              });
+              if (!files.some((f) => f.filename === "TRAPS.md")) {
+                core.warning(
+                  "PR fix: không chạm TRAPS.md — nếu bug này là một KHUÔN (không phải lỗi gõ một lần) thì thêm mục TRAPS.md trong cùng PR (xem /learn)."
+                );
+              }
+            }
+
+            // Cổng đặc tả soi CẢ tiêu đề PR LẪN tiêu đề từng commit (lý do ở khối trên).
+            const featureSubjects = [title, ...commitSubjects].filter((s) => /^feat(\(|:)/.test(s));
+            if (featureSubjects.length) {
+              core.info(`Tiêu đề kiểu feat: ${featureSubjects.join(" | ")}`);
               // Chấp nhận CẢ HAI nơi đặt đặc tả của dự án:
               //   docs/specs/YYYY-MM-DD-slug.md  — spec theo tính năng (khuôn có sẵn)
               //   docs/research/<slug>.md        — đặc tả/nghiên cứu lộ trình lớn, vd

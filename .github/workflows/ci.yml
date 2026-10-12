@@ -21,6 +21,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Token của workflow CHỈ ĐỌC (changelog 0621, đối chiếu khung project-template): không job nào ở đây
+# cần ghi vào repo/PR. Không khai thì token nhận quyền mặc định của repo — một bước bị chiếm (action
+# hoặc gói npm độc trong `npm ci`) sẽ cầm được quyền ghi.
+permissions:
+  contents: read
+
 # CẤU TRÚC (đổi 2026-08-27 — chia nhỏ để tăng tốc):
 #   Trước: 2 job tuần tự dài (quality ~9 bước nối đuôi, e2e 1 worker chạy hết 563 test).
 #   Nay:   các bước con chạy SONG SONG trên nhiều runner, rồi hai job TỔNG HỢP tên
@@ -32,6 +38,11 @@ jobs:
   static:
     name: Type + Lint + Format
     runs-on: ubuntu-latest
+    # Trần thời gian mọi job (changelog 0621): mặc định GitHub là 360 phút — một bước treo (tải
+    # Chromium kẹt 10,5 phút đã gặp, xem e2e-shard) giữ runner tới 6 tiếng. Trần ≈ 3–4× số đo thật
+    # ở run 38224335831 (2026-10-12): static 3,5′ · unit 6,9′ · build 1,6′ · audit 1,4′ · E2E chậm
+    # nhất 9,5′. Đo lại rồi nới khi một job chậm lên THẬT — đừng nới để cho qua một lần treo.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -53,6 +64,7 @@ jobs:
   unit:
     name: Unit tests + coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -68,6 +80,7 @@ jobs:
   build:
     name: Build + budget + boot
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -113,6 +126,7 @@ jobs:
   audit:
     name: npm audit + chu trình import
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -241,19 +255,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: [static, unit, build, audit, sql-prepare]
     if: ${{ !cancelled() }}
+    timeout-minutes: 5
     steps:
-      - name: Gom kết quả 5 nhánh
+      # Đọc TOÀN BỘ `needs` qua toJSON (changelog 0621) thay vì liệt kê tay từng job: trước đây thêm
+      # job thứ 6 vào `needs` mà quên thêm vào câu `if` thì job đó ĐỎ vẫn merge được — đúng kiểu hỏng
+      # im lặng mà scripts/ci-workflow-policy.test.ts canh. `skipped` cũng tính là KHÔNG xanh;
+      # `needs` rỗng cũng đỏ (không có gì để gom = cổng giả).
+      - name: Gom kết quả mọi nhánh trong needs
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          echo "static=${{ needs.static.result }}"
-          echo "unit=${{ needs.unit.result }}"
-          echo "build=${{ needs.build.result }}"
-          echo "audit=${{ needs.audit.result }}"
-          echo "sql-prepare=${{ needs.sql-prepare.result }}"
-          if [ "${{ needs.static.result }}" != "success" ] \
-            || [ "${{ needs.unit.result }}" != "success" ] \
-            || [ "${{ needs.build.result }}" != "success" ] \
-            || [ "${{ needs.audit.result }}" != "success" ] \
-            || [ "${{ needs.sql-prepare.result }}" != "success" ]; then
+          printf '%s' "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value.result)"'
+          if ! printf '%s' "$NEEDS_JSON" | jq -e 'length > 0 and all(.[]; .result == "success")' > /dev/null; then
             echo "❌ Có nhánh chất lượng KHÔNG xanh"; exit 1
           fi
           echo "✅ Toàn bộ cổng chất lượng xanh"
@@ -270,6 +283,8 @@ jobs:
   e2e-shard:
     name: E2E shard ${{ matrix.shard }}/6
     runs-on: ubuntu-latest
+    # Mảnh chậm nhất đo được 9,5′ (+ tối đa ~10,5′ khi cache trượt và tải Chromium kẹt, run 33537608110).
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -326,10 +341,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [e2e-shard]
     if: ${{ !cancelled() }}
+    timeout-minutes: 5
     steps:
+      # Cùng cách gom như `quality` — đọc toàn bộ `needs`, không liệt kê tay (changelog 0621).
       - name: Gom kết quả các mảnh E2E
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          if [ "${{ needs.e2e-shard.result }}" != "success" ]; then
+          printf '%s' "$NEEDS_JSON" | jq -r 'to_entries[] | "\(.key)=\(.value.result)"'
+          if ! printf '%s' "$NEEDS_JSON" | jq -e 'length > 0 and all(.[]; .result == "success")' > /dev/null; then
             echo "❌ Có mảnh E2E KHÔNG xanh"; exit 1
           fi
           echo "✅ Toàn bộ 6 mảnh E2E xanh"

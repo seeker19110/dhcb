@@ -297,7 +297,7 @@ Mỗi tính năng/sửa lỗi một nhánh · commit nhỏ, một thay đổi lo
    ^(feat|fix|refactor|docs|test|chore|style|perf|build|ci|revert)(\([a-z0-9._/-]+\))?!?: .+
    ```
 
-   - Scope chỉ nhận **chữ thường** (`fix(kotlinSim)` trượt, `fix(programming)` đạt).
+   - Scope chỉ nhận **chữ thường** (`fix(kotlinSim)` trượt, `fix(programming)` đạt). Soi cả TIÊU ĐỀ TỪNG COMMIT.
    - Mô tả PR **phải có đủ 6 tiêu đề** khớp từng chữ: `## Tóm tắt` · `## Issue / outcome` · `## Research / spec` · `## Validation` · `## Rủi ro, rollout và rollback` · `## Definition of Done`.
    - Tiêu đề `feat(`/`feat:` còn cần mô tả chứa đường dẫn `docs/specs/YYYY-MM-DD-slug.md` hoặc `docs/research/<slug>.md` **tồn tại thật trong nhánh** + cụm "Approved for implementation". Việc không có đặc tả trước (tái cấu trúc UI theo yêu cầu trong phiên…) thì dùng `refactor`/`style`/`chore` cho đúng bản chất.
 

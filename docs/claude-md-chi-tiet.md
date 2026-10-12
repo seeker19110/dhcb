@@ -273,9 +273,15 @@ theo **số test chứ không theo thời gian**, nên cụm test nặng dồn v
 **4. Chỉ upload artifact khi ĐỎ (`if: failure()`).** Báo cáo Playwright của một mảnh xanh đo
 được là ~29 giây trên đường tới hạn để tạo ra file không ai mở.
 
+**5. Job tổng hợp gom qua `toJSON(needs)`, mọi job có `timeout-minutes`, token chỉ đọc (changelog
+0621).** Liệt kê tay `needs.<id>.result` từng là lỗ của luật 2: job mới nối vào `needs` mà quên thêm
+vào câu `if` thì đỏ vẫn merge. Trần thời gian ≈ 3–4× số đo thật (mặc định GitHub 360 phút); job chậm
+lên THẬT thì đo lại rồi nới, đừng nới để cho qua một lần treo. `permissions: contents: read` ở đầu
+workflow — job nào cần ghi thì khai riêng ở job đó.
+
 **Cách làm việc bắt buộc khi động vào CI: ĐO, đừng đoán.** Sau khi đổi, đọc thời gian thật của
 từng job trong run CI của chính PR đó (`started_at`/`completed_at`), và đọc mốc `##[group]Run`
 trong log job để biết từng BƯỚC tốn bao lâu. Tối ưu chỗ chưa đo là đoán mò.
 
-Ba luật đầu + luật 4 có **test canh gác chặn CI**: `scripts/ci-workflow-policy.test.ts`. Sửa
+Ba luật đầu + luật 4 + luật 5 (trừ phần token) có **test canh gác chặn CI**: `scripts/ci-workflow-policy.test.ts`. Sửa
 `ci.yml` mà test đó đỏ nghĩa là đang phá một luật — sửa cho đúng luật, **đừng sửa test cho vừa**.
