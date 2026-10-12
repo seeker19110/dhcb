@@ -1,5 +1,8 @@
 blank_issues_enabled: false
+# Link Discussions cũ đã CHẾT: repo không bật Discussions (API `has_discussions: false`, kiểm 2026-10-12,
+# changelog 0621). Thay bằng kênh báo lỗ hổng riêng tư — đúng hướng dẫn ở SECURITY.md (đừng mở issue
+# công khai cho lỗ hổng).
 contact_links:
-  - name: Câu hỏi và thảo luận
-    url: https://github.com/seeker19110/dhcb/discussions
-    about: Dùng Discussions cho câu hỏi chưa đủ rõ để thành issue.
+  - name: Báo lỗ hổng bảo mật (riêng tư)
+    url: https://github.com/seeker19110/dhcb/security/advisories/new
+    about: Lộ dữ liệu, bypass thanh toán/gói, chiếm quyền… — báo riêng tư, KHÔNG mở issue công khai (xem SECURITY.md).

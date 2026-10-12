@@ -1,6 +1,6 @@
 # 0620 — Tích hợp khung project-template (đợt 2): điều phối 3 tầng theo giới hạn đo được · review tra TRAPS · luật nội dung ngoài · checkpoint trước khi nén
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo PR) · **Loại:** `docs(framework)`
+- **Ngày:** 2026-10-12 · **PR:** #1382 · **Loại:** `docs(framework)`
 - **Nguồn việc:** tiếp đợt 1 (`0619`, PR #1381) — chủ dự án: "chờ project-template merge xong rồi tích
   hợp sâu những cái hay, ưu điểm vào dự án" → "đọc toàn bộ luôn" → "xong tích hợp luôn".
 - **Khung đối chiếu:** `seeker19110/project-template` @ `59bd1d1`. File này kiêm **bản đối chiếu ba cột**

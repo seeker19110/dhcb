@@ -88,6 +88,24 @@ describe('.github/workflows/ci.yml — quy ước CI', () => {
     expect(needsOf(jobs.get('e2e') ?? '').length).toBeGreaterThan(0)
   })
 
+  // Luật 2b (changelog 0621) — job tổng hợp phải đọc TOÀN BỘ `needs` qua `toJSON(needs)`. Liệt kê tay
+  // từng `needs.<id>.result` là luật 2 có lỗ: job mới nối vào `needs` (test trên xanh) nhưng quên thêm
+  // vào câu `if` thì kết quả của nó bị bỏ qua — đỏ vẫn merge được.
+  it.each(['quality', 'e2e'])('`%s` gom kết quả qua toJSON(needs), không liệt kê tay', (id) => {
+    const body = jobs.get(id) ?? ''
+    expect(body).toContain('toJSON(needs)')
+    expect(body).not.toMatch(/needs\.[A-Za-z0-9_-]+\.result/)
+  })
+
+  // Luật 5 (changelog 0621) — mọi job có trần thời gian. Mặc định GitHub là 360 phút: một bước treo
+  // giữ runner 6 tiếng mà không ai biết.
+  it('mọi job đều có `timeout-minutes`', () => {
+    const missing = [...jobs.entries()]
+      .filter(([, body]) => !/^\s{4}timeout-minutes:\s*\d+/m.test(body))
+      .map(([id]) => id)
+    expect(missing).toEqual([])
+  })
+
   // Luật 3 — E2E phải chạy chia mảnh song song.
   it('E2E chạy chia mảnh (`--shard=` trên một matrix nhiều mảnh)', () => {
     const shardJob = jobs.get('e2e-shard') ?? ''

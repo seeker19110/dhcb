@@ -19,6 +19,13 @@ concurrency:
   group: deploy-vps
   cancel-in-progress: false
 
+# GITHUB_TOKEN chỉ được dùng để `git fetch` trên VPS (scripts/deploy.sh) — quyền ĐỌC là đủ, không job
+# nào ở đây ghi vào repo (changelog 0621). KHÔNG đặt
+# timeout-minutes ở đây: cắt ngang giữa lúc scripts/deploy.sh đang migrate/reload PM2 nguy hiểm hơn để
+# nó chạy lâu; trần đã có ở `command_timeout: 30m` của ssh-action bên dưới.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
