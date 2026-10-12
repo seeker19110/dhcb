@@ -1,6 +1,6 @@
 # 0618 — Bạn Đồng Hành GĐ3: tác tử dùng công cụ thật · định tuyến Haiku · kiểm câu trả lời cuối
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo PR) · **Loại:** `feat(companion)`
+- **Ngày:** 2026-10-12 · **PR:** #1378 · **Loại:** `feat(companion)`
 - **Đặc tả:** `docs/specs/2026-10-12-ban-dong-hanh-gd3-tac-tu-cong-cu.md` (Approved for
   implementation). **Nghiên cứu:** `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md` (kế hoạch
   dòng 3). Nối tiếp GĐ2b (changelog `0617`, PR #1377).

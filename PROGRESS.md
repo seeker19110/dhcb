@@ -188,7 +188,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   ký ức thêm/cập nhật/vô hiệu thành gợi ý chờ duyệt (không gì được ghi khi chưa bấm), vô hiệu
   bằng `valid_to` + `superseded_by` không xoá; hai khối ghi nhớ cố định người dùng tự viết; tóm tắt
   cuộn theo miền (cửa sổ 20 tin, đủ 14 tin chưa tóm tắt thì gập 10 tin cũ nhất), migration 0096.
-  **GĐ3 ĐÃ LÀM** (`docs/changelog/0618-*.md`, đặc tả
+  **GĐ3 ĐÃ LÀM** (PR #1378, `docs/changelog/0618-*.md`, đặc tả
   `docs/specs/2026-10-12-ban-dong-hanh-gd3-tac-tu-cong-cu.md`, không migration): định tuyến Haiku
   (`intent_route`, fallback từ khoá), vòng công cụ viết tay (≤ 4 bước, ≤ 6 lần thi hành, hạn chót
   45 giây) với 4 công cụ chỉ-đọc + 3 công cụ CHỈ tạo đề xuất chờ duyệt, kiểm câu trả lời cuối tất
