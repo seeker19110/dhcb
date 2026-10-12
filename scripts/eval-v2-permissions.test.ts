@@ -1,28 +1,35 @@
-import { describe, it, expect } from 'vitest'
-import { resolveAuthority } from '@dhcb/core-personal/policyService'
+// Test HÌNH DẠNG bộ ca `eval:v2:permissions` — không chạm CSDL (ca chạy thật trong CI job
+// `sql-prepare`). Bản cũ của file này gọi `resolveAuthority` với `pg` giả trả sẵn đáp án — tức là
+// chỉ kiểm được rằng hàm trả lại đúng thứ mock đưa vào (changelog 0625).
+import { describe, expect, it } from 'vitest'
+import { AuthorityLevelSchema } from '@dhcb/core-contracts/personalPolicy'
+import { PERMISSION_CASES } from './eval-v2-permissions-cases'
 
-describe('Eval V2 Permissions', () => {
-  it('should resolve DENY', async () => {
-    const mockPool = {
-      query: async () => ({ rows: [{ authority: 'DENY' }] }),
-    } as unknown as Parameters<typeof resolveAuthority>[0]
-    const auth = await resolveAuthority(mockPool, '123', 'sub', 'act', 'scope')
-    expect(auth).toBe('DENY')
+/** Sàn số ca — bộ ca chỉ được lớn lên; bớt ca phải sửa sàn này có chủ đích trong PR. */
+const MIN_CASES = 20
+
+describe('bộ ca eval:v2:permissions', () => {
+  it(`có ít nhất ${MIN_CASES} ca, id duy nhất, tiền tố perm-, có tiêu đề`, () => {
+    expect(PERMISSION_CASES.length).toBeGreaterThanOrEqual(MIN_CASES)
+    const ids = PERMISSION_CASES.map((c) => c.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const c of PERMISSION_CASES) {
+      expect(c.id.startsWith('perm-')).toBe(true)
+      expect(c.title.trim().length).toBeGreaterThan(0)
+    }
   })
 
-  it('should resolve null if no policy found', async () => {
-    const mockPool = {
-      query: async () => ({ rows: [] }),
-    } as unknown as Parameters<typeof resolveAuthority>[0]
-    const auth = await resolveAuthority(mockPool, '123', 'sub', 'act', 'scope')
-    expect(auth).toBeNull()
+  it('phủ ĐỦ mọi mức thẩm quyền trong contract — thêm mức mới mà quên ca thì đỏ', () => {
+    const ids = new Set(PERMISSION_CASES.map((c) => c.id))
+    for (const level of AuthorityLevelSchema.options) {
+      expect(ids.has(`perm-level-${level.toLowerCase()}`)).toBe(true)
+    }
   })
 
-  it('should parse authority correctly', async () => {
-    const mockPool = {
-      query: async () => ({ rows: [{ authority: 'EXECUTE_WITH_CONFIRMATION' }] }),
-    } as unknown as Parameters<typeof resolveAuthority>[0]
-    const auth = await resolveAuthority(mockPool, '123', 'sub', 'act', 'scope')
-    expect(auth).toBe('EXECUTE_WITH_CONFIRMATION')
-  })
+  it.each(['perm-cross-automate', 'perm-cross-deny', 'perm-revoke-other', 'perm-concurrent'])(
+    'giữ ca bất biến cốt lõi %s',
+    (id) => {
+      expect(PERMISSION_CASES.some((c) => c.id === id)).toBe(true)
+    },
+  )
 })

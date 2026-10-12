@@ -254,6 +254,10 @@ jobs:
       - name: Red-team Companion/tự động hoá/ngữ cảnh trên Postgres thật
         run: npm run eval:v2:red-team
 
+      # Personal Policy (thẩm quyền) trên cùng CSDL: khác người, ghi đè, thu hồi, đặt đồng thời.
+      - name: Thẩm quyền Personal Policy trên Postgres thật
+        run: npm run eval:v2:permissions
+
   # ── Job TỔNG HỢP: đây là required status check `quality` ───────────────────
   quality:
     name: quality

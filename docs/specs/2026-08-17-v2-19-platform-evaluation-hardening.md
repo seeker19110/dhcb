@@ -50,7 +50,7 @@ Files to create:
 - scripts/eval-v2-memory.ts — memory precision/false-memory/correction
 - scripts/eval-v2-memory-fixtures.json — 30+ candidates with known outcomes
 - scripts/eval-v2-permissions.ts — permission compliance + DENY gate harness
-- scripts/eval-v2-permissions-fixtures.json — authority escalation scenarios
+- scripts/eval-v2-permissions-fixtures.json — authority escalation scenarios _(ĐÃ XOÁ 2026-10-12, changelog 0625: thay bằng ca chạy Postgres thật ở `scripts/eval-v2-permissions-cases.ts`)_
 
 npm scripts to add (package.json):
 "eval:v2:routing": "npx tsx scripts/eval-v2-routing.ts"
