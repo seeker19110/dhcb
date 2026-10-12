@@ -1,6 +1,6 @@
 # 0627 — Policy AUTOMATE quá hạn duyệt lại (`review_at`) hạ về chờ xác nhận
 
-- **Ngày:** 2026-10-12 · **PR:** #PENDING · **Loại:** `fix(personal)`
+- **Ngày:** 2026-10-12 · **PR:** #1389 · **Loại:** `fix(personal)`
 - **Nguồn việc:** nợ (3b) trong mục red-team của `PROGRESS.md` (lộ ra ở changelog `0625`); chủ dự án
   chốt "theo khuyến nghị, không cần người xác nhận".
 
