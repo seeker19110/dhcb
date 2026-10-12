@@ -6,12 +6,12 @@ import { RED_TEAM_CASES } from './redTeamCases'
 
 /** Sàn số ca mỗi họ — bộ ca chỉ được lớn lên; bớt ca phải sửa sàn này có chủ đích trong PR. */
 const MIN_CASES_PER_FAMILY = 10
-const ID_PREFIX = { PI: 'rt-pi-', TA: 'rt-ta-', SL: 'rt-sl-' } as const
+const ID_PREFIX = { PI: 'rt-pi-', TA: 'rt-ta-', SL: 'rt-sl-', AG: 'rt-ag-' } as const
 /** Trụ đã gỡ hẳn 2026-09-20 (CLAUDE.md mục 1) — ca nhắc tới là ca kiểm thứ không còn tồn tại. */
 const REMOVED_PILLARS = /\b(career|startup|life)\b|sự nghiệp|khởi nghiệp|đời sống/i
 
 describe('bộ ca red-team', () => {
-  it.each(['PI', 'TA', 'SL'] as const)('họ %s có ít nhất %i ca', (family) => {
+  it.each(['PI', 'TA', 'SL', 'AG'] as const)('họ %s có ít nhất %i ca', (family) => {
     const count = RED_TEAM_CASES.filter((c) => c.family === family).length
     expect(count).toBeGreaterThanOrEqual(MIN_CASES_PER_FAMILY)
   })

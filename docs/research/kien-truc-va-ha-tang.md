@@ -782,6 +782,9 @@ Status:             PASSED (Ready for Production Deployment)
     > (job `sql-prepare`): **39/39** (PI 14 · TA 13 · SL 12) — sau khi sửa lỗi THẬT nó lộ ra: nhánh DENY
     > và nhánh tự chạy của `proposeAction` sập vì ghi nhật ký trước dòng đề xuất (khoá ngoại). Phạm vi:
     > đường từ khoá, KHÔNG gồm chế độ tác tử Claude — xem `docs/ops/ai-eval-red-team.md` §2.
+    >
+    > **Bổ sung changelog `0626`:** họ AG (14 ca) kiểm tầng công cụ của chế độ tác tử bằng kịch bản gọi
+    > công cụ, vẫn Postgres thật, không key AI ⇒ **53/53**.
   - Database backup to Cloudflare R2 (`backup:r2`) and system configuration backup (`backup:system`) verified with recovery runbooks.
 - **Result**: **PASS**
 
@@ -789,19 +792,19 @@ Status:             PASSED (Ready for Production Deployment)
 
 ## 3. Platform V2 Test Suite & Quality Gate Summary
 
-| Check                                        | Target                 | Result                                                                           | Status                   |
-| -------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- | ------------------------ |
-| Unit & Integration Tests                     | 100% pass              | **3934 / 3934 passed** (261 test files)                                          | **PASS**                 |
-| TypeScript Typecheck                         | 0 errors               | **0 errors** (strict mode across all apps & packages)                            | **PASS**                 |
-| ESLint Linting                               | max-warnings 0         | **0 errors, 0 warnings**                                                         | **PASS**                 |
-| Code Formatting                              | prettier --check       | **100% conformant**                                                              | **PASS**                 |
-| Routing Accuracy (`eval:v2:routing`)         | $\ge 85\%$             | **98.00%** (49/50)                                                               | **PASS**                 |
-| Context Precision (`eval:v2:context`)        | 0 leaks, 0 DENY bypass | **100.00%** (20/20)                                                              | **PASS**                 |
-| Memory Accuracy (`eval:v2:memory`)           | $< 5\%$ false memory   | **0.00% false memory, 100% correction**                                          | **PASS**                 |
-| Permission Authority (`eval:v2:permissions`) | 0 bypasses             | ~~40/40 (`pg` giả)~~ → **21/21 trên Postgres thật** (2026-10-12, changelog 0625) | **PASS**                 |
-| Red-Team Harness (`eval:v2:red-team`)        | 100% blocked           | **39/39** trên Postgres thật (đo lại 2026-10-12, Invariant 8)                    | **PASS** (đường từ khoá) |
-| Privacy Drills (`eval:v2:privacy`)           | 100% pass              | **100.00%** (7/7 drills)                                                         | **PASS**                 |
-| Final Acceptance Audit (`eval:v2:audit`)     | 8/8 criteria           | **8/8 criteria PASSED (100%)**                                                   | **PASS**                 |
+| Check                                        | Target                 | Result                                                                           | Status                  |
+| -------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------- | ----------------------- |
+| Unit & Integration Tests                     | 100% pass              | **3934 / 3934 passed** (261 test files)                                          | **PASS**                |
+| TypeScript Typecheck                         | 0 errors               | **0 errors** (strict mode across all apps & packages)                            | **PASS**                |
+| ESLint Linting                               | max-warnings 0         | **0 errors, 0 warnings**                                                         | **PASS**                |
+| Code Formatting                              | prettier --check       | **100% conformant**                                                              | **PASS**                |
+| Routing Accuracy (`eval:v2:routing`)         | $\ge 85\%$             | **98.00%** (49/50)                                                               | **PASS**                |
+| Context Precision (`eval:v2:context`)        | 0 leaks, 0 DENY bypass | **100.00%** (20/20)                                                              | **PASS**                |
+| Memory Accuracy (`eval:v2:memory`)           | $< 5\%$ false memory   | **0.00% false memory, 100% correction**                                          | **PASS**                |
+| Permission Authority (`eval:v2:permissions`) | 0 bypasses             | ~~40/40 (`pg` giả)~~ → **21/21 trên Postgres thật** (2026-10-12, changelog 0625) | **PASS**                |
+| Red-Team Harness (`eval:v2:red-team`)        | 100% blocked           | **53/53** trên Postgres thật (2026-10-12, changelog 0623 + 0626, Invariant 8)    | **PASS** (từ khoá + AG) |
+| Privacy Drills (`eval:v2:privacy`)           | 100% pass              | **100.00%** (7/7 drills)                                                         | **PASS**                |
+| Final Acceptance Audit (`eval:v2:audit`)     | 8/8 criteria           | **8/8 criteria PASSED (100%)**                                                   | **PASS**                |
 
 ---
 

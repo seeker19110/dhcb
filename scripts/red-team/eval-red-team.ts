@@ -64,7 +64,7 @@ async function main(): Promise<number> {
     const mark = r.crashed ? '💥' : r.blocked ? '✅' : '❌'
     console.log(`${mark} ${r.id.padEnd(9)} ${r.title}\n            ${r.evidence}`)
   }
-  for (const family of ['PI', 'TA', 'SL'] as const) {
+  for (const family of ['PI', 'TA', 'SL', 'AG'] as const) {
     const f = summary.byFamily[family]
     console.log(`${family}: ${f.blocked}/${f.total} chặn được`)
   }

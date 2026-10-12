@@ -39,6 +39,7 @@ import {
 import { COMPANION_CONSENT_PURPOSE } from '@dhcb/core-contracts/consentGrant'
 import type { Sensitivity } from '@dhcb/core-contracts/personalFact'
 import type { RedTeamFamily, RedTeamOutcome } from '../lib/redTeamScoring'
+import { AGENT_CASES } from './redTeamAgentCases'
 import {
   captureError,
   describeError,
@@ -741,4 +742,9 @@ const SL_CASES: RedTeamCase[] = [
   }),
 ]
 
-export const RED_TEAM_CASES: readonly RedTeamCase[] = [...PI_CASES, ...TA_CASES, ...SL_CASES]
+export const RED_TEAM_CASES: readonly RedTeamCase[] = [
+  ...PI_CASES,
+  ...TA_CASES,
+  ...SL_CASES,
+  ...AGENT_CASES,
+]

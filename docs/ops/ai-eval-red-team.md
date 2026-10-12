@@ -9,14 +9,14 @@
 
 Chỉ tính những mặt nhận **chữ người dùng gõ** rồi đưa vào LLM — đó là nơi prompt injection vào được.
 
-| Mặt AI                                          | Eval                                              | Ca injection / rò rỉ                                      | Chấm thế nào                                                                                                                           |
-| ----------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Action Canvas (mục tiêu → bước)                 | `npm run eval:action-canvas`                      | **3** (đổi vai · thoát rào · ép format), mỗi ca có canary | **Thật** — `scripts/lib/actionCanvasScoring.ts` có unit test; `evalActionCanvasFixtures.test.ts` buộc ≥ 3 ca có canary. **Mẫu chuẩn.** |
-| Góp ý code môn Lập trình                        | `npm run eval:code-feedback`                      | **1** (`hint-injection`: lệnh giả nằm trong comment code) | Thật — bất biến "không lộ lời giải" thoát mã 1.                                                                                        |
-| Gia sư chat / luyện nói (`/api/agent`)          | `npm run eval:tutor` (`--mode chat\|speaking`)    | **0** (180 ca: lỗi · câu đúng · ca biên)                  | —                                                                                                                                      |
-| Chấm bài viết kiểu IELTS                        | (chưa có eval riêng)                              | **0**                                                     | —                                                                                                                                      |
-| Companion "Bạn Đồng Hành"                       | `npm run eval:companion`                          | **0** (nhóm: sycophancy · crisis · toolUse)               | —                                                                                                                                      |
-| Companion V2 (planner · tự động hoá · ngữ cảnh) | `npm run eval:v2:red-team` (CI job `sql-prepare`) | **39** (PI 14 · TA 13 · SL 12), canary + ca đối chứng     | **Thật** — Postgres thật, gọi đúng hàm production; chỉ đường từ khoá (xem mục 2).                                                      |
+| Mặt AI                                          | Eval                                              | Ca injection / rò rỉ                                       | Chấm thế nào                                                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Action Canvas (mục tiêu → bước)                 | `npm run eval:action-canvas`                      | **3** (đổi vai · thoát rào · ép format), mỗi ca có canary  | **Thật** — `scripts/lib/actionCanvasScoring.ts` có unit test; `evalActionCanvasFixtures.test.ts` buộc ≥ 3 ca có canary. **Mẫu chuẩn.** |
+| Góp ý code môn Lập trình                        | `npm run eval:code-feedback`                      | **1** (`hint-injection`: lệnh giả nằm trong comment code)  | Thật — bất biến "không lộ lời giải" thoát mã 1.                                                                                        |
+| Gia sư chat / luyện nói (`/api/agent`)          | `npm run eval:tutor` (`--mode chat\|speaking`)    | **0** (180 ca: lỗi · câu đúng · ca biên)                   | —                                                                                                                                      |
+| Chấm bài viết kiểu IELTS                        | (chưa có eval riêng)                              | **0**                                                      | —                                                                                                                                      |
+| Companion "Bạn Đồng Hành"                       | `npm run eval:companion`                          | **0** (nhóm: sycophancy · crisis · toolUse)                | —                                                                                                                                      |
+| Companion V2 (planner · tự động hoá · ngữ cảnh) | `npm run eval:v2:red-team` (CI job `sql-prepare`) | **53** (PI 14 · TA 13 · SL 12 · AG 14), canary + đối chứng | **Thật** — Postgres thật, gọi đúng hàm production; đường từ khoá + tầng công cụ tác tử (xem mục 2).                                    |
 
 ## 2. `eval:v2:red-team` — từ xanh giả sang kiểm thật
 
@@ -38,7 +38,15 @@ test là `expect(true).toBe(true)`. Chạy thật trên `main` ra `29/30 … ❌
   "tra từ …" mặc định) sập 500. Unit test dùng `pg` giả không thấy; `check:sql` chỉ PREPARE, không
   chạy. Đã sửa cùng PR — kết quả **39/39**.
 
-**Chưa phủ (nợ trong `PROGRESS.md`):** chế độ tác tử (Claude chọn công cụ) · injection cho
+**Họ AG — chế độ tác tử ở tầng công cụ (changelog `0626`):** 14 ca, mỗi ca là một "kịch bản" gọi
+công cụ đóng vai Claude bị dụ (gọi công cụ không khai báo, thêm trường để tự xác nhận, đề xuất câu ra
+lệnh/PII, ngập đề xuất, đọc ghi chú người khác, ghi chú cài thẻ `du_lieu` giả, kết quả khổng lồ, đề
+xuất trùng, AUTOMATE/DENY) chạy thẳng `createCompanionToolSession(…).execute` trên Postgres thật —
+không cần key AI. Đỏ-trước: tắt lần lượt 5 rào trong `companionTools.ts` (công cụ được mời · trần 3
+đề xuất · lọc nội dung · gỡ thẻ + trần ký tự · chặn trùng) ⇒ đúng các ca tương ứng đỏ.
+
+**Chưa phủ (nợ trong `PROGRESS.md`):** Claude THẬT có bị dụ gọi công cụ hay không (cần key AI — họ AG
+chỉ chứng minh rằng bị dụ thì tầng công cụ vẫn chặn) · injection cho
 `eval:tutor`/`eval:companion`/chấm bài viết. (Byte NUL ra 500 đã sửa ở changelog `0624` — `rt-pi-12`
 nay đòi bị từ chối ở schema, không chấp nhận vỡ ở CSDL.)
 
