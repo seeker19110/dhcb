@@ -1,6 +1,6 @@
 # 0624 — Byte NUL trong body → 400 thay vì 500 · từ khoá trụ đã xoá về `general` · TRAPS 23 (mock `pg` che khoá ngoại)
 
-- **Ngày:** 2026-10-12 · **PR:** (điền khi tạo) · **Loại:** `fix(companion)`
+- **Ngày:** 2026-10-12 · **PR:** #1386 · **Loại:** `fix(companion)`
 - **Nguồn việc:** ba nợ ghi ở changelog `0623`; chủ dự án: "tất cả theo khuyến nghị".
 
 ## Đã làm
