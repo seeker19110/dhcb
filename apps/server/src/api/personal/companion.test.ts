@@ -153,8 +153,19 @@ describe('POST /api/companion execution', () => {
         intent: 'set_learning_goal',
         targetDomain: 'learning',
         tokenBudget: 3000,
+        ephemeral: false,
       }),
     )
+  })
+
+  it('ephemeral: true đi xuyên tới runtime; giá trị không phải boolean → 400 (GĐ2a)', async () => {
+    const res = await handler(req('POST', { message: 'Nói chuyện thôi', ephemeral: true }))
+    expect(res.status).toBe(200)
+    expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ ephemeral: true }),
+    )
+    expect((await handler(req('POST', { message: 'x', ephemeral: 'yes' }))).status).toBe(400)
   })
 })
 

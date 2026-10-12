@@ -29,6 +29,7 @@ const service = vi.hoisted(() => ({
   listMemoryRecords: vi.fn(),
   expireMemoryRecord: vi.fn(),
   deleteMemoryRecord: vi.fn(),
+  updateMemoryContent: vi.fn(),
 }))
 
 vi.mock('@dhcb/core-personal/memoryService', () =>
@@ -247,4 +248,64 @@ it('expire T2 vẫn được phép nhưng response không đọc lại nội dun
   )
   expect(response.status).toBe(200)
   expect(await response.json()).toEqual({ record: { id: RECORD_ID, status: 'expired' } })
+})
+
+describe('POST /api/memories action=update (GĐ2a)', () => {
+  it('sửa nội dung với expectedVersion → gọi updateMemoryContent, trả record thường', async () => {
+    service.updateMemoryContent.mockResolvedValue({
+      id: RECORD_ID,
+      content: 'Đã sửa',
+      sensitivity: 'personal',
+      status: 'accepted',
+      version: 2,
+    })
+    const res = await handler(
+      req('POST', '', { action: 'update', id: RECORD_ID, content: 'Đã sửa', expectedVersion: 1 }),
+    )
+    expect(res.status).toBe(200)
+    expect((await res.json()).record.content).toBe('Đã sửa')
+    expect(service.updateMemoryContent).toHaveBeenCalledWith(
+      expect.anything(),
+      PERSON,
+      RECORD_ID,
+      'Đã sửa',
+      1,
+      'user:user-1',
+    )
+  })
+
+  it('bản ghi mức nhạy cảm → chỉ trả id/status/version, không đọc ngược nội dung', async () => {
+    service.updateMemoryContent.mockResolvedValue({
+      id: RECORD_ID,
+      content: 'bí mật',
+      sensitivity: 'sensitive',
+      status: 'accepted',
+      version: 3,
+    })
+    const res = await handler(
+      req('POST', '', { action: 'update', id: RECORD_ID, content: 'bí mật', expectedVersion: 2 }),
+    )
+    expect(await res.json()).toEqual({ record: { id: RECORD_ID, status: 'accepted', version: 3 } })
+  })
+
+  it('thiếu expectedVersion / nội dung rỗng / quá 2000 ký tự → 400, không gọi service', async () => {
+    for (const body of [
+      { action: 'update', id: RECORD_ID, content: 'x' },
+      { action: 'update', id: RECORD_ID, content: '', expectedVersion: 1 },
+      { action: 'update', id: RECORD_ID, content: 'a'.repeat(2001), expectedVersion: 1 },
+      { action: 'update', id: 'not-uuid', content: 'x', expectedVersion: 1 },
+    ]) {
+      expect((await handler(req('POST', '', body))).status).toBe(400)
+    }
+    expect(service.updateMemoryContent).not.toHaveBeenCalled()
+  })
+
+  it('AppError từ service (409 version lệch) → trả đúng mã lỗi', async () => {
+    const { ConflictError } = await import('@dhcb/core-errors/appError')
+    service.updateMemoryContent.mockRejectedValue(new ConflictError('Bản ghi đã đổi'))
+    const res = await handler(
+      req('POST', '', { action: 'update', id: RECORD_ID, content: 'x', expectedVersion: 1 }),
+    )
+    expect(res.status).toBe(409)
+  })
 })

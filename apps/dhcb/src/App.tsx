@@ -68,6 +68,7 @@ const AddFriend = lazyWithRetry(() => import('./pages/core/AddFriend'))
 // ── 2. AI Companion & Decision Studio (Bạn Đồng Hành AI)
 const Companion = lazyWithRetry(() => import('./pages/companion/Companion'))
 const ActionCanvas = lazyWithRetry(() => import('./pages/companion/ActionCanvas'))
+const CompanionMemory = lazyWithRetry(() => import('./pages/companion/CompanionMemory'))
 const AvatarDemo = lazyWithRetry(() => import('./pages/companion/AvatarDemo'))
 
 // ── 3. Multi-Subject Learning & STEM Studio (Góc học tập & Luyện Tập Đa Môn)
@@ -419,6 +420,14 @@ export default function App() {
                         element={
                           <RequireAccount>
                             <Companion />
+                          </RequireAccount>
+                        }
+                      />
+                      <Route
+                        path="/ban-dong-hanh/ky-uc"
+                        element={
+                          <RequireAccount>
+                            <CompanionMemory />
                           </RequireAccount>
                         }
                       />

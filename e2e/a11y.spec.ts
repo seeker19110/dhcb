@@ -141,6 +141,7 @@ const AUTHED_ROUTES = [
   '/ghi-chu', // trụ Ghi chú — việc cần làm, dự án, cuộc họp, ghi chú
   '/ghi-chu/kanban', // bảng Kanban việc cần làm
   '/ban-dong-hanh', // Companion — tác tử xuyên suốt
+  '/ban-dong-hanh/ky-uc', // [GĐ2a] trang "Bạn Đồng Hành nhớ gì về tôi" — hai công tắc + danh sách ký ức
   '/action-canvas', // Bảng hành động của Companion
   '/ung-dung-thuc-te', // Ứng dụng thực tế — 22 thanh trượt mô phỏng
   '/luyen-tap', // Phòng luyện tập

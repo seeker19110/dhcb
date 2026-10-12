@@ -109,8 +109,8 @@ function makeFullDataPool(personId: string) {
           rows: [
             {
               id: 'cg1',
-              scope: 'life_graph',
-              purpose: 'companion',
+              scope: 'personal_memory.read',
+              purpose: 'companion_conversation',
               version: 1,
               status: 'active',
               granted_at: '2024-01-01T00:00:00Z',

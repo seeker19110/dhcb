@@ -23,6 +23,7 @@ import { SensitivitySchema, type Sensitivity } from '@dhcb/core-contracts/person
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import { AgeGroupSchema, type AgeGroup } from '@dhcb/core-contracts/intake'
 import { buildSafetyNotice, type CompanionSafetyNotice } from '@dhcb/core-contracts/companionSafety'
+import { COMPANION_CONSENT_PURPOSE } from '@dhcb/core-contracts/consentGrant'
 import {
   extractInteractiveQuestions,
   INTERACTIVE_QUESTION_FENCE,
@@ -64,6 +65,9 @@ export const CompanionRequestSchema = z.object({
   tokenBudget: z.number().int().positive().max(8000).optional(),
   // Tham số nội bộ do API suy từ phiên 2FA, không lấy từ JSON người dùng.
   maxSensitivity: SensitivitySchema.default('personal'),
+  // PHIÊN TẠM (GĐ2a): không đọc ký ức/hồ sơ/lịch sử, không lưu transcript, không đề xuất "lưu
+  // ký ức". Lớp an toàn vẫn chạy. Tóm tắt môn học vẫn nạp (dữ liệu app người dùng vốn thấy).
+  ephemeral: z.boolean().default(false),
 })
 
 export type CompanionRequest = z.input<typeof CompanionRequestSchema>
@@ -593,6 +597,7 @@ export async function synthesizeCompanionReply(
 export interface PreparedCompanionTurn {
   personId: string
   userMessage: string
+  ephemeral: boolean
   intent: string
   domain: string
   ageGroup: AgeGroup | null
@@ -639,6 +644,7 @@ export async function prepareCompanionTurn(
     targetDomain: explicitDomain,
     tokenBudget,
     maxSensitivity,
+    ephemeral,
   } = validated
 
   // Step 1: Intent & Domain Resolution
@@ -686,8 +692,9 @@ export async function prepareCompanionTurn(
     requestId: randomUUID(),
     requestText: userMessage,
     domain,
-    purpose: 'companion_conversation',
-    includeCompanionHistory: true,
+    purpose: COMPANION_CONSENT_PURPOSE,
+    includeCompanionHistory: !ephemeral,
+    includePersonalContext: !ephemeral,
     maxSensitivity,
     tokenBudget: tokenBudget ?? COMPANION_DEFAULT_TOKEN_BUDGET,
     ...(domainState ? { domainState } : {}),
@@ -707,7 +714,10 @@ export async function prepareCompanionTurn(
 
   // Step 3: Companion Planner. Đang ở lượt khủng hoảng thì KHÔNG đề xuất tác vụ nào: không
   // "lưu ký ức" chính lời tâm sự, không tra từ, không cập nhật hồ sơ — chỉ con người và số hỗ trợ.
-  const plannedSteps = safety.level === 'none' ? generatePlan(intent, domain, userMessage) : []
+  // Phiên tạm: không có bước "lưu ký ức" (người dùng đã nói rõ "đừng nhớ"), các bước khác giữ.
+  const plannedSteps = (
+    safety.level === 'none' ? generatePlan(intent, domain, userMessage) : []
+  ).filter((step) => !(ephemeral && step.capabilityId === 'memory.create_record'))
 
   // Step 4 & 5: Policy Gate & Capability/Tool Router (State Proposal via proposeAction)
   const proposedActions: ProposedAction[] = []
@@ -740,6 +750,7 @@ export async function prepareCompanionTurn(
   return {
     personId,
     userMessage,
+    ephemeral,
     intent,
     domain,
     ageGroup,
@@ -787,8 +798,16 @@ export async function finalizeCompanionTurn(
   prepared: PreparedCompanionTurn,
   replyResult: CompanionReplyResult,
 ): Promise<CompanionResponse> {
-  const { personId, userMessage, intent, domain, contextPackage, proposedActions, safety } =
-    prepared
+  const {
+    personId,
+    userMessage,
+    ephemeral,
+    intent,
+    domain,
+    contextPackage,
+    proposedActions,
+    safety,
+  } = prepared
 
   // Tách khối câu hỏi tick chọn (nếu có) ra khỏi lời văn — khối JSON không bao giờ được lọt
   // xuống giao diện dưới dạng chữ thô.
@@ -808,7 +827,8 @@ export async function finalizeCompanionTurn(
         ...contextPackage.items.map((item) => sensitivityLevels.indexOf(item.sensitivity)),
       )
     ] ?? 'sensitive'
-  if (safety.level !== 'imminent') {
+  // Phiên tạm cũng KHÔNG lưu — đó là lời hứa của chế độ này.
+  if (safety.level !== 'imminent' && !ephemeral) {
     try {
       await appendCompanionMessage(pool, {
         personId,

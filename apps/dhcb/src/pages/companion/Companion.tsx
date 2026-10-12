@@ -19,6 +19,11 @@ import {
   rejectProposedAction,
   fetchCompanionHistory,
 } from '../../lib/companionApi'
+import {
+  fetchCompanionMemorySettings,
+  updateCompanionMemorySettings,
+} from '../../lib/companionMemoryApi'
+import type { CompanionMemorySettings } from '@dhcb/core-contracts/consentGrant'
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import { EmbodimentMode } from '../../components/Companion3D/AvatarEmbodimentSelector'
@@ -45,6 +50,8 @@ const StudioLabs = lazyWithRetry(() => import('../../components/CompanionStudios
 const StudioProactive = lazyWithRetry(
   () => import('../../components/CompanionStudios/StudioProactive'),
 )
+
+const EPHEMERAL_STORAGE_KEY = 'dhcb.companion.ephemeral'
 
 export default function Companion() {
   usePageTitle('Bạn Đồng Hành | Đồng Hành Cùng Bạn')
@@ -82,6 +89,49 @@ export default function Companion() {
   // Tải lịch sử hội thoại hỏng → dòng báo nhẹ; `historyAttempt` tăng = tải lại.
   const [historyFailed, setHistoryFailed] = useState(false)
   const [historyAttempt, setHistoryAttempt] = useState(0)
+  // [GĐ2a] Ký ức: hai công tắc đọc từ server (null = chưa tải/lỗi → thẻ chỉ hiện phiên tạm);
+  // "phiên không lưu" giữ trong sessionStorage — hết tab là hết, không dính sang lần sau.
+  const [memorySettings, setMemorySettings] = useState<CompanionMemorySettings | null>(null)
+  const [enablingMemory, setEnablingMemory] = useState(false)
+  const [ephemeral, setEphemeralState] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(EPHEMERAL_STORAGE_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const setEphemeral = useCallback((next: boolean) => {
+    setEphemeralState(next)
+    try {
+      if (next) sessionStorage.setItem(EPHEMERAL_STORAGE_KEY, '1')
+      else sessionStorage.removeItem(EPHEMERAL_STORAGE_KEY)
+    } catch {
+      // sessionStorage bị chặn (chế độ riêng tư) → chỉ giữ trong state
+    }
+  }, [])
+  const enableMemory = useCallback(async () => {
+    setEnablingMemory(true)
+    try {
+      setMemorySettings(
+        await updateCompanionMemorySettings({ rememberMemories: true, useHistory: true }),
+      )
+    } catch {
+      // Thẻ vẫn còn đó để bấm lại; không có toast ở đây vì trang chưa dùng ToastProvider.
+    } finally {
+      setEnablingMemory(false)
+    }
+  }, [])
+  useEffect(() => {
+    let mounted = true
+    fetchCompanionMemorySettings()
+      .then((s) => {
+        if (mounted) setMemorySettings(s)
+      })
+      .catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // [S10-1 / AC-3] Cùng khuôn `AbortController` với effect lịch sử ngay dưới: lượt cũ bị huỷ
   // trong cleanup, lượt mới tự gọi lại. KHÔNG dùng ref "đã chạy" để chống StrictMode — chính
@@ -333,6 +383,7 @@ export default function Companion() {
         {
           message: textToSend,
           domain: selectedDomain === 'all' ? undefined : selectedDomain,
+          ...(ephemeral ? { ephemeral: true } : {}),
         },
         {
           onMeta: (meta) => {
@@ -589,6 +640,13 @@ export default function Companion() {
               getDomainLabel={getDomainLabel}
               messagesEndRef={messagesEndRef}
               inputRef={inputRef}
+              memory={{
+                settings: memorySettings,
+                ephemeral,
+                onEphemeralChange: setEphemeral,
+                onEnableMemory: enableMemory,
+                enabling: enablingMemory,
+              }}
             />
           )}
 
