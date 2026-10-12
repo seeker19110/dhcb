@@ -1,6 +1,6 @@
 # 0628 — Gỡ trụ đã xoá (career/startup/life) khỏi 6 contract + 5 service, dùng chung `pillarDomain.ts`
 
-- **Ngày:** 2026-10-12 · **PR:** #PENDING · **Loại:** `refactor(personal)`
+- **Ngày:** 2026-10-12 · **PR:** #1390 · **Loại:** `refactor(personal)`
 - **Nguồn việc:** nợ (4) trong mục red-team của `PROGRESS.md` (lộ ra ở changelog `0624`); chủ dự án
   chốt "theo khuyến nghị, không cần người xác nhận".
 
