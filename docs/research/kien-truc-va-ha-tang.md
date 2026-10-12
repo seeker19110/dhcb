@@ -771,6 +771,9 @@ Status:             PASSED (Ready for Production Deployment)
 - **Verification**:
   - `CapabilityCostTracker` measures prompt tokens, completion tokens, latency, and USD cost per capability invocation with budget guardrail alerts.
   - Red-team security suite: **100% blocked (30/30 attacks)** across prompt injection, tool abuse, and data exfiltration in `eval:v2:red-team`.
+    > ⚠️ **ĐÍNH CHÍNH 2026-10-12 (changelog `0622`) — con số này KHÔNG phải bằng chứng.** Harness cộng thẳng
+    > 20/30 ca vào số "đã chặn" mà không chạy, 2 ca qua nhờ đọc nhãn của chính fixture; chạy thật trên
+    > `main` hôm đó ra `29/30 … ❌ Failed` (thoát mã 1). Chi tiết + luật viết lại: `docs/ops/ai-eval-red-team.md`.
   - Database backup to Cloudflare R2 (`backup:r2`) and system configuration backup (`backup:system`) verified with recovery runbooks.
 - **Result**: **PASS**
 
@@ -778,19 +781,19 @@ Status:             PASSED (Ready for Production Deployment)
 
 ## 3. Platform V2 Test Suite & Quality Gate Summary
 
-| Check                                        | Target                 | Result                                                | Status   |
-| -------------------------------------------- | ---------------------- | ----------------------------------------------------- | -------- |
-| Unit & Integration Tests                     | 100% pass              | **3934 / 3934 passed** (261 test files)               | **PASS** |
-| TypeScript Typecheck                         | 0 errors               | **0 errors** (strict mode across all apps & packages) | **PASS** |
-| ESLint Linting                               | max-warnings 0         | **0 errors, 0 warnings**                              | **PASS** |
-| Code Formatting                              | prettier --check       | **100% conformant**                                   | **PASS** |
-| Routing Accuracy (`eval:v2:routing`)         | $\ge 85\%$             | **98.00%** (49/50)                                    | **PASS** |
-| Context Precision (`eval:v2:context`)        | 0 leaks, 0 DENY bypass | **100.00%** (20/20)                                   | **PASS** |
-| Memory Accuracy (`eval:v2:memory`)           | $< 5\%$ false memory   | **0.00% false memory, 100% correction**               | **PASS** |
-| Permission Authority (`eval:v2:permissions`) | 0 bypasses             | **100.00%** (40/40)                                   | **PASS** |
-| Red-Team Harness (`eval:v2:red-team`)        | 100% blocked           | **100.00% blocked** (30/30)                           | **PASS** |
-| Privacy Drills (`eval:v2:privacy`)           | 100% pass              | **100.00%** (7/7 drills)                              | **PASS** |
-| Final Acceptance Audit (`eval:v2:audit`)     | 8/8 criteria           | **8/8 criteria PASSED (100%)**                        | **PASS** |
+| Check                                        | Target                 | Result                                                     | Status            |
+| -------------------------------------------- | ---------------------- | ---------------------------------------------------------- | ----------------- |
+| Unit & Integration Tests                     | 100% pass              | **3934 / 3934 passed** (261 test files)                    | **PASS**          |
+| TypeScript Typecheck                         | 0 errors               | **0 errors** (strict mode across all apps & packages)      | **PASS**          |
+| ESLint Linting                               | max-warnings 0         | **0 errors, 0 warnings**                                   | **PASS**          |
+| Code Formatting                              | prettier --check       | **100% conformant**                                        | **PASS**          |
+| Routing Accuracy (`eval:v2:routing`)         | $\ge 85\%$             | **98.00%** (49/50)                                         | **PASS**          |
+| Context Precision (`eval:v2:context`)        | 0 leaks, 0 DENY bypass | **100.00%** (20/20)                                        | **PASS**          |
+| Memory Accuracy (`eval:v2:memory`)           | $< 5\%$ false memory   | **0.00% false memory, 100% correction**                    | **PASS**          |
+| Permission Authority (`eval:v2:permissions`) | 0 bypasses             | **100.00%** (40/40)                                        | **PASS**          |
+| Red-Team Harness (`eval:v2:red-team`)        | 100% blocked           | ~~100.00% blocked (30/30)~~ — xem đính chính ở Invariant 8 | **KHÔNG ĐO THẬT** |
+| Privacy Drills (`eval:v2:privacy`)           | 100% pass              | **100.00%** (7/7 drills)                                   | **PASS**          |
+| Final Acceptance Audit (`eval:v2:audit`)     | 8/8 criteria           | **8/8 criteria PASSED (100%)**                             | **PASS**          |
 
 ---
 

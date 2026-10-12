@@ -10,13 +10,13 @@ Kích hoạt **quy trình xử lý sự cố production**. Đọc kỹ `docs/ke-
 
 ## Trình tự (bám `docs/ke-hoach-khoi-phuc-su-co-server.md`)
 
-1. **Phát hiện & ghi nhận:** ghi thời điểm bắt đầu, triệu chứng, nguồn cảnh báo (Sentry, uptime, hoặc người dùng báo trực tiếp).
+1. **Phát hiện & ghi nhận + chọn mức SEV:** ghi thời điểm bắt đầu (UTC), triệu chứng, nguồn cảnh báo (Sentry, uptime, hoặc người dùng báo trực tiếp); chọn SEV1/2/3 theo bảng Phần 1b của tài liệu (phân vân → chọn mức cao hơn). Sự cố bảo mật: KHÔNG mở issue công khai (repo public).
 2. **Chẩn đoán nhanh:** bám phần "chẩn đoán nhanh" của tài liệu — kiểm PM2 (`pm2 status`/`pm2 logs`), Nginx, Postgres, Redis, dung lượng đĩa VPS trước khi đoán mò.
 3. **Giảm thiệt hại (mitigate) trước khi vá triệt để:** theo đúng "kịch bản xử lý" tương ứng trong tài liệu — restart service qua PM2, rollback deploy gần nhất (`docs/rollback-runbook.md`), hoặc restore backup (DB/.env/Nginx+crontab+PM2 — đã kiểm chứng cả hai chiều, xem PROGRESS.md). **Xác nhận người dùng trước thao tác lên dữ liệu thật.**
 4. **Liên lạc:** nếu ảnh hưởng người dùng thật đang dùng `donghanhcungban.org`, cân nhắc thông báo (banner/status) nếu sự cố kéo dài.
 5. **Khắc phục triệt để:** nhánh `fix/...` → qua đủ cổng commit/merge (CLAUDE.md mục 8–9) → deploy qua `docs/deploy-vps-ubuntu.md`.
 6. **Đóng sự cố:** xác nhận hết triệu chứng (health check `/api/health`, kiểm tra luồng chính); ghi thời điểm kết thúc.
-7. **Post-mortem (sự cố nghiêm trọng — mất dữ liệu, sập kéo dài, lộ dữ liệu):** ghi vào một mục mới trong `PROGRESS.md` (nợ mở) hoặc file riêng trong `docs/legacy/` nếu cần dòng thời gian chi tiết — dòng thời gian (giờ Việt Nam + UTC), nguyên nhân gốc (5 Whys), hành động khắc phục kèm việc cụ thể cần làm. **Văn hoá không đổ lỗi (blameless).**
+7. **Post-mortem (bắt buộc với SEV1/SEV2):** một file `docs/ops/postmortem/YYYY-MM-DD-<slug>.md` theo khuôn ở `docs/ops/postmortem/README.md` — dòng thời gian (UTC + giờ Việt Nam, kèm bằng chứng), nguyên nhân gốc (5 Whys), hàng rào mới; thêm một dòng trỏ tới file vào `PROGRESS.md` mục "Sự cố hạ tầng đã xử lý". **Văn hoá không đổ lỗi (blameless).**
 
 ## Bất biến
 

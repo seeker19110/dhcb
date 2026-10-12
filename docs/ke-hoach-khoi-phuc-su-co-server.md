@@ -54,16 +54,18 @@ Host dhcb
 Cách dùng sau khi thêm:
 
 ```bash
-ssh app                              # vào thẳng /var/www/dhcb, không cần gõ cd
-ssh xboss                            # vào VPS bình thường (thư mục home)
-ssh xboss "pm2 logs dhcb"   # chạy 1 lệnh lẻ rồi thoát, không vào shell
+ssh dhcb                    # vào thẳng /var/www/dhcb, không cần gõ cd
+ssh vps                     # vào VPS bình thường (thư mục home)
+ssh vps "pm2 logs dhcb"     # chạy 1 lệnh lẻ rồi thoát, không vào shell
 ```
 
 > ⚠️ Đổi `IdentityFile` cho khớp đúng khóa SSH bạn dùng, và đổi `HostName` nếu IP VPS đổi (xem
-> Phần 0 ở trên — nhớ cập nhật cả 2 chỗ khi đổi VPS). Host có `RemoteCommand` (`app`) không chạy
-> được lệnh lẻ kiểu `ssh app "lệnh"` (báo lỗi xung đột) — dùng host trơn `xboss` cho trường hợp đó.
+> Phần 0 ở trên — nhớ cập nhật cả 2 chỗ khi đổi VPS). Host có `RemoteCommand` (`dhcb`) không chạy
+> được lệnh lẻ kiểu `ssh dhcb "lệnh"` (báo lỗi xung đột) — dùng host trơn `vps` cho trường hợp đó.
+> (Sửa 2026-10-12, changelog `0622`: phần này từng gọi `ssh app`/`ssh xboss` — tên host không khớp
+> khối cấu hình ngay phía trên.)
 
-**Nếu khóa SSH có đặt passphrase** (khuyên dùng, an toàn hơn) — mỗi lần `ssh app`/`ssh xboss` sẽ
+**Nếu khóa SSH có đặt passphrase** (khuyên dùng, an toàn hơn) — mỗi lần `ssh dhcb`/`ssh vps` sẽ
 hỏi lại passphrase, không phải lỗi. Muốn khỏi gõ lại mỗi lần trong cùng phiên làm việc, dùng
 `ssh-agent`:
 
@@ -75,7 +77,7 @@ Start-Service ssh-agent
 ssh-add C:\Users\<tên-bạn>\.ssh\id_ed25519   # gõ passphrase MỘT LẦN khi được hỏi
 ```
 
-Sau đó `ssh app` trong cùng phiên PowerShell (và các phiên sau, vì đã set `Automatic`) sẽ không
+Sau đó `ssh dhcb` trong cùng phiên PowerShell (và các phiên sau, vì đã set `Automatic`) sẽ không
 hỏi lại passphrase.
 
 **macOS/Linux:**
@@ -104,16 +106,34 @@ ssh-add ~/.ssh/id_ed25519
 4. **Ghi lại thời gian + việc đã làm** (kể cả trong lúc rối) — cần cho báo cáo post-mortem (Phần 5)
    và để người khác tiếp tục nếu bạn phải dừng giữa chừng.
 
+### 1b. Phân mức sự cố (SEV) — chọn mức TRƯỚC khi chọn kịch bản
+
+Mức quyết định **làm ngay hay xếp lịch** và **có bắt buộc post-mortem không** (Phần 5). Phân vân
+giữa hai mức → chọn mức CAO hơn; hạ mức sau khi đã chẩn đoán là bình thường (ghi lý do vào
+post-mortem). Thêm 2026-10-12 (changelog `0622`) — trước đó tài liệu nói "phân loại mức độ" mà
+không có thang nào.
+
+| Mức      | Nghĩa                                     | Ví dụ ở DHCB                                                                                                                                                                                           | Phản hồi                 | Post-mortem                              |
+| -------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ | ---------------------------------------- |
+| **SEV1** | Sập · mất dữ liệu · lộ dữ liệu · sai tiền | `/api/health` không phản hồi · lộ dữ liệu người dùng hoặc secret · mất/hỏng dữ liệu Postgres · SePay thu tiền mà không nâng VIP (hoặc ngược lại) · đếm lượt AI **fail-open** (đốt tiền API không trần) | Ngay, mọi lúc            | Bắt buộc                                 |
+| **SEV2** | Luồng chính hỏng, site vẫn sống           | Đăng nhập lỗi · AI hỏng cho MỌI người (Claude lẫn dự phòng Groq/Gemini) · auto-deploy fail liên tiếp (production đứng ở code cũ — sự cố 2026-08-30) · backup đêm thất bại · SSL còn < 7 ngày           | Trong ngày               | Bắt buộc                                 |
+| **SEV3** | Ảnh hưởng nhỏ, có đường lách              | TTS Google lỗi (đã rơi về Web Speech) · Redis chớp < 1 giây (nợ mở trong `PROGRESS.md`) · một trang/bài học lỗi                                                                                        | Xếp lịch như việc thường | Không bắt buộc — changelog đợt sửa là đủ |
+
+**Sự cố bảo mật (lộ dữ liệu, xâm nhập, lỗ hổng đang bị khai thác):** repo là **public** — KHÔNG
+mở issue công khai và KHÔNG commit chi tiết khai thác trước khi vá xong. Ghi tạm ở GitHub Security
+Advisory riêng tư (`SECURITY.md`), post-mortem công khai chỉ viết **sau** khi đã vá và đã xoay vòng
+khoá; phần kỹ thuật nhạy cảm tóm ở mức "đã đóng đường X", không kèm cách tái hiện.
+
 ---
 
 ## 2. Bước đầu tiên khi phát hiện sự cố — chẩn đoán nhanh (< 2 phút)
 
 ```bash
 # 1. App còn phản hồi không?
-curl -i https://en-vi.donghanhcungban.com/api/health
+curl -i https://en-vi.donghanhcungban.org/api/health
 
-# 2. SSH vào VPS được không?
-ssh root@103.81.87.174
+# 2. SSH vào VPS được không? (IP lấy ở Phần 0 — đổi VPS thì sửa CẢ hai chỗ)
+ssh root@103.118.29.58
 
 # --- Nếu SSH được, chạy tiếp trên VPS: ---
 
@@ -591,16 +611,23 @@ Không coi là "xong" cho tới khi đủ:
 
 ## 5. Sau sự cố — báo cáo ngắn (post-mortem)
 
-Không cần quy trình nặng nề (dự án nhỏ), nhưng **luôn ghi lại tối thiểu** vào `PROGRESS.md` mục
-"nợ kỹ thuật"/lịch sử, hoặc issue riêng nếu cần theo dõi tiếp:
+**Nơi lưu CỐ ĐỊNH (chốt 2026-10-12, changelog `0622`): mỗi sự cố SEV1/SEV2 một file
+`docs/ops/postmortem/YYYY-MM-DD-<slug>.md`**, theo khuôn trong `docs/ops/postmortem/README.md`
+(dòng thời gian UTC + giờ Việt Nam, 5 Whys, hàng rào mới). `PROGRESS.md` mục "Sự cố hạ tầng đã xử
+lý" chỉ giữ MỘT dòng trỏ tới file đó; hành động còn mở thì vào "Nợ kỹ thuật còn mở" như mọi nợ khác.
+
+Trước đây post-mortem nằm rải ở ba nơi (Phần 7 dưới đây · `PROGRESS.md` · `docs/legacy/`) nên
+không ai tìm lại được sự cố cũ bằng một lệnh `ls`. Bản ghi cũ để nguyên chỗ, không dời.
+
+Bản tối thiểu khi đang vội (SEV3, hoặc nháp ngay sau khi khôi phục — điền đủ khuôn sau):
 
 ```
-Sự cố: [mô tả ngắn]
+Sự cố: [mô tả ngắn] · Mức: SEV1/2/3
 Thời gian: [bắt đầu] → [khôi phục xong], tổng downtime: [X phút]
 Nguyên nhân gốc: [vì sao xảy ra — không chỉ triệu chứng]
 Đã làm gì để khôi phục: [tóm tắt các bước đã chạy thật]
 Có mất dữ liệu không: [có/không, nếu có thì phạm vi]
-Cách ngăn tái diễn: [đổi code/cấu hình/quy trình gì để không lặp lại]
+Hàng rào mới: [test/cảnh báo/cổng CI/mục TRAPS.md nào để cùng nguyên nhân không lặp lại]
 ```
 
 ---
