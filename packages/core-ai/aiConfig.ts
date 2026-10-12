@@ -34,6 +34,7 @@ export type AiTask =
   | 'debate'
   | 'safety'
   | 'memory_reflect'
+  | 'intent_route'
 
 /** Nhiệm vụ mà CLIENT được phép xin qua /api/agent (các nhiệm vụ còn lại chỉ server tự gọi). */
 export const CLIENT_AI_TASKS: ReadonlySet<AiTask> = new Set<AiTask>(['converse', 'grade'])
@@ -71,6 +72,10 @@ const ROUTE_TABLE: Record<AiTask, { tier: Tier } & Omit<AnthropicRoute, 'model'>
   // JSON): chạy NỀN sau khi người dùng im ≥ 15 phút, không ai đứng chờ → Haiku, nghĩ ít. Trần
   // token đủ cho ≤ 5 thao tác + tóm tắt ≤ 1.500 ký tự (cộng phần nghĩ).
   memory_reflect: { tier: 'fast', effort: 'low', maxTokens: 4096, timeoutMs: 30_000 },
+  // Định tuyến ý định của Companion (GĐ3 — trả JSON `{ intent, domain }` rất ngắn): chạy trên
+  // ĐƯỜNG NÓNG song song với đọc hồ sơ → Haiku, nghĩ ít, hạn chót ngắn. Quá hạn thì rơi về bảng
+  // từ khoá — người dùng không phải chờ thêm quá 6 giây vì bước này.
+  intent_route: { tier: 'fast', effort: 'low', maxTokens: 1024, timeoutMs: 6_000 },
 }
 
 // Đọc env LÚC GỌI (không phải lúc import) — test đổi env được, và PM2 reload đọc giá trị mới.

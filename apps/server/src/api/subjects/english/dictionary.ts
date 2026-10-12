@@ -10,7 +10,7 @@
 //
 // Chạy trên Node (Express/VPS) vì cần đọc file từ điển — KHÔNG dùng Edge runtime.
 
-import { getAllEntries, type DictEntry } from '@dhcb/subject-english/dictionaryData'
+import { getAllEntries, searchDictionaryEntries } from '@dhcb/subject-english/dictionaryData'
 import { vnDateStr } from '@dhcb/core-db/date'
 import {
   getCorsHeaders,
@@ -22,11 +22,6 @@ import {
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 
 const MAX_RESULTS = 200
-
-// Phát hiện chuỗi tiếng Việt (có dấu) — giống logic cũ ở client để giữ nguyên trải nghiệm.
-function hasVietnamese(s: string): boolean {
-  return /[àáảãạăắặẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]/i.test(s)
-}
 
 // Sinh số "ngẫu nhiên nhưng cố định theo ngày" — phải KHỚP với logic cũ ở WordOfTheDay
 // để cùng một ngày luôn ra cùng một từ.
@@ -84,20 +79,8 @@ export default async function handler(req: Request): Promise<Response> {
     )
   if (q.length > 100) return jsonResponse({ error: 'Từ khóa quá dài' }, 400, allHeaders)
 
-  let matches: DictEntry[]
-  if (hasVietnamese(q)) {
-    matches = entries.filter((e) => e.vi.toLowerCase().includes(q))
-  } else {
-    // Ưu tiên từ BẮT ĐẦU bằng query, rồi mới đến từ CHỨA query (giống client cũ).
-    const starts: DictEntry[] = []
-    const contains: DictEntry[] = []
-    for (const e of entries) {
-      const w = e.word.toLowerCase()
-      if (w.startsWith(q)) starts.push(e)
-      else if (w.includes(q)) contains.push(e)
-    }
-    matches = [...starts, ...contains]
-  }
+  // Tiếng Việt có dấu → tìm theo nghĩa; còn lại ưu tiên từ BẮT ĐẦU bằng query (giống client cũ).
+  const matches = searchDictionaryEntries(entries, q)
 
   // Đếm số lượng theo loại từ trên TOÀN BỘ kết quả khớp (để vẽ chip lọc loại từ).
   // Đếm TRƯỚC khi lọc theo `pos` để chip luôn hiện tổng đầy đủ, không bị thay đổi

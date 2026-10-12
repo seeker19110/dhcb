@@ -357,3 +357,28 @@ export async function listProposedActions(
 
   return res.rows.map(toProposedAction)
 }
+
+/**
+ * Đề xuất `pending` TRÙNG tham số (GĐ3): cùng người, cùng capability, `payload` bằng nhau. So
+ * `jsonb =` là so giá trị đã chuẩn hoá (không phụ thuộc thứ tự khoá) — tương đương so hash tham số
+ * mà không cần cột/migration mới; lọc theo chỉ mục `(person_id, status)` sẵn có nên rẻ.
+ *
+ * Dùng trước khi công cụ đề xuất của Companion tạo bản mới: người dùng nói "nhớ giúp mình X" hai
+ * lần thì chỉ thấy MỘT nút xác nhận, không phải hai.
+ */
+export async function findPendingDuplicate(
+  pool: Pick<Pool, 'query'>,
+  personId: string,
+  capabilityId: string,
+  payload: Record<string, unknown>,
+): Promise<ProposedAction | null> {
+  const res = await pool.query<ActionRow>(
+    `select ${ACTION_COLUMNS} from personal.proposed_actions
+     where person_id = $1 and status = 'pending' and capability_id = $2 and payload = $3::jsonb
+     order by created_at desc
+     limit 1`,
+    [personId, capabilityId, JSON.stringify(payload)],
+  )
+  const row = res.rows[0]
+  return row ? toProposedAction(row) : null
+}

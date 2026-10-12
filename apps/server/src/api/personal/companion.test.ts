@@ -155,6 +155,7 @@ describe('POST /api/companion execution', () => {
         tokenBudget: 3000,
         ephemeral: false,
       }),
+      expect.anything(),
     )
   })
 
@@ -164,8 +165,28 @@ describe('POST /api/companion execution', () => {
     expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ ephemeral: true }),
+      expect.anything(),
     )
     expect((await handler(req('POST', { message: 'x', ephemeral: 'yes' }))).status).toBe(400)
+  })
+})
+
+describe('POST /api/companion — chế độ tác tử GĐ3', () => {
+  it('mặc định truyền toolkit (có hàm tra từ điển) cho runtime', async () => {
+    await handler(req('POST', { message: 'hello' }))
+    const toolkit = runtime.executeCompanionTurn.mock.calls[0]?.[2] as
+      { lookupDictionary: unknown } | undefined
+    expect(typeof toolkit?.lookupDictionary).toBe('function')
+  })
+
+  it('COMPANION_TOOLS=off → KHÔNG truyền toolkit (công tắc lùi về GĐ2b)', async () => {
+    vi.stubEnv('COMPANION_TOOLS', 'off')
+    try {
+      await handler(req('POST', { message: 'hello' }))
+      expect(runtime.executeCompanionTurn.mock.calls[0]?.[2]).toBeUndefined()
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 })
 
@@ -286,6 +307,7 @@ describe('cổng dữ liệu T2 Companion', () => {
     expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ maxSensitivity: 'personal' }),
+      expect.anything(),
     )
   })
   it('đã bật nhưng phiên hết hạn vẫn chỉ nạp personal', async () => {
@@ -294,6 +316,7 @@ describe('cổng dữ liệu T2 Companion', () => {
     expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ maxSensitivity: 'personal' }),
+      expect.anything(),
     )
   })
   it('phiên 2FA còn hiệu lực được nạp sensitive', async () => {
@@ -303,6 +326,7 @@ describe('cổng dữ liệu T2 Companion', () => {
     expect(runtime.executeCompanionTurn).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ maxSensitivity: 'sensitive' }),
+      expect.anything(),
     )
   })
   it('người gọi không thể tự nâng maxSensitivity từ request', async () => {

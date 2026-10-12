@@ -35,3 +35,17 @@ describe('getAnthropicRoute — memory_reflect (GĐ2b)', () => {
     expect(isClientAiTask('memory_reflect')).toBe(false)
   })
 })
+
+describe('getAnthropicRoute — intent_route (GĐ3)', () => {
+  it('dùng Haiku, nghĩ ít, hạn chót ngắn vì chạy trên đường nóng', () => {
+    delete process.env.ANTHROPIC_FAST_MODEL
+    const route = getAnthropicRoute('intent_route')
+    expect(route.model).toBe(DEFAULT_ANTHROPIC_FAST_MODEL)
+    expect(route.effort).toBe('low')
+    expect(route.timeoutMs).toBeLessThanOrEqual(8_000)
+  })
+
+  it('client KHÔNG xin được nhiệm vụ nền intent_route qua /api/agent', () => {
+    expect(isClientAiTask('intent_route')).toBe(false)
+  })
+})

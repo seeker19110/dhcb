@@ -22,7 +22,8 @@ const ENTRIES = [
   },
   { word: 'run', pos: 'verb', vi: 'chạy', ex_en: 'I run fast.', ex_vi: 'Tôi chạy nhanh.' },
 ]
-vi.mock('@dhcb/subject-english/dictionaryData', () => ({
+vi.mock('@dhcb/subject-english/dictionaryData', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dhcb/subject-english/dictionaryData')>()),
   getAllEntries: () => ENTRIES,
 }))
 
