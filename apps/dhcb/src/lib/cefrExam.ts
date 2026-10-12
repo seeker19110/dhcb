@@ -3,16 +3,21 @@
 //
 // Mỗi cấp CEFR (A1→C2) có 1 bài thi tổng hợp CHẤT LƯỢNG CAO — đạt ≥70% mới
 // "qua cấp" và mở khóa cấp tiếp theo (xem docs/research/bai-kiem-tra-cuoi-cap.md).
-// File này gom:
-//   1. Lưu/đọc KẾT QUẢ thi (localStorage + đồng bộ Supabase qua learning_progress.
-//      cefr_exams — migration 0009). Dữ liệu chỉ "tốt lên": giữ điểm cao nhất,
-//      passed = OR, số lần thi = max.
-//   2. buildExam(): DỰNG ĐỀ xáo trộn từ kho lớn (từ vựng 2 chiều · ngữ pháp ·
-//      nghe TTS · đọc hiểu hội thoại) nên KHÔNG học vẹt đáp án được.
-//   3. scoreExam(): chấm điểm + xét đạt ngưỡng.
+// TỪ GĐ2b (2026-10-10, PR #1320; đặc tả docs/specs/2026-10-12-gd2b-cham-thi-cefr-server.md):
+// bài thi cuối cấp do SERVER dựng đề, giữ đáp án và chấm (`/api/cefr-assessment`,
+// apps/server/src/api/_lib/cefrAssessment.ts) — trình duyệt KHÔNG còn chấm, KHÔNG còn tự quyết
+// "đạt". File này còn lại:
+//   1. Đọc KẾT QUẢ thi từ bộ đệm localStorage (`et_cefr_exams_*`) — bản chụp của sổ thi do
+//      server chấm (CefrExam.tsx ghi sau khi nộp, progressSync.ts ghi khi kéo về). Luật mở cấp
+//      THẬT nằm ở server (`packages/core-learner/cefrUnlock.ts`); bộ đệm chỉ để hiển thị.
+//      `saveExamAttempt` giữ cho test cũ dựng dữ liệu, mã sản phẩm không gọi.
+//   2. buildExam(): DỰNG ĐỀ xáo trộn tại máy — nay chỉ còn bài test XẾP LỚP dùng
+//      (pages/Placement.tsx, không cấp quyền gì) và bài luyện nghe (buildListeningQuestions).
+//   3. scoreExam(): tính %/đạt từ số câu đúng — màn kết quả dùng để HIỂN THỊ con số server trả.
+//   4. randomVoice(): giọng ngẫu nhiên cho câu Nghe (chống học vẹt theo 1 giọng, mục ③ N2) —
+//      CefrExam.tsx gắn vào câu Nghe của đề server (server không chọn giọng).
 //
-// Điều kiện DỰ THI (đã học đủ: ≥70% từ vựng + 100% ngữ pháp) do trang cấp tính —
-// file này chỉ lo bài thi + kết quả.
+// Điều kiện DỰ THI (đã học đủ: ≥70% từ vựng + 100% ngữ pháp) do trang cấp tính.
 // ──────────────────────────────────────────────────────────────────────
 
 import type { DictEntry } from '../types'
@@ -162,7 +167,7 @@ export interface BuildExamParams {
 // 14 giọng ngẫu nhiên cho câu Nghe — thi lại (đề mới) nghe giọng khác, chống
 // học vẹt theo 1 giọng quen thay vì nghe hiểu thật (đặc tả mục ③ N2).
 const LISTENING_VOICES: Voice[] = VOICE_OPTIONS.map((v) => v.id)
-function randomVoice(): Voice {
+export function randomVoice(): Voice {
   return LISTENING_VOICES[Math.floor(Math.random() * LISTENING_VOICES.length)] as Voice
 }
 
