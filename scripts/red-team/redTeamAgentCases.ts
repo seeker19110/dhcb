@@ -17,12 +17,12 @@ import { setPolicy } from '@dhcb/core-personal/policyService'
 import { createWorkDocument, createWorkTask } from '@dhcb/core-domains/workService'
 import type { ToolExecutionOutcome } from '@dhcb/core-ai/anthropicToolLoop'
 import type { RedTeamOutcome } from '../lib/redTeamScoring'
-import type { RedTeamCase } from './redTeamCases'
 import {
   diffSnapshots,
   isoDaysFromNow,
   newCanary,
   snapshotPersonRows,
+  type RedTeamCase,
   type RedTeamContext,
   type RedTeamPerson,
 } from './redTeamKit'

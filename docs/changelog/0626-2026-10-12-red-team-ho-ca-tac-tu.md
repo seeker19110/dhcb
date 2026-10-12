@@ -32,6 +32,10 @@ liệu" nhờ tiếng vọng đó, và `rt-ag-13` xanh ở 2389 ký tự — ch�
 khác canary; `rt-ag-13` dồn mọi trường tới độ dài tối đa và ĐÒI thấy vết cắt (đúng 4001 ký tự, kết
 thúc bằng "…").
 
+CI lần đầu đỏ ở bước "chu trình import" (`codemap cycles`): `redTeamAgentCases.ts` import type
+`RedTeamCase` từ `redTeamCases.ts`, file này lại import `AGENT_CASES` ngược về. Sửa: chuyển interface
+`RedTeamCase` sang đồ nghề chung `redTeamKit.ts`.
+
 ## Bằng chứng
 
 - `DATABASE_URL=… npx tsx scripts/red-team/eval-red-team.ts` → `AG: 14/14 chặn được · ✅ 53/53`.

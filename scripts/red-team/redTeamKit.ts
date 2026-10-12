@@ -8,6 +8,7 @@
 //     chuỗi canary ngẫu nhiên có/không trong ngữ cảnh.
 import { randomBytes, randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
+import type { RedTeamFamily, RedTeamOutcome } from '../lib/redTeamScoring'
 import { getOrCreatePerson } from '@dhcb/core-personal/personService'
 import { grantConsent } from '@dhcb/core-personal/consentService'
 import {
@@ -27,6 +28,15 @@ export interface RedTeamContext {
   pool: Pool
   /** Tạo một người dùng giả mới (user + person) — mỗi ca dùng người riêng, không dính trạng thái. */
   newPerson(): Promise<RedTeamPerson>
+}
+
+/** Một ca red-team. Đặt ở đây (không ở `redTeamCases.ts`) để file họ ca tách riêng như
+ *  `redTeamAgentCases.ts` không phải import ngược `redTeamCases.ts` — tránh chu trình import. */
+export interface RedTeamCase {
+  id: string
+  family: RedTeamFamily
+  title: string
+  run(ctx: RedTeamContext): Promise<RedTeamOutcome>
 }
 
 export function createContext(pool: Pool): RedTeamContext {
