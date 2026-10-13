@@ -192,9 +192,15 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   `docs/specs/2026-10-12-ban-dong-hanh-gd3-tac-tu-cong-cu.md`, không migration): định tuyến Haiku
   (`intent_route`, fallback từ khoá), vòng công cụ viết tay (≤ 4 bước, ≤ 6 lần thi hành, hạn chót
   45 giây) với 4 công cụ chỉ-đọc + 3 công cụ CHỈ tạo đề xuất chờ duyệt, kiểm câu trả lời cuối tất
-  định, nhãn "đang tra cứu" trên giao diện; công tắc lùi `COMPANION_TOOLS=off`. **Kế tiếp: GĐ4**
-  bản tin chủ động bằng dữ liệu thật. Việc tay: sau deploy chạy `migrate:pg` (0094 cần extension
-  `unaccent`; 0096 ba bảng mới), kiểm `GEMINI_API_KEY` production, bật ba công tắc trên tài khoản
+  định, nhãn "đang tra cứu" trên giao diện; công tắc lùi `COMPANION_TOOLS=off`. **GĐ4a ĐÃ LÀM**
+  (PR #PENDING, `docs/changelog/0629-*.md`, đặc tả
+  `docs/specs/2026-10-12-ban-dong-hanh-gd4a-the-hom-nay.md`, migration 0097): "Thẻ hôm nay" ≤ 3
+  thẻ/ngày dựng tất định từ dữ liệu thật (thẻ ôn đến hạn · việc đến hạn · mục tiêu học · lời mời
+  phản tỉnh), không gọi AI, tự chuyển "Đã xong"; 👍/👎 thành sở thích (👎 tắt loại thẻ 7 ngày);
+  gỡ hẳn tác tử chủ động giả lập (`/api/proactive-agent`, "năng lượng 85%", AutoPilot gõ sẵn).
+  **Kế tiếp: GĐ4b** nhắc nghỉ khi phiên trò chuyện dài cho nhóm `nhi_dong`/`thieu_nien`. Việc tay:
+  sau deploy chạy `migrate:pg` (0094 cần extension `unaccent`; 0096 ba bảng mới; 0097 hai bảng thẻ
+  hôm nay), kiểm `GEMINI_API_KEY` production, bật ba công tắc trên tài khoản
   thật, trò chuyện rồi chờ ≥ 15 phút xem gợi ý hiện ở `/ban-dong-hanh/ky-uc`; kiểm stream + bộ phân
   loại GĐ1 với key thật; **GĐ3:** chạy `npm run eval:companion` và
   `npm run eval:v2:routing -- --haiku` với key thật, theo dõi chi phí token mode `companion` +

@@ -140,7 +140,6 @@ const ALLOWED_PULSE_COUNT: Record<string, number> = {
   'components/Home/HomeUniversalAiBar.tsx': 1, // đang lắng nghe (ghi âm)
   'components/Home/TodayCard.tsx': 2, // skeleton "đang tìm việc học hôm nay" (nút + dòng phụ)
   'components/Layout.tsx': 1, // CHỈ LÀ CHÚ THÍCH ghi lại lý do đã gỡ, không phải mã thật
-  'components/ProactiveBriefingCard.tsx': 1, // mục ưu tiên "khẩn" (urgent) — màu ngữ nghĩa
   'components/PvPArena/PvPArenaLobbyModal.tsx': 1, // đang ghép trận
   'components/PvPArena/PvPBattlefieldModal.tsx': 1, // đồng hồ đếm ngược đang chạy
   'components/ReferralSection.tsx': 1, // skeleton tải

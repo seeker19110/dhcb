@@ -131,6 +131,16 @@ async function seedPerson(pool: Pool, tag: string): Promise<{ userId: string; pe
      values ($1, now()) returning person_id as id`,
     [p],
   )
+  await q(
+    `insert into personal.companion_daily_cards (person_id, vn_day, kind, position)
+     values ($1, current_date, 'review_due', 1) returning id`,
+    [p],
+  )
+  await q(
+    `insert into personal.companion_card_preferences (person_id, kind, down_count)
+     values ($1, 'reflection', 1) returning person_id as id`,
+    [p],
+  )
   const project = await q(
     `insert into worklife.projects (id, person_id, name, status) values (gen_random_uuid(), $1, 'Dự án', 'active') returning id`,
     [p],

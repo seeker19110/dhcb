@@ -7,8 +7,8 @@
 //   L1/AC-1 — cleanup unmount chỉ gọi `voiceRecorderRef.cancel()` + `stopSpeaking()` mà KHÔNG
 //     đặt cờ huỷ, nên `onDone` của stream còn đang bay vẫn gọi `speak(...)`: người dùng rời
 //     trang giữa lúc AI đang trả lời thì AI CẤT TIẾNG Ở TRANG KẾ.
-//   L3/AC-3 — `fetchProactiveAgentState()` chạy khi mount mà không có `AbortController`:
-//     StrictMode gọi hai lượt và lượt cũ setState sau khi đã unmount.
+//   L3/AC-3 — (đã gỡ cùng tác tử chủ động giả lập ở changelog 0629: trang không còn fetch
+//     `fetchProactiveAgentState` khi mount; "Thẻ hôm nay" tải trong studio qua `useAsyncLoad`.)
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act, StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -50,11 +50,6 @@ const cancelRecordingMock = vi.hoisted(() => vi.fn()) // recorder giả — tran
 vi.mock('../../lib/sttServer', () => ({
   isRecordingSupported: () => true,
   startRecording: vi.fn(async () => ({ stop: async () => '', cancel: cancelRecordingMock })),
-}))
-
-const fetchProactiveAgentStateMock = vi.hoisted(() => vi.fn())
-vi.mock('../../lib/proactiveAgentApi', () => ({
-  fetchProactiveAgentState: fetchProactiveAgentStateMock,
 }))
 
 const sendCompanionMessageStreamMock = vi.hoisted(() => vi.fn())
@@ -102,8 +97,6 @@ describe('Companion — rời trang giữa lúc AI đang nói (AC-1) và huỷ f
     speakMock.mockClear()
     stopSpeakingMock.mockClear()
     sendCompanionMessageStreamMock.mockReset()
-    fetchProactiveAgentStateMock.mockReset()
-    fetchProactiveAgentStateMock.mockResolvedValue({ actions: [], config: {} })
     daUnmount = false
     container = document.createElement('div')
     document.body.appendChild(container)
@@ -206,22 +199,5 @@ describe('Companion — rời trang giữa lúc AI đang nói (AC-1) và huỷ f
 
     go()
     expect(opts?.signal?.aborted).toBe(true)
-  })
-
-  it('AC-3: fetchProactiveAgentState nhận signal; StrictMode huỷ lượt một, rời trang huỷ hết', async () => {
-    hien(true)
-    await chay()
-
-    expect(fetchProactiveAgentStateMock).toHaveBeenCalled()
-    const signals = fetchProactiveAgentStateMock.mock.calls.map(
-      (c) => (c[1] as { signal?: AbortSignal } | undefined)?.signal,
-    )
-    for (const s of signals) expect(s).toBeInstanceOf(AbortSignal)
-    // StrictMode mount hai lượt: cleanup của lượt MỘT phải abort lượt đó.
-    expect(signals.length).toBeGreaterThanOrEqual(2)
-    expect(signals[0]?.aborted).toBe(true)
-
-    go()
-    for (const s of signals) expect(s?.aborted).toBe(true)
   })
 })

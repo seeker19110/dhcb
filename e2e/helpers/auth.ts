@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test'
 import { PublicAppSettingsSchema } from '../../packages/core-contracts/appSettings'
 import { MOCK_LIFE_SYNTHESIS } from './lifeSynthesisMock'
+import { MOCK_COMPANION_CARDS } from './companionCardsMock'
 
 // Giả "đã đăng nhập" cho E2E: gieo trước cờ phiên không bí mật (đúng key mà
 // src/lib/authHeader.ts đọc — gsa_session_present_v1) + chặn network `GET
@@ -93,6 +94,16 @@ export async function mockLogin(
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({ report: MOCK_LIFE_SYNTHESIS }),
+    }),
+  )
+
+  // "Thẻ hôm nay" ở đầu studio "Kế hoạch" (GĐ4a, changelog 0629) — đủ thẻ mở / đã xong / đã 👎 để
+  // cổng a11y quét mọi biến thể. Test cần trạng thái khác thì `page.route` đè sau.
+  await page.route('**/api/companion-cards**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_COMPANION_CARDS),
     }),
   )
 }

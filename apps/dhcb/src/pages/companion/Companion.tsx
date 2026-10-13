@@ -1,14 +1,12 @@
 import { useCallback, useState, useRef, useEffect, Suspense } from 'react'
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Layers, X } from 'lucide-react'
 import { usePageTitle } from '../../lib/usePageTitle'
 import Layout from '../../components/Layout'
 import RealtimeTelemetryBar from '../../components/MeshTelemetry/RealtimeTelemetryBar'
 import StudioLoadingSkeleton from '../../components/CompanionStudios/StudioLoadingSkeleton'
 import { lazyWithRetry } from '../../lib/lazyWithRetry'
-import { fetchProactiveAgentState } from '../../lib/proactiveAgentApi'
-import type { ProactiveAgentState } from '@dhcb/core-contracts/proactiveAgent'
 import { startRecording, isRecordingSupported, type Recorder } from '../../lib/sttServer'
 import { speak, stopSpeaking } from '../../lib/tts'
 import { useAuth } from '../../context/useAuth'
@@ -32,7 +30,11 @@ import type {
   StudioTab,
   CompanionVoiceState,
 } from '../../components/CompanionStudios/studioTypes'
-import { DOMAIN_OPTIONS, STUDIO_TABS_CONFIG } from '../../components/CompanionStudios/studioTypes'
+import {
+  DOMAIN_OPTIONS,
+  STUDIO_TABS_CONFIG,
+  isStudioTab,
+} from '../../components/CompanionStudios/studioTypes'
 import { useDialogBehavior } from '../../components/useDialogBehavior'
 import { readDraft, clearDraft } from '../../lib/learningQuestionDraft'
 import { PageShell } from '@core/PageShell'
@@ -58,6 +60,7 @@ export default function Companion() {
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeStudio, setActiveStudio] = useState<StudioTab>('dialogue')
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -87,7 +90,6 @@ export default function Companion() {
       ? 'minimal'
       : '3d_cyber_avatar',
   )
-  const [proactiveState, setProactiveState] = useState<ProactiveAgentState | null>(null)
   // Tải lịch sử hội thoại hỏng → dòng báo nhẹ; `historyAttempt` tăng = tải lại.
   const [historyFailed, setHistoryFailed] = useState(false)
   const [historyAttempt, setHistoryAttempt] = useState(0)
@@ -135,21 +137,29 @@ export default function Companion() {
     }
   }, [])
 
-  // [S10-1 / AC-3] Cùng khuôn `AbortController` với effect lịch sử ngay dưới: lượt cũ bị huỷ
-  // trong cleanup, lượt mới tự gọi lại. KHÔNG dùng ref "đã chạy" để chống StrictMode — chính
-  // cách đó từng làm hội thoại cũ không bao giờ hiện (xem ghi chú dài ở effect kế tiếp).
+  // Liên kết sâu `?studio=<id>` (GĐ4a, changelog 0629): thẻ "Nhìn lại tuần học" dẫn tới studio
+  // "Ghi nhớ" có nhật ký phản tỉnh. Theo dõi GIÁ TRỊ tham số (không chỉ lúc mount) vì thẻ nằm ngay
+  // trên trang này — bấm thẻ chỉ đổi query string, trang không mount lại. Giá trị lạ bị bỏ qua.
+  // Áp xong thì gỡ tham số (replace) để bấm lại cùng thẻ lần sau vẫn có tác dụng.
+  // Đổi studio NGAY lúc render khi tham số đổi (khuôn "điều chỉnh state khi prop đổi" của React),
+  // không setState trong effect; effect chỉ dọn URL (state của router, ngoài React).
+  const studioParam = searchParams.get('studio')
+  const [appliedStudioParam, setAppliedStudioParam] = useState<string | null>(null)
+  if (studioParam !== appliedStudioParam) {
+    setAppliedStudioParam(studioParam)
+    if (studioParam && isStudioTab(studioParam)) setActiveStudio(studioParam)
+  }
   useEffect(() => {
-    const controller = new AbortController()
-
-    fetchProactiveAgentState(undefined, { signal: controller.signal })
-      .then((state) => {
-        if (controller.signal.aborted) return
-        setProactiveState(state)
-      })
-      .catch(() => {})
-
-    return () => controller.abort()
-  }, [])
+    if (!studioParam) return
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('studio')
+        return next
+      },
+      { replace: true },
+    )
+  }, [studioParam, setSearchParams])
 
   // Nạp lại hội thoại đã lưu — mở lại trang là thấy tiếp cuộc trò chuyện trước, không phải bắt
   // đầu lại từ đầu.
@@ -665,9 +675,7 @@ export default function Companion() {
 
           {activeStudio === 'labs' && <StudioLabs />}
 
-          {activeStudio === 'proactive' && (
-            <StudioProactive proactiveState={proactiveState} navigate={navigate} />
-          )}
+          {activeStudio === 'proactive' && <StudioProactive navigate={navigate} />}
         </Suspense>
       </PageShell>
 

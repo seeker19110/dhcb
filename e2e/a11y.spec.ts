@@ -745,6 +745,9 @@ test('Bạn Đồng Hành — thẻ Workplace Harvester không tràn ngang ở 3
   const heading = page.getByRole('heading', { name: /Workplace Error Harvester/ })
   await expect(heading).toBeVisible()
   const cardsTab = page.getByRole('button', { name: /Thẻ SRS/ })
+  // Từ changelog 0629 "Thẻ hôm nay" đứng ĐẦU studio nên thẻ này nằm dưới nếp gấp: cuộn DỌC tới
+  // nó trước rồi mới đo. Phép đo vẫn đòi tab hiện TRỌN (ratio 1) — tab bị cắt NGANG vẫn đỏ.
+  await cardsTab.scrollIntoViewIfNeeded()
   await expect(cardsTab).toBeInViewport({ ratio: 1 })
   const overflow = await heading.evaluate((h) => {
     const header = h.closest('.border-b') as HTMLElement

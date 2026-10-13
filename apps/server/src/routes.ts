@@ -102,6 +102,7 @@ import workHandler from './api/domains/work.js'
 import automationHandler from './api/personal/automation.js'
 import healthDeepHandler from './api/platform/healthDeep.js'
 import proactiveBriefingHandler from './api/personal/proactive-briefing.js'
+import companionCardsHandler from './api/personal/companion-cards.js'
 import visionSolveHandler from './api/learning/vision-solve.js'
 import integrationsHandler from './api/platform/integrations.js'
 import subconsciousHandler from './api/personal/subconscious.js'
@@ -119,7 +120,6 @@ import avatarEmbodimentHandler from './api/platform/avatar-embodiment.js'
 import actionCanvasHandler from './api/platform/action-canvas.js'
 import neuralCurriculumHandler from './api/learning/neural-curriculum.js'
 import meshTelemetryHandler from './api/platform/mesh-telemetry.js'
-import proactiveAgentHandler from './api/personal/proactive-agent.js'
 import debateArenaHandler from './api/learning/debate-arena.js'
 import stemScratchpadHandler from './api/learning/stem-scratchpad.js'
 import learningEvidenceHandler from './api/learning/evidence.js'
@@ -352,6 +352,8 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/health/deep', wrapEdge(healthDeepHandler))
   // Proactive Briefing (V2 Flagship P1) — Morning / Evening personalized proactive briefs.
   app.all('/api/proactive-briefing', wrapEdge(proactiveBriefingHandler))
+  // "Thẻ hôm nay" của Bạn Đồng Hành (GĐ4a, changelog 0629) — thay /api/proactive-agent giả lập.
+  app.all('/api/companion-cards', wrapEdge(companionCardsHandler))
   // Multimodal Vision Solver (V2 Flagship P1) — STEM & Document OCR solver.
   // External Integrations (V2 Flagship) — Google Calendar & Notion sync.
   app.all('/api/integrations', wrapEdge(integrationsHandler))
@@ -388,8 +390,6 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/neural-curriculum', wrapEdge(neuralCurriculumHandler))
   // Distributed WebSocket Mesh & Realtime Telemetry (Platform V4 Phase 5) — Live session cost & latency mesh.
   app.all('/api/mesh-telemetry', wrapEdge(meshTelemetryHandler))
-  // Autonomous Proactive Agent & Goal Auto-Pilot (Platform V5 Phase 1) — Proactive Nudges & Action Dispatcher.
-  app.all('/api/proactive-agent', wrapEdge(proactiveAgentHandler))
   // AI Debate Arena & Socratic Multi-Agent (Platform V5 Phase 2) — Live debate & logic rubric.
   app.all('/api/debate-arena', wrapEdge(debateArenaHandler))
   // STEM Interactive Scratchpad (Platform V5 Phase 2) — Step-by-step math/chem/physics logic validator.

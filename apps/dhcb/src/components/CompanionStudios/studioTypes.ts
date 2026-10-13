@@ -15,7 +15,13 @@ import type { CompanionSafetyNotice } from '@dhcb/core-contracts/companionSafety
 // Studio "Tổng kết" ('synthesis') đã GỠ 2026-10-02 (changelog 0475): bảng "phân tích cuộc sống"
 // của nó hiển thị điểm BỊA cho mọi người dùng. Thẻ Agent và banner Action Canvas dời sang "Kế
 // hoạch". Bật lại khi có nguồn dữ liệu hoạt động thật — xem nợ trong PROGRESS.md.
-export type StudioTab = 'dialogue' | 'cognitive' | 'labs' | 'proactive'
+export const STUDIO_TABS = ['dialogue', 'cognitive', 'labs', 'proactive'] as const
+export type StudioTab = (typeof STUDIO_TABS)[number]
+
+/** Kiểm giá trị `?studio=` trên URL (GĐ4a) — chuỗi lạ không bao giờ thành studio. */
+export function isStudioTab(value: string): value is StudioTab {
+  return (STUDIO_TABS as readonly string[]).includes(value)
+}
 
 // Trạng thái chế độ giọng nói của Companion — pipeline STT → LLM → TTS (KHÔNG streaming
 // audio "live"): ghi âm xong mới gửi nhận diện, gửi AI, rồi đọc câu trả lời.

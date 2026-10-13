@@ -67,6 +67,7 @@ import { purgeOldSyncReceipts } from './api/_lib/syncReceipt.js'
 import { purgeExpiredAuthRows, purgeOldAnalyticsEvents } from './api/_lib/retentionCleanup.js'
 import { startDailyJob } from './dailyJob.js'
 import { backfillMemoryEmbeddings, purgeExpiredMemories } from '@dhcb/core-personal/memoryService'
+import { purgeOldDailyCards } from '@dhcb/core-personal/companionDailyCards'
 import { getEmbeddingProvider } from '@dhcb/core-ai/embeddings'
 import { runReflectionSweep } from '@dhcb/core-personal/memoryReflectionService'
 import { REFLECTION_COST_MODE } from '@dhcb/core-personal/memoryReflectionPrompt'
@@ -445,6 +446,9 @@ function startCompanionMemoryMaintenance() {
       if (purged > 0) console.log(`[companion-memory] Đã dọn ${purged} ký ức hết hạn`)
       const embedded = await backfillMemoryEmbeddings(pool, getEmbeddingProvider())
       if (embedded > 0) console.log(`[companion-memory] Đã bổ sung embedding cho ${embedded} ký ức`)
+      // "Thẻ hôm nay" (GĐ4a, changelog 0629): giữ 90 ngày để đo tỉ lệ thẻ làm xong, rồi dọn.
+      const cards = await purgeOldDailyCards(pool)
+      if (cards > 0) console.log(`[companion-memory] Đã dọn ${cards} thẻ hôm nay cũ`)
     },
     onError: (err) => {
       console.error('[companion-memory] lỗi bảo trì ký ức:', err)

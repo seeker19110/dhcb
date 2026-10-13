@@ -74,7 +74,7 @@ const DELETE: EraseAction = { kind: 'delete' }
  *
  * THỨ TỰ = THỨ TỰ CHẠY. Bảng con trước bảng cha khi có khoá ngoại giữa chúng (vd vị trí/thành
  * viên trước chuyến đi), ẩn danh hoá `payments` trước khi xoá `public.users` (FK restrict).
- * `personal.persons` (+ 21 bảng theo `person_id`) KHÔNG nằm ở đây — uỷ cho `personErasureService`.
+ * `personal.persons` (+ mọi bảng theo `person_id` trong `PERSON_TABLES`) KHÔNG nằm ở đây — uỷ cho `personErasureService`.
  */
 export const ACCOUNT_TABLES = [
   // ── location ──
@@ -1087,7 +1087,7 @@ export async function deleteAccount(pool: Pool, userId: string): Promise<DeleteA
       else recordsAnonymized += rows
     }
 
-    // Personal OS (21 bảng theo person_id + persons) — CÙNG transaction.
+    // Personal OS (mọi bảng của `PERSON_TABLES` + persons) — CÙNG transaction.
     const personRes = await client.query<{ id: string }>(
       'select id from personal.persons where user_id = $1',
       [userId],

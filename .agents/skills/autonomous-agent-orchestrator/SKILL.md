@@ -68,12 +68,15 @@ cần đặc tả mới (`/contract` + `/consult`), và mỗi bước phải:
 
 ---
 
-## 3. GOAL AUTOPILOT & NUDGE
+## 3. "THẺ HÔM NAY" (thay GOAL AUTOPILOT & NUDGE giả lập — changelog 0629)
 
-`apps/dhcb/src/components/ProactiveAgent/GoalAutoPilotCard.tsx` và `ProactiveNudgeBanner` hiển
-thị kế hoạch và gợi ý từ trạng thái proactive của Companion (studio "Kế hoạch").
-
-Mọi hành động 1-chạm dẫn tới trang/tính năng có thật — không mở luồng thực thi ngầm.
+GoalAutoPilot + nudge cũ ĐÃ GỠ: nhắc "năng lượng nhận thức 85%" gán cứng cho mọi người, lộ trình 4
+bước gõ sẵn, state trong `Map` bộ nhớ. Thay bằng `packages/core-personal/companionDailyCards.ts` +
+`/api/companion-cards` + `apps/dhcb/src/components/CompanionStudios/CompanionDailyCards.tsx`:
+≤ 3 thẻ/ngày (giờ VN, CSDL giữ trần — migration 0097) dựng TẤT ĐỊNH từ dữ liệu thật (thẻ ôn đến
+hạn, việc đến hạn, mục tiêu học, lời mời phản tỉnh), không gọi AI; 👍/👎 lưu thành sở thích (👎 tắt
+loại thẻ 7 ngày). Thẻ chỉ DẪN tới trang có thật — không thực thi gì thay người dùng.
+CHƯA CÓ: nhắc nghỉ phiên dài cho trẻ (GĐ4b), đẩy thẻ qua push/email, câu chữ thẻ do AI viết.
 
 ---
 
