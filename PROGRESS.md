@@ -198,7 +198,11 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   thẻ/ngày dựng tất định từ dữ liệu thật (thẻ ôn đến hạn · việc đến hạn · mục tiêu học · lời mời
   phản tỉnh), không gọi AI, tự chuyển "Đã xong"; 👍/👎 thành sở thích (👎 tắt loại thẻ 7 ngày);
   gỡ hẳn tác tử chủ động giả lập (`/api/proactive-agent`, "năng lượng 85%", AutoPilot gõ sẵn).
-  **Kế tiếp: GĐ4b** nhắc nghỉ khi phiên trò chuyện dài cho nhóm `nhi_dong`/`thieu_nien`. Việc tay:
+  **GĐ4b ĐÃ LÀM** (PR #PENDING, `docs/changelog/0631-*.md`, đặc tả
+  `docs/specs/2026-10-13-ban-dong-hanh-gd4b-nhac-nghi.md`, không migration): lời nhắc nghỉ viết sẵn
+  cho `nhi_dong` (sau 20 phút) / `thieu_nien` (sau 40 phút) trò chuyện liên tục, đếm bằng mã ở
+  client (mô hình không biết thời lượng phiên), nói rõ là AI, "Thêm một chút" / "Mình nghỉ đây".
+  **Cả 4 GĐ nâng cấp Bạn Đồng Hành ĐÃ XONG.** Việc tay:
   sau deploy chạy `migrate:pg` (0094 cần extension `unaccent`; 0096 ba bảng mới; 0097 hai bảng thẻ
   hôm nay), kiểm `GEMINI_API_KEY` production, bật ba công tắc trên tài khoản
   thật, trò chuyện rồi chờ ≥ 15 phút xem gợi ý hiện ở `/ban-dong-hanh/ky-uc`; kiểm stream + bộ phân

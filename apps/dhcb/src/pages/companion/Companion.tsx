@@ -40,6 +40,9 @@ import { readDraft, clearDraft } from '../../lib/learningQuestionDraft'
 import { PageShell } from '@core/PageShell'
 import { buttonClass } from '@core/buttonStyles'
 import HistoryLoadNotice from '../../components/CompanionStudios/HistoryLoadNotice'
+import CompanionBreakReminder from '../../components/CompanionStudios/CompanionBreakReminder'
+import { useOnboarding } from '../../lib/onboarding'
+import { useCompanionBreakReminder } from '../../lib/useCompanionBreakReminder'
 
 // Nạp lười (Lazy-loading) từng Studio để giảm mạnh Initial Bundle Size
 const StudioDialogue = lazyWithRetry(
@@ -60,6 +63,9 @@ export default function Companion() {
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  // Nhắc nghỉ khi trẻ trò chuyện lâu (GĐ4b, changelog 0631) — chỉ nhóm nhi_dong/thieu_nien.
+  const onboarding = useOnboarding(user?.id)
+  const breakReminder = useCompanionBreakReminder(user?.id, onboarding?.ageGroup)
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeStudio, setActiveStudio] = useState<StudioTab>('dialogue')
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -354,6 +360,7 @@ export default function Companion() {
   const handleSend = async (customText?: string, viaVoice = false) => {
     const textToSend = (customText || input).trim()
     if (!textToSend || loadingRef.current) return
+    breakReminder.recordTurn()
     if (viaVoice) {
       voiceCancelledRef.current = false
       setVoiceState('thinking')
@@ -618,6 +625,18 @@ export default function Companion() {
               </button>
             </div>
           </div>
+        )}
+
+        {breakReminder.remindFor && (
+          <CompanionBreakReminder
+            ageGroup={breakReminder.remindFor}
+            minutes={breakReminder.minutes}
+            onSnooze={breakReminder.snoozeReminder}
+            onBreak={() => {
+              breakReminder.endSession()
+              navigate('/')
+            }}
+          />
         )}
 
         {activeStudio === 'dialogue' && historyFailed && (
