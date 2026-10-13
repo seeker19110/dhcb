@@ -14,6 +14,23 @@ hành cá nhân** phát triển mọi mảng liên quan đến một con ngườ
 nhiều môn) · **Career** · **Work** · **Startup** · **Life**, với **Companion "Bạn Đồng Hành"**
 là tác tử AI xuyên suốt. App chính: `apps/dhcb` (gói `@dhcb/app`). Kiến trúc chuẩn:
 
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+**English là MỘT MÔN HỌC trong trụ Learning** — môn đầu tiên và chín nhất (mô tả chi tiết
+dưới đây vẫn đúng cho môn này): web app gia sư ngôn ngữ AI hai chiều (Việt ⇄ Anh).
+
+**Hai chiều học** (chọn bằng biến `direction` — `getDirection`/`setDirection` trong `apps/dhcb/src/lib/storage.ts`):
+
+- **A — Người Việt học tiếng Anh:** hội thoại giọng Anh, sửa lỗi/giải thích giọng tiếng Việt.
+- **B — Người nước ngoài học tiếng Việt (qua tiếng Anh):** hội thoại giọng Việt, sửa lỗi/giải thích giọng tiếng Anh.
+
+Ba chế độ:
+
+1. **Chat tổng hợp** — gia sư AI trò chuyện thân mật/nhẹ nhàng, sửa lỗi kèm động viên, giải thích
+   bằng tiếng Việt; có nút "Kết thúc & chấm điểm" cuối phiên (chấm kiểu IELTS Speaking).
+2. **Luyện viết + chấm điểm** — chấm bài kiểu IELTS, chỉ lỗi, ước lượng band.
+3. **Luyện nói song ngữ** (tính năng chính) — nói → AI nghe (STT) → trả lời bằng **giọng ngôn ngữ đích** + sửa lỗi/giải thích bằng **giọng tiếng mẹ đẻ của học viên** (TTS hai giọng riêng). Chiều A: đích=Anh, giải thích=Việt. Chiều B: đích=Việt, giải thích=Anh.
+
 ## §2 — Tài liệu của dự án
 
 - `docs/framework/QUY-TRINH-AUDIT.md` — đặc tả quy trình **audit toàn diện** (11 tầng + rà độ phủ test + audit luồng dữ liệu + mẫu báo cáo). **Đọc khi được yêu cầu "rà soát toàn bộ / audit toàn diện".** Bổ sung 2026-08-24: Tầng 1b (test flaky — một lượt xanh không đủ), Tầng 6b (tài liệu điều hành có nói đúng thực tế không), Tầng 10 (logic ngẫu nhiên/thống kê — loại lỗi KHÔNG cổng nào bắt được), Tầng 11 (đường cài mới + lũy đẳng migration).
@@ -62,6 +79,52 @@ là tác tử AI xuyên suốt. App chính: `apps/dhcb` (gói `@dhcb/app`). Ki�
 
 - `docs/ke-hoach-khoi-phuc-su-co-server.md` — **quy trình khôi phục khi server sập/gặp sự cố** (chẩn đoán nhanh → kịch bản xử lý → restore backup → post-mortem). Đọc khi có sự cố thật hoặc chuẩn bị runbook. Khác `docs/DEPLOY.md` (deploy + fix nhanh) và `docs/rollback-runbook.md` (rollback cấu hình theo PR cụ thể).
 
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+- `@PROJECT.md` — _cái gì_ cần xây (vấn đề, MVP, schema, kiến trúc, DoD). **Đọc trước việc liên quan tính năng/thiết kế.**
+- `PROGRESS.md` — **trạng thái hiện tại**: đã xong / đang làm / tiếp theo, quyết định quan trọng,
+  **nợ kỹ thuật**, việc cần làm tay. Sửa TẠI CHỖ, không chồng thêm mục.
+- `docs/changelog/` — **nhật ký từng đợt việc, mỗi đợt một file** (tách khỏi `PROGRESS.md`
+  2026-08-26 để hai PR song song không xung đột — xem `docs/changelog/README.md`). Xem nhanh:
+  `npm run changelog`.
+- `TRAPS.md` — **sổ bẫy đã mắc THẬT** (khác `docs/adr/` ghi quyết định): khuôn lỗi + cách rà +
+  cổng chốt chặn, có ngày/PR. Tra trước khi debug lại từ đầu. Cổng liên quan:
+  `scripts/check-progress-freshness.sh` cảnh báo khi `PROGRESS.md` nhắc nhánh đã lỗi thời
+  (chạy trong CI job `audit` khi push lên `main`).
+- `App-Gia-Su-Tieng-Anh-AI.md` — kế hoạch sản phẩm đầy đủ.
+- `docs/framework/KHUNG-1..3-*.md` — quy trình 9 giai đoạn + luật AI + research-first chọn công nghệ.
+- `docs/framework/BO-SUNG-*.md` — chất lượng Nhóm 1/2 (mobile, hiệu năng, a11y, UI/UX, chống lỗi logic), theme, i18n/PWA/Sentry/SEO.
+- `docs/framework/QUY-TRINH-AUDIT.md` — đặc tả quy trình **audit toàn diện** (các tầng + rà độ phủ test + audit luồng dữ liệu + mẫu báo cáo). **Đọc khi được yêu cầu "rà soát toàn bộ / audit toàn diện".**
+  **Tầng 8b (NHÌN trang thật bằng ảnh chụp 1440px + 390px, trước/sau) — BẮT BUỘC với mọi đợt
+  việc chạm giao diện:** có loại lỗi không cổng nào bắt được và đọc mã cũng không thấy, chỉ lộ
+  ra khi nhìn ảnh chụp trang.
+- `docs/framework/AP-DUNG-vao-du-an-co-san.md` — cách áp khung lên dự án có sẵn (đang theo runbook này).
+- **Năng lực cá nhân & đồng hành** — đọc trước mọi việc liên quan hồ sơ năng lực/lộ trình cá
+  nhân. Tài liệu gốc `docs/research/dac-ta-nang-luc-ca-nhan-theo-do-tuoi-2026-08-23.md`, đọc kèm
+  `docs/research/nang-luc-10-40-chi-tiet-2026-08-23.md`,
+  `docs/research/dong-hanh-va-phat-trien-nang-khieu-2026-08-23.md`,
+  `docs/research/nang-luc-10-18-nen-tang-va-nang-khieu-2026-08-23.md`,
+  `docs/research/luong-nguoi-moi-ho-so-nang-luc-an-2026-08-23.md`. Hai luật bắt buộc:
+  **giới tính KHÔNG dùng làm trục kỳ vọng năng lực** (dùng "vai trò chăm sóc & gián đoạn nghề");
+  **Luật số 1 của sản phẩm: kết quả chẩn đoán KHÔNG bao giờ là màn hình chính** — nó là công cụ
+  chọn việc, không phải bảng chấm điểm con người (7 test bất biến chặn CI để con số năng lực
+  không rò lên giao diện). Mô tả từng tài liệu: `docs/claude-md-chi-tiet.md` §2.
+- **Môn Lập trình — 14 hướng chuyên sâu** (11 hướng sản phẩm + 3 hướng NỀN), mỗi hướng 4 chặng
+  S1→S4. **Nguồn sự thật là MÃ NGUỒN, không phải tài liệu nghiên cứu:**
+  `packages/subject-programming/specializations/` (`registry.ts` · `<hướng>.ts` ·
+  `details/<hướng>-<chặng>.ts` · `stageUnits.ts`). `docs/research/mon-lap-trinh.md` chỉ là bối
+  cảnh, KHÔNG dùng làm con số. Đặc tả từng chặng: `docs/specs/*-bai-hoc-that.md`. Đọc trước khi
+  đụng bậc P6 hoặc nội dung sau P5. Chi tiết: `docs/claude-md-chi-tiet.md` §2.
+- `docs/templates/dac-ta-tinh-nang.md` + `docs/templates/adr.md` — **khuôn đặc tả giao việc và
+  khuôn ADR** (7 ô bắt buộc, có mục "KHÔNG làm", tiêu chí chấp nhận đo được, khối "Luật chung"
+  cho brief). Dùng khi viết đặc tả cho AI/người khác thi hành.
+- `docs/deploy-vps-ubuntu.md` — hướng dẫn deploy VPS. ADR (quyết định kiến trúc lớn): đặt ở `docs/adr/` khi có.
+- `docs/ke-hoach-khoi-phuc-su-co-server.md` — **quy trình khôi phục khi server sập/gặp sự cố**. Đọc khi có sự cố thật hoặc chuẩn bị runbook (deploy + fix nhanh: `docs/DEPLOY.md`; rollback theo PR: `docs/rollback-runbook.md`).
+- `docs/MASTER_SPEC.md` — tầm nhìn kiến trúc Đồng Hành Platform (THAM KHẢO tầm nhìn).
+  **Nguồn thi hành duy nhất (chốt Q2, 2026-08-23): `PROGRESS.md` +
+  `docs/research/kien-truc-va-ha-tang.md` mục [1].** `docs/phases/00..45-*.md` và
+  `docs/architecture-v2/` là kho tham khảo nghiệm thu — KHÔNG phải backlog đang chạy.
+
 ## §2.1 — Bộ skill miền (`.agents/skills/`)
 
 ## 2.1. Hệ thống 10 Siêu Kỹ Năng Tác Tử (`.agents/skills/`)
@@ -92,6 +155,12 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
 ## §4 — Nguyên tắc kỹ thuật bất biến
 
 - Gác tự động, **chặn CI**, cả hai cổng TUYỆT ĐỐI (không có baseline/ngoại lệ): `e2e/a11y.spec.ts` (A/AA — 0 vi phạm ở mọi mức tác động) + `e2e/a11y-aaa.spec.ts` (AAA cho nội dung/tiêu đề). Đều quét **15 trang × 3 theme hiện hành**. Kèm lint `jsx-a11y` (`jsxA11y.flatConfigs.recommended` trong `eslint.config.js` — bật THẬT từ 2026-09-05; trước đó tài liệu ghi có nhưng gói chưa từng được cài, audit toàn diện F1 phát hiện. Chuyển sang flat config 2026-09-22, đã kiểm luật còn bắt lỗi thật bằng file thử `<img>` thiếu `alt`).
+
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+- Lý do không ép AAA toàn site: W3C (_Understanding Conformance_) khuyến nghị KHÔNG lấy AAA làm chính sách cho toàn bộ site vì có nội dung không thể đạt hết AAA.
+
+  - Gác tự động, **chặn CI**, cả hai cổng TUYỆT ĐỐI (không có baseline/ngoại lệ): `e2e/a11y.spec.ts` (A/AA — 0 vi phạm ở mọi mức tác động) + `e2e/a11y-aaa.spec.ts` (AAA cho nội dung/tiêu đề). Đều quét **15 trang × 3 theme hiện hành**. Hub (tên miền gốc) có cổng A/AA riêng `e2e/a11y-hub.spec.ts`, kèm đo tương phản **chữ gradient** (`bg-clip-text`) — axe KHÔNG đo được loại chữ này. Mọi bộ màu chữ gradient PHẢI lấy từ `packages/core-ui/gradientText.ts` (test tĩnh `scripts/fixed-color-contrast-audit.test.ts` đo đủ 3 theme và cấm `.tsx` tự viết `bg-clip-text`). Kèm lint `jsx-a11y` (`jsxA11y.flatConfigs.recommended` trong `eslint.config.js`).
 
 ## §6 — Công nghệ (stack) & lệnh
 
@@ -161,6 +230,43 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
     import `core-contracts` (vòng tham chiếu `tsc -b`) — vì vậy `mulberry32` sống ở
     `core-grading/mulberry32.ts` và chỉ được re-export qua `core-contracts/seededRandom.ts`.
 
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+- **Frontend:** React 19 + Vite 8 + TypeScript 5.x (`strict`) + Tailwind CSS 4 (mã gốc do Lovable sinh ra).
+- **Backend & dữ liệu:** Express (`server.ts`) + **PostgreSQL tự host trên VPS** (thư viện `pg`, `packages/core-db/pgPool.ts`) — đã rời hẳn Supabase (xem `docs/migration-thoat-ly-supabase.md`). Auth tự viết (Bearer token, `packages/core-auth/auth.ts` + `packages/core-auth/authService.ts`, email/password + Google Identity Services). Handler API trong `api/`.
+- **AI:** gọi qua biến môi trường, ưu tiên model rẻ. Chat qua `/api/agent`. **Claude (Anthropic) là AI chính, model chọn theo NHIỆM VỤ** (2026-10-09): Haiku 5.5 cho trò chuyện/luyện nói, Sonnet 5.5 cho chấm bài/Companion/góp ý code — bảng ở `packages/core-ai/aiConfig.ts#getAnthropicRoute`, lớp gọi `packages/core-ai/anthropicClient.ts` (SDK chính thức); Groq → Gemini chỉ là dự phòng. **STT** Whisper qua **Groq hoặc OpenAI** (`/api/stt`, tự chọn theo key). **TTS** Google Cloud qua `/api/tts` (audio cache **mã hóa AES-256-GCM**, lưu Cloudflare R2 qua `STORAGE_DRIVER=r2` trên production — `packages/core-ai/fileStorage.ts`; Web Speech API chỉ là fallback). **Chính sách cache TTS (chốt 2026-08-06): KHÔNG bao giờ tự xoá theo "lâu không dùng" (LRU) — cache `tts_cache`/`pronunciations` giữ vĩnh viễn, chỉ xoá bản ghi orphan (không còn nằm trong dữ liệu app) qua `npm run seed:all -- --verify --clean-orphans --yes`. Gần hết dung lượng R2 thì trả phí thêm, không xoá cache đang dùng. Xem `docs/migration-thoat-ly-supabase.md` mục 3.3.**
+- **Gói dịch vụ (chốt GĐ1, 2026-09-12 — `docs/specs/2026-09-12-gd1-xoa-goi-pro.md`):** ĐÚNG **HAI** gói — `free` và `vip`. Gói `plus`/`pro` đã bị XOÁ (migration `0076`): người đang trả tiền còn hạn được nâng VIP giữ nguyên `plan_expires_at`, hết hạn thì về free. **Free hưởng hạn mức Plus cũ: 30 lượt AI/ngày** tính TỔNG mọi tính năng, cấu hình được ở `/admin` (lưu ở cột DB `app_settings.pro_daily_limit` — cột giữ TÊN cũ, ý nghĩa mới là "hạn mức Free"). VIP là gói trả phí duy nhất, bán qua SePay. Kiểu dữ liệu nguồn sự thật: `packages/core-billing/plan.ts`.
+- **Deploy:** VPS Ubuntu (PM2 + Nginx + Let's Encrypt), đang chạy tại https://en-vi.donghanhcungban.org — xem `docs/deploy-vps-ubuntu.md`. `.com` là domain cũ/redirect.
+
+- **Cấu trúc (npm workspace — `docs/research/dac-ta-cai-to-cau-truc-2026-08-23.md`):**
+  - `apps/dhcb/` (gói `@dhcb/app`) — Vite app nền tảng; output build VẪN là `dist/` ở gốc.
+  - `apps/server/` (gói `@dhcb/server`) — Express: `src/server.ts` khởi tạo, `src/routes.ts` gắn
+    route, `src/api/<trụ>/` handler; output biên dịch `dist-server/server.js`.
+  - `apps/hub/` (gói `@dhcb/hub`) — Vite app riêng: trang chủ/landing ở domain gốc.
+  - `packages/` — gói `@dhcb/core-*` + `@dhcb/subject-*`, mỗi gói có `package.json` +
+    `tsconfig.json` composite. `core-domains` chỉ còn trụ `work` (hiển thị "Ghi chú"); ba trụ
+    Career · Startup · Life đã XOÁ HẲN cả giao diện, API lẫn bảng CSDL (migration `0085`).
+  - `postgres/`, `scripts/`, `docs/`.
+
+- **PHIÊN BẢN STACK (2026-09-22, changelog 0416):** React 19 · Tailwind 4 (qua `@config`) ·
+  ESLint 9 flat config · Express 5 · Vite 8 (rolldown) · Node 22 · TypeScript 5.x. **Ba thứ CHƯA
+  nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
+  (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y`, cổng
+  a11y mục 4.5, chỉ khai peer tới ESLint 9) · Node 26 (chờ sau 2026-10-28). Hai điều phải biết:
+  **rolldown kiểm `exports` NGHIÊM** — bare import `@dhcb/<gói>` gãy build, viết đủ
+  `@dhcb/<gói>/<file>`; **`parseCssColor` (`scripts/lib/contrast.ts`) ném lỗi khi gặp định dạng
+  màu lạ — đừng đổi thành bỏ qua** (lỗ hổng xanh-giả đã vá ở changelog 0415). Lý do chi tiết:
+  `docs/claude-md-chi-tiet.md` §6.
+
+- **Lệnh:** dev `npm run dev` · build `npm run build` · typecheck `npm run typecheck` (gộp cả `tsconfig.json` + `tsconfig.api.json` + `tsconfig.e2e.json`) · lint `npm run lint` (max-warnings 0) · format `npm run format` (Prettier — đang thêm ở bước khung) · test `npm test` (`vitest run`) · E2E `npm run test:e2e` (Playwright) · biên độ ngân sách `npm run budget` (in phần còn lại của size-limit + ngưỡng coverage, cảnh báo khi sắp cạn — cần `dist/` và `coverage/` đã có) · start `npm start` (`tsx apps/server/src/server.ts`) · migration Postgres tự host `npm run migrate:pg` (tự chạy trong `scripts/deploy.sh`, xem `postgres/migrations/README.md`).
+
+  **Import xuyên gói dùng tên gói `@dhcb/<gói>/<file>` (KHÔNG đuôi `.js`), import nội bộ gói
+  dùng đường tương đối có đuôi `.js`.** Luật phụ thuộc (ESLint chặn): `packages/` không import
+  `apps/` và không import `api/`. Build backend = `npm run build:packages` (`tsc -b`) rồi
+  `tsc -p tsconfig.server.json`; dev (`tsx`/Vite/Vitest) phân giải `@dhcb` về source, KHÔNG cần
+  build gói trước. CI có bước boot check `node dist-server/server.js` + `/api/health`. Lịch sử
+  cải tổ + mô tả từng gói: `docs/claude-md-chi-tiet.md` §6.
+
 ## §7 — Quy ước khi viết code & cách làm việc
 
 - **Slash-command sẵn có (`.claude/commands/`):** `/gate` (cổng commit/merge + Báo cáo xác thực,
@@ -218,6 +324,44 @@ quay lại>`. Thiếu `xem lại khi:` là khoản nợ không có đường qua
   SEO thấp (`/lo-trinh-hoc/:levelId` — mã CEFR A1–C2), và route có logic định tuyến đa host riêng
   (`/mon-hoc/:subjectId`).
 
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+- **Subagent (`.claude/agents/`)** — 7 agent điều phối 3 tầng theo độ phức tạp
+  (`complex-implementer`/`coordinator`/`mechanical-worker`/`qa-verifier`/`reviewer`/
+  `spec-executor`/`standard-worker`, xem `docs/framework/KIEN-TRUC-DIEU-PHOI-3-TANG.md`) + 6 agent
+  tiện ích gọi trực tiếp: `lookup` · `version-check` · `security-reviewer` ·
+  `build-error-resolver` · `silent-failure-hunter` · `database-reviewer`. Agent = vai trò thực
+  thi việc; skill (mục 2.1) = kiến thức miền. Mô tả từng cái: `docs/claude-md-chi-tiet.md` §7.
+- **OpenCodeReview (delegation, ADR-0012):** `/review` lấy file + luật DHCB từ
+  `.opencodereview/rule.json` qua `npm run review:ocr:preview` /
+  `npm run review:ocr -- delegate rule <file...>` — không gọi LLM. Luật `**/*` luôn đứng cuối
+  (`scripts/ocr-rules-policy.test.ts`).
+
+- **Tra bản đồ code TRƯỚC khi sửa file dùng chung.** `npm run codemap` quét cả dự án (~9s) rồi:
+  `-- impact <file>` (sửa file này gãy chỗ nào) · `-- callers <file>#<hàm>` (ai đang gọi hàm này) ·
+  `-- hotspots` (file bị import nhiều nhất = rủi ro cao nhất) · `-- cycles` · `-- orphans`.
+  Dùng nó thay cho việc đoán phạm vi ảnh hưởng. Code: `scripts/codemap.ts` + `scripts/lib/codemap.ts`.
+
+- **Bài học môn Lập trình nạp lười theo unit (2026-09-01).** App KHÔNG import
+  `@dhcb/subject-programming/lessons` (registry đồng bộ 3 MB — chỉ server/test/script dùng);
+  giao diện dùng `@dhcb/subject-programming/lessonsLoader` (chỉ mục nhẹ `LESSON_INDEX` +
+  `loadLesson`/`loadUnitLessons` nạp đúng unit). **Thêm/đổi bài học xong PHẢI chạy
+  `npm run gen:lesson-index`** để sinh lại `lessonsLazy.ts`; quên thì `lessonsLazy.test.ts` đỏ
+  với đúng câu nhắc đó.
+
+- **Trang chủ khách có bản HTML DỰNG SẴN (2026-10-10, changelog 0584)** — `index.html` mang sẵn
+  HTML trang chủ khách cho màn hẹp, React tiếp quản sau (`apps/dhcb/src/lib/guestPrerender.ts`).
+  **Sửa component trong cây trang chủ khách (GuestHome, Layout, BottomNav…) xong PHẢI chạy
+  `npm run gen:prerender-home`**; quên thì `guestHomePrerender.test.tsx` đỏ.
+
+- **Quy ước URL mang tiêu đề.** Route có tham số là id một nội dung có tiêu đề (bài học, bậc,
+  hướng, khoá, lộ trình, chặng…) PHẢI dùng khuôn `<mã>--<tiêu đề đã slug hoá>` (vd
+  `p1--nhap-mon-tu-duy`), qua `buildSlugSegment`/`idFromSlugSegment` ở `packages/core-ui/slug.ts`:
+  mã giữ nguyên, trang tự đọc mã và bỏ qua phần slug. **Không tự ghép chuỗi URL rải rác** — dựng
+  qua đúng MỘT hàm dùng chung theo mẫu `apps/dhcb/src/lib/programmingRoutes.ts`. Route chỉ khớp mã
+  cũ (không có `--`) vẫn phải tra đúng và `<Navigate replace>` về URL chuẩn. Ngoại lệ đã quyết định
+  và ví dụ: `docs/claude-md-chi-tiet.md` §7.
+
 ## §8 — Cổng trước khi COMMIT
 
 **Từ 2026-09-19, hook PreToolUse `.claude/hooks/pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ** (không chạy `build` ở đây — quá chậm cho mỗi commit, vẫn bắt buộc ở CI job `build` + checklist merge). Bỏ qua có chủ đích: `git commit --no-verify`. **Từ 2026-10-09 (changelog 0566) cổng chạy ở đúng cây đang commit** (`cwd` của payload → `cd <dir>` trước commit → `git -C <dir>`), nên commit trong git worktree của subagent được kiểm trên chính worktree đó; cây thuộc repo khác thì bỏ qua; worktree chưa `npm ci` thì chặn kèm lời nhắc (`TRAPS.md` mục 20). Hook `.claude/hooks/block-dangerous-git.sh` cũng chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/`push --force`/`merge --abort` (thi hành mục 11 bằng máy, không chỉ bằng văn bản).
@@ -243,6 +387,44 @@ lặng). Test hành vi: `scripts/claude-hooks.test.ts`.
 **Công cụ phải khớp lockfile (bài học 2026-08-04, CI #475 đỏ).** Cổng chỉ đáng tin khi `node_modules` đúng `package-lock.json`. Dấu hiệu lệch: cổng local báo lỗi ở **nhiều file mình không hề đụng tới**, hoặc local xanh mà CI đỏ (và ngược lại). Gặp dấu hiệu đó → `npm ci` rồi chạy lại cổng, ĐỪNG đi sửa từng file theo báo lỗi giả. Trong container phiên mới, chạy `npm ci` trước lần chạy cổng đầu tiên. Kiểm nhanh: `npx prettier --version` khớp `package.json`.
 
 **Golden snapshot prompt (thêm 2026-09-12, học từ `seeker19110/claude-agents`):** `apps/dhcb/src/prompts/golden.test.ts` chụp lại nguyên văn chuỗi prompt của 9 hàm dựng prompt môn Anh (`__snapshots__/golden.test.ts.snap`). Nó **KHÔNG gọi AI**, chạy trong CI mọi PR, miễn phí — bắt đúng thứ `eval:tutor` không bắt được: prompt bị sửa **không chủ đích** (đổi chữ, đổi khoảng trắng, sửa nhầm khi refactor). Sửa prompt có chủ đích thì xem kỹ diff snapshot rồi cập nhật: `npx vitest run apps/dhcb/src/prompts/golden.test.ts -u`, commit cả `.snap`. **Snapshot KHÔNG thay thế `eval:tutor`** — vẫn phải chạy eval + dán bảng như trên; hai cổng bổ sung nhau (snapshot = đổi cái gì, eval = đổi có tốt lên không).
+
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+**Hook của Claude Code (`.claude/hooks/`; test: `scripts/claude-hooks.test.ts` +
+`scripts/agent-config-security.test.ts`):**
+
+- `pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ (không chạy
+  `build` — vẫn bắt buộc ở CI), chạy ở ĐÚNG cây đang commit, kể cả git worktree (`TRAPS.md`
+  mục 20). Bỏ qua có chủ đích: `git commit --no-verify`.
+- `block-dangerous-git.sh` chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/
+  `push --force`/`merge --abort`.
+- `config-protection.sh` canh Edit/Write vào CỔNG (cấu hình lint/format/coverage,
+  `scripts/*-policy.test.ts`, cổng a11y, workflow CI, `.husky/`, chính các hook): lần đầu chạm
+  trong phiên → **từ chối**, phải nói rõ với người dùng sửa gì + vì sao rồi mới thử lại; lần sau
+  → hỏi quyền. Bỏ qua có chủ đích: `ALLOW_GATE_EDIT=1`.
+- `block-pipe-to-shell.sh` chặn tải-rồi-chạy (`curl … | sh`…) — cách đúng: tải về file, đọc,
+  rồi chạy. Bỏ qua có chủ đích: `ALLOW_PIPE_TO_SHELL=1`.
+- `auto-format.sh` chạy Prettier sau mỗi lần sửa file; `shared-file-reminder.sh` nhắc chạy
+  `npm run codemap -- impact` khi lần đầu sửa file có ≥ 20 nơi import.
+- Đọc `.env`/`.env.*` (trừ `.env.example`) luôn phải hỏi (`permissions.ask`).
+
+Lý do thiết kế từng hook: `docs/claude-md-chi-tiet.md` §8.
+
+**Chống đặc tả "nói suông" (thêm 2026-09-19):** `npm run check:specs` (chạy trong CI job `audit`, chặn merge) kiểm mọi đường dẫn ở cột "Đường dẫn file" của đặc tả ĐÃ "Approved for implementation" (`docs/specs/*.md`) có tồn tại thật — xem `scripts/check-spec-paths.ts`.
+
+**Rà câu chữ nội dung học:** `npm run audit:prose` (`-- --ci` chạy trong CI job `audit`) chỉ bắt
+lỗi máy nhìn được — phần dễ hiểu/đúng sư phạm vẫn phải đọc tay (khuôn 5 tiêu chuẩn, changelog
+0406). **Sửa từ điển (`apps/dhcb/public/data/dictionary/chunk-*.json`) PHẢI theo đúng quy trình
+đồng bộ vòng từ vựng** (sai thứ tự là phá bộ câu mẫu viết tay theo id vòng):
+`docs/claude-md-chi-tiet.md` §8.
+
+**Cổng ở máy có thể XANH GIẢ — ba biến thể đã mắc thật, xem `TRAPS.md` mục 3 (2026-09-13, PR #893).** Tóm tắt cách chốt chặn: (1) thêm/xoá gói trong `packages/`/`apps/` thì phải `npm install` và commit `package-lock.json`, kiểm bằng `npm ci` trả về 0 — CI dùng `npm ci` nên lockfile lệch là giết MỌI job ở bước cài đặt; (2) trước lần push cuối, `rm -rf packages/*/dist dist dist-server` rồi chạy lại `npm run typecheck` để tái hiện checkout sạch của CI; (3) cổng test của CI là `npm run test:coverage` (có ngưỡng chặn), KHÔNG phải `npm test`.
+
+**Đổi prompt hoặc model AI:** mọi PR sửa `apps/dhcb/src/prompts/*` hoặc `packages/core-ai/aiConfig.ts` (model/guardrail) PHẢI chạy lại `npm run eval:tutor` (cần key AI trong `.env`) và **dán bảng so sánh với `docs/research/eval-tutor-baseline.md` vào mô tả PR** — recall/precision không được tụt so với baseline. Xem `scripts/eval-tutor.ts`. **Môn Lập trình có prompt + eval RIÊNG** (nó không đi qua `/api/agent`): PR sửa `packages/subject-programming/feedbackPrompt.ts` PHẢI chạy lại `npm run eval:code-feedback` và dán kết quả vào mô tả PR — còn ca vi phạm bất biến (lộ lời giải · không phải tiếng Việt · gợi ý không có câu hỏi) là script thoát mã 1. Tương tự: sửa `packages/core-personal/actionCanvasPrompt.ts`/`goalDecomposition.ts` (Action Canvas) ⇒ chạy `npm run eval:action-canvas`, dán kết quả vào PR.
+
+**Golden snapshot prompt:** `apps/dhcb/src/prompts/golden.test.ts` chụp nguyên văn prompt môn Anh (không gọi AI) để bắt prompt bị sửa **không chủ đích**. Sửa có chủ đích → xem kỹ diff snapshot rồi `npx vitest run apps/dhcb/src/prompts/golden.test.ts -u`, commit cả `.snap`. **Snapshot KHÔNG thay thế `eval:tutor`.** **Prompt chấm điểm có JSON Schema đi kèm** (structured outputs, `packages/core-ai/gradingSchemas.ts`): thêm/bớt khoá JSON trong prompt chấm thì sửa schema CÙNG LÚC — `apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` đỏ nếu lệch.
+
+**SQL phải chạy được trên schema thật (thêm 2026-10-08):** `npm run check:sql` (CI job `sql-prepare`, Postgres 16 đã áp mọi migration) `PREPARE` mọi câu SQL tĩnh của server — bắt sai cột/kiểu mà unit test giả lập `pg` không thấy. Câu cố ý không PREPARE được → `scripts/sql-prepare-allowlist.json` kèm lý do.
 
 ## §11 — Quy ước Git
 
@@ -285,3 +467,9 @@ trong log job để biết từng BƯỚC tốn bao lâu. Tối ưu chỗ chưa 
 
 Ba luật đầu + luật 4 + luật 5 (trừ phần token) có **test canh gác chặn CI**: `scripts/ci-workflow-policy.test.ts`. Sửa
 `ci.yml` mà test đó đỏ nghĩa là đang phá một luật — sửa cho đúng luật, **đừng sửa test cho vừa**.
+
+## §13 — Trạng thái hiện tại
+
+### Dời nguyên văn từ CLAUDE.md (changelog 0633)
+
+Tóm tắt một dòng (2026-09-06): app nền tảng chạy thật tại `donghanhcungban.org` · môn Anh A1→C2 hai chiều A/B, 3 chế độ, TTS/STT thật · môn Lập trình P1–P6 + 14 hướng + khoá ngắn + lộ trình mục tiêu · trụ Ghi chú (`/ghi-chu`, tên cũ "Công việc"; ba trụ Sự nghiệp/Khởi nghiệp/Đời sống gỡ hẳn 2026-09-20) · thanh toán SePay · Postgres tự host + Redis + R2, backup đã kiểm chứng · cổng CI: build/type/lint/format/test coverage sàn stmts/branches/funcs/lines 94/90/94/94/E2E a11y AA+AAA.

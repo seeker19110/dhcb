@@ -17,68 +17,36 @@ là tác tử AI xuyên suốt. App chính: `apps/dhcb` (gói `@dhcb/app`). Ki�
 `docs/research/kien-truc-va-ha-tang.md` mục [1] (khuôn "thêm môn học mới",
 tiêu chuẩn ngành phải theo).
 
-**English là MỘT MÔN HỌC trong trụ Learning** — môn đầu tiên và chín nhất (mô tả chi tiết
-dưới đây vẫn đúng cho môn này): web app gia sư ngôn ngữ AI hai chiều (Việt ⇄ Anh).
-
-**Hai chiều học** (chọn bằng biến `direction` — `getDirection`/`setDirection` trong `apps/dhcb/src/lib/storage.ts`):
-
-- **A — Người Việt học tiếng Anh:** hội thoại giọng Anh, sửa lỗi/giải thích giọng tiếng Việt.
-- **B — Người nước ngoài học tiếng Việt (qua tiếng Anh):** hội thoại giọng Việt, sửa lỗi/giải thích giọng tiếng Anh.
-
-Ba chế độ:
-
-1. **Chat tổng hợp** — gia sư AI trò chuyện thân mật/nhẹ nhàng, sửa lỗi kèm động viên, giải thích
-   bằng tiếng Việt; có nút "Kết thúc & chấm điểm" cuối phiên (chấm kiểu IELTS Speaking).
-2. **Luyện viết + chấm điểm** — chấm bài kiểu IELTS, chỉ lỗi, ước lượng band.
-3. **Luyện nói song ngữ** (tính năng chính) — nói → AI nghe (STT) → trả lời bằng **giọng ngôn ngữ đích** + sửa lỗi/giải thích bằng **giọng tiếng mẹ đẻ của học viên** (TTS hai giọng riêng). Chiều A: đích=Anh, giải thích=Việt. Chiều B: đích=Việt, giải thích=Anh.
+**English là MỘT MÔN HỌC trong trụ Learning** (môn đầu tiên, chín nhất): gia sư ngôn ngữ AI hai
+chiều — A: người Việt học tiếng Anh, B: người nước ngoài học tiếng Việt (biến `direction`,
+`apps/dhcb/src/lib/storage.ts`); ba chế độ Chat tổng hợp · Luyện viết + chấm điểm · Luyện nói
+song ngữ (tính năng chính). Mô tả đầy đủ: `docs/claude-md-chi-tiet.md` §1.
 
 Điểm khác biệt phải giữ: **sửa lỗi & giải thích bằng GIỌNG tiếng mẹ đẻ** (không chỉ chữ), hội thoại bằng giọng chuẩn của ngôn ngữ đích, giá rẻ, nội dung sát đời sống Việt Nam.
 
 ## 2. Tài liệu của dự án (đọc khi liên quan)
 
 - `@PROJECT.md` — _cái gì_ cần xây (vấn đề, MVP, schema, kiến trúc, DoD). **Đọc trước việc liên quan tính năng/thiết kế.**
-- `PROGRESS.md` — **trạng thái hiện tại**: đã xong / đang làm / tiếp theo, quyết định quan trọng,
-  **nợ kỹ thuật**, việc cần làm tay. Sửa TẠI CHỖ, không chồng thêm mục.
-- `docs/changelog/` — **nhật ký từng đợt việc, mỗi đợt một file** (tách khỏi `PROGRESS.md`
-  2026-08-26 để hai PR song song không xung đột — xem `docs/changelog/README.md`). Xem nhanh:
-  `npm run changelog`.
-- `TRAPS.md` — **sổ bẫy đã mắc THẬT** (khác `docs/adr/` ghi quyết định): khuôn lỗi + cách rà +
-  cổng chốt chặn, có ngày/PR. Tra trước khi debug lại từ đầu. Cổng liên quan:
-  `scripts/check-progress-freshness.sh` cảnh báo khi `PROGRESS.md` nhắc nhánh đã lỗi thời
-  (chạy trong CI job `audit` khi push lên `main`).
-- `App-Gia-Su-Tieng-Anh-AI.md` — kế hoạch sản phẩm đầy đủ.
-- `docs/framework/KHUNG-1..3-*.md` — quy trình 9 giai đoạn + luật AI + research-first chọn công nghệ.
-- `docs/framework/BO-SUNG-*.md` — chất lượng Nhóm 1/2 (mobile, hiệu năng, a11y, UI/UX, chống lỗi logic), theme, i18n/PWA/Sentry/SEO.
-- `docs/framework/QUY-TRINH-AUDIT.md` — đặc tả quy trình **audit toàn diện** (các tầng + rà độ phủ test + audit luồng dữ liệu + mẫu báo cáo). **Đọc khi được yêu cầu "rà soát toàn bộ / audit toàn diện".**
+- `PROGRESS.md` — **trạng thái hiện tại** (tiếp theo · việc tay · quyết định · **nợ kỹ thuật**).
+  Sửa TẠI CHỖ, không chồng thêm mục. **Nguồn thi hành duy nhất (chốt Q2, 2026-08-23):
+  `PROGRESS.md` + `docs/research/kien-truc-va-ha-tang.md` mục [1]** — `docs/MASTER_SPEC.md`,
+  `docs/phases/`, `docs/architecture-v2/` chỉ là tham khảo, KHÔNG phải backlog.
+- `docs/changelog/` — **nhật ký mỗi đợt việc một file** (`npm run changelog` in số kế tiếp).
+- `TRAPS.md` — **sổ bẫy đã mắc THẬT** (khuôn lỗi + cách rà + cổng chốt chặn). Tra trước khi
+  debug lại từ đầu.
+- `docs/framework/QUY-TRINH-AUDIT.md` — đọc khi được yêu cầu "rà soát toàn bộ / audit toàn diện".
   **Tầng 8b (NHÌN trang thật bằng ảnh chụp 1440px + 390px, trước/sau) — BẮT BUỘC với mọi đợt
-  việc chạm giao diện:** có loại lỗi không cổng nào bắt được và đọc mã cũng không thấy, chỉ lộ
-  ra khi nhìn ảnh chụp trang.
-- `docs/framework/AP-DUNG-vao-du-an-co-san.md` — cách áp khung lên dự án có sẵn (đang theo runbook này).
-- **Năng lực cá nhân & đồng hành** — đọc trước mọi việc liên quan hồ sơ năng lực/lộ trình cá
-  nhân. Tài liệu gốc `docs/research/dac-ta-nang-luc-ca-nhan-theo-do-tuoi-2026-08-23.md`, đọc kèm
-  `docs/research/nang-luc-10-40-chi-tiet-2026-08-23.md`,
-  `docs/research/dong-hanh-va-phat-trien-nang-khieu-2026-08-23.md`,
-  `docs/research/nang-luc-10-18-nen-tang-va-nang-khieu-2026-08-23.md`,
-  `docs/research/luong-nguoi-moi-ho-so-nang-luc-an-2026-08-23.md`. Hai luật bắt buộc:
-  **giới tính KHÔNG dùng làm trục kỳ vọng năng lực** (dùng "vai trò chăm sóc & gián đoạn nghề");
-  **Luật số 1 của sản phẩm: kết quả chẩn đoán KHÔNG bao giờ là màn hình chính** — nó là công cụ
-  chọn việc, không phải bảng chấm điểm con người (7 test bất biến chặn CI để con số năng lực
-  không rò lên giao diện). Mô tả từng tài liệu: `docs/claude-md-chi-tiet.md` §2.
-- **Môn Lập trình — 14 hướng chuyên sâu** (11 hướng sản phẩm + 3 hướng NỀN), mỗi hướng 4 chặng
-  S1→S4. **Nguồn sự thật là MÃ NGUỒN, không phải tài liệu nghiên cứu:**
-  `packages/subject-programming/specializations/` (`registry.ts` · `<hướng>.ts` ·
-  `details/<hướng>-<chặng>.ts` · `stageUnits.ts`). `docs/research/mon-lap-trinh.md` chỉ là bối
-  cảnh, KHÔNG dùng làm con số. Đặc tả từng chặng: `docs/specs/*-bai-hoc-that.md`. Đọc trước khi
-  đụng bậc P6 hoặc nội dung sau P5. Chi tiết: `docs/claude-md-chi-tiet.md` §2.
-- `docs/templates/dac-ta-tinh-nang.md` + `docs/templates/adr.md` — **khuôn đặc tả giao việc và
-  khuôn ADR** (7 ô bắt buộc, có mục "KHÔNG làm", tiêu chí chấp nhận đo được, khối "Luật chung"
-  cho brief). Dùng khi viết đặc tả cho AI/người khác thi hành.
-- `docs/deploy-vps-ubuntu.md` — hướng dẫn deploy VPS. ADR (quyết định kiến trúc lớn): đặt ở `docs/adr/` khi có.
-- `docs/ke-hoach-khoi-phuc-su-co-server.md` — **quy trình khôi phục khi server sập/gặp sự cố**. Đọc khi có sự cố thật hoặc chuẩn bị runbook (deploy + fix nhanh: `docs/DEPLOY.md`; rollback theo PR: `docs/rollback-runbook.md`).
-- `docs/MASTER_SPEC.md` — tầm nhìn kiến trúc Đồng Hành Platform (THAM KHẢO tầm nhìn).
-  **Nguồn thi hành duy nhất (chốt Q2, 2026-08-23): `PROGRESS.md` +
-  `docs/research/kien-truc-va-ha-tang.md` mục [1].** `docs/phases/00..45-*.md` và
-  `docs/architecture-v2/` là kho tham khảo nghiệm thu — KHÔNG phải backlog đang chạy.
+  việc chạm giao diện:** có loại lỗi chỉ lộ ra khi nhìn ảnh chụp trang.
+- **Năng lực cá nhân & đồng hành** — đọc tài liệu gốc
+  `docs/research/dac-ta-nang-luc-ca-nhan-theo-do-tuoi-2026-08-23.md` trước mọi việc về hồ sơ năng
+  lực/lộ trình cá nhân. Hai luật bắt buộc: **giới tính KHÔNG dùng làm trục kỳ vọng năng lực**
+  (dùng "vai trò chăm sóc & gián đoạn nghề"); **Luật số 1: kết quả chẩn đoán KHÔNG bao giờ là
+  màn hình chính** (7 test bất biến chặn CI). Tài liệu đọc kèm: `docs/claude-md-chi-tiet.md` §2.
+- **Môn Lập trình (14 hướng × 4 chặng S1→S4): nguồn sự thật là MÃ NGUỒN**
+  `packages/subject-programming/specializations/`, KHÔNG phải `docs/research/mon-lap-trinh.md`.
+  Đọc trước khi đụng bậc P6 hoặc nội dung sau P5.
+- Còn lại (kế hoạch sản phẩm, `docs/framework/KHUNG-*`/`BO-SUNG-*`, khuôn đặc tả + ADR ở
+  `docs/templates/`, deploy, khôi phục sự cố): danh mục đầy đủ ở `docs/claude-md-chi-tiet.md` §2.
 
 ## 2.1. Bộ skill miền (`.claude/skills/`)
 
@@ -114,8 +82,10 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
 5. **Accessibility — LUẬT BẮT BUỘC (2026-08-04), theo khuyến nghị W3C:**
    - **Nội dung & tiêu đề** (chữ để đọc: `h1–h6`, `p`, `li`, bảng, blockquote…) phải đạt **WCAG AAA** — riêng tương phản là **≥ 7:1**.
    - **Mọi phần còn lại** (nav, nút, badge, ô nhập, biểu tượng…) phải đạt **AA** — sàn cứng, dung sai 0.
-   - Lý do không ép AAA toàn site: W3C (_Understanding Conformance_) khuyến nghị KHÔNG lấy AAA làm chính sách cho toàn bộ site vì có nội dung không thể đạt hết AAA.
-   - Gác tự động, **chặn CI**, cả hai cổng TUYỆT ĐỐI (không có baseline/ngoại lệ): `e2e/a11y.spec.ts` (A/AA — 0 vi phạm ở mọi mức tác động) + `e2e/a11y-aaa.spec.ts` (AAA cho nội dung/tiêu đề). Đều quét **15 trang × 3 theme hiện hành**. Hub (tên miền gốc) có cổng A/AA riêng `e2e/a11y-hub.spec.ts`, kèm đo tương phản **chữ gradient** (`bg-clip-text`) — axe KHÔNG đo được loại chữ này. Mọi bộ màu chữ gradient PHẢI lấy từ `packages/core-ui/gradientText.ts` (test tĩnh `scripts/fixed-color-contrast-audit.test.ts` đo đủ 3 theme và cấm `.tsx` tự viết `bg-clip-text`). Kèm lint `jsx-a11y` (`jsxA11y.flatConfigs.recommended` trong `eslint.config.js`).
+   - Gác **chặn CI, TUYỆT ĐỐI** (không baseline/ngoại lệ): `e2e/a11y.spec.ts` (A/AA) +
+     `e2e/a11y-aaa.spec.ts` (AAA cho nội dung) quét 15 trang × 3 theme; Hub có `e2e/a11y-hub.spec.ts`.
+     **Màu chữ gradient (`bg-clip-text`) PHẢI lấy từ `packages/core-ui/gradientText.ts`** — axe không
+     đo được loại chữ này. Chi tiết: `docs/claude-md-chi-tiet.md` §4.
    - Màu chữ lấy từ token `--z-*`/`--a-*` (`apps/dhcb/src/index.css`) — sửa tương phản thì **sửa token**, đừng vá từng chỗ. Lưu ý `text-white` map sang `--c-white` và **bị đảo thành màu tối ở theme nền sáng**: nền cố định tối (nút thương hiệu OAuth…) phải dùng `text-[#fff]`.
 6. **Không bí mật trong code:** dùng biến môi trường; `.env` đã nằm trong `.gitignore`.
 7. **Mobile-first & hiệu năng:** thiết kế màn nhỏ trước, vùng chạm ≥ 44px; hướng tới ngân sách Core Web Vitals (LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1) — Lighthouse CI _(đang bổ sung)_.
@@ -136,38 +106,35 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
 
 ## 6. Công nghệ (stack) & lệnh
 
-- **Frontend:** React 19 + Vite 8 + TypeScript 5.x (`strict`) + Tailwind CSS 4 (mã gốc do Lovable sinh ra).
-- **Backend & dữ liệu:** Express (`server.ts`) + **PostgreSQL tự host trên VPS** (thư viện `pg`, `packages/core-db/pgPool.ts`) — đã rời hẳn Supabase (xem `docs/migration-thoat-ly-supabase.md`). Auth tự viết (Bearer token, `packages/core-auth/auth.ts` + `packages/core-auth/authService.ts`, email/password + Google Identity Services). Handler API trong `api/`.
-- **AI:** gọi qua biến môi trường, ưu tiên model rẻ. Chat qua `/api/agent`. **Claude (Anthropic) là AI chính, model chọn theo NHIỆM VỤ** (2026-10-09): Haiku 5.5 cho trò chuyện/luyện nói, Sonnet 5.5 cho chấm bài/Companion/góp ý code — bảng ở `packages/core-ai/aiConfig.ts#getAnthropicRoute`, lớp gọi `packages/core-ai/anthropicClient.ts` (SDK chính thức); Groq → Gemini chỉ là dự phòng. **STT** Whisper qua **Groq hoặc OpenAI** (`/api/stt`, tự chọn theo key). **TTS** Google Cloud qua `/api/tts` (audio cache **mã hóa AES-256-GCM**, lưu Cloudflare R2 qua `STORAGE_DRIVER=r2` trên production — `packages/core-ai/fileStorage.ts`; Web Speech API chỉ là fallback). **Chính sách cache TTS (chốt 2026-08-06): KHÔNG bao giờ tự xoá theo "lâu không dùng" (LRU) — cache `tts_cache`/`pronunciations` giữ vĩnh viễn, chỉ xoá bản ghi orphan (không còn nằm trong dữ liệu app) qua `npm run seed:all -- --verify --clean-orphans --yes`. Gần hết dung lượng R2 thì trả phí thêm, không xoá cache đang dùng. Xem `docs/migration-thoat-ly-supabase.md` mục 3.3.**
-- **Gói dịch vụ (chốt GĐ1, 2026-09-12 — `docs/specs/2026-09-12-gd1-xoa-goi-pro.md`):** ĐÚNG **HAI** gói — `free` và `vip`. Gói `plus`/`pro` đã bị XOÁ (migration `0076`): người đang trả tiền còn hạn được nâng VIP giữ nguyên `plan_expires_at`, hết hạn thì về free. **Free hưởng hạn mức Plus cũ: 30 lượt AI/ngày** tính TỔNG mọi tính năng, cấu hình được ở `/admin` (lưu ở cột DB `app_settings.pro_daily_limit` — cột giữ TÊN cũ, ý nghĩa mới là "hạn mức Free"). VIP là gói trả phí duy nhất, bán qua SePay. Kiểu dữ liệu nguồn sự thật: `packages/core-billing/plan.ts`.
-- **Deploy:** VPS Ubuntu (PM2 + Nginx + Let's Encrypt), đang chạy tại https://en-vi.donghanhcungban.org — xem `docs/deploy-vps-ubuntu.md`. `.com` là domain cũ/redirect.
-- **PHIÊN BẢN STACK (2026-09-22, changelog 0416):** React 19 · Tailwind 4 (qua `@config`) ·
-  ESLint 9 flat config · Express 5 · Vite 8 (rolldown) · Node 22 · TypeScript 5.x. **Ba thứ CHƯA
-  nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
-  (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y`, cổng
-  a11y mục 4.5, chỉ khai peer tới ESLint 9) · Node 26 (chờ sau 2026-10-28). Hai điều phải biết:
-  **rolldown kiểm `exports` NGHIÊM** — bare import `@dhcb/<gói>` gãy build, viết đủ
-  `@dhcb/<gói>/<file>`; **`parseCssColor` (`scripts/lib/contrast.ts`) ném lỗi khi gặp định dạng
-  màu lạ — đừng đổi thành bỏ qua** (lỗ hổng xanh-giả đã vá ở changelog 0415). Lý do chi tiết:
-  `docs/claude-md-chi-tiet.md` §6.
+- **Stack:** React 19 + Vite 8 + TypeScript 5.x (`strict`) + Tailwind 4 · Express + **PostgreSQL
+  tự host** (`pg`, đã rời hẳn Supabase) · auth tự viết (Bearer token, `packages/core-auth/`).
+  Deploy VPS (PM2 + Nginx) tại https://en-vi.donghanhcungban.org. Chi tiết: `docs/claude-md-chi-tiet.md` §6.
+- **AI: Claude là AI chính, model chọn theo NHIỆM VỤ** — bảng ở
+  `packages/core-ai/aiConfig.ts#getAnthropicRoute` (Groq → Gemini chỉ dự phòng). STT `/api/stt`,
+  TTS `/api/tts` (cache mã hoá AES-256-GCM trên R2). **Cache TTS (`tts_cache`/`pronunciations`)
+  giữ VĨNH VIỄN, KHÔNG xoá theo LRU** — chỉ xoá orphan qua
+  `npm run seed:all -- --verify --clean-orphans --yes`; gần hết R2 thì trả phí thêm.
+- **Gói dịch vụ: ĐÚNG HAI gói `free` và `vip`** (`plus`/`pro` đã xoá, migration `0076`). Free =
+  **30 lượt AI/ngày** tính tổng mọi tính năng (cấu hình ở `/admin`, cột
+  `app_settings.pro_daily_limit` giữ tên cũ). VIP bán qua SePay. Nguồn sự thật:
+  `packages/core-billing/plan.ts`.
+- **Ba thứ CHƯA nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
+  (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y` chỉ khai
+  peer tới ESLint 9) · Node 26 (chờ sau 2026-10-28). **rolldown kiểm `exports` NGHIÊM:** viết đủ
+  `@dhcb/<gói>/<file>`, không bare import. **`parseCssColor` (`scripts/lib/contrast.ts`) ném lỗi
+  khi gặp màu lạ — đừng đổi thành bỏ qua.** Phiên bản đang dùng + lý do: `docs/claude-md-chi-tiet.md` §6.
 
-- **Lệnh:** dev `npm run dev` · build `npm run build` · typecheck `npm run typecheck` (gộp cả `tsconfig.json` + `tsconfig.api.json` + `tsconfig.e2e.json`) · lint `npm run lint` (max-warnings 0) · format `npm run format` (Prettier — đang thêm ở bước khung) · test `npm test` (`vitest run`) · E2E `npm run test:e2e` (Playwright) · biên độ ngân sách `npm run budget` (in phần còn lại của size-limit + ngưỡng coverage, cảnh báo khi sắp cạn — cần `dist/` và `coverage/` đã có) · start `npm start` (`tsx apps/server/src/server.ts`) · migration Postgres tự host `npm run migrate:pg` (tự chạy trong `scripts/deploy.sh`, xem `postgres/migrations/README.md`).
-- **Cấu trúc (npm workspace — `docs/research/dac-ta-cai-to-cau-truc-2026-08-23.md`):**
-  - `apps/dhcb/` (gói `@dhcb/app`) — Vite app nền tảng; output build VẪN là `dist/` ở gốc.
-  - `apps/server/` (gói `@dhcb/server`) — Express: `src/server.ts` khởi tạo, `src/routes.ts` gắn
-    route, `src/api/<trụ>/` handler; output biên dịch `dist-server/server.js`.
-  - `apps/hub/` (gói `@dhcb/hub`) — Vite app riêng: trang chủ/landing ở domain gốc.
-  - `packages/` — gói `@dhcb/core-*` + `@dhcb/subject-*`, mỗi gói có `package.json` +
-    `tsconfig.json` composite. `core-domains` chỉ còn trụ `work` (hiển thị "Ghi chú"); ba trụ
-    Career · Startup · Life đã XOÁ HẲN cả giao diện, API lẫn bảng CSDL (migration `0085`).
-  - `postgres/`, `scripts/`, `docs/`.
+- **Lệnh:** `npm run dev` · `build` · `typecheck` (gộp 3 tsconfig) · `lint` (0 cảnh báo) · `format` ·
+  `test` · `test:coverage` (cổng CI) · `test:e2e` · `budget` · `start` · `migrate:pg` (tự chạy
+  trong `scripts/deploy.sh`).
+- **Cấu trúc (npm workspace):** `apps/dhcb` (app chính, build ra `dist/` ở gốc) · `apps/server`
+  (Express, handler ở `src/api/<trụ>/`, build ra `dist-server/`) · `apps/hub` (trang chủ domain
+  gốc) · `packages/` (`@dhcb/core-*`, `@dhcb/subject-*`) · `postgres/`, `scripts/`, `docs/`.
 
-  **Import xuyên gói dùng tên gói `@dhcb/<gói>/<file>` (KHÔNG đuôi `.js`), import nội bộ gói
-  dùng đường tương đối có đuôi `.js`.** Luật phụ thuộc (ESLint chặn): `packages/` không import
-  `apps/` và không import `api/`. Build backend = `npm run build:packages` (`tsc -b`) rồi
-  `tsc -p tsconfig.server.json`; dev (`tsx`/Vite/Vitest) phân giải `@dhcb` về source, KHÔNG cần
-  build gói trước. CI có bước boot check `node dist-server/server.js` + `/api/health`. Lịch sử
-  cải tổ + mô tả từng gói: `docs/claude-md-chi-tiet.md` §6.
+  **Import xuyên gói `@dhcb/<gói>/<file>` (KHÔNG đuôi `.js`); import nội bộ gói dùng đường tương
+  đối CÓ đuôi `.js`.** `packages/` không import `apps/`/`api/` (ESLint chặn). Dev phân giải
+  `@dhcb` về source; build backend = `npm run build:packages` rồi `tsc -p tsconfig.server.json`.
+  Lịch sử cải tổ + mô tả từng gói: `docs/claude-md-chi-tiet.md` §6.
 
 - **Đặt tên:** component PascalCase (`apps/dhcb/src/components`), tiện ích camelCase
   (`apps/dhcb/src/lib`), prompt gửi AI để riêng trong `apps/dhcb/src/prompts/`.
@@ -181,89 +148,68 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
   schema/API trước khi code) · `/grill` (làm rõ ý tưởng, mục 12) · `/review` (đọc-hiểu diff trước
   khi mở PR) · `/build-fix` (gỡ cổng đỏ, không nới cổng) · `/learn` (rút bài học thành mục
   `TRAPS.md`, chờ duyệt).
-- **Subagent (`.claude/agents/`)** — 7 agent điều phối 3 tầng theo độ phức tạp
-  (`complex-implementer`/`coordinator`/`mechanical-worker`/`qa-verifier`/`reviewer`/
-  `spec-executor`/`standard-worker`, xem `docs/framework/KIEN-TRUC-DIEU-PHOI-3-TANG.md`) + 6 agent
-  tiện ích gọi trực tiếp: `lookup` · `version-check` · `security-reviewer` ·
-  `build-error-resolver` · `silent-failure-hunter` · `database-reviewer`. Agent = vai trò thực
-  thi việc; skill (mục 2.1) = kiến thức miền. Mô tả từng cái: `docs/claude-md-chi-tiet.md` §7.
-- **OpenCodeReview (delegation, ADR-0012):** `/review` lấy file + luật DHCB từ
-  `.opencodereview/rule.json` qua `npm run review:ocr:preview` /
-  `npm run review:ocr -- delegate rule <file...>` — không gọi LLM. Luật `**/*` luôn đứng cuối
-  (`scripts/ocr-rules-policy.test.ts`).
+- **Subagent (`.claude/agents/`):** 7 agent điều phối 3 tầng
+  (`docs/framework/KIEN-TRUC-DIEU-PHOI-3-TANG.md`) + 6 agent tiện ích (`lookup`,
+  `security-reviewer`…). Agent = vai trò thi hành; skill = kiến thức miền. `/review` còn ủy quyền
+  OpenCodeReview (ADR-0012). Mô tả từng cái: `docs/claude-md-chi-tiet.md` §7.
 - **`npm run check:docs`** — đối chiếu lệnh ↔ CLAUDE.md và `name:` subagent ↔ tên file. Chạy
   trước khi thêm/xoá `.claude/commands/` hoặc `.claude/agents/`.
 
-- **Tra bản đồ code TRƯỚC khi sửa file dùng chung.** `npm run codemap` quét cả dự án (~9s) rồi:
-  `-- impact <file>` (sửa file này gãy chỗ nào) · `-- callers <file>#<hàm>` (ai đang gọi hàm này) ·
-  `-- hotspots` (file bị import nhiều nhất = rủi ro cao nhất) · `-- cycles` · `-- orphans`.
-  Dùng nó thay cho việc đoán phạm vi ảnh hưởng. Code: `scripts/codemap.ts` + `scripts/lib/codemap.ts`.
+- **Tra bản đồ code TRƯỚC khi sửa file dùng chung**, đừng đoán phạm vi ảnh hưởng:
+  `npm run codemap -- impact <file>` · `-- callers <file>#<hàm>` · `-- hotspots` · `-- cycles`.
 
-- **Bài học môn Lập trình nạp lười theo unit (2026-09-01).** App KHÔNG import
-  `@dhcb/subject-programming/lessons` (registry đồng bộ 3 MB — chỉ server/test/script dùng);
-  giao diện dùng `@dhcb/subject-programming/lessonsLoader` (chỉ mục nhẹ `LESSON_INDEX` +
-  `loadLesson`/`loadUnitLessons` nạp đúng unit). **Thêm/đổi bài học xong PHẢI chạy
-  `npm run gen:lesson-index`** để sinh lại `lessonsLazy.ts`; quên thì `lessonsLazy.test.ts` đỏ
-  với đúng câu nhắc đó.
-- **Trang chủ khách có bản HTML DỰNG SẴN (2026-10-10, changelog 0584)** — `index.html` mang sẵn
-  HTML trang chủ khách cho màn hẹp, React tiếp quản sau (`apps/dhcb/src/lib/guestPrerender.ts`).
-  **Sửa component trong cây trang chủ khách (GuestHome, Layout, BottomNav…) xong PHẢI chạy
-  `npm run gen:prerender-home`**; quên thì `guestHomePrerender.test.tsx` đỏ.
+- **Thêm/đổi bài học Lập trình xong PHẢI chạy `npm run gen:lesson-index`.** App chỉ nạp lười qua
+  `@dhcb/subject-programming/lessonsLoader`, KHÔNG import `@dhcb/subject-programming/lessons`
+  (3 MB). Quên thì `lessonsLazy.test.ts` đỏ.
+- **Sửa component trong cây trang chủ khách (GuestHome, Layout, BottomNav…) xong PHẢI chạy
+  `npm run gen:prerender-home`** (`index.html` mang HTML dựng sẵn); quên thì
+  `guestHomePrerender.test.tsx` đỏ.
 - Code đơn giản, dễ đọc, **thêm comment tiếng Việt** ở chỗ quan trọng. Mỗi file/hàm làm 1 việc; tên biến tiếng Anh dễ hiểu.
 - KHÔNG đưa API key/mật khẩu vào code — luôn dùng `.env`. Mọi lệnh gọi AI phải **đếm/giới hạn lượt** (Free vs VIP) tránh tốn tiền API.
 - Trước khi sửa nhiều file hoặc đổi cấu trúc: **giải thích kế hoạch ngắn gọn rồi hỏi trước**. Mỗi thay đổi nhỏ, dễ kiểm tra; sau khi sửa nói rõ đã đổi gì + cách chạy thử.
 - Gặp khái niệm mới: **giải thích cho người mới hiểu**. Ưu tiên giải pháp **miễn phí / chi phí thấp** (dự án vốn tối thiểu).
-- **Quy ước URL mang tiêu đề.** Route có tham số là id một nội dung có tiêu đề (bài học, bậc,
-  hướng, khoá, lộ trình, chặng…) PHẢI dùng khuôn `<mã>--<tiêu đề đã slug hoá>` (vd
-  `p1--nhap-mon-tu-duy`), qua `buildSlugSegment`/`idFromSlugSegment` ở `packages/core-ui/slug.ts`:
-  mã giữ nguyên, trang tự đọc mã và bỏ qua phần slug. **Không tự ghép chuỗi URL rải rác** — dựng
-  qua đúng MỘT hàm dùng chung theo mẫu `apps/dhcb/src/lib/programmingRoutes.ts`. Route chỉ khớp mã
-  cũ (không có `--`) vẫn phải tra đúng và `<Navigate replace>` về URL chuẩn. Ngoại lệ đã quyết định
-  và ví dụ: `docs/claude-md-chi-tiet.md` §7.
+- **URL mang tiêu đề:** route có id nội dung có tiêu đề PHẢI theo khuôn `<mã>--<slug>` qua
+  `buildSlugSegment`/`idFromSlugSegment` (`packages/core-ui/slug.ts`), dựng qua đúng MỘT hàm dùng
+  chung (mẫu `apps/dhcb/src/lib/programmingRoutes.ts`) — không tự ghép chuỗi URL. URL mã cũ vẫn
+  phải tra đúng rồi `<Navigate replace>` về URL chuẩn. Ngoại lệ + ví dụ: `docs/claude-md-chi-tiet.md` §7.
 
 ## 8. Cổng trước khi COMMIT (chạy và đạt hết)
 
 Build `npm run build` · Type `npm run typecheck` · Lint `npm run lint` (0 cảnh báo) · Format `npm run format` _(sau khi thêm Prettier)_ · Test `npm test`. Ngoài ra: tự đọc lại diff (đúng mục tiêu, không sửa nhầm); xóa `console.log` debug/code chết (frontend `apps/dhcb/src` + `apps/hub/src`: lint `no-console` chặn từ 2026-10-02, chỉ cho `warn`/`error`); không bí mật trong code; mọi input đã validate; mọi thao tác có thể lỗi đã xử lý; commit message theo **conventional commits**. Nếu `git diff --stat` hiện `Bin` ở một file mã nguồn → file lẫn ký tự điều khiển (NUL…), diff thành nhị phân **không review được**: dùng escape (`\u0000`) thay vì gõ ký tự thật, rồi kiểm lại bằng `file <path>`.
 
-**Hook của Claude Code (`.claude/hooks/`; test: `scripts/claude-hooks.test.ts` +
-`scripts/agent-config-security.test.ts`):**
+**Hook (`.claude/hooks/`) tự chặn:** `git commit` khi typecheck/lint/test đỏ (bỏ qua có chủ đích:
+`--no-verify`) · git phá dữ liệu/force-push · tải-rồi-chạy (`curl … | sh`) · sửa CỔNG (cấu hình
+lint/format/coverage, `*-policy.test.ts`, cổng a11y, workflow CI, hook) — lần đầu trong phiên bị
+**từ chối**: nói rõ với người dùng sửa gì + vì sao rồi mới thử lại. Đọc `.env` luôn phải hỏi.
+Danh sách đủ + lý do từng hook: `docs/claude-md-chi-tiet.md` §8.
 
-- `pre-commit-gate.sh` TỰ CHẶN `git commit` khi `typecheck`/`lint`/`test` đỏ (không chạy
-  `build` — vẫn bắt buộc ở CI), chạy ở ĐÚNG cây đang commit, kể cả git worktree (`TRAPS.md`
-  mục 20). Bỏ qua có chủ đích: `git commit --no-verify`.
-- `block-dangerous-git.sh` chặn cứng `reset --hard`/`clean -f`/`branch -D`/`checkout .`/
-  `push --force`/`merge --abort`.
-- `config-protection.sh` canh Edit/Write vào CỔNG (cấu hình lint/format/coverage,
-  `scripts/*-policy.test.ts`, cổng a11y, workflow CI, `.husky/`, chính các hook): lần đầu chạm
-  trong phiên → **từ chối**, phải nói rõ với người dùng sửa gì + vì sao rồi mới thử lại; lần sau
-  → hỏi quyền. Bỏ qua có chủ đích: `ALLOW_GATE_EDIT=1`.
-- `block-pipe-to-shell.sh` chặn tải-rồi-chạy (`curl … | sh`…) — cách đúng: tải về file, đọc,
-  rồi chạy. Bỏ qua có chủ đích: `ALLOW_PIPE_TO_SHELL=1`.
-- `auto-format.sh` chạy Prettier sau mỗi lần sửa file; `shared-file-reminder.sh` nhắc chạy
-  `npm run codemap -- impact` khi lần đầu sửa file có ≥ 20 nơi import.
-- Đọc `.env`/`.env.*` (trừ `.env.example`) luôn phải hỏi (`permissions.ask`).
+**Cổng CI khác:** `npm run check:specs` (đường dẫn trong đặc tả đã "Approved for implementation"
+phải có thật) · `npm run check:sql` (PREPARE mọi SQL tĩnh trên Postgres thật; câu cố ý không
+PREPARE được → `scripts/sql-prepare-allowlist.json` kèm lý do).
 
-Lý do thiết kế từng hook: `docs/claude-md-chi-tiet.md` §8.
-
-**Chống đặc tả "nói suông" (thêm 2026-09-19):** `npm run check:specs` (chạy trong CI job `audit`, chặn merge) kiểm mọi đường dẫn ở cột "Đường dẫn file" của đặc tả ĐÃ "Approved for implementation" (`docs/specs/*.md`) có tồn tại thật — xem `scripts/check-spec-paths.ts`.
-
-**SQL phải chạy được trên schema thật (thêm 2026-10-08):** `npm run check:sql` (CI job `sql-prepare`, Postgres 16 đã áp mọi migration) `PREPARE` mọi câu SQL tĩnh của server — bắt sai cột/kiểu mà unit test giả lập `pg` không thấy. Câu cố ý không PREPARE được → `scripts/sql-prepare-allowlist.json` kèm lý do.
-
-**Rà câu chữ nội dung học:** `npm run audit:prose` (`-- --ci` chạy trong CI job `audit`) chỉ bắt
-lỗi máy nhìn được — phần dễ hiểu/đúng sư phạm vẫn phải đọc tay (khuôn 5 tiêu chuẩn, changelog
-0406). **Sửa từ điển (`apps/dhcb/public/data/dictionary/chunk-*.json`) PHẢI theo đúng quy trình
-đồng bộ vòng từ vựng** (sai thứ tự là phá bộ câu mẫu viết tay theo id vòng):
-`docs/claude-md-chi-tiet.md` §8.
+**Câu chữ nội dung học:** `npm run audit:prose` chỉ bắt lỗi máy thấy — dễ hiểu/đúng sư phạm vẫn
+phải đọc tay. **Sửa từ điển (`apps/dhcb/public/data/dictionary/chunk-*.json`) PHẢI theo đúng quy
+trình đồng bộ vòng từ vựng:** `docs/claude-md-chi-tiet.md` §8.
 
 **Bảo trì định kỳ:** `npm run maintain` (`scripts/maintenance-sweep.sh`) quét tổng hợp git hygiene/dependency/tài liệu lỗi thời/bí mật lọt git/CI — chỉ đọc, không sửa; dùng khi rà soát định kỳ hoặc trước một đợt việc lớn.
 
 **Công cụ phải khớp lockfile.** Cổng local báo lỗi ở **nhiều file mình không hề đụng tới**, hoặc local và CI lệch nhau → `npm ci` rồi chạy lại cổng, ĐỪNG đi sửa từng file theo báo lỗi giả. Trong container phiên mới, chạy `npm ci` trước lần chạy cổng đầu tiên.
 
-**Cổng ở máy có thể XANH GIẢ — ba biến thể đã mắc thật, xem `TRAPS.md` mục 3 (2026-09-13, PR #893).** Tóm tắt cách chốt chặn: (1) thêm/xoá gói trong `packages/`/`apps/` thì phải `npm install` và commit `package-lock.json`, kiểm bằng `npm ci` trả về 0 — CI dùng `npm ci` nên lockfile lệch là giết MỌI job ở bước cài đặt; (2) trước lần push cuối, `rm -rf packages/*/dist dist dist-server` rồi chạy lại `npm run typecheck` để tái hiện checkout sạch của CI; (3) cổng test của CI là `npm run test:coverage` (có ngưỡng chặn), KHÔNG phải `npm test`.
+**Cổng ở máy có thể XANH GIẢ** (`TRAPS.md` mục 3): thêm/xoá gói ⇒ `npm install` + commit
+`package-lock.json`, kiểm `npm ci` trả 0 · trước lần push cuối `rm -rf packages/*/dist dist
+  dist-server` rồi chạy lại `npm run typecheck` · cổng test của CI là `npm run test:coverage`, KHÔNG
+phải `npm test`.
 
-**Đổi prompt hoặc model AI:** mọi PR sửa `apps/dhcb/src/prompts/*` hoặc `packages/core-ai/aiConfig.ts` (model/guardrail) PHẢI chạy lại `npm run eval:tutor` (cần key AI trong `.env`) và **dán bảng so sánh với `docs/research/eval-tutor-baseline.md` vào mô tả PR** — recall/precision không được tụt so với baseline. Xem `scripts/eval-tutor.ts`. **Môn Lập trình có prompt + eval RIÊNG** (nó không đi qua `/api/agent`): PR sửa `packages/subject-programming/feedbackPrompt.ts` PHẢI chạy lại `npm run eval:code-feedback` và dán kết quả vào mô tả PR — còn ca vi phạm bất biến (lộ lời giải · không phải tiếng Việt · gợi ý không có câu hỏi) là script thoát mã 1. Tương tự: sửa `packages/core-personal/actionCanvasPrompt.ts`/`goalDecomposition.ts` (Action Canvas) ⇒ chạy `npm run eval:action-canvas`, dán kết quả vào PR.
+**Đổi prompt/model AI ⇒ chạy eval (cần key trong `.env`) và dán kết quả vào mô tả PR:**
+`apps/dhcb/src/prompts/*` hoặc `packages/core-ai/aiConfig.ts` ⇒ `npm run eval:tutor`, so với
+`docs/research/eval-tutor-baseline.md` (recall/precision không được tụt) ·
+`packages/subject-programming/feedbackPrompt.ts` ⇒ `npm run eval:code-feedback` ·
+`packages/core-personal/actionCanvasPrompt.ts`/`goalDecomposition.ts` ⇒ `npm run eval:action-canvas`.
 
-**Golden snapshot prompt:** `apps/dhcb/src/prompts/golden.test.ts` chụp nguyên văn prompt môn Anh (không gọi AI) để bắt prompt bị sửa **không chủ đích**. Sửa có chủ đích → xem kỹ diff snapshot rồi `npx vitest run apps/dhcb/src/prompts/golden.test.ts -u`, commit cả `.snap`. **Snapshot KHÔNG thay thế `eval:tutor`.** **Prompt chấm điểm có JSON Schema đi kèm** (structured outputs, `packages/core-ai/gradingSchemas.ts`): thêm/bớt khoá JSON trong prompt chấm thì sửa schema CÙNG LÚC — `apps/dhcb/src/prompts/gradingSchemas.contract.test.ts` đỏ nếu lệch.
+**Golden snapshot** (`apps/dhcb/src/prompts/golden.test.ts`) bắt prompt môn Anh bị sửa không chủ
+đích; sửa có chủ đích ⇒ xem diff rồi chạy lại với `-u`, commit cả `.snap`. **Snapshot KHÔNG thay
+`eval:tutor`.** Thêm/bớt khoá JSON trong prompt chấm ⇒ sửa `packages/core-ai/gradingSchemas.ts`
+CÙNG LÚC (`gradingSchemas.contract.test.ts` canh).
 
 ## 9. Cổng trước khi MERGE (thêm)
 
@@ -333,4 +279,4 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
 
 **Nguồn duy nhất: `PROGRESS.md`** (giai đoạn · tiếp theo · việc cần làm tay · quyết định · nợ mở). Hook đầu phiên `.claude/report-status.sh` in sẵn 3 đợt gần nhất + nợ mở. Bản đồ tài liệu nào còn hiệu lực: `docs/README.md`. Bản mô tả trạng thái dài từng nằm ở đây (cập nhật tới 2026-09-01) đã dời sang `docs/legacy/claude-md-lich-su-quy-uoc.md`.
 
-Tóm tắt một dòng (2026-09-06): app nền tảng chạy thật tại `donghanhcungban.org` · môn Anh A1→C2 hai chiều A/B, 3 chế độ, TTS/STT thật · môn Lập trình P1–P6 + 14 hướng + khoá ngắn + lộ trình mục tiêu · trụ Ghi chú (`/ghi-chu`, tên cũ "Công việc"; ba trụ Sự nghiệp/Khởi nghiệp/Đời sống gỡ hẳn 2026-09-20) · thanh toán SePay · Postgres tự host + Redis + R2, backup đã kiểm chứng · cổng CI: build/type/lint/format/test coverage sàn stmts/branches/funcs/lines 94/90/94/94/E2E a11y AA+AAA.
+Ảnh chụp trạng thái cũ (2026-09-06): `docs/claude-md-chi-tiet.md` §13.
