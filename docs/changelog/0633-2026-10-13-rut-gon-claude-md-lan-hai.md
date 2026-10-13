@@ -1,6 +1,6 @@
 # 0633 — Rút gọn CLAUDE.md lần hai: 33.940 → 24.270 ký tự, không mất dòng nào
 
-- **Ngày:** 2026-10-13 · **PR:** #PENDING · **Loại:** `docs(claude-md)`
+- **Ngày:** 2026-10-13 · **PR:** #1397 · **Loại:** `docs(claude-md)`
 - **Nguồn việc:** mục 5 trong `docs/research/2026-10-13-goi-y-nang-cap.md` (changelog `0630`). Chủ
   dự án giao: "làm mục 5".
 
