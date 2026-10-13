@@ -37,7 +37,8 @@ curl -sS https://api.github.com/repos/seeker19110/dhcb/private-vulnerability-rep
 
 ## Thiết lập nằm trong git (đọc thẳng file, không chép giá trị ở đây)
 
-- Action bên thứ ba ghim SHA — **có test canh** (`scripts/ci-workflow-policy.test.ts`).
+- Mọi action (kể cả `actions/*`, siết ở changelog 0632) ghim SHA — **có test canh**
+  (`scripts/ci-workflow-policy.test.ts`).
 - `timeout-minutes` mọi job của `ci.yml` + job tổng hợp gom `toJSON(needs)` — **có test canh** (cùng file).
 - Khối `permissions:` tối thiểu ở từng workflow (`contents: read`; CodeQL thêm `security-events: write`)
   — chưa có test, rà bằng `grep -n -A3 'permissions:' .github/workflows/*.yml` (changelog `0621`).

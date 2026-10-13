@@ -172,6 +172,12 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
+  changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
+  `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Tiếp:** mục 5
+  (rút gọn `CLAUDE.md`, đang sát trần 34.000 ký tự — PR riêng). Mục 1 (`opusplan`) là quyết định
+  chi phí của chủ dự án; mục 6 (TypeScript 6) để đợt nâng phụ thuộc; mục 4 không làm (trùng
+  `pre-commit-gate.sh`).
 - **[2026-10-11] Nâng cấp "Bạn Đồng Hành" 4 giai đoạn** (nghiên cứu
   `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`, chủ dự án chốt làm lần lượt cả 4, mỗi GĐ
   một PR). **GĐ1 ĐÃ LÀM** (PR #1369, `docs/changelog/0614-*.md`, đặc tả

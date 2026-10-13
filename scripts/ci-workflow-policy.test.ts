@@ -127,7 +127,9 @@ describe('.github/workflows/ci.yml — quy ước CI', () => {
 // tài khoản họ) dời tag sang commit độc là mọi workflow ghim tag chạy mã đó, kèm secret đang cấp
 // — `appleboy/ssh-action` cầm cả SSH key VPS. Dependabot (`github-actions`) vẫn cập nhật SHA và
 // chú thích `# vX.Y.Z` đi kèm, nên ghim SHA không làm mất cập nhật.
-describe('.github/workflows/*.yml — action bên thứ ba ghim theo SHA', () => {
+// Siết ở changelog 0632: action của chính GitHub (`actions/*`) cũng ghim SHA — `checkout` chạy
+// trong mọi job cầm GITHUB_TOKEN, nên một tag `actions/*` bị dời cũng nguy hiểm như bên thứ ba.
+describe('.github/workflows/*.yml — mọi action ghim theo SHA', () => {
   const dir = join(process.cwd(), '.github', 'workflows')
   const uses = readdirSync(dir)
     .filter((f) => /\.ya?ml$/.test(f))
@@ -144,9 +146,9 @@ describe('.github/workflows/*.yml — action bên thứ ba ghim theo SHA', () =>
     expect(uses.some((u) => !u.ref.startsWith('actions/'))).toBe(true)
   })
 
-  it('mọi action ngoài `actions/` dùng `@<SHA 40 ký tự>`', () => {
+  it('mọi action (kể cả `actions/*`) dùng `@<SHA 40 ký tự>`', () => {
     const unpinned = uses
-      .filter((u) => !u.ref.startsWith('actions/') && !u.ref.startsWith('./'))
+      .filter((u) => !u.ref.startsWith('./'))
       .filter((u) => !/@[0-9a-f]{40}$/.test(u.ref))
       .map((u) => `${u.file}: ${u.ref}`)
     expect(unpinned).toEqual([])
