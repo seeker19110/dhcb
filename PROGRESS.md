@@ -193,7 +193,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   (`intent_route`, fallback từ khoá), vòng công cụ viết tay (≤ 4 bước, ≤ 6 lần thi hành, hạn chót
   45 giây) với 4 công cụ chỉ-đọc + 3 công cụ CHỈ tạo đề xuất chờ duyệt, kiểm câu trả lời cuối tất
   định, nhãn "đang tra cứu" trên giao diện; công tắc lùi `COMPANION_TOOLS=off`. **GĐ4a ĐÃ LÀM**
-  (PR #PENDING, `docs/changelog/0629-*.md`, đặc tả
+  (PR #1392, `docs/changelog/0629-*.md`, đặc tả
   `docs/specs/2026-10-12-ban-dong-hanh-gd4a-the-hom-nay.md`, migration 0097): "Thẻ hôm nay" ≤ 3
   thẻ/ngày dựng tất định từ dữ liệu thật (thẻ ôn đến hạn · việc đến hạn · mục tiêu học · lời mời
   phản tỉnh), không gọi AI, tự chuyển "Đã xong"; 👍/👎 thành sở thích (👎 tắt loại thẻ 7 ngày);
