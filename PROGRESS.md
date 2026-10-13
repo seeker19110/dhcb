@@ -173,7 +173,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 ## Tiếp theo
 
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
-  changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #PENDING, `docs/changelog/0632-*.md`): ghim cả 21
+  changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Tiếp:** mục 5
   (rút gọn `CLAUDE.md`, đang sát trần 34.000 ký tự — PR riêng). Mục 1 (`opusplan`) là quyết định
   chi phí của chủ dự án; mục 6 (TypeScript 6) để đợt nâng phụ thuộc; mục 4 không làm (trùng

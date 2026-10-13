@@ -1,6 +1,6 @@
 # 0632 — Ghim mọi GitHub Action theo SHA và thêm `permissions.deny` cho Claude Code
 
-- **Ngày:** 2026-10-13 · **PR:** #PENDING · **Loại:** `ci(security)`
+- **Ngày:** 2026-10-13 · **PR:** #1396 · **Loại:** `ci(security)`
 - **Nguồn việc:** mục 2 và 3 trong `docs/research/2026-10-13-goi-y-nang-cap.md` (changelog `0630`).
   Chủ dự án chốt "theo khuyến nghị".
 
