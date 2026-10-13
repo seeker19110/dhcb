@@ -9,7 +9,9 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { FILE_CHI_TIET, dongBiMat, mucCoThat, mucDuocTro } from './lib/claudeMdSplit.js'
 
-const TRAN_KY_TU = 34_000
+// Hạ từ 34_000 xuống 26_000 ở đợt rút gọn lần hai (changelog 0633, CLAUDE.md còn ~24_300 ký tự)
+// để giữ thành quả — chừa ~1_700 ký tự cho luật mới.
+const TRAN_KY_TU = 26_000
 
 const claudeMd = readFileSync('CLAUDE.md', 'utf8')
 const chiTiet = readFileSync(FILE_CHI_TIET, 'utf8')
