@@ -76,7 +76,10 @@ bước gõ sẵn, state trong `Map` bộ nhớ. Thay bằng `packages/core-pers
 ≤ 3 thẻ/ngày (giờ VN, CSDL giữ trần — migration 0097) dựng TẤT ĐỊNH từ dữ liệu thật (thẻ ôn đến
 hạn, việc đến hạn, mục tiêu học, lời mời phản tỉnh), không gọi AI; 👍/👎 lưu thành sở thích (👎 tắt
 loại thẻ 7 ngày). Thẻ chỉ DẪN tới trang có thật — không thực thi gì thay người dùng.
-CHƯA CÓ: nhắc nghỉ phiên dài cho trẻ (GĐ4b), đẩy thẻ qua push/email, câu chữ thẻ do AI viết.
+Nhắc nghỉ phiên dài cho trẻ (GĐ4b, changelog 0631): `apps/dhcb/src/lib/companionBreakReminder.ts`
+— đếm ở client, câu viết sẵn, chỉ `nhi_dong`/`thieu_nien`.
+
+CHƯA CÓ: đẩy thẻ qua push/email, câu chữ thẻ do AI viết.
 
 ---
 
