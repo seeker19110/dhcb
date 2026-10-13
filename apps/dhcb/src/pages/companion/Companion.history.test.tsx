@@ -33,9 +33,6 @@ vi.mock('../../lib/sttServer', () => ({
   isRecordingSupported: () => false,
   startRecording: vi.fn(),
 }))
-vi.mock('../../lib/proactiveAgentApi', () => ({
-  fetchProactiveAgentState: vi.fn(async () => ({ actions: [], config: {} })),
-}))
 
 const fetchCompanionHistoryMock = vi.hoisted(() => vi.fn())
 vi.mock('../../lib/companionApi', () => ({

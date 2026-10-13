@@ -296,6 +296,28 @@ export const PERSON_TABLES = [
     ],
     orderBy: 'updated_at',
   },
+  // GĐ4a (migration 0097): "Thẻ hôm nay" + sở thích 👍/👎 theo loại thẻ — cascade theo person.
+  {
+    exportKey: 'companionDailyCards',
+    table: 'personal.companion_daily_cards',
+    columns: [
+      'id',
+      'vn_day',
+      'kind',
+      'position',
+      'snapshot',
+      'feedback',
+      'feedback_at',
+      'created_at',
+    ],
+    orderBy: 'vn_day, position, id',
+  },
+  {
+    exportKey: 'companionCardPreferences',
+    table: 'personal.companion_card_preferences',
+    columns: ['kind', 'up_count', 'down_count', 'muted_until', 'updated_at'],
+    orderBy: 'kind',
+  },
   {
     exportKey: 'companionMessages',
     table: 'personal.companion_messages',

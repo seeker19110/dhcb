@@ -42,7 +42,8 @@ thắng** — sửa skill, đừng thiết kế theo skill.
      hợp lệ đại số/hoá học tức thì".
    - Lab phát âm: `ArticulatoryPhoneticsVisualizer` (khẩu hình, không điểm — changelog 0563), `PronunciationHintsCard` (gợi ý, không điểm), `EchoShadowingCard` (3 pha, không điểm),
      `ScenarioHolodeckCard`.
-4. **Kế hoạch** (`StudioProactive.tsx`) — nudge 1-chạm (`ProactiveNudgeBanner`), `GoalAutoPilotCard`,
+4. **Kế hoạch** (`StudioProactive.tsx`) — mở đầu bằng "Thẻ hôm nay" (`CompanionDailyCards`, ≤ 3
+   thẻ/ngày từ dữ liệu thật, 👍/👎 — changelog 0629; nudge "năng lượng 85%" + AutoPilot giả lập đã GỠ),
    khối "30 ngày qua của bạn" (`LifeSynthesisDashboard`, chỉ phép đếm thật — changelog 0550),
    `NeuralMicroCurriculumCard` và các thẻ đón đầu; cuối studio là `ActionCanvasBanner` (lối vào
    DUY NHẤT của `/action-canvas`).

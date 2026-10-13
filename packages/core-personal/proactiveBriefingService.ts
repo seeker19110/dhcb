@@ -82,21 +82,30 @@ export async function readBriefingSignals(
 ): Promise<BriefingSignals> {
   const [learning, tasks] = await Promise.all([
     getLearningReadModel(pool, { personId: subject.personId, userId: subject.userId }),
-    pool.query<{ open_count: number; due_count: number }>(
-      `select count(*) filter (where status <> 'done')::int as open_count,
-              count(*) filter (where status <> 'done' and due_at is not null and due_at < $2)::int
-                as due_count
-         from worklife.tasks
-        where person_id = $1`,
-      [subject.personId, startOfNextVnDay(now).toISOString()],
-    ),
+    readTaskCounts(pool, subject.personId, now),
   ])
-  const row = tasks.rows[0]
-  return {
-    srsDueCount: learning.srsDueCount,
-    openTaskCount: row?.open_count ?? 0,
-    dueTaskCount: row?.due_count ?? 0,
-  }
+  return { srsDueCount: learning.srsDueCount, ...tasks }
+}
+
+/**
+ * Đếm việc trong Ghi chú: chưa xong, và trong số đó đến hạn trước hết hôm nay (giờ VN, kể cả quá
+ * hạn). Dùng chung với "Thẻ hôm nay" (`companionDailyCards.ts`, changelog 0629). Lỗi CSDL ném ra.
+ */
+export async function readTaskCounts(
+  pool: Pick<Pool, 'query'>,
+  personId: string,
+  now: Date,
+): Promise<Pick<BriefingSignals, 'openTaskCount' | 'dueTaskCount'>> {
+  const res = await pool.query<{ open_count: number; due_count: number }>(
+    `select count(*) filter (where status <> 'done')::int as open_count,
+            count(*) filter (where status <> 'done' and due_at is not null and due_at < $2)::int
+              as due_count
+       from worklife.tasks
+      where person_id = $1`,
+    [personId, startOfNextVnDay(now).toISOString()],
+  )
+  const row = res.rows[0]
+  return { openTaskCount: row?.open_count ?? 0, dueTaskCount: row?.due_count ?? 0 }
 }
 
 function newItemId(): string {

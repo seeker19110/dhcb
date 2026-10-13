@@ -62,8 +62,8 @@ vi.mock('../CompanionVoice/WorkplaceHarvesterCard', () => ({
 vi.mock('../CompanionVoice/A2ANegotiatorCard', () => ({
   default: () => React.createElement('div', { 'data-testid': 'a2a-card' }),
 }))
-vi.mock('../ProactiveBriefingCard', () => ({
-  default: () => React.createElement('div', { 'data-testid': 'briefing-card' }),
+vi.mock('./CompanionDailyCards', () => ({
+  default: () => React.createElement('div', { 'data-testid': 'companion-daily-cards' }),
 }))
 vi.mock('../CompanionVoice/AmbientScreenCopilot', () => ({
   default: () => React.createElement('div', { 'data-testid': 'ambient-card' }),
@@ -106,22 +106,28 @@ describe('CompanionStudios', () => {
   // Changelog 0481: thẻ "Điều Phối Agent" gỡ vì hiện phiên agent DỰNG SẴN như đã chạy thật. Lối
   // vào DUY NHẤT của Action Canvas phải còn.
   it('StudioProactive không còn thẻ Agent, vẫn giữ lối vào Action Canvas', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(StudioProactive, { proactiveState: null, navigate: vi.fn() }),
-    )
+    const html = renderToStaticMarkup(React.createElement(StudioProactive, { navigate: vi.fn() }))
     expect(html).not.toContain('Điều Phối Agent')
     expect(html).not.toContain('Khởi chạy Agent')
     expect(html).toContain('Action Canvas')
     expect(html).toContain('Mở Workspace')
   })
 
+  // Changelog 0629 (GĐ4a): "Thẻ hôm nay" từ dữ liệu thật đứng ĐẦU studio, thay nhắc nhở giả lập
+  // ("năng lượng 85%" cho mọi người) + lộ trình AutoPilot gõ sẵn + bản tin trùng ý.
+  it('StudioProactive mở đầu bằng Thẻ hôm nay, không còn nhắc nhở/lộ trình giả', () => {
+    const html = renderToStaticMarkup(React.createElement(StudioProactive, { navigate: vi.fn() }))
+    const cards = html.indexOf('data-testid="companion-daily-cards"')
+    expect(cards).toBeGreaterThan(-1)
+    expect(cards).toBeLessThan(html.indexOf('data-testid="harvester-card"'))
+    expect(html).not.toMatch(/85%|AutoPilot|Auto-Pilot|năng lượng nhận thức/i)
+  })
+
   // Changelog 0550: "Tổng hợp 30 ngày" (dữ liệu thật) gắn lại vào studio "Kế hoạch", ngay SAU thẻ
   // Workplace Harvester (cổng E2E [S06d] đòi thẻ đó nằm trong màn hình đầu ở 390 px) và TRƯỚC các
   // thẻ thử nghiệm còn lại — không quay lại thành tab riêng.
   it('StudioProactive có khối Tổng hợp 30 ngày, ngay sau thẻ Workplace Harvester', () => {
-    const html = renderToStaticMarkup(
-      React.createElement(StudioProactive, { proactiveState: null, navigate: vi.fn() }),
-    )
+    const html = renderToStaticMarkup(React.createElement(StudioProactive, { navigate: vi.fn() }))
     const synthesis = html.indexOf('data-testid="life-synthesis"')
     expect(synthesis).toBeGreaterThan(-1)
     expect(synthesis).toBeGreaterThan(html.indexOf('data-testid="harvester-card"'))

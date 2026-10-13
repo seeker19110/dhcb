@@ -527,6 +527,10 @@ Tổng: **129 route giao diện** · **113 endpoint API**.
 
 - `/api/companion`
 
+### `/api/companion-cards` — 1 endpoint
+
+- `/api/companion-cards`
+
 ### `/api/companion-link` — 1 endpoint
 
 - `/api/companion-link`
@@ -694,10 +698,6 @@ Tổng: **129 route giao diện** · **113 endpoint API**.
 ### `/api/plan-prices` — 1 endpoint
 
 - `/api/plan-prices`
-
-### `/api/proactive-agent` — 1 endpoint
-
-- `/api/proactive-agent`
 
 ### `/api/proactive-briefing` — 1 endpoint
 

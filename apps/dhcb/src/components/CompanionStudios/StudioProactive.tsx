@@ -1,38 +1,24 @@
 import { NavigateFunction } from 'react-router-dom'
-import ProactiveNudgeBanner from '../ProactiveAgent/ProactiveNudgeBanner'
-import GoalAutoPilotCard from '../ProactiveAgent/GoalAutoPilotCard'
 import NeuralMicroCurriculumCard from '../NeuralCurriculum/NeuralMicroCurriculumCard'
 import WorkplaceHarvesterCard from '../CompanionVoice/WorkplaceHarvesterCard'
 import A2ANegotiatorCard from '../CompanionVoice/A2ANegotiatorCard'
-import ProactiveBriefingCard from '../ProactiveBriefingCard'
 import AmbientScreenCopilot from '../CompanionVoice/AmbientScreenCopilot'
 import NeuroAffectiveCard from '../CompanionVoice/NeuroAffectiveCard'
 import ActionCanvasBanner from './ActionCanvasBanner'
+import CompanionDailyCards from './CompanionDailyCards'
 import LifeSynthesisDashboard from '../LifeSynthesis/LifeSynthesisDashboard'
-import type { ProactiveAgentState } from '@dhcb/core-contracts/proactiveAgent'
 
 interface StudioProactiveProps {
-  proactiveState: ProactiveAgentState | null
   navigate: NavigateFunction
 }
 
-export default function StudioProactive({ proactiveState, navigate }: StudioProactiveProps) {
+export default function StudioProactive({ navigate }: StudioProactiveProps) {
   return (
     <div className="space-y-4 pb-20 animate-fade-in">
-      {proactiveState?.nudges?.map((nudge) => (
-        <ProactiveNudgeBanner
-          key={nudge.id}
-          nudge={nudge}
-          onActionTriggered={(url) => navigate(url)}
-        />
-      ))}
-
-      {proactiveState?.autoPilotPlans?.[0] && (
-        <GoalAutoPilotCard
-          plan={proactiveState.autoPilotPlans[0]}
-          onActionClick={(url) => navigate(url)}
-        />
-      )}
+      {/* "Thẻ hôm nay" (GĐ4a, changelog 0629) thay nhắc nhở + lộ trình AutoPilot GIẢ LẬP cũ
+          ("năng lượng 85%" cho mọi người, 4 bước gõ sẵn) và bản tin trùng ý `ProactiveBriefingCard`
+          (bản tin ở Trang chủ vẫn giữ). */}
+      <CompanionDailyCards />
 
       <NeuralMicroCurriculumCard />
       <WorkplaceHarvesterCard />
@@ -42,7 +28,6 @@ export default function StudioProactive({ proactiveState, navigate }: StudioProa
           tổng hợp đặt trên sẽ đẩy nó xuống dưới nếp gấp. */}
       <LifeSynthesisDashboard />
       <A2ANegotiatorCard />
-      <ProactiveBriefingCard />
       <AmbientScreenCopilot />
       <NeuroAffectiveCard />
       {/* Dời từ studio "Tổng kết" đã gỡ (changelog 0475). Thẻ "Điều Phối Agent" (changelog 0481) và
