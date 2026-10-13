@@ -125,6 +125,35 @@ describe('.claude/settings.json', () => {
     expect(settings.permissions.ask).toEqual(expect.arrayContaining(['Read(.env)', 'Read(.env.*)']))
   })
 
+  // changelog 0632 — `deny` là lớp thứ hai sau hook `block-dangerous-git.sh` (hook có thể không
+  // chạy: thiếu jq, công cụ khác đọc settings). Danh sách CỐ Ý hẹp, chỉ lệnh mất dữ liệu không
+  // hoàn tác được + force-push/push thẳng main.
+  it('deny chặn force-push, push thẳng main và lệnh git mất dữ liệu', () => {
+    expect(settings.permissions.deny).toEqual(
+      expect.arrayContaining([
+        'Bash(git push --force:*)',
+        'Bash(git push -f:*)',
+        'Bash(git push --force-with-lease:*)',
+        'Bash(git push origin main:*)',
+        'Bash(git reset --hard:*)',
+        'Bash(git clean -f:*)',
+        'Bash(git branch -D:*)',
+        'Bash(git checkout .)',
+      ]),
+    )
+  })
+
+  it('deny KHÔNG chặn việc quy trình bắt buộc phải làm', () => {
+    const deny = settings.permissions.deny
+    // CLAUDE.md mục 8: `rm -rf packages/*/dist dist dist-server` trước lần push cuối.
+    expect(deny.filter((r) => /^Bash\(rm\b/.test(r))).toEqual([])
+    // `.env` để ở `ask` (người dùng duyệt từng lần), không cấm hẳn.
+    expect(deny.filter((r) => /^Read\(\.env/.test(r))).toEqual([])
+    // Luật TIỀN TỐ `checkout .`/`restore .` sẽ chặn nhầm `git checkout .github/…` (khôi phục MỘT
+    // file) — phải khớp chính xác.
+    expect(deny.filter((r) => /^Bash\(git (checkout|restore)( --)? \.:\*\)$/.test(r))).toEqual([])
+  })
+
   it('mọi hook là MỘT script bash nằm trong .claude/ và được git theo dõi', () => {
     const tracked = new Set(gitLsFiles('.claude'))
     const viPham: string[] = []
