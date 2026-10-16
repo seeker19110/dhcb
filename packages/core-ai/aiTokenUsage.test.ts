@@ -101,6 +101,39 @@ describe('recordAiTokenUsage', () => {
     expect(queryMock).not.toHaveBeenCalled()
   })
 
+  it('parser → SQL giữ token tổng và quy giá từng nhóm cache đúng một lần', async () => {
+    queryMock.mockResolvedValue({ rows: [] })
+    const usage = parseAnthropicUsage({
+      usage: {
+        input_tokens: 100,
+        output_tokens: 40,
+        cache_read_input_tokens: 200,
+        cache_creation_input_tokens: 300,
+      },
+    })
+    await recordAiTokenUsage({
+      provider: 'anthropic',
+      model: 'claude-sonnet-5-5',
+      mode: 'companion',
+      usage,
+      day: '2026-10-16',
+    })
+    expect(queryMock).toHaveBeenCalledTimes(1)
+    const params = queryMock.mock.calls[0]?.[1]
+    expect(params?.slice(0, 8)).toEqual([
+      '2026-10-16',
+      'anthropic',
+      'claude-sonnet-5-5',
+      'companion',
+      600,
+      40,
+      200,
+      300,
+    ])
+    // (100×2 + 200×0.2 + 300×2.5 + 40×10)/1M = 0.00139, không gọi calculator làm oracle.
+    expect(params?.[8]).toBeCloseTo(0.00139, 9)
+  })
+
   it('DB lỗi → nuốt lỗi, KHÔNG ném ra ngoài (đo đạc không được làm hỏng lượt trả lời)', async () => {
     queryMock.mockRejectedValue(new Error('relation does not exist'))
     await expect(

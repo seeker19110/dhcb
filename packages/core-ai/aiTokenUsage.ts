@@ -24,6 +24,7 @@ export type AiProvider = 'groq' | 'anthropic' | 'gemini'
 
 /** Số token thật của MỘT lượt gọi. Cache read/write chỉ Anthropic có (mặc định 0). */
 export interface AiTokenUsage {
+  /** Tổng input, bao gồm cả cache read/write (ba nhóm token rời nhau). */
   promptTokens: number
   completionTokens: number
   cacheReadTokens: number
@@ -64,7 +65,7 @@ export function parseGroqUsage(body: unknown): AiTokenUsage | null {
  * Đọc usage từ body JSON của Anthropic Messages API. Anthropic tách riêng token đọc từ
  * prompt cache (`cache_read_input_tokens`) và token ghi cache (`cache_creation_input_tokens`)
  * KHỎI `input_tokens` — nên phải cộng lại để `promptTokens` là tổng token đầu vào thật,
- * đúng như calculateCostUsd() mong đợi (hàm đó trừ ngược cacheRead ra khỏi promptTokens).
+ * đúng như calculateCostUsd() mong đợi (hàm đó trừ cả cacheRead và cacheWrite để tìm input thường).
  */
 export function parseAnthropicUsage(body: unknown): AiTokenUsage | null {
   const usage = asRecord(asRecord(body)?.usage)
