@@ -6,7 +6,7 @@ import compress from 'vite-plugin-compression'
 import { cp, mkdir } from 'node:fs/promises'
 import { createReadStream, existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import { createApiEdgeDevMiddleware } from '../../scripts/lib/apiEdgeDevMiddleware.ts'
 import { deferBootScriptsWhilePrerendered, injectGuestPrerender } from './src/lib/guestPrerender.ts'
 import { DESKTOP_VIEWPORT_QUERY } from './src/lib/useIsDesktopViewport.ts'
 
@@ -465,63 +465,14 @@ function apiEdgeDevMiddleware(): Plugin {
     name: 'api-edge-dev-middleware',
     configureServer(server: ViteDevServer) {
       server.middlewares.use(
-        async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
-          const route = req.url ? findApiRoute(req.url) : undefined
-          if (!route) {
-            next()
-            return
-          }
-
-          try {
-            // Đọc body cho các method có payload (POST) — /api/tts nhận JSON body.
-            const body = await readRequestBody(req)
-
-            // ssrLoadModule: để Vite tự biên dịch TypeScript + import nội bộ (./_lib/...)
-            // bằng đúng pipeline thật, không phải viết/duy trì 2 bản logic khác nhau.
-            // Handler nằm NGOÀI root Vite (api/, packages/ ở gốc repo) — nạp qua
-            // module ID /@fs/<đường tuyệt đối>. Không nối chuỗi trực tiếp: trên
-            // Windows sẽ thành `/@fsC:\\...`, không phải URL FS hợp lệ của Vite.
-            const mod = (await server.ssrLoadModule(
-              toViteFsModuleId(resolveApiModulePath(route.module)),
-            )) as {
-              default: (request: Request) => Promise<Response>
-            }
-            const request = new Request(new URL(req.url!, 'http://localhost'), {
-              method: req.method,
-              headers: {
-                'content-type': req.headers['content-type'] ?? 'application/json',
-                // /api/tts cần header này để biết user đã đăng nhập chưa (trả khoá giải mã hay không)
-                ...(req.headers['authorization']
-                  ? { authorization: req.headers['authorization'] as string }
-                  : {}),
-              },
-              // GET/HEAD không được có body trong Fetch API
-              body: req.method && req.method !== 'GET' && req.method !== 'HEAD' ? body : undefined,
-            })
-            const response = await mod.default(request)
-
-            res.statusCode = response.status
-            response.headers.forEach((value, key) => res.setHeader(key, value))
-            res.end(await response.text())
-          } catch (err) {
-            res.statusCode = 500
-            res.setHeader('content-type', 'application/json')
-            res.end(JSON.stringify({ error: (err as Error).message }))
-          }
-        },
+        createApiEdgeDevMiddleware({
+          resolveModule(url) {
+            const route = findApiRoute(url)
+            return route ? toViteFsModuleId(resolveApiModulePath(route.module)) : undefined
+          },
+          loadModule: (moduleId) => server.ssrLoadModule(moduleId),
+        }),
       )
     },
   }
-}
-
-// Gom toàn bộ body của request thành chuỗi (dùng cho POST /api/tts khi chạy dev).
-function readRequestBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = ''
-    req.on('data', (chunk: Buffer) => {
-      data += chunk.toString()
-    })
-    req.on('end', () => resolve(data))
-    req.on('error', reject)
-  })
 }

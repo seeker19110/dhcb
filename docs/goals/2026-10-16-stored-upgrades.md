@@ -4,7 +4,7 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Goal ID           | GOAL-2026-10-16-STORED                                                                                                         |
 | Owner             | Chủ dự án DHCB                                                                                                                 |
-| Trạng thái        | ACTIVE — S01–S03a đã merge; S03 trace đang triển khai; S04–S06 đã được owner duyệt                                             |
+| Trạng thái        | ACTIVE — S01–S03 đã merge; S04a transport đang triển khai; S04–S06 đã được owner duyệt                                         |
 | Bắt đầu           | 2026-10-16                                                                                                                     |
 | Target review     | Sau từng slice đã kiểm chứng                                                                                                   |
 | Quyền được cấp    | Owner duyệt S02–S06 và push/PR/merge/deploy khi CI xanh trong chat 16/10; không chi tiền provider hoặc dùng dữ liệu production |
@@ -46,7 +46,8 @@
 | S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE    | Main 66db5e63; quality/e2e/metadata và deploy đạt         |
 | S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE    | Main 5e7bb30f; đủ 18 check và deploy đạt                  |
 | S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE    | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt |
-| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | WAITING | Mặc định tắt; contract/observer nội bộ theo spec đã merge |
+| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | DONE    | Main 9378c604; 19 check, 21.536 test và 6 E2E đạt         |
+| S04a | Chuyển SSE qua HTTP production/dev, giữ side effects khi disconnect          | S03 đã tích hợp                       | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1403](https://github.com/seeker19110/dhcb/pull/1403) | WAITING | HTTP/runtime/browser targeted đạt; đang chốt gate         |
 | S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | SPEC    | Giữ red-team Postgres hiện hữu                            |
 | S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa có vector thật; chưa đo ranking                      |
 | S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC    | App STT→LLM→TTS; chưa đo acoustic                         |
@@ -62,12 +63,12 @@
 
 ## 5. Current truth
 
-- Commit main đã reconcile: `f29d823785f0e099fd9528582a39a59f219f09c5` (PR #1401), ngày 16/10.
+- Commit main đã reconcile: `9378c60484ac01867f550526b413a104075aa593` (PR #1402), ngày 16/10.
 - Worktree: `/home/liend/.codex/worktrees/stored-eval-gate/dhcb`; nhánh
-  `codex/stored-turn-tracing`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
-- Goal gap: S01–S03a đã merge; S03a deploy thành công. S03 bắt đầu triển khai trace
-  mặc định tắt; kiểm thử runtime bật/tắt và targeted strict đã đạt, đang chạy full gate. S04–S06 chưa triển khai.
-- Next best slice: trace S03 theo spec đã duyệt; sau đó kiểm injection/stream S04.
+  `codex/stored-sse-transport`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
+- Goal gap: S01–S03 đã merge; S03 deploy thành công. Trace mặc định tắt, chưa review
+  điều kiện bật production. S04a sửa transport trước guard/corpus S04; S05–S06 chưa triển khai.
+- Next best slice: sửa buffering SSE (S04a), sau đó guard/corpus S04 theo spec đã duyệt.
 - CI S01: [run 38867265957](https://github.com/seeker19110/dhcb/actions/runs/38867265957),
   đủ quality/e2e/metadata. [Deploy 38868410893](https://github.com/seeker19110/dhcb/actions/runs/38868410893)
   thành công; chưa thực hiện live eval provider.
@@ -240,6 +241,94 @@
 - [PR #1402](https://github.com/seeker19110/dhcb/pull/1402) đã mở READY; chờ đầy đủ
   quality/e2e/metadata và mọi check của chính head. Không auto-merge vì protection không
   khai báo required contexts/checks. Chỉ squash merge theo exact head sau review gate.
+
+### Checkpoint tích hợp S03 — 2026-10-16
+
+- PR #1402 head `bde4511a` đủ 19 check sau cập nhật metadata; không review/comment yêu cầu sửa.
+- CI [38885706695](https://github.com/seeker19110/dhcb/actions/runs/38885706695): full
+  build/typecheck/lint/format, SQL/import/CodeQL và sáu shard E2E đạt. 956 file/21.536 test
+  passed, 5 file/35 test skipped sẵn có, 417,03 giây. Coverage 96,12/92,02/96,89/96,83%,
+  giữ sàn 94/90/94/94. Không provider trả phí hoặc production data.
+- Squash merge main `9378c604` lúc 10:24:52 UTC. Deploy
+  [38887070933](https://github.com/seeker19110/dhcb/actions/runs/38887070933) thành công.
+- Đã fetch/reload main và xác nhận spec S04 Approved trong #1399 trước source S04a.
+
+### Iteration 5 — 2026-10-16
+
+- State: WAITING (CI/local coverage); S04a PR #1403 trên `codex/stored-sse-transport`, base main `9378c604`.
+- Một outcome/PR: sửa Web Response → Node response đang gom cả SSE ở production/dev.
+  S04 chưa DONE cho tới guard/corpus tiếp theo. Không đổi runtime/handler/provider,
+  auth/cookie policy, cancel/refund/usage hoặc dữ liệu. Tối đa ba repair cùng failure.
+- Contract: SSE chuyển nguyên bytes/flush, await drain khi connected; khi socket đóng thì
+  dừng write và drain/discard tới EOF/deadline hiện hữu, không cancel Web reader làm
+  producer enqueue lỗi rồi refund. Nhánh non-SSE giữ cách gửi cũ. Header bridge dùng
+  getSetCookie()→array, giữ cookie có Expires dấu phẩy, không split hoặc đổi thuộc tính.
+- Write set: helper Node response/test core-http; routes + test HTTP/handler; helper
+  middleware dev/test scripts/lib và Vite config; E2E browser qua HTTP thật; docs.
+  Không sửa source UI, schema, dependency, migration hoặc lockfile.
+- Impact trước source: CLI full codemap đã hết heap như iteration4. Phân tích AST read-only
+  theo cùng resolver, chứng minh baseline đủ 8.170/8.170 cạnh/file parity với full cache,
+  rồi quét current 2.767 file/8.197 cạnh import, cycles0; không giả call graph/freshness
+  hoặc ghi đè cache. routes impact3, Companion handler5. Vite config ngoài scan roots:
+  rà import/caller bằng rg và module tests. Full codemap/architecture gate CI không đổi.
+- Validation: HTTP loopback/barrier qua adapter thật, negative control .text() phải bị
+  bắt; Unicode/cookies/security/status/JSON/compression/backpressure/error/close. Handler
+  thật + fakes tại auth/DB/provider/quota để đối chiếu side effects, Vite parity và browser
+  HTTP delivery. Không route.fulfill làm bằng chứng transport, không paid/live provider.
+  Local targeted/lint/format/unit và E2E browser; full gate CI exact head. RAM hiện tại
+  đã tăng khả dụng nên chạy lại codemap/build/typecheck toàn dự án cục bộ.
+- Backpressure chỉ Web body→Node socket, chưa có propagation tới producer trong start().
+  Chưa chứng minh Nginx/Cloudflare/client disconnect abort upstream. Rollback revert.
+
+- Test-first hai ca HTTP đỏ trước source: prefix không tới trước barrier và cookie đầu
+  bị overwrite. Sau sửa: wrapper/CSRF/CSP 11 test xanh; nhóm helper/dev/wrapper/handler
+  hiện tại 7 file/55 test đạt, thêm hai test dev resolve/body-error cũng đạt. Chưa dùng
+  các kết quả này thay full gate. SDK cache fake key của case trước đã được sửa ở fixture,
+  giữ nguyên oracle trước EOF/số side effects; không sửa production để né test.
+- HTTP route đăng ký thật + runtime/SDK thật với fakes auth/DB/provider/usage: connected
+  và disconnect giữ một consume/token usage, hai history, không refund thêm; fallback
+  không gọi provider và refund đúng một lần theo ngày consume. Không coi mock DB là
+  bằng chứng authority; corpus/real PG ở slice S04 tiếp theo.
+- Review độc lập helper: gzip thật 2 MiB/32 drain, đúng emitter zlib và cleanup;
+  disconnect 0 cancel, nhả reader; lỗi dev sau headers đóng socket, không thêm JSON.
+  File changed của reviewer: none. Regression gzip/close/error có test trong repo.
+- Điều kiện máy đã đổi: `free` hiện báo RAM 9.946 MiB/swap4.096 MiB (agent không đổi cấu
+  hình host). Full `npm run codemap -- impact apps/server/src/routes.ts` heap4096 đã đạt,
+  impact5. Không còn phải dựa vào fallback import-only cho lần kiểm cuối này.
+- E2E local: lệnh đầu sai quoting PATH có khoảng trắng; lệnh tiếp chưa chạy
+  test do Chromium thiếu libnspr4/nss/asound. Đã tải ba gói Ubuntu vào thư mục test riêng,
+  giải nén/LD_LIBRARY_PATH, không cài hệ thống hoặc đổi repo; browser transport 4/4 đạt.
+- Mở rộng write set kiểm thử: Playwright config + tsconfig.e2e kế thừa alias source từ
+  tsconfig.base. Fixture server thật nhập workspace từng module trước đây rơi vào exports
+  dist chưa build; chỉ định một config source cho toàn bộ file nhập để CI E2E sạch không
+  cần artifacts của build job khác. Không đổi strict/threshold/retry/skip hoặc UI flow;
+  full E2E/quality vẫn bắt buộc. Lỗi này thuộc tầng cấu hình kiểm thử, không phải stream.
+- Review integration phát hiện oracle disconnect mở provider barrier trước server close
+  (proof 3/3). Đây là lỗi tầng cổng: đã đợi latch close phía server khi provider còn held,
+  rồi đợi helper thật hoàn tất trước đối chiếu side effects. Rerun 3/3 đạt, re-review sạch;
+  cleanup browser đóng HTTP trước đợi reader. Không đổi production để né failure.
+- Build/typecheck/lint local toàn dự án đã đạt. Coverage và full browser suite đang chạy;
+  kết quả cuối và CI exact head sẽ cập nhật trước merge.
+- Format toàn dự án đạt. Full E2E local đã dừng bằng SIGINT/exit130 sau 61 ca đạt khi chạy cùng coverage
+  làm máy bắt đầu dùng swap; không báo suite này xanh. Transport browser riêng vẫn 4/4.
+  Full E2E sáu shard trên CI exact head là cổng bắt buộc trước merge.
+- Coverage local báo test sẵn có `projectStepsT2` P4/s6 quá 5.000ms; chạy riêng khi coverage
+  còn hoạt động cũng timeout (6.269ms). Chưa thay source/test/timeout hoặc suy thành lỗi
+  transport; sẽ đối chiếu khi máy không còn heavy gate và CI trên đúng head.
+- Replay provider 7/7 và check:specs 191 đạt trên diff này. Source/review đã hoàn tất;
+  PR dùng CI exact head làm cổng tích hợp đầy đủ, không auto-merge khi gate còn pending.
+- Checkpoint sau gián đoạn: local coverage đã dừng, chưa có tổng kết toàn bộ; không báo
+  pass. Test P4/s6 chạy riêng lúc máy rảnh đạt, không thay timeout 5.000ms. CI
+  [38902270938](https://github.com/seeker19110/dhcb/actions/runs/38902270938) head `1367c225`
+  đạt 18 check, đủ sáu shard E2E; 960 file/21.557 test pass, 35 skip sẵn có,
+  423,30s, coverage 96,13/92,02/96,89/96,84%, giữ sàn 94/90/94/94.
+- Chưa merge vì CodeQL review chỉ ra `js/stack-trace-exposure` medium ở helper dev:
+  lỗi loader có thể trả path/chi tiết nội bộ qua Error.message (hành vi cũ vừa tách file).
+  Test HTTP canary tái hiện hai ca đỏ trước sửa; đổi lỗi dev trước headers thành 500
+  chung, không log payload, sau headers vẫn destroy. Sau sửa 5/5 xanh, codemap impact1.
+  Đây là sửa lỗi trong scope response bridge; cần full CI lại trên head mới.
+- Bản sửa review qua 7 file/258 test liên quan và lint hai file; re-review không finding,
+  không log/lưu payload lỗi. Đang push lại PR #1403 để full gate kiểm đúng head mới.
 
 ## 7. Final audit
 
