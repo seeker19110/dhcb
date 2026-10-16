@@ -1,6 +1,6 @@
 # 0639 — Lọc lời văn Companion trước khi phát stream
 
-- **Ngày:** 2026-10-16 · **PR:** chưa mở · **Loại:** `fix(companion)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1404](https://github.com/seeker19110/dhcb/pull/1404) · **Loại:** `fix(companion)`.
 - **Goal/spec:** [stored S04b](../goals/2026-10-16-stored-upgrades.md),
   [S04 Approved](../specs/2026-10-16-stored-s04-injection-stream.md), đã merge #1399.
 

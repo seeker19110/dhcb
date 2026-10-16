@@ -41,17 +41,17 @@
 
 ## 3. Milestones và slices
 
-| ID   | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State     | Evidence                                                  |
-| ---- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | --------- | --------------------------------------------------------- |
-| S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE      | Main 66db5e63; quality/e2e/metadata và deploy đạt         |
-| S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE      | Main 5e7bb30f; đủ 18 check và deploy đạt                  |
-| S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE      | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt |
-| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | DONE      | Main 9378c604; 19 check, 21.536 test và 6 E2E đạt         |
-| S04a | Chuyển SSE qua HTTP production/dev, giữ side effects khi disconnect          | S03 đã tích hợp                       | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1403](https://github.com/seeker19110/dhcb/pull/1403) | DONE      | Main 84b16bec; 19 check, 21.558 unit và 1.436 E2E pass    |
-| S04b | Lọc lời văn delta/final qua mọi chunk, giữ metadata đề xuất                  | S04a đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | VERIFYING | Local full gate đạt; chờ PR/CI exact head                 |
-| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | BUILDING  | Transport DONE; guard/corpus còn mở                       |
-| S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC      | Chưa có vector thật; chưa đo ranking                      |
-| S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC      | App STT→LLM→TTS; chưa đo acoustic                         |
+| ID   | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State    | Evidence                                                  |
+| ---- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | -------- | --------------------------------------------------------- |
+| S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE     | Main 66db5e63; quality/e2e/metadata và deploy đạt         |
+| S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE     | Main 5e7bb30f; đủ 18 check và deploy đạt                  |
+| S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE     | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt |
+| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | DONE     | Main 9378c604; 19 check, 21.536 test và 6 E2E đạt         |
+| S04a | Chuyển SSE qua HTTP production/dev, giữ side effects khi disconnect          | S03 đã tích hợp                       | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1403](https://github.com/seeker19110/dhcb/pull/1403) | DONE     | Main 84b16bec; 19 check, 21.558 unit và 1.436 E2E pass    |
+| S04b | Lọc lời văn delta/final qua mọi chunk, giữ metadata đề xuất                  | S04a đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1404](https://github.com/seeker19110/dhcb/pull/1404) | CI       | Local full gate đạt; chờ CI exact head                    |
+| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | BUILDING | Transport DONE; guard/corpus còn mở                       |
+| S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC     | Chưa có vector thật; chưa đo ranking                      |
+| S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC     | App STT→LLM→TTS; chưa đo acoustic                         |
 
 ## 4. Risk register
 
@@ -76,7 +76,7 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   `codex/stored-stream-surface-guard`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
 - Goal gap: S01–S04a đã merge; S04a deploy thành công. Trace mặc định tắt, chưa review
   điều kiện bật production. S04b sửa guard delta/final trước corpus S04; S05–S06 chưa triển khai.
-- Next best slice: S04b guard delta/final, sau đó corpus/authority Postgres S04 theo spec đã duyệt.
+- Next best slice: tích hợp S04b sau CI; ưu tiên S05a sửa retrieval guard đã tái hiện, rồi corpus/authority Postgres S04 theo spec đã duyệt.
 - CI S01: [run 38867265957](https://github.com/seeker19110/dhcb/actions/runs/38867265957),
   đủ quality/e2e/metadata. [Deploy 38868410893](https://github.com/seeker19110/dhcb/actions/runs/38868410893)
   thành công; chưa thực hiện live eval provider.
@@ -352,7 +352,7 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
 
 ### Iteration 6 — 2026-10-16
 
-- State: VERIFYING; S04b trên `codex/stored-stream-surface-guard`, base main `84b16bec`.
+- State: CI; S04b PR #1404 trên `codex/stored-stream-surface-guard`, base main `84b16bec`.
 - Spec S04 Approved đã merge #1399. Một outcome/PR: cùng policy loại markup/UUID cho
   delta và final visible text, giữ stream thật. Corpus/authority PG là S04c kế tiếp.
 - Write set: helper surface/test mới core-personal; finalAnswerChecks/test;
@@ -395,8 +395,11 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   format:check exit0. `npm test -- --coverage --maxWorkers=2` exit0: 961 file,
   21.614 test pass/35 skip sẵn có, 477,90s; coverage96,13/92,04/96,91/96,84%,
   giữ sàn94/90/94/94. Guard46/46; replay7/7, check:specs191 đạt.
-- Kiểm typing cuối sau sửa oracle E2E và cập nhật PR trên head thực; CI toàn bộ và
-  sáu shard E2E vẫn bắt buộc trước merge. Không auto-merge trên protection rỗng.
+- Typecheck cuối sau sửa oracle E2E, từ checkout đã xóa dist, exit0. Source commit
+  `ba6802ba`, PR [#1404](https://github.com/seeker19110/dhcb/pull/1404) READY; ghi đúng PR
+  trong tài liệu rồi push head cuối. CI toàn bộ/sáu shard E2E vẫn bắt buộc trước merge,
+  không auto-merge trên protection rỗng. Sau tích hợp ưu tiên S05a vá retrieval guard
+  đã tái hiện, rồi trở lại corpus S04; không chờ benchmark để vá bug P1 hiện hữu.
 
 ## 7. Final audit
 
