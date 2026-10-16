@@ -897,7 +897,7 @@ bảng cha, và chung một transaction nếu hai dòng phải cùng có hoặc 
 
 ## 24. Eval in ca Failed nhưng mã thoát chỉ xét vài chỉ số tổng hợp → xanh giả
 
-**Ngày/PR:** 2026-10-16, chưa tạo PR (changelog `0634`).
+**Ngày/PR:** 2026-10-16, PR #1399 (changelog `0634`).
 
 **Khuôn lỗi:** `eval:v2:memory` tính accuracy và in từng ca sai, nhưng chỉ xét false-memory
 rate/correction rate để thoát. Một ca sai ngoài tập con vẫn báo Passed; tập rỗng cũng có

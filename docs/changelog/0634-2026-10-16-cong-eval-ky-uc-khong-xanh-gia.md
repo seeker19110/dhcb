@@ -1,6 +1,6 @@
 # 0634 — Cổng eval ký ức chặn ca sai và bộ fixture hỏng
 
-- **Ngày:** 2026-10-16 · **PR:** chưa tạo · **Loại:** `fix(eval)`
+- **Ngày:** 2026-10-16 · **PR:** [#1399](https://github.com/seeker19110/dhcb/pull/1399) · **Loại:** `fix(eval)`
 - **Nguồn việc:** nghiên cứu `stored` ngày 16/10, chủ dự án giao “triển khai đi”.
 - **Đặc tả hiện hữu:** `docs/specs/2026-08-17-v2-19-platform-evaluation-hardening.md`.
 

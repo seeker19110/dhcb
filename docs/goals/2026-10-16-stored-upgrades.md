@@ -41,14 +41,14 @@
 
 ## 3. Milestones và slices
 
-| ID  | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR       | State   | Evidence                                                        |
-| --- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | -------- | ------- | --------------------------------------------------------------- |
-| S01 | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | Chưa tạo | WAITING | Đủ năm cổng cục bộ; helper/CLI negative control đạt; chưa merge |
-| S02 | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | Chưa tạo | SPEC    | Chưa triển khai source                                          |
-| S03 | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | Chưa tạo | SPEC    | Chưa chọn backend hoặc chính sách lưu                           |
-| S04 | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo | SPEC    | Giữ red-team Postgres hiện hữu                                  |
-| S05 | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo | SPEC    | Giữ FTS + cosine + RRF hiện hữu                                 |
-| S06 | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo | SPEC    | Chưa thử provider có phí                                        |
+| ID  | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State   | Evidence                                                        |
+| --- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | ------- | --------------------------------------------------------------- |
+| S01 | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | WAITING | Đủ năm cổng cục bộ; helper/CLI negative control đạt; chưa merge |
+| S02 | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa triển khai source                                          |
+| S03 | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa chọn backend hoặc chính sách lưu                           |
+| S04 | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | SPEC    | Giữ red-team Postgres hiện hữu                                  |
+| S05 | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC    | Giữ FTS + cosine + RRF hiện hữu                                 |
+| S06 | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa thử provider có phí                                        |
 
 ## 4. Risk register
 
@@ -104,7 +104,9 @@
 - Owner chọn “Duyệt đặc tả và cho phép push/PR/merge/deploy khi CI xanh”.
 - S02–S06 được đánh dấu Approved for implementation theo quyết định này; chỉ viết source
   sau khi PR chứa spec được merge. Không mở rộng sang provider có phí/dữ liệu production.
-- S01 local commit `e0d0ca56`; bước tiếp theo push nhánh, tạo PR và theo dõi CI.
+- S01 local commit `e0d0ca56`; [PR #1399](https://github.com/seeker19110/dhcb/pull/1399)
+  đã mở, chờ quality/e2e/metadata. GitHub protection hiện không có required check trong
+  `contexts`/`checks`; kiểm đủ ba check xanh thủ công trước merge, không tự đổi protection.
 
 ## 7. Final audit
 

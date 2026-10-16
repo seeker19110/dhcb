@@ -177,7 +177,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   [Goal](docs/goals/2026-10-16-stored-upgrades.md) theo dõi từng slice; S01 đã qua đủ năm cổng
   cục bộ trên `codex/stored-eval-gate`: sửa cổng eval ký ức báo thành công khi có ca sai,
   validate fixture và negative control CLI (`docs/changelog/0634-*.md`). 21.435 test passed,
-  35 skipped sẵn có; chưa tích hợp main. Owner đã duyệt S02–S06 và quyền push/PR/merge/deploy
+  35 skipped sẵn có; [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) đang chờ CI, chưa tích hợp main. Owner đã duyệt S02–S06 và quyền push/PR/merge/deploy
   khi CI xanh ngày 16/10. Các spec từ
   [S02 replay provider](docs/specs/2026-10-16-stored-s02-provider-replay.md) tới
   trace/injection/truy xuất/voice; chưa triển khai và chưa coi là hoàn thành.
