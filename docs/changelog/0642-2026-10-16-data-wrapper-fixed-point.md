@@ -1,6 +1,6 @@
 # 0642 — Giữ thẻ bọc dữ liệu ổn định sau khi xóa thẻ giả
 
-- **Ngày:** 2026-10-16 · **PR:** sẽ ghi sau khi mở · **Loại:** `fix(companion)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1407](https://github.com/seeker19110/dhcb/pull/1407) · **Loại:** `fix(companion)`.
 - **Goal/spec:** [stored S04c](../goals/2026-10-16-stored-upgrades.md),
   [S04 Approved](../specs/2026-10-16-stored-s04-injection-stream.md), merge #1399.
 
