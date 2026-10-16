@@ -17,6 +17,7 @@
 // Model tự chuẩn hoá vector khi cắt chiều (768); vẫn chuẩn hoá lại ở đây cho chắc (cosine = dot).
 
 import { recordAiTokenUsage } from './aiTokenUsage.js'
+import { traceModelCall, type ModelTrace } from './modelTrace.js'
 
 export const EMBEDDING_DIMENSIONS = 768
 export const DEFAULT_GEMINI_EMBEDDING_MODEL = 'gemini-embedding-2'
@@ -117,10 +118,25 @@ class GeminiEmbeddingProvider implements EmbeddingProvider {
 
   async embed(texts: string[], kind: EmbeddingKind): Promise<Array<number[] | null>> {
     if (texts.length === 0) return []
+    return traceModelCall(
+      'gemini',
+      this.model,
+      (observer) => this.embedObserved(texts, kind, observer),
+      // Batch chỉ thành công logic khi mọi vector yêu cầu đều dùng được.
+      (vectors) => vectors.every((vector) => vector !== null),
+    )
+  }
+
+  private async embedObserved(
+    texts: string[],
+    kind: EmbeddingKind,
+    observer: ModelTrace | undefined,
+  ): Promise<Array<number[] | null>> {
     const prefixed = texts.map((t) => withGeminiTaskPrefix(t, kind))
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), this.timeoutMs)
     try {
+      const attempt = observer?.begin()
       const res = await this.fetchImpl(`${GEMINI_ENDPOINT}/${this.model}:batchEmbedContents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
@@ -133,11 +149,13 @@ class GeminiEmbeddingProvider implements EmbeddingProvider {
         }),
         signal: controller.signal,
       })
+      observer?.headers(res, attempt)
       if (!res.ok) {
         console.warn(`[embeddings] Gemini trả HTTP ${res.status} — bỏ qua vector lượt này`)
         return texts.map(() => null)
       }
       const body: unknown = await res.json()
+      observer?.response(body)
       // Ghi chi phí (ước lượng) để nhìn thấy trong bảng token, mode riêng `embedding`.
       void recordAiTokenUsage({
         provider: 'gemini',
@@ -152,6 +170,7 @@ class GeminiEmbeddingProvider implements EmbeddingProvider {
       })
       return readEmbeddings(body, texts.length)
     } catch (err) {
+      observer?.fail()
       const reason = err instanceof Error ? err.name : String(err)
       console.warn(`[embeddings] Gemini lỗi (${reason}) — bỏ qua vector lượt này`)
       return texts.map(() => null)
