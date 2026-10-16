@@ -1,6 +1,6 @@
 # 0635 — Replay provider offline qua SDK và vòng công cụ production
 
-- **Ngày:** 2026-10-16 · **PR:** chưa tạo · **Loại:** `feat(eval)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1400](https://github.com/seeker19110/dhcb/pull/1400) · **Loại:** `feat(eval)`.
 - **Spec:** [S02](../specs/2026-10-16-stored-s02-provider-replay.md), owner duyệt trong chat,
   merge trước source ở PR #1399, main `66db5e6316ecba917a553e567ff78c6a28281fc8`.
 - **Goal:** [nâng cấp từ stored](../goals/2026-10-16-stored-upgrades.md).
