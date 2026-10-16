@@ -1,6 +1,6 @@
 # 0641 — Tính attempt embedding vào trace lượt Companion
 
-- **Ngày:** 2026-10-16 · **PR:** sẽ ghi sau khi mở · **Loại:** `fix(observability)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1406](https://github.com/seeker19110/dhcb/pull/1406) · **Loại:** `fix(observability)`.
 - **Goal/spec:** [stored S03b](../goals/2026-10-16-stored-upgrades.md),
   [S03 Approved](../specs/2026-10-16-stored-s03-turn-tracing.md), đã merge #1399.
 

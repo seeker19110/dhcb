@@ -937,7 +937,7 @@ xác nhận interleaving với service thật và bắt được source cũ. Kh�
 
 ## 26. Call chưa instrument làm tổng chi phí trông đầy đủ
 
-**Ngày/PR:** 2026-10-16, S03b stored (changelog `0641`).
+**Ngày/PR:** 2026-10-16, [PR #1406](https://github.com/seeker19110/dhcb/pull/1406), S03b stored (changelog `0641`).
 
 **Khuôn lỗi:** tổng chỉ biết những attempt đã đăng ký. Adapter phụ gọi HTTP trực tiếp nhưng
 không đăng ký thì unknown count vẫn0; embedding-only có thể thành total0, hoặc mixed total
