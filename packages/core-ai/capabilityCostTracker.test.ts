@@ -62,6 +62,41 @@ describe('CapabilityCostTracker', () => {
     expect(allMetrics).toHaveLength(1)
   })
 
+  it.each([
+    { prompt: 0, output: 0, read: 0, write: 0, usd: 0 },
+    { prompt: 1000, output: 100, read: 0, write: 0, usd: 0.003 },
+    { prompt: 1000, output: 100, read: 800, write: 0, usd: 0.00156 },
+    { prompt: 1000, output: 0, read: 0, write: 1000, usd: 0.0025 },
+    { prompt: 600, output: 0, read: 200, write: 300, usd: 0.00099 },
+    { prompt: 1000, output: 100, read: 0, write: 1000, usd: 0.0035 },
+    { prompt: 500, output: 0, read: 200, write: 300, usd: 0.00079 },
+  ])('mỗi nhóm input chỉ chịu một đơn giá: $prompt/$read/$write/$output', (c) => {
+    // Oracle tính tay theo registry Sonnet hiện hữu: thường $2/M, đọc $0.2/M,
+    // ghi $2.5/M, output $10/M. Tổng prompt đã BAO GỒM cả ba nhóm input rời nhau.
+    expect(calculateCostUsd('claude-sonnet-5-5', c.prompt, c.output, c.read, c.write)).toBeCloseTo(
+      c.usd,
+      9,
+    )
+  })
+
+  it('tracker giữ tổng token nhưng không cộng giá thường lần nữa cho cache write', () => {
+    const metric = tracker.recordInvocation({
+      capabilityId: 'learning.tutor_turn',
+      domain: 'learning',
+      personId: 'synthetic-cost-test',
+      model: 'claude-sonnet-5-5',
+      promptTokens: 600,
+      completionTokens: 40,
+      cacheReadTokens: 200,
+      cacheWriteTokens: 300,
+      latencyMs: 1,
+      status: 'success',
+    })
+    expect(metric.totalTokens).toBe(640)
+    expect(metric.costUsd).toBeCloseTo(0.00139, 9)
+    expect(tracker.getTotalMetrics().totalCostUsd).toBeCloseTo(0.00139, 9)
+  })
+
   it('filters metrics by capability, domain, and person', () => {
     tracker.recordInvocation({
       capabilityId: 'learning.tutor_turn',

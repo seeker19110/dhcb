@@ -106,8 +106,9 @@ export function calculateCostUsd(
   cacheWriteTokens: number = 0,
 ): number {
   const pricing = MODEL_PRICING_REGISTRY[model] || DEFAULT_FALLBACK_PRICING
-  // Regular prompt tokens (tokens không được đọc từ cache)
-  const regularPromptTokens = Math.max(0, promptTokens - cacheReadTokens)
+  // promptTokens là TỔNG input (thường + đọc cache + ghi cache), theo AiTokenUsage.
+  // Ba nhóm rời nhau: cache write đã chịu giá 1.25x bên dưới, không cộng thêm giá thường.
+  const regularPromptTokens = Math.max(0, promptTokens - cacheReadTokens - cacheWriteTokens)
   const regularPromptCost = (regularPromptTokens / 1_000_000) * pricing.promptCostPer1MTokensUsd
   // Cache read tokens được chiết khấu 90% (chỉ tính 10% đơn giá gốc)
   const cacheReadCost = (cacheReadTokens / 1_000_000) * (pricing.promptCostPer1MTokensUsd * 0.1)
