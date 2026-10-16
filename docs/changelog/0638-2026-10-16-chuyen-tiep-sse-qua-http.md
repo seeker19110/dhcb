@@ -1,6 +1,6 @@
 # 0638 — Chuyển tiếp SSE tới client theo từng chunk
 
-- **Ngày:** 2026-10-16 · **PR:** chờ tạo · **Loại:** `fix(http)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1403](https://github.com/seeker19110/dhcb/pull/1403) · **Loại:** `fix(http)`.
 - **Goal/spec:** [stored S04a](../goals/2026-10-16-stored-upgrades.md),
   [S04 Approved](../specs/2026-10-16-stored-s04-injection-stream.md), đã merge #1399.
 
