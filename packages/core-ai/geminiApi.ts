@@ -3,6 +3,7 @@
 
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 import { parseGeminiUsage, type AiTokenUsage } from './aiTokenUsage.js'
+import { traceModelCall, type ModelTrace } from './modelTrace.js'
 
 // Thời gian chờ tối đa cho 1 lần gọi AI (ms) — tránh treo vô hạn khi nhà cung cấp chậm.
 const AI_TIMEOUT_MS = 30_000
@@ -40,6 +41,23 @@ export async function callGemini(
   // thay vì đổi kiểu trả về — 3 nơi đang gọi callGemini() chỉ cần text, giữ nguyên không sửa.
   onUsage?: (usage: AiTokenUsage | null) => void,
 ): Promise<string> {
+  return traceModelCall(
+    'gemini',
+    model,
+    (observer) =>
+      callGeminiObserved(
+        [apiKey, model, system, messages, maxTokens, cachedContent, onUsage],
+        observer,
+      ),
+    (text) => Boolean(text.trim()),
+  )
+}
+
+async function callGeminiObserved(
+  args: Parameters<typeof callGemini>,
+  observer: ModelTrace | undefined,
+): Promise<string> {
+  const [apiKey, model, system, messages, maxTokens, cachedContent, onUsage] = args
   // Chuyển đổi từ format chung sang Gemini format
   const geminiMessages: GeminiMessage[] = []
 
@@ -72,6 +90,7 @@ export async function callGemini(
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
+  const attempt = observer?.begin()
   const resp = await fetchWithTimeout(
     url,
     {
@@ -81,6 +100,7 @@ export async function callGemini(
     },
     AI_TIMEOUT_MS,
   )
+  observer?.headers(resp, attempt)
 
   if (!resp.ok) {
     const errorText = await resp.text()
@@ -88,6 +108,7 @@ export async function callGemini(
   }
 
   const data = (await resp.json()) as GeminiResponse
+  observer?.response(data)
 
   // Báo usage NGAY khi có body hợp lệ — trước cả khi kiểm lỗi nội dung: Gemini đã tính tiền
   // token cho lượt này rồi, kể cả khi phần text trả về rỗng/lỗi.
