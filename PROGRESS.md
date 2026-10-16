@@ -172,15 +172,14 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
-- **[2026-10-16] Nâng cấp từ stored:** chủ dự án đã giao triển khai theo
-  [nghiên cứu](docs/research/2026-10-16-stored-nang-cap-dhcb.md).
-  [Goal](docs/goals/2026-10-16-stored-upgrades.md) theo dõi từng slice; S01 đã qua đủ năm cổng
-  cục bộ trên `codex/stored-eval-gate`: sửa cổng eval ký ức báo thành công khi có ca sai,
-  validate fixture và negative control CLI (`docs/changelog/0634-*.md`). 21.435 test passed,
-  35 skipped sẵn có; [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) đang chờ CI, chưa tích hợp main. Owner đã duyệt S02–S06 và quyền push/PR/merge/deploy
-  khi CI xanh ngày 16/10. Các spec từ
-  [S02 replay provider](docs/specs/2026-10-16-stored-s02-provider-replay.md) tới
-  trace/injection/truy xuất/voice; chưa triển khai và chưa coi là hoàn thành.
+- **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
+  S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
+  cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền
+  push/PR/merge/deploy khi CI xanh; không chi phí provider hoặc dữ liệu production.
+  S02 replay offline đã qua đủ năm cổng (7/7 cassette, 47 test tập trung; 21.482 test toàn bộ đạt),
+  đang chờ CI ở [PR #1400](https://github.com/seeker19110/dhcb/pull/1400).
+  Trace/injection/truy xuất/voice chưa triển khai.
+  S03 cần sửa phép tính cache write bị cộng trùng trước khi xuất chi phí theo lượt.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,

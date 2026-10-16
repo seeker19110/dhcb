@@ -912,3 +912,8 @@ hoặc hỏng đều làm cổng đỏ. Giữ các ngưỡng an toàn cũ như �
 và mã thoát của chính CLI bằng tiến trình con (`scripts/lib/memoryEval.test.ts`,
 `scripts/eval-v2-memory-cli.test.ts`); nguồn dữ liệu giả chỉ thay biên SELECT, quyết định
 ký ức vẫn đi qua `evaluateMemoryCandidate` thật.
+
+**Biến thể ở biên SDK (S02, changelog `0635`):** SDK có thể đổi mismatch thành
+`network_error`, trùng nhánh lỗi mà ca đang chờ. Phải có ledger riêng cho fingerprint,
+response body đã được đọc và terminal effect thực sự xảy ra; số request khớp chưa đủ.
+Giữ hard gate trên delta đã phát trước lỗi, và nhớ SDK chuyển beta từ body sang header.

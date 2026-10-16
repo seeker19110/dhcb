@@ -3,7 +3,7 @@
 | Thuộc tính   | Giá trị                                                      |
 | ------------ | ------------------------------------------------------------ |
 | Spec owner   | Chủ dự án DHCB / agent                                       |
-| Trạng thái   | Approved for implementation; chờ merge trước source          |
+| Trạng thái   | Approved for implementation; đã merge qua PR #1399           |
 | Goal         | [Nâng cấp từ stored](../goals/2026-10-16-stored-upgrades.md) |
 | Lần cập nhật | 2026-10-16                                                   |
 
@@ -86,3 +86,17 @@ Nếu điểm chạm thực tế đổi các luồng đó, cập nhật đặc t
   không được có record mode gọi mạng. Replay không chứng minh chất lượng model mới.
 - Owner đã duyệt phạm vi; bộ ca tối thiểu theo mục 2. Chỉ tạo source S02 sau khi đặc tả
   được merge. Chưa chọn hoặc vận hành dịch vụ Promptfoo/Langfuse bên ngoài.
+
+## 7. Chốt triển khai S02
+
+- Spec đã merge ở PR #1399 (`66db5e63`) trước source. V1 chỉ nhận origin synthetic;
+  bản ghi provider thật cần phạm vi/ngân sách và review riêng.
+- Fingerprint bao method/path, JSON chuẩn hóa và đúng hai header hành vi
+  `anthropic-version`/`anthropic-beta`; auth/key/header định danh không được chụp.
+- Snapshot route kiểm cả timeout ngoài request body. Timeout tổng hợp theo signal SDK
+  và deadline ngắn tường minh của harness; không dùng số này làm latency production.
+- Ledger yêu cầu consumer đọc body hoặc kích hoạt đúng lỗi terminal đã khai báo. Lỗi
+  parser sớm không được tính là đã đo transport cut. Watchdog thiếu signal là lỗi harness.
+- Lời tự nhận đã lưu phải được kiểm trên cả delta đã quan sát khi kết quả cuối lỗi;
+  chỉ kiểm final success không đủ. Executor giả và HTTP delivery thật thuộc phạm vi
+  bằng chứng khác như mục 4, không suy ra authority hoặc client delivery từ replay.
