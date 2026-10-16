@@ -18,6 +18,7 @@
 
 import { fetchWithTimeout } from '@dhcb/core-http/fetchTimeout'
 import { parseGroqUsage, type AiTokenUsage } from './aiTokenUsage.js'
+import { traceModelCall, type ModelTrace } from './modelTrace.js'
 import {
   groqKeyPool,
   groqModelPool,
@@ -75,10 +76,25 @@ export async function callGroqChat(
   maxTokens: number,
   timeoutMs: number = CHAT_PROVIDER_TIMEOUT_MS,
 ): Promise<ChatCallResult> {
+  return traceModelCall(
+    'groq',
+    model,
+    (observer) =>
+      callGroqChatObserved([apiKey, model, system, messages, maxTokens, timeoutMs], observer),
+    (result) => result.kind === 'success' && Boolean(result.text.trim()),
+  )
+}
+
+async function callGroqChatObserved(
+  args: Parameters<typeof callGroqChat>,
+  observer: ModelTrace | undefined,
+): Promise<ChatCallResult> {
+  const [apiKey, model, system, messages, maxTokens, timeoutMs = CHAT_PROVIDER_TIMEOUT_MS] = args
   const groqMessages = [...(system ? [{ role: 'system', content: system }] : []), ...messages]
   const startedAt = Date.now()
 
   let resp: Response
+  const attempt = observer?.begin()
   try {
     resp = await fetchWithTimeout(
       'https://api.groq.com/openai/v1/chat/completions',
@@ -89,7 +105,9 @@ export async function callGroqChat(
       },
       timeoutMs,
     )
+    observer?.headers(resp, attempt)
   } catch (err) {
+    observer?.fail(attempt)
     const message = err instanceof Error ? err.message : String(err)
     return { kind: 'network_error', message, latencyMs: Date.now() - startedAt }
   }
@@ -102,6 +120,7 @@ export async function callGroqChat(
   try {
     // Đọc body MỘT lần rồi rút cả text lẫn usage — Response body chỉ đọc được 1 lượt.
     const body = await resp.json()
+    observer?.response(body)
     const text = parseGroqText(body)
     return {
       kind: 'success',
@@ -111,6 +130,7 @@ export async function callGroqChat(
       model,
     }
   } catch (err) {
+    observer?.fail(attempt)
     const message = err instanceof Error ? err.message : String(err)
     return { kind: 'malformed_body', message, latencyMs: Date.now() - startedAt }
   }

@@ -16,6 +16,7 @@
 // Không gửi temperature/top_p/top_k: model mới từ chối giá trị khác mặc định (400).
 
 import Anthropic from '@anthropic-ai/sdk'
+import { traceModelCall, type ModelTrace } from './modelTrace.js'
 import type { AnthropicRoute } from './aiConfig.js'
 import type { JsonSchema } from './jsonSchema.js'
 import { parseAnthropicUsage, type AiTokenUsage } from './aiTokenUsage.js'
@@ -186,6 +187,18 @@ export async function callAnthropicText(params: {
   /** Chỉ dùng trong test: fetch giả thay cho mạng thật. */
   fetchImpl?: typeof fetch
 }): Promise<AnthropicTextResult> {
+  return traceModelCall(
+    'anthropic',
+    params.route.model,
+    (observer) => callAnthropicTextObserved(params, observer),
+    (result) => result.kind === 'success',
+  )
+}
+
+async function callAnthropicTextObserved(
+  params: Parameters<typeof callAnthropicText>[0],
+  observer: ModelTrace | undefined,
+): Promise<AnthropicTextResult> {
   const { apiKey, route, system, messages, outputSchema, onTextDelta, fetchImpl } = params
   const startedAt = Date.now()
   const latency = () => Date.now() - startedAt
@@ -195,7 +208,11 @@ export async function callAnthropicText(params: {
     const request = buildAnthropicRequest(route, system, messages, outputSchema)
     // `signal` là HẠN CHÓT TỔNG cho cả lần thử lại; `timeout` chỉ áp từng lần thử. Không có
     // signal, timeout + 1 lần thử lại có thể kéo gấp đôi và vượt mốc 60s của Nginx.
-    const options = { timeout: route.timeoutMs, signal: AbortSignal.timeout(route.timeoutMs) }
+    const options = {
+      timeout: route.timeoutMs,
+      signal: AbortSignal.timeout(route.timeoutMs),
+      ...(observer ? { middleware: [observer.middleware] } : {}),
+    }
     const client = getAnthropicClient(apiKey, fetchImpl)
     if (onTextDelta && !outputSchema) {
       // Stream: SDK gom các sự kiện SSE thành đúng một BetaMessage ở `finalMessage()` (kể cả
@@ -203,12 +220,15 @@ export async function callAnthropicText(params: {
       // Lỗi giữa chừng (mạng rớt, overloaded) làm `finalMessage()` ném — rơi vào `catch` như
       // đường không stream; caller đã nhận một phần chữ thì tự quyết giữ hay bỏ.
       const stream = client.beta.messages.stream(request, options)
+      if (observer) stream.on('streamEvent', (event) => observer.observeStream(event))
       stream.on('text', (delta) => onTextDelta(delta))
       response = await stream.finalMessage()
     } else {
       response = await client.beta.messages.create(request, options)
     }
+    observer?.response(response)
   } catch (err) {
+    observer?.fail()
     return describeAnthropicError(err, latency())
   }
 

@@ -18,6 +18,8 @@
 //   - trả NGUYÊN `response.content` (kể cả khối `thinking`) làm tin `assistant` kế tiếp: lịch sử chỉ
 //     nối thêm, không sửa (preserved thinking); mọi `tool_result` của một bước nằm trong MỘT tin.
 import type Anthropic from '@anthropic-ai/sdk'
+import { activeTraceSpan } from '@dhcb/core-db/turnTrace'
+import { traceModelCall } from './modelTrace.js'
 import type { AnthropicRoute } from './aiConfig.js'
 import {
   buildAnthropicRequest,
@@ -176,21 +178,43 @@ export async function runAnthropicToolLoop(params: RunToolLoopParams): Promise<T
 
     let response: BetaMessage
     try {
-      if (onTextDelta) {
-        let stepEmitted = false
-        const stream = client.beta.messages.stream(request, options)
-        stream.on('text', (delta) => {
-          // Bước sau có chữ mà bước trước cũng đã có chữ → nối bằng một dòng trống, để chữ stream
-          // khớp đúng chữ cuối (`texts.join('\n\n')`).
-          if (!stepEmitted && emittedText) onTextDelta('\n\n')
-          stepEmitted = true
-          emittedText = true
-          onTextDelta(delta)
-        })
-        response = await stream.finalMessage()
-      } else {
-        response = await client.beta.messages.create(request, options)
-      }
+      response = await traceModelCall(
+        'anthropic',
+        route.model,
+        async (observer) => {
+          const observedOptions = {
+            ...options,
+            ...(observer ? { middleware: [observer.middleware] } : {}),
+          }
+          try {
+            let result: BetaMessage
+            if (onTextDelta) {
+              let stepEmitted = false
+              const stream = client.beta.messages.stream(request, observedOptions)
+              if (observer) stream.on('streamEvent', (event) => observer.observeStream(event))
+              stream.on('text', (delta) => {
+                // Giữ cách nối delta của loop cũ; observer không chạm nội dung.
+                if (!stepEmitted && emittedText) onTextDelta('\n\n')
+                stepEmitted = true
+                emittedText = true
+                onTextDelta(delta)
+              })
+              result = await stream.finalMessage()
+            } else result = await client.beta.messages.create(request, observedOptions)
+            observer?.response(result)
+            return result
+          } catch (error) {
+            observer?.fail()
+            throw error
+          }
+        },
+        (result) =>
+          !['refusal', 'max_tokens', 'model_context_window_exceeded'].includes(
+            result.stop_reason ?? '',
+          ) &&
+          (result.content.some((b) => b.type === 'tool_use') ||
+            Boolean(extractText(result.content))),
+      )
     } catch (err) {
       const failure = describeAnthropicError(err, Date.now() - startedAt)
       return { ...failure, ...trace() }
@@ -250,9 +274,18 @@ export async function runAnthropicToolLoop(params: RunToolLoopParams): Promise<T
       executions += 1
       onToolStart?.(toolUse.name)
       let outcome: ToolExecutionOutcome
+      const toolKind = tools.some((tool) => tool.name === toolUse.name)
+        ? toolUse.name.startsWith('propose_')
+          ? 'proposal'
+          : 'read'
+        : 'unknown'
+      const toolSpan = activeTraceSpan()?.child('tool', { toolKind })
       try {
-        outcome = await executeTool(toolUse.name, toolUse.input)
+        const execute = () => executeTool(toolUse.name, toolUse.input)
+        outcome = await (toolSpan ? toolSpan.run(execute) : execute())
+        toolSpan?.end({ status: outcome.isError ? 'error' : 'success' })
       } catch {
+        toolSpan?.end({ status: 'error' })
         outcome = { content: TOOL_CRASH_MESSAGE, isError: true }
       }
       toolCalls.push({ name: toolUse.name, ok: !outcome.isError })

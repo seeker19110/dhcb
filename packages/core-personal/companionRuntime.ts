@@ -19,6 +19,11 @@
 import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 import { z } from 'zod'
+import {
+  traceCompanionTurn,
+  traceCompanionGenerator,
+  withTraceStage,
+} from '@dhcb/core-db/turnTrace'
 import { buildContextPackage, type ContextBuildOptions } from './contextEngine.js'
 import { appendCompanionMessage } from './companionMessageService.js'
 import { proposeAction, type ProposeActionInput } from './proposedActionService.js'
@@ -511,7 +516,7 @@ export async function synthesizeCompanionReply(
 
   if (!groqKey && !geminiKey && !anthropicKey) {
     console.warn('[companion] không có key AI nào — trả câu mẫu dự phòng')
-    return fallback()
+    return withTraceStage('fallback', async () => fallback())
   }
 
   const historyItems = contextPackage.items.filter(
@@ -620,12 +625,8 @@ export async function synthesizeCompanionReply(
   // 2. Nhánh Groq (dự phòng thứ nhất — chung model với gia sư tiếng Anh: GROQ_CHAT_MODEL)
   if (groqKey) {
     try {
-      const groqRes = await callGroqChatWithKeyPool(
-        GROQ_CHAT_MODEL,
-        systemPrompt,
-        messages,
-        2048,
-        30_000,
+      const groqRes = await withTraceStage('fallback', () =>
+        callGroqChatWithKeyPool(GROQ_CHAT_MODEL, systemPrompt, messages, 2048, 30_000),
       )
       if (groqRes.kind === 'success' && groqRes.text.trim()) {
         // Ghi chi phí AI theo token THẬT (mục N4) — mode 'companion' để tách khỏi lượt gia sư
@@ -650,16 +651,18 @@ export async function synthesizeCompanionReply(
   if (geminiKey) {
     let geminiUsage: AiTokenUsage | null = null
     try {
-      const geminiText = await callGemini(
-        geminiKey,
-        GEMINI_CHAT_MODEL,
-        systemPrompt,
-        messages as Array<{ role: 'user' | 'assistant'; content: string }>,
-        2048,
-        undefined,
-        (usage) => {
-          geminiUsage = usage
-        },
+      const geminiText = await withTraceStage('fallback', () =>
+        callGemini(
+          geminiKey,
+          GEMINI_CHAT_MODEL,
+          systemPrompt,
+          messages as Array<{ role: 'user' | 'assistant'; content: string }>,
+          2048,
+          undefined,
+          (usage) => {
+            geminiUsage = usage
+          },
+        ),
       )
       void recordAiTokenUsage({
         provider: 'gemini',
@@ -679,7 +682,7 @@ export async function synthesizeCompanionReply(
   // Mọi nhà cung cấp đều hỏng → câu mẫu + cờ dự phòng (handler hoàn lượt). `error` chứ không
   // phải `warn`: tới được đây nghĩa là Companion đang KHÔNG có AI cho bất kỳ ai.
   console.error('[companion] mọi nhà cung cấp AI đều lỗi — trả câu mẫu dự phòng')
-  return fallback()
+  return withTraceStage('fallback', async () => fallback())
 }
 
 // ─── Chặng 1: chuẩn bị lượt ─────────────────────────────────────────────────────────────────
@@ -746,6 +749,14 @@ export async function prepareCompanionTurn(
   request: CompanionRequest,
   agent?: CompanionAgentToolkit,
 ): Promise<PreparedCompanionTurn> {
+  return withTraceStage('prepare', () => prepareCompanionTurnObserved(pool, request, agent))
+}
+
+async function prepareCompanionTurnObserved(
+  pool: Pool,
+  request: CompanionRequest,
+  agent?: CompanionAgentToolkit,
+): Promise<PreparedCompanionTurn> {
   const validated = CompanionRequestSchema.parse(request)
   const {
     personId,
@@ -767,76 +778,82 @@ export async function prepareCompanionTurn(
   const useRouter = agentActive && !explicitDomain && !explicitIntent
   // Step 1b: hồ sơ nền tảng (user_id cho read model, nhóm tuổi cho prompt).
   const [routed, { userId, ageGroup }, memoryConsent] = await Promise.all([
-    useRouter
-      ? routeIntent({
-          ...(anthropicKey ? { apiKey: anthropicKey } : {}),
-          message: userMessage,
-          keywordFallback: keyword,
-        })
-      : Promise.resolve(keyword),
+    withTraceStage('intent', () =>
+      useRouter
+        ? routeIntent({
+            ...(anthropicKey ? { apiKey: anthropicKey } : {}),
+            message: userMessage,
+            keywordFallback: keyword,
+          })
+        : Promise.resolve(keyword),
+    ),
     readPersonProfile(pool, personId),
     agentActive && !ephemeral ? hasMemoryConsent(pool, personId) : Promise.resolve(false),
   ])
   const { intent, domain } = routed
 
-  // Step 2: Context Resolution (Context Engine with Domain Read Model)
-  let domainState: ContextBuildOptions['domainState'] = undefined
-  if (domain === 'learning') {
-    try {
-      const learningModel = await getLearningReadModel(pool, { personId, userId })
-      // Môn Lập trình có khuôn tiến độ riêng (bậc P1–P6, không phải CEFR) nên nối thêm một
-      // dòng thay vì nhồi vào LearningReadModel — và chỉ nối khi người học ĐÃ chạm vào môn.
-      const programming = formatProgrammingProgressForContext(
-        await getProgrammingProgressSummary(pool, userId),
-      )
-      const learningContext = formatLearningReadModelForContext(learningModel)
-      domainState = {
-        sourceId: personId,
-        content: programming ? `${learningContext}\n${programming}` : learningContext,
-        provenance: 'learning:read_model',
+  const contextPackage = await withTraceStage('context', async () => {
+    // Step 2: Context Resolution (Context Engine with Domain Read Model)
+    let domainState: ContextBuildOptions['domainState'] = undefined
+    if (domain === 'learning') {
+      try {
+        const learningModel = await getLearningReadModel(pool, { personId, userId })
+        // Môn Lập trình có khuôn tiến độ riêng (bậc P1–P6, không phải CEFR) nên nối thêm một
+        // dòng thay vì nhồi vào LearningReadModel — và chỉ nối khi người học ĐÃ chạm vào môn.
+        const programming = formatProgrammingProgressForContext(
+          await getProgrammingProgressSummary(pool, userId),
+        )
+        const learningContext = formatLearningReadModelForContext(learningModel)
+        domainState = {
+          sourceId: personId,
+          content: programming ? `${learningContext}\n${programming}` : learningContext,
+          provenance: 'learning:read_model',
+        }
+      } catch {
+        // Graceful fallback
       }
-    } catch {
-      // Graceful fallback
-    }
-  } else {
-    // Trụ Ghi chú (`work`) — cùng khuôn "read model nạp vào ngữ cảnh" như Learning. Hỏng thì đi
-    // tiếp với ngữ cảnh rỗng: thiếu một khối tóm tắt vẫn hơn là không trả lời được. Việc khối
-    // này có THỰC SỰ được nạp hay không do cổng `isConsentActive(personId, domain, purpose)`
-    // trong contextEngine quyết định — ở đây KHÔNG lách cổng đó.
-    try {
-      const content = await getDomainReadModelForContext(pool, personId, domain)
-      if (content) {
-        domainState = { sourceId: personId, content, provenance: `${domain}:read_model` }
+    } else {
+      // Trụ Ghi chú (`work`) — cùng khuôn "read model nạp vào ngữ cảnh" như Learning. Hỏng thì đi
+      // tiếp với ngữ cảnh rỗng: thiếu một khối tóm tắt vẫn hơn là không trả lời được. Việc khối
+      // này có THỰC SỰ được nạp hay không do cổng `isConsentActive(personId, domain, purpose)`
+      // trong contextEngine quyết định — ở đây KHÔNG lách cổng đó.
+      try {
+        const content = await getDomainReadModelForContext(pool, personId, domain)
+        if (content) {
+          domainState = { sourceId: personId, content, provenance: `${domain}:read_model` }
+        }
+      } catch {
+        // Graceful fallback
       }
-    } catch {
-      // Graceful fallback
     }
-  }
 
-  const contextOptions: ContextBuildOptions = {
-    personId,
-    requestId: randomUUID(),
-    requestText: userMessage,
-    domain,
-    purpose: COMPANION_CONSENT_PURPOSE,
-    includeCompanionHistory: !ephemeral,
-    includePersonalContext: !ephemeral,
-    maxSensitivity,
-    tokenBudget: tokenBudget ?? COMPANION_DEFAULT_TOKEN_BUDGET,
-    ...(domainState ? { domainState } : {}),
-  }
-  const contextPackage = await buildContextPackage(pool, contextOptions)
+    const contextOptions: ContextBuildOptions = {
+      personId,
+      requestId: randomUUID(),
+      requestText: userMessage,
+      domain,
+      purpose: COMPANION_CONSENT_PURPOSE,
+      includeCompanionHistory: !ephemeral,
+      includePersonalContext: !ephemeral,
+      maxSensitivity,
+      tokenBudget: tokenBudget ?? COMPANION_DEFAULT_TOKEN_BUDGET,
+      ...(domainState ? { domainState } : {}),
+    }
+    return buildContextPackage(pool, contextOptions)
+  })
 
   // Step 2b: LỚP AN TOÀN — chạy sau khi có ngữ cảnh để bộ phân loại thấy vài lượt người dùng gần
   // đây (đã qua cổng consent y như mọi dữ liệu khác). Chi tiết: safetyGuard.ts.
   const recentUserTurns = contextPackage.items
     .filter((item) => item.provenance.startsWith('companion_message:user:'))
     .map((item) => item.content)
-  const safety = await assessSafety({
-    message: userMessage,
-    recentUserTurns,
-    ...(process.env.ANTHROPIC_API_KEY ? { anthropicApiKey: process.env.ANTHROPIC_API_KEY } : {}),
-  })
+  const safety = await withTraceStage('safety', () =>
+    assessSafety({
+      message: userMessage,
+      recentUserTurns,
+      ...(process.env.ANTHROPIC_API_KEY ? { anthropicApiKey: process.env.ANTHROPIC_API_KEY } : {}),
+    }),
+  )
 
   // Step 3: Companion Planner. Đang ở lượt khủng hoảng thì KHÔNG đề xuất tác vụ nào: không
   // "lưu ký ức" chính lời tâm sự, không tra từ, không cập nhật hồ sơ — chỉ con người và số hỗ trợ.
@@ -904,6 +921,13 @@ export async function synthesizePreparedReply(
   prepared: PreparedCompanionTurn,
   options: Pick<SynthesizeOptions, 'onDelta' | 'now' | 'onToolStart'> = {},
 ): Promise<CompanionReplyResult> {
+  return withTraceStage('synthesis', () => synthesizePreparedReplyObserved(prepared, options))
+}
+
+async function synthesizePreparedReplyObserved(
+  prepared: PreparedCompanionTurn,
+  options: Pick<SynthesizeOptions, 'onDelta' | 'now' | 'onToolStart'>,
+): Promise<CompanionReplyResult> {
   if (prepared.safety.level === 'imminent') {
     return { text: IMMINENT_SAFETY_REPLY, isFallback: false }
   }
@@ -942,6 +966,16 @@ export async function synthesizePreparedReply(
 // ─── Chặng 3: hoàn tất ──────────────────────────────────────────────────────────────────────
 
 export async function finalizeCompanionTurn(
+  pool: Pool,
+  prepared: PreparedCompanionTurn,
+  replyResult: CompanionReplyResult,
+): Promise<CompanionResponse> {
+  return withTraceStage('finalize', () =>
+    finalizeCompanionTurnObserved(pool, prepared, replyResult),
+  )
+}
+
+async function finalizeCompanionTurnObserved(
   pool: Pool,
   prepared: PreparedCompanionTurn,
   replyResult: CompanionReplyResult,
@@ -1042,9 +1076,11 @@ export async function executeCompanionTurn(
   request: CompanionRequest,
   agent?: CompanionAgentToolkit,
 ): Promise<CompanionResponse> {
-  const prepared = await prepareCompanionTurn(pool, request, agent)
-  const replyResult = await synthesizePreparedReply(prepared)
-  return finalizeCompanionTurn(pool, prepared, replyResult)
+  return traceCompanionTurn(async () => {
+    const prepared = await prepareCompanionTurn(pool, request, agent)
+    const replyResult = await synthesizePreparedReply(prepared)
+    return finalizeCompanionTurn(pool, prepared, replyResult)
+  })
 }
 
 export type CompanionStreamEvent =
@@ -1168,7 +1204,15 @@ export class QuestionFenceGuard {
  * Chữ phát ra là STREAM THẬT từ Claude (`onDelta`); nhà cung cấp dự phòng (Groq/Gemini) và câu
  * cố định không stream được thì phát theo từng từ sau khi có bản đầy đủ (hành vi cũ).
  */
-export async function* streamCompanionTurn(
+export function streamCompanionTurn(
+  pool: Pool,
+  request: CompanionRequest,
+  agent?: CompanionAgentToolkit,
+): AsyncGenerator<CompanionStreamEvent, CompanionResponse, unknown> {
+  return traceCompanionGenerator(() => streamCompanionTurnObserved(pool, request, agent))
+}
+
+async function* streamCompanionTurnObserved(
   pool: Pool,
   request: CompanionRequest,
   agent?: CompanionAgentToolkit,
