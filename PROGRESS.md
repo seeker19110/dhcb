@@ -172,6 +172,14 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-10-16] Nâng cấp từ stored:** chủ dự án đã giao triển khai theo
+  [nghiên cứu](docs/research/2026-10-16-stored-nang-cap-dhcb.md).
+  [Goal](docs/goals/2026-10-16-stored-upgrades.md) theo dõi từng slice; S01 đã qua đủ năm cổng
+  cục bộ trên `codex/stored-eval-gate`: sửa cổng eval ký ức báo thành công khi có ca sai,
+  validate fixture và negative control CLI (`docs/changelog/0634-*.md`). 21.435 test passed,
+  35 skipped sẵn có; chưa tích hợp main. S02–S06 đã có Draft từ
+  [S02 replay provider](docs/specs/2026-10-16-stored-s02-provider-replay.md) tới
+  trace/injection/truy xuất/voice; chưa triển khai và chưa coi là hoàn thành.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,

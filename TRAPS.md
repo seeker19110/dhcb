@@ -894,3 +894,21 @@ bảng cha, và chung một transaction nếu hai dòng phải cùng có hoặc 
 - Unit test hồi quy cho đúng luồng này dùng mock ĐÓNG VAI khoá ngoại (ném lỗi khi ghi bảng con
   trỏ tới id chưa chèn) — `packages/core-personal/proposedActionService.test.ts`, describe "nhật
   ký chỉ được ghi SAU khi đã có dòng đề xuất (khoá ngoại)".
+
+## 24. Eval in ca Failed nhưng mã thoát chỉ xét vài chỉ số tổng hợp → xanh giả
+
+**Ngày/PR:** 2026-10-16, chưa tạo PR (changelog `0634`).
+
+**Khuôn lỗi:** `eval:v2:memory` tính accuracy và in từng ca sai, nhưng chỉ xét false-memory
+rate/correction rate để thoát. Một ca sai ngoài tập con vẫn báo Passed; tập rỗng cũng có
+thể qua do mẫu số rỗng được gán giá trị thuận lợi.
+
+**Cách rà:** đọc cả điều kiện quyết định exit code và mẫu số, không dừng ở bảng log. Thử
+một sai lệch mà hai ngưỡng tổng hợp vẫn đạt. Đối chứng CLI của đợt này đổi expected outcome
+của `conf-accept-1`: 29/30 đúng, false-memory 4,76%, correction 100% vẫn phải thoát 1.
+
+**Cổng chốt chặn:** schema fixture phải chặn rỗng/thiếu nhóm/ID trùng; mọi ca tất định sai
+hoặc hỏng đều làm cổng đỏ. Giữ các ngưỡng an toàn cũ như điều kiện bổ sung. Kiểm cả helper
+và mã thoát của chính CLI bằng tiến trình con (`scripts/lib/memoryEval.test.ts`,
+`scripts/eval-v2-memory-cli.test.ts`); nguồn dữ liệu giả chỉ thay biên SELECT, quyết định
+ký ức vẫn đi qua `evaluateMemoryCandidate` thật.
