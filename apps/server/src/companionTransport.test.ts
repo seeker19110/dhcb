@@ -157,7 +157,7 @@ function open(url: string, onData: (body: string) => void) {
   result.catch(() => {})
   return { result, close: () => request?.destroy() }
 }
-function provider(barrier: Promise<void>) {
+function provider(barrier: Promise<void>, deltas: string[] = [PREFIX]) {
   const send = (
     controller: ReadableStreamDefaultController<Uint8Array>,
     event: Record<string, unknown>,
@@ -191,11 +191,13 @@ function provider(barrier: Promise<void>) {
           index: 0,
           content_block: { type: 'text', text: '' },
         })
-        send(controller, {
-          type: 'content_block_delta',
-          index: 0,
-          delta: { type: 'text_delta', text: PREFIX },
-        })
+        for (const text of deltas) {
+          send(controller, {
+            type: 'content_block_delta',
+            index: 0,
+            delta: { type: 'text_delta', text },
+          })
+        }
         await barrier
         send(controller, { type: 'content_block_stop', index: 0 })
         send(controller, {
@@ -262,6 +264,84 @@ describe('Companion HTTP integration', () => {
       })
     },
   )
+
+  it('runtime thật lọc từng delta trước HTTP, giữ ID của questions/context có cấu trúc', async () => {
+    let release: () => void = () => {}
+    const barrier = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const question = {
+      id: PERSON,
+      text: 'Chọn?',
+      multi: false,
+      allowFreeText: true,
+      options: [
+        { id: PERSON, label: 'A' },
+        { id: 'b', label: 'B' },
+      ],
+    }
+    const raw =
+      PREFIX +
+      ' <du_<tool_use>lieu_a>' +
+      PERSON +
+      '\n``` \tdhcb-questions\r\n' +
+      JSON.stringify({ schemaVersion: 1, questions: [question] }) +
+      '\n```\n```dhcb-questions\n{"private":true}\n```'
+    const fetcher = vi.fn<typeof fetch>(async (url) => {
+      if (!String(url).startsWith('https://api.anthropic.com/'))
+        throw new Error('TEST_OUTSIDE_PROVIDER_BOUNDARY')
+      return provider(barrier, [...raw])
+    })
+    vi.stubGlobal('fetch', fetcher)
+    // Chỉ kiểm các event SSE đầy đủ; metadata UUID là hợp lệ, không quét toàn bộ JSON.
+    const events = (body: string): Array<{ type: string; data: Record<string, unknown> }> =>
+      body
+        .split('\n\n')
+        .filter((block) => block.startsWith('event:'))
+        .map((block) => {
+          const [type, data] = block.split('\n')
+          return {
+            type: type!.slice(7),
+            data: JSON.parse(data!.slice(6)) as Record<string, unknown>,
+          }
+        })
+    await withRegistered(async (url) => {
+      let visible = ''
+      const client = open(url, (body) => {
+        const complete = body.slice(0, body.lastIndexOf('\n\n') + 2)
+        visible = events(complete)
+          .filter((event) => event.type === 'chunk')
+          .map((event) => event.data.delta)
+          .join('')
+        expect(visible).not.toContain(PERSON)
+        expect(visible).not.toContain('<tool_')
+        expect(visible).not.toContain('private')
+      })
+      try {
+        await vi.waitFor(() => expect(visible).toContain(PREFIX), { interval: 5 })
+        expect(fakes.history).not.toHaveBeenCalled()
+        release()
+        const parsed = events(await client.result)
+        const done = parsed.find((event) => event.type === 'done')!.data
+        expect(visible.trimEnd()).toBe(PREFIX)
+        expect(done.reply).toBe(PREFIX)
+        expect(done.interactiveQuestions).toEqual([question])
+        expect(
+          parsed.find((event) => event.type === 'questions')!.data.interactiveQuestions,
+        ).toEqual([question])
+        expect(parsed.find((event) => event.type === 'meta')!.data.contextPackage).toMatchObject({
+          personId: PERSON,
+        })
+        expect(fakes.history).toHaveBeenCalledTimes(2)
+        expect(fakes.consume).toHaveBeenCalledTimes(1)
+        expect(fakes.tokenUsage).toHaveBeenCalledTimes(1)
+        expect(fakes.refund).not.toHaveBeenCalled()
+      } finally {
+        release()
+        client.close()
+      }
+    })
+  })
 
   it('câu mẫu fallback vẫn hoàn đúng một lần theo ngày đã consume, không gọi provider', async () => {
     vi.stubEnv('ANTHROPIC_API_KEY', '')

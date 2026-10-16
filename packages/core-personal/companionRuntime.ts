@@ -37,6 +37,8 @@ import {
   type CompanionToolSession,
 } from './companionTools.js'
 import { runFinalAnswerChecks } from './finalAnswerChecks.js'
+import { CompanionVisibleTextGuard } from './companionVisibleText.js'
+export { QuestionFenceGuard } from './companionQuestionFence.js'
 import { isConsentActive } from './consentService.js'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
 import { SensitivitySchema, type Sensitivity } from '@dhcb/core-contracts/personalFact'
@@ -49,7 +51,6 @@ import {
 } from '@dhcb/core-contracts/consentGrant'
 import {
   extractInteractiveQuestions,
-  INTERACTIVE_QUESTION_FENCE,
   type InteractiveQuestion,
 } from '@dhcb/core-contracts/interactiveQuestion'
 import {
@@ -1134,69 +1135,6 @@ class AsyncQueue<T> {
   }
 }
 
-const QUESTION_FENCE_OPEN = '```' + INTERACTIVE_QUESTION_FENCE
-
-/**
- * Giữ lại khối ```dhcb-questions``` khi stream: người dùng KHÔNG được thấy JSON thô chạy qua
- * màn hình rồi biến mất. Mọi dấu ``` khác (code block thường) vẫn đi qua bình thường.
- *
- * Cách làm: gặp ``` thì giữ lại cho tới khi biết chắc nó có phải mở khối câu hỏi không; là khối
- * câu hỏi → nuốt tất cả từ đó về sau (khối luôn đứng cuối câu trả lời theo prompt); không phải →
- * nhả ra và quét tiếp.
- */
-export class QuestionFenceGuard {
-  private pending = ''
-  private swallowing = false
-
-  constructor(private readonly emit: (delta: string) => void) {}
-
-  push(delta: string): void {
-    if (this.swallowing) return
-    this.pending += delta
-    this.drain(false)
-  }
-
-  /** Hết stream: phần đang giữ mà chưa thành khối câu hỏi thì nhả nốt. */
-  end(): void {
-    if (this.swallowing) return
-    this.drain(true)
-  }
-
-  private drain(final: boolean): void {
-    for (;;) {
-      const idx = this.pending.indexOf('```')
-      if (idx === -1) {
-        // Một–hai dấu ` ở cuối có thể là đầu của ``` đang đến theo mẩu sau → giữ lại (trừ khi hết).
-        const trailing = final ? 0 : (/`{1,2}$/.exec(this.pending)?.[0].length ?? 0)
-        const emitUpTo = this.pending.length - trailing
-        if (emitUpTo > 0) this.emit(this.pending.slice(0, emitUpTo))
-        this.pending = this.pending.slice(emitUpTo)
-        return
-      }
-      if (idx > 0) {
-        this.emit(this.pending.slice(0, idx))
-        this.pending = this.pending.slice(idx)
-      }
-      if (this.pending.startsWith(QUESTION_FENCE_OPEN)) {
-        this.swallowing = true
-        this.pending = ''
-        return
-      }
-      if (QUESTION_FENCE_OPEN.startsWith(this.pending)) {
-        // Mới thấy một phần đầu ("```dh…") — chờ thêm, trừ khi stream đã hết.
-        if (final) {
-          this.emit(this.pending)
-          this.pending = ''
-        }
-        return
-      }
-      // Dấu ``` của code block thường → nhả ra, quét tiếp phần sau.
-      this.emit('```')
-      this.pending = this.pending.slice(3)
-    }
-  }
-}
-
 /**
  * Async generator for Streaming Companion responses over Server-Sent Events (SSE).
  * Yields meta -> (safety) -> text chunks (xen nhãn `tool` ở chế độ tác tử) -> proposed actions -> (questions) -> done.
@@ -1240,17 +1178,19 @@ async function* streamCompanionTurnObserved(
   // 2. Chữ: producer (AI) đẩy vào hàng đợi qua bộ giữ khối câu hỏi; generator kéo ra và yield.
   // Nhãn công cụ (chế độ tác tử) đi CÙNG hàng đợi để giữ đúng thứ tự với chữ.
   const queue = new AsyncQueue<{ kind: 'delta' | 'tool'; text: string }>()
-  const guard = new QuestionFenceGuard((delta) => queue.push({ kind: 'delta', text: delta }))
+  const guard = new CompanionVisibleTextGuard((delta) => queue.push({ kind: 'delta', text: delta }))
   const replyPromise = synthesizePreparedReply(prepared, {
     onDelta: (delta) => guard.push(delta),
     onToolStart: (label) => queue.push({ kind: 'tool', text: label }),
   }).then(
     (result) => {
-      guard.end()
+      if (result.streamed) guard.end()
+      else guard.abort()
       queue.close()
       return result
     },
     (err: unknown) => {
+      guard.abort()
       queue.close()
       throw err
     },

@@ -10,6 +10,18 @@ function action(status: ProposedAction['status']): ProposedAction {
 const VI = 'Hôm nay mình nên ôn gì?'
 
 describe('runFinalAnswerChecks', () => {
+  it.each([
+    '<du_<tool_use>lieu_a>',
+    '<tool_<tool_use>use>',
+    '<11111111-1111-4111-8111-111111111111/invoke>',
+  ])('không để phép xóa ghép thành markup nội bộ mới: %s', (reply) => {
+    const result = runFinalAnswerChecks({ reply, userMessage: VI, proposedActions: [] })
+    expect(result.text).toBe('')
+    expect(
+      runFinalAnswerChecks({ reply: result.text, userMessage: VI, proposedActions: [] }).text,
+    ).toBe(result.text)
+  })
+
   it('câu trả lời sạch ⇒ giữ nguyên, không có lỗi', () => {
     const r = runFinalAnswerChecks({
       reply: 'Bạn có 3 thẻ cần ôn hôm nay.',

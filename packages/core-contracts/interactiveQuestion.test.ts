@@ -135,5 +135,20 @@ describe('extractInteractiveQuestions', () => {
     const result = extractInteractiveQuestions(reply)
     expect(result.questions).toHaveLength(1)
     expect(result.questions[0]?.id).toBe('linh_vuc')
+    expect(result.text).toBe('')
+  })
+
+  it('khối reserved đứng cuối: không để phần sau header lọt ra lời văn', () => {
+    const reply = 'Lời mở đầu.\n' + fenced(JSON.stringify(VALID_SET)) + '\n{"private":1}'
+    expect(extractInteractiveQuestions(reply).text).toBe('Lời mở đầu.')
+  })
+
+  it('ID trong bộ câu hỏi có cấu trúc được giữ nguyên', () => {
+    const set = structuredClone(VALID_SET)
+    set.questions[0]!.id = '11111111-1111-4111-8111-111111111111'
+    set.questions[0]!.options[0]!.id = '22222222-2222-4222-8222-222222222222'
+    const result = extractInteractiveQuestions(fenced(JSON.stringify(set)))
+    expect(result.questions[0]?.id).toBe(set.questions[0]!.id)
+    expect(result.questions[0]?.options[0]?.id).toBe(set.questions[0]!.options[0]!.id)
   })
 })

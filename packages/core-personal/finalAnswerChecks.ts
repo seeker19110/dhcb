@@ -12,8 +12,9 @@
 //      CHỈ ghi nhận (đổi ngôn ngữ có thể là chủ ý khi luyện tiếng Anh).
 // Cố ý KHÔNG kiểm "lộ lời giải" bằng mã — không có phép kiểm tất định đáng tin cho văn bản tự do.
 import type { ProposedAction } from '@dhcb/core-contracts/proposedAction'
+import { sanitizeCompanionVisibleText, type VisibleTextIssue } from './companionVisibleText.js'
 
-export type FinalCheckIssue = 'markup' | 'internal_id' | 'false_save_claim' | 'language_mismatch'
+export type FinalCheckIssue = VisibleTextIssue | 'false_save_claim' | 'language_mismatch'
 
 export interface FinalCheckResult {
   text: string
@@ -25,14 +26,6 @@ export interface FinalCheckInput {
   userMessage: string
   proposedActions: ProposedAction[]
 }
-
-const MARKUP_PATTERNS: RegExp[] = [
-  /<\/?du_lieu_[0-9a-f]*[^>]*>/gi,
-  /<\/?(tool_use|tool_result|function_calls|antml:[a-z_]+)[^>]*>/gi,
-  /<invoke\b[^>]*>|<\/invoke>|<parameter\b[^>]*>|<\/parameter>/gi,
-]
-
-const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
 
 /** "(mình|tôi|Bạn Đồng Hành) đã lưu/ghi nhớ/ghi lại/cập nhật/thêm vào…" — khẳng định đã GHI ("lưu ý" không tính). */
 const SAVE_CLAIM =
@@ -47,16 +40,9 @@ export const PENDING_SAVE_NOTE =
 const LANGUAGE_CHECK_MIN_CHARS = 80
 
 export function runFinalAnswerChecks(input: FinalCheckInput): FinalCheckResult {
-  const issues: FinalCheckIssue[] = []
-  let text = input.reply
-
-  const beforeMarkup = text
-  for (const pattern of MARKUP_PATTERNS) text = text.replace(pattern, '')
-  if (text !== beforeMarkup) issues.push('markup')
-
-  const beforeIds = text
-  text = text.replace(UUID, '')
-  if (text !== beforeIds) issues.push('internal_id')
+  const surface = sanitizeCompanionVisibleText(input.reply)
+  const issues: FinalCheckIssue[] = [...surface.issues]
+  let text = surface.text
 
   // Gỡ thẻ/id có thể để lại khoảng trắng thừa — gọn lại nhưng giữ xuống dòng của markdown.
   if (issues.length > 0) {
