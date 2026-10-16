@@ -951,3 +951,17 @@ accounting vì sẽ bỏ HTTP failures hoặc đếm trùng các adapter đã c�
 trace giữ observed chat cost/total null, một attempt mỗi batch và empty/no-provider0.
 On/off request/daily parity và ledger độc lập catch chặn call thừa bị nuốt. Không dùng giá
 hoặc token ước lượng để làm tổng known; không suy số liệu production từ HTTP/PG giả.
+
+## 27. Xóa một lần có thể ghép lại thẻ dữ liệu mới
+
+**Ngày/PR:** 2026-10-16, S04c stored (changelog `0642`).
+
+**Khuôn lỗi:** phần mở/đóng bị chia bởi thẻ khác sẽ ghép thành matching tag mới sau replace.
+One-pass bỏ thẻ ở giữa nhưng để wrapper close mới sống sót. Context dùng nonce biết trước
+trong fixture; không suy thành blind model compromise hoặc quyền ghi DB.
+
+**Cổng chốt chặn:** public-wrapper tests phải đỏ trên source one-pass và kiểm đúng matcher
+scope riêng context/tool, cả open/close/mixedcase. Xóa tới fixed point,32 deletion passes +
+stable check; chưa ổn định thì context content rỗng/tool literalJSONnull, không trả remainder.
+Depth32 giữ canary/depth33 failclosed; benign/code/HTML/UUID/fence giữ input-data policy.
+Cap pass không bound input hoặc chi phí một regex; không mô tả thành CPU/memoryO(1).

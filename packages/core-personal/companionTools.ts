@@ -28,6 +28,7 @@ import { excerptNote } from '@dhcb/core-domains/domainReadModelService'
 import { findPendingDuplicate, proposeAction } from './proposedActionService.js'
 import { isUnsafeMemoryContent, REFLECTION_NAMESPACES } from './memoryReflectionPrompt.js'
 import { stripVietnameseDiacritics } from './vietnameseText.js'
+import { stripCompanionDataTags } from './companionDataTags.js'
 
 /** Một mục từ điển trả về cho model (server tiêm hàm tra — xem `CompanionAgentToolkit`). */
 export interface DictionaryHit {
@@ -216,7 +217,7 @@ const DATA_TAG = /<\/?du_lieu_[0-9a-f]*[^>]*>/gi
 
 /** JSON gọn, đã gỡ thẻ bọc dữ liệu giả và cắt trần độ dài. */
 export function toToolData(value: unknown): string {
-  const json = JSON.stringify(value).replace(DATA_TAG, '')
+  const json = stripCompanionDataTags(JSON.stringify(value), DATA_TAG) ?? 'null'
   return json.length > TOOL_OUTPUT_MAX_CHARS ? `${json.slice(0, TOOL_OUTPUT_MAX_CHARS)}…` : json
 }
 
