@@ -920,7 +920,7 @@ Giữ hard gate trên delta đã phát trước lỗi, và nhớ SDK chuyển be
 
 ## 25. Lọc ứng viên nhưng quên eligibility khi tải ID thiếu
 
-**Ngày/PR:** 2026-10-16, S05a stored (changelog `0640`).
+**Ngày/PR:** 2026-10-16, PR #1405, S05a stored (changelog `0640`).
 
 **Khuôn lỗi:** query lấy ID lọc person/hiệu lực/sensitivity, nhưng query hydrate sau đó chỉ
 lọc person/ID. Record thay đổi giữa hai SELECT bị loại khỏi base rồi được hydrate trở lại;

@@ -417,7 +417,7 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
 
 ### Iteration 7 — 2026-10-16
 
-- State: VERIFY; S05a trên `codex/stored-retrieval-guards`, base main80328ab7.
+- State: CI_WAIT; S05a trên `codex/stored-retrieval-guards`, base main80328ab7.
 - Spec S05 Approved đã merge #1399. Ưu tiên bug P1 trước corpus/benchmark mới: lexical
   hoặc semantic query lấy ID live, record đổi trước base, missing fetch chỉ lọc person/id
   nên expired/invalidated lọt lại vào context. Sensitivity có filter sau ở Context Engine,
@@ -473,6 +473,10 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   33 positive (17vi/16en),7 no_relevant riêng; missing/error/hard violation→INVALID/null.
   Context probes dùng cohort riêng vì mặc định touch, không để transaction read-only lỗi
   rồi coi context rỗng là chặn đúng. Chưa baseline/ranking hoặc floor/vector thật.
+
+- Source commit `6fa0e9af`, [PR #1405](https://github.com/seeker19110/dhcb/pull/1405) READY.
+  Tài liệu đã ghi đúng số PR; chờ quality/e2e/metadata và mọi check trên head cuối,
+  kiểm lại base/review/CodeQL trước merge thủ công. Không auto-merge/bypass.
 
 ## 7. Final audit
 

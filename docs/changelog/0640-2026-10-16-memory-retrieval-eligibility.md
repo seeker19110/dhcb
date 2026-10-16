@@ -1,6 +1,6 @@
 # 0640 — Giữ điều kiện hiệu lực khi đọc bổ sung ký ức
 
-- **Ngày:** 2026-10-16 · **PR:** sẽ ghi sau khi mở · **Loại:** `fix(memory)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1405](https://github.com/seeker19110/dhcb/pull/1405) · **Loại:** `fix(memory)`.
 - **Goal/spec:** [stored S05a](../goals/2026-10-16-stored-upgrades.md),
   [S05 Approved](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md), đã merge #1399.
 
