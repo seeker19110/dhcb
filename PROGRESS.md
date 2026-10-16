@@ -180,7 +180,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   S03a sửa phép tính cache write đã merge [PR #1401](https://github.com/seeker19110/dhcb/pull/1401)
   sau đủ 19 check, CI 21.491 test/coverage và sáu mảnh E2E đạt; deploy thành công.
   S03 trace đã merge [PR #1402](https://github.com/seeker19110/dhcb/pull/1402) sau 19 check xanh,
-  mặc định tắt; deploy thành công. S04a sửa đường SSE đã merge [PR #1403](https://github.com/seeker19110/dhcb/pull/1403) sau 19 check xanh; deploy thành công. S04b guard delta/final ở [PR #1404](https://github.com/seeker19110/dhcb/pull/1404), local full gate đạt, chờ CI; corpus S04 và S05–S06 còn mở.
+  mặc định tắt; deploy thành công. Rà soát bổ sung phát hiện embedding thiếu trace attempt, cần S03b trước khi coi coverage trace hoàn tất. S04a sửa đường SSE đã merge [PR #1403](https://github.com/seeker19110/dhcb/pull/1403) sau 19 check xanh; deploy thành công. S04b guard delta/final đã merge [PR #1404](https://github.com/seeker19110/dhcb/pull/1404) sau 19 check xanh, deploy thành công. Ưu tiên S05a vá retrieval guard đã tái hiện; corpus S04 và benchmark/voice S05–S06 còn mở.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,

@@ -158,10 +158,15 @@ export async function searchMemories(
   let semantic: string[] = []
   // `embeddingProvider: undefined` = dùng mặc định (process.env); `null` = cố ý tắt.
   if (!options.skipSemantic && options.query.trim() && options.embeddingProvider !== null) {
-    const vector =
-      options.embeddingProvider === undefined
-        ? await embedQuery(options.query)
-        : await embedQuery(options.query, options.embeddingProvider)
+    let vector: number[] | null = null
+    try {
+      vector =
+        options.embeddingProvider === undefined
+          ? await embedQuery(options.query)
+          : await embedQuery(options.query, options.embeddingProvider)
+    } catch {
+      // Provider lỗi vẫn giữ nhánh chữ/nền; lỗi SQL bên dưới phải tiếp tục được báo.
+    }
     if (vector) semantic = await semanticCandidates(runner, personId, vector, sensitivities)
   }
 
@@ -182,8 +187,10 @@ export async function searchMemories(
     const { rows } = await runner.query<MemoryRecordRow>(
       `select ${MEMORY_COLUMNS}
        from personal.memory_records
-       where person_id = $1 and id = any($2::uuid[])`,
-      [personId, missing],
+       where person_id = $1 and id = any($2::uuid[])
+         and status <> 'expired' and valid_to is null
+         and sensitivity = any($3::text[])`,
+      [personId, missing, sensitivities],
     )
     for (const row of rows) rowsById.set(row.id, row)
   }

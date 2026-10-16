@@ -4,7 +4,7 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Goal ID           | GOAL-2026-10-16-STORED                                                                                                         |
 | Owner             | Chủ dự án DHCB                                                                                                                 |
-| Trạng thái        | ACTIVE — S01–S04a đã merge; S04b guard đang triển khai; S04–S06 đã được owner duyệt                                            |
+| Trạng thái        | ACTIVE — S01–S04b đã merge; ưu tiên S05a sửa retrieval guard; corpus S04 và S05–S06 còn mở                                     |
 | Bắt đầu           | 2026-10-16                                                                                                                     |
 | Target review     | Sau từng slice đã kiểm chứng                                                                                                   |
 | Quyền được cấp    | Owner duyệt S02–S06 và push/PR/merge/deploy khi CI xanh trong chat 16/10; không chi tiền provider hoặc dùng dữ liệu production |
@@ -46,10 +46,11 @@
 | S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE     | Main 66db5e63; quality/e2e/metadata và deploy đạt         |
 | S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE     | Main 5e7bb30f; đủ 18 check và deploy đạt                  |
 | S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE     | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt |
-| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | DONE     | Main 9378c604; 19 check, 21.536 test và 6 E2E đạt         |
+| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | FOLLOWUP | Main9378c604; phát hiện embedding thiếu attempt, cần S03b |
 | S04a | Chuyển SSE qua HTTP production/dev, giữ side effects khi disconnect          | S03 đã tích hợp                       | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1403](https://github.com/seeker19110/dhcb/pull/1403) | DONE     | Main 84b16bec; 19 check, 21.558 unit và 1.436 E2E pass    |
-| S04b | Lọc lời văn delta/final qua mọi chunk, giữ metadata đề xuất                  | S04a đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1404](https://github.com/seeker19110/dhcb/pull/1404) | CI       | Local full gate đạt; chờ CI exact head                    |
-| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | BUILDING | Transport DONE; guard/corpus còn mở                       |
+| S04b | Lọc lời văn delta/final qua mọi chunk, giữ metadata đề xuất                  | S04a đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1404](https://github.com/seeker19110/dhcb/pull/1404) | DONE     | Main80328ab7; 19 check, 21.614 unit và 1.440 E2E pass     |
+| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | BUILDING | Transport/guard DONE; corpus/PG còn mở                    |
+| S05a | Giữ eligibility khi hydrate và fallback khi embedding reject                 | Spec S05 đã merge                     | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | VERIFY   | Targeted201, PG4/4 và đối chứng source cũ đỏ đúng         |
 | S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC     | Chưa có vector thật; chưa đo ranking                      |
 | S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC     | App STT→LLM→TTS; chưa đo acoustic                         |
 
@@ -71,12 +72,12 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
 
 ## 5. Current truth
 
-- Commit main đã reconcile: `84b16bec917384a1ff01ae1ea7d57a57cd29156b` (PR #1403), ngày 16/10.
+- Commit main đã reconcile: `80328ab7909dbf88d972f2b0845fd228469ada4a` (PR #1404), ngày 16/10.
 - Worktree: `/home/liend/.codex/worktrees/stored-eval-gate/dhcb`; nhánh
-  `codex/stored-stream-surface-guard`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
-- Goal gap: S01–S04a đã merge; S04a deploy thành công. Trace mặc định tắt, chưa review
-  điều kiện bật production. S04b sửa guard delta/final trước corpus S04; S05–S06 chưa triển khai.
-- Next best slice: tích hợp S04b sau CI; ưu tiên S05a sửa retrieval guard đã tái hiện, rồi corpus/authority Postgres S04 theo spec đã duyệt.
+  `codex/stored-retrieval-guards`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
+- Goal gap: S01–S04b đã merge; S04b deploy thành công. Trace mặc định tắt, chưa review
+  điều kiện bật production; S03b cần bổ sung attempt embedding đã xác nhận thiếu. Corpus S04 còn mở; S05a sửa guard trước benchmark, S06 chưa triển khai.
+- Next best slice: S05a vá fallback/rehydration đã tái hiện, rồi bổ sung trace embedding S03b và corpus/authority Postgres S04 theo spec đã duyệt.
 - CI S01: [run 38867265957](https://github.com/seeker19110/dhcb/actions/runs/38867265957),
   đủ quality/e2e/metadata. [Deploy 38868410893](https://github.com/seeker19110/dhcb/actions/runs/38868410893)
   thành công; chưa thực hiện live eval provider.
@@ -400,6 +401,78 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   trong tài liệu rồi push head cuối. CI toàn bộ/sáu shard E2E vẫn bắt buộc trước merge,
   không auto-merge trên protection rỗng. Sau tích hợp ưu tiên S05a vá retrieval guard
   đã tái hiện, rồi trở lại corpus S04; không chờ benchmark để vá bug P1 hiện hữu.
+
+### Checkpoint tích hợp S04b — 2026-10-16
+
+- PR #1404 squash merge lúc15:37:43 UTC, main `80328ab7`. Exact head `c3f5fd1e`,
+  đủ19 check sau metadata mới38925351809 (mô tả cập nhật15:36:42); base vẫn84b16bec,
+  không auto-merge/bypass, không review yêu cầu sửa, CodeQL không alert mở.
+- CI [38923571453](https://github.com/seeker19110/dhcb/actions/runs/38923571453):
+  961 file/21.614 test pass, 5 file/35 test skip sẵn có,375,18s; coverage
+  96,13/92,04/96,91/96,84%, giữ sàn. Sáu shard E2E mỗi shard240 pass, tổng1.440
+  pass/5 skip sẵn có, không flaky trong summary. PG red-team54/54 và permissions23/23.
+- Deploy [38925484811](https://github.com/seeker19110/dhcb/actions/runs/38925484811) đã success
+  trên80328ab7; mainCI [38925484953](https://github.com/seeker19110/dhcb/actions/runs/38925484953) cũng success.
+- Đã fetch/reload main, đọc AGENTS/CLAUDE/PROGRESS/goal/spec trước slice tiếp theo.
+
+### Iteration 7 — 2026-10-16
+
+- State: VERIFY; S05a trên `codex/stored-retrieval-guards`, base main80328ab7.
+- Spec S05 Approved đã merge #1399. Ưu tiên bug P1 trước corpus/benchmark mới: lexical
+  hoặc semantic query lấy ID live, record đổi trước base, missing fetch chỉ lọc person/id
+  nên expired/invalidated lọt lại vào context. Sensitivity có filter sau ở Context Engine,
+  nhưng search vẫn trả quá ngưỡng. Không hứa revoke tuyệt đối sau lần đọc đã hoàn tất.
+- Một outcome: retrieval giữ eligibility/fallback contract hiện có. Write set:
+  memoryRetrieval.ts/test và tài liệu goal/PROGRESS/TRAPS/changelog0640. Không đổi ranking,
+  limit/budget/consent, provider, giá, migration, dependencies hoặc lockfile.
+- Contract: missing SELECT phải kiểm cùng status/valid_to/sensitivity như các candidate
+  SELECT. Provider reject coi như không có vector; catch chỉ await embedQuery, giữ lỗi
+  SQL lexical/semantic/base/hydration được ném. Không thêm log raw/query/exception.
+- Acceptance: test-first stale lexical/semantic ID với expired/invalidated/sensitive,
+  positive missing live ngoài base vẫn tải được, không touch record bị loại;
+  null/default/explicit provider reject giữ lexical/base; bốn lỗi DB không bị catch nhầm.
+  Kiểm SQL/interleaving trên Postgres disposable khi có thể; cleanup own UUID, giữ baseline
+  4 memory audit. Full gate/replay/specs/CI/E2E, rollback revert, tối đa3 repair cùng lỗi.
+- Reviewer probe ngoài repo chỉ dùng source thật+fakes SQL-aware; chưa thay bằng chứng
+  PG/MVCC. Parent sẽ chạy lại path thật của slice. Không provider có phí/production.
+- Nhãn S05 draft26records/40queries (20vi/20en,33positive/7no_relevant) đã review trước
+  ranking, hashb8cf4cfb…59dd68a, provenance agent_synthetic_review, không human golden.
+  Corpus nhỏ nên chưa đặt floor, không tune sau xem baseline; timestamp fixture cần chốt
+  trung thực qua service trước dùng. Chưa chạy benchmark/vector provider, semantic NOT_MEASURED.
+
+- Test-first: 8 ca đỏ/19 ca xanh trước sửa, sau sửa và thêm foreign-ID controls 29/29 retrieval đạt; toàn bộ targeted
+  memory/context/reflection/runtime 5 file/201 test đạt. Fake hydration chỉ diễn giải
+  predicate SQL thật; positive live ngoài base và bốn lỗi SQL đều giữ contract.
+- Postgres16 disposable `dhcb_stored_test`: service thật gieo 20 nền + target ngoài LIMIT,
+  lexical lấy ID trước barrier; expire/invalidate/merge nâng sensitivity qua service trên
+  kết nối khác trước base/hydration. Cả ba target bị loại; live control vẫn trả, không
+  trả người khác. Kiểm version/status/valid_to/sensitivity/access_count thật. `touch:false`
+  ở proof PG, test unit riêng kiểm không gọi touch khi target bị loại.
+- Negative control dùng source main cũ, chỉ transpile ngoài repo: cùng PG oracle đỏ đúng
+  vì expired được trả lại. Bản sửa exit0 bốn case, own-UUID cleanup0, giữ nguyên 4 audit
+  baseline cả lượt âm/dương. Không gọi provider/production. Đây là fresh SELECT guard,
+  không bảo đảm revoke sau snapshot đã đọc. Script/evidence ngoài repo trong
+  `/home/liend/.codex/validation/stored-retrieval-guards/`; test hồi quy nằm trong repo.
+- Rà soát S03 phát hiện P2: embedding HTTP chưa tạo trace attempt, nên tổng có thể known
+  dù thiếu call. Probe actual context/retrieval/embedding+trace với fake fetch xác nhận;
+  sửa ở slice riêng theo S03 Approved, giữ cost/token unknown, không sửa daily accounting
+  hoặc giá. S03 coverage chưa được coi là hoàn tất trước sửa bổ sung này.
+
+- Full local Node22: build/typecheck/lint0 cảnh báo/format:check exit0.
+  `npm test -- --coverage --maxWorkers=2`: 961 file/21.630 test pass, 5 file/35 test skip
+  sẵn có,373,43s; coverage96,13/92,05/96,91/96,84%, giữ sàn94/90/94/94.
+  Replay7/7, check:specs191 đạt. Browser transport8/8 đạt, gồm hai buffering controls.
+  Typecheck cuối sau xóa dist exit0 (69,01s); CI exact head vẫn bắt buộc trước merge.
+- Chuẩn bị phần sau, chưa source/DB/ranking: corpus plan S04 có wrapper one-pass composition
+  tái hiện bằng hàm thật; context là nonce-known robustness, không model compromise proof.
+  Giữ matcher riêng context/tool và chốt bound/fail-closed trước source, không dùng visible
+  UUID/fence guard cho dữ liệu input prompt. Đây là scope S04 sau S05a/S03b.
+- Parent review chốt S05 timePolicy `service_clock_snapshot`: service timestamp thật,
+  chụp một clock Postgres sau seed, giữ now/touch:false trên cùng read-only snapshot giữa
+  các mode. Revision metadata trước ranking, không đổi nhãn/query/exclusions frozen;
+  33 positive (17vi/16en),7 no_relevant riêng; missing/error/hard violation→INVALID/null.
+  Context probes dùng cohort riêng vì mặc định touch, không để transaction read-only lỗi
+  rồi coi context rỗng là chặn đúng. Chưa baseline/ranking hoặc floor/vector thật.
 
 ## 7. Final audit
 

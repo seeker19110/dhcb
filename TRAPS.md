@@ -917,3 +917,20 @@ ký ức vẫn đi qua `evaluateMemoryCandidate` thật.
 `network_error`, trùng nhánh lỗi mà ca đang chờ. Phải có ledger riêng cho fingerprint,
 response body đã được đọc và terminal effect thực sự xảy ra; số request khớp chưa đủ.
 Giữ hard gate trên delta đã phát trước lỗi, và nhớ SDK chuyển beta từ body sang header.
+
+## 25. Lọc ứng viên nhưng quên eligibility khi tải ID thiếu
+
+**Ngày/PR:** 2026-10-16, S05a stored (changelog `0640`).
+
+**Khuôn lỗi:** query lấy ID lọc person/hiệu lực/sensitivity, nhưng query hydrate sau đó chỉ
+lọc person/ID. Record thay đổi giữa hai SELECT bị loại khỏi base rồi được hydrate trở lại;
+việc candidate từng hợp lệ không thay thế được kiểm tra tại lần đọc mới.
+
+**Cách rà:** rà mọi SELECT trả nội dung, kể cả nhánh tải ID ngoài LIMIT. Dùng barrier sau
+candidate rồi expire/invalidate/nâng sensitivity; positive live ngoài base vẫn phải trả.
+Fake chỉ diễn giải predicate có thật, tránh tự loại record hộ query đang thiếu điều kiện.
+
+**Cổng chốt chặn:** `memoryRetrieval.test.ts` kiểm hai nguồn ID, lifecycle, sensitivity,
+foreign ID, không touch record bị loại và positive live. Proof PostgreSQL disposable S05a
+xác nhận interleaving với service thật và bắt được source cũ. Không suy thành revoke tuyệt
+đối sau snapshot đã đọc. Catch fallback embedding chỉ bao provider; bốn lỗi SQL vẫn reject.
