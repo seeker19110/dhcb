@@ -41,15 +41,15 @@
 
 ## 3. Milestones và slices
 
-| ID   | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State    | Evidence                                                  |
-| ---- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | -------- | --------------------------------------------------------- |
-| S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE     | Main 66db5e63; quality/e2e/metadata và deploy đạt         |
-| S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE     | Main 5e7bb30f; đủ 18 check và deploy đạt                  |
-| S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE     | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt |
-| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | Chưa tạo                                               | BUILDING | Mặc định tắt; contract/observer nội bộ theo spec đã merge |
-| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | SPEC     | Giữ red-team Postgres hiện hữu                            |
-| S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC     | Chưa có vector thật; chưa đo ranking                      |
-| S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC     | App STT→LLM→TTS; chưa đo acoustic                         |
+| ID   | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State   | Evidence                                                  |
+| ---- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | ------- | --------------------------------------------------------- |
+| S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE    | Main 66db5e63; quality/e2e/metadata và deploy đạt         |
+| S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE    | Main 5e7bb30f; đủ 18 check và deploy đạt                  |
+| S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE    | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt |
+| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | WAITING | Mặc định tắt; contract/observer nội bộ theo spec đã merge |
+| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo                                               | SPEC    | Giữ red-team Postgres hiện hữu                            |
+| S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa có vector thật; chưa đo ranking                      |
+| S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC    | App STT→LLM→TTS; chưa đo acoustic                         |
 
 ## 4. Risk register
 
@@ -191,7 +191,7 @@
 
 ### Iteration 4 — 2026-10-16
 
-- State: BUILDING; slice S03 trên `codex/stored-turn-tracing`, main `f29d8237` đã reload.
+- State: WAITING (CI); slice S03 PR #1402 trên `codex/stored-turn-tracing`, main `f29d8237` đã reload.
 - Spec S03 Approved đã merge ở #1399 trước source. Một outcome/PR: trace private các
   chặng/lần gọi của Companion, mặc định tắt, logger hiện hữu; không backend mới, không
   quota/billing/DB mutation hoặc provider trả phí. Tối đa ba lần sửa cùng failure.
@@ -236,6 +236,10 @@
   lượt cục bộ không đo coverage. Replay CLI7/7 và check:specs191 đạt. Nhóm45 test trace
   lặp lại đạt sau sửa cleanup collector deferred; không lọc event để che lẫn trace.
   Build/typecheck toàn dự án, coverage và E2E giữ nguyên gate CI trên chính head trước merge.
+
+- [PR #1402](https://github.com/seeker19110/dhcb/pull/1402) đã mở READY; chờ đầy đủ
+  quality/e2e/metadata và mọi check của chính head. Không auto-merge vì protection không
+  khai báo required contexts/checks. Chỉ squash merge theo exact head sau review gate.
 
 ## 7. Final audit
 

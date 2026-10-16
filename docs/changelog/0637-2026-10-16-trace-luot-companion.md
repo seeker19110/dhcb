@@ -1,6 +1,6 @@
 # 0637 — Trace các chặng và chi phí lượt Companion
 
-- **Ngày:** 2026-10-16 · **PR:** chờ tạo · **Loại:** `feat(observability)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1402](https://github.com/seeker19110/dhcb/pull/1402) · **Loại:** `feat(observability)`.
 - **Goal/spec:** [stored S03](../goals/2026-10-16-stored-upgrades.md),
   [Approved for implementation](../specs/2026-10-16-stored-s03-turn-tracing.md), đã merge #1399.
 
