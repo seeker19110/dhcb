@@ -70,7 +70,7 @@ describe('Middleware dev qua HTTP thật', () => {
       async (url) => {
         expect(await open(url + '/api/companion')).toMatchObject({
           status: 500,
-          text: '{"error":"TEST_RESOLVE_ERROR"}',
+          text: '{"error":"Internal server error"}',
         })
       },
       () => {
@@ -78,6 +78,24 @@ describe('Middleware dev qua HTTP thật', () => {
       },
     )
     expect(load).not.toHaveBeenCalled()
+  })
+
+  it('lỗi loader chứa chi tiết nội bộ không tới HTTP body', async () => {
+    const canary = 'TEST_PRIVATE_LOADER_CANARY'
+    await withDev(
+      async () => {
+        throw new Error(`Không tải được module: ${canary} at /private/server.ts:123`)
+      },
+      async (url) => {
+        const response = await open(url + '/api/companion')
+        expect(response).toMatchObject({
+          status: 500,
+          text: '{"error":"Internal server error"}',
+        })
+        expect(response.text).not.toContain(canary)
+        expect(response.text).not.toContain('/private/')
+      },
+    )
   })
 
   it('body lỗi sau prefix đóng socket, không nối JSON 500 vào stream', async () => {

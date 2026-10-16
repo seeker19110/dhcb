@@ -317,6 +317,18 @@
   transport; sẽ đối chiếu khi máy không còn heavy gate và CI trên đúng head.
 - Replay provider 7/7 và check:specs 191 đạt trên diff này. Source/review đã hoàn tất;
   PR dùng CI exact head làm cổng tích hợp đầy đủ, không auto-merge khi gate còn pending.
+- Checkpoint sau gián đoạn: local coverage đã dừng, chưa có tổng kết toàn bộ; không báo
+  pass. Test P4/s6 chạy riêng lúc máy rảnh đạt, không thay timeout 5.000ms. CI
+  [38902270938](https://github.com/seeker19110/dhcb/actions/runs/38902270938) head `1367c225`
+  đạt 18 check, đủ sáu shard E2E; 960 file/21.557 test pass, 35 skip sẵn có,
+  423,30s, coverage 96,13/92,02/96,89/96,84%, giữ sàn 94/90/94/94.
+- Chưa merge vì CodeQL review chỉ ra `js/stack-trace-exposure` medium ở helper dev:
+  lỗi loader có thể trả path/chi tiết nội bộ qua Error.message (hành vi cũ vừa tách file).
+  Test HTTP canary tái hiện hai ca đỏ trước sửa; đổi lỗi dev trước headers thành 500
+  chung, không log payload, sau headers vẫn destroy. Sau sửa 5/5 xanh, codemap impact1.
+  Đây là sửa lỗi trong scope response bridge; cần full CI lại trên head mới.
+- Bản sửa review qua 7 file/258 test liên quan và lint hai file; re-review không finding,
+  không log/lưu payload lỗi. Đang push lại PR #1403 để full gate kiểm đúng head mới.
 
 ## 7. Final audit
 

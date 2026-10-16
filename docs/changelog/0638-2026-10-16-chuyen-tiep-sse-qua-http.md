@@ -22,6 +22,10 @@ và request headers hiện hữu. Không đổi auth/cookie policy, handler/runt
 usage/refund, cấu hình compression, schema, dependency hoặc migration. Chưa triển khai
 guard/corpus injection trong S04a; đó là slice kế tiếp của S04.
 
+Review CodeQL chỉ ra lỗi dev trước headers trả `Error.message` có thể chứa path/chi tiết
+nội bộ. Test canary qua HTTP tái hiện được; đổi riêng lỗi này sang JSON 500 chung,
+không log payload. Nhánh lỗi sau headers vẫn chỉ đóng socket.
+
 ## Kiểm chứng
 
 - Hai ca HTTP đỏ trước sửa, xanh sau sửa. Wrapper, CSRF/CSP, helper, dev và handler/API:
@@ -45,6 +49,15 @@ guard/corpus injection trong S04a; đó là slice kế tiếp của S04.
   Lượt E2E toàn bộ local đã dừng exit130 khi máy dùng swap (61 ca đạt trước khi dừng),
   không coi suite này xanh. Giữ nguyên timeout/threshold; full gate và sáu shard E2E
   trên CI exact head phải đạt trước merge.
+- CI [38902270938](https://github.com/seeker19110/dhcb/actions/runs/38902270938) trên head
+  `1367c225` đạt 18 check, 960 file/21.557 test, 35 test skip sẵn có; coverage
+  96,13/92,02/96,89/96,84%. Lượt coverage local bị ngắt chưa có tổng kết, không báo pass;
+  riêng test timeout chạy lại lúc máy rảnh đạt (1 test được chọn, không nới 5.000ms).
+- Sau CI xanh, review CodeQL `js/stack-trace-exposure` medium đã được xử lý bằng lỗi dev
+  chung: test-first 2 đỏ/3 xanh trước sửa, 5/5 xanh sau sửa. Full codemap impact helper1.
+  Cần CI mới trên head chứa bản sửa này; không dùng kết quả head cũ để merge.
+- Nhóm cuối 7 file/258 test HTTP, route registry, CSRF/CSP, helper và runtime đạt;
+  lint hai file sửa đạt, re-review không finding mới, không log hay lưu payload lỗi.
 
 ## Rollout và rollback
 

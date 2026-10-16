@@ -64,14 +64,15 @@ export function createApiEdgeDevMiddleware(dependencies: DevApiDependencies) {
       copyWebResponseHeaders(response, target)
       if (!(await forwardEventStream(response, target, request.method)))
         target.end(await response.text())
-    } catch (error) {
+    } catch {
       if (target.headersSent || target.destroyed) {
         target.destroy()
         return
       }
       target.statusCode = 500
       target.setHeader('content-type', 'application/json')
-      target.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }))
+      // Lỗi loader/handler có thể mang path hoặc chi tiết nội bộ; không trả ra browser.
+      target.end(JSON.stringify({ error: 'Internal server error' }))
     }
   }
 }
