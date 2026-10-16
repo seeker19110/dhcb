@@ -1,6 +1,6 @@
 # S06 đo trải nghiệm hội thoại giọng nói
 
-**Trạng thái:** Approved for implementation — chờ merge trước source.
+**Trạng thái:** Approved for implementation — đã merge qua PR #1399.
 
 **Goal:** [Nâng cấp từ stored](../goals/2026-10-16-stored-upgrades.md).
 

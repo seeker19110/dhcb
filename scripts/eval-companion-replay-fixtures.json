@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "fixtureSetVersion": "2026-10-16.1",
+  "sourceCommit": "66db5e6316ecba917a553e567ff78c6a28281fc8",
+  "origin": "synthetic",
+  "provider": "anthropic",
+  "route": {
+    "model": "claude-sonnet-5-5",
+    "effort": "low",
+    "maxTokens": 6144,
+    "timeoutMs": 30000
+  },
+  "cases": [
+    {
+      "id": "replay-text",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": false,
+      "toolReplies": {},
+      "group": "text",
+      "message": "Chào bạn, cho mình một lời chào ngắn.",
+      "expect": {
+        "kind": "success",
+        "text": "Chào bạn!",
+        "deltas": "",
+        "tools": [],
+        "pendingProposals": 0
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "32399b4ab1cc4c36167e91a7ff1ac9038a8c2209bb7656362dbcf711abc633ae",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "application/json",
+            "body": "{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[{\"type\":\"text\",\"text\":\"Chào bạn!\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay-read_tool",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": false,
+      "toolReplies": {
+        "get_review_queue": {
+          "content": "{\"due\":3}"
+        }
+      },
+      "group": "read_tool",
+      "message": "Hôm nay mình cần ôn bao nhiêu thẻ?",
+      "expect": {
+        "kind": "success",
+        "text": "Bạn có 3 thẻ cần ôn.",
+        "deltas": "",
+        "tools": ["get_review_queue"],
+        "pendingProposals": 0
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "29a21ff2bd4a85ce3f4c26b96c97887d4f72e8535c7ddc3cf704b285f1081683",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "application/json",
+            "body": "{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[{\"type\":\"tool_use\",\"id\":\"tu_synthetic\",\"name\":\"get_review_queue\",\"input\":{}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "c84be89b651cbd3e0cb3cc6d1c1dabd32b166624ecfc0cc603f3dc5f78b1e7b0",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "application/json",
+            "body": "{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[{\"type\":\"text\",\"text\":\"Bạn có 3 thẻ cần ôn.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay-pending_proposal",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": false,
+      "toolReplies": {
+        "propose_memory": {
+          "content": "{\"status\":\"pending\",\"note\":\"Chờ người dùng xác nhận\"}"
+        }
+      },
+      "group": "pending_proposal",
+      "message": "Hãy đề xuất ghi nhớ mình thích học vào buổi sáng.",
+      "expect": {
+        "kind": "success",
+        "text": "Đề xuất đang chờ bạn xác nhận.",
+        "deltas": "",
+        "tools": ["propose_memory"],
+        "pendingProposals": 1
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "f17bf55e753aca2e6a9fcbcb68359b39b971a2bc2af80d73198b50088c964b54",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "application/json",
+            "body": "{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[{\"type\":\"tool_use\",\"id\":\"tu_synthetic\",\"name\":\"propose_memory\",\"input\":{\"namespace\":\"preference\",\"content\":\"Người dùng thích học vào buổi sáng.\",\"importance\":5}}],\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}"
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "96b3a5cfa8057c583ab5be33c95d845b8d8c84fef4f425d8c9d575815edddf32",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "application/json",
+            "body": "{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[{\"type\":\"text\",\"text\":\"Đề xuất đang chờ bạn xác nhận.\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay-stream",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": true,
+      "toolReplies": {},
+      "group": "stream",
+      "message": "Bạn có thể cùng mình ôn tập không?",
+      "expect": {
+        "kind": "success",
+        "text": "Mình có thể cùng bạn ôn tập.",
+        "deltas": "Mình có thể cùng bạn ôn tập.",
+        "tools": [],
+        "pendingProposals": 0
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "305d1c8fbed2482c68d2f245fdcd7cfa2d5286bdb4edadfa82fa0045d327587a",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "text/event-stream",
+            "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Mình có thể \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cùng bạn ôn tập.\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":20}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay-malformed_json",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": false,
+      "toolReplies": {},
+      "group": "malformed_json",
+      "message": "Đây là ca lỗi JSON tổng hợp.",
+      "expect": {
+        "kind": "network_error",
+        "deltas": "",
+        "tools": [],
+        "pendingProposals": 0
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "0d81b4082a5687bac1dedcf2fea373a140c2787683c79952e92ab4ac5d028ab2",
+          "response": {
+            "kind": "http",
+            "status": 200,
+            "contentType": "application/json",
+            "body": "{"
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay-timeout",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": false,
+      "toolReplies": {},
+      "group": "timeout",
+      "message": "Đây là ca hết thời gian tổng hợp.",
+      "deadlineMs": 200,
+      "expect": {
+        "kind": "network_error",
+        "deltas": "",
+        "tools": [],
+        "pendingProposals": 0
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "d570dfe52ecfc1ab242f39d8c8dfbeda66a19637f4bc2b1fc1930eb31a513c2f",
+          "response": {
+            "kind": "timeout"
+          }
+        }
+      ]
+    },
+    {
+      "id": "replay-stream_cut",
+      "now": "2026-10-16T00:00:00.000Z",
+      "nonce": "0123abcd",
+      "stream": true,
+      "toolReplies": {},
+      "group": "stream_cut",
+      "message": "Đây là ca stream đứt tổng hợp.",
+      "expect": {
+        "kind": "network_error",
+        "deltas": "Một phần câu trả lời",
+        "tools": [],
+        "pendingProposals": 0
+      },
+      "exchanges": [
+        {
+          "method": "POST",
+          "path": "/v1/messages?beta=true",
+          "requestHeaders": {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01"
+          },
+          "requestFingerprint": "7f02d3025480c2002882182970c0cec91f909dff9b4947905fad8fb9d1806e53",
+          "response": {
+            "kind": "stream_error",
+            "chunks": [
+              "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_synthetic\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":100,\"output_tokens\":20}}}\n\n",
+              "event: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\n",
+              "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Một phần câu trả lời\"}}\n\n"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
