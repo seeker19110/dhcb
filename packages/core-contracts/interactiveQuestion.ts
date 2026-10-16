@@ -8,7 +8,7 @@
 //
 // NGUYÊN TẮC BẤT BIẾN: khối câu hỏi là PHẦN THÊM, không thay thế lời văn. Nếu LLM không xuất
 // khối này, hoặc xuất sai định dạng, người dùng vẫn đọc được câu hỏi dạng chữ như cũ
-// (xem `extractInteractiveQuestions` — mọi nhánh lỗi đều trả nguyên văn `reply`).
+// Khối reserved luôn được giấu, kể cả JSON hỏng; lời văn trước khối vẫn được giữ.
 
 import { z } from 'zod'
 
@@ -77,20 +77,14 @@ export const INTERACTIVE_QUESTION_PROMPT_GUIDE =
   'KHÔNG dùng khối này cho câu hỏi mở hoàn toàn (ví dụ "Bạn cảm thấy thế nào?") — câu hỏi mở cứ ' +
   'để người dùng tự viết.'
 
-// Regex bắt khối ```dhcb-questions ... ```. Cờ `m` để `^`/`$` khớp theo từng dòng; không dùng cờ
-// `g` (chỉ lấy khối ĐẦU TIÊN — một lượt thoại chỉ có đúng một bộ câu hỏi).
-const FENCE_PATTERN = new RegExp(
-  '^[ \\t]*```[ \\t]*' +
-    INTERACTIVE_QUESTION_FENCE +
-    '[ \\t]*\\r?\\n([\\s\\S]*?)\\r?\\n?```[ \\t]*$',
-  'm',
-)
-
-// Chỉ bắt dòng MỞ khối (không cần dấu đóng) — dùng khi khối bị cắt cụt giữa chừng.
-const OPEN_FENCE_PATTERN = new RegExp(
-  '^[ \\t]*```[ \\t]*' + INTERACTIVE_QUESTION_FENCE + '[ \\t]*\\r?\\n',
-  'm',
-)
+// Một grammar chung cho parser và stream: đúng tên ở đầu dòng, LF/CRLF.
+const HEADER_BODY = '[ \\t]*```[ \\t]*' + INTERACTIVE_QUESTION_FENCE + '[ \\t]*'
+const HEADER_LINE = new RegExp('^' + HEADER_BODY + '\\r?$')
+export function isInteractiveQuestionHeader(line: string): boolean {
+  return HEADER_LINE.test(line)
+}
+const FENCE_PATTERN = new RegExp('^' + HEADER_BODY + '\\r?\\n([\\s\\S]*?)\\r?\\n?```[ \\t]*$', 'm')
+const OPEN_FENCE_PATTERN = new RegExp('^' + HEADER_BODY + '\\r?\\n', 'm')
 
 export interface ExtractedInteractiveQuestions {
   /** Lời văn hiển thị cho người dùng — đã gỡ khối JSON ra khỏi câu trả lời. */
@@ -103,23 +97,17 @@ export interface ExtractedInteractiveQuestions {
  * Tách khối câu hỏi tương tác khỏi câu trả lời thô của LLM.
  *
  * Luôn "hỏng thì bỏ qua", không bao giờ ném lỗi: LLM là nguồn dữ liệu KHÔNG đáng tin, nên mọi
- * trường hợp thiếu khối / JSON sai cú pháp / schema không khớp đều rơi về hành vi cũ (hiện chữ).
+ * trường hợp thiếu khối giữ nguyên lời văn; JSON/schema hỏng chỉ bỏ bộ câu hỏi.
  * Riêng khi JSON sai schema, khối vẫn bị GỠ khỏi lời văn để người dùng không phải đọc JSON thô.
  */
 export function extractInteractiveQuestions(reply: string): ExtractedInteractiveQuestions {
-  const match = FENCE_PATTERN.exec(reply)
-  if (!match) {
-    // Khối mở ra (```dhcb-questions) nhưng chưa có dấu đóng — thường do LLM bị cắt cụt giữa
-    // chừng (hết token). Vẫn phải giấu khỏi người dùng: hiện JSON dở dang còn tệ hơn không hiện
-    // gì, nên cắt bỏ mọi thứ từ điểm mở khối trở đi.
-    const openMatch = OPEN_FENCE_PATTERN.exec(reply)
-    if (openMatch) {
-      return { text: reply.slice(0, openMatch.index).trimEnd(), questions: [] }
-    }
-    return { text: reply, questions: [] }
-  }
-
-  const text = reply.replace(FENCE_PATTERN, '').trimEnd()
+  const open = OPEN_FENCE_PATTERN.exec(reply)
+  if (!open) return { text: reply, questions: [] }
+  // Prompt yêu cầu khối đứng cuối. Giấu toàn bộ từ header đầu tiên, kể cả nhiều khối
+  // hay JSON hỏng; không để parser cuối khác chính sách delta đã tới người dùng.
+  const text = reply.slice(0, open.index).trimEnd()
+  const match = FENCE_PATTERN.exec(reply.slice(open.index))
+  if (!match || match.index !== 0) return { text, questions: [] }
 
   let raw: unknown
   try {

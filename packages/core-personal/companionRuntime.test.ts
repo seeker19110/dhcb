@@ -1202,6 +1202,17 @@ describe('QuestionFenceGuard — giữ khối ```dhcb-questions khỏi stream', 
     return out
   }
 
+  it('giữ header spaces/tabs và CRLF như parser, kể cả split tên khối', () => {
+    expect(run(['A\n', '``` \t dhcb-', 'questions\t\r', '\n{"private":1}\n```'])).toBe('A\n')
+  })
+
+  it.each([
+    'Ví dụ inline: ```dhcb-questions chỉ là tên kỹ thuật.',
+    'Ví dụ:\n```dhcb-questionsExtra\n{"normal":1}\n```',
+  ])('giữ literal không khớp grammar reserved: %s', (text) => {
+    expect(run([...text])).toBe(text)
+  })
+
   it('chữ thường và code block thường đi qua nguyên vẹn', () => {
     expect(run(['Xin ', 'chào ', 'bạn!'])).toBe('Xin chào bạn!')
     expect(run(['Ví dụ:\n```py', 'thon\nprint(1)\n```\nxong'])).toBe(
@@ -1283,13 +1294,13 @@ describe('streamCompanionTurn — stream THẬT từ Claude', () => {
     process.env.GROQ_API_KEY = 'g'
     anthropicClientMock.callAnthropicText.mockImplementationOnce(
       async (params: { onTextDelta?: (d: string) => void }) => {
-        params.onTextDelta?.('Dở ')
+        params.onTextDelta?.('Dở <tool_')
         return { kind: 'network_error', message: 'rớt', latencyMs: 10 }
       },
     )
     chatProvidersMock.callGroqChatWithKeyPool.mockResolvedValueOnce({
       kind: 'success',
-      text: 'Bản đầy đủ từ Groq',
+      text: 'Bản <du_<tool_use>lieu_a>đầy đủ từ Groq',
       latencyMs: 5,
     })
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -1305,6 +1316,27 @@ describe('streamCompanionTurn — stream THẬT từ Claude', () => {
     expect(done.type === 'done' && done.data.reply).toBe('Bản đầy đủ từ Groq')
     warn.mockRestore()
     delete process.env.GROQ_API_KEY
+  })
+
+  it('lỗi giữa stream bỏ suffix đang giữ, không flush markup ra trước error', async () => {
+    anthropicClientMock.callAnthropicText.mockImplementationOnce(
+      async (params: { onTextDelta?: (d: string) => void }) => {
+        params.onTextDelta?.('An toàn <tool_')
+        throw new Error('TEST_PROVIDER_ABORT')
+      },
+    )
+    let visible = ''
+    await expect(
+      (async () => {
+        for await (const event of streamCompanionTurn(pool, {
+          personId: PERSON_ID,
+          userMessage: 'Hi',
+        })) {
+          if (event.type === 'chunk') visible += event.data.delta
+        }
+      })(),
+    ).rejects.toThrow('TEST_PROVIDER_ABORT')
+    expect(visible).toBe('An toàn ')
   })
 
   it('AI ném lỗi giữa stream → generator ném ra ngoài (handler hoàn lượt), không treo', async () => {
