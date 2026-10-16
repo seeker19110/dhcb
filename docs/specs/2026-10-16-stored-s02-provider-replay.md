@@ -3,9 +3,11 @@
 | Thuộc tính   | Giá trị                                                      |
 | ------------ | ------------------------------------------------------------ |
 | Spec owner   | Chủ dự án DHCB / agent                                       |
-| Trạng thái   | Draft, chờ review và merge trước source                      |
+| Trạng thái   | Approved for implementation; chờ merge trước source          |
 | Goal         | [Nâng cấp từ stored](../goals/2026-10-16-stored-upgrades.md) |
 | Lần cập nhật | 2026-10-16                                                   |
+
+**Người duyệt:** chủ dự án, xác nhận trong chat ngày 2026-10-16; cho phép push/PR/merge/deploy khi CI xanh. Không bao gồm chi phí provider hoặc dữ liệu production.
 
 ## 1. Outcome và bằng chứng
 
@@ -20,8 +22,9 @@ chứng mới. Nguồn: [nghiên cứu 16/10](../research/2026-10-16-stored-nang
 
 ## 2. Phạm vi
 
-- Một bộ cassette mẫu cho Anthropic ở Companion, phủ text thành công, tool use, JSON lỗi,
-  timeout và stream đứt giữa chừng.
+- Một bộ cassette mẫu cho Anthropic ở Companion, tối thiểu bảy ca: text thành công,
+  đọc qua công cụ, tạo đề xuất pending, stream thành công, JSON lỗi, timeout và stream
+  đứt giữa chừng. Có đối chứng dương trước mỗi biến đổi âm liên quan.
 - Tiêm fake ở `fetchImpl` hiện có, giữ parser, prompt builder và vòng công cụ production.
 - Dữ liệu tổng hợp, kiểm duyệt và version hóa; không thu hội thoại người học production.
 - Dùng Vitest và công cụ hiện hữu; chỉ cân nhắc adapter Promptfoo sau khi có runner đúng.
@@ -81,5 +84,5 @@ Nếu điểm chạm thực tế đổi các luồng đó, cập nhật đặc t
 - Không ảnh hưởng đường trả lời production khi replay hỏng.
 - Record từ provider thật là công việc riêng cần người dùng cấp key và ngân sách; CI
   không được có record mode gọi mạng. Replay không chứng minh chất lượng model mới.
-- Cần review/merge đặc tả và chốt bộ ca tối thiểu trước khi tạo source của S02. Chưa chọn
-  hoặc vận hành dịch vụ Promptfoo/Langfuse bên ngoài.
+- Owner đã duyệt phạm vi; bộ ca tối thiểu theo mục 2. Chỉ tạo source S02 sau khi đặc tả
+  được merge. Chưa chọn hoặc vận hành dịch vụ Promptfoo/Langfuse bên ngoài.

@@ -19,7 +19,7 @@ giá trị mặc định của mẫu số. JSON được ép kiểu và test cũ
 - CLI in riêng số ca hỏng và dùng mã thoát từ helper. Lỗi đọc/parse fixture tiếp tục thoát 1.
 - Test helper có negative control cho sáu nhóm; test tiến trình con chạy chính source CLI
   với dữ liệu tạm, không sửa golden set và không truyền secret vào tiến trình con.
-- Ghi khuôn lỗi ở `TRAPS.md` mục 24; tạo goal và Draft S02–S06. Các tính năng mới còn lại
+- Ghi khuôn lỗi ở `TRAPS.md` mục 24; tạo goal và đặc tả S02–S06 (owner đã duyệt trong chat 16/10). Các tính năng mới còn lại
   chưa triển khai.
 
 ## Kiểm chứng
@@ -45,4 +45,5 @@ hết heap rồi chạy lại thành công, không thay ngưỡng hay source đ�
 
 Chỉ thay công cụ eval và tài liệu; không sửa memory service, fixture gốc, dữ liệu người học,
 quyền, billing hoặc provider. Tập fixture tương lai phải giữ đủ nhóm và tối thiểu 30 ca.
-Rollback bằng revert đợt sửa; không migration. Chưa push, merge hoặc deploy.
+Rollback bằng revert đợt sửa; không migration. Owner đã cho phép push/PR/merge/deploy
+khi quality/e2e/metadata xanh; spec S02–S06 phải merge trước source tính năng mới.

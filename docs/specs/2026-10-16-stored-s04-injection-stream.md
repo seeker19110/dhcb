@@ -1,8 +1,10 @@
 # S04 kiểm nội dung gián tiếp và đầu ra stream
 
-**Trạng thái:** Draft — cần review và merge trước source.
+**Trạng thái:** Approved for implementation — chờ merge trước source.
 
 **Goal:** [Nâng cấp từ stored](../goals/2026-10-16-stored-upgrades.md).
+
+**Người duyệt:** chủ dự án, xác nhận trong chat ngày 2026-10-16; cho phép push/PR/merge/deploy khi CI xanh. Không bao gồm chi phí provider hoặc dữ liệu production.
 
 ## Outcome và phạm vi
 

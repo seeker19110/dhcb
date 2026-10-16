@@ -1,14 +1,14 @@
 # Goal nâng cấp DHCB từ stored
 
-| Thuộc tính        | Giá trị                                                                                                                                       |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Goal ID           | GOAL-2026-10-16-STORED                                                                                                                        |
-| Owner             | Chủ dự án DHCB                                                                                                                                |
-| Trạng thái        | WAITING — S01 đã qua cổng cục bộ, chờ quyền tích hợp và duyệt spec tiếp theo                                                                  |
-| Bắt đầu           | 2026-10-16                                                                                                                                    |
-| Target review     | Sau từng slice đã kiểm chứng                                                                                                                  |
-| Quyền được cấp    | Nghiên cứu, triển khai cục bộ và kiểm thử theo lời giao “triển khai đi” ngày 16/10; chưa được giao push, merge, deploy hoặc chi tiền provider |
-| Budget/guardrails | Một outcome mỗi vòng; tối đa ba lần sửa cùng lỗi; test không gọi provider trả phí; giữ nguyên dữ liệu/quyền/billing production                |
+| Thuộc tính        | Giá trị                                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Goal ID           | GOAL-2026-10-16-STORED                                                                                                         |
+| Owner             | Chủ dự án DHCB                                                                                                                 |
+| Trạng thái        | ACTIVE — S01 qua cổng cục bộ, đang tích hợp; S02–S06 đã được owner duyệt                                                       |
+| Bắt đầu           | 2026-10-16                                                                                                                     |
+| Target review     | Sau từng slice đã kiểm chứng                                                                                                   |
+| Quyền được cấp    | Owner duyệt S02–S06 và push/PR/merge/deploy khi CI xanh trong chat 16/10; không chi tiền provider hoặc dùng dữ liệu production |
+| Budget/guardrails | Một outcome mỗi vòng; tối đa ba lần sửa cùng lỗi; test không gọi provider trả phí; giữ nguyên dữ liệu/quyền/billing production |
 
 ## 1. Outcome và Definition of Goal Complete
 
@@ -44,11 +44,11 @@
 | ID  | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR       | State   | Evidence                                                        |
 | --- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | -------- | ------- | --------------------------------------------------------------- |
 | S01 | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | Chưa tạo | WAITING | Đủ năm cổng cục bộ; helper/CLI negative control đạt; chưa merge |
-| S02 | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [Draft S02](../specs/2026-10-16-stored-s02-provider-replay.md)                                   | Chưa tạo | Chưa tạo | SPEC    | Chưa triển khai source                                          |
-| S03 | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [Draft S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                      | Chưa tạo | Chưa tạo | SPEC    | Chưa chọn backend hoặc chính sách lưu                           |
-| S04 | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [Draft S04](../specs/2026-10-16-stored-s04-injection-stream.md)                                  | Chưa tạo | Chưa tạo | SPEC    | Giữ red-team Postgres hiện hữu                                  |
-| S05 | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [Draft S05](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                        | Chưa tạo | Chưa tạo | SPEC    | Giữ FTS + cosine + RRF hiện hữu                                 |
-| S06 | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [Draft S06](../specs/2026-10-16-stored-s06-voice-metrics.md)                                     | Chưa tạo | Chưa tạo | SPEC    | Chưa thử provider có phí                                        |
+| S02 | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | Chưa tạo | SPEC    | Chưa triển khai source                                          |
+| S03 | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | Chưa tạo | SPEC    | Chưa chọn backend hoặc chính sách lưu                           |
+| S04 | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | Chưa tạo | SPEC    | Giữ red-team Postgres hiện hữu                                  |
+| S05 | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo | SPEC    | Giữ FTS + cosine + RRF hiện hữu                                 |
+| S06 | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo | SPEC    | Chưa thử provider có phí                                        |
 
 ## 4. Risk register
 
@@ -64,12 +64,12 @@
 - Commit main đã reconcile: `3bdf9617ac1764f2307e9f31fc1265c6b8943f09` ngày 13/10.
 - Worktree: `/home/liend/.codex/worktrees/stored-eval-gate/dhcb`; nhánh
   `codex/stored-eval-gate`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
-- Goal gap: S01 đã qua cổng cục bộ, chưa tích hợp; S02–S06 mới có Draft. Chưa có bằng chứng trên main cho
+- Goal gap: S01 đã qua cổng cục bộ, chưa tích hợp; S02–S06 đã được owner duyệt, chờ merge spec trước source. Chưa có bằng chứng trên main cho
   các slice của goal này.
 - Next best slice: S02 sau khi S01 được tích hợp và đặc tả replay đã review/merge.
-- Quyền cần thêm ở cổng tích hợp: push nhánh/mở PR, duyệt các spec S02–S06 và quyền merge
-  khi các check bắt buộc xanh. `.github/workflows/deploy.yml` chạy khi push vào main nên
-  merge cũng kích hoạt deploy VPS; chưa có quyền cho bước này.
+- Quyền tích hợp đã được cấp trong chat 16/10: push/mở PR/merge/deploy sau khi
+  `quality`, `e2e`, `metadata` xanh. Owner đã biết merge main tự kích hoạt deploy VPS.
+  Chưa có quyền gọi provider có phí hay dùng dữ liệu production.
 
 ## 6. Iteration log
 
@@ -98,6 +98,13 @@
   - Chưa chạy E2E cục bộ: chỉ đổi công cụ eval/tài liệu, không đổi UI/routing/auth/API
     hoặc luồng người học. Vẫn cần check E2E bắt buộc của PR trước merge.
 - Quyền cần thêm: theo mục 5, sau khi hoàn tất kiểm chứng cục bộ.
+
+### Checkpoint duyệt tích hợp — 2026-10-16
+
+- Owner chọn “Duyệt đặc tả và cho phép push/PR/merge/deploy khi CI xanh”.
+- S02–S06 được đánh dấu Approved for implementation theo quyết định này; chỉ viết source
+  sau khi PR chứa spec được merge. Không mở rộng sang provider có phí/dữ liệu production.
+- S01 local commit `e0d0ca56`; bước tiếp theo push nhánh, tạo PR và theo dõi CI.
 
 ## 7. Final audit
 
