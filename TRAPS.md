@@ -934,3 +934,20 @@ Fake chỉ diễn giải predicate có thật, tránh tự loại record hộ qu
 foreign ID, không touch record bị loại và positive live. Proof PostgreSQL disposable S05a
 xác nhận interleaving với service thật và bắt được source cũ. Không suy thành revoke tuyệt
 đối sau snapshot đã đọc. Catch fallback embedding chỉ bao provider; bốn lỗi SQL vẫn reject.
+
+## 26. Call chưa instrument làm tổng chi phí trông đầy đủ
+
+**Ngày/PR:** 2026-10-16, [PR #1406](https://github.com/seeker19110/dhcb/pull/1406), S03b stored (changelog `0641`).
+
+**Khuôn lỗi:** tổng chỉ biết những attempt đã đăng ký. Adapter phụ gọi HTTP trực tiếp nhưng
+không đăng ký thì unknown count vẫn0; embedding-only có thể thành total0, hoặc mixed total
+chỉ gồm chat nhưng trông như tổng đầy đủ. Daily token estimate không thay thế provider usage.
+
+**Cách rà:** đi theo call graph của root và đối chiếu số fake HTTP thực với attempt ledger,
+bao lỗi/timeout/fallback. Phân biệt call ngoài root với call bị sót; không hook thêm tại
+accounting vì sẽ bỏ HTTP failures hoặc đếm trùng các adapter đã có trace.
+
+**Cổng chốt chặn:** `embeddingsTrace.test.ts` kiểm embedding-only unknown/total null, mixed
+trace giữ observed chat cost/total null, một attempt mỗi batch và empty/no-provider0.
+On/off request/daily parity và ledger độc lập catch chặn call thừa bị nuốt. Không dùng giá
+hoặc token ước lượng để làm tổng known; không suy số liệu production từ HTTP/PG giả.
