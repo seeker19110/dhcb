@@ -1,28 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import * as path from 'node:path'
-import { evaluateMemoryCandidate, type MemoryCandidate } from '@dhcb/core-personal/memoryService'
+import { evaluateMemoryCandidate } from '@dhcb/core-personal/memoryService'
+import { runMemoryEvaluation } from './lib/memoryEval'
 
 const SCRIPT_DIR = fileURLToPath(new URL('.', import.meta.url))
 const FIXTURES_PATH = path.join(SCRIPT_DIR, 'eval-v2-memory-fixtures.json')
 
-interface Fixture {
-  id: string
-  description: string
-  candidate: MemoryCandidate
-  existingRecords?: Array<{ content: string; provenance: string; sensitivity: string }>
-  expectedOutcome: string
-}
-
 async function main() {
-  const fixtures: Fixture[] = JSON.parse(readFileSync(FIXTURES_PATH, 'utf8'))
-  let correct = 0
-  let falseMemoryCount = 0
-  let falseMemoryTotal = 0
-  let correctionCount = 0
-  let correctionTotal = 0
-
-  for (const fx of fixtures) {
+  const rawFixtures: unknown = JSON.parse(readFileSync(FIXTURES_PATH, 'utf8'))
+  const summary = await runMemoryEvaluation(rawFixtures, async (fx) => {
     const mockRunner = {
       query: async () => {
         const rows = (fx.existingRecords || []).map((r, i) => ({
@@ -33,55 +20,34 @@ async function main() {
         }))
         return { rows, rowCount: rows.length, command: '', oid: 0, fields: [] }
       },
-    } as unknown as Parameters<typeof evaluateMemoryCandidate>[0]
+    } as Parameters<typeof evaluateMemoryCandidate>[0]
 
     const result = await evaluateMemoryCandidate(mockRunner, 'person-123', fx.candidate)
+    return result.outcome
+  })
 
-    if (result.outcome === fx.expectedOutcome) {
-      correct++
-    } else {
-      console.log(`❌ Failed: ${fx.id} - ${fx.description}`)
-      console.log(`  Expected: ${fx.expectedOutcome}, Actual: ${result.outcome}`)
-    }
-
-    if (fx.expectedOutcome === 'REJECT' || fx.expectedOutcome === 'ASK_USER') {
-      falseMemoryTotal++
-      if (result.outcome === 'ACCEPT') {
-        falseMemoryCount++
-      }
-    }
-
-    // correction_rate: if candidate is user_declared and expected to override/merge, check it does
-    if (
-      fx.candidate.provenance === 'user_declared' &&
-      (fx.expectedOutcome === 'MERGE' ||
-        fx.expectedOutcome === 'ACCEPT' ||
-        fx.expectedOutcome === 'REJECT')
-    ) {
-      correctionTotal++
-      // Basic check to make sure user_declared gets appropriately handled
-      if (result.outcome === fx.expectedOutcome) {
-        correctionCount++
-      }
+  for (const result of summary.results) {
+    if (result.actual !== result.expected) {
+      console.log(`❌ Failed: ${result.id} - ${result.description}`)
+      console.log(`  Expected: ${result.expected}, Actual: ${result.actual ?? 'ERROR'}`)
+      if (result.error) console.log(`  Error: ${result.error}`)
     }
   }
 
-  const overallAccuracy = (correct / fixtures.length) * 100
-  const falseMemoryRate = falseMemoryTotal > 0 ? falseMemoryCount / falseMemoryTotal : 0
-  const correctionRate = correctionTotal > 0 ? correctionCount / correctionTotal : 1
+  const overallAccuracy = (summary.correct / summary.total) * 100
+  const falseMemoryRate = summary.falseMemoryCount / summary.falseMemoryTotal
+  const correctionRate = summary.correctionCount / summary.correctionTotal
 
   console.log(`\n=== Eval Memory V2 ===`)
-  console.log(`Overall Accuracy: ${overallAccuracy.toFixed(2)}% (${correct}/${fixtures.length})`)
+  console.log(
+    `Overall Accuracy: ${overallAccuracy.toFixed(2)}% (${summary.correct}/${summary.total})`,
+  )
+  console.log(`Crashed Cases: ${summary.crashed} (Target: 0)`)
   console.log(`False Memory Rate: ${(falseMemoryRate * 100).toFixed(2)}% (Target: < 5%)`)
   console.log(`Correction Rate: ${(correctionRate * 100).toFixed(2)}% (Target: 100%)`)
 
-  if (falseMemoryRate < 0.05 && correctionRate === 1.0) {
-    console.log('✅ Passed thresholds')
-    process.exit(0)
-  } else {
-    console.log('❌ Failed thresholds')
-    process.exit(1)
-  }
+  console.log(summary.exitCode === 0 ? '✅ Passed thresholds' : '❌ Failed thresholds')
+  process.exit(summary.exitCode)
 }
 
 main().catch((e) => {
