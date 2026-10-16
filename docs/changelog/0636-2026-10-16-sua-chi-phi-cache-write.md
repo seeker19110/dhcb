@@ -1,6 +1,6 @@
 # 0636 — Không tính trùng phần input đã ghi cache
 
-- **Ngày:** 2026-10-16 · **PR:** chưa tạo · **Loại:** `fix(ai)`.
+- **Ngày:** 2026-10-16 · **PR:** [#1401](https://github.com/seeker19110/dhcb/pull/1401) · **Loại:** `fix(ai)`.
 - **Goal:** [stored](../goals/2026-10-16-stored-upgrades.md), slice S03a chuẩn bị cho
   [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md).
 
