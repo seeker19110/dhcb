@@ -179,7 +179,8 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   S02 replay offline đã merge/deploy [PR #1400](https://github.com/seeker19110/dhcb/pull/1400).
   S03a sửa phép tính cache write đã merge [PR #1401](https://github.com/seeker19110/dhcb/pull/1401)
   sau đủ 19 check, CI 21.491 test/coverage và sáu mảnh E2E đạt; deploy thành công.
-  S03 trace chờ CI ở [PR #1402](https://github.com/seeker19110/dhcb/pull/1402), mặc định tắt; S04–S06 chưa triển khai.
+  S03 trace đã merge [PR #1402](https://github.com/seeker19110/dhcb/pull/1402) sau 19 check xanh,
+  mặc định tắt; deploy thành công. S04a sửa đường SSE đang triển khai; guard/corpus S04 và S05–S06 còn mở.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,

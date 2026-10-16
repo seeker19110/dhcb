@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.base.json",
   // Typecheck cho Playwright E2E (e2e/) — Playwright tự transpile khi CHẠY test nên lỗi type
   // ở đây không bị bắt bởi build/CI trước đó. File này lấp lỗ hổng đó (xem PROGRESS.md "Nợ kỹ thuật").
   // Chạy: `npm run typecheck:e2e` (cũng được gọi trong `npm run typecheck`).

@@ -15,6 +15,7 @@ import {
 import { captureServerException } from './api/_lib/sentry.js'
 import { runnerOriginsFromEnv } from './runnerHost.js'
 import { isAppError } from '@dhcb/core-errors/appError'
+import { copyWebResponseHeaders, forwardEventStream } from '@dhcb/core-http/nodeResponse'
 
 import ttsHandler from '@dhcb/core-ai/tts'
 import aiHandler from '@dhcb/core-ai/ai'
@@ -211,12 +212,12 @@ export function wrapEdge(handler: (req: Request) => Promise<Response>) {
 
       // Chuyển Web API Response → Express response
       res.status(webRes.status)
-      webRes.headers.forEach((val, key) => res.setHeader(key, val))
+      copyWebResponseHeaders(webRes, res)
 
       // Security headers — thêm sau khi convert response, tránh conflict với Web API Response
       applyCommonSecurityHeaders(res)
 
-      res.send(await webRes.text())
+      if (!(await forwardEventStream(webRes, res, req.method))) res.send(await webRes.text())
     } catch (err) {
       // Lỗi nghiệp vụ có kiểu (AppError) lọt ra khỏi handler — trả ĐÚNG mã của nó thay vì gộp
       // thành 500 (audit 2026-10-10, E1.5): `validateAuth` ném 503 khi CSDL không kiểm được
@@ -226,6 +227,10 @@ export function wrapEdge(handler: (req: Request) => Promise<Response>) {
       if (!isAppError(err) || err.status >= 500) {
         console.error('[server] Lỗi handler:', err)
         captureServerException(err, { path: req.originalUrl, method: req.method })
+      }
+      if (res.headersSent || res.destroyed) {
+        res.destroy()
+        return
       }
       if (isAppError(err)) res.status(err.status).json({ error: err.message, code: err.code })
       else res.status(500).json({ error: 'Internal server error' })

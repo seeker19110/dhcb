@@ -26,6 +26,9 @@ const launchOptions = {
 }
 
 export default defineConfig({
+  // Fixture HTTP nạp adapter server thật; mọi workspace alias phải trỏ source như
+  // typecheck/Vitest, không phụ thuộc dist của một lần build trước trên máy local.
+  tsconfig: './tsconfig.e2e.json',
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
