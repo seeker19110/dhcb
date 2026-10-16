@@ -2,6 +2,7 @@
 // "không embedding vẫn ra kết quả" (đặc tả GĐ2a ④).
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Pool } from 'pg'
+import { z } from 'zod'
 import type { EmbeddingProvider } from '@dhcb/core-ai/embeddings'
 
 const embeddings = vi.hoisted(() => ({
@@ -59,20 +60,47 @@ interface Fixture {
   semantic?: Array<{ id: string; embedding: number[] | null }>
   base?: ReturnType<typeof row>[]
   byId?: Record<string, ReturnType<typeof row>>
+  beforeBase?: () => void
+  failAt?: 'lexical' | 'semantic' | 'base' | 'hydration'
 }
 
 function poolFor(fx: Fixture) {
   const calls: Array<{ sql: string; params: unknown[] }> = []
   const query = vi.fn(async (sql: string, params: unknown[] = []) => {
     calls.push({ sql, params })
-    if (sql.includes('search_tsv @@')) return { rows: (fx.lexical ?? []).map((i) => ({ id: i })) }
-    if (sql.includes('select id, embedding')) return { rows: fx.semantic ?? [] }
+    if (sql.includes('search_tsv @@')) {
+      if (fx.failAt === 'lexical') throw new Error('DB_lexical_CANARY')
+      return { rows: (fx.lexical ?? []).map((i) => ({ id: i })) }
+    }
+    if (sql.includes('select id, embedding')) {
+      if (fx.failAt === 'semantic') throw new Error('DB_semantic_CANARY')
+      return { rows: fx.semantic ?? [] }
+    }
     if (sql.includes('order by importance desc, last_accessed_at desc nulls last')) {
-      return { rows: fx.base ?? [] }
+      if (fx.failAt === 'base') throw new Error('DB_base_CANARY')
+      fx.beforeBase?.()
+      return { rows: structuredClone(fx.base ?? []) }
     }
     if (sql.includes('id = any($2::uuid[])') && sql.trim().startsWith('select')) {
-      const wanted = params[1] as string[]
-      return { rows: wanted.map((i) => fx.byId?.[i]).filter(Boolean) }
+      if (fx.failAt === 'hydration') throw new Error('DB_hydration_CANARY')
+      const wanted = z.array(z.string()).parse(params[1])
+      // Fake SQL diễn giải predicate thật; không tự lọc hộ production khi SELECT thiếu guard.
+      const sensitivity = /sensitivity = any\(\$(\d+)::text\[\]\)/.exec(sql)
+      const allowed = sensitivity
+        ? z.array(z.string()).parse(params[Number(sensitivity[1]) - 1])
+        : null
+      const records = wanted.map((i) => fx.byId?.[i]).filter((r) => r !== undefined)
+      return {
+        rows: structuredClone(
+          records.filter(
+            (r) =>
+              (!sql.includes('person_id = $1') || r.person_id === params[0]) &&
+              (!sql.includes("status <> 'expired'") || r.status !== 'expired') &&
+              (!sql.includes('valid_to is null') || r.valid_to === null) &&
+              (!allowed || allowed.includes(r.sensitivity)),
+          ),
+        ),
+      }
     }
     if (sql.includes('last_accessed_at = now()')) return { rows: [], rowCount: 1 }
     return { rows: [] }
@@ -200,8 +228,126 @@ describe('searchMemories', () => {
     const fetchMissing = calls.find(
       (c) => c.sql.includes('id = any($2::uuid[])') && c.sql.trim().startsWith('select'),
     )!
-    expect(fetchMissing.params).toEqual([PERSON, [id(9)]])
+    expect(fetchMissing.params).toEqual([PERSON, [id(9)], ['public', 'personal']])
   })
+
+  describe.each(['lexical', 'semantic'] as const)(
+    'ID từ %s được đọc lại theo trạng thái mới',
+    (source) => {
+      it.each([
+        ['expired', { status: 'expired' }],
+        ['invalidated', { valid_to: new Date(NOW.getTime() + 1000) }],
+        ['sensitive', { sensitivity: 'sensitive' }],
+      ] as const)('%s sau candidate query không được rehydrate/touch', async (_name, changed) => {
+        const fx: Fixture = {
+          lexical: source === 'lexical' ? [id(9)] : [],
+          semantic: source === 'semantic' ? [{ id: id(9), embedding: [1, 0] }] : [],
+          base: [],
+          byId: { [id(9)]: row(9) },
+        }
+        fx.beforeBase = () => {
+          fx.byId![id(9)] = row(9, { ...changed, version: 2 })
+        }
+        if (source === 'semantic') embeddings.embedQuery.mockResolvedValue([1, 0])
+        const { pool, calls } = poolFor(fx)
+        const out = await searchMemories(pool, PERSON, {
+          query: 'ký ức',
+          now: NOW,
+          maxSensitivity: 'personal',
+          embeddingProvider:
+            source === 'semantic' ? { model: 'fake', embed: async () => [] } : null,
+        })
+        expect(out).toEqual([])
+        expect(calls.some((c) => c.sql.includes('last_accessed_at = now()'))).toBe(false)
+      })
+
+      it('không hydrate/touch ID của người khác dù candidate chứa ID đó', async () => {
+        if (source === 'semantic') embeddings.embedQuery.mockResolvedValue([1, 0])
+        const { pool, calls } = poolFor({
+          lexical: source === 'lexical' ? [id(9)] : [],
+          semantic: source === 'semantic' ? [{ id: id(9), embedding: [1, 0] }] : [],
+          base: [],
+          byId: { [id(9)]: row(9, { person_id: id(99) }) },
+        })
+        const result = await searchMemories(pool, PERSON, {
+          query: 'ký ức',
+          now: NOW,
+          embeddingProvider:
+            source === 'semantic' ? { model: 'fake', embed: async () => [] } : null,
+        })
+        expect(result).toEqual([])
+        expect(calls.some((c) => c.sql.includes('last_accessed_at = now()'))).toBe(false)
+      })
+
+      it('positive control: record live ngoài base vẫn được tải và touch', async () => {
+        if (source === 'semantic') embeddings.embedQuery.mockResolvedValue([1, 0])
+        const { pool, calls } = poolFor({
+          lexical: source === 'lexical' ? [id(9)] : [],
+          semantic: source === 'semantic' ? [{ id: id(9), embedding: [1, 0] }] : [],
+          base: [],
+          byId: { [id(9)]: row(9) },
+        })
+        const result = await searchMemories(pool, PERSON, {
+          query: 'ký ức',
+          now: NOW,
+          embeddingProvider:
+            source === 'semantic' ? { model: 'fake', embed: async () => [] } : null,
+        })
+        expect(result.map((r) => r.record.id)).toEqual([id(9)])
+        expect(calls.find((c) => c.sql.includes('last_accessed_at = now()'))?.params).toEqual([
+          PERSON,
+          [id(9)],
+        ])
+      })
+    },
+  )
+
+  it.each(['default', 'explicit'] as const)(
+    'embedding %s reject giữ nguyên đường lexical/base',
+    async (provider) => {
+      const fx: Fixture = { lexical: [id(1)], base: [row(1), row(2)] }
+      const baseline = await searchMemories(poolFor(fx).pool, PERSON, {
+        query: 'ký ức',
+        now: NOW,
+        touch: false,
+        embeddingProvider: null,
+      })
+      embeddings.embedQuery.mockRejectedValueOnce(new Error('EMBED_REJECT_CANARY'))
+      const { pool, calls } = poolFor(fx)
+      const result = await searchMemories(pool, PERSON, {
+        query: 'ký ức',
+        now: NOW,
+        touch: false,
+        ...(provider === 'explicit'
+          ? { embeddingProvider: { model: 'fake', embed: async () => [] } }
+          : {}),
+      })
+      expect(result).toEqual(baseline)
+      expect(calls.some((c) => c.sql.includes('select id, embedding'))).toBe(false)
+      expect(embeddings.embedQuery).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it.each(['lexical', 'semantic', 'base', 'hydration'] as const)(
+    'lỗi SQL %s vẫn reject, không giả thành fallback thành công',
+    async (phase) => {
+      if (phase === 'semantic') embeddings.embedQuery.mockResolvedValue([1, 0])
+      const { pool, calls } = poolFor({
+        failAt: phase,
+        lexical: [id(9)],
+        base: [],
+        byId: { [id(9)]: row(9) },
+      })
+      await expect(
+        searchMemories(pool, PERSON, {
+          query: 'ký ức',
+          now: NOW,
+          embeddingProvider: { model: 'fake', embed: async () => [] },
+        }),
+      ).rejects.toThrow(`DB_${phase}_CANARY`)
+      expect(calls.some((c) => c.sql.includes('last_accessed_at = now()'))).toBe(false)
+    },
+  )
 
   it('recency: ký ức dùng gần đây thắng ký ức cùng importance nhưng cũ', async () => {
     const old = new Date(NOW.getTime() - 7 * 24 * 3_600_000)
