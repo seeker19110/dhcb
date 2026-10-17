@@ -1,6 +1,6 @@
 # 0644 — Hủy TTS giữ đúng lượt phát qua tải lỗi và Web Speech
 
-- **Ngày:** 2026-10-17 · **PR:** đang chuẩn bị · **Loại:** `fix(voice)`.
+- **Ngày:** 2026-10-17 · **PR:** [#1410](https://github.com/seeker19110/dhcb/pull/1410) · **Loại:** `fix(voice)`.
 - **Goal/spec:** [stored S06](../goals/2026-10-16-stored-upgrades.md),
   [S06 Approved](../specs/2026-10-16-stored-s06-voice-metrics.md), đã merge #1399.
 
