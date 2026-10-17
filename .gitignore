@@ -74,3 +74,6 @@ packages/*/dist
 
 # Kế hoạch thi hành của một đợt việc (AI_DEVELOPMENT_PROTOCOL §3.3) — artifact tạm, không commit
 PLAN.md
+
+# X-Templates: trạng thái autopilot cục bộ
+.autopilot/
