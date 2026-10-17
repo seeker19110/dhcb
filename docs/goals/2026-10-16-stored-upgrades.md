@@ -4,7 +4,7 @@
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Goal ID           | GOAL-2026-10-16-STORED                                                                                                         |
 | Owner             | Chủ dự án DHCB                                                                                                                 |
-| Trạng thái        | ACTIVE — wrapper S04c đã merge; corpus S04 đang kiểm chứng, S05–S06 còn mở                                                     |
+| Trạng thái        | ACTIVE — corpus S04 đã merge; đang kiểm chứng hủy TTS S06a, S05–S06 còn mở                                                     |
 | Bắt đầu           | 2026-10-16                                                                                                                     |
 | Target review     | Sau từng slice đã kiểm chứng                                                                                                   |
 | Quyền được cấp    | Owner duyệt S02–S06 và push/PR/merge/deploy khi CI xanh trong chat 16/10; không chi tiền provider hoặc dùng dữ liệu production |
@@ -41,20 +41,21 @@
 
 ## 3. Milestones và slices
 
-| ID   | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State   | Evidence                                                   |
-| ---- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | ------- | ---------------------------------------------------------- |
-| S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE    | Main 66db5e63; quality/e2e/metadata và deploy đạt          |
-| S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE    | Main 5e7bb30f; đủ 18 check và deploy đạt                   |
-| S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE    | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt  |
-| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | DONE    | Main46ff9437; S03b1406 bổ sung embedding, 19 check xanh    |
-| S03b | Ghi attempt embedding, giữ tổng unknown khi chưa có usage                    | S05a đã tích hợp; S03 Approved        | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1406](https://github.com/seeker19110/dhcb/pull/1406) | DONE    | Main46ff9437; 19 check, 21.647 unit/1.440 E2E đạt          |
-| S04a | Chuyển SSE qua HTTP production/dev, giữ side effects khi disconnect          | S03 đã tích hợp                       | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1403](https://github.com/seeker19110/dhcb/pull/1403) | DONE    | Main 84b16bec; 19 check, 21.558 unit và 1.436 E2E pass     |
-| S04b | Lọc lời văn delta/final qua mọi chunk, giữ metadata đề xuất                  | S04a đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1404](https://github.com/seeker19110/dhcb/pull/1404) | DONE    | Main80328ab7; 19 check, 21.614 unit và 1.440 E2E pass      |
-| S04c | Xóa thẻ dữ liệu tới ổn định, fail closed khi quá 32 lượt                     | S03b đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1407](https://github.com/seeker19110/dhcb/pull/1407) | DONE    | Maina47a5c14;19 check,21.676 unit/1.440 E2E và deploy đạt  |
-| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1408](https://github.com/seeker19110/dhcb/pull/1408) | WAITING | Local21.975 unit/1.874 PG+8runtime/browser8 đạt; CI còn mở |
-| S05a | Giữ eligibility khi hydrate và fallback khi embedding reject                 | Spec S05 đã merge                     | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | [#1405](https://github.com/seeker19110/dhcb/pull/1405) | DONE    | Main85f27d9a; 19 check, PG/21.630 unit/1.440 E2E đạt       |
-| S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa có vector thật; chưa đo ranking                       |
-| S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC    | App STT→LLM→TTS; chưa đo acoustic                          |
+| ID   | Outcome/AC                                                                   | Dependency                            | Spec                                                                                             | Issue    | PR                                                     | State   | Evidence                                                          |
+| ---- | ---------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------ | ------- | ----------------------------------------------------------------- |
+| S01  | Runner ký ức từ chối ca sai, ca hỏng, fixture rỗng/thiếu nhóm; giữ 30 ca gốc | Không                                 | [V2-19 đã duyệt](../specs/2026-08-17-v2-19-platform-evaluation-hardening.md) và nghiên cứu 16/10 | Chưa tạo | [#1399](https://github.com/seeker19110/dhcb/pull/1399) | DONE    | Main 66db5e63; quality/e2e/metadata và deploy đạt                 |
+| S02  | Replay phản hồi provider qua logic production, offline và phát hiện mismatch | S01 đã tích hợp; spec được merge      | [S02 đã duyệt](../specs/2026-10-16-stored-s02-provider-replay.md)                                | Chưa tạo | [#1400](https://github.com/seeker19110/dhcb/pull/1400) | DONE    | Main 5e7bb30f; đủ 18 check và deploy đạt                          |
+| S03a | Sửa phép tính cache write bị cộng trùng trước trace                          | S02 tích hợp                          | [Khảo sát S03](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1401](https://github.com/seeker19110/dhcb/pull/1401) | DONE    | Main f29d8237; 19 check xanh, CI 21.491 test/coverage đạt         |
+| S03  | Trace các chặng và chi phí từng lượt, dữ liệu tối thiểu                      | Spec telemetry được merge             | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1402](https://github.com/seeker19110/dhcb/pull/1402) | DONE    | Main46ff9437; S03b1406 bổ sung embedding, 19 check xanh           |
+| S03b | Ghi attempt embedding, giữ tổng unknown khi chưa có usage                    | S05a đã tích hợp; S03 Approved        | [S03 đã duyệt](../specs/2026-10-16-stored-s03-turn-tracing.md)                                   | Chưa tạo | [#1406](https://github.com/seeker19110/dhcb/pull/1406) | DONE    | Main46ff9437; 19 check, 21.647 unit/1.440 E2E đạt                 |
+| S04a | Chuyển SSE qua HTTP production/dev, giữ side effects khi disconnect          | S03 đã tích hợp                       | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1403](https://github.com/seeker19110/dhcb/pull/1403) | DONE    | Main 84b16bec; 19 check, 21.558 unit và 1.436 E2E pass            |
+| S04b | Lọc lời văn delta/final qua mọi chunk, giữ metadata đề xuất                  | S04a đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1404](https://github.com/seeker19110/dhcb/pull/1404) | DONE    | Main80328ab7; 19 check, 21.614 unit và 1.440 E2E pass             |
+| S04c | Xóa thẻ dữ liệu tới ổn định, fail closed khi quá 32 lượt                     | S03b đã merge                         | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1407](https://github.com/seeker19110/dhcb/pull/1407) | DONE    | Maina47a5c14;19 check,21.676 unit/1.440 E2E và deploy đạt         |
+| S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1408](https://github.com/seeker19110/dhcb/pull/1408) | DONE    | Main bbeaded5; PR/main CI và deploy đạt; 1.874+8 runtime/cleanup0 |
+| S05a | Giữ eligibility khi hydrate và fallback khi embedding reject                 | Spec S05 đã merge                     | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | [#1405](https://github.com/seeker19110/dhcb/pull/1405) | DONE    | Main85f27d9a; 19 check, PG/21.630 unit/1.440 E2E đạt              |
+| S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa có vector thật; chưa đo ranking                              |
+| S06a | Hủy TTS giữ đúng vé qua tải lỗi/callback Web Speech                          | S04 đã merge                          | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | [#1410](https://github.com/seeker19110/dhcb/pull/1410) | WAITING | Local22.000unit/22browser/clean typecheck đạt; CI bản sửa còn mở  |
+| S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC    | App STT→LLM→TTS; chưa đo acoustic                                 |
 
 ## 4. Risk register
 
@@ -74,17 +75,16 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
 
 ## 5. Current truth
 
-- Commit main đã reconcile: `a47a5c14f590e28c4eeed45ede2db0f9e54c4a81` (PR #1407), ngày 17/10 giờ Việt Nam.
+- Commit main đã reconcile: `bbeaded56aca318fb584b11874d79ebe7cde4e34` (PR #1408), ngày 17/10.
 - Worktree: `/home/liend/.codex/worktrees/stored-eval-gate/dhcb`; nhánh
-  `codex/stored-boundary-corpus`. Workspace gốc và các file chưa track của người dùng giữ nguyên.
-- Goal gap: S04c wrapper đã merge đủ19 check và deploy thành công. S04 corpus chạy local
-  1.874/1.874 ca +8 runtime consent đạt, cleanup/network0; full local gates và browser8
-  đã đạt, còn CI exact head.
-  Trace mặc định tắt, chưa review điều kiện bật production. Baseline S05/engineering S06 và
-  số đo vector/voice thật còn mở, không suy từ mock thành chất lượng/latency production.
-- Next best slice: merge corpus S04 sau CI; ưu tiên sửa cancellation TTS rồi lifecycle
-  UI/STT S06 vì đã có counterexample phát sinh tác vụ sau hủy. Tiếp theo baseline S05
-  và instrumentation S06 theo spec đã duyệt; không provider có phí hoặc production data.
+  `codex/stored-tts-cancellation`. Workspace gốc và file chưa track của người dùng giữ nguyên.
+- Goal gap: corpus S04 đã merge sau đủ 19 context, có artifact CI 1.874/1.874 + 8/8,
+  cleanup/network 0. Main CI 38986735433 và deploy 38986735404 đều SUCCESS. S06a TTS đã tái hiện
+  lỗi trước sửa, source đầu đã full gate nhưng review phát hiện P2 pending replacement; [PR #1410](https://github.com/seeker19110/dhcb/pull/1410) đã đạt full local 22.000unit/22browser/clean typecheck sau sửa, chờ CI exact head. Lifecycle UI/STT sau unmount,
+  baseline S05, instrumentation S06 và số đo vector/voice thật vẫn mở.
+- Next best slice: hoàn tất S06a hủy TTS, sau đó sửa immutable owner của recorder/STT
+  xuyên permission/response/timer trước instrumentation. Không dùng metadata làm authority
+  guard. Tiếp theo baseline S05 và metrics S06; không provider có phí/production data.
 - CI S01: [run 38867265957](https://github.com/seeker19110/dhcb/actions/runs/38867265957),
   đủ quality/e2e/metadata. [Deploy 38868410893](https://github.com/seeker19110/dhcb/actions/runs/38868410893)
   thành công; chưa thực hiện live eval provider.
@@ -699,6 +699,99 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   Full local số ở trên là trước một dòng fixture; full CI head mới phải chạy đủ mọi
   gate, không tái dùng số CI cũ hoặc dismiss/suppress. Lịch rerun bootstrap head cũ đã
   dừng trước gửi request khi cần head mới; ECR hiện1lượt CI fail ở iteration này.
+
+### Checkpoint tích hợp S04 — 2026-10-17
+
+- PR #1408 đã merge `bbeaded56aca318fb584b11874d79ebe7cde4e34` lúc 00:31:03 UTC.
+  Head cuối `7d28b397`, CI [38985722173](https://github.com/seeker19110/dhcb/actions/runs/38985722173)
+  SUCCESS; trước merge đủ 19 context, metadata mới 38986638187 tạo sau body, base/head
+  không đổi, không review yêu cầu sửa, không auto-merge/bypass.
+- CI đúng head: 973 file/21.975 unit pass, 5 file/35 test skip, 378,22 giây; coverage
+  96,13/92,05/96,91/96,83%. Browser 1.439 pass, 1 flaky, 5 skip: lịch 1440 px lần đầu
+  23,99993896484375 < 24, retry cùng head đạt. Chạy lại local đúng test 3/3 không retry
+  (11,9 giây); theo dõi [#1409](https://github.com/seeker19110/dhcb/issues/1409), giữ ngưỡng.
+- Artifact `companion-boundary-38985722173-1`, ID 12082589120, digest
+  `sha256:7cda9f7894958c8ab09fa44da29ffc8111316121ff7ddd97f555a3ee4340e989`:
+  1.874/1.874 + runtime 8/8, 0 crash/notRun/network, cleanup residuals 0, accounting
+  không đổi sau đóng pool. Report SHA `5a0ac578603b9026d9714ff7e60a81214816cee17ce22fe36619dbbfa1cd2b86`,
+  25 source hashes khớp exact head; PG legacy 54/54 + 23/23 đạt.
+- CodeQL PR merge 05f99520: analyses 1971156550/1971146124, JS 103/Actions 23 rule,
+  error rỗng, results 0; PR-ref open 0. Fixture alert #85 fixed, không dismiss/suppress.
+  Main vẫn có 82 cảnh báo nền từ 12/10, không phải toàn repo 0. ECR ở head cũ không
+  cần rerun: lịch retry đã hủy trước gửi, head cuối SQL/CI đạt ngay attempt 1.
+- Main CI 38986735433, deploy 38986735404, CodeQL 38986735379 và secret scan
+  38986735389 đều SUCCESS trên merge bbeaded5, không retry. Evidence ngoài repo:
+  validation/stored-boundary-corpus-implementation.
+
+### Iteration 11 — 2026-10-17
+
+- State: VERIFY sau repair ownership lần 2; S06a hủy TTS trên `codex/stored-tts-cancellation`, base main bbeaded5.
+  Đã reload main/AGENTS/CLAUDE/PROGRESS/PROJECT/goal/spec và delivery loop. S06 Approved
+  merge #1399; một outcome là quyền sở hữu lượt phát qua tải lỗi và Web Speech.
+- Scope: `tts.ts`, ba file unit regression và browser fixture TTS thật; docs/goal/changelog
+  0644/TRAPS. Public API, request/body/cache/inflight/retry/provider/usage/schema giữ nguyên.
+  Codemap trước source: 102 file ảnh hưởng; full gate/browser CI vẫn bắt buộc.
+- Actual checkout trước sửa: 13 unit đỏ/9 đối chứng đạt; browser 6 đỏ/2 đối chứng đạt
+  trên cả en→vi và vi→en. Lỗi assertion là giọng/feedback hoặc karaoke sau hủy/đổi lượt,
+  không dùng crash hay request provider thật làm bằng chứng.
+- Fix hẹp: chỉ catch tải audio, stale trả vé cũ thay vì kích fallback. Lỗi active vẫn throw.
+  Web Speech claim vé mới trước cancel, callback kết thúc trả vé riêng và boundary kiểm vé.
+  Không guard public catch bằng vé trước tải vì HTMLAudio active tự tăng vé trước play.
+- Sau sửa actual checkout: 4 file/99 unit đạt (2,78 giây), gồm 22 regression và 77 test
+  TTS cũ; Chromium 8/8 không retry (7,5 giây). Bao gồm active fallback, thành công,
+  delayed play reject sau stop/replacement, normal bilingual feedback/karaoke.
+- Fixture browser nạp module TTS production qua Vite; HTTP 503/Web Speech được giả lập
+  tại biên, không mount React/route lifecycle hoặc đo âm thanh vật lý. UI/STT ownership
+  vẫn là slice sau, không suy 8 ca này thành nghiệm thu physical voice hoặc toàn S06.
+- Full build/type/lint/format/coverage, clean typecheck, replay/specs và CI exact head
+  còn bắt buộc trước PR/merge. Mỗi failure tối đa 3 repair, provider cost 0.
+
+- Full local S06a: type 94,08 giây, build 147,13 giây, lint 0 cảnh báo 85,81 giây,
+  format 94,68 giây, exit 0. Coverage: 976 file/21.997 unit pass, 5 file/35 test skip,
+  Vitest 538,83 giây (npm wall 541,25 giây); 96,14/92,07/96,91/96,85%, sàn không đổi.
+  Replay 7/7, specs 191 đạt. Thin strict riêng 3 regression file đạt.
+- check:ui-ux 6 file/173 test đạt; smoke TTS + Practice direction 20/20 không retry
+  (59,0 giây), clean typecheck sau chỉ xóa generated dist đạt (94,82 giây). Source/test
+  5 file giữ nguyên SHA qua các lượt này. CI exact head/review/CodeQL/metadata còn bắt buộc.
+- Read-only design lifecycle đã có B1 + matrix mounted React/browser A/B. Thêm proof
+  actual startListening + exact toggleRecord: manual browser Stop làm mất confirm ở
+  A/B (2 đỏ), natural-end/cleanup 4 đối chứng đạt, network 0. Chưa mounted React/browser
+  proof cho lỗi đó. Slice sau giữ default cancel và thêm complete explicit, owner
+  độc lập metadata, signal trước upload, usage của request đã gửi giữ đúng captured user.
+
+- Source commit65cc3d75; [PR #1410](https://github.com/seeker19110/dhcb/pull/1410) READY, đã attach. Còn full CI exact head, review/base/CodeQL và metadata mới sau body trước merge; không auto-merge/bypass.
+
+- Independent review tìm P2 ở source 683d99ce: A tải cũ pending, B mới cũng pending,
+  A reject rồi fallback claim vé làm B bị bỏ. Gap còn có A tải thành công hoặc play-error
+  trước khi B tải xong. Parent regression actual checkout: 3 unit đỏ/22 controls đạt,
+  Chromium hai chiều 2 đỏ/8 controls đạt. Không merge source này.
+- Trước lần sửa 2 của ownership: lỗi nằm ở tầng **thiết kế** vì claim vé lúc backend bắt
+  đầu phát không bảo vệ intent đã bắt đầu tải. Hướng sửa: một claim ở public nonempty speak,
+  backend giữ vé, guard public catch chỉ sau khi bỏ self-increment. Lượt full gate trước
+  là lịch sử cho source cũ; archive initial-validations, phải chạy lại đầy đủ source mới.
+- CI683d99ce/run38989883273 SQL job117269847752 bị ECR Data limit exceeded tại Initialize
+  containers trước checkout; chưa chạy SQL/test. Không đổi image/gate, chưa gửi rerun vì
+  P2 cần source mới. Không coi bootstrap failure là product failure hoặc dùng nó che P2.
+
+- Repair source mới: public nonempty speak nhận ticket trước await; private Google/Web
+  Speech không tự tăng; public catch kiểm ticket cho cả load/play lỗi, boundary trả/kiểm
+  vé riêng. Active fallback và normal bilingual vẫn chạy, empty không claim. Source SHA
+  93e2ad177d5de58ba60c9ba212b32f71e71c12ef37de50cc316a32006ebe52c3 giữ qua review.
+  Actual targeted 4 file/102 đạt (2,90s), Chromium10/10 (9,8s), thin strict3file đạt.
+  Independent29probe actual source đạt; negative double-claim bắt active playback-error.
+  Full gate mới bắt buộc, không tái dùng full21997/smoke20 của source đầu.
+
+- Full local source sửa sau review: type92,42/build147,04/lint0warning81,46/format99,18s,
+  exit0. 976file/22.000unit pass,5file/35test skip sẵn có; Vitest555,05s/npmwall557,57s,
+  coverage96,14/92,07/96,91/96,85%, sàn94/90/94/94 không đổi. Replay7/7/specs191 đạt.
+  UI contract6file/173 đạt; TTS+Practice direction22/22 không retry57,4s. Clean typecheck
+  sau chỉ xóa generated dist đạt95,61s. Năm source/test hashes giữ đúng snapshot sửa mới;
+  docs cập nhật sau gate được Prettier/diff riêng, không tái dùng gate source đầu.
+- Chuẩn bị slice sau ngoài repo: actual mounted Companion/Speaking A/B30ca có16 regression
+  đỏ/14controls, gồm reauth/late STT/manual native Stop. Adapter candidate có36coregreen
+  và một regression stop-throw bổ sung; chưa apply/mounted/browser/fullgate source adapter.
+  S05 CLI prototype P1 native env đã sửa một predicate; parent6/6 native/tsx controls đạt,
+  chưa actual PG/ranking/quality floor. Những prototype này không là acceptance trên main.
 
 ## 7. Final audit
 
