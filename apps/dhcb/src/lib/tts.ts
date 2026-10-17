@@ -519,7 +519,15 @@ async function speakViaGoogle(
   const veTruocKhiTai = playToken
 
   // Lấy audio (ưu tiên IndexedDB; bộ nạp-trước thường đã tải sẵn câu này)
-  const { buffer, voice: actualVoice } = await ensureAudioWithTimeline(text, lang, voice)
+  let audio: SpeechAudio
+  try {
+    audio = await ensureAudioWithTimeline(text, lang, voice)
+  } catch (error) {
+    // Tải lỗi sau khi người dùng hủy/đổi lượt: trả vé cũ, không kích Web Speech.
+    if (playToken !== veTruocKhiTai) return veTruocKhiTai
+    throw error
+  }
+  const { buffer, voice: actualVoice } = audio
 
   // Có ai đó chiếm vé trong lúc ta đang tải (stopSpeaking, hoặc một lượt phát khác) → BỎ lượt
   // này. Trả về vé CŨ (đã lạc hậu) chứ không phải `playToken` hiện tại, để nơi gọi —
@@ -624,6 +632,8 @@ function speakViaWebSpeech(
       resolve(playToken)
       return
     }
+    // Chiếm vé trước cancel: callback của câu cũ phải trả vé riêng đã hết hiệu lực.
+    const token = ++playToken
     window.speechSynthesis.cancel()
     const utt = new SpeechSynthesisUtterance(text)
     utt.lang = lang
@@ -633,6 +643,7 @@ function speakViaWebSpeech(
     if (onWord) {
       const words = text.trim().split(/\s+/)
       utt.onboundary = (e: SpeechSynthesisEvent) => {
+        if (token !== playToken) return
         if (e.name !== 'word') return
         let cumLen = 0
         for (let i = 0; i < words.length; i++) {
@@ -656,8 +667,8 @@ function speakViaWebSpeech(
         : n.includes('female') || n.includes('zira') || n.includes('samantha') || n.includes('nữ')
     })
     if (wanted) utt.voice = wanted
-    utt.onend = () => resolve(playToken)
-    utt.onerror = () => resolve(playToken) // không throw để tránh crash UI
+    utt.onend = () => resolve(token)
+    utt.onerror = () => resolve(token) // không throw để tránh crash UI
     window.speechSynthesis.speak(utt)
   })
 }

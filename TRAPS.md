@@ -982,3 +982,20 @@ row/audit theo input độc lập, giữ raw JSON đã validate. Parse/hash cùn
 kể cả khi runtime bắt lỗi mạng. Cleanup cần journal trước mutation, ownership transaction
 và residuals; signal/timeout hoặc thiếu artifact không được suy ra sạch. Xem
 [runbook](docs/ops/companion-boundary-eval.md); mock test bộ đo không thay Postgres thật.
+
+## 29. Vé tại callback có thể đã thuộc lượt phát khác
+
+**Đã gặp:** Web Speech resolve bằng `playToken` toàn cục khi onend/onerror chạy. Stop hoặc
+lượt mới đã tăng token, nên `speakBilingual` nhận nhầm vé mới và đọc tiếp phần giải thích
+vừa bị hủy. Boundary cũ cũng còn cập nhật karaoke. Tải cache/HTTP reject sau stop lại bị
+public `speak.catch` chuyển sang giọng dự phòng.
+
+**Cách rà:** giữ immutable ticket cho từng lượt, claim trước cancel callback; callback
+kết thúc trả ticket riêng, callback cập nhật kiểm ticket còn active. Catch stale chỉ ở
+quãng tải; không so token trước tải trong public catch vì HTMLAudio tự claim vé lúc play,
+lỗi active vẫn phải fallback. Không dùng trạng thái telemetry làm quyền thực thi.
+
+**Cổng chốt:** deferred cache/HTTP reject sau stop/replacement, onend/onerror sau cancel,
+late boundary, delayed play reject; đối chứng active error và normal bilingual vẫn chạy.
+Test public API thật với fake tại biên, Chromium hai chiều; không suy thành audible latency
+hoặc bằng chứng lifecycle React. Xem changelog `0644`.
