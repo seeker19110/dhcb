@@ -965,3 +965,20 @@ scope riêng context/tool, cả open/close/mixedcase. Xóa tới fixed point,32 
 stable check; chưa ổn định thì context content rỗng/tool literalJSONnull, không trả remainder.
 Depth32 giữ canary/depth33 failclosed; benign/code/HTML/UUID/fence giữ input-data policy.
 Cap pass không bound input hoặc chi phí một regex; không mô tả thành CPU/memoryO(1).
+
+## 28. Bộ đo ranh giới cũng có thể bỏ qua chính dữ liệu cần kiểm
+
+**Ngày:** 2026-10-17, stored S04 (changelog `0643`).
+
+**Khuôn lỗi đã bắt khi rà runner:** absence chỉ tìm canary nên sourceID còn sống vẫn
+được xanh; positive thiếu dữ liệu trở thành ca mù; proposal đúng ID nhưng sai payload/
+owner/domain vẫn được nhận. Clone JSON bằng schema có thể xóa ownkey `__proto__` trước
+khi nó tới API. Hash corpus bằng lần đọc khác với buffer đã parse có thể gắn nhãn sai.
+Snapshot accounting trước khi drain cached pool bỏ sót fire-and-forget query.
+
+**Cổng chốt chặn:** oracle kiểm ID/type lẫn nội dung và đối chứng hợp lệ; bind toàn DTO/
+row/audit theo input độc lập, giữ raw JSON đã validate. Parse/hash cùng buffer, pin source
+đầu/cuối, kiểm accounting sau await đóng pool. Negative controls phải làm đúng oracle đỏ,
+kể cả khi runtime bắt lỗi mạng. Cleanup cần journal trước mutation, ownership transaction
+và residuals; signal/timeout hoặc thiếu artifact không được suy ra sạch. Xem
+[runbook](docs/ops/companion-boundary-eval.md); mock test bộ đo không thay Postgres thật.

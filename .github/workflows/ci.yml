@@ -210,7 +210,7 @@ jobs:
   # Postgres 16 rỗng, áp schema + migration bằng ĐÚNG lệnh deploy dùng (`npm run migrate:pg`,
   # scripts/deploy.sh) rồi PREPARE mọi câu SQL tĩnh trích từ `.query(` trong apps/server/src +
   # packages. Ngoại lệ có lý do: scripts/sql-prepare-allowlist.json. Chạy riêng một job vì cần
-  # service container; nhẹ (~vài giây sau npm ci), không kéo dài đường tới hạn.
+  # service container; gồm corpus S04/HTTP/consent, không gọi provider trả phí.
   sql-prepare:
     name: SQL PREPARE trên Postgres thật
     runs-on: ubuntu-latest
@@ -257,6 +257,21 @@ jobs:
       # Personal Policy (thẩm quyền) trên cùng CSDL: khác người, ghi đè, thu hồi, đặt đồng thời.
       - name: Thẩm quyền Personal Policy trên Postgres thật
         run: npm run eval:v2:permissions
+
+      - name: Corpus S04 và runtime consent trên Postgres disposable
+        id: companion-boundary
+        env:
+          STORED_EVAL_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/dhcb
+        run: npm run eval:companion:boundary -- --profile github-ci --artifacts "$RUNNER_TEMP/stored-boundary"
+
+      - name: Lưu bằng chứng corpus và journal fixture tổng hợp
+        if: ${{ always() && steps.companion-boundary.outcome != 'skipped' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: companion-boundary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/stored-boundary
+          retention-days: 7
+          if-no-files-found: error
 
   # ── Job TỔNG HỢP: đây là required status check `quality` ───────────────────
   quality:
