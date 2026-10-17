@@ -43,6 +43,11 @@
       {
         "matcher": "",
         "hooks": [{ "type": "command", "command": "bash .claude/report-status.sh" }]
+      },
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/session-start.sh", "timeout": 20 }
+        ]
       }
     ],
     "PreToolUse": [
@@ -55,10 +60,28 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/pre-bash-guard.sh", "timeout": 600 }
+        ]
+      },
+      {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/config-protection.sh" },
           { "type": "command", "command": "bash .claude/hooks/shared-file-reminder.sh" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/pre-edit-guard.sh", "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "mcp__.*(merge_pull_request|auto_merge).*",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/pre-mcp-guard.sh", "timeout": 120 }
         ]
       }
     ],
@@ -73,11 +96,21 @@
     "PreCompact": [
       {
         "hooks": [{ "type": "command", "command": "bash .claude/hooks/precompact-checkpoint.sh" }]
+      },
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/pre-compact.sh", "timeout": 30 }
+        ]
       }
     ],
     "Stop": [
       {
         "hooks": [{ "type": "command", "command": "bash .claude/hooks/usage-guard.sh" }]
+      },
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/stop-guard.sh", "timeout": 30 }
+        ]
       }
     ]
   }

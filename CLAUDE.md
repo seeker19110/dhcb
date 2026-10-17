@@ -280,3 +280,5 @@ Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác 
 **Nguồn duy nhất: `PROGRESS.md`** (giai đoạn · tiếp theo · việc cần làm tay · quyết định · nợ mở). Hook đầu phiên `.claude/report-status.sh` in sẵn 3 đợt gần nhất + nợ mở. Bản đồ tài liệu nào còn hiệu lực: `docs/README.md`. Bản mô tả trạng thái dài từng nằm ở đây (cập nhật tới 2026-09-01) đã dời sang `docs/legacy/claude-md-lich-su-quy-uoc.md`.
 
 Ảnh chụp trạng thái cũ (2026-09-06): `docs/claude-md-chi-tiet.md` §13.
+
+@AGENTS.md

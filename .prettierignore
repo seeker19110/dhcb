@@ -25,3 +25,6 @@ vite.config.ts.timestamp-*.mjs
 playwright-report/
 test-results/
 blob-report/
+
+# X-Templates: bản sao chỉ đọc của khung (cập nhật bằng install.py), không format
+.xtemplates/
