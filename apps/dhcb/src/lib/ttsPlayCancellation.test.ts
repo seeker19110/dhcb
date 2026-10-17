@@ -119,6 +119,34 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 describe('API phát thật với lỗi HTMLAudio.play trả về muộn', () => {
+  it('lỗi play cũ khi lượt mới còn tải không được dùng giọng dự phòng hay bỏ lượt mới', async () => {
+    const api = await import('./tts')
+    const old = api.speak('synthetic old', 'en-US', 'Kore', 1)
+    await settle()
+    expect(audio.calls).toHaveLength(1)
+    let resolveNew!: (entry: { buffer: ArrayBuffer; timeline: null }) => void
+    const newEntry = new Promise<{ buffer: ArrayBuffer; timeline: null }>((resolve) => {
+      resolveNew = resolve
+    })
+    state.cache.mockReturnValueOnce(newEntry)
+    const current = api.speak('synthetic new', 'en-US', 'Kore', 1)
+    await settle()
+    expect(state.cache).toHaveBeenCalledTimes(2)
+    audio.calls[0]?.reject(new Error('synthetic-old-play-failed'))
+    await old
+    const spokenBeforeCurrentLoad = [...state.synthesized]
+    resolveNew({ buffer: new ArrayBuffer(8), timeline: null })
+    await settle()
+    const plays = audio.calls.length
+    audio.onended?.()
+    await current
+    expect(spokenBeforeCurrentLoad).toEqual([])
+    expect(state.synthesized).toEqual([])
+    expect(plays).toBe(2)
+    expect(state.cache).toHaveBeenCalledTimes(2)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('đối chứng: lỗi play đang hoạt động vẫn dùng giọng dự phòng đúng một lần', async () => {
     const api = await import('./tts')
     const pending = api.speak('synthetic active', 'en-US', 'Kore', 1)

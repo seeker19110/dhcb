@@ -169,6 +169,31 @@ afterEach(() => {
 })
 
 describe('S06a API phát thật, giả lập tại biên audio/cache/HTTP', () => {
+  it.each(['reject', 'resolve'] as const)(
+    'tải cũ %s khi lượt mới còn chờ không được phát hoặc chiếm vé lượt mới',
+    async (completion) => {
+      const old = await startHeld('cache')
+      const newer = deferred<ReturnType<typeof cached>>()
+      state.getAudioEntry.mockReturnValueOnce(newer.promise)
+      const current = old.api.speak('synthetic replacement', 'en-US', 'Kore', 1)
+      await settleTasks()
+      expect(state.getAudioEntry).toHaveBeenCalledTimes(2)
+      if (completion === 'reject') old.fail()
+      else old.succeed()
+      await old.promise
+      const beforeCurrentLoad = {
+        plays: FakeAudio.plays,
+        synthesized: [...state.synthesized],
+      }
+      newer.resolve(cached())
+      await current
+      expect(beforeCurrentLoad).toEqual({ plays: 0, synthesized: [] })
+      expect(FakeAudio.plays).toBe(1)
+      expect(state.synthesized).toEqual([])
+      expect(state.getAudioEntry).toHaveBeenCalledTimes(2)
+    },
+  )
+
   it.each(['cache', 'request'] as const)('stop rồi %s reject: không WebSpeech', async (source) => {
     const held = await startHeld(source)
     held.api.stopSpeaking()

@@ -46,10 +46,9 @@ let currentResolve: (() => void) | null = null
 // dùng chung — đều tăng số này, để huỷ phần CÒN LẠI của speakBilingual (vd: đang đọc câu
 // thoại mà bấm Tắt tiếng → KHÔNG đọc tiếp phần sửa lỗi).
 //
-// QUAN TRỌNG: chính lượt phát của speakBilingual cũng tăng số này (speakViaGoogle chiếm thẻ
-// audio), nên KHÔNG được so với giá trị chốt TRƯỚC khi phát — làm vậy thì lần nào cũng lệch
-// và phần sửa lỗi KHÔNG BAO GIỜ được đọc (lỗi thật, có từ PR #476 tới 2026-08-10). Vì thế
-// speak()/speakViaGoogle TRẢ VỀ đúng số vé của lượt phát vừa rồi để nơi gọi so lại.
+// Mỗi speak không rỗng nhận vé ngay khi bắt đầu, trước mọi await. Backend HTMLAudio/Web
+// Speech giữ nguyên vé đó: câu cũ không được chiếm vé mới trong lúc câu mới còn tải.
+// speak TRẢ VỀ vé riêng để speakBilingual bỏ phần giải thích nếu đã hủy/đổi lượt.
 let playToken = 0
 
 // Gỡ mọi handler cũ trên thẻ dùng chung trước khi gắn handler cho lượt phát mới
@@ -519,15 +518,7 @@ async function speakViaGoogle(
   const veTruocKhiTai = playToken
 
   // Lấy audio (ưu tiên IndexedDB; bộ nạp-trước thường đã tải sẵn câu này)
-  let audio: SpeechAudio
-  try {
-    audio = await ensureAudioWithTimeline(text, lang, voice)
-  } catch (error) {
-    // Tải lỗi sau khi người dùng hủy/đổi lượt: trả vé cũ, không kích Web Speech.
-    if (playToken !== veTruocKhiTai) return veTruocKhiTai
-    throw error
-  }
-  const { buffer, voice: actualVoice } = audio
+  const { buffer, voice: actualVoice } = await ensureAudioWithTimeline(text, lang, voice)
 
   // Có ai đó chiếm vé trong lúc ta đang tải (stopSpeaking, hoặc một lượt phát khác) → BỎ lượt
   // này. Trả về vé CŨ (đã lạc hậu) chứ không phải `playToken` hiện tại, để nơi gọi —
@@ -541,8 +532,8 @@ async function speakViaGoogle(
   // Tách từ để tính index tương ứng với vị trí phát (ước tính theo tỉ lệ thời gian)
   const words = onWord ? text.trim().split(/\s+/) : []
   const audioId = crypto.randomUUID()
-  // Số vé của CHÍNH lượt phát này (gán lúc chiếm thẻ audio) — trả về cho nơi gọi so lại.
-  let myPlayToken = playToken
+  // Vé đã nhận tại public speak, giữ nguyên xuyên tải/phát/fallback.
+  const myPlayToken = veTruocKhiTai
 
   await new Promise<void>((resolve, reject) => {
     // Nếu có lượt phát TRƯỚC ĐÓ còn đang treo (currentResolve chưa được gọi) — vd người
@@ -550,15 +541,14 @@ async function speakViaGoogle(
     // thẻ audio dùng chung. Thiếu bước này thì Promise của lượt phát trước sẽ treo MÃI MÃI
     // (không bao giờ resolve/reject vì handler của nó bị gỡ ở clearAudioHandlers ngay dưới
     // mà không ai gọi resolve() thay), khiến nút loa/vòng lặp "Phát tất cả" đang chờ nó bị
-    // kẹt vĩnh viễn ở trạng thái "đang phát". playToken++ để huỷ luôn phần sửa lỗi còn treo
-    // (nếu lượt trước là speakBilingual) — giống hệt logic stopSpeaking().
+    // kẹt vĩnh viễn ở trạng thái "đang phát". Public speak đã đổi vé trước lúc tải để hủy
+    // phần giải thích còn treo; không nhận vé lần nữa ở backend này.
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl)
       currentBlobUrl = null
     }
     currentResolve?.()
     currentResolve = null
-    myPlayToken = ++playToken
 
     // Tái dùng thẻ <audio> đã mở khoá (xem ghi chú đầu file) thay vì tạo mới mỗi câu
     const audio = getSharedAudio()
@@ -632,8 +622,8 @@ function speakViaWebSpeech(
       resolve(playToken)
       return
     }
-    // Chiếm vé trước cancel: callback của câu cũ phải trả vé riêng đã hết hiệu lực.
-    const token = ++playToken
+    // Public speak đã nhận vé trước cancel; callback câu cũ trả vé riêng đã hết hiệu lực.
+    const token = playToken
     window.speechSynthesis.cancel()
     const utt = new SpeechSynthesisUtterance(text)
     utt.lang = lang
@@ -686,9 +676,13 @@ export async function speak(
   // Trả về "số vé" của lượt phát này — nơi gọi so với playToken hiện tại để biết lượt phát
   // có bị Tắt tiếng / lượt phát khác chiếm chỗ hay không (xem speakBilingual).
 ): Promise<number> {
+  // Nhận vé trước tải: lỗi/callback câu cũ không được thay thế lượt mới còn đang chờ.
+  const initialTicket = text.trim() ? ++playToken : playToken
   try {
     return await speakViaGoogle(text, lang, voice, rate, onWord)
   } catch {
+    // Backend giữ nguyên vé của public call, nên guard này áp được cả lỗi tải lẫn play.
+    if (playToken !== initialTicket) return initialTicket
     // Lỗi Google TTS (hết lượt dùng thử, mất mạng, server lỗi...) → dùng Web Speech API tạm
     return await speakViaWebSpeech(text, lang, voice, rate, onWord)
   }
@@ -710,8 +704,7 @@ export async function speakBilingual(
   onFeedbackWord?: (idx: number) => void,
   feedbackVoice: Voice = getNativeVoicePref(voice),
 ) {
-  // Chốt số vé SAU khi câu thoại phát xong (speak trả về vé của chính lượt phát đó) — chốt
-  // trước khi phát là sai, vì chính lượt phát này cũng tăng playToken (xem ghi chú ở playToken).
+  // Dùng vé do speak trả về; stop hoặc một public call mới đều làm vé câu cũ hết hiệu lực.
   let myToken = ++playToken
   if (speech) myToken = await speak(speech, speechLang, voice, rate, onSpeechWord)
   // Nếu giữa chừng người dùng bấm Tắt tiếng / sang câu khác (stopSpeaking → playToken đổi),

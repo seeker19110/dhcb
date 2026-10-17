@@ -12,26 +12,38 @@ declare global {
       start: () => void
       stop: () => void
       replace: () => Promise<void>
+      startReplacement: () => void
+      waitOriginal: () => Promise<void>
       finish: () => void
       wait: () => Promise<void>
     }
   }
 }
 
-async function prepare(page: Page, speechLang: Lang, feedbackLang: Lang, heldRequest = false) {
+async function prepare(
+  page: Page,
+  speechLang: Lang,
+  feedbackLang: Lang,
+  heldRequest: boolean | 'both' = false,
+) {
   let requests = 0
   let release: () => void = () => {}
   const barrier = new Promise<void>((resolve) => {
     release = resolve
+  })
+  let releaseNew: () => void = () => {}
+  const newBarrier = new Promise<void>((resolve) => {
+    releaseNew = resolve
   })
   const unexpected: string[] = []
   await page.route('**/__tts_cancellation__', (route) =>
     route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>TTS fixture</title>' }),
   )
   await page.route('**/api/tts', async (route) => {
-    requests++
+    const requestIndex = ++requests
     if (route.request().method() !== 'POST') unexpected.push('tts_method')
-    if (heldRequest && requests === 1) await barrier
+    if (heldRequest && requestIndex === 1) await barrier
+    if (heldRequest === 'both' && requestIndex === 2) await newBarrier
     await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
   })
   await page.goto('/__tts_cancellation__')
@@ -43,6 +55,7 @@ async function prepare(page: Page, speechLang: Lang, feedbackLang: Lang, heldReq
       let held: SpeechSynthesisUtterance | null = null
       let old: SpeechSynthesisUtterance | null = null
       let pending: Promise<void> = Promise.resolve()
+      let replacement: Promise<void> = Promise.resolve()
       const boundary = (utterance: SpeechSynthesisUtterance | null) => {
         if (utterance)
           utterance.dispatchEvent(
@@ -92,24 +105,54 @@ async function prepare(page: Page, speechLang: Lang, feedbackLang: Lang, heldReq
           await pending
           boundary(old)
         },
+        startReplacement: () => {
+          replacement = api.speak('synthetic replacement', speechLang, 'Kore', 1).then(() => {})
+        },
+        waitOriginal: () => pending,
         finish: () => {
           const previous = held
           held = null
           boundary(previous)
           previous?.dispatchEvent(new Event('end'))
         },
-        wait: () => pending,
+        wait: () => Promise.all([pending, replacement]).then(() => {}),
       }
     },
     { moduleUrl: '/src/lib/tts.ts', speechLang, feedbackLang, holdSpeech: !heldRequest },
   )
-  return { count: () => requests, release, unexpected }
+  return { count: () => requests, release, releaseNew, unexpected }
 }
 
 for (const [speechLang, feedbackLang] of [
   ['en-US', 'vi-VN'],
   ['vi-VN', 'en-US'],
 ] as const) {
+  test(`${speechLang} → ${feedbackLang}: lỗi câu cũ không chiếm vé khi câu mới vẫn đang tải`, async ({
+    page,
+  }) => {
+    const fixture = await prepare(page, speechLang, feedbackLang, 'both')
+    try {
+      await page.evaluate(() => window.__ttsCancellation.start())
+      await expect.poll(fixture.count).toBe(1)
+      await page.evaluate(() => window.__ttsCancellation.startReplacement())
+      await expect.poll(fixture.count).toBe(2)
+      fixture.release()
+      await page.evaluate(() => window.__ttsCancellation.waitOriginal())
+      const beforeNewLoad = await page.evaluate(() => [...window.__ttsCancellation.spoken])
+      fixture.releaseNew()
+      await page.evaluate(() => window.__ttsCancellation.wait())
+      expect(beforeNewLoad).toEqual([])
+      expect(await page.evaluate(() => window.__ttsCancellation.spoken)).toEqual([
+        'synthetic replacement',
+      ])
+      expect(fixture.count()).toBe(2)
+      expect(fixture.unexpected).toEqual([])
+    } finally {
+      fixture.release()
+      fixture.releaseNew()
+    }
+  })
+
   test(`${speechLang} → ${feedbackLang}: lỗi tải sau hủy không phát dự phòng hay giải thích`, async ({
     page,
   }) => {

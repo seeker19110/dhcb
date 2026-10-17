@@ -990,12 +990,14 @@ lượt mới đã tăng token, nên `speakBilingual` nhận nhầm vé mới v�
 vừa bị hủy. Boundary cũ cũng còn cập nhật karaoke. Tải cache/HTTP reject sau stop lại bị
 public `speak.catch` chuyển sang giọng dự phòng.
 
-**Cách rà:** giữ immutable ticket cho từng lượt, claim trước cancel callback; callback
-kết thúc trả ticket riêng, callback cập nhật kiểm ticket còn active. Catch stale chỉ ở
-quãng tải; không so token trước tải trong public catch vì HTMLAudio tự claim vé lúc play,
-lỗi active vẫn phải fallback. Không dùng trạng thái telemetry làm quyền thực thi.
+**Cách rà:** claim một vé tại public speak không rỗng, trước mọi await. Backend phải giữ
+nguyên vé xuyên tải/phát/fallback; callback kết thúc trả vé riêng và boundary kiểm vé còn
+active. Khi backend không tự tăng vé nữa, public catch mới so được initial ticket cho cả
+lỗi tải và play. Chỉ thêm public claim mà giữ self-increment sẽ làm lỗi active mất fallback;
+chỉ claim lúc backend phát sẽ bỏ lượt mới còn đang tải. Không dùng telemetry làm authority.
 
-**Cổng chốt:** deferred cache/HTTP reject sau stop/replacement, onend/onerror sau cancel,
-late boundary, delayed play reject; đối chứng active error và normal bilingual vẫn chạy.
+**Cổng chốt:** hai tải A/B đồng thời, A resolve/reject/play-error trước khi B xong; B vẫn
+phát đúng một lần, A không fallback/feedback. Giữ onend/onerror/late boundary sau cancel,
+active load/play error, normal bilingual, empty và playAudioUrl controls.
 Test public API thật với fake tại biên, Chromium hai chiều; không suy thành audible latency
 hoặc bằng chứng lifecycle React. Xem changelog `0644`.

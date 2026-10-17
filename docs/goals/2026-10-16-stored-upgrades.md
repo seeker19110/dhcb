@@ -54,7 +54,7 @@
 | S04  | Injection qua ghi chú/ký ức/công cụ và kiểm cả delta stream                  | Spec và corpus được merge             | [S04 đã duyệt](../specs/2026-10-16-stored-s04-injection-stream.md)                               | Chưa tạo | [#1408](https://github.com/seeker19110/dhcb/pull/1408) | DONE    | Main bbeaded5; PR/main CI và deploy đạt; 1.874+8 runtime/cleanup0 |
 | S05a | Giữ eligibility khi hydrate và fallback khi embedding reject                 | Spec S05 đã merge                     | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | [#1405](https://github.com/seeker19110/dhcb/pull/1405) | DONE    | Main85f27d9a; 19 check, PG/21.630 unit/1.440 E2E đạt              |
 | S05  | Benchmark chất lượng truy xuất Việt–Anh                                      | Corpus/nhãn/ngưỡng đã duyệt           | [S05 đã duyệt](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md)                     | Chưa tạo | Chưa tạo                                               | SPEC    | Chưa có vector thật; chưa đo ranking                              |
-| S06a | Hủy TTS giữ đúng vé qua tải lỗi/callback Web Speech                          | S04 đã merge                          | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | [#1410](https://github.com/seeker19110/dhcb/pull/1410) | WAITING | Local21.997unit/20browser/clean typecheck đạt; CI còn mở          |
+| S06a | Hủy TTS giữ đúng vé qua tải lỗi/callback Web Speech                          | S04 đã merge                          | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | [#1410](https://github.com/seeker19110/dhcb/pull/1410) | WAITING | Local22.000unit/22browser/clean typecheck đạt; CI bản sửa còn mở  |
 | S06  | Số đo voice, ngắt lời, reconnect và fallback                                 | Spec/cách đo trên thiết bị được duyệt | [S06 đã duyệt](../specs/2026-10-16-stored-s06-voice-metrics.md)                                  | Chưa tạo | Chưa tạo                                               | SPEC    | App STT→LLM→TTS; chưa đo acoustic                                 |
 
 ## 4. Risk register
@@ -80,7 +80,7 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   `codex/stored-tts-cancellation`. Workspace gốc và file chưa track của người dùng giữ nguyên.
 - Goal gap: corpus S04 đã merge sau đủ 19 context, có artifact CI 1.874/1.874 + 8/8,
   cleanup/network 0. Main CI 38986735433 và deploy 38986735404 đều SUCCESS. S06a TTS đã tái hiện
-  lỗi trước sửa, đủ full gate/20 browser/clean typecheck; [PR #1410](https://github.com/seeker19110/dhcb/pull/1410) chờ CI. Lifecycle UI/STT sau unmount,
+  lỗi trước sửa, source đầu đã full gate nhưng review phát hiện P2 pending replacement; [PR #1410](https://github.com/seeker19110/dhcb/pull/1410) đã đạt full local 22.000unit/22browser/clean typecheck sau sửa, chờ CI exact head. Lifecycle UI/STT sau unmount,
   baseline S05, instrumentation S06 và số đo vector/voice thật vẫn mở.
 - Next best slice: hoàn tất S06a hủy TTS, sau đó sửa immutable owner của recorder/STT
   xuyên permission/response/timer trước instrumentation. Không dùng metadata làm authority
@@ -725,7 +725,7 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
 
 ### Iteration 11 — 2026-10-17
 
-- State: WAITING CI; S06a hủy TTS trên `codex/stored-tts-cancellation`, base main bbeaded5.
+- State: VERIFY sau repair ownership lần 2; S06a hủy TTS trên `codex/stored-tts-cancellation`, base main bbeaded5.
   Đã reload main/AGENTS/CLAUDE/PROGRESS/PROJECT/goal/spec và delivery loop. S06 Approved
   merge #1399; một outcome là quyền sở hữu lượt phát qua tải lỗi và Web Speech.
 - Scope: `tts.ts`, ba file unit regression và browser fixture TTS thật; docs/goal/changelog
@@ -760,6 +760,38 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   độc lập metadata, signal trước upload, usage của request đã gửi giữ đúng captured user.
 
 - Source commit65cc3d75; [PR #1410](https://github.com/seeker19110/dhcb/pull/1410) READY, đã attach. Còn full CI exact head, review/base/CodeQL và metadata mới sau body trước merge; không auto-merge/bypass.
+
+- Independent review tìm P2 ở source 683d99ce: A tải cũ pending, B mới cũng pending,
+  A reject rồi fallback claim vé làm B bị bỏ. Gap còn có A tải thành công hoặc play-error
+  trước khi B tải xong. Parent regression actual checkout: 3 unit đỏ/22 controls đạt,
+  Chromium hai chiều 2 đỏ/8 controls đạt. Không merge source này.
+- Trước lần sửa 2 của ownership: lỗi nằm ở tầng **thiết kế** vì claim vé lúc backend bắt
+  đầu phát không bảo vệ intent đã bắt đầu tải. Hướng sửa: một claim ở public nonempty speak,
+  backend giữ vé, guard public catch chỉ sau khi bỏ self-increment. Lượt full gate trước
+  là lịch sử cho source cũ; archive initial-validations, phải chạy lại đầy đủ source mới.
+- CI683d99ce/run38989883273 SQL job117269847752 bị ECR Data limit exceeded tại Initialize
+  containers trước checkout; chưa chạy SQL/test. Không đổi image/gate, chưa gửi rerun vì
+  P2 cần source mới. Không coi bootstrap failure là product failure hoặc dùng nó che P2.
+
+- Repair source mới: public nonempty speak nhận ticket trước await; private Google/Web
+  Speech không tự tăng; public catch kiểm ticket cho cả load/play lỗi, boundary trả/kiểm
+  vé riêng. Active fallback và normal bilingual vẫn chạy, empty không claim. Source SHA
+  93e2ad177d5de58ba60c9ba212b32f71e71c12ef37de50cc316a32006ebe52c3 giữ qua review.
+  Actual targeted 4 file/102 đạt (2,90s), Chromium10/10 (9,8s), thin strict3file đạt.
+  Independent29probe actual source đạt; negative double-claim bắt active playback-error.
+  Full gate mới bắt buộc, không tái dùng full21997/smoke20 của source đầu.
+
+- Full local source sửa sau review: type92,42/build147,04/lint0warning81,46/format99,18s,
+  exit0. 976file/22.000unit pass,5file/35test skip sẵn có; Vitest555,05s/npmwall557,57s,
+  coverage96,14/92,07/96,91/96,85%, sàn94/90/94/94 không đổi. Replay7/7/specs191 đạt.
+  UI contract6file/173 đạt; TTS+Practice direction22/22 không retry57,4s. Clean typecheck
+  sau chỉ xóa generated dist đạt95,61s. Năm source/test hashes giữ đúng snapshot sửa mới;
+  docs cập nhật sau gate được Prettier/diff riêng, không tái dùng gate source đầu.
+- Chuẩn bị slice sau ngoài repo: actual mounted Companion/Speaking A/B30ca có16 regression
+  đỏ/14controls, gồm reauth/late STT/manual native Stop. Adapter candidate có36coregreen
+  và một regression stop-throw bổ sung; chưa apply/mounted/browser/fullgate source adapter.
+  S05 CLI prototype P1 native env đã sửa một predicate; parent6/6 native/tsx controls đạt,
+  chưa actual PG/ranking/quality floor. Những prototype này không là acceptance trên main.
 
 ## 7. Final audit
 
