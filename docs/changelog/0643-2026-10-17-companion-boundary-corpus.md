@@ -1,6 +1,6 @@
 # 0643 — Kiểm chứng ranh giới Companion trên Postgres disposable
 
-- **Ngày:** 2026-10-17 · **PR:** sẽ ghi sau khi mở · **Loại:** `test(companion)`.
+- **Ngày:** 2026-10-17 · **PR:** [#1408](https://github.com/seeker19110/dhcb/pull/1408) · **Loại:** `test(companion)`.
 - **Goal/spec:** [stored S04](../goals/2026-10-16-stored-upgrades.md), [S04 Approved](../specs/2026-10-16-stored-s04-injection-stream.md), merge #1399.
 
 ## Thay đổi
