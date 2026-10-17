@@ -279,7 +279,7 @@ describe('parseDisposableDatabase', () => {
       LOCAL.replace('postgresql:', 'https:'),
       LOCAL.replace('synthetic:not-a-secret@', ''),
       LOCAL.replace('not-a-secret', ''),
-      LOCAL.replace('synthetic', '%00'),
+      LOCAL.replaceAll('synthetic', '%00'),
       LOCAL.replace('not-a-secret', '%ZZ'),
       LOCAL + '?',
       LOCAL + '#',

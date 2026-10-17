@@ -692,6 +692,14 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   đã attach vào chat. Full local gates/clean typecheck/browser đạt; chờ mọi check exacthead
   cùng review/base/CodeQL và metadata mới sau body trước merge theo quyền owner đã cấp.
 
+- CI head0f361be8/run38984959491 gặp ECR Data limit exceeded trước checkout SQL; các
+  job khác vẫn chạy. CodeQL PR85 trỏ `.replace` tạo credential lỗi trong testfixture
+  (js/incomplete-sanitization). Đổi đúng dòng đó sang replaceAll, fixture string giống
+  hệt;51/51 targeted +lint/format đạt. Không sửa source sản phẩm, corpus hoặc oracle.
+  Full local số ở trên là trước một dòng fixture; full CI head mới phải chạy đủ mọi
+  gate, không tái dùng số CI cũ hoặc dismiss/suppress. Lịch rerun bootstrap head cũ đã
+  dừng trước gửi request khi cần head mới; ECR hiện1lượt CI fail ở iteration này.
+
 ## 7. Final audit
 
 - [ ] Mọi Goal AC có bằng chứng trên main.

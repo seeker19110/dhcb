@@ -52,6 +52,13 @@ privacy/source/expiry, extra/duplicate tools, nested JSON, runtime DTO/grant set
 hash corpus đọc lại, source drift, spawn exit và journal/fsync/timeout. Mock/RAM kiểm
 bộ đo, không thay bằng chứng PG hoặc provider thật.
 
+CodeQL PR lần đầu phát cảnh báo #85 tại phép tạo username lỗi trong test DB guard.
+Đổi `.replace` thành `.replaceAll`; giá trị fixture giữ nguyên vì username chỉ xuất hiện
+một lần. Sau thay đổi test-only: 51/51 test, lint và format đạt. Các số full local ở trên
+thuộc source trước một dòng fixture này; CI trên head cuối phải chạy lại đầy đủ, không
+suy kết quả exact head từ lượt cũ hoặc dismiss cảnh báo. CI đầu còn lỗi ECR Data limit
+exceeded trước checkout; đã dừng lịch retry head cũ khi chuẩn bị commit test mới.
+
 ## Giới hạn, rollout và rollback
 
 Corpus có provenance agent_synthetic_review/human NOT_REVIEWED. Chưa đo model mới,
