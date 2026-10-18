@@ -1,3 +1,5 @@
+import type { PlaybackHandle, TurnHandle } from './voiceMetrics'
+import type { Reason } from '@dhcb/core-contracts/voiceMetrics'
 // Text-to-Speech — gọi Google TTS qua /api/tts (server-side, có cache dùng chung)
 // Audio cache được MÃ HÓA AES-256-GCM (lưu local VPS hoặc Cloudflare R2 tùy STORAGE_DRIVER):
 // ai có link cũng không nghe được nội dung nếu không đi qua /api/tts — server chỉ trả khoá giải
@@ -32,6 +34,12 @@ import {
 export { unlockAudio } from './sharedAudio'
 
 type Lang = 'en-US' | 'vi-VN'
+export interface SpeechObservation {
+  readonly turn: TurnHandle
+  readonly segment: 'speech' | 'feedback' | 'replay'
+}
+type AudioObservation = SpeechObservation & { readonly playback: PlaybackHandle }
+let observedPlayback: PlaybackHandle | undefined
 export type Voice = VoiceId
 
 const MALE_VOICE_IDS = new Set(VOICE_OPTIONS.filter((v) => v.gender === 'male').map((v) => v.id))
@@ -53,6 +61,7 @@ let playToken = 0
 
 // Gỡ mọi handler cũ trên thẻ dùng chung trước khi gắn handler cho lượt phát mới
 function clearAudioHandlers(a: HTMLAudioElement) {
+  a.onplaying = null
   a.onended = null
   a.onerror = null
   a.ontimeupdate = null
@@ -246,7 +255,9 @@ export function isTTSSupported(): boolean {
   return true // Google TTS luôn hoạt động (không phụ thuộc trình duyệt)
 }
 
-export function stopSpeaking() {
+export function stopSpeaking(reason: Reason = 'user') {
+  observedPlayback?.end('cancelled', reason)
+  observedPlayback = undefined
   playToken++ // huỷ phần còn lại của chuỗi đọc song ngữ đang chờ (nếu có)
   const audio = peekSharedAudio()
   if (audio) {
@@ -302,10 +313,27 @@ async function decryptToBuffer(
   audioUrl: string,
   keyB64: string,
   ivB64: string,
+  metrics?: TurnHandle,
 ): Promise<ArrayBuffer> {
-  const cipherRes = await fetch(audioUrl)
+  const request = metrics?.request('audio_download')
+  let cipherRes: Response
+  try {
+    cipherRes = await fetch(audioUrl)
+  } catch (error) {
+    request?.end('error', 'network')
+    throw error
+  }
+  request?.headers()
+  if (!cipherRes.ok) request?.end('error', 'http')
   if (!cipherRes.ok) throw new Error(`Không tải được audio: ${cipherRes.status}`)
-  const cipherBuffer = await cipherRes.arrayBuffer()
+  let cipherBuffer: ArrayBuffer
+  try {
+    cipherBuffer = await cipherRes.arrayBuffer()
+  } catch (error) {
+    request?.end('error', 'network')
+    throw error
+  }
+  request?.end('ok')
 
   const keyBytes = base64ToBytes(keyB64)
   const ivBytes = base64ToBytes(ivB64)
@@ -399,6 +427,7 @@ export async function ensureAudioWithTimeline(
   text: string,
   lang: Lang,
   voiceInput: Voice,
+  observation?: AudioObservation,
 ): Promise<SpeechAudio> {
   const voice = resolveVoiceForLang(voiceInput, lang)
   // Giọng ElevenLabs không phân biệt lang (xem ghi chú tương ứng trong api/tts.ts) — bỏ lang
@@ -409,6 +438,7 @@ export async function ensureAudioWithTimeline(
   // /api/tts trả `voice`) không có giọng thật → dùng tạm giọng yêu cầu, đúng như hành vi cũ.
   const cached = await getAudioEntry(cacheKey)
   if (cached) {
+    observation?.playback.cache('local_hit')
     return {
       buffer: cached.buffer,
       timeline: cached.timeline,
@@ -418,22 +448,38 @@ export async function ensureAudioWithTimeline(
 
   // Đang có yêu cầu tải cùng câu này (vd: bộ nạp-trước) → dùng chung, không tải lại
   const running = inflight.get(cacheKey)
-  if (running) return running
+  if (running) {
+    observation?.playback.cache('shared_inflight')
+    return running
+  }
+  observation?.playback.cache('local_miss')
 
   const job = (async () => {
     // Không chặn khách ở đây: getAuthHeader() tự gắn `X-Guest-Id` khi chưa có phiên, server
     // quyết định hạn mức (cache HIT miễn phí, tạo mới trừ lượt dùng thử).
-    const callTts = () =>
-      fetch('/api/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader(),
-        },
-        body: JSON.stringify({ text, lang, voice }),
-      })
+    const callTts = async (attempt: 1 | 2) => {
+      const auth = getAuthHeader()
+      const request = observation?.turn.request('tts', attempt)
+      let response: Response
+      try {
+        response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...auth,
+          },
+          body: JSON.stringify({ text, lang, voice }),
+        })
+      } catch (error) {
+        request?.end('error', 'network')
+        throw error
+      }
+      request?.headers()
+      if (!response.ok) request?.end('error', 'http')
+      return { response, request }
+    }
 
-    let res = await callTts()
+    let { response: res, request } = await callTts(1)
     // 429 = quá nhiều request (thường do phát nhiều câu liên tiếp). Đợi 1.2s rồi thử lại
     // 1 lần trước khi báo lỗi — phần lớn câu đã cache nên lần 2 thường qua.
     // Riêng khách HẾT LƯỢT DÙNG THỬ: thử lại vô ích (hạn mức theo ngày) — báo lỗi ngay để
@@ -441,18 +487,28 @@ export async function ensureAudioWithTimeline(
     if (res.status === 429) {
       if (await isGuestTrialExhausted(res)) throw new Error(GUEST_TRIAL_EXHAUSTED_ERROR)
       await new Promise((r) => setTimeout(r, 1200))
-      res = await callTts()
+      const retry = await callTts(2)
+      res = retry.response
+      request = retry.request
     }
 
     if (!res.ok) throw new Error(`TTS API lỗi: ${res.status}`)
 
+    let data: unknown
+    try {
+      data = await res.json()
+    } catch (error) {
+      request?.end('error', 'invalid_response')
+      throw error
+    }
+    request?.end('ok')
     const {
       audio_url,
       key_b64,
       iv_b64,
       viseme_timeline = null,
       voice: serverVoice,
-    } = (await res.json()) as {
+    } = data as {
       audio_url: string
       key_b64: string
       iv_b64: string
@@ -464,7 +520,7 @@ export async function ensureAudioWithTimeline(
     // Chirp3-HD (mp3) thay cho giọng Gemini (WAV) mà client yêu cầu. Bám theo giọng server
     // trả về, nếu không sẽ gắn nhầm mimeType cho Blob và iOS/Safari không phát được.
     const actualVoice = serverVoice && isKnownVoiceId(serverVoice) ? serverVoice : voice
-    const buffer = await decryptToBuffer(audio_url, key_b64, iv_b64)
+    const buffer = await decryptToBuffer(audio_url, key_b64, iv_b64, observation?.turn)
     // Lưu vào IndexedDB để lần sau (kể cả mở lại app) dùng ngay không cần fetch
     void setAudioBuffer(cacheKey, buffer, viseme_timeline, actualVoice)
     return { buffer, timeline: viseme_timeline, voice: actualVoice }
@@ -508,6 +564,7 @@ async function speakViaGoogle(
   voice: Voice,
   rate = 1,
   onWord?: (idx: number) => void,
+  observation?: AudioObservation,
 ): Promise<number> {
   if (!text.trim()) return playToken
 
@@ -518,14 +575,22 @@ async function speakViaGoogle(
   const veTruocKhiTai = playToken
 
   // Lấy audio (ưu tiên IndexedDB; bộ nạp-trước thường đã tải sẵn câu này)
-  const { buffer, voice: actualVoice } = await ensureAudioWithTimeline(text, lang, voice)
+  const { buffer, voice: actualVoice } = await ensureAudioWithTimeline(
+    text,
+    lang,
+    voice,
+    observation,
+  )
 
   // Có ai đó chiếm vé trong lúc ta đang tải (stopSpeaking, hoặc một lượt phát khác) → BỎ lượt
   // này. Trả về vé CŨ (đã lạc hậu) chứ không phải `playToken` hiện tại, để nơi gọi —
   // `speakBilingual` so `playToken !== myToken` — thấy lệch và dừng luôn phần đọc còn lại.
   // `resolve` chứ không `throw`: `speak()` bắt lỗi là rơi sang Web Speech, tức lại phát thành
   // tiếng đúng thứ vừa bị huỷ.
-  if (playToken !== veTruocKhiTai) return veTruocKhiTai
+  if (playToken !== veTruocKhiTai) {
+    observation?.playback.end('cancelled', 'superseded')
+    return veTruocKhiTai
+  }
   // mimeType theo giọng THẬT server dùng, không phải giọng yêu cầu (xem ensureAudioWithTimeline)
   const blobUrl = bufferToBlobUrl(buffer, blobMimeTypeForVoice(actualVoice))
 
@@ -592,15 +657,22 @@ async function speakViaGoogle(
       if (currentAudioId === audioId) currentAudioId = null
       if (currentResolve === resolve) currentResolve = null
     }
+    audio.onplaying = () => {
+      if (currentAudioId === audioId && playToken === myPlayToken && audio.currentSrc === blobUrl)
+        observation?.playback.started()
+    }
     audio.onended = () => {
+      observation?.playback.end('ok')
       cleanup()
       resolve()
     }
     audio.onerror = () => {
+      observation?.playback.end('error', 'media')
       cleanup()
       reject(new Error('Không phát được audio'))
     }
     audio.play().catch((err) => {
+      observation?.playback.end('error', 'autoplay')
       cleanup()
       reject(err)
     })
@@ -616,9 +688,13 @@ function speakViaWebSpeech(
   voice: Voice,
   rate = 1,
   onWord?: (idx: number) => void,
+  observation?: SpeechObservation,
 ): Promise<number> {
+  const playback = observation?.turn.playback({ kind: 'web_speech', segment: observation.segment })
+  observedPlayback = playback
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window) || !text.trim()) {
+      playback?.end('error', 'unsupported')
       resolve(playToken)
       return
     }
@@ -657,8 +733,17 @@ function speakViaWebSpeech(
         : n.includes('female') || n.includes('zira') || n.includes('samantha') || n.includes('nữ')
     })
     if (wanted) utt.voice = wanted
-    utt.onend = () => resolve(token)
-    utt.onerror = () => resolve(token) // không throw để tránh crash UI
+    utt.onstart = () => {
+      if (token === playToken) playback?.started()
+    }
+    utt.onend = () => {
+      playback?.end('ok')
+      resolve(token)
+    }
+    utt.onerror = () => {
+      playback?.end('error', 'media')
+      resolve(token)
+    } // không throw để tránh crash UI
     window.speechSynthesis.speak(utt)
   })
 }
@@ -673,18 +758,37 @@ export async function speak(
   // (getRatePref/setRatePref/RateToggle) — chỉ nới lỏng tham số phát thực tế.
   rate: number = getRatePref(),
   onWord?: (idx: number) => void,
+  observation?: SpeechObservation,
   // Trả về "số vé" của lượt phát này — nơi gọi so với playToken hiện tại để biết lượt phát
   // có bị Tắt tiếng / lượt phát khác chiếm chỗ hay không (xem speakBilingual).
 ): Promise<number> {
   // Nhận vé trước tải: lỗi/callback câu cũ không được thay thế lượt mới còn đang chờ.
   const initialTicket = text.trim() ? ++playToken : playToken
+  let playback: PlaybackHandle | undefined
+  if (text.trim()) {
+    observedPlayback?.end('cancelled', 'superseded')
+    playback = observation?.turn.playback({ kind: 'html_audio', segment: observation.segment })
+    observedPlayback = playback
+  }
   try {
-    return await speakViaGoogle(text, lang, voice, rate, onWord)
+    return await speakViaGoogle(
+      text,
+      lang,
+      voice,
+      rate,
+      onWord,
+      observation && playback ? { ...observation, playback } : undefined,
+    )
   } catch {
     // Backend giữ nguyên vé của public call, nên guard này áp được cả lỗi tải lẫn play.
-    if (playToken !== initialTicket) return initialTicket
+    if (playToken !== initialTicket) {
+      playback?.end('cancelled', 'superseded')
+      return initialTicket
+    }
+    playback?.end('error', 'unknown')
+    observation?.turn.fallback('server_tts_to_web_speech', 'unknown')
     // Lỗi Google TTS (hết lượt dùng thử, mất mạng, server lỗi...) → dùng Web Speech API tạm
-    return await speakViaWebSpeech(text, lang, voice, rate, onWord)
+    return await speakViaWebSpeech(text, lang, voice, rate, onWord, observation)
   }
 }
 
@@ -703,12 +807,29 @@ export async function speakBilingual(
   onSpeechWord?: (idx: number) => void,
   onFeedbackWord?: (idx: number) => void,
   feedbackVoice: Voice = getNativeVoicePref(voice),
+  metrics?: TurnHandle,
 ) {
   // Dùng vé do speak trả về; stop hoặc một public call mới đều làm vé câu cũ hết hiệu lực.
   let myToken = ++playToken
-  if (speech) myToken = await speak(speech, speechLang, voice, rate, onSpeechWord)
+  if (speech)
+    myToken = await speak(
+      speech,
+      speechLang,
+      voice,
+      rate,
+      onSpeechWord,
+      metrics ? { turn: metrics, segment: 'speech' } : undefined,
+    )
   // Nếu giữa chừng người dùng bấm Tắt tiếng / sang câu khác (stopSpeaking → playToken đổi),
   // thì DỪNG, không đọc tiếp phần sửa lỗi.
   if (playToken !== myToken) return
-  if (feedback) await speak(feedback, feedbackLang, feedbackVoice, rate, onFeedbackWord)
+  if (feedback)
+    await speak(
+      feedback,
+      feedbackLang,
+      feedbackVoice,
+      rate,
+      onFeedbackWord,
+      metrics ? { turn: metrics, segment: 'feedback' } : undefined,
+    )
 }

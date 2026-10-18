@@ -244,7 +244,21 @@ describe('Companion public owner regressions', () => {
     await click('DIRECT-VOICE')
     expect(sends).toHaveLength(1)
     await finishSend(0)
-    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith('fixture reply', 'vi-VN')
+    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith(
+      'fixture reply',
+      'vi-VN',
+      undefined,
+      undefined,
+      undefined,
+      {
+        segment: 'speech',
+        turn: expect.objectContaining({
+          request: expect.any(Function),
+          playback: expect.any(Function),
+          end: expect.any(Function),
+        }),
+      },
+    )
     expect(output('voice')).toBe('idle')
     expect(output('loading')).toBe('false')
   })
@@ -492,6 +506,20 @@ describe('Companion public owner regressions', () => {
     expect(sends).toHaveLength(2)
     await finishSend(1, 'new owner reply')
     expect(output('loading')).toBe('false')
-    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith('new owner reply', 'vi-VN')
+    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith(
+      'new owner reply',
+      'vi-VN',
+      undefined,
+      undefined,
+      undefined,
+      {
+        segment: 'speech',
+        turn: expect.objectContaining({
+          request: expect.any(Function),
+          playback: expect.any(Function),
+          end: expect.any(Function),
+        }),
+      },
+    )
   })
 })

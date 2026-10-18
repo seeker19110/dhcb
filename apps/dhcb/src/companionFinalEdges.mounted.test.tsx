@@ -241,7 +241,21 @@ describe('Final actual Companion API ownership edges', () => {
     await finish(1, 'SECOND_OWNER_CURRENT_REPLY')
     expect(output('loading')).toBe('false')
     expect(output('messages')).toContain('SECOND_OWNER_CURRENT_REPLY')
-    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith('SECOND_OWNER_CURRENT_REPLY', 'vi-VN')
+    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith(
+      'SECOND_OWNER_CURRENT_REPLY',
+      'vi-VN',
+      undefined,
+      undefined,
+      undefined,
+      {
+        segment: 'speech',
+        turn: expect.objectContaining({
+          request: expect.any(Function),
+          playback: expect.any(Function),
+          end: expect.any(Function),
+        }),
+      },
+    )
     expect(output('messages'), 'AUTH_COMMIT_RETAINED_PREVIOUS_PRIVATE_MESSAGES').not.toContain(
       'FIRST_OWNER_PRIVATE_CANARY',
     )

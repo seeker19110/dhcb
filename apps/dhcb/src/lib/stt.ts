@@ -1,3 +1,4 @@
+import type { TurnHandle } from './voiceMetrics'
 // Speech-to-Text dùng Web Speech API (miễn phí, Chrome/Edge)
 // Khi production: thay bằng gpt-4o-mini-transcribe hoặc Deepgram
 
@@ -39,6 +40,7 @@ export interface STTResult {
 
 export interface CaptureOptions {
   readonly signal?: AbortSignal
+  readonly metrics?: TurnHandle
 }
 
 export type StopListening = (mode?: 'cancel' | 'complete') => void
@@ -48,7 +50,7 @@ export function startListening(
   onResult: (r: STTResult) => void,
   onEnd: (lastTranscript: string) => void,
   onError: (err: string) => void,
-  { signal }: CaptureOptions = {},
+  { signal, metrics }: CaptureOptions = {},
 ): StopListening {
   if (signal?.aborted) return () => {}
   const w = window as unknown as {
@@ -79,6 +81,7 @@ export function startListening(
     if (!gotSpeech && !terminal) {
       close()
       try {
+        metrics?.capture('stop_requested')
         rec.stop()
       } catch {
         /* recognition đã dừng */
@@ -120,6 +123,7 @@ export function startListening(
       close()
       if (!completing) {
         try {
+          metrics?.capture('stop_requested')
           rec.stop()
         } catch {
           /* recognition đã dừng */
@@ -131,6 +135,7 @@ export function startListening(
     completing = true
     clearTimers()
     try {
+      metrics?.capture('stop_requested')
       rec.stop()
     } catch {
       finishError('aborted')
@@ -153,6 +158,8 @@ export function startListening(
   rec.onend = () => {
     if (terminal) return
     close()
+    metrics?.capture('stopped')
+    if (lastTranscript.trim()) metrics?.textReady('stt')
     onEnd(lastTranscript)
   }
   rec.onerror = (e) => {

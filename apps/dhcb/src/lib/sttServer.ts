@@ -1,3 +1,4 @@
+import type { TurnHandle } from './voiceMetrics'
 // src/lib/sttServer.ts
 // Ghi âm giọng nói người dùng bằng MediaRecorder rồi gửi lên /api/stt để nhận diện
 // (OpenAI gpt-4o-mini-transcribe). Chính xác hơn Web Speech API và chạy được trên hầu
@@ -23,6 +24,7 @@ export interface Recorder {
 export interface CaptureOptions {
   readonly signal?: AbortSignal
   readonly isCurrent?: () => boolean
+  readonly metrics?: TurnHandle
 }
 
 function captureAborted(): DOMException {
@@ -43,7 +45,7 @@ function pickMime(): string {
 // Bắt đầu ghi âm. Trả về đối tượng Recorder để dừng (và nhận text) hoặc hủy.
 export async function startRecording(
   lang: 'en' | 'vi',
-  { signal, isCurrent }: CaptureOptions = {},
+  { signal, isCurrent, metrics }: CaptureOptions = {},
 ): Promise<Recorder> {
   // Kiểm owner ngay tại ranh giới thiết bị/request, kể cả trước React commit kế tiếp.
   const captureCurrent = () => {
@@ -130,6 +132,7 @@ export async function startRecording(
       return
     }
     phase = 'processing'
+    metrics?.capture('stopped')
     releaseTracks()
     try {
       assertCaptureCurrent()
@@ -137,11 +140,17 @@ export async function startRecording(
       if (blob.size === 0) throw new Error('EMPTY_RECORDING')
       const b64 = await blobToBase64(blob)
       assertCaptureCurrent()
-      const text = await transcribe(b64, blob.type, lang, () => {
-        assertCaptureCurrent()
-        phase = 'uploading'
-        signal?.removeEventListener('abort', cancel)
-      })
+      const text = await transcribe(
+        b64,
+        blob.type,
+        lang,
+        () => {
+          assertCaptureCurrent()
+          phase = 'uploading'
+          signal?.removeEventListener('abort', cancel)
+        },
+        metrics,
+      )
       phase = 'terminal'
       detach()
       resolveCompletion?.(text)
@@ -175,6 +184,7 @@ export async function startRecording(
         return completion
       }
       phase = 'stopping'
+      metrics?.capture('stop_requested')
       try {
         rec.stop()
       } catch (error) {
@@ -196,12 +206,14 @@ async function transcribe(
   mime: string,
   lang: 'en' | 'vi',
   beforeFetch: () => void,
+  metrics?: TurnHandle,
 ): Promise<string> {
   const auth = await getAuthHeader()
   // Không dùng capture signal làm transport signal: sau fetch, accounting cần receipt thật.
   beforeFetch()
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), CLIENT_STT_TIMEOUT_MS)
+  const request = metrics?.request('stt')
   let resp: Response
   try {
     resp = await fetch('/api/stt', {
@@ -211,6 +223,7 @@ async function transcribe(
       signal: controller.signal,
     })
   } catch (e) {
+    request?.end('error', e instanceof Error && e.name === 'AbortError' ? 'timeout' : 'network')
     if (e instanceof Error && e.name === 'AbortError') {
       throw new Error('Máy chủ phản hồi quá lâu — kiểm tra mạng rồi thử lại.')
     }
@@ -218,21 +231,33 @@ async function transcribe(
   } finally {
     clearTimeout(timer)
   }
+  request?.headers()
   if (!resp.ok) {
+    request?.end('error', 'http')
     const err = await resp.json().catch(() => ({}))
     throw new Error((err as { error?: string }).error ?? `Lỗi STT: ${resp.status}`)
   }
-  const data = (await resp.json()) as unknown
+  let data: unknown
+  try {
+    data = await resp.json()
+  } catch (error) {
+    request?.end('error', 'invalid_response')
+    throw error
+  }
   if (!data || typeof data !== 'object' || !('text' in data)) {
+    request?.end('error', 'invalid_response')
     throw new Error('STT API returned invalid response')
   }
   const text = (data as { text?: unknown }).text
   if (typeof text !== 'string') {
+    request?.end('error', 'invalid_response')
     throw new Error('STT API returned non-string text')
   }
   // Whisper có thể nghe ra rỗng (im lặng/tạp âm) — vẫn là 1 lần gọi API THÀNH CÔNG (server
   // đã trừ lượt), khác hẳn case EMPTY_RECORDING (chưa hề gọi API) ở trên. Trả '' thay vì
   // throw để caller (đã `await` thành công) tính đúng 1 lượt STT thay vì bỏ sót.
+  request?.end('ok')
+  if (text.trim()) metrics?.textReady('stt')
   return text.trim()
 }
 

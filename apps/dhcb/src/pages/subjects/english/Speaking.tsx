@@ -1,3 +1,6 @@
+import { voiceMetrics } from '../../../lib/voiceMetricsLocal'
+import type { TurnHandle } from '../../../lib/voiceMetrics'
+import type { Reason, Status, TurnOptions } from '@dhcb/core-contracts/voiceMetrics'
 import { buttonClass } from '@core/buttonStyles'
 import { getStoredToken } from '@core/authHeader'
 import { useState, useRef, useEffect, useMemo, useLayoutEffect, useCallback } from 'react'
@@ -583,11 +586,13 @@ interface SpeakingScope {
 type SpeakingPhase = 'permission' | 'recording' | 'completing' | 'stt' | 'confirm' | 'ai'
 
 interface SpeakingTurn {
+  readonly metrics: TurnHandle
   readonly scope: SpeakingScope
   readonly controller: AbortController
 }
 
 interface SpeakingPlayback {
+  readonly metrics: TurnHandle
   readonly scope: SpeakingScope
   readonly turn?: SpeakingTurn
 }
@@ -702,7 +707,7 @@ export default function Speaking() {
     if (keyboardOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [keyboardOpen])
 
-  const releaseTurn = useCallback(() => {
+  const releaseTurn = useCallback((status: Status = 'cancelled', reason: Reason = 'superseded') => {
     const owner = turnRef.current
     const capture = recorderRef.current
     const native = stopRecRef.current
@@ -712,6 +717,7 @@ export default function Speaking() {
     loadingOwnerRef.current = null
     recorderRef.current = null
     stopRecRef.current = null
+    owner?.metrics.end(status, reason)
     owner?.controller.abort()
     capture?.recorder.cancel()
     native?.stop()
@@ -720,17 +726,19 @@ export default function Speaking() {
     recTimerRef.current = null
     pendingTimerRef.current = null
   }, [])
-  const releasePlayback = useCallback(() => {
+  const releasePlayback = useCallback((reason: Reason = 'unknown') => {
+    const playback = playbackRef.current
+    if (playback && !playback.turn) playback.metrics.end('cancelled', reason)
     playbackRef.current = null
-    stopSpeaking()
+    stopSpeaking(reason)
   }, [])
   useLayoutEffect(() => {
     const scope: SpeakingScope = { key: scopeKey, userId: user.id, dir, sessionMarker }
     scopeRef.current = scope
     return () => {
       if (scopeRef.current === scope) scopeRef.current = null
-      releaseTurn()
-      releasePlayback()
+      releaseTurn('cancelled', 'unknown')
+      releasePlayback('unknown')
     }
   }, [scopeKey, user.id, dir, sessionMarker, releaseTurn, releasePlayback])
 
@@ -742,14 +750,22 @@ export default function Speaking() {
       !owner.controller.signal.aborted
     )
   }
-  function claimTurn(phase: SpeakingPhase): SpeakingTurn | null {
+  function claimTurn(
+    phase: SpeakingPhase,
+    input: TurnOptions['input'] = phase === 'permission' ? 'microphone' : 'system',
+  ): SpeakingTurn | null {
     const scope = scopeRef.current
     if (!scope || scope.key !== scopeKey || getStoredToken() !== scope.sessionMarker) return null
     releaseTurn()
-    releasePlayback()
+    releasePlayback('superseded')
     setSpeaking(false)
     setWordSync(null)
     const owner: SpeakingTurn = {
+      metrics: voiceMetrics.startTurn({
+        mode: 'speaking',
+        direction: scope.dir === 'A' ? 'vi_to_en' : 'en_to_vi',
+        input,
+      }),
       scope,
       controller: new AbortController(),
     }
@@ -758,7 +774,7 @@ export default function Speaking() {
     return owner
   }
   function finishTurn(owner: SpeakingTurn) {
-    if (isCurrent(owner)) releaseTurn()
+    if (isCurrent(owner)) releaseTurn('ok', 'none')
   }
   function isPlaybackCurrent(playback: SpeakingPlayback) {
     return (
@@ -772,8 +788,18 @@ export default function Speaking() {
     if (!msg.speechEn || (turn && (!isCurrent(turn) || mutedRef.current))) return
     const scope = scopeRef.current
     if (!scope || scope.key !== scopeKey || getStoredToken() !== scope.sessionMarker) return
-    releasePlayback()
-    const playback: SpeakingPlayback = { scope, ...(turn ? { turn } : {}) }
+    releasePlayback('superseded')
+    const playback: SpeakingPlayback = {
+      scope,
+      metrics:
+        turn?.metrics ??
+        voiceMetrics.startTurn({
+          mode: 'speaking',
+          direction: scope.dir === 'A' ? 'vi_to_en' : 'en_to_vi',
+          input: 'replay',
+        }),
+      ...(turn ? { turn } : {}),
+    }
     playbackRef.current = playback
     setSpeaking(true)
     try {
@@ -790,10 +816,16 @@ export default function Speaking() {
         (wi) =>
           isPlaybackCurrent(playback) &&
           setWordSync({ msgId: msg.id, field: 'feedback', wordIdx: wi }),
+        undefined,
+        playback.metrics,
       )
+    } catch (error) {
+      playback.metrics.end('error', 'unknown')
+      throw error
     } finally {
       if (isPlaybackCurrent(playback)) {
         playbackRef.current = null
+        if (!turn) playback.metrics.end('ok')
         setSpeaking(false)
       }
     }
@@ -801,12 +833,12 @@ export default function Speaking() {
   function toggleMute() {
     mutedRef.current = !mutedRef.current
     setMuted(mutedRef.current)
-    releasePlayback()
+    releasePlayback('user')
     setSpeaking(false)
   }
-  function newRoom() {
-    releaseTurn()
-    releasePlayback()
+  function resetRoom(reason: Reason) {
+    releaseTurn('cancelled', reason)
+    releasePlayback(reason)
     setSession(null)
     setRecording(false)
     setProcessing(false)
@@ -823,10 +855,14 @@ export default function Speaking() {
     setLastIdx(-1)
   }
 
+  function newRoom() {
+    resetRoom('user')
+  }
+
   function discardStaleTurn(owner: SpeakingTurn) {
     if (isCurrent(owner)) return false
     // Scope cũ vẫn giữ tài nguyên khi marker đổi trước Auth render. Chỉ dọn đúng owner đó.
-    if (turnRef.current === owner) newRoom()
+    if (turnRef.current === owner) resetRoom('unknown')
     return true
   }
 
@@ -858,7 +894,7 @@ export default function Speaking() {
   }
 
   function cancelPendingConfirm() {
-    releaseTurn()
+    releaseTurn('cancelled', 'user')
     setPendingConfirm(null)
     setPendingCountdown(0)
     setTranscript('')
@@ -900,11 +936,13 @@ export default function Speaking() {
       setProcessing(false)
       if (text.trim()) startPendingConfirm(text.trim(), owner)
       else {
+        owner.metrics.end('error', 'empty')
         setError(isA ? 'Không nghe rõ, thử nói lại nhé.' : "Didn't catch that, try again.")
         finishTurn(owner)
       }
     } catch (e) {
       if (discardStaleTurn(owner)) return
+      owner.metrics.end('error', 'unknown')
       setProcessing(false)
       finishTurn(owner)
       if (e instanceof Error && e.message === 'EMPTY_RECORDING') {
@@ -964,6 +1002,7 @@ export default function Speaking() {
     try {
       const raw = await callClaude([], sys, 1024, 'speaking', undefined, undefined, {
         isCurrent: () => isCurrent(owner),
+        metrics: owner.metrics,
       })
       const ai = parseJson<AIResponse>(raw) ?? {
         speech: raw,
@@ -1000,6 +1039,7 @@ export default function Speaking() {
       if (!mutedRef.current) await playOwnedMessage({ ...msg, feedbackVi: '' }, owner)
     } catch (e) {
       if (discardStaleTurn(owner)) return
+      owner.metrics.end('error', 'unknown')
       const m = thongDiepLoiThanThien(
         e,
         isA ? 'Có lỗi xảy ra' : 'Something went wrong',
@@ -1055,6 +1095,7 @@ export default function Speaking() {
         const recorder = await startRecording(sttLang, {
           signal: owner.controller.signal,
           isCurrent: () => isCurrent(owner),
+          metrics: owner.metrics,
         })
         if (discardStaleTurn(owner)) {
           recorder.cancel()
@@ -1071,6 +1112,7 @@ export default function Speaking() {
         recTimerRef.current = timer
       } catch {
         if (discardStaleTurn(owner)) return
+        owner.metrics.end('error', 'unknown')
         finishTurn(owner)
         setError(
           isA
@@ -1081,6 +1123,7 @@ export default function Speaking() {
       return
     }
     phaseRef.current = 'recording'
+    owner.metrics.fallback('server_stt_to_browser', 'unsupported')
     setRecording(true)
     try {
       let terminal = false
@@ -1095,22 +1138,27 @@ export default function Speaking() {
           if (stopRecRef.current?.owner === owner) stopRecRef.current = null
           setRecording(false)
           if (last.trim()) startPendingConfirm(last.trim(), owner)
-          else finishTurn(owner)
+          else {
+            owner.metrics.end('error', 'empty')
+            finishTurn(owner)
+          }
         },
         (err) => {
           terminal = true
           if (discardStaleTurn(owner)) return
           if (stopRecRef.current?.owner === owner) stopRecRef.current = null
+          owner.metrics.end('error', 'unknown')
           setError(sttErrorMessage(err, isA))
           setRecording(false)
           finishTurn(owner)
         },
-        { signal: owner.controller.signal },
+        { signal: owner.controller.signal, metrics: owner.metrics },
       )
       if (!terminal && !discardStaleTurn(owner)) stopRecRef.current = { owner, stop }
       else stop()
     } catch {
       if (discardStaleTurn(owner)) return
+      owner.metrics.end('error', 'media')
       finishTurn(owner)
       setRecording(false)
       setError(sttErrorMessage('audio-capture', isA))
@@ -1130,7 +1178,10 @@ export default function Speaking() {
       toast.error(
         isA ? `Chờ ${throttleCountdown}s để tiếp tục...` : `Wait ${throttleCountdown}s...`,
       )
-      if (captureOwner) finishTurn(captureOwner)
+      if (captureOwner) {
+        captureOwner.metrics.end('cancelled', 'unknown')
+        finishTurn(captureOwner)
+      }
       return
     }
     const usage = getUsage(user.id)
@@ -1141,10 +1192,13 @@ export default function Speaking() {
       hasReachedDailyLimit(usage, effectivePlan(user.plan))
     ) {
       setLimitHit(true)
-      if (captureOwner) finishTurn(captureOwner)
+      if (captureOwner) {
+        captureOwner.metrics.end('cancelled', 'unknown')
+        finishTurn(captureOwner)
+      }
       return
     }
-    const owner = captureOwner ?? claimTurn('ai')
+    const owner = captureOwner ?? claimTurn('ai', isSuggestionRequest ? 'system' : 'typed')
     if (!owner || discardStaleTurn(owner)) return
     // Gợi ý tiếp/gõ tay có thể thay lượt đang ghi hoặc đang nhận diện.
     setRecording(false)
@@ -1175,6 +1229,7 @@ export default function Speaking() {
     try {
       const raw = await callClaude(history, sys, 1024, 'speaking', undefined, undefined, {
         isCurrent: () => isCurrent(owner),
+        metrics: owner.metrics,
       })
       const ai = parseJson<AIResponse>(raw) ?? {
         speech: raw,
@@ -1213,6 +1268,7 @@ export default function Speaking() {
       if (!mutedRef.current && isTTSSupported()) await playOwnedMessage(aiMsg, owner)
     } catch (e) {
       if (discardStaleTurn(owner)) return
+      owner.metrics.end('error', 'unknown')
       const m = thongDiepLoiThanThien(
         e,
         isA ? 'Có lỗi xảy ra' : 'Something went wrong',
@@ -1270,6 +1326,7 @@ export default function Speaking() {
     try {
       const raw = await callClaude(history, sys, 2048, 'speaking', 'grade', 'speaking_eval', {
         isCurrent: () => isCurrent(owner),
+        metrics: owner.metrics,
       })
       const data = parseJson<EvaluationResult>(raw)
       if (
@@ -1290,6 +1347,7 @@ export default function Speaking() {
       throttle()
     } catch (e) {
       if (discardStaleTurn(owner)) return
+      owner.metrics.end('error', 'unknown')
       const m = thongDiepLoiThanThien(
         e,
         isA ? 'Lỗi không xác định' : 'Unknown error',

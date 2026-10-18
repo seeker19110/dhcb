@@ -1,3 +1,6 @@
+import { voiceMetrics } from '../../lib/voiceMetricsLocal'
+import type { TurnHandle } from '../../lib/voiceMetrics'
+import type { Reason } from '@dhcb/core-contracts/voiceMetrics'
 import { useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo, Suspense } from 'react'
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -90,6 +93,7 @@ interface QuickPromptIntent {
 }
 
 interface CompanionOwner {
+  readonly metrics: TurnHandle
   readonly scope: CompanionScope
   readonly controller: AbortController
 }
@@ -310,13 +314,14 @@ function CompanionSession() {
     setToolStatus(null)
   }
 
-  const releaseVoiceOwner = useCallback(() => {
+  const releaseVoiceOwner = useCallback((reason: Reason = 'superseded') => {
     const owner = voiceOwnerRef.current
     const capture = voiceRecorderRef.current
     // Vô hiệu identity trước abort/cancel: callback đồng bộ hoặc Promise muộn không hồi sinh lượt cũ.
     voiceOwnerRef.current = null
     voiceRecorderRef.current = null
     voiceStoppingRef.current = null
+    owner?.metrics.end('cancelled', reason)
     owner?.controller.abort()
     capture?.recorder.cancel()
   }, [])
@@ -324,6 +329,7 @@ function CompanionSession() {
     const owner = sendOwnerRef.current
     sendOwnerRef.current = null
     loadingRef.current = false
+    owner?.metrics.end('cancelled', 'unknown')
     owner?.controller.abort()
   }, [])
 
@@ -342,9 +348,9 @@ function CompanionSession() {
     scopeRef.current = scope
     return () => {
       if (scopeRef.current === scope) scopeRef.current = null
-      releaseVoiceOwner()
+      releaseVoiceOwner('unknown')
       releaseSendOwner()
-      stopSpeaking()
+      stopSpeaking('unknown')
     }
   }, [scopeKey, scopeSnapshot, releaseVoiceOwner, releaseSendOwner])
 
@@ -358,19 +364,27 @@ function CompanionSession() {
     scopeRef.current === owner.scope &&
     getStoredToken() === owner.scope.snapshot.sessionMarker &&
     !owner.controller.signal.aborted
-  const claimVoiceOwner = (): CompanionOwner | null => {
+  const claimVoiceOwner = (input: 'microphone' | 'typed' = 'microphone'): CompanionOwner | null => {
     const scope = scopeRef.current
     if (!scope || scope.key !== scopeKey || getStoredToken() !== scope.snapshot.sessionMarker)
       return null
-    const owner: CompanionOwner = { scope, controller: new AbortController() }
+    const owner: CompanionOwner = {
+      scope,
+      controller: new AbortController(),
+      metrics: voiceMetrics.startTurn({
+        mode: 'companion',
+        direction: 'vi_only',
+        input,
+      }),
+    }
     voiceOwnerRef.current = owner
     return owner
   }
   const discardStaleVoiceOwner = (owner: CompanionOwner) => {
     if (isVoiceCurrent(owner)) return false
     if (voiceOwnerRef.current === owner) {
-      releaseVoiceOwner()
-      stopSpeaking()
+      releaseVoiceOwner('unknown')
+      stopSpeaking('unknown')
       setVoiceState('idle')
     }
     return true
@@ -378,6 +392,7 @@ function CompanionSession() {
   const finishVoiceOwner = (owner: CompanionOwner) => {
     if (discardStaleVoiceOwner(owner)) return
     voiceOwnerRef.current = null
+    owner.metrics.end('ok')
     owner.controller.abort()
     setVoiceState('idle')
   }
@@ -391,6 +406,7 @@ function CompanionSession() {
       const recorder = await startRecording('vi', {
         signal: owner.controller.signal,
         isCurrent: () => isVoiceCurrent(owner),
+        metrics: owner.metrics,
       })
       if (discardStaleVoiceOwner(owner)) {
         recorder.cancel()
@@ -400,6 +416,7 @@ function CompanionSession() {
       setVoiceState('recording')
     } catch {
       if (discardStaleVoiceOwner(owner)) return
+      owner.metrics.end('error', 'unknown')
       finishVoiceOwner(owner)
       setVoiceError('Không truy cập được micro. Hãy cho phép quyền micro trong trình duyệt.')
     }
@@ -422,6 +439,10 @@ function CompanionSession() {
       text = await capture.recorder.stop()
     } catch (e) {
       if (discardStaleVoiceOwner(owner)) return
+      owner.metrics.end(
+        'error',
+        e instanceof Error && e.message === 'EMPTY_RECORDING' ? 'empty' : 'unknown',
+      )
       finishVoiceOwner(owner)
       setVoiceError(
         e instanceof Error && e.message === 'EMPTY_RECORDING'
@@ -435,11 +456,13 @@ function CompanionSession() {
     }
     if (discardStaleVoiceOwner(owner)) return
     if (!text.trim()) {
+      owner.metrics.end('error', 'empty')
       finishVoiceOwner(owner)
       setVoiceError('Không nghe rõ, thử nói lại nhé.')
       return
     }
     if (loadingRef.current) {
+      owner.metrics.end('cancelled', 'unknown')
       finishVoiceOwner(owner)
       setVoiceError('Bạn Đồng Hành đang trả lời câu trước — chờ xong rồi nói tiếp nhé.')
       return
@@ -448,14 +471,14 @@ function CompanionSession() {
   }
 
   const cancelVoiceRecording = () => {
-    releaseVoiceOwner()
-    stopSpeaking()
+    releaseVoiceOwner('user')
+    stopSpeaking('user')
     setVoiceState('idle')
   }
 
   const stopVoiceSession = () => {
-    releaseVoiceOwner()
-    stopSpeaking()
+    releaseVoiceOwner('user')
+    stopSpeaking('user')
     setVoiceState('idle')
   }
 
@@ -534,9 +557,9 @@ function CompanionSession() {
     // Lối gọi hai tham số cũ vẫn hợp lệ; chỉ pipeline STT truyền owner đã claim ở tham số ba.
     if (!captureOwner && voiceOwnerRef.current) {
       releaseVoiceOwner()
-      stopSpeaking()
+      stopSpeaking('superseded')
     }
-    const voiceOwner = viaVoice ? (captureOwner ?? claimVoiceOwner()) : null
+    const voiceOwner = viaVoice ? (captureOwner ?? claimVoiceOwner('typed')) : null
     if (viaVoice && !voiceOwner) return
     breakReminder.recordTurn()
     if (viaVoice) setVoiceState('thinking')
@@ -578,7 +601,13 @@ function CompanionSession() {
     loadingRef.current = true
     setLoading(true)
 
-    const owner: CompanionOwner = { scope, controller: new AbortController() }
+    const owner: CompanionOwner = {
+      scope,
+      controller: new AbortController(),
+      metrics:
+        voiceOwner?.metrics ??
+        voiceMetrics.startTurn({ mode: 'companion', direction: 'vi_only', input: 'typed' }),
+    }
     sendOwnerRef.current = owner
     let doneHandled = false
 
@@ -656,7 +685,13 @@ function CompanionSession() {
                 setVoiceState('speaking')
                 const finishSpeech = () => finishVoiceOwner(voiceOwner)
                 // Lỗi TTS vẫn kết thúc owner hiện tại; không tạo fallback/request mới ở trang.
-                void speak(finalResp.reply, 'vi-VN').then(finishSpeech, finishSpeech)
+                void speak(finalResp.reply, 'vi-VN', undefined, undefined, undefined, {
+                  turn: voiceOwner.metrics,
+                  segment: 'speech',
+                }).then(finishSpeech, () => {
+                  voiceOwner.metrics.end('error', 'unknown')
+                  finishSpeech()
+                })
               } else {
                 finishVoiceOwner(voiceOwner)
               }
@@ -665,6 +700,7 @@ function CompanionSession() {
         },
         {
           signal: owner.controller.signal,
+          metrics: owner.metrics,
           isCurrent: () => isSendCurrent(owner) && (!voiceOwner || isVoiceCurrent(voiceOwner)),
         },
       )
@@ -675,6 +711,10 @@ function CompanionSession() {
         pendingDraftIdRef.current = null
       }
     } catch (err: unknown) {
+      owner.metrics.end(
+        err instanceof Error && err.name === 'AbortError' ? 'cancelled' : 'error',
+        'unknown',
+      )
       // Người dùng chủ động rời trang không phải là LỖI: im lặng, không toast, không đổi
       // state của một trang đã biến mất. (Lượt AI đã trừ ở server thì KHÔNG hoàn — server
       // không biết client rời; đúng luật hiện hành, xem đặc tả S10 AC-2.)
@@ -691,6 +731,7 @@ function CompanionSession() {
       )
       if (voiceOwner) finishVoiceOwner(voiceOwner)
     } finally {
+      if (!voiceOwner) owner.metrics.end('ok')
       // Finalizer cũ không được mở khóa hoặc xóa nhãn của request thuộc scope/owner mới.
       if (sendOwnerRef.current === owner) {
         sendOwnerRef.current = null

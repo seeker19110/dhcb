@@ -1,3 +1,4 @@
+import type { TurnHandle } from './voiceMetrics'
 // Gọi AI qua /api/agent — KHÔNG gửi API key từ browser.
 // API key được giữ ở server: vite.config.ts (lúc dev) hoặc api/ai.ts (lúc deploy lên VPS).
 // Server chọn nhà cung cấp (Anthropic chính → Groq → Gemini dự phòng) và chọn MODEL theo
@@ -47,7 +48,7 @@ export async function callClaude(
   mode: CallMode = 'chat',
   task?: CallTask,
   outputSchema?: GradingSchemaName,
-  options?: { readonly isCurrent?: () => boolean },
+  options?: { readonly isCurrent?: () => boolean; readonly metrics?: TurnHandle },
 ): Promise<string> {
   // /api/agent: lúc "npm run dev" được vite.config.ts proxy thẳng tới Anthropic (key đọc từ .env phía server);
   // lúc deploy lên Vercel, route này do api/claude.ts (serverless function) xử lý.
@@ -64,6 +65,7 @@ export async function callClaude(
   const authHeader = await getAuthHeader()
   // Sau khi đã gửi, giữ response thật cho persistence/usage; guard chỉ chặn trước fetch.
   assertRequestCurrent()
+  const request = options?.metrics?.request('agent')
   let resp: Response
   try {
     resp = await fetch('/api/agent', {
@@ -79,10 +81,13 @@ export async function callClaude(
       }),
     })
   } catch (e) {
+    request?.end('error', 'network')
     return reportAndThrow(FRIENDLY_NETWORK_ERROR, e)
   }
 
+  request?.headers()
   if (!resp.ok) {
+    request?.end('error', 'http')
     const err = await resp.json().catch(() => ({}))
     // Server (api/ai.ts) đã trả message song ngữ/thân thiện cho các lỗi thường gặp (hết lượt,
     // quá tải, chưa đăng nhập...) — giữ nguyên nếu có; chỉ dùng thông điệp chung khi server
@@ -92,12 +97,20 @@ export async function callClaude(
     return reportAndThrow(FRIENDLY_NETWORK_ERROR, { status: resp.status })
   }
 
-  const data = (await resp.json()) as unknown
+  let data: unknown
+  try {
+    data = await resp.json()
+  } catch (error) {
+    request?.end('error', 'invalid_response')
+    throw error
+  }
   if (!data || typeof data !== 'object' || !('content' in data)) {
+    request?.end('error', 'invalid_response')
     return reportAndThrow(FRIENDLY_INVALID_RESPONSE, { reason: 'missing content', data })
   }
   const content = (data as { content?: unknown }).content
   if (!Array.isArray(content) || content.length === 0) {
+    request?.end('error', 'invalid_response')
     return reportAndThrow(FRIENDLY_INVALID_RESPONSE, { reason: 'empty content array', data })
   }
   // Đọc khối `type: 'text'` đầu tiên, KHÔNG đọc theo vị trí: model Claude đời mới có thể trả
@@ -108,8 +121,11 @@ export async function callClaude(
   )
   const text = (textBlock ?? (content[0] as { text?: unknown })).text
   if (typeof text !== 'string') {
+    request?.end('error', 'invalid_response')
     return reportAndThrow(FRIENDLY_INVALID_RESPONSE, { reason: 'non-string text', data })
   }
+  request?.end('ok')
+  options?.metrics?.textReady('assistant')
   return text
 }
 
