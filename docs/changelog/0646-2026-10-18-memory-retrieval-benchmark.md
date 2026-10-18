@@ -1,5 +1,7 @@
 # 0646 — Baseline truy xuất ký ức Việt–Anh
 
+PR [#1413](https://github.com/seeker19110/dhcb/pull/1413), ngày18/10/2026.
+
 Theo [S05 Approved](../specs/2026-10-16-stored-s05-memory-retrieval-benchmark.md), thuộc
 [goal stored](../goals/2026-10-16-stored-upgrades.md). Trước đây eval ký ức đo ingest;
 slice này đo ranking bằng `searchMemories` và context cuối bằng `buildContextPackage` thật.
