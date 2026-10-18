@@ -217,10 +217,9 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        # Bản sao Docker Official Image trên ECR Public, KHÔNG phải Docker Hub: runner GitHub kéo
-        # ẩn danh từ Docker Hub bị chặn `toomanyrequests` (2026-10-09, PR #1321 đỏ hai lần liền
-        # dù không đụng SQL). Cùng image `postgres:16`, chỉ khác nơi kéo.
-        image: public.ecr.aws/docker/library/postgres:16
+        # ECR từng tránh lỗi Docker Hub (#1321), nhưng đã chặn hai lượt bởi Data limit exceeded
+        # ngày 2026-10-18 (#1413). Dùng Docker Official Image trực tiếp, giữ nguyên PostgreSQL 16.
+        image: postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -270,6 +269,22 @@ jobs:
         with:
           name: companion-boundary-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/stored-boundary
+          retention-days: 7
+          if-no-files-found: error
+
+      # S05: bằng chứng truy xuất trên snapshot cố định; không gọi embedding trả phí.
+      - name: Benchmark truy xuất ký ức trên Postgres disposable
+        id: memory-retrieval
+        env:
+          STORED_EVAL_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/dhcb
+        run: node --import tsx scripts/eval-memory-retrieval.ts --profile github-ci --artifacts "$RUNNER_TEMP/stored-retrieval"
+
+      - name: Lưu bằng chứng truy xuất và journal fixture tổng hợp
+        if: ${{ always() && steps.memory-retrieval.outcome != 'skipped' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: memory-retrieval-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/stored-retrieval
           retention-days: 7
           if-no-files-found: error
 

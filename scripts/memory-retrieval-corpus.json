@@ -1,0 +1,1471 @@
+{
+  "version": 1,
+  "datasetId": "stored-retrieval-synthetic-v1",
+  "metadata": {
+    "labelRevision": 1,
+    "labelProvenance": "agent_synthetic_review",
+    "humanReview": "NOT_REVIEWED",
+    "frozenDraftSha256": "b8cf4cfb775e39e6e9a1b1baa67c387a6e5b2171719d037f1f83bddd759dd68a",
+    "frozenDefinitionSha256": "817ff8bea6bf9ff40fd4474ed3e0a847af1609c5231f76c883de9c7b05dc0297",
+    "timeContractRevision": 1,
+    "timePolicy": "service_clock_snapshot",
+    "scoringPlanSha256": "dcca6a4eecdc2b69eb4ac837cbab9cd445dad695558b2dee0a70a08b70c7d62b",
+    "draftDatesReplaced": true,
+    "semanticQuality": "NOT_MEASURED",
+    "semanticReason": "NO_REAL_VECTORS"
+  },
+  "persons": [
+    {
+      "key": "P1",
+      "displayName": "Mai"
+    },
+    {
+      "key": "P2",
+      "displayName": "Bảo"
+    },
+    {
+      "key": "P3",
+      "displayName": "Chi"
+    }
+  ],
+  "records": [
+    {
+      "key": "R01",
+      "personKey": "P1",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Mục tiêu IELTS hiện tại của tôi là đạt 7.0 vào tháng 12 năm 2026.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R01"
+      }
+    },
+    {
+      "key": "R02",
+      "personKey": "P1",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Mục tiêu IELTS của tôi là đạt 6.0 vào tháng 12 năm 2026.",
+      "lifecycle": {
+        "kind": "superseded",
+        "supersededByKey": "R01"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R02"
+      }
+    },
+    {
+      "key": "R03",
+      "personKey": "P1",
+      "namespace": "preference",
+      "sensitivity": "personal",
+      "content": "Tôi muốn học tiếng Anh từ 20 giờ đến 21 giờ, sau bữa tối.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R03"
+      }
+    },
+    {
+      "key": "R04",
+      "personKey": "P1",
+      "namespace": "preference",
+      "sensitivity": "personal",
+      "content": "Tôi muốn được giải thích bằng tiếng Việt trước, rồi xem ví dụ bằng tiếng Anh.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R04"
+      }
+    },
+    {
+      "key": "R05",
+      "personKey": "P1",
+      "namespace": "domain",
+      "sensitivity": "personal",
+      "content": "Khi viết tiếng Anh, tôi hay bỏ các mạo từ a, an và the.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R05"
+      }
+    },
+    {
+      "key": "R06",
+      "personKey": "P1",
+      "namespace": "domain",
+      "sensitivity": "personal",
+      "content": "Khi viết tiếng Anh, tôi thường nhầm giữa thì quá khứ đơn và hiện tại hoàn thành.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R06"
+      }
+    },
+    {
+      "key": "R07",
+      "personKey": "P1",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Tôi tham gia câu lạc bộ đọc sách tại thư viện vào chiều thứ Bảy.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R07"
+      }
+    },
+    {
+      "key": "R08",
+      "personKey": "P1",
+      "namespace": "semantic",
+      "sensitivity": "personal",
+      "content": "Tôi đến lớp tiếng Anh bằng xe đưa đón của trường.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R08"
+      }
+    },
+    {
+      "key": "R09",
+      "personKey": "P1",
+      "namespace": "preference",
+      "sensitivity": "public",
+      "content": "Tôi thích vẽ phong cảnh biển bằng màu nước.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R09"
+      }
+    },
+    {
+      "key": "R10",
+      "personKey": "P1",
+      "namespace": "semantic",
+      "sensitivity": "personal",
+      "content": "Tôi làm thiết kế giao diện người dùng cho ứng dụng giáo dục.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R10"
+      }
+    },
+    {
+      "key": "R11",
+      "personKey": "P1",
+      "namespace": "domain",
+      "sensitivity": "personal",
+      "content": "Portfolio của tôi có ba case study về thiết kế ứng dụng.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R11"
+      }
+    },
+    {
+      "key": "R12",
+      "personKey": "P1",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Tôi dự định đi Huế bằng tàu hỏa vào tháng 11 năm 2026.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R12"
+      }
+    },
+    {
+      "key": "R13",
+      "personKey": "P1",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Tôi dự định chạy half marathon vào tháng 11 năm 2026.",
+      "lifecycle": {
+        "kind": "invalidated"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R13"
+      }
+    },
+    {
+      "key": "R14",
+      "personKey": "P1",
+      "namespace": "episodic",
+      "sensitivity": "personal",
+      "content": "Tôi hẹn uống cà phê tại quán Sao Mộc vào sáng Chủ nhật.",
+      "lifecycle": {
+        "kind": "expired"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R14"
+      }
+    },
+    {
+      "key": "R15",
+      "personKey": "P1",
+      "namespace": "semantic",
+      "sensitivity": "sensitive",
+      "content": "Dự án cá nhân chưa công bố của tôi có tên Mây Xanh.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R15"
+      }
+    },
+    {
+      "key": "R16",
+      "personKey": "P1",
+      "namespace": "semantic",
+      "sensitivity": "restricted",
+      "content": "Bản thảo riêng của tôi có tên Những cánh buồm giấy.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R16"
+      }
+    },
+    {
+      "key": "R17",
+      "personKey": "P1",
+      "namespace": "preference",
+      "sensitivity": "personal",
+      "content": "Mai prefers learning new words through short stories rather than isolated word lists.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R17"
+      }
+    },
+    {
+      "key": "R18",
+      "personKey": "P1",
+      "namespace": "preference",
+      "sensitivity": "personal",
+      "content": "Mai prefers vegetarian lunches on weekdays.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R18"
+      }
+    },
+    {
+      "key": "R19",
+      "personKey": "P2",
+      "namespace": "domain",
+      "sensitivity": "personal",
+      "content": "Bao is building a plant-watering tracker in TypeScript.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R19"
+      }
+    },
+    {
+      "key": "R20",
+      "personKey": "P2",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Tôi dự định đi Đà Nẵng bằng xe khách vào tháng 12 năm 2026.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R20"
+      }
+    },
+    {
+      "key": "R21",
+      "personKey": "P2",
+      "namespace": "preference",
+      "sensitivity": "personal",
+      "content": "Tôi thích lập trình từ 7 giờ đến 9 giờ sáng.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R21"
+      }
+    },
+    {
+      "key": "R22",
+      "personKey": "P2",
+      "namespace": "preference",
+      "sensitivity": "public",
+      "content": "Tôi thích chụp ảnh chim trong công viên.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R22"
+      }
+    },
+    {
+      "key": "R23",
+      "personKey": "P2",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Tôi học tiếng Pháp vào tối thứ Tư hằng tuần.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R23"
+      }
+    },
+    {
+      "key": "R24",
+      "personKey": "P2",
+      "namespace": "commitment",
+      "sensitivity": "personal",
+      "content": "Mục tiêu IELTS của tôi là đạt 6.5 vào tháng 3 năm 2027.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R24"
+      }
+    },
+    {
+      "key": "R25",
+      "personKey": "P3",
+      "namespace": "semantic",
+      "sensitivity": "sensitive",
+      "content": "Nghiên cứu chưa công bố của tôi có tên Red Lighthouse.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R25"
+      }
+    },
+    {
+      "key": "R26",
+      "personKey": "P3",
+      "namespace": "semantic",
+      "sensitivity": "personal",
+      "content": "Tôi đang đọc cuốn Những hạt mầm nhỏ.",
+      "lifecycle": {
+        "kind": "live"
+      },
+      "seed": {
+        "confidence": 1,
+        "importance": 5,
+        "provenance": "user_declared:synthetic:stored-s05-v1:R26"
+      }
+    }
+  ],
+  "queries": [
+    {
+      "key": "V01",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Mục tiêu IELTS hiện tại của tôi là bao nhiêu và vào thời điểm nào?",
+      "kind": "positive",
+      "relevantIds": ["R01"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V02",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Muc tieu IELTS hien tai cua toi la bao nhieu va vao thoi diem nao?",
+      "kind": "positive",
+      "relevantIds": ["R01"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V03",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi đã chọn khung giờ học tiếng Anh nào và muốn được giải thích theo cách nào?",
+      "kind": "positive",
+      "relevantIds": ["R03", "R04"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V04",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi muốn được giải thích bằng ngôn ngữ nào trước khi xem ví dụ tiếng Anh?",
+      "kind": "positive",
+      "relevantIds": ["R04"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V05",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Hai khó khăn ngữ pháp tôi thường gặp khi viết tiếng Anh là gì?",
+      "kind": "positive",
+      "relevantIds": ["R05", "R06"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V06",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi thường nhầm hai thì tiếng Anh nào với nhau?",
+      "kind": "positive",
+      "relevantIds": ["R06"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V07",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Chiều thứ Bảy, tôi tham gia câu lạc bộ đọc sách ở đâu?",
+      "kind": "positive",
+      "relevantIds": ["R07"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V08",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi đến lớp tiếng Anh bằng phương tiện gì?",
+      "kind": "positive",
+      "relevantIds": ["R08"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V09",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "public",
+      "text": "Tôi thích vẽ chủ đề gì và bằng chất liệu nào?",
+      "kind": "positive",
+      "relevantIds": ["R09"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V10",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi đang làm nghề gì và portfolio của tôi có những gì?",
+      "kind": "positive",
+      "relevantIds": ["R10", "R11"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V11",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Portfolio của tôi có bao nhiêu case study và chúng thuộc lĩnh vực nào?",
+      "kind": "positive",
+      "relevantIds": ["R11"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V12",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tháng 11 năm 2026, tôi dự định đi đâu và bằng phương tiện gì?",
+      "kind": "positive",
+      "relevantIds": ["R12"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V13",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi thích học từ mới qua truyện ngắn hay qua danh sách từ riêng lẻ?",
+      "kind": "positive",
+      "relevantIds": ["R17"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V14",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Tôi thích ăn gì vào bữa trưa các ngày trong tuần?",
+      "kind": "positive",
+      "relevantIds": ["R18"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V15",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "sensitive",
+      "text": "Dự án cá nhân chưa công bố của tôi tên là gì?",
+      "kind": "positive",
+      "relevantIds": ["R15"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V16",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Dự án cá nhân chưa công bố của tôi tên là gì?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V17",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Hiện tại tôi có kế hoạch tham gia cuộc đua chạy nào?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V18",
+      "language": "vi",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Sáng Chủ nhật, tôi hẹn uống cà phê ở quán nào?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V19",
+      "language": "vi",
+      "personKey": "P2",
+      "maxSensitivity": "personal",
+      "text": "Tôi đang lập trình ứng dụng gì và thích làm việc đó vào khung giờ nào?",
+      "kind": "positive",
+      "relevantIds": ["R19", "R21"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "V20",
+      "language": "vi",
+      "personKey": "P3",
+      "maxSensitivity": "personal",
+      "text": "Tôi đang đọc cuốn sách nào?",
+      "kind": "positive",
+      "relevantIds": ["R26"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25"
+      ]
+    },
+    {
+      "key": "E01",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Is my current IELTS target still 6.0, or has it changed?",
+      "kind": "positive",
+      "relevantIds": ["R01"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E02",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "What hour have I set aside for studying English after dinner?",
+      "kind": "positive",
+      "relevantIds": ["R03"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E03",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Do I want a Vietnamese explanation before an English example?",
+      "kind": "positive",
+      "relevantIds": ["R04"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E04",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Which small English words do I tend to leave out when writing?",
+      "kind": "positive",
+      "relevantIds": ["R05"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E05",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Which two English tenses do I often confuse?",
+      "kind": "positive",
+      "relevantIds": ["R06"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E06",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "Where does my Saturday afternoon reading group meet?",
+      "kind": "positive",
+      "relevantIds": ["R07"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E07",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "How do I travel to my English class?",
+      "kind": "positive",
+      "relevantIds": ["R08"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E08",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "What medium and subject do I enjoy painting?",
+      "kind": "positive",
+      "relevantIds": ["R09"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E09",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "What work do I do, and what is in my portfolio?",
+      "kind": "positive",
+      "relevantIds": ["R10", "R11"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E10",
+      "language": "en",
+      "personKey": "P2",
+      "maxSensitivity": "personal",
+      "text": "What app am I building, and what time of day do I prefer to code?",
+      "kind": "positive",
+      "relevantIds": ["R19", "R21"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E11",
+      "language": "en",
+      "personKey": "P2",
+      "maxSensitivity": "personal",
+      "text": "Which language class do I attend on Wednesday evenings?",
+      "kind": "positive",
+      "relevantIds": ["R23"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E12",
+      "language": "en",
+      "personKey": "P2",
+      "maxSensitivity": "personal",
+      "text": "What is my weekly language class, and what IELTS score and deadline am I aiming for?",
+      "kind": "positive",
+      "relevantIds": ["R23", "R24"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E13",
+      "language": "en",
+      "personKey": "P2",
+      "maxSensitivity": "personal",
+      "text": "Where am I planning to travel in December 2026, and how will I get there?",
+      "kind": "positive",
+      "relevantIds": ["R20"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E14",
+      "language": "en",
+      "personKey": "P2",
+      "maxSensitivity": "public",
+      "text": "What do I like photographing outdoors, and where?",
+      "kind": "positive",
+      "relevantIds": ["R22"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E15",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "restricted",
+      "text": "What is the title of my private manuscript?",
+      "kind": "positive",
+      "relevantIds": ["R16"],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E16",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "sensitive",
+      "text": "What is the title of my private manuscript?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E17",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "What is the name of Chi's unpublished research?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E18",
+      "language": "en",
+      "personKey": "P3",
+      "maxSensitivity": "sensitive",
+      "text": "What is the name of my unpublished research?",
+      "kind": "positive",
+      "relevantIds": ["R25"],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24"
+      ]
+    },
+    {
+      "key": "E19",
+      "language": "en",
+      "personKey": "P1",
+      "maxSensitivity": "personal",
+      "text": "What model of telescope do I own?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R02",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R19",
+        "R20",
+        "R21",
+        "R22",
+        "R23",
+        "R24",
+        "R25",
+        "R26"
+      ]
+    },
+    {
+      "key": "E20",
+      "language": "en",
+      "personKey": "P2",
+      "maxSensitivity": "personal",
+      "text": "Which hotel am I staying at in Hue?",
+      "kind": "no_relevant",
+      "relevantIds": [],
+      "mustExcludeIds": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R25",
+        "R26"
+      ]
+    }
+  ]
+}
