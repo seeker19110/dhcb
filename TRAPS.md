@@ -1001,3 +1001,21 @@ phát đúng một lần, A không fallback/feedback. Giữ onend/onerror/late b
 active load/play error, normal bilingual, empty và playAudioUrl controls.
 Test public API thật với fake tại biên, Chromium hai chiều; không suy thành audible latency
 hoặc bằng chứng lifecycle React. Xem changelog `0644`.
+
+## 30. Bỏ callback cũ chưa đồng nghĩa đã đóng tài nguyên cũ
+
+**Đã gặp:** permission về sau unmount vẫn mở micro; stale guard ở nút Dừng hoặc timer
+chỉ return nên recorder vẫn sống. Native Stop mặc định cancel làm mất final transcript.
+AI phản hồi thay capture nhưng không reset recording/processing khiến mic kẹt.
+
+**Cổng chốt:** claim owner trước await, busy ref đồng bộ, giữ recorder tới terminal và
+stop promise dùng chung. Vô hiệu identity trước cleanup; stale owner còn giữ tài nguyên
+thì đóng đúng tài nguyên của nó, không chạm replacement owner. Native complete chỉ dùng
+cho Stop rõ ràng; cleanup luôn cancel. Kiểm cả callback/timer được giữ rồi gọi lại.
+
+**Phiên đăng nhập:** scope render chưa đủ khi auth refresh còn await. Kiểm marker quan
+sát được trực tiếp tại thiết bị và trước HTTP; marker không phải quyền xác thực server.
+Hủy trước fetch không gửi thêm request; sau fetch vẫn giữ receipt/usage của user gốc.
+Old AI response không được sync qua cookie mới. Guarded sync có marker null phải giữ
+local; stale scheduler phải bị chặn trước khi xóa timer của task hợp lệ. Không dùng
+trace làm authority hoặc ép receipt thiếu thành zero. Xem changelog `0645`.

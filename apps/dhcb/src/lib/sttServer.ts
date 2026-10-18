@@ -20,6 +20,15 @@ export interface Recorder {
   cancel: () => void // hủy, không gọi API
 }
 
+export interface CaptureOptions {
+  readonly signal?: AbortSignal
+  readonly isCurrent?: () => boolean
+}
+
+function captureAborted(): DOMException {
+  return new DOMException('Đã hủy ghi âm', 'AbortError')
+}
+
 // Chọn định dạng ghi âm mà trình duyệt hỗ trợ (Chrome/FF: webm/opus, Safari: mp4).
 function pickMime(): string {
   const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg']
@@ -32,68 +41,146 @@ function pickMime(): string {
 }
 
 // Bắt đầu ghi âm. Trả về đối tượng Recorder để dừng (và nhận text) hoặc hủy.
-export async function startRecording(lang: 'en' | 'vi'): Promise<Recorder> {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  // Tắt micro (nhả đèn ghi âm của trình duyệt). Khai báo TRƯỚC khi dựng MediaRecorder vì
-  // constructor có thể ném (xem ngay dưới).
-  const cleanup = () => stream.getTracks().forEach((t) => t.stop())
+export async function startRecording(
+  lang: 'en' | 'vi',
+  { signal, isCurrent }: CaptureOptions = {},
+): Promise<Recorder> {
+  // Kiểm owner ngay tại ranh giới thiết bị/request, kể cả trước React commit kế tiếp.
+  const captureCurrent = () => {
+    try {
+      return !signal?.aborted && (isCurrent?.() ?? true)
+    } catch {
+      return false
+    }
+  }
+  if (!captureCurrent()) throw captureAborted()
+  let stream: MediaStream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+  } catch (error) {
+    if (!captureCurrent()) throw captureAborted()
+    throw error
+  }
+  let tracksReleased = false
+  const releaseTracks = () => {
+    if (tracksReleased) return
+    tracksReleased = true
+    stream.getTracks().forEach((track) => track.stop())
+  }
+  if (!captureCurrent()) {
+    releaseTracks()
+    throw captureAborted()
+  }
 
-  const mime = pickMime()
-  // [S10-1 / AC-4, lỗi L5] `getUserMedia` đã MỞ micro ở dòng trên. Nếu `new MediaRecorder(...)`
-  // ném — mime không được hỗ trợ, thiết bị đang bận — mà ta để lỗi bay thẳng ra ngoài thì các
-  // track không bao giờ được `.stop()`: đèn micro sáng vô hạn cho tới khi người dùng tự đóng
-  // tab. Nhả thiết bị trước, rồi mới ném lại đúng lỗi gốc cho nơi gọi hiển thị.
+  let mime: string
   let rec: MediaRecorder
   try {
+    mime = pickMime()
     rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined)
-  } catch (e) {
-    cleanup()
-    throw e
+  } catch (error) {
+    releaseTracks()
+    throw error
   }
   const chunks: Blob[] = []
+  let phase: 'recording' | 'stopping' | 'processing' | 'uploading' | 'terminal' = 'recording'
+  let cancelled = false
+  let completion: Promise<string> | null = null
+  let resolveCompletion: ((text: string) => void) | null = null
+  let rejectCompletion: ((error: unknown) => void) | null = null
 
-  rec.ondataavailable = (e) => {
-    if (e.data && e.data.size > 0) chunks.push(e.data)
+  const detach = () => {
+    signal?.removeEventListener('abort', cancel)
+    rec.ondataavailable = null
+    rec.onstop = null
   }
-  rec.start()
-
-  return {
-    cancel() {
+  const fail = (error: unknown) => {
+    if (phase === 'terminal') return
+    phase = 'terminal'
+    detach()
+    releaseTracks()
+    rejectCompletion?.(error)
+  }
+  function cancel() {
+    // Upload đã gửi giữ receipt/lỗi thật và timeout riêng để caller không bỏ sót usage.
+    if (phase === 'uploading' || phase === 'terminal') return
+    const wasRecording = phase === 'recording'
+    cancelled = true
+    phase = 'terminal'
+    detach()
+    releaseTracks()
+    if (wasRecording) {
       try {
         rec.stop()
       } catch {
-        /* đã dừng rồi */
+        /* recorder đã dừng */
       }
-      cleanup()
-    },
-    stop() {
-      return new Promise<string>((resolve, reject) => {
-        rec.onstop = async () => {
-          try {
-            cleanup()
-            const blob = new Blob(chunks, { type: mime || 'audio/webm' })
-            if (blob.size === 0) {
-              // Chưa hề gọi /api/stt (không có gì để gửi) — phân biệt với case server ĐÃ gọi
-              // nhưng Whisper nghe ra rỗng (transcribe() dưới), để caller biết có nên tính
-              // 1 lượt STT hay không (server chỉ trừ lượt khi thực sự gọi Whisper).
-              reject(new Error('EMPTY_RECORDING'))
-              return
-            }
-            const b64 = await blobToBase64(blob)
-            const text = await transcribe(b64, blob.type, lang)
-            resolve(text)
-          } catch (e) {
-            cleanup()
-            reject(e)
-          }
-        }
-        try {
-          rec.stop()
-        } catch (e) {
-          cleanup()
-          reject(e)
-        }
+    }
+    rejectCompletion?.(captureAborted())
+  }
+  const assertCaptureCurrent = () => {
+    if (cancelled || !captureCurrent()) throw captureAborted()
+  }
+  rec.ondataavailable = (event) => {
+    if (phase !== 'recording' && phase !== 'stopping') return
+    if (event.data && event.data.size > 0) chunks.push(event.data)
+  }
+  rec.onstop = async () => {
+    if (phase !== 'stopping') {
+      releaseTracks()
+      return
+    }
+    phase = 'processing'
+    releaseTracks()
+    try {
+      assertCaptureCurrent()
+      const blob = new Blob(chunks, { type: mime || 'audio/webm' })
+      if (blob.size === 0) throw new Error('EMPTY_RECORDING')
+      const b64 = await blobToBase64(blob)
+      assertCaptureCurrent()
+      const text = await transcribe(b64, blob.type, lang, () => {
+        assertCaptureCurrent()
+        phase = 'uploading'
+        signal?.removeEventListener('abort', cancel)
       })
+      phase = 'terminal'
+      detach()
+      resolveCompletion?.(text)
+    } catch (error) {
+      fail(error)
+    }
+  }
+  signal?.addEventListener('abort', cancel, { once: true })
+  if (!captureCurrent()) {
+    cancel()
+    throw captureAborted()
+  }
+  try {
+    rec.start()
+  } catch (error) {
+    phase = 'terminal'
+    detach()
+    releaseTracks()
+    throw error
+  }
+  return {
+    cancel,
+    stop() {
+      if (completion) return completion
+      completion = new Promise<string>((resolve, reject) => {
+        resolveCompletion = resolve
+        rejectCompletion = reject
+      })
+      if (cancelled) {
+        rejectCompletion?.(captureAborted())
+        return completion
+      }
+      phase = 'stopping'
+      try {
+        rec.stop()
+      } catch (error) {
+        fail(error)
+      }
+      return completion
     },
   }
 }
@@ -104,8 +191,15 @@ export async function startRecording(lang: 'en' | 'vi'): Promise<Recorder> {
 const CLIENT_STT_TIMEOUT_MS = 60_000
 
 // Gửi audio base64 lên /api/stt và nhận lại văn bản.
-async function transcribe(audioB64: string, mime: string, lang: 'en' | 'vi'): Promise<string> {
+async function transcribe(
+  audioB64: string,
+  mime: string,
+  lang: 'en' | 'vi',
+  beforeFetch: () => void,
+): Promise<string> {
   const auth = await getAuthHeader()
+  // Không dùng capture signal làm transport signal: sau fetch, accounting cần receipt thật.
+  beforeFetch()
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), CLIENT_STT_TIMEOUT_MS)
   let resp: Response

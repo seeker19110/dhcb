@@ -67,6 +67,7 @@ interface StudioDialogueProps {
     stopSession: () => void
   }
   handleSend: (customText?: string, viaVoice?: boolean) => Promise<void>
+  onQuickPrompt?: (domain: string, text: string) => Promise<void>
   handleConfirmAction: (action: ProposedAction) => Promise<void>
   handleRejectAction: (action: ProposedAction) => Promise<void>
   actionLoadingMap: Record<string, boolean>
@@ -94,6 +95,7 @@ export default function StudioDialogue({
   setEmbodimentMode,
   voice,
   handleSend,
+  onQuickPrompt,
   handleConfirmAction,
   handleRejectAction,
   actionLoadingMap,
@@ -546,8 +548,12 @@ export default function StudioDialogue({
                   <button
                     key={idx}
                     onClick={() => {
-                      setSelectedDomain(prompt.domain)
-                      handleSend(prompt.text)
+                      if (onQuickPrompt) {
+                        void onQuickPrompt(prompt.domain, prompt.text)
+                      } else {
+                        setSelectedDomain(prompt.domain)
+                        void handleSend(prompt.text)
+                      }
                     }}
                     className="tap-44-y text-left p-3 rounded-2xl bg-zinc-900/70 hover:bg-zinc-850 border border-zinc-800/80 hover:border-accent-500/50 text-xs font-medium text-zinc-300 hover:text-white transition duration-200 flex items-center justify-between group shadow-sm active:scale-98"
                   >
