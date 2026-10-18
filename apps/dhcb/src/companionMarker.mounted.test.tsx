@@ -240,7 +240,21 @@ describe('Independent Companion marker-only privacy boundaries', () => {
     await drain()
     expect(sends).toHaveLength(1)
     await finishSend(0, 'CURRENT_MARKER_REPLY')
-    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith('CURRENT_MARKER_REPLY', 'vi-VN')
+    expect(boundary.speak).toHaveBeenCalledExactlyOnceWith(
+      'CURRENT_MARKER_REPLY',
+      'vi-VN',
+      undefined,
+      undefined,
+      undefined,
+      {
+        segment: 'speech',
+        turn: expect.objectContaining({
+          request: expect.any(Function),
+          playback: expect.any(Function),
+          end: expect.any(Function),
+        }),
+      },
+    )
   })
   it('marker-only reauth while permission pending rejects late recorder before constructor/start', async () => {
     await render()

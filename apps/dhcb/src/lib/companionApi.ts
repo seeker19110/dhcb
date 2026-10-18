@@ -1,3 +1,4 @@
+import type { TurnHandle } from './voiceMetrics'
 // apps/dhcb/src/lib/companionApi.ts — Client API wrapper for Companion Runtime and Proposed Actions
 import { getAuthHeader } from '@core/authHeader'
 import type { ContextPackage } from '@dhcb/core-contracts/contextPackage'
@@ -94,7 +95,11 @@ export async function sendCompanionMessageStream(
   // [S10-1] Lượt gửi phải HUỶ ĐƯỢC: rời trang giữa lúc AI đang trả lời thì vòng đọc SSE phải
   // dừng ngay, không chạy tiếp tới `done` (nếu chạy tiếp, `onDone` của trang cũ sẽ gọi TTS và
   // AI cất tiếng ở trang kế — lỗi L1/AC-1 của đặc tả S10).
-  options?: { readonly signal?: AbortSignal; readonly isCurrent?: () => boolean },
+  options?: {
+    readonly signal?: AbortSignal
+    readonly isCurrent?: () => boolean
+    readonly metrics?: TurnHandle
+  },
 ): Promise<CompanionResponse> {
   const signal = options?.signal
   const assertRequestCurrent = () => {
@@ -109,17 +114,26 @@ export async function sendCompanionMessageStream(
   assertRequestCurrent()
   const headers = await getAuthHeader()
   assertRequestCurrent()
-  const res = await fetch('/api/companion', {
-    method: 'POST',
-    headers: {
-      ...headers,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ ...params, stream: true }),
-    ...(signal ? { signal } : {}),
-  })
+  const request = options?.metrics?.request('companion')
+  let res: Response
+  try {
+    res = await fetch('/api/companion', {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...params, stream: true }),
+      ...(signal ? { signal } : {}),
+    })
+  } catch (error) {
+    request?.end(signal?.aborted ? 'cancelled' : 'error', signal?.aborted ? 'unknown' : 'network')
+    throw error
+  }
+  request?.headers()
 
   if (!res.ok) {
+    request?.end('error', 'http')
     const errorBody = await res.json().catch(() => ({ error: `HTTP error ${res.status}` }))
     const err = new Error(errorBody.error || `HTTP error ${res.status}`)
     callbacks.onError?.(err)
@@ -127,6 +141,7 @@ export async function sendCompanionMessageStream(
   }
 
   if (!res.body) {
+    request?.end('error', 'invalid_response')
     throw new Error('Response body is missing')
   }
 
@@ -153,6 +168,7 @@ export async function sendCompanionMessageStream(
         break
       }
 
+      if (value.byteLength > 0) request?.firstBodyChunk()
       buffer += decoder.decode(value, { stream: true })
       const parts = buffer.split('\n\n')
       buffer = parts.pop() || ''
@@ -188,8 +204,10 @@ export async function sendCompanionMessageStream(
             if (typeof parsed.label === 'string') callbacks.onTool?.(parsed.label)
           } else if (eventType === 'done') {
             finalResponse = parsed as CompanionResponse
+            options?.metrics?.textReady('assistant')
             callbacks.onDone?.(finalResponse)
           } else if (eventType === 'error') {
+            request?.end('error', 'invalid_response')
             const err = new Error(parsed.message || parsed.error || 'SSE Error')
             callbacks.onError?.(err)
             throw err
@@ -199,14 +217,19 @@ export async function sendCompanionMessageStream(
         }
       }
     }
+  } catch (error) {
+    request?.end(signal?.aborted ? 'cancelled' : 'error', signal?.aborted ? 'unknown' : 'network')
+    throw error
   } finally {
     signal?.removeEventListener('abort', onAbort)
   }
 
   if (!finalResponse) {
+    request?.end('error', 'invalid_response')
     throw new Error('Stream ended without completion event')
   }
 
+  request?.end('ok')
   return finalResponse
 }
 
