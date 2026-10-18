@@ -181,9 +181,12 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   sau đủ 19 check, CI 21.491 test/coverage và sáu mảnh E2E đạt; deploy thành công.
   S03 trace đã merge [PR #1402](https://github.com/seeker19110/dhcb/pull/1402) sau 19 check xanh,
   mặc định tắt; deploy thành công. Rà soát bổ sung phát hiện embedding thiếu trace attempt, cần S03b trước khi coi coverage trace hoàn tất. S04a sửa đường SSE đã merge [PR #1403](https://github.com/seeker19110/dhcb/pull/1403) sau 19 check xanh; deploy thành công. S04b guard delta/final đã merge [PR #1404](https://github.com/seeker19110/dhcb/pull/1404) sau 19 check xanh, deploy thành công. S05a vá retrieval guard đã merge [PR #1405](https://github.com/seeker19110/dhcb/pull/1405) sau 19 check xanh (21.630 unit/1.440 E2E), deploy thành công. S03b trace embedding đã merge [PR #1406](https://github.com/seeker19110/dhcb/pull/1406) sau19 check xanh (21.647 unit/1.440 E2E), deploy thành công. S04c wrapper đã merge [PR #1407](https://github.com/seeker19110/dhcb/pull/1407) sau19 check xanh (21.676 unit/1.440 E2E), deploy thành công; mainCI retry bootstrap ECR đã đạt. Corpus S04 đã merge [PR #1408](https://github.com/seeker19110/dhcb/pull/1408): CI21.975 unit, PG1.874+8runtime/cleanup0 đạt; browser1.439 pass/1flaky lịch theo dõi [#1409](https://github.com/seeker19110/dhcb/issues/1409), không hạ ngưỡng. Main CI/deploy thành công. S06a sửa hủy TTS [PR #1410](https://github.com/seeker19110/dhcb/pull/1410) đã merge/deploy:
-  CI22.000 unit/1.450 E2E/0flaky, main CI/deploy/CodeQL/secret scan đạt. S06b đủ local gates
-  trên base 54590ead: 22.152 unit/47 browser/AA/AAA đạt, chờ PR/CI. Sửa capture/confirm/AI/TTS
-  ownership và ràng buộc phiên đăng nhập ở client (changelog `0645`), có test-first/review độc lập. Benchmark S05, instrumentation S06 và số đo thật còn mở.
+  CI22.000 unit/1.450 E2E/0flaky, main CI/deploy/CodeQL/secret scan đạt. S06b đã merge/deploy
+  [PR #1412](https://github.com/seeker19110/dhcb/pull/1412), mainba82335f:19context xanh,
+  CI22.152unit/1.460E2E/0flaky; bốn workflow main đạt. Sửa capture/confirm/AI/TTS ownership
+  và ràng buộc phiên ở client (changelog `0645`), có test-first/review độc lập. Đang tích hợp
+  baseline S05 trên Postgres disposable: local22.350unit, normal80+8 và4negative controls đạt;
+  đang chuẩn bị PR/CI, chưa merge. Instrumentation S06 và số đo thật còn mở.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,

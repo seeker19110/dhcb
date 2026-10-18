@@ -273,6 +273,22 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      # S05: bằng chứng truy xuất trên snapshot cố định; không gọi embedding trả phí.
+      - name: Benchmark truy xuất ký ức trên Postgres disposable
+        id: memory-retrieval
+        env:
+          STORED_EVAL_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/dhcb
+        run: node --import tsx scripts/eval-memory-retrieval.ts --profile github-ci --artifacts "$RUNNER_TEMP/stored-retrieval"
+
+      - name: Lưu bằng chứng truy xuất và journal fixture tổng hợp
+        if: ${{ always() && steps.memory-retrieval.outcome != 'skipped' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: memory-retrieval-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/stored-retrieval
+          retention-days: 7
+          if-no-files-found: error
+
   # ── Job TỔNG HỢP: đây là required status check `quality` ───────────────────
   quality:
     name: quality
