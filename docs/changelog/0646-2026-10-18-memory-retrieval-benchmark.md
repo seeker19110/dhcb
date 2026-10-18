@@ -55,3 +55,19 @@ cho tới khi recovery đúng journal hoàn tất; disposable teardown không th
 Rollback bằng revert tooling/CI step; không migration hoặc thay đổi dữ liệu sản phẩm. Review
 corpus/baseline trước chốt floor hoặc đổi retrieval; vector/provider/device thật cần phạm vi và
 ngân sách riêng theo đặc tả. Goal còn mở ở instrumentation/measurement S06 và số đo thật.
+
+## Khôi phục CI trước checkout
+
+Hai attempts của CI39130615588 bị ECR Public chặn Data limit exceeded khi tải Postgres,
+trước checkout/migration/benchmark. Các cổng khác của head bbcec9ec đã đạt; giữ evidence
+riêng, chưa dùng run đó làm bằng chứng S05 trên CI.
+
+Đổi riêng nguồn image về [Docker Official Image postgres:16](https://hub.docker.com/_/postgres),
+giữ PostgreSQL16 và mọi cấu hình khác. Đã ghi nhận lịch sử Docker Hub lỗi ở1321; tài liệu
+[GitHub Actions](https://docs.github.com/en/actions/reference/limits#docker-hubs-rate-limit-for-github-actions)
+hiện ghi miễn pull rate limit thông thường cho public images trên hosted runners; vẫn phải
+kiểm chứng actual CI mới, không suy tài liệu thay bằng chứng chạy.
+
+YAML parse/deep-equal chứng minh chỉ image đổi;2file/33policy tests, Prettier và diff check đạt.
+18 TS/corpus/test pins và44runtime pins không đổi so với full local gate/actual database campaign.
+Không nhận full local rerun sau sửa workflow; mọi cổng CI exact head và actual artifacts còn bắt buộc.

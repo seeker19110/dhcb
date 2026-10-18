@@ -186,7 +186,7 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   CI22.152unit/1.460E2E/0flaky; bốn workflow main đạt. Sửa capture/confirm/AI/TTS ownership
   và ràng buộc phiên ở client (changelog `0645`), có test-first/review độc lập. Đang tích hợp
   baseline S05 trên Postgres disposable: local22.350unit, normal80+8 và4negative controls đạt;
-  đã mở [PR #1413](https://github.com/seeker19110/dhcb/pull/1413), chờ exact-head CI/artifact trước merge. Instrumentation S06 và số đo thật còn mở.
+  đã mở [PR #1413](https://github.com/seeker19110/dhcb/pull/1413), chờ exact-head CI/artifact sau sửa nguồn image vì hai lỗi ECR trước checkout. Instrumentation S06 và số đo thật còn mở.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,

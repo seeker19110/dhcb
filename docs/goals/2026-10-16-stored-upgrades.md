@@ -1012,3 +1012,15 @@ tính sau thời điểm đọc cuối. Đây là bug hiện hữu, không phả
   trước matched-head squash merge. Không auto-merge khi protection thiếu required checks.
 - Chỉ bổ sung số PR/trạng thái vào ba tài liệu sau source commit;19 source/test/CI và44 runtime
   pins giữ nguyên. Không thay source để lấy lại cổng xanh.
+
+### Sửa hạ tầng CI S05 — 2026-10-18
+
+- CI39130615588 trên bbcec9ec: unit/build/static/audit và sáu shard E2E đạt; SQL/quality
+  đỏ ở Initialize containers trước checkout. Hai attempts đều bị ECR Public Data limit exceeded,
+  benchmark chưa chạy. Giữ logs hai lượt; không gọi đây là lỗi hoặc bằng chứng thực thi S05.
+- Trước lần sửa2 ghi tầngcổng/hạtầng registry. ECR từng tránh lỗi Docker Hub ở1321; lần này đổi
+  riêng image về Docker Official Image postgres:16. YAML parse/deep-equal xác nhận mọi trường
+  khác giữ nguyên, gồm health/profile/DB/timeouts/needs/steps. Không thêm credential/provider.
+- Cấu hình mới qua2file/33policy tests, Prettier và diff check.18 TS/corpus/test pins và44runtime
+  pins khớp toàn gate/actualPG trước đó. Không nhận toàn gate local đã chạy lại sau sửa workflow;
+  CI đầy đủ trên head mới vẫn bắt buộc trước merge. Artifacts/CodeQL sẽ xác minh theo head mới.
