@@ -150,13 +150,17 @@ export function getSpeakingSessions(userId: string): SpeakingSession[] {
   return get<SpeakingSession[]>(K.speakingSessions(userId)) ?? []
 }
 
-export function saveSpeakingSession(session: SpeakingSession) {
+export function saveSpeakingSession(
+  session: SpeakingSession,
+  { syncToCloud = true }: { readonly syncToCloud?: boolean } = {},
+) {
   const all = getSpeakingSessions(session.userId)
   const idx = all.findIndex((s) => s.id === session.id)
   if (idx >= 0) all[idx] = session
   else all.unshift(session)
   set(K.speakingSessions(session.userId), all)
-  pushSpeakingSession(session) // đồng bộ lên Supabase
+  // Lượt AI cũ vẫn giữ bản cục bộ, nhưng không gửi qua cookie của phiên đăng nhập mới.
+  if (syncToCloud) pushSpeakingSession(session)
 }
 
 // ─── Usage ────────────────────────────────────────────────────────────────────

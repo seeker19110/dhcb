@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect, Suspense } from 'react'
+import { useCallback, useState, useRef, useEffect, useLayoutEffect, useMemo, Suspense } from 'react'
 import { thongDiepLoiThanThien } from '../../lib/friendlyError'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Layers, X } from 'lucide-react'
@@ -11,6 +11,7 @@ import { startRecording, isRecordingSupported, type Recorder } from '../../lib/s
 import { speak, stopSpeaking } from '../../lib/tts'
 import { useAuth } from '../../context/useAuth'
 import { useToast } from '@core/ToastProvider'
+import { getStoredToken } from '@core/authHeader'
 import {
   sendCompanionMessageStream,
   confirmProposedAction,
@@ -56,9 +57,53 @@ const StudioProactive = lazyWithRetry(
   () => import('../../components/CompanionStudios/StudioProactive'),
 )
 
+interface CompanionScopeSnapshot {
+  readonly userId: string | null
+  readonly sessionMarker: string | null
+  readonly domain: string
+  readonly ephemeral: boolean
+  readonly viewMode: 'chat' | 'voice'
+  readonly studio: StudioTab
+}
+
+function companionScopeKey(scope: CompanionScopeSnapshot): string {
+  return JSON.stringify([
+    scope.userId,
+    scope.sessionMarker,
+    scope.domain,
+    scope.ephemeral,
+    scope.viewMode,
+    scope.studio,
+  ])
+}
+
+interface CompanionScope {
+  readonly key: string
+  readonly snapshot: CompanionScopeSnapshot
+}
+
+interface QuickPromptIntent {
+  readonly generation: number
+  readonly target: CompanionScopeSnapshot
+  readonly targetKey: string
+  readonly text: string
+}
+
+interface CompanionOwner {
+  readonly scope: CompanionScope
+  readonly controller: AbortController
+}
+
 const EPHEMERAL_STORAGE_KEY = 'dhcb.companion.ephemeral'
 
 export default function Companion() {
+  const { user } = useAuth()
+  const sessionMarker = getStoredToken()
+  // Tài khoản/phiên mới nhận toàn bộ state mới, gồm lịch sử, consent UI và đề xuất đã render.
+  return <CompanionSession key={JSON.stringify([user?.id ?? null, sessionMarker])} />
+}
+
+function CompanionSession() {
   usePageTitle('Bạn Đồng Hành | Đồng Hành Cùng Bạn')
   const { user } = useAuth()
   const toast = useToast()
@@ -73,7 +118,10 @@ export default function Companion() {
       id: 'welcome',
       sender: 'companion',
       text: `Xin chào ${user?.name || 'bạn'}! Tôi là **Bạn Đồng Hành AI**. Tôi đi cùng bạn trong việc học (Tiếng Anh, Lập trình, Toán, Lý, Hoá, Sinh) và việc bạn ghi lại ở Ghi chú. Hôm nay bạn muốn bắt đầu từ đâu?`,
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       domain: 'general',
     },
   ])
@@ -123,7 +171,10 @@ export default function Companion() {
     setEnablingMemory(true)
     try {
       setMemorySettings(
-        await updateCompanionMemorySettings({ rememberMemories: true, useHistory: true }),
+        await updateCompanionMemorySettings({
+          rememberMemories: true,
+          useHistory: true,
+        }),
       )
     } catch {
       // Thẻ vẫn còn đó để bấm lại; không có toast ở đây vì trang chưa dùng ToastProvider.
@@ -222,84 +273,188 @@ export default function Companion() {
   // ── Chế độ giọng nói: STT → LLM → TTS (KHÔNG "live" — ghi âm xong mới gửi từng bước) ──
   const [voiceState, setVoiceState] = useState<CompanionVoiceState>('idle')
   const [voiceError, setVoiceError] = useState<string | null>(null)
-  const voiceRecorderRef = useRef<Recorder | null>(null)
   const voiceSupported = isRecordingSupported()
-  // Ref phản chiếu `loading`: handler async đọc state qua closure có thể bị CŨ (stale) sau await
-  // — dùng ref để kiểm chính xác lúc chạy (fix bug kẹt 'transcribing', audit 2026-08-24).
   const loadingRef = useRef(false)
-  // Bấm "Dừng" phải hủy cả phần TTS sắp phát khi stream LLM về xong SAU đó (fix bug audit).
-  const voiceCancelledRef = useRef(false)
-  // Lượt gửi đang bay tới `/api/companion` — giữ để huỷ được khi rời trang (AC-2).
-  const sendAbortRef = useRef<AbortController | null>(null)
+  const scopeRef = useRef<CompanionScope | null>(null)
+  const voiceOwnerRef = useRef<CompanionOwner | null>(null)
+  const voiceRecorderRef = useRef<{
+    readonly owner: CompanionOwner
+    readonly recorder: Recorder
+  } | null>(null)
+  const voiceStoppingRef = useRef<CompanionOwner | null>(null)
+  const sendOwnerRef = useRef<CompanionOwner | null>(null)
+  const sessionMarker = getStoredToken()
+  const scopeSnapshot = useMemo<CompanionScopeSnapshot>(
+    () => ({
+      userId: user?.id ?? null,
+      sessionMarker,
+      domain: selectedDomain,
+      ephemeral,
+      viewMode,
+      studio: activeStudio,
+    }),
+    [user?.id, sessionMarker, selectedDomain, ephemeral, viewMode, activeStudio],
+  )
+  const scopeKey = companionScopeKey(scopeSnapshot)
+  const quickGenerationRef = useRef(0)
+  const pendingQuickRef = useRef<QuickPromptIntent | null>(null)
+  const [quickIntent, setQuickIntent] = useState<QuickPromptIntent | null>(null)
+  const committedSendRef = useRef<((text: string) => Promise<void>) | null>(null)
+  const [observedScope, setObservedScope] = useState(scopeKey)
+  // Cùng khuôn điều chỉnh state khi scope đổi như deep link studio phía trên; cleanup chỉ dọn owner.
+  if (observedScope !== scopeKey) {
+    setObservedScope(scopeKey)
+    setVoiceState('idle')
+    setVoiceError(null)
+    setLoading(false)
+    setToolStatus(null)
+  }
 
-  // [S10-1 / AC-1] Rời trang = IM LẶNG. Bản cũ chỉ nhả micro + `stopSpeaking()`, nhưng stream
-  // LLM vẫn bay tới đích và `onDone` của nó gọi `speak(...)` — AI cất tiếng ở TRANG KẾ, giữa
-  // một màn hình chẳng liên quan. Cleanup nay làm đủ ba việc: nhả micro, tắt tiếng đang phát,
-  // và chặn mọi lượt phát SẮP tới (cờ huỷ + abort chính lượt gửi).
-  useEffect(
+  const releaseVoiceOwner = useCallback(() => {
+    const owner = voiceOwnerRef.current
+    const capture = voiceRecorderRef.current
+    // Vô hiệu identity trước abort/cancel: callback đồng bộ hoặc Promise muộn không hồi sinh lượt cũ.
+    voiceOwnerRef.current = null
+    voiceRecorderRef.current = null
+    voiceStoppingRef.current = null
+    owner?.controller.abort()
+    capture?.recorder.cancel()
+  }, [])
+  const releaseSendOwner = useCallback(() => {
+    const owner = sendOwnerRef.current
+    sendOwnerRef.current = null
+    loadingRef.current = false
+    owner?.controller.abort()
+  }, [])
+
+  useLayoutEffect(
     () => () => {
-      voiceCancelledRef.current = true
-      sendAbortRef.current?.abort()
-      sendAbortRef.current = null
-      voiceRecorderRef.current?.cancel()
-      stopSpeaking()
+      quickGenerationRef.current += 1
+      pendingQuickRef.current = null
+      committedSendRef.current = null
     },
     [],
   )
 
+  useLayoutEffect(() => {
+    // StrictMode setup sau cleanup nhận identity mới, không tái dùng controller đã abort.
+    const scope: CompanionScope = { key: scopeKey, snapshot: scopeSnapshot }
+    scopeRef.current = scope
+    return () => {
+      if (scopeRef.current === scope) scopeRef.current = null
+      releaseVoiceOwner()
+      releaseSendOwner()
+      stopSpeaking()
+    }
+  }, [scopeKey, scopeSnapshot, releaseVoiceOwner, releaseSendOwner])
+
+  const isVoiceCurrent = (owner: CompanionOwner) =>
+    voiceOwnerRef.current === owner &&
+    scopeRef.current === owner.scope &&
+    getStoredToken() === owner.scope.snapshot.sessionMarker &&
+    !owner.controller.signal.aborted
+  const isSendCurrent = (owner: CompanionOwner) =>
+    sendOwnerRef.current === owner &&
+    scopeRef.current === owner.scope &&
+    getStoredToken() === owner.scope.snapshot.sessionMarker &&
+    !owner.controller.signal.aborted
+  const claimVoiceOwner = (): CompanionOwner | null => {
+    const scope = scopeRef.current
+    if (!scope || scope.key !== scopeKey || getStoredToken() !== scope.snapshot.sessionMarker)
+      return null
+    const owner: CompanionOwner = { scope, controller: new AbortController() }
+    voiceOwnerRef.current = owner
+    return owner
+  }
+  const discardStaleVoiceOwner = (owner: CompanionOwner) => {
+    if (isVoiceCurrent(owner)) return false
+    if (voiceOwnerRef.current === owner) {
+      releaseVoiceOwner()
+      stopSpeaking()
+      setVoiceState('idle')
+    }
+    return true
+  }
+  const finishVoiceOwner = (owner: CompanionOwner) => {
+    if (discardStaleVoiceOwner(owner)) return
+    voiceOwnerRef.current = null
+    owner.controller.abort()
+    setVoiceState('idle')
+  }
+
   const startVoiceRecording = async () => {
-    if (voiceState !== 'idle') return
+    if (voiceState !== 'idle' || voiceOwnerRef.current) return
+    const owner = claimVoiceOwner()
+    if (!owner) return
     setVoiceError(null)
     try {
-      voiceRecorderRef.current = await startRecording('vi')
+      const recorder = await startRecording('vi', {
+        signal: owner.controller.signal,
+        isCurrent: () => isVoiceCurrent(owner),
+      })
+      if (discardStaleVoiceOwner(owner)) {
+        recorder.cancel()
+        return
+      }
+      voiceRecorderRef.current = { owner, recorder }
       setVoiceState('recording')
     } catch {
+      if (discardStaleVoiceOwner(owner)) return
+      finishVoiceOwner(owner)
       setVoiceError('Không truy cập được micro. Hãy cho phép quyền micro trong trình duyệt.')
     }
   }
 
   const stopVoiceRecording = async () => {
-    const rec = voiceRecorderRef.current
-    if (!rec) return
-    voiceRecorderRef.current = null
+    const capture = voiceRecorderRef.current
+    if (
+      !capture ||
+      discardStaleVoiceOwner(capture.owner) ||
+      voiceStoppingRef.current === capture.owner
+    )
+      return
+    const owner = capture.owner
+    voiceStoppingRef.current = owner
     setVoiceState('transcribing')
     let text = ''
     try {
-      text = await rec.stop()
+      // Giữ ref đến khi stop terminal để cancel còn chặn được encode/auth trước fetch.
+      text = await capture.recorder.stop()
     } catch (e) {
-      setVoiceState('idle')
+      if (discardStaleVoiceOwner(owner)) return
+      finishVoiceOwner(owner)
       setVoiceError(
         e instanceof Error && e.message === 'EMPTY_RECORDING'
           ? 'Không nghe rõ, thử nói lại nhé.'
           : thongDiepLoiThanThien(e, 'Lỗi nhận diện giọng nói'),
       )
       return
+    } finally {
+      if (voiceRecorderRef.current === capture) voiceRecorderRef.current = null
+      if (voiceStoppingRef.current === owner) voiceStoppingRef.current = null
     }
+    if (discardStaleVoiceOwner(owner)) return
     if (!text.trim()) {
-      setVoiceState('idle')
+      finishVoiceOwner(owner)
       setVoiceError('Không nghe rõ, thử nói lại nhé.')
       return
     }
     if (loadingRef.current) {
-      // AI còn đang trả lời câu trước — handleSend sẽ từ chối im lặng, đừng để kẹt 'transcribing'.
-      setVoiceState('idle')
+      finishVoiceOwner(owner)
       setVoiceError('Bạn Đồng Hành đang trả lời câu trước — chờ xong rồi nói tiếp nhé.')
       return
     }
-    await handleSend(text, true)
+    await handleSend(text, true, owner)
   }
 
   const cancelVoiceRecording = () => {
-    voiceRecorderRef.current?.cancel()
-    voiceRecorderRef.current = null
+    releaseVoiceOwner()
+    stopSpeaking()
     setVoiceState('idle')
   }
 
-  // Dừng phiên giọng nói hiện tại (đang ghi âm hoặc AI đang đọc) — về idle ngay.
   const stopVoiceSession = () => {
-    voiceRecorderRef.current?.cancel()
-    voiceRecorderRef.current = null
-    voiceCancelledRef.current = true // stream LLM đang bay về sau cũng KHÔNG được cất tiếng nữa
+    releaseVoiceOwner()
     stopSpeaking()
     setVoiceState('idle')
   }
@@ -313,7 +468,10 @@ export default function Companion() {
   const pendingDraftIdRef = useRef<string | null>(null)
   const draftLoadedRef = useRef(false)
   // Khi ô soạn ĐÃ có chữ: hỏi thay hay giữ, không ghi đè ngầm chữ người dùng đang viết dở.
-  const [draftOffer, setDraftOffer] = useState<{ id: string; question: string } | null>(null)
+  const [draftOffer, setDraftOffer] = useState<{
+    id: string
+    question: string
+  } | null>(null)
 
   useEffect(() => {
     // Chỉ chạy một lần cho mỗi tài khoản: StrictMode chạy effect hai lần ở dev.
@@ -357,25 +515,49 @@ export default function Companion() {
     }
   }, [messages, loading, activeStudio])
 
-  const handleSend = async (customText?: string, viaVoice = false) => {
+  const handleSend = async (
+    customText?: string,
+    viaVoice = false,
+    captureOwner?: CompanionOwner,
+  ) => {
     const textToSend = (customText || input).trim()
-    if (!textToSend || loadingRef.current) return
-    breakReminder.recordTurn()
-    if (viaVoice) {
-      voiceCancelledRef.current = false
-      setVoiceState('thinking')
+    const scope = scopeRef.current
+    if (
+      !textToSend ||
+      loadingRef.current ||
+      !scope ||
+      scope.key !== scopeKey ||
+      getStoredToken() !== scope.snapshot.sessionMarker
+    )
+      return
+    if (captureOwner && discardStaleVoiceOwner(captureOwner)) return
+    // Lối gọi hai tham số cũ vẫn hợp lệ; chỉ pipeline STT truyền owner đã claim ở tham số ba.
+    if (!captureOwner && voiceOwnerRef.current) {
+      releaseVoiceOwner()
+      stopSpeaking()
     }
+    const voiceOwner = viaVoice ? (captureOwner ?? claimVoiceOwner()) : null
+    if (viaVoice && !voiceOwner) return
+    breakReminder.recordTurn()
+    if (viaVoice) setVoiceState('thinking')
 
     const userMsg: ChatMessage = {
       id: `usr-${Date.now()}`,
       sender: 'user',
       text: textToSend,
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     }
 
     const botMsgId = `bot-${Date.now()}`
     let streamedText = ''
-    let botMeta: { intent?: string; domain?: string; contextPackage?: ContextPackage } = {}
+    let botMeta: {
+      intent?: string
+      domain?: string
+      contextPackage?: ContextPackage
+    } = {}
     let botActions: ProposedAction[] | undefined = undefined
 
     setMessages((prev) => [
@@ -385,7 +567,10 @@ export default function Companion() {
         id: botMsgId,
         sender: 'companion',
         text: '',
-        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
         domain: selectedDomain === 'all' ? undefined : selectedDomain,
       },
     ])
@@ -393,11 +578,12 @@ export default function Companion() {
     loadingRef.current = true
     setLoading(true)
 
-    // Một controller cho ĐÚNG lượt gửi này; cleanup unmount abort nó (AC-2).
-    const controller = new AbortController()
-    sendAbortRef.current = controller
+    const owner: CompanionOwner = { scope, controller: new AbortController() }
+    sendOwnerRef.current = owner
+    let doneHandled = false
 
     try {
+      if (!isSendCurrent(owner)) return
       await sendCompanionMessageStream(
         {
           message: textToSend,
@@ -406,6 +592,7 @@ export default function Companion() {
         },
         {
           onMeta: (meta) => {
+            if (!isSendCurrent(owner)) return
             botMeta = {
               intent: meta.intent,
               domain: meta.targetDomain,
@@ -414,9 +601,10 @@ export default function Companion() {
             setMessages((prev) => prev.map((m) => (m.id === botMsgId ? { ...m, ...botMeta } : m)))
           },
           onTool: (label) => {
-            if (!controller.signal.aborted) setToolStatus(label)
+            if (isSendCurrent(owner)) setToolStatus(label)
           },
           onChunk: (delta) => {
+            if (!isSendCurrent(owner)) return
             // Đã có chữ ⇒ bước tra cứu đã xong, bỏ nhãn công cụ.
             setToolStatus(null)
             streamedText += delta
@@ -425,24 +613,28 @@ export default function Companion() {
             )
           },
           onActions: (actionsData) => {
+            if (!isSendCurrent(owner)) return
             botActions = actionsData.proposedActions
             setMessages((prev) =>
               prev.map((m) => (m.id === botMsgId ? { ...m, proposedActions: botActions } : m)),
             )
           },
           onQuestions: (questions) => {
+            if (!isSendCurrent(owner)) return
             setMessages((prev) =>
               prev.map((m) => (m.id === botMsgId ? { ...m, interactiveQuestions: questions } : m)),
             )
           },
           onSafety: (safety) => {
+            if (!isSendCurrent(owner)) return
             setMessages((prev) => prev.map((m) => (m.id === botMsgId ? { ...m, safety } : m)))
           },
           onDone: (finalResp) => {
             // Trang đã rời → không chạm state, không đọc. `companionApi` đã chặn `onDone` sau
             // khi abort, đây là lớp khoá thứ hai (callback có thể về từ lượt đọc ngay trước
             // lúc abort kịp có hiệu lực).
-            if (controller.signal.aborted) return
+            if (!isSendCurrent(owner) || doneHandled) return
+            doneHandled = true
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === botMsgId
@@ -459,23 +651,26 @@ export default function Companion() {
                   : m,
               ),
             )
-            if (viaVoice && voiceCancelledRef.current) {
-              // Người dùng đã bấm Dừng trong lúc chờ — không đọc, không đổi trạng thái.
-            } else if (viaVoice && finalResp.reply.trim()) {
-              setVoiceState('speaking')
-              void speak(finalResp.reply, 'vi-VN').finally(() => {
-                setVoiceState((s) => (s === 'speaking' ? 'idle' : s))
-              })
-            } else if (viaVoice) {
-              setVoiceState('idle')
+            if (voiceOwner && isVoiceCurrent(voiceOwner)) {
+              if (finalResp.reply.trim()) {
+                setVoiceState('speaking')
+                const finishSpeech = () => finishVoiceOwner(voiceOwner)
+                // Lỗi TTS vẫn kết thúc owner hiện tại; không tạo fallback/request mới ở trang.
+                void speak(finalResp.reply, 'vi-VN').then(finishSpeech, finishSpeech)
+              } else {
+                finishVoiceOwner(voiceOwner)
+              }
             }
           },
         },
-        { signal: controller.signal },
+        {
+          signal: owner.controller.signal,
+          isCurrent: () => isSendCurrent(owner) && (!voiceOwner || isVoiceCurrent(voiceOwner)),
+        },
       )
       // Gửi trót lọt thì nháp hết vai trò. `clearDraft(id)` tự bỏ qua nếu trong lúc chờ đã có
       // nháp MỚI — không xoá nhầm câu hỏi người dùng vừa gõ tiếp.
-      if (pendingDraftIdRef.current) {
+      if (isSendCurrent(owner) && pendingDraftIdRef.current) {
         clearDraft(pendingDraftIdRef.current)
         pendingDraftIdRef.current = null
       }
@@ -483,7 +678,7 @@ export default function Companion() {
       // Người dùng chủ động rời trang không phải là LỖI: im lặng, không toast, không đổi
       // state của một trang đã biến mất. (Lượt AI đã trừ ở server thì KHÔNG hoàn — server
       // không biết client rời; đúng luật hiện hành, xem đặc tả S10 AC-2.)
-      if (err instanceof Error && err.name === 'AbortError') return
+      if (!isSendCurrent(owner) || (err instanceof Error && err.name === 'AbortError')) return
       // Gửi lỗi thì GIỮ nháp: người dùng còn thử lại được, không mất câu hỏi.
       const message = thongDiepLoiThanThien(err, 'Lỗi khi gửi yêu cầu tới Companion')
       toast.error(message)
@@ -494,18 +689,74 @@ export default function Companion() {
             : m,
         ),
       )
-      if (viaVoice) setVoiceState('idle')
+      if (voiceOwner) finishVoiceOwner(voiceOwner)
     } finally {
-      loadingRef.current = false
-      if (sendAbortRef.current === controller) sendAbortRef.current = null
-      // Trang đã rời thì không setState nữa (lượt huỷ đã `return` ở nhánh catch, nhưng
-      // `finally` vẫn chạy).
-      if (!controller.signal.aborted) {
-        setLoading(false)
-        setToolStatus(null)
+      // Finalizer cũ không được mở khóa hoặc xóa nhãn của request thuộc scope/owner mới.
+      if (sendOwnerRef.current === owner) {
+        sendOwnerRef.current = null
+        loadingRef.current = false
+        if (scopeRef.current === owner.scope && !owner.controller.signal.aborted) {
+          setLoading(false)
+          setToolStatus(null)
+        }
       }
     }
   }
+
+  const handleQuickPrompt = async (domain: string, text: string) => {
+    const scope = scopeRef.current
+    if (
+      loadingRef.current ||
+      !scope ||
+      scope.key !== scopeKey ||
+      !text.trim() ||
+      getStoredToken() !== scope.snapshot.sessionMarker
+    )
+      return
+    const target: CompanionScopeSnapshot = { ...scope.snapshot, domain }
+    const intent: QuickPromptIntent = {
+      generation: ++quickGenerationRef.current,
+      target,
+      targetKey: companionScopeKey(target),
+      text,
+    }
+    pendingQuickRef.current = intent
+    setQuickIntent(intent)
+    setSelectedDomain(domain)
+  }
+
+  useLayoutEffect(() => {
+    committedSendRef.current = handleSend
+  })
+
+  useLayoutEffect(() => {
+    if (!quickIntent) return
+    const scope = scopeRef.current
+    if (
+      pendingQuickRef.current !== quickIntent ||
+      quickIntent.generation !== quickGenerationRef.current ||
+      !scope ||
+      scope.key !== scopeKey ||
+      scope.key !== quickIntent.targetKey
+    ) {
+      if (pendingQuickRef.current === quickIntent) {
+        pendingQuickRef.current = null
+        quickGenerationRef.current += 1
+      }
+      return
+    }
+    // Chỉ intent người dùng đã chọn mới đợi commit đích; cleanup scope/route vẫn hủy ngay.
+    queueMicrotask(() => {
+      if (
+        pendingQuickRef.current !== quickIntent ||
+        quickIntent.generation !== quickGenerationRef.current ||
+        scopeRef.current !== scope
+      )
+        return
+      pendingQuickRef.current = null
+      void committedSendRef.current?.(quickIntent.text)
+    })
+  }, [quickIntent, scopeKey])
 
   const handleConfirmAction = async (action: ProposedAction) => {
     setActionLoadingMap((prev) => ({ ...prev, [action.id]: true }))
@@ -673,6 +924,7 @@ export default function Companion() {
                 stopSession: stopVoiceSession,
               }}
               handleSend={handleSend}
+              onQuickPrompt={handleQuickPrompt}
               handleConfirmAction={handleConfirmAction}
               handleRejectAction={handleRejectAction}
               actionLoadingMap={actionLoadingMap}

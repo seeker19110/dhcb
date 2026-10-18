@@ -37,12 +37,20 @@ export interface STTResult {
   isFinal: boolean
 }
 
+export interface CaptureOptions {
+  readonly signal?: AbortSignal
+}
+
+export type StopListening = (mode?: 'cancel' | 'complete') => void
+
 export function startListening(
   lang: 'en' | 'vi',
   onResult: (r: STTResult) => void,
   onEnd: (lastTranscript: string) => void,
   onError: (err: string) => void,
-): () => void {
+  { signal }: CaptureOptions = {},
+): StopListening {
+  if (signal?.aborted) return () => {}
   const w = window as unknown as {
     SpeechRecognition?: SpeechRecognitionCtor
     webkitSpeechRecognition?: SpeechRecognitionCtor
@@ -60,27 +68,26 @@ export function startListening(
 
   let lastTranscript = ''
   let gotSpeech = false
+  let terminal = false
+  let completing = false
 
   // Chống "mic mở vô tận": tự dừng nếu không nghe thấy gì sau 8s, hoặc nói quá 20s.
   const NO_SPEECH_MS = 8000
   const MAX_MS = 20000
   let noSpeechTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
     noSpeechTimer = null
-    if (!gotSpeech) {
+    if (!gotSpeech && !terminal) {
+      close()
       try {
         rec.stop()
       } catch {
-        /* đã dừng */
+        /* recognition đã dừng */
       }
       onError('no-speech')
     }
   }, NO_SPEECH_MS)
   const maxTimer = setTimeout(() => {
-    try {
-      rec.stop()
-    } catch {
-      /* đã dừng */
-    }
+    stop('complete')
   }, MAX_MS)
 
   function clearTimers() {
@@ -91,7 +98,47 @@ export function startListening(
     clearTimeout(maxTimer)
   }
 
+  function close() {
+    terminal = true
+    clearTimers()
+    signal?.removeEventListener('abort', cancel)
+    rec.onresult = null
+    rec.onend = null
+    rec.onerror = null
+  }
+  function finishError(error: string) {
+    if (terminal) return
+    close()
+    onError(error)
+  }
+  function cancel() {
+    stop('cancel')
+  }
+  function stop(mode: 'cancel' | 'complete' = 'cancel') {
+    if (terminal) return
+    if (mode === 'cancel') {
+      close()
+      if (!completing) {
+        try {
+          rec.stop()
+        } catch {
+          /* recognition đã dừng */
+        }
+      }
+      return
+    }
+    if (completing) return
+    completing = true
+    clearTimers()
+    try {
+      rec.stop()
+    } catch {
+      finishError('aborted')
+    }
+  }
+
   rec.onresult = (e) => {
+    if (terminal) return
     gotSpeech = true
     if (noSpeechTimer) {
       clearTimeout(noSpeechTimer)
@@ -104,20 +151,23 @@ export function startListening(
   }
 
   rec.onend = () => {
-    clearTimers()
+    if (terminal) return
+    close()
     onEnd(lastTranscript)
   }
   rec.onerror = (e) => {
-    clearTimers()
-    onError(e.error)
+    finishError(e.error)
   }
-  rec.start()
-
-  return () => {
-    clearTimers()
-    rec.onresult = null
-    rec.onend = null
-    rec.onerror = null
-    rec.stop()
+  signal?.addEventListener('abort', cancel, { once: true })
+  if (signal?.aborted) {
+    cancel()
+    return stop
   }
+  try {
+    rec.start()
+  } catch (error) {
+    close()
+    throw error
+  }
+  return stop
 }

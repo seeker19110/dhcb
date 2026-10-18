@@ -94,11 +94,21 @@ export async function sendCompanionMessageStream(
   // [S10-1] Lượt gửi phải HUỶ ĐƯỢC: rời trang giữa lúc AI đang trả lời thì vòng đọc SSE phải
   // dừng ngay, không chạy tiếp tới `done` (nếu chạy tiếp, `onDone` của trang cũ sẽ gọi TTS và
   // AI cất tiếng ở trang kế — lỗi L1/AC-1 của đặc tả S10).
-  options?: { signal?: AbortSignal },
+  options?: { readonly signal?: AbortSignal; readonly isCurrent?: () => boolean },
 ): Promise<CompanionResponse> {
   const signal = options?.signal
-  if (signal?.aborted) throw loiHuy()
+  const assertRequestCurrent = () => {
+    let current = true
+    try {
+      current = options?.isCurrent?.() ?? true
+    } catch {
+      current = false
+    }
+    if (signal?.aborted || !current) throw loiHuy()
+  }
+  assertRequestCurrent()
   const headers = await getAuthHeader()
+  assertRequestCurrent()
   const res = await fetch('/api/companion', {
     method: 'POST',
     headers: {

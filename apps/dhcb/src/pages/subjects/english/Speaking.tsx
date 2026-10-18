@@ -1,5 +1,6 @@
 import { buttonClass } from '@core/buttonStyles'
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { getStoredToken } from '@core/authHeader'
+import { useState, useRef, useEffect, useMemo, useLayoutEffect, useCallback } from 'react'
 import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import { duongDanMonTiengAnh } from '../../../lib/subjectsHost'
 import { useSearchParams } from 'react-router-dom'
@@ -25,7 +26,6 @@ import { useAuth } from '../../../context/useAuth'
 import { useToast } from '@core/ToastProvider'
 import { useCloudSync } from '../../../lib/useCloudSync'
 import { useApiThrottle } from '../../../lib/useApiThrottle'
-import { useMountedRef } from '../../../lib/useMountedRef'
 import { useIsDesktopViewport } from '../../../lib/useIsDesktopViewport'
 import { useVisualViewportHeight } from '../../../lib/useVisualViewportHeight'
 import { useOnboarding } from '../../../lib/onboarding'
@@ -35,7 +35,7 @@ import {
   speakingFullEvaluationPrompt,
   situationLabel,
 } from '../../../prompts'
-import { startListening, isSTTSupported } from '../../../lib/stt'
+import { startListening, isSTTSupported, type StopListening } from '../../../lib/stt'
 import { startRecording, isRecordingSupported, type Recorder } from '../../../lib/sttServer'
 import { speakBilingual, stopSpeaking, isTTSSupported, getRatePref } from '../../../lib/tts'
 import { effectivePlan } from '../../../lib/promo'
@@ -216,7 +216,9 @@ function SetupScreen({
                   setLevel(l.value)
                 }}
                 aria-pressed={level === l.value}
-                className={buttonClass({ variant: level === l.value ? 'primary' : 'ghost' })}
+                className={buttonClass({
+                  variant: level === l.value ? 'primary' : 'ghost',
+                })}
               >
                 {isA ? l.labelA : l.labelB}
               </button>
@@ -240,7 +242,11 @@ function SetupScreen({
           onClick={() => onStart(situation, level)}
           disabled={loading}
           aria-label={isA ? 'Bắt đầu luyện nói' : 'Start speaking practice'}
-          className={buttonClass({ fullWidth: true, size: 'lg', className: 'mt-2' })}
+          className={buttonClass({
+            fullWidth: true,
+            size: 'lg',
+            className: 'mt-2',
+          })}
         >
           {loading ? (
             <>
@@ -567,6 +573,25 @@ function currentTimeMs(): number {
   return Date.now()
 }
 
+interface SpeakingScope {
+  readonly key: string
+  readonly userId: string
+  readonly dir: Direction
+  readonly sessionMarker: string | null
+}
+
+type SpeakingPhase = 'permission' | 'recording' | 'completing' | 'stt' | 'confirm' | 'ai'
+
+interface SpeakingTurn {
+  readonly scope: SpeakingScope
+  readonly controller: AbortController
+}
+
+interface SpeakingPlayback {
+  readonly scope: SpeakingScope
+  readonly turn?: SpeakingTurn
+}
+
 // ── Main Speaking page ──────────────────────────────────────────────────
 export default function Speaking() {
   usePageTitle('Luyện nói song ngữ | Môn tiếng Anh · Đồng Hành Cùng Bạn')
@@ -616,13 +641,44 @@ export default function Speaking() {
   // đếm ngược PENDING_CONFIRM_S rồi tự gửi, hoặc bấm "Ghi lại" để xoá và ghi âm lại.
   const [pendingConfirm, setPendingConfirm] = useState<string | null>(null)
   const [pendingCountdown, setPendingCountdown] = useState(0)
-  const stopRecRef = useRef<(() => void) | null>(null) // dừng Web Speech (fallback)
-  const recorderRef = useRef<Recorder | null>(null) // recorder server STT (chính)
-  const recTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null) // tự dừng ghi âm khi quá lâu
-  const pendingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null) // đếm ngược xác nhận
+  const stopRecRef = useRef<{
+    owner: SpeakingTurn
+    stop: StopListening
+  } | null>(null)
+  const recorderRef = useRef<{
+    owner: SpeakingTurn
+    recorder: Recorder
+  } | null>(null)
+  const recTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  // Chặn setState sau khi rời trang giữa lúc đang chờ AI trả lời (callClaude có thể mất vài giây)
-  const mountedRef = useMountedRef()
+  const scopeRef = useRef<SpeakingScope | null>(null)
+  const turnRef = useRef<SpeakingTurn | null>(null)
+  const phaseRef = useRef<SpeakingPhase | null>(null)
+  const loadingOwnerRef = useRef<SpeakingTurn | null>(null)
+  const playbackRef = useRef<SpeakingPlayback | null>(null)
+  const mutedRef = useRef(muted)
+  const sessionMarker = getStoredToken()
+  const scopeKey = JSON.stringify([user.id, dir, sessionMarker])
+  const [observedScope, setObservedScope] = useState(scopeKey)
+  if (observedScope !== scopeKey) {
+    setObservedScope(scopeKey)
+    setSession(null)
+    setRecording(false)
+    setProcessing(false)
+    setTranscript('')
+    setPendingConfirm(null)
+    setPendingCountdown(0)
+    setLoading(false)
+    setEvaluating(false)
+    setEvaluation(null)
+    setSpeaking(false)
+    setWordSync(null)
+    setError('')
+    setTypedInput('')
+    setLimitHit(false)
+    setLastIdx(-1)
+  }
   const MAX_REC_MS = 60_000 // tự dừng ghi âm server sau 60s (tránh micro mở vô tận)
   const PENDING_CONFIRM_S = 2 // số giây chờ xác nhận trước khi tự gửi câu vừa ghi âm
   // Ưu tiên ghi âm gửi server (chính xác, đa trình duyệt); Web Speech chỉ là dự phòng.
@@ -630,7 +686,7 @@ export default function Speaking() {
   const sttSupported = canRecord || isSTTSupported()
 
   // Rate limit chặn double-click/bão request — giới hạn lượt/ngày đã cap riêng
-  // qua daily_usage nên throttle chỉ cần mức nhẹ (mặc định 3s của hook).
+  // qua daily_usage nên throttle chỉ cần mức nhẹ (mặc định 5s của hook).
   const { isThrottled, throttle } = useApiThrottle({
     onCountdown: setThrottleCountdown,
   })
@@ -646,42 +702,166 @@ export default function Speaking() {
     if (keyboardOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [keyboardOpen])
 
-  useEffect(
-    () => () => {
-      stopSpeaking()
-      stopRecRef.current?.()
-      recorderRef.current?.cancel()
-      if (recTimerRef.current) clearTimeout(recTimerRef.current)
-      if (pendingTimerRef.current) clearInterval(pendingTimerRef.current)
-    },
-    [],
-  )
+  const releaseTurn = useCallback(() => {
+    const owner = turnRef.current
+    const capture = recorderRef.current
+    const native = stopRecRef.current
+    // Đóng identity trước mọi callback đồng bộ từ abort/stop.
+    turnRef.current = null
+    phaseRef.current = null
+    loadingOwnerRef.current = null
+    recorderRef.current = null
+    stopRecRef.current = null
+    owner?.controller.abort()
+    capture?.recorder.cancel()
+    native?.stop()
+    if (recTimerRef.current) clearTimeout(recTimerRef.current)
+    if (pendingTimerRef.current) clearInterval(pendingTimerRef.current)
+    recTimerRef.current = null
+    pendingTimerRef.current = null
+  }, [])
+  const releasePlayback = useCallback(() => {
+    playbackRef.current = null
+    stopSpeaking()
+  }, [])
+  useLayoutEffect(() => {
+    const scope: SpeakingScope = { key: scopeKey, userId: user.id, dir, sessionMarker }
+    scopeRef.current = scope
+    return () => {
+      if (scopeRef.current === scope) scopeRef.current = null
+      releaseTurn()
+      releasePlayback()
+    }
+  }, [scopeKey, user.id, dir, sessionMarker, releaseTurn, releasePlayback])
 
-  // Hiện câu vừa ghi âm/nhận diện, đếm ngược rồi tự gửi cho AI — bấm "Ghi lại" để huỷ.
-  function startPendingConfirm(text: string) {
+  function isCurrent(owner: SpeakingTurn) {
+    return (
+      turnRef.current === owner &&
+      scopeRef.current === owner.scope &&
+      getStoredToken() === owner.scope.sessionMarker &&
+      !owner.controller.signal.aborted
+    )
+  }
+  function claimTurn(phase: SpeakingPhase): SpeakingTurn | null {
+    const scope = scopeRef.current
+    if (!scope || scope.key !== scopeKey || getStoredToken() !== scope.sessionMarker) return null
+    releaseTurn()
+    releasePlayback()
+    setSpeaking(false)
+    setWordSync(null)
+    const owner: SpeakingTurn = {
+      scope,
+      controller: new AbortController(),
+    }
+    turnRef.current = owner
+    phaseRef.current = phase
+    return owner
+  }
+  function finishTurn(owner: SpeakingTurn) {
+    if (isCurrent(owner)) releaseTurn()
+  }
+  function isPlaybackCurrent(playback: SpeakingPlayback) {
+    return (
+      playbackRef.current === playback &&
+      scopeRef.current === playback.scope &&
+      getStoredToken() === playback.scope.sessionMarker &&
+      (!playback.turn || isCurrent(playback.turn))
+    )
+  }
+  async function playOwnedMessage(msg: Message, turn?: SpeakingTurn) {
+    if (!msg.speechEn || (turn && (!isCurrent(turn) || mutedRef.current))) return
+    const scope = scopeRef.current
+    if (!scope || scope.key !== scopeKey || getStoredToken() !== scope.sessionMarker) return
+    releasePlayback()
+    const playback: SpeakingPlayback = { scope, ...(turn ? { turn } : {}) }
+    playbackRef.current = playback
+    setSpeaking(true)
+    try {
+      await speakBilingual(
+        msg.speechEn,
+        msg.feedbackVi ?? '',
+        scope.dir === 'A' ? 'en-US' : 'vi-VN',
+        scope.dir === 'A' ? 'vi-VN' : 'en-US',
+        undefined,
+        getRatePref(),
+        (wi) =>
+          isPlaybackCurrent(playback) &&
+          setWordSync({ msgId: msg.id, field: 'speech', wordIdx: wi }),
+        (wi) =>
+          isPlaybackCurrent(playback) &&
+          setWordSync({ msgId: msg.id, field: 'feedback', wordIdx: wi }),
+      )
+    } finally {
+      if (isPlaybackCurrent(playback)) {
+        playbackRef.current = null
+        setSpeaking(false)
+      }
+    }
+  }
+  function toggleMute() {
+    mutedRef.current = !mutedRef.current
+    setMuted(mutedRef.current)
+    releasePlayback()
+    setSpeaking(false)
+  }
+  function newRoom() {
+    releaseTurn()
+    releasePlayback()
+    setSession(null)
+    setRecording(false)
+    setProcessing(false)
+    setTranscript('')
+    setPendingConfirm(null)
+    setPendingCountdown(0)
+    setLoading(false)
+    setEvaluating(false)
+    setEvaluation(null)
+    setSpeaking(false)
+    setWordSync(null)
+    setError('')
+    setTypedInput('')
+    setLastIdx(-1)
+  }
+
+  function discardStaleTurn(owner: SpeakingTurn) {
+    if (isCurrent(owner)) return false
+    // Scope cũ vẫn giữ tài nguyên khi marker đổi trước Auth render. Chỉ dọn đúng owner đó.
+    if (turnRef.current === owner) newRoom()
+    return true
+  }
+
+  // Timer thuộc chính lượt thu âm; callback cũ không được xóa timer của lượt mới.
+  function startPendingConfirm(text: string, owner: SpeakingTurn) {
+    if (discardStaleTurn(owner)) return
+    phaseRef.current = 'confirm'
     if (pendingTimerRef.current) clearInterval(pendingTimerRef.current)
     setTranscript('')
     setPendingConfirm(text)
     let remaining = PENDING_CONFIRM_S
     setPendingCountdown(remaining)
-    pendingTimerRef.current = setInterval(() => {
+    const timer = setInterval(() => {
+      if (discardStaleTurn(owner)) {
+        clearInterval(timer)
+        if (pendingTimerRef.current === timer) pendingTimerRef.current = null
+        return
+      }
       remaining -= 1
       setPendingCountdown(remaining)
       if (remaining <= 0) {
-        if (pendingTimerRef.current) clearInterval(pendingTimerRef.current)
-        pendingTimerRef.current = null
+        clearInterval(timer)
+        if (pendingTimerRef.current === timer) pendingTimerRef.current = null
         setPendingConfirm(null)
-        void sendUserSpeech(text)
+        void sendUserSpeech(text, false, owner)
       }
     }, 1000)
+    pendingTimerRef.current = timer
   }
 
-  // "Ghi lại" — xoá câu đang chờ, không gửi AI, để người dùng ghi âm lại từ đầu.
   function cancelPendingConfirm() {
-    if (pendingTimerRef.current) clearInterval(pendingTimerRef.current)
-    pendingTimerRef.current = null
+    releaseTurn()
     setPendingConfirm(null)
     setPendingCountdown(0)
+    setTranscript('')
   }
 
   // Nút "AI phản hồi" — nhờ AI chủ động gợi ý câu hỏi/chủ đề tiếp theo dựa trên
@@ -698,29 +878,36 @@ export default function Speaking() {
 
   // Dừng ghi âm server (chính) rồi gửi audio lên nhận diện. Gọi khi người dùng nhấn dừng
   // HOẶC khi quá thời lượng tối đa (recTimerRef).
-  async function stopServerRecording() {
-    if (recTimerRef.current) {
-      clearTimeout(recTimerRef.current)
-      recTimerRef.current = null
-    }
-    const r = recorderRef.current
-    if (!r) return
-    recorderRef.current = null
+  async function stopServerRecording(owner = recorderRef.current?.owner) {
+    const capture = recorderRef.current
+    if (
+      !owner ||
+      discardStaleTurn(owner) ||
+      phaseRef.current !== 'recording' ||
+      capture?.owner !== owner
+    )
+      return
+    phaseRef.current = 'stt'
+    if (recTimerRef.current) clearTimeout(recTimerRef.current)
+    recTimerRef.current = null
     setRecording(false)
     setProcessing(true)
     try {
-      const text = await r.stop()
+      const text = await capture.recorder.stop()
+      // Receipt đã gửi phải được ghi nhận cho user gốc, kể cả blank/stale owner.
+      incrementUsage(owner.scope.userId, 'sttCount')
+      if (discardStaleTurn(owner)) return
       setProcessing(false)
-      // Tới được đây nghĩa là /api/stt đã được gọi thành công (server đã trừ 1 lượt) —
-      // kể cả khi Whisper nghe ra rỗng (im lặng/tạp âm), vẫn tính đúng 1 lượt để khớp
-      // số server, không đợi lần pullUserData kế tiếp mới đúng.
-      incrementUsage(user.id, 'sttCount')
-      if (text.trim()) startPendingConfirm(text.trim())
-      else setError(isA ? 'Không nghe rõ, thử nói lại nhé.' : "Didn't catch that, try again.")
+      if (text.trim()) startPendingConfirm(text.trim(), owner)
+      else {
+        setError(isA ? 'Không nghe rõ, thử nói lại nhé.' : "Didn't catch that, try again.")
+        finishTurn(owner)
+      }
     } catch (e) {
+      if (discardStaleTurn(owner)) return
       setProcessing(false)
+      finishTurn(owner)
       if (e instanceof Error && e.message === 'EMPTY_RECORDING') {
-        // Chưa hề gọi /api/stt (không có gì để gửi) — không tính lượt.
         setError(isA ? 'Không nghe rõ, thử nói lại nhé.' : "Didn't catch that, try again.")
         return
       }
@@ -731,10 +918,13 @@ export default function Speaking() {
       )
       setError(m)
       toast.error(m)
+    } finally {
+      if (recorderRef.current === capture) recorderRef.current = null
     }
   }
 
   async function startSession(situation: string, level: Level) {
+    if (loadingOwnerRef.current) return
     const usage = getUsage(user.id)
     // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
     // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
@@ -758,6 +948,9 @@ export default function Speaking() {
       )
       return
     }
+    const owner = claimTurn('ai')
+    if (!owner) return
+    loadingOwnerRef.current = owner
     setLoading(true)
     setError('')
     const targets = practiceWords.length > 0 ? practiceWords : undefined
@@ -769,8 +962,14 @@ export default function Speaking() {
       onboarding?.ageGroup,
     )
     try {
-      const raw = await callClaude([], sys, 1024, 'speaking')
-      const ai = parseJson<AIResponse>(raw) ?? { speech: raw, feedback: '', corrected: '' }
+      const raw = await callClaude([], sys, 1024, 'speaking', undefined, undefined, {
+        isCurrent: () => isCurrent(owner),
+      })
+      const ai = parseJson<AIResponse>(raw) ?? {
+        speech: raw,
+        feedback: '',
+        corrected: '',
+      }
       const msg: Message = newMessage({
         role: 'assistant',
         content: raw,
@@ -780,41 +979,27 @@ export default function Speaking() {
       })
       const s: SpeakingSession = {
         id: crypto.randomUUID(),
-        userId: user.id,
+        userId: owner.scope.userId,
         situation,
         level,
         messages: [msg],
         createdAt: currentTimeMs(),
         ...(targets ? { targetWords: targets } : {}),
       }
-      saveSpeakingSession(s)
-      incrementUsage(user.id, 'speakingCount')
+      saveSpeakingSession(s, { syncToCloud: getStoredToken() === owner.scope.sessionMarker })
+      incrementUsage(owner.scope.userId, 'speakingCount')
       // Đã rời trang trong lúc chờ AI trả lời — vẫn lưu phiên/lượt dùng ở trên, chỉ
       // bỏ qua các setState (component không còn mount để nhận cập nhật).
-      if (!mountedRef.current) return
+      if (discardStaleTurn(owner)) return
       setSession(s)
       setLastIdx(0)
       throttle() // Rate limit sau lần gọi thành công
       // Huy hiệu mới (kỹ năng — ② M2) — phiên MỚI vừa được lưu (getSpeakingSessions tăng 1).
-      for (const a of checkNewAchievements(user.id)) toast.success(achievementMessage(a, isA))
-      if (!muted) {
-        setSpeaking(true)
-        // Chiều A: giọng Anh trước, không có feedback khi mở đầu
-        // Chiều B: giọng Việt trước
-        await speakBilingual(
-          ai.speech,
-          '',
-          isA ? 'en-US' : 'vi-VN',
-          isA ? 'vi-VN' : 'en-US',
-          undefined,
-          getRatePref(),
-          (wi) =>
-            mountedRef.current && setWordSync({ msgId: msg.id, field: 'speech', wordIdx: wi }),
-        )
-        if (mountedRef.current) setSpeaking(false)
-      }
+      for (const a of checkNewAchievements(owner.scope.userId))
+        toast.success(achievementMessage(a, isA))
+      if (!mutedRef.current) await playOwnedMessage({ ...msg, feedbackVi: '' }, owner)
     } catch (e) {
-      if (!mountedRef.current) return
+      if (discardStaleTurn(owner)) return
       const m = thongDiepLoiThanThien(
         e,
         isA ? 'Có lỗi xảy ra' : 'Something went wrong',
@@ -822,30 +1007,32 @@ export default function Speaking() {
       )
       setError(m)
       toast.error(m)
+    } finally {
+      if (loadingOwnerRef.current === owner && !discardStaleTurn(owner)) {
+        setLoading(false)
+        finishTurn(owner)
+      }
     }
-    if (mountedRef.current) setLoading(false)
   }
 
   async function toggleRecord() {
-    haptics[recording ? 'stop' : 'start']() // rung nhẹ báo bắt đầu/dừng ghi âm
-    // ── Đang ghi → dừng lại ──────────────────────────────────────────────
-    if (recording) {
-      // STT server: dừng recorder, gửi audio lên nhận diện
-      if (recorderRef.current) {
-        await stopServerRecording()
+    const active = turnRef.current
+    if (active && discardStaleTurn(active)) return
+    if (active && phaseRef.current === 'recording') {
+      haptics.stop()
+      if (recorderRef.current?.owner === active) {
+        await stopServerRecording(active)
         return
       }
-      // Web Speech (fallback): dừng, kết quả trả qua callback onEnd
-      stopRecRef.current?.()
-      stopRecRef.current = null
-      setRecording(false)
+      phaseRef.current = 'completing'
+      // Giữ callable tới terminal để cleanup sau đó vẫn thắng final result muộn.
+      stopRecRef.current?.stop('complete')
+      if (isCurrent(active)) setRecording(false)
       return
     }
-
-    // ── Chưa ghi → bắt đầu ghi ──────────────────────────────────────────
-    if (!session) return
-    // Chặn nếu đã hết hạn mức TỔNG lượt AI/ngày (STT cũng tính vào tổng — GĐ1). Gói Free giữ
-    // nguyên cách cũ: để server tự chặn.
+    // Ref chặn đồng bộ cả khoảng chờ permission, trước khi UI recording đổi.
+    if (active || loadingOwnerRef.current || !session || loading || processing || pendingConfirm)
+      return
     if (
       effectivePlan(user.plan) !== 'free' &&
       hasReachedDailyLimit(getUsage(user.id), effectivePlan(user.plan))
@@ -858,20 +1045,33 @@ export default function Speaking() {
       )
       return
     }
+    const owner = claimTurn('permission')
+    if (!owner) return
+    haptics.start()
     setTranscript('')
     setError('')
-
     if (canRecord) {
-      // Phương án chính: ghi âm rồi gửi server
       try {
-        const r = await startRecording(sttLang)
-        recorderRef.current = r
+        const recorder = await startRecording(sttLang, {
+          signal: owner.controller.signal,
+          isCurrent: () => isCurrent(owner),
+        })
+        if (discardStaleTurn(owner)) {
+          recorder.cancel()
+          return
+        }
+        recorderRef.current = { owner, recorder }
+        phaseRef.current = 'recording'
         setRecording(true)
-        // An toàn: tự dừng + gửi nhận diện nếu người dùng quên nhấn dừng (mic mở quá lâu)
-        recTimerRef.current = setTimeout(() => {
-          void stopServerRecording()
+        const timer = setTimeout(() => {
+          if (recTimerRef.current !== timer || discardStaleTurn(owner)) return
+          recTimerRef.current = null
+          void stopServerRecording(owner)
         }, MAX_REC_MS)
+        recTimerRef.current = timer
       } catch {
+        if (discardStaleTurn(owner)) return
+        finishTurn(owner)
         setError(
           isA
             ? 'Không truy cập được micro. Hãy cho phép quyền micro hoặc gõ tay.'
@@ -880,35 +1080,57 @@ export default function Speaking() {
       }
       return
     }
-
-    // Fallback: Web Speech API (Chrome/Edge)
+    phaseRef.current = 'recording'
     setRecording(true)
-    const stop = startListening(
-      sttLang,
-      (r) => setTranscript(r.transcript),
-      // KHÔNG đếm sttCount cho nhánh Web Speech: nó chạy MIỄN PHÍ ở trình duyệt, không qua
-      // /api/stt nên server không đếm → bump cục bộ chỉ gây lệch rồi bị pullUserData ghi đè.
-      // (Đường tốn tiền là server STT/Whisper ở stopServerRecording — chỗ đó mới tính lượt.)
-      (last) => {
-        setRecording(false)
-        if (last.trim()) startPendingConfirm(last.trim())
-      },
-      (err) => {
-        setError(sttErrorMessage(err, isA))
-        setRecording(false)
-      },
-    )
-    stopRecRef.current = stop
+    try {
+      let terminal = false
+      const stop = startListening(
+        sttLang,
+        (result) => {
+          if (!discardStaleTurn(owner)) setTranscript(result.transcript)
+        },
+        (last) => {
+          terminal = true
+          if (discardStaleTurn(owner)) return
+          if (stopRecRef.current?.owner === owner) stopRecRef.current = null
+          setRecording(false)
+          if (last.trim()) startPendingConfirm(last.trim(), owner)
+          else finishTurn(owner)
+        },
+        (err) => {
+          terminal = true
+          if (discardStaleTurn(owner)) return
+          if (stopRecRef.current?.owner === owner) stopRecRef.current = null
+          setError(sttErrorMessage(err, isA))
+          setRecording(false)
+          finishTurn(owner)
+        },
+        { signal: owner.controller.signal },
+      )
+      if (!terminal && !discardStaleTurn(owner)) stopRecRef.current = { owner, stop }
+      else stop()
+    } catch {
+      if (discardStaleTurn(owner)) return
+      finishTurn(owner)
+      setRecording(false)
+      setError(sttErrorMessage('audio-capture', isA))
+    }
   }
 
   // isSuggestionRequest: gọi từ nút "AI phản hồi" (gợi ý tiếp) — không ghi vào Sổ lỗi cá
   // nhân vì đây là câu nhắc hệ thống, không phải học viên tự nói.
-  async function sendUserSpeech(text: string, isSuggestionRequest = false) {
-    if (!session || loading) return
+  async function sendUserSpeech(
+    text: string,
+    isSuggestionRequest = false,
+    captureOwner?: SpeakingTurn,
+  ) {
+    if (!session || loading || loadingOwnerRef.current) return
+    if (captureOwner && discardStaleTurn(captureOwner)) return
     if (isThrottled) {
       toast.error(
         isA ? `Chờ ${throttleCountdown}s để tiếp tục...` : `Wait ${throttleCountdown}s...`,
       )
+      if (captureOwner) finishTurn(captureOwner)
       return
     }
     const usage = getUsage(user.id)
@@ -919,8 +1141,18 @@ export default function Speaking() {
       hasReachedDailyLimit(usage, effectivePlan(user.plan))
     ) {
       setLimitHit(true)
+      if (captureOwner) finishTurn(captureOwner)
       return
     }
+    const owner = captureOwner ?? claimTurn('ai')
+    if (!owner || discardStaleTurn(owner)) return
+    // Gợi ý tiếp/gõ tay có thể thay lượt đang ghi hoặc đang nhận diện.
+    setRecording(false)
+    setProcessing(false)
+    setPendingConfirm(null)
+    setPendingCountdown(0)
+    phaseRef.current = 'ai'
+    loadingOwnerRef.current = owner
     const userMsg: Message = newMessage({ role: 'user', content: text })
     const updated = { ...session, messages: [...session.messages, userMsg] }
     setSession(updated)
@@ -941,8 +1173,14 @@ export default function Speaking() {
       onboarding?.ageGroup,
     )
     try {
-      const raw = await callClaude(history, sys, 1024, 'speaking')
-      const ai = parseJson<AIResponse>(raw) ?? { speech: raw, feedback: '', corrected: '' }
+      const raw = await callClaude(history, sys, 1024, 'speaking', undefined, undefined, {
+        isCurrent: () => isCurrent(owner),
+      })
+      const ai = parseJson<AIResponse>(raw) ?? {
+        speech: raw,
+        feedback: '',
+        corrected: '',
+      }
       const aiMsg: Message = newMessage({
         role: 'assistant',
         content: raw,
@@ -951,43 +1189,30 @@ export default function Speaking() {
         correctedEn: ai.corrected,
       })
       const final = { ...updated, messages: [...updated.messages, aiMsg] }
-      saveSpeakingSession(final)
+      saveSpeakingSession(final, { syncToCloud: getStoredToken() === owner.scope.sessionMarker })
       // Nếu AI có sửa lỗi → thu vào SỔ LỖI CÁ NHÂN (câu sai = câu học viên vừa nói).
       if (!isSuggestionRequest && (ai.corrected?.trim() || ai.feedback?.trim())) {
-        addMistake(user.id, {
+        addMistake(owner.scope.userId, {
           wrong: text,
           corrected: ai.corrected ?? '',
           explanation: ai.feedback ?? '',
           source: 'speaking',
-          dir,
+          dir: owner.scope.dir,
         })
-        scheduleMistakeSync(user.id)
+        scheduleMistakeSync(owner.scope.userId, undefined, {
+          sessionMarker: owner.scope.sessionMarker,
+        })
       }
-      incrementUsage(user.id, 'speakingCount')
+      incrementUsage(owner.scope.userId, 'speakingCount')
       // Đã rời trang trong lúc chờ AI trả lời — vẫn lưu phiên/lượt dùng ở trên, chỉ
       // bỏ qua các setState (component không còn mount để nhận cập nhật).
-      if (!mountedRef.current) return
+      if (discardStaleTurn(owner)) return
       setSession(final)
       setLastIdx(final.messages.length - 1)
       throttle() // Rate limit sau lần gọi thành công
-      if (!muted && isTTSSupported()) {
-        setSpeaking(true)
-        await speakBilingual(
-          ai.speech,
-          ai.feedback,
-          isA ? 'en-US' : 'vi-VN',
-          isA ? 'vi-VN' : 'en-US',
-          undefined,
-          getRatePref(),
-          (wi) =>
-            mountedRef.current && setWordSync({ msgId: aiMsg.id, field: 'speech', wordIdx: wi }),
-          (wi) =>
-            mountedRef.current && setWordSync({ msgId: aiMsg.id, field: 'feedback', wordIdx: wi }),
-        )
-        if (mountedRef.current) setSpeaking(false)
-      }
+      if (!mutedRef.current && isTTSSupported()) await playOwnedMessage(aiMsg, owner)
     } catch (e) {
-      if (!mountedRef.current) return
+      if (discardStaleTurn(owner)) return
       const m = thongDiepLoiThanThien(
         e,
         isA ? 'Có lỗi xảy ra' : 'Something went wrong',
@@ -995,31 +1220,23 @@ export default function Speaking() {
       )
       setError(m)
       toast.error(m)
+    } finally {
+      if (loadingOwnerRef.current === owner && !discardStaleTurn(owner)) {
+        setLoading(false)
+        finishTurn(owner)
+      }
     }
-    if (mountedRef.current) setLoading(false)
   }
 
   async function playMsg(msg: Message) {
-    if (!msg.speechEn) return
-    setSpeaking(true)
-    await speakBilingual(
-      msg.speechEn,
-      msg.feedbackVi ?? '',
-      isA ? 'en-US' : 'vi-VN',
-      isA ? 'vi-VN' : 'en-US',
-      undefined,
-      getRatePref(),
-      (wi) => setWordSync({ msgId: msg.id, field: 'speech', wordIdx: wi }),
-      (wi) => setWordSync({ msgId: msg.id, field: 'feedback', wordIdx: wi }),
-    )
-    setSpeaking(false)
+    await playOwnedMessage(msg)
   }
 
   // Kết thúc & chấm điểm cả phiên — gọi AI 1 lần thêm với prompt chấm điểm sẵn có
   // (speakingFullEvaluationPrompt, có tiêu chí Pronunciation), tính là 1 lượt speaking
   // (không thêm cột giới hạn riêng). Kết quả chỉ hiện tạm, không lưu Supabase.
   async function endAndGrade() {
-    if (!session || loading || evaluating) return
+    if (!session || loading || evaluating || loadingOwnerRef.current) return
     const usage = getUsage(user.id)
     // Hạn mức là TỔNG lượt AI/ngày (GĐ1) — chặn sớm theo tổng bộ đếm local. Gói Free giữ
     // nguyên cách cũ: để server tự chặn (cổng thật luôn ở packages/core-billing/usage.ts).
@@ -1036,6 +1253,13 @@ export default function Speaking() {
       )
       return
     }
+    const owner = claimTurn('ai')
+    if (!owner) return
+    loadingOwnerRef.current = owner
+    setRecording(false)
+    setProcessing(false)
+    setPendingConfirm(null)
+    setPendingCountdown(0)
     setEvaluating(true)
     setError('')
     const sys = speakingFullEvaluationPrompt(dir)
@@ -1044,7 +1268,9 @@ export default function Speaking() {
       content: m.role === 'assistant' ? (m.speechEn ?? m.content) : m.content,
     }))
     try {
-      const raw = await callClaude(history, sys, 2048, 'speaking', 'grade', 'speaking_eval')
+      const raw = await callClaude(history, sys, 2048, 'speaking', 'grade', 'speaking_eval', {
+        isCurrent: () => isCurrent(owner),
+      })
       const data = parseJson<EvaluationResult>(raw)
       if (
         !data ||
@@ -1058,12 +1284,12 @@ export default function Speaking() {
             ? 'AI trả về định dạng không đúng. Thử lại.'
             : 'AI returned invalid format. Please try again.',
         )
-      incrementUsage(user.id, 'speakingCount')
-      if (!mountedRef.current) return
+      incrementUsage(owner.scope.userId, 'speakingCount')
+      if (discardStaleTurn(owner)) return
       setEvaluation(data)
       throttle()
     } catch (e) {
-      if (!mountedRef.current) return
+      if (discardStaleTurn(owner)) return
       const m = thongDiepLoiThanThien(
         e,
         isA ? 'Lỗi không xác định' : 'Unknown error',
@@ -1071,8 +1297,12 @@ export default function Speaking() {
       )
       setError(m)
       toast.error(m)
+    } finally {
+      if (loadingOwnerRef.current === owner && !discardStaleTurn(owner)) {
+        setEvaluating(false)
+        finishTurn(owner)
+      }
     }
-    if (mountedRef.current) setEvaluating(false)
   }
 
   const userTurns = session?.messages.filter((m) => m.role === 'user').length ?? 0
@@ -1228,10 +1458,7 @@ export default function Speaking() {
                   <div className="flex flex-col items-center gap-3">
                     <div className="flex items-center justify-between w-full max-w-sm">
                       <button
-                        onClick={() => {
-                          stopSpeaking()
-                          setSession(null)
-                        }}
+                        onClick={newRoom}
                         className="tap-44 p-3 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition hover:bg-zinc-800/50"
                         title={isA ? 'Phòng mới' : 'New room'}
                         aria-label={isA ? 'Phòng mới' : 'New room'}
@@ -1279,11 +1506,7 @@ export default function Speaking() {
                       </button>
 
                       <button
-                        onClick={() => {
-                          setMuted((m) => !m)
-                          stopSpeaking()
-                          setSpeaking(false)
-                        }}
+                        onClick={toggleMute}
                         aria-label={
                           muted ? (isA ? 'Bật âm thanh' : 'Unmute') : isA ? 'Tắt âm thanh' : 'Mute'
                         }
@@ -1331,10 +1554,7 @@ export default function Speaking() {
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <button
-                        onClick={() => {
-                          stopSpeaking()
-                          setSession(null)
-                        }}
+                        onClick={newRoom}
                         aria-label={isA ? 'Phòng mới' : 'New room'}
                         className="tap-44 p-3 text-zinc-400 hover:text-zinc-300 border border-zinc-800/80 hover:border-zinc-700 rounded-xl transition shrink-0 hover:bg-zinc-800/50"
                       >
@@ -1383,11 +1603,7 @@ export default function Speaking() {
                         )}
                       </button>
                       <button
-                        onClick={() => {
-                          setMuted((m) => !m)
-                          stopSpeaking()
-                          setSpeaking(false)
-                        }}
+                        onClick={toggleMute}
                         aria-label={
                           muted ? (isA ? 'Bật âm thanh' : 'Unmute') : isA ? 'Tắt âm thanh' : 'Mute'
                         }

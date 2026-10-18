@@ -14,7 +14,7 @@
 // Mọi thao tác vẫn nuốt lỗi (không throw) để việc lưu/ôn lỗi không bao giờ làm gãy luồng gọi.
 
 import type { Direction } from '../types'
-import { getAuthHeader } from '@core/authHeader'
+import { getAuthHeader, getStoredToken } from '@core/authHeader'
 import { readLocalArray } from './localJson'
 
 export type MistakeSource = 'chat' | 'writing' | 'speaking'
@@ -242,11 +242,23 @@ function mergeMistakeLists(base: Mistake[], extra: Mistake[]): Mistake[] {
 //
 // Trả về sổ sau đồng bộ; nếu chưa đăng nhập hoặc mất mạng thì trả về sổ cục bộ và KHÔNG throw —
 // người dùng vẫn học bình thường, lần đồng bộ sau sẽ đẩy lên.
-export async function syncMistakes(userId: string): Promise<Mistake[]> {
+export interface MistakeSyncOptions {
+  readonly sessionMarker: string | null
+}
+
+export async function syncMistakes(
+  userId: string,
+  options?: MistakeSyncOptions,
+): Promise<Mistake[]> {
   if (!userId) return []
   const local = read(userId)
+  const expectedMarker = options?.sessionMarker
+  const isOriginalSession = () =>
+    !options || (typeof expectedMarker === 'string' && getStoredToken() === expectedMarker)
   try {
+    if (!isOriginalSession()) return local
     const headers = await getAuthHeader()
+    if (!isOriginalSession()) return local
     const res = await fetch('/api/mistakes', {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
@@ -254,6 +266,7 @@ export async function syncMistakes(userId: string): Promise<Mistake[]> {
     })
     if (!res.ok) return local
     const data = (await res.json()) as { mistakes?: Mistake[] }
+    if (!isOriginalSession()) return local
     if (!Array.isArray(data.mistakes)) return local
     // Hợp nhất lại với sổ cục bộ HIỆN TẠI trước khi ghi đè: trong lúc request đang bay,
     // addMistake() có thể vừa ghi lỗi mới — ghi đè thẳng bằng bản server sẽ nuốt mất chúng
@@ -276,12 +289,19 @@ export async function syncMistakes(userId: string): Promise<Mistake[]> {
 let syncTimer: ReturnType<typeof setTimeout> | null = null
 const SYNC_DEBOUNCE_MS = 5_000
 
-export function scheduleMistakeSync(userId: string, delayMs: number = SYNC_DEBOUNCE_MS): void {
+export function scheduleMistakeSync(
+  userId: string,
+  delayMs: number = SYNC_DEBOUNCE_MS,
+  options?: MistakeSyncOptions,
+): void {
   if (!userId) return
+  // Sao chép giá trị trước khi hẹn giờ; nơi gọi không được đổi owner bằng cách sửa options.
+  const captured = options ? { sessionMarker: options.sessionMarker } : undefined
+  if (captured && (!captured.sessionMarker || getStoredToken() !== captured.sessionMarker)) return
   if (syncTimer) clearTimeout(syncTimer)
   syncTimer = setTimeout(() => {
     syncTimer = null
-    void syncMistakes(userId)
+    void syncMistakes(userId, captured)
   }, delayMs)
 }
 

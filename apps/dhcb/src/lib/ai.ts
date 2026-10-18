@@ -47,10 +47,23 @@ export async function callClaude(
   mode: CallMode = 'chat',
   task?: CallTask,
   outputSchema?: GradingSchemaName,
+  options?: { readonly isCurrent?: () => boolean },
 ): Promise<string> {
   // /api/agent: lúc "npm run dev" được vite.config.ts proxy thẳng tới Anthropic (key đọc từ .env phía server);
   // lúc deploy lên Vercel, route này do api/claude.ts (serverless function) xử lý.
+  const assertRequestCurrent = () => {
+    let current = true
+    try {
+      current = options?.isCurrent?.() ?? true
+    } catch {
+      current = false
+    }
+    if (!current) throw new DOMException('Đã hủy lượt AI', 'AbortError')
+  }
+  assertRequestCurrent()
   const authHeader = await getAuthHeader()
+  // Sau khi đã gửi, giữ response thật cho persistence/usage; guard chỉ chặn trước fetch.
+  assertRequestCurrent()
   let resp: Response
   try {
     resp = await fetch('/api/agent', {
