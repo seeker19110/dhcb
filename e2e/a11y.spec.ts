@@ -18,8 +18,9 @@ import {
 //
 // [2026-08-04] Cổng SIẾT THÀNH TUYỆT ĐỐI: 0 vi phạm A/AA ở MỌI mức tác động
 // (critical/serious/moderate/minor), thay cho cổng cũ kiểu "không tệ hơn hiện tại"
-// (chỉ chặn critical + serious mới). Đo thực tế toàn bộ 15 trang × 5 theme cho 0 vi
-// phạm nên siết được ngay, không cần baseline. AA là SÀN BẮT BUỘC của dự án — theo
+// (chỉ chặn critical + serious mới). Đo thực tế toàn bộ 15 trang × 5 theme (lúc 2026-08-04;
+// nay `AUTHED_ROUTES` bên dưới là nguồn thật, × 3 theme) cho 0 vi phạm nên siết được ngay,
+// không cần baseline. AA là SÀN BẮT BUỘC của dự án — theo
 // khuyến nghị của W3C (Understanding Conformance): KHÔNG lấy AAA làm chính sách cho
 // toàn site vì có nội dung không thể đạt hết AAA; chỗ nào chưa/không đạt AAA thì tối
 // thiểu phải đạt AA. Mức AAA được gác riêng ở e2e/a11y-aaa.spec.ts.

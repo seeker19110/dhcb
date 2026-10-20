@@ -27,7 +27,8 @@ import { remeasureContrast, type ContrastRemeasurement } from './helpers/remeasu
 //     đạt **AAA** (tương phản ≥ 7:1); mọi phần còn lại (nav, nút, badge, ô nhập, biểu
 //     tượng…) phải đạt **AA** — cổng AA tuyệt đối 0 vi phạm ở e2e/a11y.spec.ts.
 //
-// Cổng này TUYỆT ĐỐI: 0 vi phạm AAA trên nội dung/tiêu đề, 15 trang × 5 theme.
+// Cổng này TUYỆT ĐỐI: 0 vi phạm AAA trên nội dung/tiêu đề, mọi route trong `ROUTES` bên dưới
+// × 3 theme (ghi "15 trang × 5 theme" là con số lúc 2026-08-04).
 // Nợ tương phản cũ (~305 phần tử) đã xử lý xong ngày 2026-08-04 bằng cách chỉnh token
 // --z-300/--z-400 của cả 5 theme (xem apps/dhcb/src/index.css + PROGRESS.md), nên
 // KHÔNG còn baseline nào — thêm màn hình mới mà rớt 7:1 là fail ngay.

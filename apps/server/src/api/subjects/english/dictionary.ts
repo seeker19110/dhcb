@@ -12,6 +12,7 @@
 
 import { getAllEntries, searchDictionaryEntries } from '@dhcb/subject-english/dictionaryData'
 import { vnDateStr } from '@dhcb/core-db/date'
+import { sample } from '@dhcb/core-contracts/shuffle'
 import {
   getCorsHeaders,
   SECURITY_HEADERS,
@@ -107,14 +108,6 @@ export default async function handler(req: Request): Promise<Response> {
   )
 }
 
-// Lấy n phần tử ngẫu nhiên (Fisher–Yates một phần, không sửa mảng gốc).
-function pickRandom<T>(arr: T[], n: number): T[] {
-  const a = [...arr]
-  const out: T[] = []
-  for (let i = 0; i < n && a.length > 0; i++) {
-    const j = Math.floor(Math.random() * a.length)
-    out.push(a[j]!) // j < a.length nên chắc chắn có
-    a.splice(j, 1)
-  }
-  return out
-}
+// Lấy n phần tử ngẫu nhiên — `sample` chung ở core-contracts (Fisher–Yates một phần, không sửa
+// mảng gốc) thay bản chép tay cũ (audit 2026-10-20, F-004).
+const pickRandom = sample

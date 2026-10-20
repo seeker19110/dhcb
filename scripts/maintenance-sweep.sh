@@ -134,7 +134,9 @@ sweep_docs() {
     [ "$n" -gt 0 ] && yel "Tài liệu" "$n goal có thể đang BLOCKED chờ quyết định" "xem docs/goals/ — quyết định rồi mở lại"
   fi
   local n
-  n="$(tracked | grep -zvE '\.(md|json|lock|svg|png|jpg)$' | xargs -0 grep -lE '\b(TODO|FIXME|HACK|XXX)\b' 2>/dev/null | grep -vc "maintenance-sweep.sh" || true)"
+  # Bỏ NỘI DUNG BÀI HỌC Lập trình: "TODO" ở đó là đề bài cho học viên điền, không phải nợ kỹ
+  # thuật (audit 2026-10-20, F-006: 57/64 file khớp nằm trong lessons/ và specializations/).
+  n="$(tracked | grep -zvE '\.(md|json|lock|svg|png|jpg)$' | grep -zvE '^packages/subject-programming/(lessons|specializations)/' | xargs -0 grep -lE '\b(TODO|FIXME|HACK|XXX)\b' 2>/dev/null | grep -vc "maintenance-sweep.sh" || true)"
   line "- File có TODO/FIXME/HACK/XXX: $n"
   if [ "${n:-0}" -gt "$TODO_WARN" ]; then yel "Nợ kỹ thuật" "$n file có TODO/FIXME/HACK (ngưỡng $TODO_WARN)" "gom thành mục nợ trong PROGRESS.md hoặc xử lý theo lô"; else info "Nợ kỹ thuật" "$n file có TODO/FIXME/HACK" "—"; fi
   # Dấu nợ CÓ CẤU TRÚC (docs/claude-md-chi-tiet.md §7, changelog 0620 — lấy từ khung project-template):

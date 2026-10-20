@@ -178,8 +178,10 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   lượt/giá/webhook/sổ xoá tài khoản). Chủ dự án chốt **"làm tất cả"** (2026-10-20), chia 4 PR:
   **W-001 F-001 ĐÃ LÀM** (`docs/changelog/0649-*.md`, `crypto.randomInt` cho mã kết bạn + mã mời vị
   trí, test đỏ-trước, PR #1421). **W-002 ĐÃ LÀM** (`docs/changelog/0650-*.md`, +~330 dòng test
-  cho D-1…D-8 + `founder.ts`, không đổi mã sản phẩm). Còn: W-003 F-002…F-006 + F-010 · W-004
-  F-009. F-008 (`eval:tutor` baseline mới với key thật) là việc tay, AI không làm được.
+  cho D-1…D-8 + `founder.ts`, không đổi mã sản phẩm, PR #1422). **W-003 ĐÃ LÀM**
+  (`docs/changelog/0651-*.md`: `sample()` chung, xoá `Celebration.tsx`, 4 chỗ tài liệu cũ, đếm
+  TODO bỏ nội dung bài học, TRAPS mục 31). Còn: W-004 F-009 (giao diện, chụp ảnh trước/sau).
+  F-008 (`eval:tutor` baseline mới với key thật) là việc tay, AI không làm được.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền
@@ -1352,7 +1354,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   ~77 % đạt trong 5 lượt/ngày — trần chặn VÉT CẠN tự động, không làm đoán mò bất khả. Đặc tả
   `docs/specs/2026-10-09-hoi-thoai-cefr-seed-server-cap.md` ⑤b + ⑥.
 - 🟡 **[2026-10-08 — HẠ MỨC từ 🔴 sau `0527`] Xuất/xoá dữ liệu cá nhân `/api/persons` ĐÃ SỬA** (5 cột
-  sai, bỏ nuốt lỗi, 21 bảng `person_id` trong một danh sách duy nhất — trước sót 11 bảng; test tích hợp
+  sai, bỏ nuốt lỗi, mọi bảng `person_id` trong một danh sách duy nhất `PERSON_TABLES` (21 lúc `0527`, nay
+  26 — audit 2026-10-20 đối chiếu) — trước sót 11 bảng; test tích hợp
   Postgres thật canh danh sách khớp `information_schema`). Lưới `unhandledRejection`/`uncaughtException`
   (`0528`) và cổng CI `sql-prepare` (`0529`) cũng đã làm. (1) ✅ **Xoá tài khoản + tải toàn bộ dữ liệu** đã làm ở `0533`
   (`/api/account`, đặc tả `docs/specs/2026-10-08-xoa-tai-khoan-va-xuat-du-lieu.md`): mọi bảng có cột
@@ -2029,8 +2032,12 @@ build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên
   **đã dựng xong và có test** (`packages/core-config/userDataCrypto.ts`, 18 test: AES-256-GCM,
   khoá mỗi người suy ra bằng `HMAC(USER_DATA_MASTER_KEY, user_id)`, chuỗi tự mô tả
   `v<n>:<iv>:<cipher>`, IV luôn ngẫu nhiên, `keyVersion` sẵn từ bản đầu, `isEncryptedField()` cho
-  phép chuyển đổi dần, `hashLookupValue()` cho cột cần tra cứu). **Nhưng CHƯA nối vào bất kỳ dữ
-  liệu nào** — module hiện đang NGỦ, không chỗ nào gọi, không ảnh hưởng gì đang chạy.
+  phép chuyển đổi dần, `hashLookupValue()` cho cột cần tra cứu). **Đã nối vào ĐÚNG HAI chỗ ghi
+  mới** (đối chiếu mã ở audit 2026-10-20, F-002 — thân mục này trước ghi "module đang NGỦ" là đã
+  lỗi thời): secret 2FA (`packages/core-auth/twoFactor.ts`) và câu trả lời tự do lúc đăng ký
+  (`packages/core-personal/intakeService.ts`, cột `*_enc`; xuất dữ liệu giải mã ở
+  `accountErasureService.ts`). Tên, email, tiến độ **chưa mã hoá** và **chưa có script backfill**
+  dữ liệu cũ — đó là phần nợ còn lại bên dưới.
 
   **Việc còn lại + câu hỏi chưa có đáp án — **cất khoá gốc `USER_DATA_MASTER_KEY` ở đâu?** Khoá phải nằm KHÁC chỗ với backup DB (cất chung thì mã hoá vô
   nghĩa: ai lấy được backup lấy luôn khoá), mà **mất khoá = mất vĩnh viễn toàn bộ dữ liệu đã mã

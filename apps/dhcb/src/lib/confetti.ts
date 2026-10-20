@@ -1,5 +1,6 @@
 // Hiệu ứng confetti CSS thuần — KHÔNG thêm thư viện ngoài.
-// File này chỉ được nạp qua import() ĐỘNG (Celebration.tsx) nên nằm ở chunk
+// File này chỉ được nạp qua import() ĐỘNG (SessionDone.tsx — overlay ăn mừng duy nhất từ
+// 2026-09-17, P1-6; `Celebration.tsx` cũ đã xoá ở audit 2026-10-20, F-003) nên nằm ở chunk
 // riêng, không tốn ngân sách bundle/CSS đầu trang (style tự tiêm khi chạy).
 // Tôn trọng prefers-reduced-motion: không làm gì khi người dùng giảm chuyển động.
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shuffle } from './shuffle.js'
+import { sample, shuffle } from './shuffle.js'
 
 // Nguồn ngẫu nhiên XÁC ĐỊNH (mulberry32) — test phân bố phải lặp lại y hệt mỗi lần chạy, nếu
 // không chính nó thành test flaky (quy trình audit Tầng 1b).
@@ -64,6 +64,42 @@ describe('shuffle', () => {
       const pct = (dem[i]! / N) * 100
       expect(pct).toBeGreaterThan(100 / K - 1)
       expect(pct).toBeLessThan(100 / K + 1)
+    }
+  })
+})
+
+describe('sample — bốc n phần tử khác nhau (audit 2026-10-20, F-004)', () => {
+  const ARR = ['a', 'b', 'c', 'd', 'e'] as const
+
+  it('không đụng mảng gốc; trả đúng n phần tử, không trùng, đều thuộc mảng gốc', () => {
+    const src = [...ARR]
+    const out = sample(src, 3, seededRng(7))
+    expect(src).toEqual([...ARR])
+    expect(out).toHaveLength(3)
+    expect(new Set(out).size).toBe(3)
+    for (const x of out) expect(ARR).toContain(x)
+  })
+
+  it('ca biên: n lớn hơn độ dài → trả hết (là một hoán vị); n = 0 / âm / mảng rỗng → []', () => {
+    expect([...sample(ARR, 99, seededRng(1))].sort()).toEqual([...ARR])
+    expect(sample(ARR, 0)).toEqual([])
+    expect(sample(ARR, -3)).toEqual([])
+    expect(sample([], 4)).toEqual([])
+    expect(sample(ARR, 2.9, seededRng(3))).toHaveLength(2)
+  })
+
+  it('phân bố ĐỀU: với n = 1, mỗi phần tử được bốc với xác suất như nhau (±1 điểm %)', () => {
+    const rng = seededRng(2026)
+    const N = 200_000
+    const count = new Map<string, number>()
+    for (let i = 0; i < N; i++) {
+      const [x] = sample(ARR, 1, rng)
+      count.set(x!, (count.get(x!) ?? 0) + 1)
+    }
+    for (const x of ARR) {
+      const pct = ((count.get(x) ?? 0) / N) * 100
+      expect(pct).toBeGreaterThan(100 / ARR.length - 1)
+      expect(pct).toBeLessThan(100 / ARR.length + 1)
     }
   })
 })
