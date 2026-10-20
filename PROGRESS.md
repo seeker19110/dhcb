@@ -180,8 +180,10 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   trí, test đỏ-trước, PR #1421). **W-002 ĐÃ LÀM** (`docs/changelog/0650-*.md`, +~330 dòng test
   cho D-1…D-8 + `founder.ts`, không đổi mã sản phẩm, PR #1422). **W-003 ĐÃ LÀM**
   (`docs/changelog/0651-*.md`: `sample()` chung, xoá `Celebration.tsx`, 4 chỗ tài liệu cũ, đếm
-  TODO bỏ nội dung bài học, TRAPS mục 31). Còn: W-004 F-009 (giao diện, chụp ảnh trước/sau).
-  F-008 (`eval:tutor` baseline mới với key thật) là việc tay, AI không làm được.
+  TODO bỏ nội dung bài học, TRAPS mục 31, PR #1423). **W-004 ĐÃ LÀM** (`docs/changelog/0652-*.md`:
+  gỡ banner trùng lối tắt ở `/goc-hoc-tap`, ảnh 390 px 1045 → 857). **Cả 4 đợt sửa sau audit ĐÃ
+  XONG**; còn mở: F-007 (biên CSS, chỉ ghi nhận) và F-008 (`eval:tutor` baseline mới với key thật —
+  việc tay chủ dự án, AI không làm được).
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền

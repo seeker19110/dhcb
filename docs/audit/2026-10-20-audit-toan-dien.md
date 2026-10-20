@@ -191,5 +191,5 @@ tới khi chủ dự án chốt.
 | W-001 | F-001                                                                | `docs/changelog/0649-*.md` | ĐÃ LÀM     |
 | W-002 | D-1…D-8 (+ `founder.ts` catch)                                       | `docs/changelog/0650-*.md` | ĐÃ LÀM     |
 | W-003 | F-002 · F-003 · F-004 · F-005 · F-006 · F-010                        | `docs/changelog/0651-*.md` | ĐÃ LÀM     |
-| W-004 | F-009                                                                | —                          | chờ        |
+| W-004 | F-009                                                                | `docs/changelog/0652-*.md` | ĐÃ LÀM     |
 | —     | F-007 (ghi nhận, không sửa) · F-008 (việc tay chủ dự án, cần key AI) | —                          | mở         |

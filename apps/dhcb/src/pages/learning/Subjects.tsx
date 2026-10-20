@@ -264,35 +264,10 @@ export default function Subjects() {
           </div>
         </div>
 
-        {/* Banner dẫn vào Phòng Thí Nghiệm Mô Phỏng Ứng Dụng Thực Tế */}
-        {/* Trước đây là <div onClick>: không focus/Enter được bằng bàn phím. */}
-        <button
-          type="button"
-          onClick={() => nav('/ung-dung-thuc-te')}
-          className="tap-44 w-full text-left p-5 rounded-3xl bg-gradient-to-r from-accent-600/20 via-blue-600/20 to-purple-600/20 border border-accent-500/40 hover:border-accent-500/80 cursor-pointer transition flex items-center justify-between group shadow-lg active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3.5 rounded-2xl bg-accent-500/20 text-accent-400 theme-light:text-accent-800 group-hover:scale-110 transition">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[0.6875rem] px-2 py-0.5 rounded bg-accent-500/20 text-accent-300 theme-light:text-accent-800 font-bold">
-                  MỚI
-                </span>
-                <span className="text-xs text-zinc-400">10 thí nghiệm tương tác</span>
-              </div>
-              <h2 className="text-base font-bold text-white mt-1 group-hover:text-accent-300 transition">
-                Phòng thí nghiệm mô phỏng & ứng dụng thực tế
-              </h2>
-              <p className="text-xs text-zinc-300 mt-0.5">
-                Xem ngay công thức Toán, Lý, Hóa, Sinh giải quyết bài toán tiền điện, lãi kép, giảm
-                mỡ, vệ tinh GPS ra sao.
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-accent-400 theme-light:text-accent-800 group-hover:translate-x-1 transition shrink-0 ml-2" />
-        </button>
+        {/* [Audit 2026-10-20, F-009] Banner "MỚI · Phòng thí nghiệm mô phỏng & ứng dụng thực tế"
+            từng đứng ở đây đã gỡ: cùng đích `/ung-dung-thuc-te` với lối tắt "10 phòng thí nghiệm
+            mô phỏng" ngay trong hero phía trên — một màn hình nói cùng một câu hai lần, và đẩy
+            danh sách môn (việc chính của trang) xuống dưới. Lối tắt trong hero giữ nguyên. */}
 
         {/* Tiêu đề ẩn cho danh sách: thẻ môn dùng `<h3>`, cần một `<h2>` phía trên để không nhảy
             bậc h1 → h3 (WCAG 1.3.1, port từ PR #1230). */}
