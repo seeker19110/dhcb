@@ -41,3 +41,62 @@ describe('checkAndConsumeActorUsage — khách', () => {
     })
   })
 })
+
+// Audit 2026-10-20, D-1/D-2: nhánh HOÀN LƯỢT chưa từng được phủ — đây là chỗ tiền/lượt đi
+// ngược lại khi AI lỗi, sai một nhánh là người dùng mất lượt oan (hoặc khách được hoàn vô hạn).
+const usageMod = await import('@dhcb/core-billing/usage')
+const guestMod = await import('./guestTrial.js')
+const { refundActorUsage } = await import('./actorUsage.js')
+const USER = { kind: 'user', userId: 'u-1' } as const
+
+describe('refundActorUsage — hoàn lượt đúng kênh', () => {
+  beforeEach(() => {
+    vi.mocked(usageMod.refundUsage).mockReset()
+    vi.mocked(guestMod.refundGuestTrial).mockReset()
+  })
+
+  it('tài khoản thật, có day → hoàn đúng dòng daily_usage của ngày đó', async () => {
+    await refundActorUsage(USER, 'chat', '2026-10-20', '1.2.3.4')
+    expect(usageMod.refundUsage).toHaveBeenCalledWith('u-1', 'chat', '2026-10-20')
+    expect(guestMod.refundGuestTrial).not.toHaveBeenCalled()
+  })
+
+  it('tài khoản thật, day RỖNG (gate không trả ngày) → truyền undefined, không truyền chuỗi rỗng', async () => {
+    await refundActorUsage(USER, 'speaking', '', '1.2.3.4')
+    expect(usageMod.refundUsage).toHaveBeenCalledWith('u-1', 'speaking', undefined)
+  })
+
+  it('khách → hoàn lượt dùng thử theo guestKey + IP, KHÔNG đụng daily_usage', async () => {
+    await refundActorUsage(GUEST, 'chat', '', '1.2.3.4')
+    expect(guestMod.refundGuestTrial).toHaveBeenCalledWith('guest_a', '1.2.3.4')
+    expect(usageMod.refundUsage).not.toHaveBeenCalled()
+  })
+})
+
+describe('checkAndConsumeActorUsage — tài khoản thật', () => {
+  it('gate ok → trả nguyên gate (kèm day) để hoàn đúng dòng về sau', async () => {
+    vi.mocked(usageMod.checkAndConsumeUsage).mockResolvedValue({ ok: true, day: '2026-10-20' })
+    expect(await checkAndConsumeActorUsage(USER, 'chat', '1.2.3.4')).toEqual({
+      ok: true,
+      day: '2026-10-20',
+    })
+  })
+
+  it('gate chặn → guestTrialExhausted luôn false (không mời đăng ký người đã đăng nhập)', async () => {
+    vi.mocked(usageMod.checkAndConsumeUsage).mockResolvedValue({ ok: false, message: 'Hết lượt' })
+    expect(await checkAndConsumeActorUsage(USER, 'chat', '1.2.3.4')).toEqual({
+      ok: false,
+      message: 'Hết lượt',
+      guestTrialExhausted: false,
+    })
+  })
+
+  it('khách chặn nhưng gate không có message → message rỗng, không undefined', async () => {
+    guestGate.mockResolvedValue({ ok: false })
+    expect(await checkAndConsumeActorUsage(GUEST, 'chat', '1.2.3.4')).toEqual({
+      ok: false,
+      message: '',
+      guestTrialExhausted: true,
+    })
+  })
+})

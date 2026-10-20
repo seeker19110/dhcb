@@ -578,3 +578,65 @@ describe('/api/payment-webhook', () => {
     expect(granted.calls).toEqual([{ userId: 'user-1', plan: 'pro', days: 30 }])
   })
 })
+
+// Audit 2026-10-20, D-5: ca biên của thân request — SePay gửi lại tới 7 lần nếu không nhận 200,
+// nên body hỏng/không phải object PHẢI trả 200 (không phải ca ta xử lý được) mà không đụng DB.
+describe('/api/payment-webhook — thân request hỏng (D-5)', () => {
+  function rawRequest(body: string): Request {
+    return new Request('http://localhost/api/payment-webhook', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Apikey ${API_KEY}` },
+      body,
+    })
+  }
+
+  it('body không phải JSON → 200 success (không để SePay lặp), KHÔNG query, KHÔNG log payload', async () => {
+    const resp = await handler(rawRequest('{không phải json'))
+    expect(resp.status).toBe(200)
+    expect(await resp.json()).toEqual({ success: true })
+    expect(query).not.toHaveBeenCalled()
+    expect(vi.mocked(logSecurityEvent)).not.toHaveBeenCalled()
+  })
+
+  it('payload là MẢNG → 200, log BAD_PAYLOAD với payloadType "array", txnId null, keys rỗng', async () => {
+    const resp = await handler(makeRequest([{ id: 1 }]))
+    expect(resp.status).toBe(200)
+    expect(query).not.toHaveBeenCalled()
+    expect(vi.mocked(logSecurityEvent)).toHaveBeenCalledWith('SEPAY_WEBHOOK_BAD_PAYLOAD', 'sepay', {
+      payloadType: 'array',
+      keys: [],
+      txnId: null,
+    })
+  })
+
+  it('payload là chuỗi/null → payloadType đúng kiểu, không ném', async () => {
+    expect((await handler(makeRequest('abc'))).status).toBe(200)
+    expect((await handler(makeRequest(null))).status).toBe(200)
+    const types = vi
+      .mocked(logSecurityEvent)
+      .mock.calls.map((c) => (c[2] as { payloadType: string }).payloadType)
+    expect(types).toEqual(['string', 'object'])
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('id không phải number/string (boolean) → txnId null trong log, vẫn 200', async () => {
+    const resp = await handler(
+      makeRequest({ id: true, transferType: 'in', transferAmount: 1, content: 'x' }),
+    )
+    expect(resp.status).toBe(200)
+    expect(vi.mocked(logSecurityEvent)).toHaveBeenCalledWith(
+      'SEPAY_WEBHOOK_BAD_PAYLOAD',
+      'sepay',
+      expect.objectContaining({ payloadType: 'object', txnId: null }),
+    )
+  })
+
+  it('id là chuỗi rất dài → txnId bị cắt còn 64 ký tự trong log', async () => {
+    const resp = await handler(
+      makeRequest({ id: 'x'.repeat(200), transferType: 'in', transferAmount: 'sai' }),
+    )
+    expect(resp.status).toBe(200)
+    const logged = vi.mocked(logSecurityEvent).mock.calls[0]![2] as { txnId: string }
+    expect(logged.txnId).toHaveLength(64)
+  })
+})

@@ -5,8 +5,13 @@
 //   - Thứ tự chọn KHỚP migration (`order by created_at, id`) — lệch tie-break là hai nơi chọn
 //     ra hai tập khác nhau và ưu đãi trở nên không tái lập được.
 //   - Người tiên phong KHÔNG BAO GIỜ bị luồng gia hạn/hết hạn của SePay hạ xuống free.
-import { describe, it, expect } from 'vitest'
-import { selectFounderIds, FOUNDER_LIMIT, type AccountOrder } from './founder.js'
+import { describe, it, expect, vi } from 'vitest'
+import {
+  selectFounderIds,
+  grantFounderIfAvailable,
+  FOUNDER_LIMIT,
+  type AccountOrder,
+} from './founder.js'
 import { computePlanGrant } from './planGrant.js'
 import { resolvePlan } from './plan.js'
 
@@ -126,5 +131,30 @@ describe('người tiên phong không bao giờ bị hạ xuống free', () => {
     const lifetimeExpiresAt: Date | null = null
     expect(lifetimeExpiresAt !== null).toBe(false)
     expect(resolvePlan('vip', lifetimeExpiresAt, new Date('2199-01-01T00:00:00Z'))).toBe('vip')
+  })
+})
+
+// Audit 2026-10-20 (kèm D-6): `grantFounderIfAvailable` là chỗ cấp VIP VĨNH VIỄN — nhánh lỗi hạ
+// tầng phải FAIL-SAFE đúng chiều (không cấp), và chỉ cấp khi hàm SQL trả đúng `true`.
+describe('grantFounderIfAvailable — fail-safe đúng chiều', () => {
+  it('query ném → false (KHÔNG cấp), có warn, không ném ra ngoài', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const runner = { query: vi.fn().mockRejectedValue(new Error('db down')) }
+    expect(await grantFounderIfAvailable('u1', runner as never)).toBe(false)
+    expect(warn).toHaveBeenCalledTimes(1)
+    warn.mockRestore()
+  })
+
+  it('hàm SQL trả granted=true → true; rows rỗng hoặc granted khác true → false', async () => {
+    const ok = { query: vi.fn().mockResolvedValue({ rows: [{ granted: true }] }) }
+    expect(await grantFounderIfAvailable('u1', ok as never)).toBe(true)
+    expect(ok.query).toHaveBeenCalledWith(
+      'select public.grant_founder_if_available($1, $2) as granted',
+      ['u1', FOUNDER_LIMIT],
+    )
+    const empty = { query: vi.fn().mockResolvedValue({ rows: [] }) }
+    expect(await grantFounderIfAvailable('u1', empty as never)).toBe(false)
+    const str = { query: vi.fn().mockResolvedValue({ rows: [{ granted: 'true' }] }) }
+    expect(await grantFounderIfAvailable('u1', str as never)).toBe(false)
   })
 })
