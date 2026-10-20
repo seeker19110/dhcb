@@ -19,6 +19,8 @@ import {
   MAX_TRIES,
   OUTBOX_KEY,
   __resetOutboxForTests,
+  setActiveUid,
+  bindOutboxListeners,
   type OutboxEntry,
 } from './syncOutbox'
 
@@ -523,4 +525,80 @@ describe('audit — chia batch chấm và bảo toàn bài khi bảo trì', () =
     expect(pendingProgrammingItems(UID)).toEqual([newer])
     expect(readOutbox(UID)[0]?.attemptId).not.toBe(before)
   })
+})
+
+// Audit 2026-10-20, D-8: cụm "ai đang đăng nhập + sự kiện toàn cục" chưa phủ — đây là chỗ
+// nhiều tab/đổi tài khoản dễ gửi chéo hoặc gửi trùng.
+describe('setActiveUid + sự kiện toàn cục (D-8)', () => {
+  it('setActiveUid(null) hoặc khách → không gửi gì', async () => {
+    const fn = mockFetch(() => new Response('{}', { status: 200 }))
+    enqueue(UID, 'english')
+    setActiveUid(null)
+    setActiveUid('guest_abc')
+    await Promise.resolve()
+    expect(fn).not.toHaveBeenCalled()
+    expect(pending(UID)).toBe(1)
+  })
+
+  it('setActiveUid(uid) → gửi ngay hàng đợi của ĐÚNG chủ, reset backoff cũ', async () => {
+    mockFetch(() => new Response('oops', { status: 500 }))
+    enqueue(UID, 'english')
+    await flush(UID)
+    expect(readOutbox(UID)[0]?.tries).toBe(1)
+    const fn = mockFetch(() => new Response('{}', { status: 200 }))
+    setActiveUid(UID)
+    await vi.waitFor(() => expect(pending(UID)).toBe(0))
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
+  it('sự kiện storage: khoá ngoài tiền tố → bỏ qua; khoá của chủ đang hoạt động có mục chờ → gửi', async () => {
+    const fn = mockFetch(() => new Response('{}', { status: 200 }))
+    bindOutboxListeners()
+    setActiveUid(UID)
+    await vi.waitFor(() => expect(pending(UID)).toBe(0))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'khac_hoan_toan' }))
+    window.dispatchEvent(new StorageEvent('storage', { key: null }))
+    await Promise.resolve()
+    expect(fn).not.toHaveBeenCalled()
+    // Tab khác vừa xếp thêm một mục cho đúng chủ này → gửi NGAY (huỷ debounce), đúng MỘT lượt.
+    enqueue(UID, 'english')
+    window.dispatchEvent(new StorageEvent('storage', { key: OUTBOX_KEY(UID) }))
+    await vi.waitFor(() => expect(pending(UID)).toBe(0))
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
+  it('sự kiện storage của chủ KHÁC → chỉ báo giao diện, không gửi hộ', async () => {
+    const OTHER = '22222222-2222-4222-8222-222222222222'
+    const fn = mockFetch(() => new Response('{}', { status: 200 }))
+    bindOutboxListeners()
+    setActiveUid(UID)
+    enqueue(OTHER, 'english')
+    const seen: string[] = []
+    const off = subscribe((uid) => seen.push(uid))
+    window.dispatchEvent(new StorageEvent('storage', { key: OUTBOX_KEY(OTHER) }))
+    await Promise.resolve()
+    off()
+    expect(seen).toContain(OTHER)
+    expect(fn).not.toHaveBeenCalled()
+    expect(pending(OTHER)).toBe(1)
+  })
+
+  it('visibilitychange khi tab bị ẩn → không gửi; hiện lại → gửi', async () => {
+    const fn = mockFetch(() => new Response('{}', { status: 200 }))
+    bindOutboxListeners()
+    setActiveUid(UID)
+    await Promise.resolve()
+    enqueue(UID, 'english')
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+    await Promise.resolve()
+    expect(fn).not.toHaveBeenCalled()
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.waitFor(() => expect(pending(UID)).toBe(0))
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
+  // Debounce của `enqueue` (hai lần xếp hàng → một lượt gửi sau DEBOUNCE_MS) đã có ở AC-9
+  // phía trên với cách chờ dynamic import đúng — không lặp lại ở đây.
 })
