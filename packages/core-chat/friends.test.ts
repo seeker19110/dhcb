@@ -154,3 +154,32 @@ describe('areFriends', () => {
     expect(await areFriends('u1', 'u2')).toBe(false)
   })
 })
+
+// Audit 2026-10-20, F-001: mã kết bạn là chìa khoá công khai → phải sinh bằng node:crypto,
+// KHÔNG qua Math.random (xorshift128+ của V8 suy được trạng thái). Test này ĐỎ trước khi sửa.
+describe('randomCode — nguồn ngẫu nhiên an toàn', () => {
+  it('sinh mã 8 ký tự trong bảng chữ không nhầm lẫn và KHÔNG gọi Math.random', async () => {
+    const spy = vi.spyOn(Math, 'random')
+    query
+      .mockResolvedValueOnce({ rows: [{ friend_code: null }] })
+      .mockImplementationOnce(async (_sql: string, params: unknown[]) => ({
+        rows: [{ friend_code: params[1] }],
+      }))
+    const code = await ensureFriendCode('u1')
+    expect(code).toMatch(/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  it('hai lần sinh liên tiếp cho hai mã khác nhau (không gian 31^8, trùng ≈ 0)', async () => {
+    const seen: unknown[] = []
+    query.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (String(sql).startsWith('select friend_code')) return { rows: [{ friend_code: null }] }
+      seen.push(params[1])
+      return { rows: [{ friend_code: params[1] }] }
+    })
+    await ensureFriendCode('u1')
+    await ensureFriendCode('u2')
+    expect(new Set(seen).size).toBe(2)
+  })
+})

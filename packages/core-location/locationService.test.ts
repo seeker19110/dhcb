@@ -546,3 +546,19 @@ describe('updateSession — Đợt 2 coverage', () => {
     expect(call[1]).toEqual(['s1', '45'])
   })
 })
+
+// Audit 2026-10-20, F-001: mã mời mở cửa vào chuyến chia sẻ VỊ TRÍ → sinh bằng node:crypto,
+// KHÔNG qua Math.random. Test này ĐỎ trước khi sửa.
+describe('randomCode — nguồn ngẫu nhiên an toàn', () => {
+  it('mã mời 6 ký tự trong bảng chữ không nhầm lẫn và KHÔNG gọi Math.random', async () => {
+    const spy = vi.spyOn(Math, 'random')
+    mockQuery.mockResolvedValueOnce({ rows: [{ count: '0' }] })
+    mockQuery.mockResolvedValueOnce({ rows: [{ id: 's-new' }] })
+    const r = await createSession('u1', 'Đi chơi', 60)
+    expect(r.ok).toBe(true)
+    const insert = callsMatching('insert into location.sessions')[0]!
+    expect((insert[1] as unknown[])[2]).toMatch(/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/)
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
+  })
+})
