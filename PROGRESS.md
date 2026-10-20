@@ -172,6 +172,11 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
 
 ## Tiếp theo
 
+- **[2026-10-20] Audit toàn diện 11 tầng** ([báo cáo](docs/audit/2026-10-20-audit-toan-dien.md),
+  `docs/changelog/0648-*.md`): mọi cổng chặn xanh, 0 phát hiện Cao, 1 Trung (F-001 mã mời
+  `Math.random` → `crypto.randomInt`), 7 Thấp (F-002…F-009), 8 đề xuất test D-1…D-8 (6 mức Cao chạm
+  lượt/giá/webhook/sổ xoá tài khoản). **Chờ chủ dự án chốt chia đợt**; F-008 (`eval:tutor` baseline
+  mới với key thật) là việc tay.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền
