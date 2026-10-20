@@ -6,6 +6,7 @@
 //  - Vị trí của người đang TẮT chia sẻ không bao giờ rời khỏi DB (đã xoá khi tắt) — hàm đọc
 //    vẫn lọc thêm một lớp nữa để phòng hờ.
 
+import { randomInt } from 'node:crypto'
 import { getPgPool } from '@dhcb/core-db/pgPool'
 import type { MemberPosition, Position, SessionState } from '@dhcb/core-contracts/location'
 import { coarsen } from './geo.js'
@@ -16,10 +17,13 @@ const CODE_LENGTH = 6
 const MAX_CODE_ATTEMPTS = 8
 const MAX_ACTIVE_SESSIONS_PER_USER = 5
 
+// randomInt của node:crypto — ngẫu nhiên an toàn, KHÔNG dùng Math.random (audit 2026-10-20,
+// F-001). Mã mời mở cửa vào chuyến chia sẻ VỊ TRÍ thật — dữ liệu nhạy cảm — nên không được để
+// đoán ra từ trạng thái xorshift128+ của V8. Cùng quy ước với referral.ts, sepay.ts.
 function randomCode(): string {
   let out = ''
   for (let i = 0; i < CODE_LENGTH; i++) {
-    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]
+    out += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]
   }
   return out
 }

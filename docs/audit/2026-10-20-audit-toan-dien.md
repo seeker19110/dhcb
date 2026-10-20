@@ -183,3 +183,13 @@ lỗi) chưa phủ — 9 nhánh nên không vào bảng, nhưng chạm tiền, n
 **Hội tụ (mục 3b):** 0 phát hiện mức Cao → đạt tiêu chí (1). Các F- còn lại chờ quyết định ghi vào
 `PROGRESS.md` ("sửa đợt sau" hoặc "chấp nhận rủi ro") ở lượt sửa kế tiếp — tiêu chí (2) chưa đóng cho
 tới khi chủ dự án chốt.
+
+## G. Truy vết F- → W- (cập nhật theo từng PR sửa)
+
+| W-    | Đóng F-                                                              | PR / changelog             | Trạng thái |
+| ----- | -------------------------------------------------------------------- | -------------------------- | ---------- |
+| W-001 | F-001                                                                | `docs/changelog/0649-*.md` | ĐÃ LÀM     |
+| W-002 | D-1…D-8 (+ `founder.ts` catch)                                       | —                          | chờ        |
+| W-003 | F-002 · F-003 · F-004 · F-005 · F-006 · F-010                        | —                          | chờ        |
+| W-004 | F-009                                                                | —                          | chờ        |
+| —     | F-007 (ghi nhận, không sửa) · F-008 (việc tay chủ dự án, cần key AI) | —                          | mở         |
