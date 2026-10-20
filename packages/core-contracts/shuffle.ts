@@ -28,3 +28,22 @@ export function shuffle<T>(arr: readonly T[], rng: () => number = Math.random): 
   }
   return a
 }
+
+/**
+ * Bốc `n` phần tử KHÁC NHAU từ `arr` theo thứ tự ngẫu nhiên (Fisher–Yates một phần — chỉ trộn
+ * đúng `n` bước nên rẻ hơn `shuffle(arr).slice(0, n)` với từ điển hàng nghìn mục). Không đụng mảng
+ * gốc; `n` lớn hơn độ dài thì trả hết; `n ≤ 0` trả mảng rỗng.
+ *
+ * Gom từ hai bản chép tay giống hệt nhau ở `apps/dhcb/src/lib/dictionaryApi.ts` và
+ * `apps/server/src/api/subjects/english/dictionary.ts` (audit 2026-10-20, F-004 — cờ đỏ R3 của
+ * Tầng 10: hai cài đặt song song cùng mục đích).
+ */
+export function sample<T>(arr: readonly T[], n: number, rng: () => number = Math.random): T[] {
+  const a = [...arr]
+  const take = Math.min(Math.max(0, Math.floor(n)), a.length)
+  for (let i = 0; i < take; i++) {
+    const j = i + Math.floor(rng() * (a.length - i))
+    ;[a[i], a[j]] = [a[j] as T, a[i] as T]
+  }
+  return a.slice(0, take)
+}

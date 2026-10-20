@@ -7,6 +7,7 @@
 //
 // Giữ nguyên CHỮ KÝ hàm (async, trả Promise) để Dictionary.tsx & Flashcard.tsx không phải sửa.
 
+import { sample } from '@dhcb/core-contracts/shuffle'
 import { loadDictionary } from '../data/dictionary/loader'
 import type { DictEntry } from '../types'
 import { vnDateStr } from './date'
@@ -131,15 +132,9 @@ export async function fetchWordOfDay(): Promise<{ total: number; entry: DictEntr
   return { total: entries.length, entry }
 }
 
-// Lấy n từ ngẫu nhiên cho một lượt luyện Flashcard (Fisher–Yates một phần, không sửa gốc).
+// Lấy n từ ngẫu nhiên cho một lượt luyện Flashcard — dùng `sample` chung (Fisher–Yates một
+// phần, không sửa gốc) thay bản chép tay cũ (audit 2026-10-20, F-004).
 export async function fetchRandomEntries(n = 30): Promise<DictEntry[]> {
   const entries = await loadDictionary()
-  const a = [...entries]
-  const out: DictEntry[] = []
-  for (let i = 0; i < n && a.length > 0; i++) {
-    const j = Math.floor(Math.random() * a.length)
-    out.push(a[j]!) // j < a.length nên chắc chắn có
-    a.splice(j, 1)
-  }
-  return out
+  return sample(entries, n)
 }

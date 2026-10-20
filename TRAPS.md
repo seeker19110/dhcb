@@ -1019,3 +1019,21 @@ Hủy trước fetch không gửi thêm request; sau fetch vẫn giữ receipt/u
 Old AI response không được sync qua cookie mới. Guarded sync có marker null phải giữ
 local; stale scheduler phải bị chặn trước khi xóa timer của task hợp lệ. Không dùng
 trace làm authority hoặc ép receipt thiếu thành zero. Xem changelog `0645`.
+
+## 31. Chromium cài sẵn của máy không phải bản Playwright ghim
+
+**Đã gặp:** audit 2026-10-20, E2E 1467/1473 nhưng `lesson-animation-reduced-motion.spec.ts:118`
+đỏ **5/5 lượt** khi chạy riêng, trong khi CI cùng HEAD xanh 6/6 mảnh. Nguyên nhân không nằm ở mã:
+`playwright.config.ts` ưu tiên `/opt/pw-browsers/chromium` cài sẵn (Chromium 141), còn
+`package-lock` ghim Playwright 1.64 = Chromium 156. Chromium 141 **giữ** `CSSAnimation` đã bị WAAPI
+`pause()` khi media đổi sang `prefers-reduced-motion: reduce` (đo tối giản: pause → 3 → 3; không
+pause → 3 → 0); Chromium 156 huỷ đúng. Xem `docs/audit/2026-10-20-audit-toan-dien.md` mục C, F-010.
+
+**Cách rà:** trước khi kết luận "test đỏ" ở máy/container, in bản trình duyệt thật
+(`browser.version()` hoặc `<đường dẫn chromium> --version`) và so với `revision`/`browserVersion`
+trong `node_modules/playwright-core/browsers.json`. Lệch → chạy lại ca đó ≥ 5 lượt; đỏ đều mà CI
+xanh cùng HEAD thì là lệch trình duyệt, ghi vào báo cáo, **không sửa/skip test**.
+
+**Cổng chốt:** CI luôn cài đúng bản ghim (cache theo phiên bản Playwright) nên cổng thật không bị
+ảnh hưởng; ở máy khác, muốn khớp CI thì `npx playwright install chromium` rồi đặt
+`PLAYWRIGHT_CHROMIUM_PATH` trỏ tới bản vừa cài (hoặc bỏ biến để Playwright tự tìm bản của nó).

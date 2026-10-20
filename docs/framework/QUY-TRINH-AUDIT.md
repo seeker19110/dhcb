@@ -503,7 +503,9 @@ npx tsx scripts/run-pg-migrations.ts
 # 4. Server đã biên dịch có sống với DB đó không
 PORT=3999 NODE_ENV=production node dist-server/server.js &   # PORT tường minh để không đụng dev
 curl -s localhost:3999/api/health          # phải trả {"status":"ok",...}
-curl -s localhost:3999/api/health/deep     # phải trả {"status":"healthy",...}
+curl -s localhost:3999/api/health/deep     # KHÔNG có Redis + NODE_ENV=production → 429 (rate limit
+                                           # fail-closed, changelog 0581) là ĐÚNG; muốn thấy "healthy"
+                                           # thì bỏ NODE_ENV=production hoặc trỏ REDIS_URL thật
 
 # 5. Dọn
 su -s /bin/bash nobody -c "PATH=$PATH pg_ctl -D $D/data stop"; rm -rf $D
@@ -513,7 +515,8 @@ su -s /bin/bash nobody -c "PATH=$PATH pg_ctl -D $D/data stop"; rm -rf $D
 
 - Bước 2 áp hết **N/N** migration, exit 0 — N khớp `ls postgres/migrations/*.sql | wc -l`.
 - Bước 3 báo "Đã áp dụng đủ N migration lẻ — không có gì mới" (lũy đẳng).
-- Bước 4 `/api/health` trả 200.
+- Bước 4 `/api/health` trả 200. `/api/health/deep` trả 429 khi không có Redis ở chế độ
+  production (đo 2026-10-20) — đó là rate limit fail-closed, không phải lỗi cài mới.
 
 **Kết quả 2026-08-24:** `schema.sql` + **65/65** migration chạy sạch trên DB rỗng → 99 bảng / 9
 schema; lần 2 lũy đẳng; `/api/health` 200 và `/api/health/deep` "healthy".
