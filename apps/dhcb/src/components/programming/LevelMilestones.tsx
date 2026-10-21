@@ -121,11 +121,6 @@ export default function LevelMilestones({
             <button
               onClick={() => onOpen(level)}
               disabled={biKhoa}
-              aria-label={
-                biKhoa
-                  ? `Bậc ${level.id.toUpperCase()} ${level.name} — đang khoá. ${giaiThich || moSau}`
-                  : `Bậc ${level.id.toUpperCase()} ${level.name} — đã xong ${done} trên ${total} bài`
-              }
               className={`tap-44 w-full text-left rounded-3xl p-4 transition flex items-start gap-3 active:scale-[0.99] border ${
                 biKhoa
                   ? 'bg-zinc-900/50 border-zinc-800 cursor-not-allowed'
@@ -134,11 +129,12 @@ export default function LevelMilestones({
                     : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
               }`}
             >
+              <span className="sr-only">Bậc </span>
               <ProgressRing done={done} total={total} />
               <div className="space-y-1.5 min-w-0 flex-1">
                 <p className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
                   <span className="text-accent-300 theme-light:text-accent-800 uppercase">
-                    {level.id}
+                    {level.id.toUpperCase()}
                   </span>
                   <span>{level.name}</span>
                   {dangO && (
@@ -175,7 +171,11 @@ export default function LevelMilestones({
                     <Clock className="w-3.5 h-3.5" aria-hidden="true" /> {level.duration}
                   </span>
                   <span>
-                    {done}/{total} bài
+                    <span className="sr-only">đã xong </span>
+                    {done}
+                    <span aria-hidden="true">/</span>
+                    <span className="sr-only"> trên </span>
+                    {total} bài
                   </span>
                 </div>
               </div>

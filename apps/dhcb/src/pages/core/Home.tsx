@@ -291,8 +291,8 @@ export default function Home() {
           <button
             onClick={notesSpace.go}
             className="w-full flex items-start gap-3.5 text-left group"
-            aria-label={`Vào không gian ${notesSpace.title}`}
           >
+            <span className="sr-only">Vào không gian </span>
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-rose-500/15 text-rose-400 theme-light:text-rose-800">
               <StickyNote className="w-5 h-5" aria-hidden="true" />
             </div>
@@ -339,7 +339,7 @@ export default function Home() {
     <div className="grid grid-cols-2 gap-3 pt-1">
       <button
         onClick={() => nav('/tien-do')}
-        aria-label="Xem bảng tiến độ"
+        aria-label={vi ? 'Xem bảng tiến độ' : 'View progress dashboard'}
         className="bg-zinc-900/70 border border-zinc-800/80 hover:border-accent-500/40 rounded-2xl p-4 flex items-center gap-3.5 transition-colors duration-200 group hover:bg-zinc-800/60 active:scale-98 animate-fade-in motion-reduce:transform-none motion-reduce:animate-none shadow-sm"
       >
         <div className="w-9 h-9 rounded-xl bg-accent-500/10 border border-accent-500/20 group-hover:bg-accent-500/20 flex items-center justify-center shrink-0 transition">
@@ -352,7 +352,7 @@ export default function Home() {
 
       <button
         onClick={() => nav('/lich-su-hoc')}
-        aria-label="Xem lịch sử học"
+        aria-label={vi ? 'Xem lịch sử học' : 'View learning history'}
         className="bg-zinc-900/70 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl p-4 flex items-center gap-3.5 transition-colors duration-200 group hover:bg-zinc-800/60 active:scale-98 animate-fade-in motion-reduce:transform-none motion-reduce:animate-none shadow-sm"
       >
         <div className="w-9 h-9 rounded-xl bg-zinc-800/80 border border-zinc-700/50 group-hover:bg-zinc-700 flex items-center justify-center shrink-0 transition">

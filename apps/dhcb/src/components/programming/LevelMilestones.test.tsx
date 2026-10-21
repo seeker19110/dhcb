@@ -41,18 +41,20 @@ function renderHtml(nextLockedLevelId: string | undefined): string {
 
 describe('LevelMilestones — câu giải thích ổ khoá không lặp', () => {
   it('chỉ bậc kế tiếp (p2) hiện câu đầy đủ, p3/p4 hiện ngắn "Mở sau"', () => {
-    const html = renderHtml('p2')
-    // Câu đầy đủ xuất hiện ở CẢ `aria-label` lẫn đoạn `<p>` hiển thị — mỗi bậc có câu là 2 lần.
-    const soLanCauDayDu = html.split('nữa là mở.').length - 1
-    expect(soLanCauDayDu).toBe(2)
-    const soLanMoSau = html.split('Mở sau P1').length - 1
-    expect(soLanMoSau).toBe(4) // p3 và p4, mỗi bậc 2 lần (aria-label + <p>)
+    const text =
+      new DOMParser().parseFromString(renderHtml('p2'), 'text/html').body.textContent ?? ''
+    // Đếm nội dung đọc được, không phụ thuộc bản sao trong thuộc tính đặt tên nút.
+    const soLanCauDayDu = text.split('nữa là mở.').length - 1
+    expect(soLanCauDayDu).toBe(1)
+    const soLanMoSau = text.split('Mở sau P1').length - 1
+    expect(soLanMoSau).toBe(2) // p3 và p4, mỗi bậc có đúng một câu.
   })
 
   it('không truyền nextLockedLevelId thì giữ hành vi cũ — mọi bậc khoá đều hiện đầy đủ', () => {
-    const html = renderHtml(undefined)
-    const soLanCauDayDu = html.split('nữa là mở.').length - 1
-    expect(soLanCauDayDu).toBe(6) // 3 bậc × 2 (aria-label + <p>)
-    expect(html).not.toContain('Mở sau')
+    const text =
+      new DOMParser().parseFromString(renderHtml(undefined), 'text/html').body.textContent ?? ''
+    const soLanCauDayDu = text.split('nữa là mở.').length - 1
+    expect(soLanCauDayDu).toBe(3) // Cả 3 bậc, mỗi bậc có đúng một câu.
+    expect(text).not.toContain('Mở sau')
   })
 })

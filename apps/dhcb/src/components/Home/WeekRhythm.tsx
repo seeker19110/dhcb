@@ -50,7 +50,6 @@ export default function WeekRhythm({ model }: WeekRhythmProps) {
   return (
     <Link
       to="/nhiem-vu"
-      aria-label={ariaLabel}
       className="block rounded-3xl border border-line-strong bg-zinc-900/90 p-4 sm:p-5 transition hover:border-accent-500/40 animate-fade-in"
     >
       <div className="flex items-center justify-between gap-2 flex-wrap">

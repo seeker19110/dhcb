@@ -336,14 +336,11 @@ export default function Layout({
             (P0-4), ẩn ở đây để header mobile chỉ còn 4 khe. */}
         {isDesktop && <ThemeToggle />}
 
-        {/* User avatar + tên đầy đủ (bấm vào để xem trang cá nhân).
-            Tên truy cập BẮT ĐẦU bằng tên đang hiện trên nút (WCAG 2.5.3 "Label in Name" —
-            Lighthouse báo lỗi khi nhãn chỉ là "Trang cá nhân" mà nút lại hiện chữ "Khách");
-            chữ cái đầu trong vòng tròn là trang trí nên ẩn khỏi trình đọc màn hình. */}
+        {/* Tên nút lấy từ tên đầy đủ và đích đến trong nội dung, thay vì ghi đè aria-label.
+            Mobile giữ tên đầy đủ ở sr-only; chữ cái avatar là trang trí, không đọc lặp tên. */}
         {user && (
           <button
             onClick={() => nav('/trang-ca-nhan')}
-            aria-label={`${user.name} — ${T.profile}`}
             title={T.profile}
             className="tap-44 flex items-center gap-2 shrink-0 hover:opacity-90 transition active:scale-95 min-w-0 group"
           >
@@ -353,9 +350,11 @@ export default function Layout({
             >
               {user.name[0]?.toUpperCase()}
             </span>
+            <span className="sr-only sm:hidden">{user.name}</span>
             <span className="text-sm font-medium text-white truncate hidden sm:inline max-w-[10rem]">
               {user.name}
             </span>
+            <span className="sr-only"> — {T.profile}</span>
           </button>
         )}
       </div>

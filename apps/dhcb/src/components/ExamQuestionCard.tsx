@@ -194,14 +194,13 @@ export default function ExamQuestionCard({
               ref={(node) => {
                 optionRefs.current[optIdx] = node
               }}
-              aria-label={opt}
+              aria-label={`${optIdx + 1} ${opt}`}
               aria-pressed={selected === opt}
               aria-disabled={selected !== null}
               onClick={() => pick(opt)}
               className={`w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl border font-medium text-[0.9375rem] transition-colors motion-reduce:animate-none motion-reduce:transition-none ${cls}`}
             >
-              <QuizOptionKey index={optIdx} />
-              <span className="min-w-0 flex-1">{opt}</span>
+              <QuizOptionKey index={optIdx} /> <span className="min-w-0 flex-1">{opt}</span>
             </button>
           )
         })}

@@ -179,7 +179,6 @@ function ResultPanel({
           onClick={() => setShowSample((p) => !p)}
           className="flex items-center justify-between w-full"
           aria-expanded={showSample}
-          aria-label={isA ? 'Hiện/ẩn đoạn văn mẫu' : 'Toggle sample paragraph'}
         >
           <p className="text-sm font-bold text-zinc-100 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-sky-500" />
@@ -198,7 +197,6 @@ function ResultPanel({
 
       <button
         onClick={onReset}
-        aria-label={isA ? 'Bài viết mới' : 'New essay'}
         className="w-full flex items-center justify-center gap-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:text-white rounded-2xl py-3.5 text-sm font-semibold transition duration-200 hover:bg-zinc-850 active:scale-[0.98] shadow-sm"
       >
         <RotateCcw className="w-4 h-4" />
@@ -514,7 +512,6 @@ export default function Writing() {
       <button
         onClick={submit}
         disabled={loading || !essay.trim() || !essayPrompt.trim() || isThrottled}
-        aria-label={isA ? 'Chấm bài ngay' : 'Grade my essay'}
         className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 text-white font-bold py-3.5 rounded-2xl text-sm transition duration-200 active:scale-[0.98] shadow-xl relative"
       >
         {isThrottled && throttleCountdown > 0 ? (

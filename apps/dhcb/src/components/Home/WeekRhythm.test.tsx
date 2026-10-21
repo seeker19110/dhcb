@@ -52,10 +52,13 @@ describe('WeekRhythm', () => {
     dots.forEach((d) => expect(allowed.has(d.getAttribute('data-dot') ?? '')).toBe(true))
   })
 
-  it('AC-2: aria-label toàn khối đúng khuôn "Tuần này học N trên 7 ngày"', async () => {
+  it('AC-2: cụm chấm có mô tả số ngày học, liên kết giữ chữ tóm tắt đang hiện', async () => {
     const el = await render(model({ daysDone: 4 }))
     const link = el.querySelector('a')
-    expect(link?.getAttribute('aria-label')).toBe('Tuần này học 4 trên 7 ngày')
+    expect(link?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(
+      'Tuần này học 4 trên 7 ngày',
+    )
+    expect(link?.textContent).toContain('Tuần này 4/7 ngày')
   })
 
   it('hiện dòng nhiệm vụ khi có quests', async () => {

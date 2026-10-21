@@ -175,7 +175,7 @@ test.describe('UX-R2 — progressive disclosure ở Trang chủ member', () => {
     await expect(page.locator('#home-prompt-chips').getByRole('button')).toHaveCount(4)
     await expect(page.locator('#home-subjects-revealed')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 3 })).toHaveCount(7)
-    await expect(page.getByRole('button', { name: 'Lộ trình CEFR' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Lộ trình CEFR', exact: true })).toBeVisible()
     await expect(
       page.locator('main').getByRole('button', { name: 'Xem bảng tiến độ' }),
     ).toHaveCount(1)

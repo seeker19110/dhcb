@@ -276,14 +276,10 @@ function Navbar({ stats }: { stats: HubStats | null }) {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-zinc-950/85 border-b border-zinc-800/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-        {/* aria-label: dưới 560px chữ thương hiệu ẩn đi (nhường chỗ cho cụm nút bên phải, tránh
-            tràn ngang ở 320/390px — audit 2026-09-30 C6) nên liên kết cần tên đọc được riêng
-            (WCAG 2.4.4/4.1.2, axe link-name). */}
-        <a
-          href="/"
-          aria-label="Đồng Hành Cùng Bạn — trang chủ"
-          className="flex items-center gap-2.5 group shrink-0"
-        >
+        {/* Tên liên kết lấy từ toàn bộ chữ đang hiện. Dưới 560px thương hiệu ẩn đi thì giữ
+            một bản sr-only, để nút logo vẫn có tên mà không đọc lặp trên desktop. */}
+        <a href="/" className="flex items-center gap-2.5 group shrink-0">
+          <span className="sr-only min-[560px]:hidden">Đồng Hành Cùng Bạn</span>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-accent-500 to-accent-400 flex items-center justify-center shadow-lg shadow-accent-500/20 group-hover:scale-105 transition-transform">
             <Sparkles className="w-5 h-5 text-[#09090b]" />
           </div>
@@ -298,6 +294,7 @@ function Navbar({ stats }: { stats: HubStats | null }) {
               Học tập · Ghi chú · Bạn Đồng Hành
             </span>
           </div>
+          <span className="sr-only"> — trang chủ</span>
         </a>
 
         <nav

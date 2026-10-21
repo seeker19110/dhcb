@@ -492,7 +492,7 @@ describe('REVIEW independent follow-up ownership switch', () => {
     expect(fixture.sttRequests).toHaveLength(0)
     expect(fixture.agentRequests).toHaveLength(1)
     expect(container.textContent).not.toContain('Đang ghi')
-    expect(button('Bắt đầu ghi âm')).toBeTruthy()
+    expect(button('Bắt đầu ghi âm — 5s').disabled).toBe(true)
   })
   it('REVIEW follow-up during sent STT clears obsolete processing UI after captured receipt', async () => {
     await openSpeaking('A')

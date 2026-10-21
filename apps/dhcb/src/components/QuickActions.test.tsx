@@ -47,7 +47,9 @@ function button(label: string): HTMLButtonElement | null {
   return (
     Array.from(container.querySelectorAll('button')).find(
       (candidate) =>
-        candidate.getAttribute('aria-label') === label || candidate.textContent === label,
+        candidate.getAttribute('aria-label') === label ||
+        candidate.getAttribute('aria-label')?.endsWith(` — ${label}`) ||
+        candidate.textContent === label,
     ) ?? null
   )
 }

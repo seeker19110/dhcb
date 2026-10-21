@@ -1269,12 +1269,16 @@ test.describe('Admin Dashboard — /admin-s', () => {
 
   test('GrantPlan: Từ cấm "admin" hiện trong danh sách', async ({ page }) => {
     await gotoAdmin(page, 'grant-plan')
-    await expect(page.getByText('admin').first()).toBeVisible({ timeout: VISIBLE_TIMEOUT })
+    await expect(page.getByText('admin', { exact: true })).toBeVisible({
+      timeout: VISIBLE_TIMEOUT,
+    })
   })
 
   test('GrantPlan: Từ cấm "hotro" hiện trong danh sách', async ({ page }) => {
     await gotoAdmin(page, 'grant-plan')
-    await expect(page.getByText('hotro').first()).toBeVisible({ timeout: VISIBLE_TIMEOUT })
+    await expect(page.getByText('hotro', { exact: true })).toBeVisible({
+      timeout: VISIBLE_TIMEOUT,
+    })
   })
 
   test('GrantPlan: Thêm từ cấm → POST với action=add', async ({ page }) => {

@@ -54,7 +54,9 @@ describe('ExamQuestionCard', () => {
     )
   }
   function option(value: string) {
-    return container.querySelector<HTMLButtonElement>(`button[aria-label="${value}"]`)!
+    return container.querySelectorAll<HTMLButtonElement>('button[data-quiz-option]')[
+      question.options.indexOf(value)
+    ]!
   }
   function status() {
     return container.querySelector('[role="status"]')!

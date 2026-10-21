@@ -965,7 +965,9 @@ export default function Chat() {
                   onClick={() => sendMessage()}
                   disabled={!input.trim() || loading || limitHit || isThrottled}
                   className={`${buttonVariantClass('primary')} tap-44 flex items-center justify-center p-2.5 rounded-xl shrink-0 relative disabled:opacity-40`}
-                  aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
+                  aria-label={`${isA ? 'Gửi tin nhắn' : 'Send message'}${
+                    isThrottled && throttleCountdown > 0 ? ` — ${throttleCountdown}s` : ''
+                  }`}
                 >
                   <Send className="w-4 h-4" />
                   {isThrottled && throttleCountdown > 0 && (

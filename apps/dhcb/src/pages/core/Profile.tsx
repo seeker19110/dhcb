@@ -437,7 +437,6 @@ export default function Profile() {
               {/* Tiến độ học */}
               <button
                 onClick={() => nav('/tien-do')}
-                aria-label={isA ? 'Xem tiến độ học' : 'View progress'}
                 className="w-full bg-zinc-900/80 border border-zinc-800/80 hover:border-accent-500/40 rounded-2xl p-4 flex items-center gap-4 transition group text-left active:scale-[0.99]"
               >
                 <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -459,7 +458,6 @@ export default function Profile() {
               {/* Lịch sử học */}
               <button
                 onClick={() => nav('/lich-su-hoc')}
-                aria-label={isA ? 'Xem lịch sử học' : 'View learning history'}
                 className="w-full bg-zinc-900/80 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl p-4 flex items-center gap-4 transition group text-left active:scale-[0.99]"
               >
                 <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
@@ -482,7 +480,6 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => setFeedbackOpen(true)}
-                aria-label={isA ? 'Đóng góp ý kiến & Báo lỗi' : 'Feedback & Bug Report'}
                 className="w-full bg-zinc-900/80 border border-zinc-800/80 hover:border-accent-500/40 rounded-2xl p-4 flex items-center gap-4 transition group text-left active:scale-[0.99]"
               >
                 <div className="w-11 h-11 rounded-xl bg-purple-500/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">

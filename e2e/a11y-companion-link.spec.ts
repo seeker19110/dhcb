@@ -66,7 +66,7 @@ for (const theme of THEMES) {
     // Mở phần "Họ thấy được những gì?" và tạo mã mời — hai trạng thái mới sinh ra màu mới.
     await page.getByText('Họ thấy được những gì?').click()
     await page.getByRole('button', { name: 'Tạo mã mời người thân' }).click()
-    await expect(page.getByRole('button', { name: 'Sao chép mã mời' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Chép mã' })).toBeVisible()
 
     expect(await scanSection(page, AA_TAGS)).toEqual([])
   })
@@ -96,7 +96,7 @@ for (const theme of DIRECTION_B_THEMES) {
 
     await page.getByText('What can they see?').click()
     await page.getByRole('button', { name: 'Create invite code' }).click()
-    await expect(page.getByRole('button', { name: 'Copy invite code' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Copy code' })).toBeVisible()
 
     expect(await scanSection(page, AA_TAGS)).toEqual([])
   })
