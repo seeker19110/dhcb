@@ -17,6 +17,14 @@ hiển thị hoặc dùng ngôn ngữ khác với giao diện.
   cả giọng đọc/văn bản đang hiện trong tên trợ năng. Giữ thao tác và cơ chế audio cũ.
 - Selector kiểm tra từ cấm của trang quản trị khớp chính xác `admin`/`hotro`, tránh
   bắt nhầm tên tài khoản trong phần hồ sơ dành cho màn hình nhỏ.
+- Thẻ điều hướng trang cá nhân và nút giới thiệu bạn bè dùng chữ đang hiện làm tên.
+  Nhãn nút gửi/ghi âm giữ cả thời gian chờ khi có countdown; nút chấm bài, xem mẫu
+  và viết lại tự theo nội dung/trạng thái đang hiển thị.
+- Hai lối sang tiến độ/lịch sử ở trang môn tiếng Anh dùng chữ hiển thị làm tên;
+  lựa chọn đáp án bài thi giữ cả số phím tắt hiện trên desktop trong tên trợ năng,
+  với khoảng trắng thật trong DOM để số và đáp án là hai token riêng.
+- Selector CTA lộ trình trên trang chủ khớp chính xác tên nút; selector bài thi khớp
+  cả thứ tự và đáp án của fixture, giữ toàn bộ kiểm tra chấm điểm/thử lại từ máy chủ.
 
 ## Kiểm chứng
 
@@ -26,6 +34,13 @@ hiển thị hoặc dùng ngôn ngữ khác với giao diện.
 - Kiểm thử tập trung bổ sung cho thẻ bậc/nút nghe: 4 file, 16 test xanh.
 - E2E tập trung sau sửa bổ sung: 12/12 ca xanh, gồm axe ba theme cho Lập trình/Từ
   điển Hôm nay, hai từ cấm quản trị và bốn luồng trang chủ môn Lập trình.
+- Profile/referral: 2 file, 9 test xanh. Năm suite voice hiện có: 64 test xanh;
+  hai assertion sau phản hồi AI kiểm cả tên mic có countdown và trạng thái bị khoá.
+- Trang môn tiếng Anh: 2 file, 6 test xanh. Bốn suite bài thi/luyện nghe/xếp lớp:
+  14 test xanh, giữ chặn click lặp, focus, công bố kết quả và phím tắt.
+- E2E thật ở lượt cuối: 21 ca trang cá nhân/nhiệm vụ/kết quả AI xanh; 13 ca xác nhận
+  gồm Chọn nghĩa ba theme, bài thi máy chủ chấm ở sáu tổ hợp theme/kích thước và
+  bốn kiểm tra shortcut/focus trang chủ đều xanh.
 - Sinh lại source snapshot `guestHome.prerender.html` theo quy trình của repo; kiểm tra
   với bộ dependency mới nhất: 3 test snapshot và 15 test parser HTTP đều xanh.
 - Đối chiếu 8 ảnh GuestHome/Home đăng nhập trước/sau ở 1440 × 900 và 390 × 844, theme
@@ -36,9 +51,6 @@ hiển thị hoặc dùng ngôn ngữ khác với giao diện.
   sửa không có vi phạm; tên tiến độ và trạng thái khoá bậc vẫn khớp E2E hiện có.
 - Cổng đầy đủ và quét axe với phiên bản mới được chạy trong đợt tích hợp; kết quả cuối
   được ghi trong PR #1425.
-- Bộ dependency cuối đã qua build/typecheck/lint/format; 1.009 file, 22.521 test xanh
-  (5 file/35 test được bỏ qua theo cấu hình hiện có). Coverage statements/branches/
-  functions/lines: 96,08/92,05/96,97/96,79%, đạt mọi ngưỡng.
 
 ## Rủi ro và hoàn tác
 

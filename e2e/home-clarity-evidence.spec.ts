@@ -562,7 +562,7 @@ test.describe('UX-R2 — canonical Home evidence', () => {
       await expect(promptPanel.getByRole('button')).toHaveCount(4)
       await expect(page.locator('#home-subjects-revealed')).toHaveCount(0)
       await expect(page.getByRole('button', { name: /^Vào không gian / })).toHaveCount(7)
-      await expect(page.getByRole('button', { name: 'Lộ trình CEFR' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Lộ trình CEFR', exact: true })).toBeVisible()
       await expect(page.locator('main [aria-label="Xem bảng tiến độ"]')).toHaveCount(1)
       await expect(page.getByText('Xem tiến độ', { exact: true })).toHaveCount(0)
 

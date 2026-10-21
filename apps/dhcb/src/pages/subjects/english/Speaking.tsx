@@ -1529,7 +1529,7 @@ export default function Speaking() {
                         disabled={
                           loading || limitHit || processing || isThrottled || !!pendingConfirm
                         }
-                        aria-label={
+                        aria-label={`${
                           recording
                             ? isA
                               ? 'Dừng ghi âm'
@@ -1537,7 +1537,7 @@ export default function Speaking() {
                             : isA
                               ? 'Bắt đầu ghi âm'
                               : 'Start recording'
-                        }
+                        }${isThrottled && throttleCountdown > 0 ? ` — ${throttleCountdown}s` : ''}`}
                         className={`relative w-20 h-20 rounded-full flex items-center justify-center transition shadow-xl disabled:opacity-40 active:scale-95 ${
                           recording
                             ? 'bg-red-500 shadow-red-500/40'
@@ -1650,7 +1650,9 @@ export default function Speaking() {
                           }
                         }}
                         disabled={!typedInput.trim() || loading || limitHit || isThrottled}
-                        aria-label={isA ? 'Gửi tin nhắn' : 'Send message'}
+                        aria-label={`${isA ? 'Gửi tin nhắn' : 'Send message'}${
+                          isThrottled && throttleCountdown > 0 ? ` — ${throttleCountdown}s` : ''
+                        }`}
                         className="tap-44 p-3 bg-gradient-to-br from-sky-600 to-cyan-500 disabled:opacity-40 text-white rounded-xl transition shrink-0"
                       >
                         <Send className="w-4 h-4" />

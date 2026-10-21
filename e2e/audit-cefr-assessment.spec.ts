@@ -79,11 +79,11 @@ for (const theme of ['dark-blue', 'blue-sky', 'kid'] as const) {
         path: testInfo.outputPath(`cefr-question-${width}.png`),
         fullPage: true,
       })
-      await page.getByRole('button', { name: 'hello', exact: true }).click()
+      await page.getByRole('button', { name: '1 hello', exact: true }).click()
       await expect(page.getByText('Đã chọn: hello.', { exact: true }).first()).toBeVisible()
       await expect(page.getByText(/Đáp án đúng:|Chưa đúng\.|^Đúng\./)).toHaveCount(0)
       await page.getByRole('button', { name: 'Câu tiếp theo', exact: true }).click()
-      await page.getByRole('button', { name: 'am', exact: true }).click()
+      await page.getByRole('button', { name: '1 am', exact: true }).click()
       await page.getByRole('button', { name: 'Nộp bài', exact: true }).click()
       await expect(page.getByRole('alert')).toContainText('Chưa lưu được bài thi')
       await expect(page.getByText(/Bạn đã QUA cấp A1/)).toHaveCount(0)
