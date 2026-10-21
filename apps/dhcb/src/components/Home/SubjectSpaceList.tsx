@@ -109,8 +109,8 @@ export default function SubjectSpaceList({
         <button
           onClick={() => nav(entry.ctaPath)}
           className="min-h-11 w-full flex items-start gap-3.5 text-left group focus-visible:ring-2 focus-visible:ring-focus-ring rounded-xl"
-          aria-label={`Vào không gian ${entry.label}`}
         >
+          <span className="sr-only">Vào không gian </span>
           <div
             className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${tone}`}
           >

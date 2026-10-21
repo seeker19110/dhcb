@@ -181,7 +181,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
         {/* Lộ trình — mở tổng quan A1→B2 (tab Kiểm tra giờ nằm TRONG từng cấp) */}
         <button
           onClick={() => nav(duongDanLoTrinh())}
-          aria-label={isA ? 'Lộ trình học' : 'Learning path'}
+          aria-label={isA ? 'Lộ trình học' : 'Roadmap'}
           className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 hover:border-teal-500/40 transition group"
         >
           <Route className="w-4 h-4 text-teal-400 theme-light:text-teal-900" />
@@ -207,7 +207,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
           ref={notifButtonRef}
           onClick={onNotifClick}
           disabled={!supported || pushLoading}
-          aria-label={
+          aria-label={`${notifLabel} — ${
             pushOn
               ? isA
                 ? 'Tắt nhắc học'
@@ -215,7 +215,7 @@ function QuickActionsForUser({ userId }: { userId: string }) {
               : isA
                 ? 'Bật nhắc học mỗi ngày'
                 : 'Turn on daily reminders'
-          }
+          }`}
           className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl border transition group disabled:opacity-50 disabled:cursor-not-allowed ${
             pushOn
               ? 'bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50'

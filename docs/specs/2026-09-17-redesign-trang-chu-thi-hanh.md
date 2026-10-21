@@ -550,8 +550,10 @@ export function buildWeekRhythm(input: {
 - [ ] **AC-1** `buildWeekRhythm` bảng ≥ 8 ca: T2 chưa học (`[today-pending, future×6]`); CN đủ
       7; giữa tuần có nghỉ; tuần rỗng + streak 0 → `visible=false`; tuần rỗng + streak>0 →
       `visible=true` — `weekRhythm.test.ts`.
-- [ ] **AC-2** DOM: đúng 7 phần tử `[data-dot]` với `data-dot` ∈ 4 giá trị; `aria-label` toàn
-      khối dạng "Tuần này học 4 trên 7 ngày" — `WeekRhythm.test.tsx`.
+- [ ] **AC-2** DOM: đúng 7 phần tử `[data-dot]` với `data-dot` ∈ 4 giá trị; cụm chấm
+      `role="img"` có `aria-label` dạng "Tuần này học 4 trên 7 ngày". Tên liên kết lấy từ
+      nội dung để giữ nguyên chữ hiển thị, kể cả nhiệm vụ/huy hiệu (WCAG 2.5.3; đồng bộ khi
+      nâng axe-core 4.14 ngày 2026-10-22) — `WeekRhythm.test.tsx`.
 - [ ] **AC-3** Không có ký tự `%` và không có chuỗi khớp `/\b[ABC][12]\b/` hay `/\bP[1-6]\b/`
       trong DOM của `WeekRhythm` — test bất biến.
 - [ ] **AC-4** Khách → `Home` không render `WeekRhythm` — `Home.test.tsx`.

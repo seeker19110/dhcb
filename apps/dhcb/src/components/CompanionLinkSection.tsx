@@ -207,7 +207,6 @@ export default function CompanionLinkSection({ isA }: { isA: boolean }) {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  aria-label={isA ? 'Sao chép mã mời' : 'Copy invite code'}
                   className="tap-44 shrink-0 flex items-center gap-1.5 rounded-xl bg-accent-500/15 border border-accent-500/30 px-3 py-2.5 text-xs font-medium text-accent-400 theme-light:text-accent-900 hover:bg-accent-500/25 transition"
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
