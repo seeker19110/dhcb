@@ -244,6 +244,22 @@ test.describe('M6 — lịch hoạt động ở Tiến độ: vùng chạm ≥ 2
       await page.goto('/tien-do')
       const grid = page.getByRole('grid', { name: /Lịch hoạt động theo ngày/ })
       await expect(grid).toBeVisible()
+      // Đo SAU khi hoạt ảnh xuất hiện của khung cha chạy xong (issue #1409). `fade-in` trượt
+      // dọc một khoảng lẻ; Chromium tính hộp đã biến đổi bằng số thực 32-bit nên khoảng 1/4 vị
+      // trí cho chiều cao 24 − 2⁻¹⁴ px (đo thật: 6/80 lượt đỏ) dù bố cục vẫn đúng 24px. Chỉ chờ
+      // hoạt ảnh hữu hạn — hoạt ảnh lặp vô hạn không bao giờ "finished".
+      await grid.evaluate(async (el) => {
+        const running: Animation[] = []
+        for (let node: Element | null = el; node; node = node.parentElement) {
+          running.push(...node.getAnimations())
+        }
+        await Promise.all(
+          running
+            .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+            // Hoạt ảnh bị huỷ (React dựng lại nút) thì `finished` reject — coi như đã dừng.
+            .map((a) => a.finished.catch(() => undefined)),
+        )
+      })
       const sizes = await grid.locator('[role="gridcell"]').evaluateAll((cells) =>
         cells.map((c) => {
           const r = c.getBoundingClientRect()
