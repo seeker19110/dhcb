@@ -114,7 +114,7 @@ export default function WordVoiceCycleButton({ word, lang = 'en-US', isA = true 
       onClick={handleClick}
       disabled={loading}
       title={isA ? 'Nghe' : 'Listen'}
-      aria-label={isA ? 'Nghe' : 'Listen'}
+      aria-label={`${isA ? 'Nghe' : 'Listen'}: ${voiceLabel(currentVoice, isA)}`}
       className="tap-44 shrink-0 h-10 px-3.5 flex items-center gap-1.5 rounded-full bg-zinc-800 hover:bg-accent-500/20 text-zinc-300 hover:text-accent-300 transition disabled:opacity-60 text-sm font-medium"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}

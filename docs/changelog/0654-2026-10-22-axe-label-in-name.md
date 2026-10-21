@@ -13,17 +13,27 @@ hiển thị hoặc dùng ngôn ngữ khác với giao diện.
 - Nhãn lộ trình, nhắc học, tiến độ/lịch sử khớp đúng chữ hiển thị và ngôn ngữ đang dùng.
 - Giữ mô tả số ngày học trên hình cụm chấm; đồng bộ AC-2 của đặc tả trang chủ và các
   test hiện có. Giữ nguyên đường dẫn, thao tác và chữ hiển thị.
+- Thẻ bậc lập trình dùng tên từ toàn bộ nội dung; nút nghe ở thẻ từ và câu ví dụ giữ
+  cả giọng đọc/văn bản đang hiện trong tên trợ năng. Giữ thao tác và cơ chế audio cũ.
+- Selector kiểm tra từ cấm của trang quản trị khớp chính xác `admin`/`hotro`, tránh
+  bắt nhầm tên tài khoản trong phần hồ sơ dành cho màn hình nhỏ.
 
 ## Kiểm chứng
 
 - Phân tích log CI ban đầu: 275 test thất bại đều liên quan quy tắc trên; các cổng
   build/type/lint/format/unit đã xanh.
 - Kiểm thử tập trung sau sửa: 8 file, 95 test xanh; Prettier và `git diff --check` sạch.
+- Kiểm thử tập trung bổ sung cho thẻ bậc/nút nghe: 4 file, 16 test xanh.
+- E2E tập trung sau sửa bổ sung: 12/12 ca xanh, gồm axe ba theme cho Lập trình/Từ
+  điển Hôm nay, hai từ cấm quản trị và bốn luồng trang chủ môn Lập trình.
 - Sinh lại source snapshot `guestHome.prerender.html` theo quy trình của repo; kiểm tra
   với bộ dependency mới nhất: 3 test snapshot và 15 test parser HTTP đều xanh.
 - Đối chiếu 8 ảnh GuestHome/Home đăng nhập trước/sau ở 1440 × 900 và 390 × 844, theme
   blue-sky: cả 4 cặp khác biệt 0 pixel, hình học điều khiển và chiều cao trang khớp;
   không tràn ngang hoặc lỗi runtime. Dùng dữ liệu giả, chặn API/remote, cache Vite riêng.
+- Đối chiếu thêm 8 ảnh Lập trình/Từ điển tab Hôm nay ở hai kích thước trên: cả 4 cặp
+  khác biệt 0 pixel, không tràn ngang/lỗi runtime. Quét axe A/AA cả 4 trường hợp sau
+  sửa không có vi phạm; tên tiến độ và trạng thái khoá bậc vẫn khớp E2E hiện có.
 - Cổng đầy đủ và quét axe với phiên bản mới được chạy trong đợt tích hợp; kết quả cuối
   được ghi trong PR #1425.
 - Bộ dependency cuối đã qua build/typecheck/lint/format; 1.009 file, 22.521 test xanh

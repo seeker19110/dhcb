@@ -111,7 +111,7 @@ export default function KaraokeText({
       type="button"
       onClick={handleClick}
       title={label}
-      aria-label={label}
+      aria-label={`${label}: ${text}`}
       disabled={disabled && !isControlled}
       // [U9a, M20] Vùng chạm ≥ 44px trên màn chạm (`tap-44-touch-y`): câu một dòng trước đây
       // chỉ cao 22px. Nút căn GIỮA theo chiều dọc một khối con (icon + chữ, căn đầu dòng như cũ)
