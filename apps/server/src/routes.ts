@@ -16,6 +16,7 @@ import { captureServerException } from './api/_lib/sentry.js'
 import { runnerOriginsFromEnv } from './runnerHost.js'
 import { isAppError } from '@dhcb/core-errors/appError'
 import { copyWebResponseHeaders, forwardEventStream } from '@dhcb/core-http/nodeResponse'
+import { createRequestBodyErrorHandler } from './requestBodyErrors.js'
 
 import ttsHandler from '@dhcb/core-ai/tts'
 import aiHandler from '@dhcb/core-ai/ai'
@@ -413,4 +414,8 @@ export function registerApiRoutes(app: express.Express): void {
   app.all('/api/pvp-arena', wrapEdge(pvpArenaHandler))
   // Gemini Live Bidirectional Streaming Gateway (Platform V7.2) — Full-Duplex PCM & Audio Streaming.
   app.all('/api/gemini-live', wrapEdge(geminiLiveHandler))
+
+  // Đặt sau cả parser riêng lẫn parser 64kb: JSON lỗi phải dừng trước default handler,
+  // nơi Express 5.3 có thể ghi nguyên request body chứa thông tin riêng tư vào log.
+  app.use(createRequestBodyErrorHandler(applyCommonSecurityHeaders))
 }
