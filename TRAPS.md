@@ -1037,3 +1037,22 @@ xanh cùng HEAD thì là lệch trình duyệt, ghi vào báo cáo, **không s�
 **Cổng chốt:** CI luôn cài đúng bản ghim (cache theo phiên bản Playwright) nên cổng thật không bị
 ảnh hưởng; ở máy khác, muốn khớp CI thì `npx playwright install chromium` rồi đặt
 `PLAYWRIGHT_CHROMIUM_PATH` trỏ tới bản vừa cài (hoặc bỏ biến để Playwright tự tìm bản của nó).
+
+## 32. Đo kích thước bằng `getBoundingClientRect` khi khung cha còn đang chạy hoạt ảnh
+
+**Đã gặp:** issue #1409, changelog `0655`, PR #1426. Ca E2E "1440px: mọi ô ngày ≥ 24×24px"
+(`e2e/u6-user-preferences.spec.ts`) lúc đỏ lúc xanh trên cùng source, nhận `23.99993896484375`.
+Ô lịch luôn `w-6 h-6` = 24 px; test đo ngay khi lưới hiện, lúc khung cha còn chạy `fade-in`
+(`translateY` lẻ). Chromium tính hộp ĐÃ BIẾN ĐỔI bằng số thực 32-bit: ở y ≈ 500–1000 px bước
+làm tròn là 2⁻¹⁵–2⁻¹⁴ px, nên `bottom − top` có thể ra `24 − 2⁻¹⁴`. Đo thật: 2.464/10.001 vị
+trí `translateY` cho chiều cao < 24; chạy test 80 lượt không retry thì đỏ 6.
+
+**Cách rà:** giá trị đo hụt ngưỡng một phần cực nhỏ (`24 − 6e-5`, `44 − 1e-4`) mà retry lại
+xanh → nghi transform/hoạt ảnh đang chạy ở tổ tiên, không phải bố cục sai. So `offsetHeight`
+(bố cục, không biến đổi) với `getBoundingClientRect().height`; liệt kê
+`el.getAnimations()` của từng tổ tiên tại thời điểm đo.
+
+**Cổng chốt:** trước khi đo hình học bằng `getBoundingClientRect`/`boundingBox`, chờ mọi hoạt ảnh
+HỮU HẠN trên phần tử và tổ tiên xong (`animation.finished`, bỏ hoạt ảnh lặp vô hạn, bắt
+reject khi bị huỷ) — mẫu ở ca M6 của `e2e/u6-user-preferences.spec.ts`. **Không** hạ ngưỡng,
+không làm tròn kết quả, không tăng retries để che.
