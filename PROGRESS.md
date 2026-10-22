@@ -199,12 +199,12 @@ wc -l`), đừng cộng nhẩm — ghi chú trước đó từng ghi `fairy-tale
   và ràng buộc phiên ở client (changelog `0645`), có test-first/review độc lập. Baseline S05 đã merge/deploy
   [PR #1413](https://github.com/seeker19110/dhcb/pull/1413), main08f9508e:19context xanh,
   CI22.350unit/1.460E2E/0flaky, actualCI80+8/source44/cleanup0 và4localPGnegative đạt;
-  chưa human label review/quality floor/vector thật. Đang tích hợp instrumentation S06 local
-  mặc định tắt, metadata allowlist/no content:142targeted,84×4mounted modes, đủ11localgates đạt;
-  1.006file/22.465unit/35skip, coverage96,01/91,89/96,92/96,73%; UI173/browser55(retry0),
-  AA/AAA và ảnh1440/390 đạt. Exact-head CI/PR/merge còn chờ, chưa nghiệm thu bản phát hành.
-  Agent tự chọn Chromium/Linux localhost và mobile viewport mô phỏng; acoustic/device/network
-  thật vẫn WAITING, không suy số đo hiệu năng từ fake clock.
+  chưa human label review/quality floor/vector thật. Instrumentation S06 (đo metadata giọng nói
+  cục bộ, mặc định tắt) đã merge/deploy [PR #1414](https://github.com/seeker19110/dhcb/pull/1414),
+  main `17ce6b0f`: CI/deploy/CodeQL/secret scan đều SUCCESS (đối soát changelog `0657`).
+  **Goal WAITING chủ dự án** — engineering xong; còn 3 việc cần người (mục 7 file goal):
+  duyệt nhãn tay + chốt floor S05, benchmark vector thật (provider có phí), đo acoustic/device
+  thật S06. Không suy số đo hiệu năng từ fake clock.
 - **[2026-10-13] Gợi ý nâng cấp từ rà soát chéo** (`docs/research/2026-10-13-goi-y-nang-cap.md`,
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,
