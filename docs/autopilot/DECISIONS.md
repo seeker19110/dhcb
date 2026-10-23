@@ -22,3 +22,17 @@
 - Chọn: Sửa ngưỡng thành 190000 theo số đo, phạm vi T-002 giữ nguyên
 - Lý do (tiêu chí chất lượng cuối): Ngưỡng là ước lượng lập kế hoạch trước khi đo, không phải cổng chất lượng; dời thêm sẽ lấn phạm vi T-003 cần đọc từng mục. Cổng thật (test report-status/changelog, prettier, kiểm không mất dòng) giữ nguyên.
 - Đường lùi: Đặt lại ngưỡng cũ trong PLAN
+
+### D-004 · 2026-10-23T12:54:38+00:00 · Audit delta giữa Lát 1 và Lát 2?
+
+- Phương án: (1) Chạy audit 13 nhóm · (2) Bỏ qua: diff chỉ dời Markdown nguyên văn, không mã/cấu hình
+- Chọn: Bỏ qua: diff chỉ dời Markdown nguyên văn, không mã/cấu hình
+- Lý do (tiêu chí chất lượng cuối): Phạm vi audit delta theo diff = rỗng về mã; cổng thật (test report-status/changelog, prettier, kiểm không mất dòng) đã chạy
+- Đường lùi: Chạy xt.py audit plan khi có diff mã
+
+### D-005 · 2026-10-23T12:56:24+00:00 · Ngưỡng byte Gate T-003 (150000) thấp hơn số đo sau khi dời hết mục đã xong
+
+- Phương án: (1) Dời thêm mục còn mở/quyết định còn hiệu lực để đạt 150000 · (2) Sửa ngưỡng thành 160000 theo số đo; phần còn lại là trạng thái thật
+- Chọn: Sửa ngưỡng thành 160000 theo số đo; phần còn lại là trạng thái thật
+- Lý do (tiêu chí chất lượng cuối): Lần thứ hai ngưỡng ước lượng trước khi đo bị lệch (ghi nhận). Đúng & an toàn: phần còn lại đều là việc mở/quyết định/nợ mở — dời đi sẽ làm PROGRESS sai trạng thái. Cổng thật (test, prettier, kiểm không mất dòng) giữ nguyên.
+- Đường lùi: Đặt lại ngưỡng; dời thêm khi chủ dự án xác nhận mục nào hết hiệu lực
