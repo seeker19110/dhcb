@@ -25,3 +25,19 @@ audit: npm audit --omit=dev
 # Khai báo thêm (đọc, không chạy bởi dev-task): migrate cần DATABASE_URL tới Postgres dùng một lần (CI: service container postgres:16); sql-prepare gồm migrate + check:sql.
 install: npm ci
 migrate: npm run migrate:pg
+
+# Khoá mới của khung (bản 3.15.3 (1023a46)) — bật bằng cách bỏ "# "; vắng khoá = hành vi cũ
+# setup: ""             # cài phụ thuộc trước mỗi job CI (npm ci · pip install …); trống = bỏ qua
+format_check: npm run format:check
+coverage: npm run test:coverage
+# commit_gate: fast
+# test_fast: ""         # test liên quan file đổi (XT_CHANGED_FILES, mỗi dòng một file); trống → test
+# merge_hard_exceptions: human
+# delivery_phase: build
+# e2e_setup: ""         # trước e2e: cài trình duyệt (vd npx playwright install --with-deps chromium)
+# e2e_affected: ""      # chỉ spec của lát đang làm (Gate mỗi task); trống = e2e
+# attack: ""            # tấn công thử: DAST (ZAP baseline/API scan) · fuzz API (schemathesis run …) trên bản chạy cục bộ/staging
+# perf: ""              # kiểm tải có ngưỡng, đỏ khi vượt ngân sách (vd k6 run với thresholds)
+# claude_min_version: ""   # doctor cảnh báo khi Claude Code thấp hơn (LOOP-HARNESS-026)
+# ai_attribution: ""    # forbid = guard chặn commit/PR ghi tên model hay URL phiên AI (LOOP-HARNESS-027)
+# pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 72 ký tự

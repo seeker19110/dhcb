@@ -1,7 +1,7 @@
 ---
 title: Mẫu GO-NO-GO
 kind: template
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 
 # Mẫu GO-NO-GO.md — báo cáo phát hành
@@ -14,10 +14,11 @@ updated: 2026-10-16
 ```markdown
 # GO/NO-GO — <Tên dự án> · phát hành <phiên bản/tag> · <YYYY-MM-DD>
 
-> Commit: `<SHA>` · Blueprint: `xt.py blueprint-status BLUEPRINT.md --strict` → exit <0/1> (MUST mở: <n>) · CI: <link, xanh/đỏ>
+> Commit: `<SHA>` · Blueprint: `xt.py blueprint-status BLUEPRINT.md --strict --run` → exit <0/1> (MUST mở: <n>, lệnh kiểm đỏ: <n>, MUST tick không có lệnh kiểm: <n>) · CI: <link, xanh/đỏ>
 > Người kiểm: <tên/agent> (report-only) · Phạm vi: <web/mobile/API — bỏ phần không áp dụng, ghi lý do>
 
 ## 1. Đếm
+> Phần máy: `xt.py release-check --json` (blueprint `--strict --run` · sổ audit `--strict` · kiểm lại cuối · cây git · đề xuất "Khi chạy thật") → dán `verdict` và từng hàng FAIL vào mục 3; NO-GO của máy là NO-GO. Người vẫn ký mục 5.
 | Mức | PASS | FAIL | N/A |
 |---|---|---|---|
 | BLOCKER | | | |
