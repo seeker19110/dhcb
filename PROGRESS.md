@@ -1375,19 +1375,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   chiều). (2) ✅ `/api/persons?action=full_erase` nay đòi xác minh lại
   (mật khẩu/Google + 2FA) qua cổng dùng chung với `/api/account` (`api/_lib/reauthGate.ts`, cùng
   hạn mức lượt thử), `0541` — chưa có giao diện nào gọi endpoint này; (3) ✅ câu SQL dựng động nay `check:sql` kiểm hết (21 → 0 câu bỏ qua, `0536`).
-- ✅ **[2026-10-02 — phát hiện ở changelog `0485`, ĐÃ XỬ LÝ ở `0549`] Action Canvas "tạo sơ đồ
-  từ mục tiêu" từng chỉ là KHUNG MẪU cố định.** Nay AI ĐỀ XUẤT phân rã thật (đặc tả
-  `docs/specs/2026-10-09-action-canvas-phan-ra-muc-tieu-ai.md`): 1 lời gọi/lần, đếm chung lượt AI/ngày,
-  hoàn lượt khi AI lỗi/đầu ra hỏng, khoá chống hai request đua, đầu ra kiểm Zod + DAG; đề xuất KHÔNG
-  tự lưu — người dùng bỏ/sửa bước rồi bấm Lưu; hết lượt thì tự bắt đầu với thẻ mục tiêu. Khung mẫu
-  `synthesizeCrossDomainGoalCanvas` đã gỡ. **Việc tay còn lại:** chủ dự án chạy
-  `npm run eval:action-canvas` (cần key AI trong `.env`, tốn phí) và ghi kết quả vào PR — chưa
-  chạy lần nào trên model thật.
-- ✅ **[2026-10-02 — changelog `0479`, ĐÃ XỬ LÝ ở `0539`] "Chỉ số tự nhận thức" giả của nhật ký
-  phản tỉnh đã BỎ HẲN** (cùng "Growth Mindset" và "xu hướng tư duy"): service không còn tính, hợp
-  đồng/API/giao diện không còn số, thay bằng phản hồi định tính (bẫy có thể đang mắc + cụm từ khiến
-  bộ dò nghĩ tới + câu hỏi Socratic theo từng bẫy). Bản ghi cũ trong `platform.feature_state` vẫn
-  còn hai trường số (không xoá dữ liệu thật) — server chỉ ngừng đọc/ghi.
 - 🟡 **[2026-10-02 — HẠ MỨC từ 🔴 sau changelog `0473`; THU HẸP ở `0547`, `0551`, `0552`, `0560`, `0608`, `0611`, `0612`, `0613`, `0614`] Bảng nháp
   STEM (Companion › Thử thách) — bước giữa đã kiểm được cho Toán + Hoá, Vật lí kiểm thứ nguyên.** `0547` (đặc tả
   `docs/specs/2026-10-09-kiem-buoc-giai-stem.md`): Toán — phương trình đại số MỘT ẩn được so TẬP
@@ -1485,14 +1472,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `ignores`, khai `sourceType: 'commonjs'` (trước đó flat config parse `.cjs` như ES module).
   Hai file `commitlint.config.cjs`/`ecosystem.config.cjs` qua 127 luật; file thử có biến thừa bị bắt.
   (4) **ESLint 10:** chờ `eslint-plugin-jsx-a11y` mở peer (nay chỉ tới `^9`).
-- ✅ **ĐÃ ĐÓNG [2026-09-22, xác nhận qua CI — `docs/changelog/0413-*.md`] Deploy VPS đỏ 5 lần
-  liên tiếp vì hết heap Node lúc build (`FATAL ERROR ... JavaScript heap out of memory`),
-  không liên quan nội dung PR.** Vá bằng `NODE_OPTIONS=--max-old-space-size=2560` cho bước
-  build trong `scripts/deploy.sh` (PR #1110). **Xác nhận:** lần deploy đầu tiên sau khi PR
-  merge — run #1061 (`e1db7a89`, workflow id 35696918341) — **xanh**, 06:53:43 → 06:57:35
-  (~3 phút 52 giây, đúng thời lượng một deploy bình thường, không dấu hiệu tràn swap bất
-  thường). Cũng đã sửa hai file changelog cùng đánh số `0411` (PR #1108/#1109 merge gần nhau
-  không ai chạy lại `npm run changelog`) — đổi file của PR #1109 sang `0412`.
 - 🟡 **[2026-09-22 — audit UI/UX sâu, `docs/audit/2026-09-22-danh-gia-sau-ui-ux.md` +
   `docs/changelog/0412-*.md`, PR đợt 0412] Đã xử lý 6 đợt A–F trong một PR.** Nợ còn lại: (1)
   ✅ `err.message` thô — ĐÃ ĐÓNG HẲN 2026-09-25 (`docs/changelog/0453-*.md`): 0433 bỏ sót khuôn
@@ -1570,76 +1549,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   thiết kế).
   (Bản này thay 9 file bài học của #1187 — changelog 0461; `shots:lesson-anim` chạy được trên Windows từ #1187.)
   Đặc tả: `docs/specs/2026-09-21-hoat-anh-mo-phong-bai-hoc.md`.
-- ✅ **[2026-09-20 — PR #1061 → ĐÓNG 2026-09-25, `docs/changelog/0447-*.md`] Ảnh Tầng 8b cho sửa
-  tương phản CompanionVoice đã chụp và xem bằng mắt.** Ảnh 390/1440 × blue-sky/dark-blue × 3 studio
-  cho thấy: trước sửa, 3 thẻ nền tối có chữ gần như không đọc được; sau sửa, chữ đọc được. Quét axe
-  cùng lúc lộ ra **14 vi phạm AA khác** ở 5 studio, mà cổng AA chưa quét → mở S06c (Approved,
-  sửa ở PR kế tiếp).
-- ✅ **[2026-09-20 — Đợt 4 theo dõi audit 0380 — ĐÃ ĐÓNG 2 việc, còn 1 việc cần backend thật]**
-  Chủ dự án đã chốt việc 1 và 2 (`docs/changelog/0380-*.md`):
-  1. Gỡ `ComingSoonBanner` khỏi `/luyen-noi` (`Speaking.tsx`) — tính năng đã chạy thật trên
-     production (TTS/STT thật), banner "Sắp ra mắt" từ quyết định 2026-08-09 nay gây hiểu lầm.
-  2. Sửa gốc rễ toast "Đã đồng bộ dữ liệu học tập thành công!" bắn lại mỗi lần điều hướng trang:
-     `applyCloudProgress()` trong `apps/dhcb/src/lib/progressSync.ts` gọi `enqueueSync(userId,
-'english')` **VÔ ĐIỀU KIỆN** sau mỗi lượt kéo (`pullProgress`), dù bản hợp nhất không có gì
-     mới ngoài bản cloud vừa nhận — mỗi trang dùng `useCloudSync` (Home/Dashboard/Profile/
-     History/EnglishHome/Speaking/Writing/Chat) mount lại là kéo + đẩy lại y nguyên, khiến hàng
-     đợi luôn có đúng 1 mục rồi gửi ngay → `OfflineSyncIndicator.tsx` thấy "chờ → 0" mỗi lần và
-     bắn banner. Sửa: chỉ `enqueueSync` khi hợp nhất THẬT SỰ có gì mới so với bản cloud (local có
-     mục cloud chưa có, SRS/exam/settings đổi nội dung, hoặc local thắng theo mốc thời gian ở
-     placement/weeklyGoal/settings). Test canh ở `progressSync.test.ts`.
-  3. **CÒN MỞ** — vài màn báo lỗi tải dữ liệu (trang chủ, hồ sơ, `/su-nghiep-khoi-nghiep`,
-     `/cong-viec-cuoc-song`) thấy trong ảnh chụp audit: môi trường phiên làm việc này KHÔNG có
-     `DATABASE_URL`/backend Postgres thật (đã kiểm — biến rỗng), nên KHÔNG thể tự xác nhận đây là
-     lỗi thật hay chỉ do môi trường audit thiếu backend. Cần chủ dự án hoặc phiên có backend thật
-     kiểm lại các trang trên trước khi kết luận có phải bug production hay không.
-- ✅ **[2026-09-16 → 2026-09-19 — `apps/hub/src` nằm NGOÀI cổng tương phản tĩnh — ĐÃ ĐÓNG]** (`docs/changelog/0373-*.md`). Tiền đề của nợ cũ (hub "không cùng hệ token") **sai**: hub đã có `ThemeToggle` (`App.tsx`/`HubLogin.tsx`) và `apps/hub/tailwind.config.js` map `zinc`/`accent` sang ĐÚNG biến `--z-*`/`--a-*` của `packages/core-ui/theme.css` — cùng hệ token với `@dhcb/app`. Gỡ bằng cách thêm `apps/hub/src` vào phạm vi quét của `scripts/fixed-color-contrast-audit.ts` (không tạo script riêng); vá 5 chỗ rớt AA tìm được (`theme-light:text-<màu>-800/900`, đúng cách vá đã dùng ~720 lần); ~60 chỗ `text-zinc-*` còn lại đã tự đạt AA (chỉ dùng bậc sáng). Phần E2E ĐÃ ĐÓNG ở changelog `0598`: `e2e/a11y-hub.spec.ts` quét trang chủ + `/login` của hub × 3 theme (0 vi phạm A/AA) và đo thêm tương phản CHỮ GRADIENT — điểm mù của axe; chính phép đo này bắt tiêu đề hub chỉ đạt 1,27:1 ở theme sáng (đã sửa). Changelog `0599` gom MỌI chữ gradient (hub + hai con số band điểm của app) về `packages/core-ui/gradientText.ts`, đo tĩnh ở 3 theme × 3 bề mặt, sửa thêm hai con số điểm ~1,5:1 ở theme sáng và điểm thấp bài viết 3,28:1 ở theme tối.
-- ✅ **[2026-09-16 → 2026-09-17 — S13-1 → S13-2] Hai nợ giao diện do cổng mới ĐO ĐƯỢC — ĐÃ ĐÓNG** (`docs/changelog/0358-*.md`, PR S13-2):
-  1. `aria-prohibited-attr` (serious) trên Trang chủ ở trạng thái ĐANG TẢI: `TodayCard.tsx` nay có `role="status"`; khối `NO_AA` của `e2e/learning-ux-states.spec.ts` đã **xoá hẳn** — cổng chạy ở mức tuyệt đối, 0 vi phạm AA.
-  2. Đoạn văn quá dài ở ≥ 768px: **126 → 3** vi phạm trên toàn bộ 10 ô (today 10→1 · outline 8→0 · lesson 12→0 · result 27→0 · progress 8→1 · tutor 2→1, 768/1440). Cách sửa: bó khoảng đọc `.read-measure` (hiệu chuẩn 66ch → 63ch, đo được 83 → 79 ký tự/dòng) lên đúng những đoạn chữ để đọc. Bảng `BASELINE_KY_TU` đã về **rỗng**.
-- ✅ **[2026-09-17 → XÁC NHẬN ĐÃ ĐÓNG 2026-09-20] Initial JS — mô tả "vượt mốc cảnh báo, trần
-  140kB" ĐÃ LỖI THỜI, không cần tách chunk.** Cùng ngày 2026-09-17 (sau thời điểm ghi nợ này),
-  đặc tả `docs/specs/...thiet-ke-lai-trang-chu.md`/`docs/changelog/0360-*.md` (PR #1000) đã
-  **NỚI TRẦN CÓ CHỦ ĐÍCH 140 → 150 kB** để có chỗ cho các lát P0 của trang chủ mới — quyết định
-  của chủ dự án, đúng luật "nới ngân sách không phải việc của agent". Đo lại 2026-09-20
-  (`npm run budget`, build sạch): **Initial JS 137,54 / 150 kB = 91,7%** — dưới mốc cảnh báo
-  95%, dư 12,46 kB. Không còn là nợ mở; không tách chunk vì không cần thiết ở mức dùng hiện tại.
-- ✅ **[2026-09-17 → ĐÃ ĐÓNG 2026-09-20, `docs/changelog/0358-*.md` + `docs/changelog/0385-*.md`] Coverage branch — ĐÃ ĐẠT "≥ 1 điểm" mà AC-10 đòi.** Thêm test ca biên cho nhánh chưa phủ:
-  `listChemAdvancedLessons`/`listChemLessonsByChapter` (`packages/subject-chemistry/lessons.ts`,
-  trước đây 0 test) và các nhánh rỗng/thẻ SCRIPT/CSS rỗng của `htmlPrelude.ts`
-  (`packages/subject-programming`). Đo sau khi thêm (`npm run test:coverage` sạch, checkout mới):
-  **Branches 90,01% (16175/17969) — dư 1,01 điểm so với sàn 89.** Không hạ sàn, không nới ngưỡng.
 - 🟡 **[2026-09-17 — S13-2] AC-8 (ma trận thị giác 6 màn × 5 trục) CHƯA CHẤM:** spec S13 §7 Q6 cấm agent vừa làm vừa chấm — điểm cuối là của chủ dự án. 18 ảnh bắt buộc chụp sẵn bằng `npm run shots:learning-ux`. **Gỡ:** chủ dự án chấm 30 ô kèm một câu lý do/ô; ô < 4 thành mục việc. Goal `learning-ux` KHÔNG được kết luận COMPLETE trước đó.
-- ✅ **[2026-09-15 → ĐÃ ĐÓNG 2026-09-20, `docs/changelog/0384-*.md`] Hai tài liệu được CLAUDE.md và mã dẫn tới nhưng KHÔNG tồn tại trong repo — KHÔI PHỤC LẠI.** Cả hai từng bị GỘP vào tài
-  liệu tổng hợp khác trong một đợt dọn tài liệu (đúng khuôn lỗi đã gặp ở Đợt 1 audit UI/UX
-  2026-09-19: nội dung còn nguyên trong bản gộp, chỉ đường dẫn gốc bị gãy). `docs/research/eval-tutor-baseline.md`
-  (CLAUDE.md §8 + `scripts/eval-tutor.ts:53`) khôi phục nguyên văn từ `dinh-huong-va-ke-hoach-chung.md`
-  mục [6]; `docs/research/cai-tien-lo-trinh-hoc.md` (`storage.ts:241`) khôi phục nguyên văn từ
-  `phuong-phap-va-su-pham.md` mục [1]. `npm run check:specs` xanh. Cũng sửa: CLAUDE.md §13 ghi sai
-  sàn coverage `97/93/96/97` — số thật theo `vitest.config.ts` là `93/89/93/93`, đã sửa.
-- ✅ **[2026-09-15 → 2026-09-16 — S09] Mất tiến độ Lập trình khi offline — ĐÃ ĐÓNG:** nền server xong ở S09-1 (`docs/changelog/0334-*.md`, PR #940: migration `0083`, `version`/`client_updated_at`, `public.sync_receipts`, `sync.attemptId`/batch); hàng đợi client xong ở **S09-2** (`docs/changelog/0353-*.md`, PR #984): `apps/dhcb/src/lib/syncOutbox.ts` gửi lại theo chủ sở hữu (debounce · gộp · backoff · Web Locks · 401), `fetchProgress` phủ mục còn chờ lên bản server, `offlineStore.ts` (hàng đợi giả) đã xoá. Ba lỗi F1/F4/F5 hết. **Còn lại:** S09-3 (`ConflictRecord` + hộp thoại hỏi người học) vẫn BLOCKED chờ S08 quyết đẩy nháp lên server.
-- ✅ **[2026-09-15 → đóng hoàn toàn 2026-09-19, `docs/changelog/0376-2026-09-19-sua-f6-f8-progress-merge.md`] Ba lỗi merge tinh tế ghi nợ ở S09-1 — ĐÃ SỬA CẢ BA (F7/F6/F8).** F7 (`mergeSrsMap` hoà `reps`) sửa ở đợt trước. F6 (`hard` ghi đè theo thứ tự ĐẾN của request) và F8 (`mergeByTimestamp` cho `placement`/`weeklyGoal` lệch đồng hồ 2 thiết bị) sửa ở đợt này theo quyết định đã chốt của chủ dự án: `resolveHard()` mới ở `progressMerge.ts` so `client_updated_at` (migration `0083`) của bản đã lưu với request hiện tại, bỏ qua thay đổi `hard` nếu request cũ hơn; `mergeByTimestamp()` nhận thêm tham số tuỳ chọn `clientClock` dùng `client_updated_at` của CẢ REQUEST (một trục nhất quán, thay vì mốc `lastAt`/`updatedAt` tự ghi rải rác từng object) làm tiêu chí chính, field nội bộ vẫn giữ để tie-break phụ. Cột `version` (S09-1) là version của CẢ DÒNG, không tách theo field — không đủ để làm trọng tài riêng cho `placement`/`weeklyGoal` (đã ghi rõ lý do đổi phương án so với đề xuất ban đầu trong changelog trên).
-- ✅ **[2026-09-15 → ĐÃ ĐÓNG 2026-09-19 — khảo sát S12] `learningReadModelService.ts` select cột `stats`/`settings` không tồn tại trong `english.learning_progress` — ĐÃ SỬA theo ADR-0005 (Accepted).** Service nay chỉ SELECT cột thật (`learned, srs, placement, updated_at`); `masteredCount` tính từ `learned` (tự báo cáo), `inProgressCount`/`dueForReviewCount`/`srsDueCount` tính từ `srs` theo server time (`Date.now()`), `recentEvidenceCount` đổi sang nullable và trả `null` cho subject không có nguồn evidence thật (`english` hiện tại). Test canh `learningReadModelService.schemaGuard.test.ts` đã bỏ `describe.skip`, chạy XANH THẬT. Xem `docs/changelog/0375-2026-09-19-sua-learning-read-model-adr-0005.md`.
-- ✅ **[2026-09-15 — ĐÃ TRẢ, xem `docs/changelog/0334-2026-09-15-on-dinh-test-python3.md`] `packages/subject-programming/lessonsPython.test.ts` (ca `p5-s2`) flaky dưới tải toàn suite.** Nguyên nhân thật KHÔNG phải `timeout: 15_000` của `execFileSync` mà là: hằng số `PYTHON_TEST_TIMEOUT_MS = 30_000` chỉ được truyền cho 2 trong 4 khối `it.each` sinh tiến trình `python3`; hai khối còn lại (Predict, milestone check — nơi `p5-s2` nằm) vẫn dùng mặc định 5s của Vitest. Đo lúc máy rảnh: ca chậm nhất của khối CÓ timeout là `p5-u6-l1` 1.866ms (dư 16×), ca chậm nhất của khối KHÔNG có timeout là `p5-s2` 1.604ms (dư 3,1×) — dưới tải song song thì 3,1× không đủ. Đã truyền hằng số cho cả bốn khối, không skip/giảm ca nào. Mục `programmingSrs.test.ts` (2026-09-14) là nợ KHÁC họ — ĐÃ TRẢ ở changelog `0344` (đo lại 2026-10-10: ca "limit cắt đúng số thẻ" 2–5 ms, 3/3 lượt xanh).
-- ✅ **[2026-09-15 → ĐÓNG HOÀN TOÀN 2026-09-19, ADR-0007 Accepted] Bài Lập trình bậc P1–P4 (Python) nay được CHẤM LẠI Ở SERVER trước khi ghi `status:'completed'`, cả 3 lớp bảo vệ đều BẬT THẬT trên production.** `packages/subject-programming/completionSandboxServer.ts` chạy code học viên bằng `python3` thật trong tiến trình con (đúng `grading.ts`/`pyLanes.ts` mà cổng nội dung `lessonsPython.test.ts` dùng), đọc test-case từ registry SERVER (không tin dữ liệu client gửi). 3 lớp bảo vệ: (1) allowlist chặn import module hệ thống/mạng; (2) chạy dưới user hệ thống riêng `dhcb-sandbox` — đã chạy `scripts/setup-programming-sandbox-user.sh` + cấu hình `PROGRAMMING_SANDBOX_USER=dhcb-sandbox` + `pm2 restart --update-env` trên VPS thật 2026-09-19, xác nhận `pm2 logs` không có cảnh báo "không tra được uid/gid"; (3) giới hạn CPU/bộ nhớ/tiến trình (`ulimit`) + timeout 10s khớp client, diệt CẢ CÂY tiến trình qua `timeout(1)` (sửa ở PR sau khi phát hiện `execFileSync`'s timeout không lan xuống cháu tiến trình qua `sudo`). Cô lập mạng tầng phụ (`unshare --net`) VPS này CŨNG hỗ trợ — xác nhận qua script (không còn là nợ mở, xem lịch sử ADR-0007 Quyết định 2 đã đóng). `apps/server/src/api/subjects/programming/progress.ts` đòi kèm `code` khi báo 'completed' bài thuộc phạm vi này, từ chối (400) nếu chấm lại không đạt, rate-limit 5 lần nộp sai/phút/bài chống spam CPU. Bước dự án (`p<n>-s<x>`) và bài P5/P6 + 14 hướng chuyên sâu KHÔNG thuộc phạm vi ADR-0007 — xem dòng nợ hẹp bên dưới.
-- ✅ **[2026-09-19 → ĐÓNG HOÀN TOÀN 2026-09-20 — ADR-0007 Quyết định 4; ADR-0008 Accepted] 509/509 bài Lập trình (100%) nay được CHẤM LẠI Ở SERVER, không còn bài nào "client tự khai".**
-  `docs/adr/0008-cham-lai-server-lap-trinh-ngoai-p1-p4.md` (Accepted, cả 3 câu hỏi đã thi hành).
-  B1+B2 (374 bài, `docs/changelog/0382-*.md`) + B3 (97 bài JS/TS/`html`/`dom`/`fetch`,
-  `docs/changelog/0384-2026-09-20-adr-0008-b3-js-ts-dom-fetch.md`) đã đóng trước. **Đợt này đóng
-  nốt câu hỏi 3 — SQL (5 bài, `docs/changelog/0387-*.md`):** xác minh THẬT trên `sql.js` (không
-  đoán): `load_extension()` không tồn tại trong bản dựng đang dùng (ném "no such function");
-  `ATTACH DATABASE '<đường dẫn>' AS x` không chạm hệ thống file thật (bản WASM không có VFS bền —
-  kiểm bằng thực nghiệm: ghi bảng vào CSDL đã ATTACH rồi `existsSync()` đường dẫn, không tồn
-  tại). Kết luận: an toàn chấm-lại-ở-server cùng mức tin cậy với lúc chạy trong Worker trình
-  duyệt. Thêm `regradeSqlSubmission()` trong `completionSandboxServer.ts` (nạp `sql.js` lười,
-  dùng lại `SQL_SEED`/`formatSqlResults` — đúng engine `sqlWorker.ts`/`lessonsSql.test.ts`).
-  `regradeSubmission()` vẫn là dispatcher duy nhất. Test canh gồm ca xác minh ATTACH DATABASE
-  không tạo file thật trên server. Bước dự án `p<n>-s<x>` + tiêu chí hướng chuyên sâu vẫn NGOÀI
-  phạm vi ADR-0008 (câu hỏi 2 chốt KHÔNG mở rộng — chấm bằng rubric/artifact, khác bài toán này).
-
-> Mục này CHỈ giữ nợ **đang mở** (🟡/🔴). Nợ đã đóng (🟢) được dời sang
-> `docs/legacy/no-ky-thuat-da-dong.md` (2026-09-01) để file này chỉ nói trạng thái hiện tại —
-> đúng vai trò ở mục 2 `CLAUDE.md`. Đóng một món nợ = cắt khối đó dán sang file kia, kèm ngày.
 
 - **[2026-09-15 — slice 02 Góc học tập, xem `docs/changelog/0326-*.md`, Q3 chủ dự án uỷ quyền]
   🟡 Dữ liệu học đã lỡ ghi ở origin `hoc-tap.donghanhcungban.org` KHÔNG được migrate.** Nguyên
@@ -1654,44 +1564,6 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   (`docs/changelog/0383-*.md`), mọi môn dùng `/goc-hoc-tap/<mã môn>` trên MỘT host — không còn
   origin thứ hai để ghi nhầm. Nợ vẫn 🟡 vì phần dữ liệu ĐÃ ghi ở origin cũ chưa được dọn/chuyển.
   Đóng nợ sau 60 ngày không phản ánh, hoặc khi `hoc-tap.` bị gỡ khỏi `server_name` của nginx.
-- ✅ **[2026-09-14 — ĐÃ TRẢ 2026-09-16, xem changelog trả nợ flaky] Test flaky có sẵn của môn
-  Lập trình đã sửa.** Nguyên nhân thật KHÔNG phải `vi.setSystemTime` mà là ca "limit cắt đúng số
-  thẻ cho một phiên ôn" nạp cả 381 bài (~1184 thẻ) vào SRS — `addLessonCardsToSrs()` gọi `save()`
-  (stringify + ghi localStorage toàn bộ) cho MỖI thẻ nên đó là O(n²), đo thật ~1,7s trên máy rảnh,
-  vượt ngưỡng 5s dưới tải full suite. Sửa cho nhanh (chỉ nạp đủ bài để vượt limit) thay vì nới
-  ngưỡng. Cùng đợt: nới timeout 4 describe bcrypt thật (12 vòng) ở `packages/core-auth/authService.test.ts`
-  — cùng khuôn lỗi, phát hiện khi chạy full suite (S05-2). Xem `TRAPS.md` mục khuôn lỗi timeout
-  5s dưới tải.
-- ✅ **[2026-09-12 → ĐÃ SIẾT 2026-09-19, xem `docs/changelog/0291-*.md` +
-  `docs/changelog/0376-*.md`] Khoá bậc môn Lập trình — phần NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP nay siết ở
-  SERVER.** Trước đây luật "Free học tuần tự P1→P6" chỉ tính ở trình duyệt
-  (`lib/programmingLevelLock.ts`); người sửa localStorage/gõ thẳng URL vẫn GHI ĐƯỢC tiến độ bậc
-  chưa mở. Từ 2026-09-19, `api/subjects/programming/progress.ts` tự kiểm lại bằng cùng hàm THUẦN
-  `computeLevelLockMap` (`packages/subject-programming/levelLockServer.ts`) trước khi upsert:
-  bài xương sống thuộc bậc chưa mở → 403, KHÔNG ghi DB. GRANDFATHER suy TỪ DỮ LIỆU SERVER sẵn có
-  (bất kỳ dòng `lesson_progress` nào ở một bậc, bất kể status, tức là đã từng vào bậc đó) — không
-  cần migration/cột mới, không khoá oan người dùng cũ. **Vẫn CỐ Ý không khoá nội dung bài học**
-  (đọc bài không phải bí mật) — chỉ chặn ghi tiến độ.
-  **[Cập nhật 2026-09-15 — chế độ Khách, `docs/changelog/0317-*.md`, KHÔNG đổi]** Khách vãng lai
-  (chưa đăng nhập) vẫn không có hàng trên server nên luật khoá của họ vẫn tính HOÀN TOÀN ở
-  client, theo tiến độ localStorage — quyết định riêng ở
-  `docs/specs/2026-09-15-mo-xem-web-khong-can-dang-nhap.md`, không đổi bởi đợt siết này (khách
-  không có điểm/tiền/xếp hạng gắn với danh tính nên không lấy được gì khi tự mở khoá; lượt AI
-  thì server vẫn đếm theo `X-Guest-Id` + IP).
-
-- ✅ **[2026-09-12 → xác minh lại 2026-09-19, xem `docs/changelog/0289-*.md` +
-  `docs/changelog/NNNN-2026-09-19-*.md`] Kho lượt cửa sổ trượt 7 ngày — mô tả "MỒ CÔI" ban đầu là
-  SAI, đã đóng nợ chính.** GĐ1 bỏ `consume_rolling_credit`/`refund_rolling_credit` khỏi đường
-  enforce (Free chuyển sang hạn mức TỔNG/ngày) — **hai hàm này thật sự không còn lời gọi TS nào**
-  (xác nhận qua `packages/core-billing/usage.test.ts:121,246`) — ✅ **ĐÃ GỠ ở migration `0093`**
-  (changelog `0607`, chủ dự án đồng ý 2026-10-11; cả bốn chữ ký của 0017 + 0029). Nhưng **bảng `free_daily_credit` + hàm `grant_daily_bonus_rolling` KHÔNG
-  mồ côi** — rà lại code thật 2026-09-19 phát hiện `apps/server/src/api/_lib/quests.ts`
-  (`getCurrentStreak`, nhiệm vụ `streak_5` — "học liên tiếp 5 ngày") đọc trực tiếp
-  `free_daily_credit.bonus_earned` và PHỤ THUỘC bảng này được ghi tiếp tục mỗi ngày qua lời gọi
-  ở `apps/server/src/api/core/progress.ts`. **QUYẾT ĐỊNH: GIỮ NGUYÊN lời gọi
-  `grant_daily_bonus_rolling`** — gỡ nó sẽ làm nhiệm vụ streak_5 hỏng âm thầm (không cổng CI nào
-  bắt được, vì không có test tích hợp progress.ts→quests.ts). Không còn việc phải làm cho phần
-  bảng/hàm chính này.
 
 - 🟡 **[2026-08-26 — NỢ CÓ CHỦ ĐÍCH, người dùng chốt; TRẢ XONG PHẦN GIAO DIỆN 2026-09-05] Hai
   tính năng mới CHƯA có bản chiều B** (người nước ngoài học tiếng Việt). Người dùng xác nhận:
