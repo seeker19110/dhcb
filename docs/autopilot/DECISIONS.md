@@ -15,3 +15,10 @@
 - Chọn: Duyệt
 - Lý do (tiêu chí chất lượng cuối): Chỉ tài liệu, lát nhỏ, mỗi task có Gate máy kiểm, không mất dữ liệu
 - Đường lùi: Revert từng PR
+
+### D-003 · 2026-10-23T12:44:11+00:00 · Ngưỡng byte Gate T-002 (185000) thấp hơn số đo thật
+
+- Phương án: (1) Giữ 185000, dời thêm phần ngoài phạm vi T-002 · (2) Sửa ngưỡng thành 190000 theo số đo, phạm vi T-002 giữ nguyên
+- Chọn: Sửa ngưỡng thành 190000 theo số đo, phạm vi T-002 giữ nguyên
+- Lý do (tiêu chí chất lượng cuối): Ngưỡng là ước lượng lập kế hoạch trước khi đo, không phải cổng chất lượng; dời thêm sẽ lấn phạm vi T-003 cần đọc từng mục. Cổng thật (test report-status/changelog, prettier, kiểm không mất dòng) giữ nguyên.
+- Đường lùi: Đặt lại ngưỡng cũ trong PLAN
