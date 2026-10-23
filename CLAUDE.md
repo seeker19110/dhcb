@@ -61,7 +61,7 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
 ## 3. Cách quản lý dự án (quan trọng nhất)
 
 - **Theo giai đoạn, không bỏ giai đoạn.** Đầu phiên nêu rõ đang ở giai đoạn nào, việc tiếp theo là gì.
-- **Cổng giữa các giai đoạn.** Trước khi chuyển giai đoạn / thay đổi lớn: tóm tắt đã đạt cổng chưa và **xin xác nhận của người dùng**.
+- **Cổng giữa các giai đoạn.** Trước khi chuyển giai đoạn / thay đổi lớn: tóm tắt đã đạt cổng chưa rồi **tự duyệt theo mục 12** — chỉ hỏi khi rơi vào điểm dừng về hành động.
 - **Theo dõi trạng thái.** `PROGRESS.md` chỉ giữ TRẠNG THÁI HIỆN TẠI (giai đoạn · tiếp theo · việc tay · quyết định · nợ mở) — sửa TẠI CHỖ khi trạng thái thật sự đổi, không chồng thêm mục. Phần đã xong dời sang `docs/legacy/`.
 - **TẠO PR = COI NHƯ ĐÃ XONG (2026-08-09, làm rõ 2026-08-26).** Ba việc làm **liền một mạch**, không tách ra hỏi lại:
   1. **Nhật ký đợt việc = MỘT FILE MỚI trong `docs/changelog/`** theo khuôn `NNNN-YYYY-MM-DD-slug.md` (`npm run changelog` in số kế tiếp). Ghi số PR, ngày, việc đã làm, quyết định, bằng chứng kiểm chứng. KHÔNG chồng mục vào `PROGRESS.md` (test `scripts/changelog.test.ts` canh).
@@ -166,7 +166,7 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
   `guestHomePrerender.test.tsx` đỏ.
 - Code đơn giản, dễ đọc, **thêm comment tiếng Việt** ở chỗ quan trọng. Mỗi file/hàm làm 1 việc; tên biến tiếng Anh dễ hiểu.
 - KHÔNG đưa API key/mật khẩu vào code — luôn dùng `.env`. Mọi lệnh gọi AI phải **đếm/giới hạn lượt** (Free vs VIP) tránh tốn tiền API.
-- Trước khi sửa nhiều file hoặc đổi cấu trúc: **giải thích kế hoạch ngắn gọn rồi hỏi trước**. Mỗi thay đổi nhỏ, dễ kiểm tra; sau khi sửa nói rõ đã đổi gì + cách chạy thử.
+- Trước khi sửa nhiều file hoặc đổi cấu trúc: **giải thích kế hoạch ngắn gọn rồi làm** (mục 12). Mỗi thay đổi nhỏ, dễ kiểm tra; sau khi sửa nói rõ đã đổi gì + cách chạy thử.
 - Gặp khái niệm mới: **giải thích cho người mới hiểu**. Ưu tiên giải pháp **miễn phí / chi phí thấp** (dự án vốn tối thiểu).
 - **URL mang tiêu đề:** route có id nội dung có tiêu đề PHẢI theo khuôn `<mã>--<slug>` qua
   `buildSlugSegment`/`idFromSlugSegment` (`packages/core-ui/slug.ts`), dựng qua đúng MỘT hàm dùng
@@ -215,7 +215,7 @@ CÙNG LÚC (`gradingSchemas.contract.test.ts` canh).
 
 Đạt toàn bộ cổng commit · chạy TOÀN BỘ test (xanh) · nhánh đã cập nhật với nhánh chính, không xung đột · đối chiếu đủ tiêu chí chấp nhận (`PROJECT.md`) + Definition of Done · tự chạy smoke test luồng chính (thật) · rà bảo mật (quyền server, không lộ dữ liệu) · không phá tính năng khác (ghi rõ nếu có breaking change) · nếu đổi schema: có migration có phiên bản, rollback được.
 
-"Không phá tính năng khác" phải **kiểm bằng công cụ, không bằng trí nhớ**: `npm run codemap -- impact <file>` cho từng file đã sửa → soát lại danh sách bị ảnh hưởng (mục 7). Nếu merge cục bộ: chạy lại test **trên kết quả đã merge**, không chỉ trên nhánh feature. Quyết định tích hợp (merge / tạo PR / giữ nguyên chờ) là của **người dùng** — AI trình bày lựa chọn, không tự chọn thay; chỉ xoá nhánh khi người dùng xác nhận rõ ràng. Chi tiết: KHUNG 2 mục "Hoàn tất một nhánh phát triển".
+"Không phá tính năng khác" phải **kiểm bằng công cụ, không bằng trí nhớ**: `npm run codemap -- impact <file>` cho từng file đã sửa → soát lại danh sách bị ảnh hưởng (mục 7). Nếu merge cục bộ: chạy lại test **trên kết quả đã merge**, không chỉ trên nhánh feature. Tích hợp theo mục 11 (PR + tự merge khi CI xanh); chỉ xoá nhánh khi người dùng xác nhận rõ ràng. Chi tiết: KHUNG 2 mục "Hoàn tất một nhánh phát triển".
 
 ## 10. Báo cáo xác thực (xuất trước mỗi commit/merge)
 
@@ -271,9 +271,19 @@ Lịch sử vì sao có từng luật trên (PR #693/#709/#724/#726/#727): `docs
 **Động vào CI thì ĐO, đừng đoán:** đọc `started_at`/`completed_at` từng job và mốc
 `##[group]Run` trong log. Lý do từng luật: `docs/claude-md-chi-tiet.md` §11.1.
 
-## 12. Khi nào PHẢI dừng và hỏi
+## 12. Tự quyết hay dừng hỏi (luật bớt hỏi của X-Templates ADR-0008, chốt 2026-10-23)
 
-Yêu cầu mơ hồ / nhiều cách hiểu · thao tác không thể hoàn tác (xóa dữ liệu, đổi schema phá vỡ) · mâu thuẫn với code/thiết kế hiện có · breaking change ảnh hưởng nhiều nơi · nhiều giải pháp đánh đổi khác nhau đáng kể · đụng bảo mật, thanh toán, dữ liệu người dùng thật.
+- **Điểm quyết định chuyên môn → TỰ DUYỆT, không hỏi:** yêu cầu nhiều cách hiểu, chọn công nghệ/thiết
+  kế/phạm vi, mâu thuẫn spec ↔ code, sửa nhiều file/đổi cấu trúc, breaking change, đổi cổng kèm lý
+  do. Chọn theo **tiêu chí chất lượng cuối** (trên thắng dưới): (1) đúng & an toàn — bảo mật/pháp lý
+  lấy cách hiểu chặt hơn · (2) giữ đường lùi · (3) bền, đơn giản, theo chuẩn, test được · (4) trải
+  nghiệm người dùng · (5) tốc độ/chi phí chỉ để phá hoà. Ghi quyết định + lý do + đường lùi vào
+  changelog/PR (kiến trúc: ADR), báo kết quả rồi làm tiếp; người dùng can thiệp lúc nào cũng được.
+- **Vẫn PHẢI dừng hỏi (điểm dừng về hành động):** tiền thật/thanh toán · dữ liệu người dùng
+  thật/production · thao tác không đảo ngược (xoá dữ liệu, migration phá vỡ) · gọi dịch vụ trả
+  phí/khoá thật · bị công cụ/hook chặn mà chỉ người dùng gỡ được. Còn việc độc lập thì làm tiếp,
+  gom câu hỏi báo một lần.
+- Nguồn: `.xtemplates/framework/11-autonomous-loop/stop-points-and-escalation.md` §Điểm quyết định.
 
 ## 13. Trạng thái hiện tại
 
