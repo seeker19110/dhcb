@@ -47,8 +47,20 @@ const TRACKED = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' 
   .split('\n')
   .filter(Boolean)
 
+/**
+ * Đường dẫn mà skill quy trình chép từ khung X-Templates (`autopilot`, `audit`, `research` — chép
+ * giữ nguyên nội dung upstream, chỉ khác định dạng Prettier — changelog 0659) nhắc tới nhưng KHÔNG phải file DHCB
+ * phải có sẵn: file do chính skill TẠO RA khi chạy, hoặc file của repo đang được nghiên cứu.
+ */
+const DUONG_DAN_SKILL_TAO_RA = new Set([
+  'docs/autopilot/PLAN.md', // /autopilot tạo ở Pha 1
+  'docs/ops/AUDIT-STATUS.md', // /audit tạo sổ máy đọc
+  'docs/gaps.md', // /research: file của repo NGUỒN đang được xác minh, không phải của DHCB
+])
+
 /** Đường dẫn tồn tại nếu là file/thư mục thật, hoặc là tiền tố của file đang được git theo dõi (vd `docs/changelog/0206`). */
 export function duongDanTonTai(p: string, tracked: readonly string[] = TRACKED): boolean {
+  if (DUONG_DAN_SKILL_TAO_RA.has(p)) return true
   if (existsSync(join(ROOT, p))) return true
   return tracked.some((f) => f.startsWith(p))
 }
