@@ -36,3 +36,10 @@
 - Chọn: Sửa ngưỡng thành 160000 theo số đo; phần còn lại là trạng thái thật
 - Lý do (tiêu chí chất lượng cuối): Lần thứ hai ngưỡng ước lượng trước khi đo bị lệch (ghi nhận). Đúng & an toàn: phần còn lại đều là việc mở/quyết định/nợ mở — dời đi sẽ làm PROGRESS sai trạng thái. Cổng thật (test, prettier, kiểm không mất dòng) giữ nguyên.
 - Đường lùi: Đặt lại ngưỡng; dời thêm khi chủ dự án xác nhận mục nào hết hiệu lực
+
+### D-006 · 2026-10-24T08:38:52+00:00 · Vá lỗ hổng high của body-parser bằng cách nào?
+
+- Phương án: (1) npm audit fix — chỉ cập nhật lockfile lên body-parser 2.4.0 · (2) Thêm overrides trong package.json · (3) Bỏ qua, chờ Express nâng
+- Chọn: npm audit fix — chỉ cập nhật lockfile lên body-parser 2.4.0
+- Lý do (tiêu chí chất lượng cuối): Đúng & an toàn: lỗ hổng DoS ở phụ thuộc production, bản vá nằm trong dải ^2 của Express 5.3 nên không đổi API. Giữ đường lùi: chỉ lockfile, revert được. Overrides thêm nợ cấu hình; chờ Express để hở lỗ hổng.
+- Đường lùi: git revert PR; lockfile về body-parser 2.3.0
