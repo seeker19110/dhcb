@@ -85,6 +85,8 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   gỡ banner trùng lối tắt ở `/goc-hoc-tap`, ảnh 390 px 1045 → 857). **Cả 4 đợt sửa sau audit ĐÃ
   XONG**; còn mở: F-007 (biên CSS, chỉ ghi nhận) và F-008 (`eval:tutor` baseline mới với key thật —
   việc tay chủ dự án, AI không làm được).
+  **Audit delta 2026-10-24** (`docs/audit/2026-10-24-audit-delta.md`, changelog `0662`–`0663`): 19 commit
+  sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền

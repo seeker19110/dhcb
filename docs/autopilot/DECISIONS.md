@@ -43,3 +43,10 @@
 - Chọn: npm audit fix — chỉ cập nhật lockfile lên body-parser 2.4.0
 - Lý do (tiêu chí chất lượng cuối): Đúng & an toàn: lỗ hổng DoS ở phụ thuộc production, bản vá nằm trong dải ^2 của Express 5.3 nên không đổi API. Giữ đường lùi: chỉ lockfile, revert được. Overrides thêm nợ cấu hình; chờ Express để hở lỗ hổng.
 - Đường lùi: git revert PR; lockfile về body-parser 2.3.0
+
+### D-007 · 2026-10-24T10:14:26+00:00 · Hiểu 'hoàn thiện dự án' thế nào cho một phiên?
+
+- Phương án: (1) Audit đầy đủ 11 tầng lại từ đầu · (2) Audit delta sau 2026-10-20 + đóng lỗ hổng phụ thuộc còn lại · (3) Làm tính năng mới trong PROGRESS
+- Chọn: Audit delta sau 2026-10-20 + đóng lỗ hổng phụ thuộc còn lại
+- Lý do (tiêu chí chất lượng cuối): Đúng: audit đủ 11 tầng mới làm 4 ngày trước và đã sửa hết; delta chỉ 19 commit chủ yếu phụ thuộc. Giữ đường lùi + bền: kiểm bằng máy, sửa lỗ hổng có bằng chứng. Tính năng mới cần đặc tả Approved — không tự mở.
+- Đường lùi: Chạy /audit đầy đủ khi chủ dự án muốn
