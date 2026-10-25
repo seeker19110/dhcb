@@ -87,6 +87,12 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   việc tay chủ dự án, AI không làm được).
   **Audit delta 2026-10-24** (`docs/audit/2026-10-24-audit-delta.md`, changelog `0662`–`0663`): 19 commit
   sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0.
+  **Eval AI thật 2026-10-25** (chủ dự án chạy trên VPS, changelog `0664`): **F-008 ĐÃ ĐÓNG** — baseline
+  `eval:tutor` 180 câu đã ghi (`docs/research/eval-tutor-baseline.md`); companion 16/16, code-feedback 8/8,
+  routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — cần chạy lại
+  `npm run eval:action-canvas` trên VPS sau deploy để xác nhận các bất biến khác. **🔴 F-011 MỞ:** gia sư
+  bịa lỗi ở câu đúng — FP-rate ≈ 50 % trên cùng 62 câu cũ (5,6 % hồi Groq 2026-08-26); cần sửa prompt
+  chấm rồi chạy lại `eval:tutor` với key thật.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền

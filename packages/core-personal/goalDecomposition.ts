@@ -21,7 +21,12 @@ import { ActionCanvasService } from './actionCanvasService.js'
 export const MAX_STEPS = 8
 /** Sàn số bước — ít hơn thì không phải "phân rã". */
 export const MIN_STEPS = 2
-/** Trần độ sâu chuỗi phụ thuộc (bước không phụ thuộc gì = tầng 1). */
+/**
+ * Độ sâu chuỗi phụ thuộc KHUYÊN model giữ (bước không phụ thuộc gì = tầng 1) — chỉ dùng trong prompt.
+ * Bộ kiểm KHÔNG từ chối chuỗi sâu hơn: model thật hay trả chuỗi tuần tự s1→…→sN (hợp lệ về nghĩa),
+ * trần cứng 4 tầng từng làm 10/10 ca eval thành 502 (changelog 0664). Độ sâu vẫn bị chặn tự nhiên
+ * bởi `MAX_STEPS` và luật không vòng.
+ */
 export const MAX_DEPTH = 4
 /** Trần số phụ thuộc của MỘT bước. */
 export const MAX_DEPS_PER_STEP = 3
@@ -119,7 +124,6 @@ export type DecompositionFailure =
   | 'unknown_dependency'
   | 'self_dependency'
   | 'cycle'
-  | 'too_deep'
   | 'link_in_label'
 
 export type DecompositionResult =
@@ -200,9 +204,7 @@ export function parseGoalDecomposition(raw: string): DecompositionResult {
     }
   }
 
-  const depth = longestDependencyDepth(steps)
-  if (depth === null) return { ok: false, reason: 'cycle' }
-  if (depth > MAX_DEPTH) return { ok: false, reason: 'too_deep' }
+  if (longestDependencyDepth(steps) === null) return { ok: false, reason: 'cycle' }
   return { ok: true, steps }
 }
 

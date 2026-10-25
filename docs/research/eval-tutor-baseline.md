@@ -1,54 +1,60 @@
 # Eval gia sư AI — baseline (⑤ T1)
 
-> ## ⚠️ HIỆU LỰC CỦA BASELINE — cập nhật 2026-10-09 (changelog 0553)
+> ## Hiệu lực — cập nhật 2026-10-25 (changelog 0664, đóng F-008)
 >
-> **Mọi số liệu bên dưới (2026-08-26) CHỈ còn hiệu lực với bộ 62 câu cũ** (toàn chiều A). Golden
-> set nay là **180 câu** (62 cũ + 118 mới ở `scripts/eval-tutor-fixtures-extra.json`, cả hai chiều
-> A/B, nhóm đúng/ca biên 60 câu): **bộ mới CHƯA có baseline** — không so số của bộ 180 câu với bảng
-> dưới đây. Muốn đối chiếu với baseline cũ: `npm run eval:tutor -- --limit 62` (bộ cũ luôn đứng
-> trước khi gộp).
+> Baseline dưới đây là **lần đầu** của bộ 180 câu, chạy trên VPS với cấu hình production
+> (chủ dự án chạy tay, dán nguyên văn kết quả vào phiên; số liệu chép đúng nguyên văn). Chạy **MỘT lượt**
+> (không `--runs 3`), nên chưa có khoảng Wilson — so sánh PR sau chỉ coi là khác khi chênh vượt
+> "Dải nhiễu" cuối file. Baseline cũ (2026-08-26, 62 câu, Groq) giữ ở mục "Lịch sử" để đối chiếu với
+> `npm run eval:tutor -- --limit 62`.
 >
-> **Việc tay chủ dự án (cần key AI thật):** chạy `npm run eval:tutor -- --runs 3 --write-baseline`
-> (≈ 540 lời gọi/chế độ), xem lại các câu bị hỏng, rồi commit file này. Lưu ý lệnh ghi đè TOÀN BỘ file
-> (kể cả phần "Dải nhiễu" cuối file) — nếu cần giữ phần đó, chép lại sau khi chạy. `--runs N` in
-> trung bình ± độ lệch chuẩn giữa các lượt và khoảng tin cậy Wilson 95% theo từng nhóm lỗi; hai lần
-> chạy chỉ coi là KHÁC NHAU khi khoảng Wilson không chồng lên nhau. `--group <tên>` chạy riêng một
-> nhóm (loại lỗi · error · correct · edge · clean · A · B). `CLAUDE.md` §8 không đổi: vẫn "không tụt
-> so với baseline" — baseline mới (nhiều lượt) mới đủ rộng để luật đó có nghĩa.
+> **Điểm cần theo dõi:** FP-rate 53,3 % — bịa lỗi ở 32/60 câu đúng/ca biên, nặng nhất ở câu đúng
+> chiều B (`x-b-correct-*` 14/21). Với người mới, sửa SAI hại hơn bỏ sót: đây là việc nên làm tiếp
+> (sửa prompt chấm ⇒ bắt buộc chạy lại `eval:tutor` theo CLAUDE.md §8).
+>
+> **Tụt so với baseline cũ trên CÙNG 62 câu** (đếm từng dòng trong log lượt chạy này): 44/44 câu lỗi
+> bắt được (recall 100 %), nhưng 9/18 câu đúng/ca biên bị bịa lỗi (ok-01/03/05/06/08,
+> edge-01/03/04/05) ⇒ FP-rate ≈ 50 % so với 5,6 % ngày 2026-08-26 (Groq · gpt-oss-120b). Khác biệt
+> vượt xa "Dải nhiễu" cuối file — đây là tụt chất lượng thật kể từ khi Claude làm AI chính (#1315),
+> ghi thành phát hiện F-011 (changelog 0664).
 
 > Sinh tự động bởi `npm run eval:tutor -- --write-baseline`. KHÔNG sửa tay phần số liệu.
 > Phương pháp + cách đọc chỉ số: xem cuối file.
 
-- **Ngày chạy:** 2026-08-26
-- **Provider · model:** Groq · openai/gpt-oss-120b (3 key)
-- **Golden set:** 62 câu (44 lỗi · 12 đúng · 6 ca biên)
+- **Ngày chạy:** 2026-10-25
+- **Provider · model:** Anthropic · claude-haiku-5-5 (effort low)
+- **Golden set:** 180 câu (120 lỗi · 43 đúng · 17 ca biên)
 - **Chế độ chạy:** chat
 
 ## Tổng hợp
 
 | Chế độ | Chấm được | Recall | Precision | FP-rate | Specificity | Feedback VI | JSON hợp lệ | Type-hit* |
 | ------ | --------- | ------ | --------- | ------- | ----------- | ----------- | ----------- | --------- |
-| chat   | 62        | 97.7%  | 97.7%     | 5.6%    | 94.4%       | 100.0%      | —           | 76.7%     |
+| chat   | 180       | 99.2%  | 78.8%     | 53.3%   | 46.7%       | 100.0%      | —           | 58.0%     |
 
 ## Recall theo loại lỗi — chế độ chat
 
 | Loại lỗi        | Bắt được / Tổng |
 | --------------- | --------------- |
-| third_person_s  | 4/4             |
-| plural_s        | 5/5             |
-| article         | 7/7             |
-| tense           | 7/7             |
-| aux_verb        | 4/4             |
-| missing_be      | 4/4             |
-| extra_be        | 2/2             |
-| preposition     | 5/5             |
-| adjective_order | 1/2             |
-| pronoun         | 3/3             |
-| word_by_word    | 5/5             |
+| third_person_s  | 8/8             |
+| plural_s        | 8/8             |
+| article         | 8/8             |
+| tense           | 11/11           |
+| aux_verb        | 9/9             |
+| missing_be      | 8/8             |
+| extra_be        | 8/8             |
+| preposition     | 8/8             |
+| adjective_order | 8/8             |
+| pronoun         | 8/8             |
+| word_by_word    | 8/8             |
+| tone_mark       | 8/8             |
+| classifier      | 8/8             |
+| word_order      | 8/8             |
+| negation        | 7/8             |
 
-**Bỏ sót lỗi (FN):** adj-02
+**Bỏ sót lỗi (FN):** x-b-negation-07
 
-**Bịa lỗi ở câu đúng/ca biên (FP):** edge-05
+**Bịa lỗi ở câu đúng/ca biên (FP):** ok-01, ok-03, ok-05, ok-06, ok-08, edge-01, edge-03, edge-04, edge-05, x-a-correct-01, x-a-correct-08, x-a-correct-09, x-a-edge-01, x-a-edge-05, x-b-correct-01, x-b-correct-03, x-b-correct-05, x-b-correct-06, x-b-correct-07, x-b-correct-08, x-b-correct-09, x-b-correct-10, x-b-edge-03, x-b-edge-04, x-b-edge-05, x-b-correct-11, x-b-correct-12, x-b-correct-15, x-b-correct-17, x-b-correct-19, x-b-correct-20, x-b-correct-21
 
 ## Cách đọc
 
@@ -58,8 +64,6 @@
 - **Feedback VI** = tỉ lệ nhận xét (chiều A) đúng bằng tiếng Việt.
 - **JSON hợp lệ** = tỉ lệ câu trả lời speaking đúng schema `{speech,feedback,corrected}`.
 - **Type-hit\*** = ĐO GẦN ĐÚNG bằng từ khoá xem nhận xét có nhắm đúng loại lỗi không — CHỈ tham khảo, không dùng để pass/fail.
-
----
 
 ## ⚠️ DẢI NHIỄU — đọc TRƯỚC khi kết luận một PR làm tụt chất lượng
 
@@ -101,3 +105,39 @@ Muốn thu hẹp dải nhiễu thì phải mở rộng golden set (nhất là nh
 > KHÔNG đổi số liệu) để hết tham chiếu gãy — xem `docs/changelog/0384-*.md`. **Số liệu vẫn
 > là bản chạy 2026-08-26, ĐÃ CŨ** — PR nào cần so sánh mới phải tự chạy lại
 > `npm run eval:tutor -- --write-baseline` (cần key AI thật) trước khi dựa vào file này.
+
+## Lịch sử — baseline cũ 2026-08-26 (bộ 62 câu, Groq)
+
+> Sinh tự động bởi `npm run eval:tutor -- --write-baseline`. KHÔNG sửa tay phần số liệu.
+> Phương pháp + cách đọc chỉ số: xem cuối file.
+
+- **Ngày chạy:** 2026-08-26
+- **Provider · model:** Groq · openai/gpt-oss-120b (3 key)
+- **Golden set:** 62 câu (44 lỗi · 12 đúng · 6 ca biên)
+- **Chế độ chạy:** chat
+
+#### Tổng hợp
+
+| Chế độ | Chấm được | Recall | Precision | FP-rate | Specificity | Feedback VI | JSON hợp lệ | Type-hit* |
+| ------ | --------- | ------ | --------- | ------- | ----------- | ----------- | ----------- | --------- |
+| chat   | 62        | 97.7%  | 97.7%     | 5.6%    | 94.4%       | 100.0%      | —           | 76.7%     |
+
+#### Recall theo loại lỗi — chế độ chat
+
+| Loại lỗi        | Bắt được / Tổng |
+| --------------- | --------------- |
+| third_person_s  | 4/4             |
+| plural_s        | 5/5             |
+| article         | 7/7             |
+| tense           | 7/7             |
+| aux_verb        | 4/4             |
+| missing_be      | 4/4             |
+| extra_be        | 2/2             |
+| preposition     | 5/5             |
+| adjective_order | 1/2             |
+| pronoun         | 3/3             |
+| word_by_word    | 5/5             |
+
+**Bỏ sót lỗi (FN):** adj-02
+
+**Bịa lỗi ở câu đúng/ca biên (FP):** edge-05
