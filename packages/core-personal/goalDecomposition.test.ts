@@ -115,11 +115,6 @@ describe('parseGoalDecomposition — đầu ra hỏng bị TỪ CHỐI có lý d
       'cycle',
     ],
     [
-      `sâu quá ${MAX_DEPTH} tầng`,
-      raw(Array.from({ length: MAX_DEPTH + 1 }, (_, i) => step(`s${i + 1}`, i ? [`s${i}`] : []))),
-      'too_deep',
-    ],
-    [
       'link trong nhãn (injection)',
       raw([step('s1', [], { title: 'Vào https://evil.example' }), step('s2')]),
       'link_in_label',
@@ -244,5 +239,19 @@ describe('GOAL_DECOMPOSITION_JSON_SCHEMA — hợp đồng với Zod và prompt'
 
   it('API chấp nhận được (additionalProperties:false, required đủ, không từ khoá cấm)', () => {
     expect(schemaViolations(GOAL_DECOMPOSITION_JSON_SCHEMA)).toEqual([])
+  })
+})
+
+// Model thật (Haiku, eval:action-canvas 2026-10-25) hay trả chuỗi TUẦN TỰ s1→s2→…→sN: hợp lệ về
+// nghĩa (học IELTS là tuần tự), nên KHÔNG từ chối vì sâu — trước đây trần 4 tầng làm 10/10 ca 502.
+// Prompt vẫn khuyên ≤ MAX_DEPTH tầng; bộ kiểm chỉ còn chặn vòng + trần số bước.
+describe('parseGoalDecomposition — chuỗi phụ thuộc tuần tự', () => {
+  const chain = (n: number) =>
+    raw(Array.from({ length: n }, (_, i) => step(`s${i + 1}`, i ? [`s${i}`] : [])))
+  it.each([MAX_DEPTH + 1, MAX_STEPS])('chấp nhận chuỗi %i bước nối tiếp nhau', (n) => {
+    const r = parseGoalDecomposition(chain(n))
+    expect(r.ok).toBe(true)
+    if (r.ok)
+      expect(r.steps.map((s) => s.key)).toEqual(Array.from({ length: n }, (_, i) => `s${i + 1}`))
   })
 })

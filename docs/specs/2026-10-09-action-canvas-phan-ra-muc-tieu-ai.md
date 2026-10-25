@@ -37,7 +37,7 @@ Người dùng đã đăng nhập nhập một mục tiêu, server gọi AI rẻ
 - Bộ kiểm đầu ra `packages/core-personal/goalDecomposition.ts` (Zod `.strict()` + luật nghiệp vụ):
   2–8 bước · key `s1…s99` không trùng · tiêu đề 2–80 ký tự, chi tiết ≤ 280 · miền CHỈ
   `learning`/`work`/`general` (miền đã xoá ⇒ từ chối, không lặng lẽ đổi) · ≤ 3 phụ thuộc/bước ·
-  phụ thuộc trỏ bước có thật, không tự trỏ · **DAG** (Kahn) · độ sâu ≤ 4 · không link/URL · không
+  phụ thuộc trỏ bước có thật, không tự trỏ · **DAG** (Kahn) · ~~độ sâu ≤ 4~~ (sửa 2026-10-25, xem cuối file) · không link/URL · không
   trường lạ (vd `actions`) · chuỗi thô ≤ 8000 ký tự · chấp nhận đúng một khối rào ```json.
 - Đề xuất trả về **không lưu**: `{ success, source: 'ai', proposal: ActionCanvasState }`. Nút gốc
   là CHÍNH câu mục tiêu (AI không đổi được), mọi thẻ AI: `status: 'draft'`, `assignedTo: 'user'`,
@@ -181,3 +181,12 @@ npm run eval:action-canvas   # tốn phí, cần key trong .env
 - Có phá bất biến ⑤ nào không:
 - Có mở rộng ngoài phạm vi ① không:
 - Còn để ngỏ:
+
+## Sửa đổi sau khi duyệt
+
+- **2026-10-25 (changelog 0664) — bỏ trần cứng "độ sâu ≤ 4" ở bộ kiểm.** `eval:action-canvas` chạy với
+  cấu hình production (Anthropic · Haiku) cho **0/10**: cả 10 ca bị từ chối `too_deep` — model trả chuỗi
+  tuần tự s1→s2→…→sN (hợp lệ về nghĩa) dù prompt khuyên ≤ 4 tầng, nên mọi yêu cầu phân rã đều 502.
+  Quyết định (CLAUDE.md §12, tự duyệt): prompt GIỮ NGUYÊN lời khuyên ≤ 4 tầng (`MAX_DEPTH`), bộ kiểm chỉ
+  còn chặn vòng + trần `MAX_STEPS` = 8 (độ sâu vì thế ≤ 8). Bố cục canvas không phụ thuộc độ sâu. Lý do
+  `reason: 'too_deep'` bị gỡ khỏi `DecompositionFailure`. Đường lùi: đặt lại kiểm `depth > MAX_DEPTH`.
