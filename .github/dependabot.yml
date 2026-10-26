@@ -49,5 +49,10 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # init/analyze của codeql-action PHẢI cùng phiên bản — tách hai PR thì CodeQL báo
+    # "configuration error" (PR #1441/#1444).
+    groups:
+      codeql-action:
+        patterns: ['github/codeql-action*']
     commit-message:
       prefix: 'chore(ci)'
