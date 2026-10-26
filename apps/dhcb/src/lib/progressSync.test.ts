@@ -609,6 +609,32 @@ describe('progressSync — ca biên hợp nhất khi kéo về', () => {
     expect(srs.pen.reps).toBe(2)
   })
 
+  it('SRS hoà reps: dùng CÙNG luật với server (due xa hơn thắng) → hội tụ, không đẩy thừa (AUD-XFEAT-001)', async () => {
+    localStorage.setItem(
+      'srs_u2',
+      JSON.stringify({ book: { interval: 1, ease: 2, due: 100, reps: 3 } }),
+    )
+    const calls = mockFetchPull({ srs: { book: { interval: 2, ease: 2, due: 200, reps: 3 } } })
+    await pullProgress('u2')
+    await pullProgress('u2')
+    await flush()
+    const srs = JSON.parse(localStorage.getItem('srs_u2')!)
+    expect(srs.book).toEqual({ interval: 2, ease: 2, due: 200, reps: 3 })
+    expect(calls.filter((c) => c.method !== 'GET')).toHaveLength(0)
+    expect(pending('u2')).toBe(0)
+  })
+
+  it('SRS hoà reps, local có due xa hơn → local thắng và được đẩy lên', async () => {
+    localStorage.setItem(
+      'srs_u2',
+      JSON.stringify({ book: { interval: 4, ease: 2, due: 300, reps: 3 } }),
+    )
+    mockFetchPull({ srs: { book: { interval: 2, ease: 2, due: 200, reps: 3 } } })
+    await pullProgress('u2')
+    const srs = JSON.parse(localStorage.getItem('srs_u2')!)
+    expect(srs.book.due).toBe(300)
+  })
+
   it('settings: cloud có mốc updatedAt MỚI HƠN → ghi đè từng khoá có giá trị, giữ khoá cloud không gửi', async () => {
     localStorage.setItem('ui_lang', 'vi')
     localStorage.setItem('tts_voice', 'vi-VN-A')
