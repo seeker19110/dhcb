@@ -1,6 +1,6 @@
 # 0668 — 2026-10-26 — Restore an toàn: không báo thành công giả, không lộ mật khẩu, file giải mã 0600
 
-PR (điền khi mở). Đợt sửa audit thứ nhất (sổ `docs/ops/AUDIT-STATUS.md`): đóng `AUD-DATA-002` (🔴),
+PR #1447. Đợt sửa audit thứ nhất (sổ `docs/ops/AUDIT-STATUS.md`): đóng `AUD-DATA-002` (🔴),
 `AUD-SEC-003` (🟠), `AUD-SEC-004` (🟠).
 
 ## Đã làm
