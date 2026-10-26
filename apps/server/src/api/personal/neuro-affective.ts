@@ -16,7 +16,20 @@ import {
 import { ActiveShieldSchema } from '@dhcb/core-contracts/neuroAffective'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
-import { readJsonBody } from '@dhcb/core-http/validation'
+import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
+import { z } from 'zod'
+
+// Thân POST: bật/tắt một khiên, HOẶC đánh giá lại (tuỳ chọn tự đặt mức stress 0–100).
+const NeuroPostSchema = z.union([
+  z
+    .object({
+      action: z.literal('toggle_shield'),
+      shield: ActiveShieldSchema,
+      enabled: z.boolean(),
+    })
+    .strict(),
+  z.object({ stressOverride: z.number().min(0).max(100).optional() }).strict(),
+])
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -44,21 +57,22 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     if (req.method === 'POST') {
-      const rawBody = (await readJsonBody(req)) as {
-        action?: string
-        shield?: string
-        enabled?: boolean
-        stressOverride?: number
+      // AUD-CODE-001: trước đây đọc trường trên vỏ `{ ok, raw }` ⇒ luôn undefined, JSON hỏng vẫn 200.
+      const body = await readJsonBody(req)
+      if (!body.ok) return jsonResponse({ error: body.error.message }, body.error.status, headers)
+      const parsed = validateBody(NeuroPostSchema, body.raw)
+      if (!parsed.ok) {
+        return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
       }
+      const input = parsed.data
 
-      if (rawBody.action === 'toggle_shield' && rawBody.shield) {
-        const validatedShield = ActiveShieldSchema.parse(rawBody.shield)
-        const updated = toggleNeuroShield(person.id, validatedShield, Boolean(rawBody.enabled))
+      if ('action' in input) {
+        const updated = toggleNeuroShield(person.id, input.shield, input.enabled)
         return jsonResponse({ state: updated }, 200, headers)
       }
 
       const evaluated = await assessNeuroAffectiveState(pool, person.id, {
-        manualStressOverride: rawBody.stressOverride,
+        manualStressOverride: input.stressOverride,
       })
       return jsonResponse({ state: evaluated }, 200, headers)
     }
