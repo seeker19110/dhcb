@@ -25,6 +25,8 @@ beforeEach(() => {
     path.join(bin, 'psql'),
     '#!/usr/bin/env bash\n' +
       'printf "%s\\n" "$@" > "$FAKE_PSQL_ARGS"\n' +
+      // Mô phỏng psql dừng sớm (ON_ERROR_STOP ở câu đầu) — thoát mà không đọc hết stdin.
+      'if [ -n "${FAKE_PSQL_NO_READ:-}" ]; then exit "${FAKE_PSQL_EXIT:-0}"; fi\n' +
       'cat > "$FAKE_PSQL_STDIN"\n' +
       'printf "%s" "${FAKE_PSQL_STDOUT:-}"\n' +
       'exit "${FAKE_PSQL_EXIT:-0}"\n',
@@ -46,6 +48,7 @@ afterEach(() => {
     'FAKE_PSQL_EXIT',
     'FAKE_PSQL_STDOUT',
     'PWN_MARKER',
+    'FAKE_PSQL_NO_READ',
   ])
     delete process.env[key]
   fs.rmSync(dir, { recursive: true, force: true })
@@ -70,23 +73,32 @@ describe('assertGzipIntact — kiểm file TRƯỚC bước DROP', () => {
 })
 
 describe('runRestorePipeline — không báo thành công giả', () => {
-  it('gzip bị cắt cụt dù psql thoát 0 → ném lỗi (pipefail)', () => {
+  it('gzip bị cắt cụt dù psql thoát 0 → ném lỗi (pipefail)', async () => {
     const dump = writeDump('cut.sql.gz', 'select 1;\n', true)
-    expect(() => runRestorePipeline(dump, TARGET)).toThrow()
+    await expect(runRestorePipeline(dump, TARGET)).rejects.toThrow()
   })
-  it('psql báo lỗi SQL (exit 3) → ném lỗi', () => {
+  it('psql báo lỗi SQL (exit 3) → ném lỗi', async () => {
     process.env.FAKE_PSQL_EXIT = '3'
-    expect(() => runRestorePipeline(writeDump('ok.sql.gz', 'select 1;\n'), TARGET)).toThrow()
+    await expect(
+      runRestorePipeline(writeDump('ok.sql.gz', 'select 1;\n'), TARGET),
+    ).rejects.toThrow()
   })
-  it('lỗi ném ra KHÔNG chứa mật khẩu của connection string', () => {
+  it('lỗi ném ra KHÔNG chứa mật khẩu của connection string', async () => {
     process.env.FAKE_PSQL_EXIT = '3'
-    expect(() => runRestorePipeline(writeDump('ok.sql.gz', 'select 1;\n'), TARGET)).toThrow(
+    await expect(runRestorePipeline(writeDump('ok.sql.gz', 'select 1;\n'), TARGET)).rejects.toThrow(
       /^(?![\s\S]*s3cret-pass)[\s\S]*mã thoát 3/,
     )
     expect(() => verifyRestoredDatabase(TARGET)).toThrow(/^(?![\s\S]*s3cret-pass)/)
   })
-  it('gọi psql với ON_ERROR_STOP=1 và nạp đủ nội dung dump', () => {
-    runRestorePipeline(writeDump('ok.sql.gz', 'select 42;\n'), TARGET)
+  it('psql dừng sớm với dump lớn → ném lỗi, KHÔNG treo chờ gunzip', async () => {
+    process.env.FAKE_PSQL_NO_READ = '1'
+    process.env.FAKE_PSQL_EXIT = '3'
+    // ~30 MB sau giải nén — lớn hơn nhiều bộ đệm ống, gunzip chắc chắn phải chờ người đọc.
+    const big = writeDump('big.sql.gz', 'select 1;\n'.repeat(3_000_000))
+    await expect(runRestorePipeline(big, TARGET)).rejects.toThrow(/mã thoát 3/)
+  }, 15_000)
+  it('gọi psql với ON_ERROR_STOP=1 và nạp đủ nội dung dump', async () => {
+    await runRestorePipeline(writeDump('ok.sql.gz', 'select 42;\n'), TARGET)
     const args = fs.readFileSync(process.env.FAKE_PSQL_ARGS!, 'utf8').split('\n')
     expect(args).toContain('ON_ERROR_STOP=1')
     expect(args).toContain(TARGET)
@@ -107,13 +119,13 @@ describe('assertSafeDatabaseName — tên database ghép vào DROP/CREATE', () =
 })
 
 describe('runRestorePipeline — đường dẫn có ký tự shell không chạy được lệnh', () => {
-  it('đường dẫn chứa $(...) và dấu nháy được coi là tên file thuần', () => {
+  it('đường dẫn chứa $(...) và dấu nháy được coi là tên file thuần', async () => {
     // Tên file không chứa `/`; nếu shell diễn giải `$(...)` thì file đánh dấu sẽ được tạo ra.
     const marker = path.join(dir, 'pwned')
     process.env.PWN_MARKER = marker
     const evil = path.join(dir, 'x"$(touch "$PWN_MARKER")".sql.gz')
     fs.writeFileSync(evil, gzipSync(Buffer.from('select 1;\n')))
-    runRestorePipeline(evil, TARGET)
+    await runRestorePipeline(evil, TARGET)
     expect(fs.existsSync(marker)).toBe(false)
     expect(fs.readFileSync(process.env.FAKE_PSQL_STDIN!, 'utf8')).toBe('select 1;\n')
   })

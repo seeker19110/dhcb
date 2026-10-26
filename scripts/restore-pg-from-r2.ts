@@ -33,7 +33,7 @@
 import * as dotenv from 'dotenv'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import type { Readable } from 'node:stream'
 import { redactConnectionUrl } from './lib/restoreSafety.js'
@@ -220,7 +220,7 @@ async function cmdRestoreInto(targetDb: string): Promise<void> {
   console.log(`[restore:r2] Khôi phục dữ liệu vào "${targetDb}"...`)
   // Ghép connection string trỏ đúng database đích thay vì database mặc định của psqlUrl.
   const targetUrl = psqlUrl.replace(/\/[^/?]*(\?|$)/, `/${targetDb}$1`)
-  runRestorePipeline(localPath, targetUrl)
+  await runRestorePipeline(localPath, targetUrl)
 
   const users = verifyRestoredDatabase(targetUrl)
   if (cleanupLocal) fs.unlinkSync(localPath)
@@ -229,9 +229,6 @@ async function cmdRestoreInto(targetDb: string): Promise<void> {
   )
   console.log(`  Kiểm lại: psql "${redactConnectionUrl(targetUrl)}"`)
 }
-
-/** `$0` = nhãn tiến trình; `$1` = file dump; `$2` = connection string đích. `--` chặn tên file bắt đầu bằng `-`. */
-const RESTORE_PIPELINE_SCRIPT = 'gunzip -c -- "$1" | psql -v ON_ERROR_STOP=1 "$2"'
 
 /** Tên database đích được ghép vào DROP/CREATE và URL → chỉ nhận định danh Postgres thường. */
 const SAFE_DB_NAME = /^[a-z_][a-z0-9_]{0,62}$/
@@ -267,24 +264,43 @@ export function assertGzipIntact(localPath: string): void {
 
 /**
  * gunzip | psql — giống hệt cách pg_dump tạo ra file (cron: pg_dump ... | gzip), xem
- * docs/setup-postgresql-vps.md mục 7. `pipefail` để gzip hỏng giữa chừng làm cả lệnh lỗi;
- * `ON_ERROR_STOP=1` để câu SQL lỗi đầu tiên dừng psql với mã khác 0 — thiếu hai cờ này, restore
- * từng báo thành công sau dump lỗi (audit 2026-10-26, AUD-DATA-002).
+ * docs/setup-postgresql-vps.md mục 7. KHÔNG qua shell: Node chạy hai tiến trình và nối ống
+ * stdout → stdin, nên đường dẫn/URL không bao giờ bị diễn giải thành lệnh (CodeQL). Kiểm mã thoát
+ * của CẢ HAI (tương đương `pipefail`) + `ON_ERROR_STOP=1` để câu SQL lỗi đầu tiên dừng psql —
+ * thiếu hai điều này, restore từng báo thành công sau dump lỗi (audit 2026-10-26, AUD-DATA-002).
  */
-export function runRestorePipeline(localPath: string, targetUrl: string): void {
+export async function runRestorePipeline(localPath: string, targetUrl: string): Promise<void> {
+  const gunzip = spawn('gunzip', ['-c', '--', localPath], { stdio: ['ignore', 'pipe', 'inherit'] })
+  const psql = spawn('psql', ['-v', 'ON_ERROR_STOP=1', targetUrl], {
+    stdio: ['pipe', 'inherit', 'inherit'],
+  })
+  // psql dừng sớm (ON_ERROR_STOP) → gunzip ghi vào ống đã đóng (EPIPE). Mã thoát của hai tiến
+  // trình đã báo lỗi đầy đủ; nuốt riêng sự kiện EPIPE để nó không thành lỗi chưa bắt.
+  psql.stdin.on('error', () => {})
+  gunzip.stdout.pipe(psql.stdin)
+  // Khi psql đã thoát, `pipe` tự gỡ nên KHÔNG ai đọc stdout của gunzip nữa → gunzip kẹt ở lệnh ghi
+  // và không bao giờ thoát (treo với dump lớn lỗi ở đầu). Đóng đầu đọc để gunzip nhận EPIPE và dừng.
+  psql.once('close', () => gunzip.stdout.destroy())
+
+  let codes: [number | null, number | null]
   try {
-    // Script shell là HẰNG; đường dẫn + URL đi vào dưới dạng tham số vị trí $1/$2 nên không bao
-    // giờ bị shell diễn giải (đường dẫn chứa `"` hay `$(...)` không chạy được lệnh — CodeQL).
-    execFileSync(
-      'bash',
-      ['-o', 'pipefail', '-c', RESTORE_PIPELINE_SCRIPT, 'restore', localPath, targetUrl],
-      {
-        stdio: 'inherit',
-      },
-    )
-  } catch (err) {
-    rethrowWithoutCommand(err, 'Nạp dump (gunzip | psql)')
+    codes = await Promise.all([exitCodeOf(gunzip), exitCodeOf(psql)])
+  } catch {
+    // Lỗi spawn (thiếu gunzip/psql trên PATH) — không chuyển tiếp lỗi gốc vì nó mang theo đối số.
+    throw new Error('Nạp dump (gunzip | psql) thất bại: không chạy được gunzip hoặc psql.')
   }
+  const [gzCode, pgCode] = codes
+  if (pgCode !== 0) throw new Error(`Nạp dump (psql) thất bại (mã thoát ${pgCode ?? 'tín hiệu'}).`)
+  if (gzCode !== 0) {
+    throw new Error(`Giải nén dump (gunzip) thất bại (mã thoát ${gzCode ?? 'tín hiệu'}).`)
+  }
+}
+
+function exitCodeOf(child: ChildProcess): Promise<number | null> {
+  return new Promise((resolve, reject) => {
+    child.once('error', reject)
+    child.once('close', (code) => resolve(code))
+  })
 }
 
 /** Kiểm dữ liệu sau restore: bảng lõi đọc được và trả về số. Ném lỗi nếu không. */
