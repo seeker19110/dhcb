@@ -106,6 +106,23 @@ async function bumpUsageStat(userId: string, day: string, col: string): Promise<
   }
 }
 
+/**
+ * Cầu dao AI chung cho MỌI người gọi provider — tài khoản lẫn khách (audit 2026-10-26,
+ * AUD-CFG-001: trước đây chỉ nhánh tài khoản kiểm, khách vẫn gọi chat/STT khi cầu dao bật).
+ * FAIL-CLOSED: không đọc được cấu hình thì coi như đang tạm dừng.
+ */
+export async function checkAiCircuitBreaker(): Promise<
+  { ok: true } | { ok: false; message: string }
+> {
+  try {
+    const { aiCircuitBreaker } = await getAppSettings({ requireAvailable: true })
+    return aiCircuitBreaker ? { ok: false, message: CIRCUIT_BREAKER_MESSAGE } : { ok: true }
+  } catch (err) {
+    console.warn('[usage] Không đọc được cầu dao AI → tạm dừng AI:', err)
+    return { ok: false, message: CIRCUIT_BREAKER_MESSAGE }
+  }
+}
+
 // Kiểm tra còn lượt không + tăng 1 (authoritative). FAIL-CLOSED khi lỗi hạ tầng.
 // `day` trả kèm khi cho qua = NGÀY (giờ VN) mà lượt đã bị trừ vào. Nơi gọi PHẢI truyền lại
 // đúng ngày này cho refundUsage() nếu sau đó provider lỗi — xem giải thích ở refundUsage().

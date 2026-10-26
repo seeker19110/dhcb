@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getPgPool } from '@dhcb/core-db/pgPool'
-import { checkAndConsumeUsage, refundUsage, isUsageMode } from './usage.js'
+import { checkAiCircuitBreaker, checkAndConsumeUsage, refundUsage, isUsageMode } from './usage.js'
 import { hasUnlimitedAiTurns } from './aiUsagePolicy'
 import { invalidateSettingsCache } from '@dhcb/core-db/settings'
 
@@ -354,5 +354,23 @@ describe('VIP không giới hạn — vẫn giữ các cổng an toàn', () => {
     expect(hasUnlimitedAiTurns('vip')).toBe(true)
     for (const value of ['free', 'guest', 'pro', 'VIP', '', 'admin'])
       expect(hasUnlimitedAiTurns(value)).toBe(false)
+  })
+})
+
+// Audit 2026-10-26, AUD-CFG-001: cầu dao dùng chung cho cả khách (core-auth/actorUsage).
+describe('checkAiCircuitBreaker', () => {
+  it('cầu dao tắt → ok', async () => {
+    mockedGetPool.mockReturnValue(mockPool({ aiCircuitBreaker: false }))
+    expect(await checkAiCircuitBreaker()).toEqual({ ok: true })
+  })
+  it('cầu dao bật → chặn với lời nhắn bảo trì', async () => {
+    mockedGetPool.mockReturnValue(mockPool({ aiCircuitBreaker: true }))
+    const r = await checkAiCircuitBreaker()
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.message).toMatch(/tạm dừng/)
+  })
+  it('không đọc được cấu hình → FAIL-CLOSED', async () => {
+    mockedGetPool.mockReturnValue(mockPool({ queryError: new Error('db down') }))
+    expect((await checkAiCircuitBreaker()).ok).toBe(false)
   })
 })

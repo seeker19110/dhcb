@@ -7,15 +7,20 @@ vi.mock('./guestTrial.js', () => ({
   checkAndConsumeGuestTrial: guestGate,
   refundGuestTrial: vi.fn(),
 }))
+const breaker = vi.fn()
 vi.mock('@dhcb/core-billing/usage', () => ({
   checkAndConsumeUsage: vi.fn(),
   refundUsage: vi.fn(),
+  checkAiCircuitBreaker: breaker,
 }))
 
 const { checkAndConsumeActorUsage } = await import('./actorUsage.js')
 const GUEST = { kind: 'guest', guestKey: 'guest_a' } as const
 
-beforeEach(() => guestGate.mockReset())
+beforeEach(() => {
+  guestGate.mockReset()
+  breaker.mockReset().mockResolvedValue({ ok: true })
+})
 
 describe('checkAndConsumeActorUsage — khách', () => {
   it('còn lượt → ok, day rỗng', async () => {
@@ -39,6 +44,28 @@ describe('checkAndConsumeActorUsage — khách', () => {
       message: 'bận',
       guestTrialExhausted: false,
     })
+  })
+})
+
+// Audit 2026-10-26, AUD-CFG-001: cầu dao AI từng chỉ được kiểm ở nhánh TÀI KHOẢN — khách vẫn gọi
+// chat/STT tới provider khi admin đã bật cầu dao. Cầu dao phải chặn TRƯỚC khi trừ lượt dùng thử.
+describe('checkAndConsumeActorUsage — khách tôn trọng cầu dao AI', () => {
+  it('cầu dao BẬT → chặn, KHÔNG trừ lượt thử, không mời đăng ký', async () => {
+    breaker.mockResolvedValue({ ok: false, message: 'bảo trì' })
+    guestGate.mockResolvedValue({ ok: true })
+    expect(await checkAndConsumeActorUsage(GUEST, 'stt', '1.2.3.4')).toEqual({
+      ok: false,
+      message: 'bảo trì',
+      guestTrialExhausted: false,
+    })
+    expect(guestGate).not.toHaveBeenCalled()
+  })
+
+  it('cầu dao TẮT → đi tiếp tới hạn mức dùng thử như cũ', async () => {
+    guestGate.mockResolvedValue({ ok: true })
+    expect(await checkAndConsumeActorUsage(GUEST, 'chat', '1.2.3.4')).toEqual({ ok: true, day: '' })
+    expect(breaker).toHaveBeenCalledTimes(1)
+    expect(guestGate).toHaveBeenCalledWith('guest_a', '1.2.3.4')
   })
 })
 
