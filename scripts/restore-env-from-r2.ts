@@ -8,7 +8,7 @@
 // Kết quả ghi ra .env.restored (KHÔNG ghi đè .env trực tiếp — tự kiểm tra rồi mới đổi tên tay).
 
 import * as dotenv from 'dotenv'
-import * as fs from 'node:fs'
+import { writePrivateFile } from './lib/restoreSafety'
 import * as path from 'node:path'
 import * as crypto from 'node:crypto'
 import { S3Client, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
     fail('Giải mã thất bại — sai ENV_BACKUP_PASSPHRASE hoặc file backup bị hỏng.')
   }
 
-  fs.writeFileSync(OUTPUT_FILE, decrypted)
+  writePrivateFile(OUTPUT_FILE, decrypted)
   console.log(
     `[restore:env] ✅ Đã ghi ra "${OUTPUT_FILE}" — tự kiểm tra nội dung rồi mới đổi tên thành .env.`,
   )

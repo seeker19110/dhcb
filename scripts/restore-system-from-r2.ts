@@ -15,7 +15,7 @@
 //   pm2 resurrect  # sau khi cp /tmp/restored/pm2/dump.pm2 → ~/.pm2/dump.pm2
 
 import * as dotenv from 'dotenv'
-import * as fs from 'node:fs'
+import { writePrivateFile } from './lib/restoreSafety'
 import * as path from 'node:path'
 import { S3Client, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { KEY_PREFIX } from './backup-system-to-r2'
@@ -83,7 +83,7 @@ async function main(): Promise<void> {
     fail('Giải mã thất bại — sai ENV_BACKUP_PASSPHRASE hoặc file backup bị hỏng.')
   }
 
-  fs.writeFileSync(OUTPUT_FILE, decrypted)
+  writePrivateFile(OUTPUT_FILE, decrypted)
   console.log(
     `[restore:system] ✅ Đã ghi ra "${OUTPUT_FILE}" — xem hướng dẫn khôi phục từng phần ở comment đầu file này.`,
   )

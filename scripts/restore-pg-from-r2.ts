@@ -33,9 +33,10 @@
 import * as dotenv from 'dotenv'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import type { Readable } from 'node:stream'
+import { redactConnectionUrl } from './lib/restoreSafety.js'
 
 dotenv.config()
 
@@ -162,6 +163,7 @@ async function cmdDownload(): Promise<void> {
 }
 
 async function cmdRestoreInto(targetDb: string): Promise<void> {
+  assertSafeDatabaseName(targetDb)
   if (!hasFlag('yes')) {
     fail(
       'Thiếu --yes. Lệnh này sẽ XOÁ VÀ TẠO LẠI database đích trước khi khôi phục — bắt buộc ' +
@@ -201,24 +203,122 @@ async function cmdRestoreInto(targetDb: string): Promise<void> {
     await downloadBackup(client, bucket, key, localPath)
   }
 
+  // Kiểm file TRƯỚC bước phá huỷ: dump hỏng/tải dở thì dừng khi database cũ còn nguyên.
+  console.log(`[restore:r2] Kiểm tính toàn vẹn gzip của "${localPath}"...`)
+  assertGzipIntact(localPath)
+
   console.log(`[restore:r2] ⚠️  Xoá + tạo lại database "${targetDb}"...`)
-  execFileSync('psql', [psqlUrl, '-c', `drop database if exists ${targetDb};`], {
-    stdio: 'inherit',
-  })
-  execFileSync('psql', [psqlUrl, '-c', `create database ${targetDb};`], { stdio: 'inherit' })
+  try {
+    execFileSync('psql', [psqlUrl, '-c', `drop database if exists ${targetDb};`], {
+      stdio: 'inherit',
+    })
+    execFileSync('psql', [psqlUrl, '-c', `create database ${targetDb};`], { stdio: 'inherit' })
+  } catch (err) {
+    rethrowWithoutCommand(err, `Xoá/tạo lại database "${targetDb}"`)
+  }
 
   console.log(`[restore:r2] Khôi phục dữ liệu vào "${targetDb}"...`)
   // Ghép connection string trỏ đúng database đích thay vì database mặc định của psqlUrl.
   const targetUrl = psqlUrl.replace(/\/[^/?]*(\?|$)/, `/${targetDb}$1`)
-  // gunzip | psql — giống hệt cách pg_dump tạo ra file (cron: pg_dump ... | gzip), xem
-  // docs/setup-postgresql-vps.md mục 7.
-  execFileSync('bash', ['-c', `gunzip -c "${localPath}" | psql "${targetUrl}"`], {
-    stdio: 'inherit',
-  })
+  await runRestorePipeline(localPath, targetUrl)
 
+  const users = verifyRestoredDatabase(targetUrl)
   if (cleanupLocal) fs.unlinkSync(localPath)
-  console.log(`[restore:r2] ✅ Khôi phục xong vào database "${targetDb}". Kiểm tra lại bằng:`)
-  console.log(`  psql "${targetUrl}" -c "select count(*) from public.users;"`)
+  console.log(
+    `[restore:r2] ✅ Khôi phục xong vào database "${targetDb}" (public.users: ${users} dòng).`,
+  )
+  console.log(`  Kiểm lại: psql "${redactConnectionUrl(targetUrl)}"`)
+}
+
+/** Tên database đích được ghép vào DROP/CREATE và URL → chỉ nhận định danh Postgres thường. */
+const SAFE_DB_NAME = /^[a-z_][a-z0-9_]{0,62}$/
+
+export function assertSafeDatabaseName(name: string): void {
+  if (!SAFE_DB_NAME.test(name)) {
+    throw new Error(
+      `Tên database "${name}" không hợp lệ — chỉ chữ thường, số, gạch dưới, bắt đầu bằng chữ/gạch dưới.`,
+    )
+  }
+}
+
+/**
+ * Lỗi của execFileSync chứa NGUYÊN dòng lệnh — tức cả connection string có mật khẩu — và
+ * `main().catch` sẽ in nó ra. Ném lại lỗi chỉ mang tên bước + mã thoát (AUD-SEC-003).
+ * stderr của psql đã hiện trực tiếp nhờ stdio 'inherit', không mất thông tin chẩn đoán.
+ */
+function rethrowWithoutCommand(err: unknown, step: string): never {
+  const status = (err as { status?: number | null }).status
+  throw new Error(`${step} thất bại${status != null ? ` (mã thoát ${status})` : ''}.`)
+}
+
+/** `gunzip -t`: đọc hết file nén, ném lỗi nếu cắt cụt/hỏng — không ghi gì ra đĩa hay CSDL. */
+export function assertGzipIntact(localPath: string): void {
+  try {
+    execFileSync('gunzip', ['-t', localPath], { stdio: 'pipe' })
+  } catch {
+    throw new Error(
+      `File backup "${localPath}" hỏng hoặc tải dở (gunzip -t lỗi) — KHÔNG đụng tới database.`,
+    )
+  }
+}
+
+/**
+ * gunzip | psql — giống hệt cách pg_dump tạo ra file (cron: pg_dump ... | gzip), xem
+ * docs/setup-postgresql-vps.md mục 7. KHÔNG qua shell: Node chạy hai tiến trình và nối ống
+ * stdout → stdin, nên đường dẫn/URL không bao giờ bị diễn giải thành lệnh (CodeQL). Kiểm mã thoát
+ * của CẢ HAI (tương đương `pipefail`) + `ON_ERROR_STOP=1` để câu SQL lỗi đầu tiên dừng psql —
+ * thiếu hai điều này, restore từng báo thành công sau dump lỗi (audit 2026-10-26, AUD-DATA-002).
+ */
+export async function runRestorePipeline(localPath: string, targetUrl: string): Promise<void> {
+  const gunzip = spawn('gunzip', ['-c', '--', localPath], { stdio: ['ignore', 'pipe', 'inherit'] })
+  const psql = spawn('psql', ['-v', 'ON_ERROR_STOP=1', targetUrl], {
+    stdio: ['pipe', 'inherit', 'inherit'],
+  })
+  // psql dừng sớm (ON_ERROR_STOP) → gunzip ghi vào ống đã đóng (EPIPE). Mã thoát của hai tiến
+  // trình đã báo lỗi đầy đủ; nuốt riêng sự kiện EPIPE để nó không thành lỗi chưa bắt.
+  psql.stdin.on('error', () => {})
+  gunzip.stdout.pipe(psql.stdin)
+  // Khi psql đã thoát, `pipe` tự gỡ nên KHÔNG ai đọc stdout của gunzip nữa → gunzip kẹt ở lệnh ghi
+  // và không bao giờ thoát (treo với dump lớn lỗi ở đầu). Đóng đầu đọc để gunzip nhận EPIPE và dừng.
+  psql.once('close', () => gunzip.stdout.destroy())
+
+  let codes: [number | null, number | null]
+  try {
+    codes = await Promise.all([exitCodeOf(gunzip), exitCodeOf(psql)])
+  } catch {
+    // Lỗi spawn (thiếu gunzip/psql trên PATH) — không chuyển tiếp lỗi gốc vì nó mang theo đối số.
+    throw new Error('Nạp dump (gunzip | psql) thất bại: không chạy được gunzip hoặc psql.')
+  }
+  const [gzCode, pgCode] = codes
+  if (pgCode !== 0) throw new Error(`Nạp dump (psql) thất bại (mã thoát ${pgCode ?? 'tín hiệu'}).`)
+  if (gzCode !== 0) {
+    throw new Error(`Giải nén dump (gunzip) thất bại (mã thoát ${gzCode ?? 'tín hiệu'}).`)
+  }
+}
+
+function exitCodeOf(child: ChildProcess): Promise<number | null> {
+  return new Promise((resolve, reject) => {
+    child.once('error', reject)
+    child.once('close', (code) => resolve(code))
+  })
+}
+
+/** Kiểm dữ liệu sau restore: bảng lõi đọc được và trả về số. Ném lỗi nếu không. */
+export function verifyRestoredDatabase(targetUrl: string): number {
+  let out: string
+  try {
+    out = execFileSync(
+      'psql',
+      ['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', 'select count(*) from public.users;', targetUrl],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
+    ).trim()
+  } catch (err) {
+    rethrowWithoutCommand(err, 'Kiểm sau restore (select count(*) from public.users)')
+  }
+  if (!/^\d+$/.test(out)) {
+    throw new Error(`Kiểm sau restore trả kết quả lạ: "${out.slice(0, 80)}"`)
+  }
+  return Number(out)
 }
 
 async function main(): Promise<void> {
