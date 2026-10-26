@@ -16,7 +16,10 @@ import {
 import { A2AMessageSchema } from '@dhcb/core-contracts/a2aProtocol'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp, logInternalError } from '@dhcb/core-http/http'
-import { readJsonBody } from '@dhcb/core-http/validation'
+import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
+import { z } from 'zod'
+
+const A2APostSchema = z.object({ message: A2AMessageSchema }).strict()
 
 export default async function handler(req: Request): Promise<Response> {
   const headers = { ...getCorsHeaders(req), ...SECURITY_HEADERS }
@@ -51,12 +54,14 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     if (req.method === 'POST') {
-      const rawBody = (await readJsonBody(req)) as { message?: unknown }
-      if (!rawBody.message) {
-        return jsonResponse({ error: 'Thiếu thông điệp A2A (message)' }, 400, headers)
+      // AUD-CODE-001: trước đây đọc `message` trên vỏ `{ ok, raw }` ⇒ luôn 400 "thiếu message".
+      const body = await readJsonBody(req)
+      if (!body.ok) return jsonResponse({ error: body.error.message }, body.error.status, headers)
+      const parsed = validateBody(A2APostSchema, body.raw)
+      if (!parsed.ok) {
+        return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
       }
-
-      const validatedMsg = A2AMessageSchema.parse(rawBody.message)
+      const validatedMsg = parsed.data.message
       const result = await processIncomingA2AMessage(pool, person.id, validatedMsg)
       return jsonResponse({ result }, 200, headers)
     }

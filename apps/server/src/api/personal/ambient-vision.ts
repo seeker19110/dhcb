@@ -11,7 +11,7 @@ import { analyzeAmbientScreenFrame } from '@dhcb/core-ai/ambientVisionService'
 import { isAppError, toErrorBody } from '@dhcb/core-errors/appError'
 import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { checkAndConsumeUsage, refundUsage } from '@dhcb/core-billing/usage'
-import { readJsonBody } from '@dhcb/core-http/validation'
+import { readJsonBody, validateBody } from '@dhcb/core-http/validation'
 
 const AmbientVisionRequestSchema = z
   .object({
@@ -40,6 +40,13 @@ export default async function handler(req: Request): Promise<Response> {
     return jsonResponse({ error: 'Method not allowed' }, 405, headers)
   }
 
+  // Đọc + kiểm body TRƯỚC khi trừ lượt: request hỏng không được đốt lượt AI của người dùng
+  // (audit 2026-10-26, AUD-CODE-001 — trước đây vỏ `{ ok, raw }` bị đưa thẳng vào schema ⇒ 500).
+  const body = await readJsonBody(req)
+  if (!body.ok) return jsonResponse({ error: body.error.message }, body.error.status, headers)
+  const parsed = validateBody(AmbientVisionRequestSchema, body.raw)
+  if (!parsed.ok) return jsonResponse({ error: parsed.error.message }, parsed.error.status, headers)
+
   // Đếm lượt như chế độ 'chat' — endpoint gọi Gemini Vision trả phí, phải chịu hạn mức
   // Free/Pro như mọi đường AI khác (vá lỗ hổng chi phí 2026-08-23, đề xuất N1 mục B3).
   const gate = await checkAndConsumeUsage(auth.userId, 'chat')
@@ -49,10 +56,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    const rawBody = await readJsonBody(req)
-    const parsed = AmbientVisionRequestSchema.parse(rawBody)
-
-    const insight = await analyzeAmbientScreenFrame(parsed.imageBase64, parsed.focusHint)
+    const insight = await analyzeAmbientScreenFrame(parsed.data.imageBase64, parsed.data.focusHint)
     return jsonResponse({ insight }, 200, headers)
   } catch (err) {
     // Provider lỗi → trả lại lượt vừa trừ
