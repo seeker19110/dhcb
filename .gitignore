@@ -77,3 +77,7 @@ PLAN.md
 
 # X-Templates: trạng thái autopilot cục bộ
 .autopilot/
+
+# File tạm/giải mã của restore:* (audit AUD-SEC-004) — chứa dữ liệu thật, không bao giờ commit.
+.restore-*.sql.gz
+system-restored.tar.gz

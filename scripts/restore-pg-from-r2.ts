@@ -36,6 +36,7 @@ import * as path from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import type { Readable } from 'node:stream'
+import { redactConnectionUrl } from './lib/restoreSafety.js'
 
 dotenv.config()
 
@@ -201,24 +202,90 @@ async function cmdRestoreInto(targetDb: string): Promise<void> {
     await downloadBackup(client, bucket, key, localPath)
   }
 
+  // Kiểm file TRƯỚC bước phá huỷ: dump hỏng/tải dở thì dừng khi database cũ còn nguyên.
+  console.log(`[restore:r2] Kiểm tính toàn vẹn gzip của "${localPath}"...`)
+  assertGzipIntact(localPath)
+
   console.log(`[restore:r2] ⚠️  Xoá + tạo lại database "${targetDb}"...`)
-  execFileSync('psql', [psqlUrl, '-c', `drop database if exists ${targetDb};`], {
-    stdio: 'inherit',
-  })
-  execFileSync('psql', [psqlUrl, '-c', `create database ${targetDb};`], { stdio: 'inherit' })
+  try {
+    execFileSync('psql', [psqlUrl, '-c', `drop database if exists ${targetDb};`], {
+      stdio: 'inherit',
+    })
+    execFileSync('psql', [psqlUrl, '-c', `create database ${targetDb};`], { stdio: 'inherit' })
+  } catch (err) {
+    rethrowWithoutCommand(err, `Xoá/tạo lại database "${targetDb}"`)
+  }
 
   console.log(`[restore:r2] Khôi phục dữ liệu vào "${targetDb}"...`)
   // Ghép connection string trỏ đúng database đích thay vì database mặc định của psqlUrl.
   const targetUrl = psqlUrl.replace(/\/[^/?]*(\?|$)/, `/${targetDb}$1`)
-  // gunzip | psql — giống hệt cách pg_dump tạo ra file (cron: pg_dump ... | gzip), xem
-  // docs/setup-postgresql-vps.md mục 7.
-  execFileSync('bash', ['-c', `gunzip -c "${localPath}" | psql "${targetUrl}"`], {
-    stdio: 'inherit',
-  })
+  runRestorePipeline(localPath, targetUrl)
 
+  const users = verifyRestoredDatabase(targetUrl)
   if (cleanupLocal) fs.unlinkSync(localPath)
-  console.log(`[restore:r2] ✅ Khôi phục xong vào database "${targetDb}". Kiểm tra lại bằng:`)
-  console.log(`  psql "${targetUrl}" -c "select count(*) from public.users;"`)
+  console.log(
+    `[restore:r2] ✅ Khôi phục xong vào database "${targetDb}" (public.users: ${users} dòng).`,
+  )
+  console.log(`  Kiểm lại: psql "${redactConnectionUrl(targetUrl)}"`)
+}
+
+/**
+ * Lỗi của execFileSync chứa NGUYÊN dòng lệnh — tức cả connection string có mật khẩu — và
+ * `main().catch` sẽ in nó ra. Ném lại lỗi chỉ mang tên bước + mã thoát (AUD-SEC-003).
+ * stderr của psql đã hiện trực tiếp nhờ stdio 'inherit', không mất thông tin chẩn đoán.
+ */
+function rethrowWithoutCommand(err: unknown, step: string): never {
+  const status = (err as { status?: number | null }).status
+  throw new Error(`${step} thất bại${status != null ? ` (mã thoát ${status})` : ''}.`)
+}
+
+/** `gunzip -t`: đọc hết file nén, ném lỗi nếu cắt cụt/hỏng — không ghi gì ra đĩa hay CSDL. */
+export function assertGzipIntact(localPath: string): void {
+  try {
+    execFileSync('gunzip', ['-t', localPath], { stdio: 'pipe' })
+  } catch {
+    throw new Error(
+      `File backup "${localPath}" hỏng hoặc tải dở (gunzip -t lỗi) — KHÔNG đụng tới database.`,
+    )
+  }
+}
+
+/**
+ * gunzip | psql — giống hệt cách pg_dump tạo ra file (cron: pg_dump ... | gzip), xem
+ * docs/setup-postgresql-vps.md mục 7. `pipefail` để gzip hỏng giữa chừng làm cả lệnh lỗi;
+ * `ON_ERROR_STOP=1` để câu SQL lỗi đầu tiên dừng psql với mã khác 0 — thiếu hai cờ này, restore
+ * từng báo thành công sau dump lỗi (audit 2026-10-26, AUD-DATA-002).
+ */
+export function runRestorePipeline(localPath: string, targetUrl: string): void {
+  try {
+    execFileSync(
+      'bash',
+      ['-o', 'pipefail', '-c', `gunzip -c "${localPath}" | psql -v ON_ERROR_STOP=1 "${targetUrl}"`],
+      {
+        stdio: 'inherit',
+      },
+    )
+  } catch (err) {
+    rethrowWithoutCommand(err, 'Nạp dump (gunzip | psql)')
+  }
+}
+
+/** Kiểm dữ liệu sau restore: bảng lõi đọc được và trả về số. Ném lỗi nếu không. */
+export function verifyRestoredDatabase(targetUrl: string): number {
+  let out: string
+  try {
+    out = execFileSync(
+      'psql',
+      ['-X', '-v', 'ON_ERROR_STOP=1', '-At', '-c', 'select count(*) from public.users;', targetUrl],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
+    ).trim()
+  } catch (err) {
+    rethrowWithoutCommand(err, 'Kiểm sau restore (select count(*) from public.users)')
+  }
+  if (!/^\d+$/.test(out)) {
+    throw new Error(`Kiểm sau restore trả kết quả lạ: "${out.slice(0, 80)}"`)
+  }
+  return Number(out)
 }
 
 async function main(): Promise<void> {

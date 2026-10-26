@@ -1,0 +1,136 @@
+// Ca an toàn của restore (audit 2026-10-26: AUD-DATA-002, AUD-SEC-003, AUD-SEC-004). KHÔNG chạm
+// Postgres thật: `psql` trên PATH là script giả ghi lại tham số + đọc hết stdin rồi thoát theo mã
+// trong FAKE_PSQL_EXIT. `gunzip`/`bash` là bản thật của máy.
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import { gzipSync } from 'node:zlib'
+import { assertGzipIntact, runRestorePipeline, verifyRestoredDatabase } from './restore-pg-from-r2'
+import { redactConnectionUrl, writePrivateFile } from './lib/restoreSafety'
+
+let dir: string
+let originalPath: string | undefined
+
+beforeEach(() => {
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'restore-test-'))
+  const bin = path.join(dir, 'bin')
+  fs.mkdirSync(bin)
+  fs.writeFileSync(
+    path.join(bin, 'psql'),
+    '#!/usr/bin/env bash\n' +
+      'printf "%s\\n" "$@" > "$FAKE_PSQL_ARGS"\n' +
+      'cat > "$FAKE_PSQL_STDIN"\n' +
+      'printf "%s" "${FAKE_PSQL_STDOUT:-}"\n' +
+      'exit "${FAKE_PSQL_EXIT:-0}"\n',
+    { mode: 0o755 },
+  )
+  originalPath = process.env.PATH
+  process.env.PATH = `${bin}${path.delimiter}${originalPath ?? ''}`
+  process.env.FAKE_PSQL_ARGS = path.join(dir, 'args.txt')
+  process.env.FAKE_PSQL_STDIN = path.join(dir, 'stdin.sql')
+  delete process.env.FAKE_PSQL_EXIT
+  delete process.env.FAKE_PSQL_STDOUT
+})
+
+afterEach(() => {
+  process.env.PATH = originalPath
+  for (const key of ['FAKE_PSQL_ARGS', 'FAKE_PSQL_STDIN', 'FAKE_PSQL_EXIT', 'FAKE_PSQL_STDOUT'])
+    delete process.env[key]
+  fs.rmSync(dir, { recursive: true, force: true })
+})
+
+function writeDump(name: string, sql: string, truncate = false): string {
+  const file = path.join(dir, name)
+  const gz = gzipSync(Buffer.from(sql))
+  fs.writeFileSync(file, truncate ? gz.subarray(0, gz.length - 5) : gz)
+  return file
+}
+
+const TARGET = 'postgres://postgres:s3cret-pass@127.0.0.1:5432/dhcb_restore'
+
+describe('assertGzipIntact — kiểm file TRƯỚC bước DROP', () => {
+  it('file gzip nguyên vẹn → qua', () => {
+    expect(() => assertGzipIntact(writeDump('ok.sql.gz', 'select 1;\n'))).not.toThrow()
+  })
+  it('file gzip bị cắt cụt → ném lỗi', () => {
+    expect(() => assertGzipIntact(writeDump('cut.sql.gz', 'select 1;\n', true))).toThrow()
+  })
+})
+
+describe('runRestorePipeline — không báo thành công giả', () => {
+  it('gzip bị cắt cụt dù psql thoát 0 → ném lỗi (pipefail)', () => {
+    const dump = writeDump('cut.sql.gz', 'select 1;\n', true)
+    expect(() => runRestorePipeline(dump, TARGET)).toThrow()
+  })
+  it('psql báo lỗi SQL (exit 3) → ném lỗi', () => {
+    process.env.FAKE_PSQL_EXIT = '3'
+    expect(() => runRestorePipeline(writeDump('ok.sql.gz', 'select 1;\n'), TARGET)).toThrow()
+  })
+  it('lỗi ném ra KHÔNG chứa mật khẩu của connection string', () => {
+    process.env.FAKE_PSQL_EXIT = '3'
+    expect(() => runRestorePipeline(writeDump('ok.sql.gz', 'select 1;\n'), TARGET)).toThrow(
+      /^(?![\s\S]*s3cret-pass)[\s\S]*mã thoát 3/,
+    )
+    expect(() => verifyRestoredDatabase(TARGET)).toThrow(/^(?![\s\S]*s3cret-pass)/)
+  })
+  it('gọi psql với ON_ERROR_STOP=1 và nạp đủ nội dung dump', () => {
+    runRestorePipeline(writeDump('ok.sql.gz', 'select 42;\n'), TARGET)
+    const args = fs.readFileSync(process.env.FAKE_PSQL_ARGS!, 'utf8').split('\n')
+    expect(args).toContain('ON_ERROR_STOP=1')
+    expect(args).toContain(TARGET)
+    expect(fs.readFileSync(process.env.FAKE_PSQL_STDIN!, 'utf8')).toBe('select 42;\n')
+  })
+})
+
+describe('verifyRestoredDatabase — kiểm dữ liệu trước khi báo xong', () => {
+  it('đọc được số người dùng → trả về số đó', () => {
+    process.env.FAKE_PSQL_STDOUT = '17\n'
+    expect(verifyRestoredDatabase(TARGET)).toBe(17)
+  })
+  it('truy vấn lỗi (bảng không có) → ném lỗi', () => {
+    process.env.FAKE_PSQL_EXIT = '1'
+    expect(() => verifyRestoredDatabase(TARGET)).toThrow()
+  })
+  it('kết quả không phải số → ném lỗi', () => {
+    process.env.FAKE_PSQL_STDOUT = 'oops'
+    expect(() => verifyRestoredDatabase(TARGET)).toThrow()
+  })
+})
+
+describe('redactConnectionUrl — không in mật khẩu ra log', () => {
+  it('che mật khẩu, giữ phần còn lại', () => {
+    const out = redactConnectionUrl(TARGET)
+    expect(out).not.toContain('s3cret-pass')
+    expect(out).toBe('postgres://postgres:***@127.0.0.1:5432/dhcb_restore')
+  })
+  it('URL không có mật khẩu → giữ nguyên', () => {
+    expect(redactConnectionUrl('postgres://postgres@localhost/db')).toBe(
+      'postgres://postgres@localhost/db',
+    )
+  })
+  it('chuỗi không phải URL → không trả lại nguyên văn', () => {
+    expect(redactConnectionUrl('host=db password=hunter2')).not.toContain('hunter2')
+  })
+})
+
+describe('writePrivateFile — file giải mã chỉ chủ sở hữu đọc được', () => {
+  it('file mới tạo dưới umask 022 vẫn là 0600', () => {
+    const file = path.join(dir, '.env.restored')
+    const old = process.umask(0o022)
+    try {
+      writePrivateFile(file, Buffer.from('SECRET=1\n'))
+    } finally {
+      process.umask(old)
+    }
+    expect(fs.statSync(file).mode & 0o777).toBe(0o600)
+    expect(fs.readFileSync(file, 'utf8')).toBe('SECRET=1\n')
+  })
+  it('file đã tồn tại với 0644 → bị siết về 0600', () => {
+    const file = path.join(dir, 'system-restored.tar.gz')
+    fs.writeFileSync(file, 'old', { mode: 0o644 })
+    writePrivateFile(file, Buffer.from('new'))
+    expect(fs.statSync(file).mode & 0o777).toBe(0o600)
+    expect(fs.readFileSync(file, 'utf8')).toBe('new')
+  })
+})
