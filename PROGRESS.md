@@ -930,14 +930,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🔴 **[2026-10-26 — audit sâu; THU HẸP ở `0668`] Còn mở 3 phát hiện mức Cao và 10 mức Trung.**
+- 🔴 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`] Còn mở 2 phát hiện mức Cao và 10 mức Trung.**
   ✅ `0668` (PR #1447): đã sửa `AUD-DATA-002`, `AUD-SEC-003`, `AUD-SEC-004` (restore an toàn).
+  ✅ `0669` (PR #1448): đã sửa `AUD-CFG-001` (cầu dao AI chặn cả khách).
   Theo dõi từng ID tại [sổ audit](docs/ops/AUDIT-STATUS.md); bằng chứng tái hiện, giới hạn và kế hoạch
   chia đợt nằm trong [báo cáo audit](docs/ops/AUDIT-REPORT-2026-10-26.md). Chủ xử lý: kỹ thuật qua PR;
-  riêng thu hồi credential cần chủ dự án xác minh trên provider. **Ba mục Cao cần xử lý trước phát hành:**
+  riêng thu hồi credential cần chủ dự án xác minh trên provider. **Hai mục Cao cần xử lý trước phát hành:**
 
-  - `AUD-CFG-001`: khách vẫn gọi chat/STT khi cầu dao AI đã bật; cần kiểm breaker chung trước mọi
-    nhánh gọi provider (quota khách hiện vẫn có hiệu lực).
   - `AUD-SEC-001`: tool `search_notes` đưa lại ghi chú bị policy `DENY` cấm `inject_context`;
     cần áp cùng kiểm tra quyền riêng tư cho đường context và tool result, không phải lỗi đọc chéo user.
   - `AUD-DATA-001`: hai lần sync đầu khi chưa có dòng tiến độ có thể ghi đè nhau; cần khóa theo user

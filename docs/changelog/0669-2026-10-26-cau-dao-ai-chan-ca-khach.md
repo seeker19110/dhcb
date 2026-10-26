@@ -1,6 +1,6 @@
 # 0669 — 2026-10-26 — Cầu dao AI chặn cả khách (chat/STT)
 
-PR (điền khi mở). Đợt sửa audit thứ hai: đóng `AUD-CFG-001` (🔴) trong `docs/ops/AUDIT-STATUS.md`.
+PR #1448. Đợt sửa audit thứ hai: đóng `AUD-CFG-001` (🔴) trong `docs/ops/AUDIT-STATUS.md`.
 
 ## Vấn đề
 
