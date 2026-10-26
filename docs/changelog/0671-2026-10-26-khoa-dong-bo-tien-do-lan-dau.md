@@ -1,6 +1,6 @@
 # 0671 — 2026-10-26 — Khoá theo người dùng cho mọi lần ghi tiến độ học (kể cả lần đồng bộ đầu)
 
-PR (điền khi mở). Đợt sửa audit thứ tư: đóng `AUD-DATA-001` (🔴) — mục Cao cuối cùng.
+PR #1450. Đợt sửa audit thứ tư: đóng `AUD-DATA-001` (🔴) — mục Cao cuối cùng.
 
 ## Vấn đề
 
