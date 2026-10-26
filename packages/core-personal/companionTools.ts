@@ -26,6 +26,7 @@ import { getProgrammingProgressSummary } from '@dhcb/core-learner/programmingRea
 import { listWorkDocuments, listWorkTasks } from '@dhcb/core-domains/workService'
 import { excerptNote } from '@dhcb/core-domains/domainReadModelService'
 import { findPendingDuplicate, proposeAction } from './proposedActionService.js'
+import { resolveAuthority } from './policyService.js'
 import { isUnsafeMemoryContent, REFLECTION_NAMESPACES } from './memoryReflectionPrompt.js'
 import { stripVietnameseDiacritics } from './vietnameseText.js'
 import { stripCompanionDataTags } from './companionDataTags.js'
@@ -362,6 +363,30 @@ interface ProposalSpec {
   payload: Record<string, unknown>
 }
 
+/**
+ * Miền dữ liệu mà mỗi công cụ ĐỌC trả về cho model. Công cụ đọc là một đường đưa trạng thái miền
+ * vào ngữ cảnh, nên phải qua đúng cổng policy mà ContextEngine áp cho `authoritative_domain_state`
+ * (audit 2026-10-26, AUD-SEC-001: DENY `inject_context` từng bị search_notes vượt qua).
+ * `lookup_dictionary` không có ở đây — từ điển là dữ liệu công khai, không phải của người dùng.
+ */
+const READ_TOOL_DOMAIN: Partial<Record<CompanionToolName, string>> = {
+  get_learning_progress: 'learning',
+  get_review_queue: 'learning',
+  search_notes: 'work',
+}
+
+/** Người dùng đã DENY đưa trạng thái miền này vào trò chuyện? Ném lỗi khi không đọc được policy. */
+async function isDomainContextDenied(ctx: CompanionToolContext, domain: string): Promise<boolean> {
+  const authority = await resolveAuthority(
+    ctx.pool,
+    ctx.personId,
+    'authoritative_domain_state',
+    'inject_context',
+    domain,
+  )
+  return authority === 'DENY'
+}
+
 /** Phiên công cụ của MỘT lượt thoại: giữ bộ đếm đề xuất + danh sách đề xuất đã tạo. */
 export interface CompanionToolSession {
   definitions: ToolLoopToolDefinition[]
@@ -494,6 +519,14 @@ export function createCompanionToolSession(ctx: CompanionToolContext): Companion
     // Model chỉ được gọi công cụ ĐÃ KHAI ở lượt này (phiên tạm không có công cụ đề xuất...).
     if (!offered.has(name)) return fail('Công cụ này không dùng được trong lượt này.')
     try {
+      // Kiểm policy TRƯỚC khi đọc dữ liệu; lỗi đọc policy rơi xuống catch → không trả dữ liệu.
+      const domain = READ_TOOL_DOMAIN[name as CompanionToolName]
+      if (domain && (await isDomainContextDenied(ctx, domain))) {
+        return ok({
+          status: 'blocked_by_privacy',
+          note: 'Người dùng đã tắt việc đưa dữ liệu miền này vào trò chuyện (cài đặt quyền riêng tư). Đừng đoán nội dung; có thể gợi ý họ tự mở trang tương ứng.',
+        })
+      }
       return await run(name, input)
     } catch (err) {
       console.warn(`[companion-tools] ${name} lỗi: ${err instanceof Error ? err.name : 'không rõ'}`)
