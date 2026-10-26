@@ -47,6 +47,11 @@ vi.mock('./proposedActionService.js', () => ({
   findPendingDuplicate: (...a: unknown[]) => actionsMock.findPendingDuplicate(...a),
 }))
 
+const policyMock = vi.hoisted(() => ({ resolveAuthority: vi.fn() }))
+vi.mock('./policyService.js', () => ({
+  resolveAuthority: (...a: unknown[]) => policyMock.resolveAuthority(...a),
+}))
+
 const query = vi.fn()
 const pool = { query } as unknown as Pool
 const lookupDictionary = vi.fn()
@@ -71,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.spyOn(console, 'warn').mockImplementation(() => {})
   actionsMock.findPendingDuplicate.mockResolvedValue(null)
+  policyMock.resolveAuthority.mockResolvedValue(null)
   let n = 0
   actionsMock.proposeAction.mockImplementation(async () => ({
     action: action(`a${++n}`),
@@ -404,4 +410,75 @@ describe('công cụ đề xuất — consent (D-7)', () => {
       expect(actionsMock.proposeAction).not.toHaveBeenCalled()
     },
   )
+})
+
+// Audit 2026-10-26, AUD-SEC-001: policy DENY `inject_context` của trạng thái miền phải giữ hiệu lực
+// qua CẢ đường công cụ — trước đây ContextEngine loại ghi chú nhưng search_notes vẫn trả nó cho model.
+describe('công cụ đọc tôn trọng policy DENY inject_context', () => {
+  const NOTE = {
+    title: 'Ghi chú mật',
+    summary: 'NOI_DUNG_BI_CAM',
+    updatedAt: '2026-10-26T00:00:00Z',
+  }
+  const denyFor = (scope: string) =>
+    policyMock.resolveAuthority.mockImplementation(
+      async (_p: unknown, _id: unknown, subject: string, action: string, s: string) =>
+        subject === 'authoritative_domain_state' && action === 'inject_context' && s === scope
+          ? 'DENY'
+          : null,
+    )
+
+  it('DENY miền work ⇒ search_notes KHÔNG trả ghi chú, không đọc kho ghi chú', async () => {
+    denyFor('work')
+    workMock.listWorkDocuments.mockResolvedValue([NOTE])
+    workMock.listWorkTasks.mockResolvedValue([])
+    const out = await createCompanionToolSession(ctx()).execute('search_notes', { query: '' })
+    expect(out.content).not.toContain('NOI_DUNG_BI_CAM')
+    expect(out.content).toMatch(/quyền riêng tư/)
+    expect(workMock.listWorkDocuments).not.toHaveBeenCalled()
+    expect(policyMock.resolveAuthority).toHaveBeenCalledWith(
+      pool,
+      PERSON,
+      'authoritative_domain_state',
+      'inject_context',
+      'work',
+    )
+  })
+
+  it.each(['get_learning_progress', 'get_review_queue'] as const)(
+    'DENY miền learning ⇒ %s không đọc dữ liệu học',
+    async (name) => {
+      denyFor('learning')
+      const out = await createCompanionToolSession(ctx()).execute(
+        name,
+        name === 'get_learning_progress' ? { subject: 'english' } : {},
+      )
+      expect(out.content).toMatch(/quyền riêng tư/)
+      expect(learnerMock.getLearningReadModel).not.toHaveBeenCalled()
+      expect(learnerMock.getProgrammingProgressSummary).not.toHaveBeenCalled()
+    },
+  )
+
+  it('DENY miền learning KHÔNG chặn search_notes (đúng phạm vi)', async () => {
+    denyFor('learning')
+    workMock.listWorkDocuments.mockResolvedValue([NOTE])
+    workMock.listWorkTasks.mockResolvedValue([])
+    const out = await createCompanionToolSession(ctx()).execute('search_notes', { query: '' })
+    expect(out.content).toContain('NOI_DUNG_BI_CAM')
+  })
+
+  it('lookup_dictionary là dữ liệu công khai ⇒ không kiểm policy', async () => {
+    lookupDictionary.mockReturnValue([])
+    await createCompanionToolSession(ctx()).execute('lookup_dictionary', { word: 'apple' })
+    expect(policyMock.resolveAuthority).not.toHaveBeenCalled()
+  })
+
+  it('không đọc được policy ⇒ FAIL-CLOSED, không trả ghi chú', async () => {
+    policyMock.resolveAuthority.mockRejectedValue(new Error('db down'))
+    workMock.listWorkDocuments.mockResolvedValue([NOTE])
+    workMock.listWorkTasks.mockResolvedValue([])
+    const out = await createCompanionToolSession(ctx()).execute('search_notes', { query: '' })
+    expect(out.content).not.toContain('NOI_DUNG_BI_CAM')
+    expect(out.isError).toBe(true)
+  })
 })
