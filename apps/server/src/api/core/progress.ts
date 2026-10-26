@@ -26,6 +26,7 @@ import { jsonResponse, getClientIp } from '@dhcb/core-http/http'
 import { vnDateStr } from '@dhcb/core-db/date'
 import { FREE_WEEKLY_BONUS_PER_DAY } from '@dhcb/core-billing/usage'
 import { withTransaction } from '@dhcb/core-db/transaction'
+import { lockLearningProgress } from '../_lib/learningProgressLock.js'
 import { resolvePlan } from '@dhcb/core-billing/plan'
 import { computeUnlockedLevels } from '@dhcb/core-learner/cefrUnlock'
 import { SyncEnvelopeSchema } from '@dhcb/core-contracts/sync'
@@ -306,6 +307,9 @@ export default async function handler(req: Request): Promise<Response> {
     conflict,
     merged: mergedDoc,
   } = await withTransaction(pool, async (client) => {
+    // Khoá theo user TRƯỚC khi đọc: `for update` bên dưới không khoá được gì khi chưa có dòng
+    // (lần đồng bộ đầu) — xem _lib/learningProgressLock.ts (AUD-DATA-001).
+    await lockLearningProgress(client, auth.userId)
     // Khoá state hiện tại để hai thiết bị không cùng suy completion từ một bản trước merge.
     const { rows: existingRows } = await client.query<ProgressRow>(
       `select learned, hard, srs, cefr_grammar, cefr_dialogues, cefr_unlocked,

@@ -44,6 +44,7 @@ import {
 import { validateBody, readJsonBody } from '@dhcb/core-http/validation'
 import { jsonResponse, internalErrorResponse, getClientIp } from '@dhcb/core-http/http'
 import { withTransaction } from '@dhcb/core-db/transaction'
+import { lockLearningProgress } from './learningProgressLock.js'
 import { vnDateStr } from '@dhcb/core-db/date'
 import { FREE_WEEKLY_BONUS_PER_DAY } from '@dhcb/core-billing/usage'
 import {
@@ -167,6 +168,9 @@ async function saveLearned(
   const viewed = dialogueKey(ownerId, titleEn)
   const learned = learnedDialogueEntry(ownerId, titleEn)
   return withTransaction(pool, async (client) => {
+    // Cùng khoá theo user với `/api/progress`: khi chưa có dòng, `for update` không tuần tự được
+    // hai bên và upsert của progress có thể đè mất hội thoại vừa thêm ở đây (AUD-DATA-001).
+    await lockLearningProgress(client, userId)
     // `for update`: tuần tự với `/api/progress` cùng người dùng (handler đó cũng khoá dòng này).
     const { rows } = await client.query<{ cefr_dialogues: string[] | null }>(
       `select cefr_dialogues from english.learning_progress where user_id = $1 for update`,
