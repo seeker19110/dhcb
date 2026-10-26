@@ -1,6 +1,6 @@
 # 0664 — 2026-10-25 — Eval AI thật trên VPS: đóng F-008, sửa action-canvas 0/10, ghi F-011
 
-PR (điền khi mở). Chủ dự án chạy 5 eval trên VPS (cấu hình production, key thật) và dán nguyên văn
+PR #1437. Chủ dự án chạy 5 eval trên VPS (cấu hình production, key thật) và dán nguyên văn
 kết quả vào phiên. Agent không có key nên không chạy lại được — mọi số dưới đây chép từ log đó.
 
 ## Kết quả

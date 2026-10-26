@@ -930,6 +930,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🟡 **[2026-10-26 — changelog `0665`] `@anthropic-ai/sdk` 1.x CHƯA nâng (Dependabot chặn bản major).**
+  SDK 1.0 đổi API version `2023-06-01` → `2026-10-21` và gửi khoá qua `Authorization: Bearer` thay
+  `x-api-key` (PR #1439 đỏ). **Gỡ theo thứ tự:** (1) đọc ghi chú API version `2026-10-21` của Anthropic, rà
+  `packages/core-ai/anthropicClient.ts` + `anthropicToolLoop.ts` (đọc `stop_reason`/`usage`/beta header);
+  (2) harness replay (`scripts/lib/providerReplay.ts`, `companionRuntimeConsent.ts`) nhận Bearer khoá giả,
+  ghi lại fingerprint fixture (`scripts/eval-companion-replay-fixtures.json`,
+  `companionRuntimeConsentFixture.ts`); (3) chủ dự án chạy `eval:tutor`/`eval:companion`/`eval:action-canvas`
+  với key thật trước khi merge; (4) gỡ mục `ignore` ở `.github/dependabot.yml`. `linkedom` 0.18.14 cũng bị
+  chặn (vỡ build worker do `@acemir/cssom`) — chỉ đúng bản đó, không cần làm gì thêm.
+
 - 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`, `0627`, `0628`] Red-team AI: phần Companion V2 ĐÃ KIỂM
   THẬT, còn các mặt khác.** ✅ `eval:v2:red-team` viết lại chạy trên Postgres thật, chặn CI (job
   `sql-prepare`): **54/54** (PI 14 · TA 13 · SL 12 · AG 15) — lần chạy đầu bắt được lỗi sản phẩm (DENY + tự chạy
