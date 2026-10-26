@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Safe regression: statically extract only the restore pipeline; NEVER run the restore script.
+set -euo pipefail
+export AUDIT_RESTORE_SCRATCH
+AUDIT_RESTORE_SCRATCH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 <<'PY'
+import gzip
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+
+repo = Path(os.environ['AUDIT_REPO_ROOT']).resolve()
+work = Path(os.environ['AUDIT_RESTORE_SCRATCH']).resolve()
+container = os.environ['AUDIT_PSQL_CONTAINER']
+database = os.environ['AUDIT_DATABASE_NAME']
+if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*', container):
+    raise SystemExit('Invalid local audit container name')
+if not re.fullmatch(r'dhcb_(?:codex|audit_[A-Za-z0-9_]+)', database):
+    raise SystemExit('Only a named disposable audit database is allowed')
+source = (repo / 'scripts/restore-pg-from-r2.ts').read_text()
+match = re.search(r"execFileSync\(\s*'bash',\s*\[([\s\S]*?)\]\s*,\s*\{", source)
+if not match:
+    raise SystemExit('Restore pipeline shape changed: review the source and this safe fixture')
+arguments = match.group(1)
+if arguments.count('`') != 2:
+    raise SystemExit('Refusing unreviewed dynamic shell arguments')
+prefix, template, tail = arguments.split('`')
+if tail.strip() not in ('', ','):
+    raise SystemExit('Refusing unreviewed extra shell arguments')
+flags = re.findall(r"'([^']*)'", prefix)
+if re.sub(r"'[^']*'|[\s,]", '', prefix):
+    raise SystemExit('Refusing computed bash flags')
+if not flags or flags[-1] != '-c' or any(f not in ('-c', '-e', '-o', 'pipefail') for f in flags):
+    raise SystemExit('Refusing unexpected bash flags')
+command = template.strip().replace('${localPath}', '$AUDIT_DUMP').replace('${targetUrl}', '$AUDIT_TARGET')
+allowed = r'gunzip\s+-c\s+"\$AUDIT_DUMP"\s*\|\s*psql(?:\s+(?:-v\s+ON_ERROR_STOP=1|--set(?:=|\s+)ON_ERROR_STOP=1))*\s+"\$AUDIT_TARGET"'
+if not re.fullmatch(allowed, command):
+    raise SystemExit('Refusing shell command outside the reviewed gunzip | psql shape')
+
+bin_dir = work / 'restore-bin'
+bin_dir.mkdir(exist_ok=True)
+wrapper = bin_dir / 'psql'
+wrapper.write_text('''#!/usr/bin/env bash
+set -euo pipefail
+args=()
+for arg in "$@"; do
+  if [ "$arg" != AUDIT_LOCAL_DATABASE_SENTINEL ]; then args+=("$arg"); fi
+done
+exec env -u DOCKER_HOST -u DOCKER_CONTEXT -u DOCKER_TLS -u DOCKER_TLS_VERIFY -u DOCKER_CERT_PATH \\
+  docker --host=unix:///var/run/docker.sock exec -i "$AUDIT_PSQL_CONTAINER" \\
+  psql -X -w -U "${AUDIT_PSQL_USER:-postgres}" -d "$AUDIT_DATABASE_NAME" "${args[@]}"
+''')
+wrapper.chmod(0o700)
+env = dict(os.environ)
+env['PATH'] = str(bin_dir) + os.pathsep + env['PATH']
+env['AUDIT_TARGET'] = 'AUDIT_LOCAL_DATABASE_SENTINEL'
+probe = subprocess.run([str(wrapper), '-Atc', 'SELECT 42'], env=env, text=True, capture_output=True)
+if probe.returncode != 0 or probe.stdout.strip() != '42':
+    raise SystemExit('Disposable PostgreSQL preflight failed; do not count this as a passing regression')
+
+sql_error = work / 'sql-error.sql.gz'
+truncated = work / 'truncated.sql.gz'
+sql_error.write_bytes(gzip.compress(b'SELECT audit_verify_nonexistent_function();\nSELECT 42 AS after_error;\n'))
+truncated.write_bytes(gzip.compress(b'SELECT 42 AS fully_decompressed;\n')[:-5])
+cases = []
+def run(name, dump, bash_flags, pipeline):
+    case_env = dict(env, AUDIT_DUMP=str(dump))
+    result = subprocess.run(['bash', *bash_flags, pipeline], env=case_env, text=True, capture_output=True)
+    cases.append({'case': name, 'exit': result.returncode})
+    (work / (name + '.log')).write_text(result.stdout + result.stderr)
+    return result
+
+actual_sql = run('source-sql-error', sql_error, flags, command)
+actual_gzip = run('source-truncated-gzip', truncated, flags, command)
+sql_control = run('sql-on-error-stop-control', sql_error, ['-c'], 'gunzip -c "$AUDIT_DUMP" | psql -v ON_ERROR_STOP=1 "$AUDIT_TARGET"')
+gzip_control = run('gzip-pipefail-control', truncated, ['-o', 'pipefail', '-c'], 'gunzip -c "$AUDIT_DUMP" | psql "$AUDIT_TARGET"')
+assert sql_control.returncode == 3, 'Invalid SQL control must fail with psql exit 3'
+assert gzip_control.returncode == 1, 'Truncated gzip control must fail with pipefail exit 1'
+observed = {'safeSelectOnly': True, 'destructiveRestoreInvoked': False, 'controlsPassed': True, 'sourceBashFlags': flags, 'cases': cases}
+(work / 'restore-observed.json').write_text(json.dumps(observed, indent=2) + '\n')
+print(json.dumps(observed))
+assert actual_sql.returncode != 0, 'regression: source restore pipeline falsely reports SQL-error success'
+assert actual_gzip.returncode != 0, 'regression: source restore pipeline falsely reports truncated-gzip success'
+PY

@@ -1,0 +1,33 @@
+"""Extract inert audit text fixtures into a NEW disposable directory; never edit app files."""
+import os
+from pathlib import Path
+
+repo = Path(os.environ["AUDIT_REPO_ROOT"]).resolve()
+scratch = Path(os.environ["AUDIT_SCRATCH"]).resolve()
+assets = repo / "docs/ops/audit-evidence/2026-10-26"
+if not (repo / "package-lock.json").is_file():
+    raise SystemExit("AUDIT_REPO_ROOT must identify the DHCB checkout")
+if scratch == repo or repo in scratch.parents:
+    raise SystemExit("AUDIT_SCRATCH must be outside the checkout")
+scratch.mkdir(parents=True, exist_ok=True)
+if any(scratch.iterdir()):
+    raise SystemExit("Use a NEW empty AUDIT_SCRATCH directory")
+files = {
+    "progress.test.ts.txt": "verify/progress.test.ts",
+    "progress.config.mjs.txt": "verify/progress.config.mjs",
+    "policy.mts.txt": "verify/policy.mts",
+    "breaker.mts.txt": "verify-ops/breaker.mts",
+    "restore-safe-repro.sh.txt": "verify/restore-safe-repro.sh",
+}
+def js_path(path):
+    return str(path).replace("\\", "\\\\").replace("'", "\\'")
+for source, relative in files.items():
+    content = (assets / source).read_text()
+    content = content.replace("__AUDIT_REPO_ROOT__", js_path(repo))
+    content = content.replace("__AUDIT_SCRATCH__", js_path(scratch))
+    target = scratch / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content)
+    target.chmod(0o600)
+(scratch / "node_modules").symlink_to(repo / "node_modules", target_is_directory=True)
+print("Extracted four audit repros and config outside checkout; repository files unchanged")

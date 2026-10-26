@@ -1,0 +1,2 @@
+import { defineConfig } from '__AUDIT_REPO_ROOT__/node_modules/vitest/dist/config.js'
+export default defineConfig({root:'__AUDIT_REPO_ROOT__',resolve:{alias:[{find:'vitest',replacement:'__AUDIT_REPO_ROOT__/node_modules/vitest/dist/index.js'},{find:/^@dhcb\/(.*)$/,replacement:'__AUDIT_REPO_ROOT__/packages/$1'}]},test:{environment:'node',include:['__AUDIT_SCRATCH__/verify/progress.test.ts'],reporters:['verbose'],testTimeout:15000}})

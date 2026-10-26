@@ -1,0 +1,63 @@
+import assert from 'node:assert/strict'
+import {test,expect,vi,afterAll} from 'vitest'
+import pg from '__AUDIT_REPO_ROOT__/node_modules/pg/lib/index.js'
+import {randomUUID} from 'node:crypto'
+const shared=vi.hoisted(()=>({uid:'',pool:null as any,emptyBarrier:false,emptyCount:0,wait:null as null|(()=>void)}))
+vi.mock('@dhcb/core-auth/security',()=>({getCorsHeaders:()=>({}),SECURITY_HEADERS:{},checkRateLimit:async()=>true,validateAuth:async()=>({userId:shared.uid}),logSecurityEvent:()=>{}}))
+vi.mock('@dhcb/core-db/pgPool',()=>({getPgPool:()=>({
+ query:(...args:any[])=>shared.pool.query(...args),
+ connect:async()=>{
+  const real=await shared.pool.connect()
+  return {release:()=>real.release(),query:async(...args:any[])=>{
+   const result=await real.query(...args)
+   if(shared.emptyBarrier&&typeof args[0]==='string'&&/from english.learning_progress.*for update/s.test(args[0])&&result.rows.length===0){
+    shared.emptyCount++
+    if(shared.emptyCount===1)await new Promise<void>(r=>{
+     let done=false
+     const release=()=>{if(done)return;done=true;clearTimeout(timer);r()}
+     const timer=setTimeout(release,250)
+     shared.wait=release
+    })
+    else shared.wait?.()
+   }
+   return result
+  }}
+ }
+})}))
+const auditUrl=new URL(process.env.DATABASE_URL??'')
+assert.ok(['localhost','127.0.0.1','[::1]'].includes(auditUrl.hostname),'Only loopback disposable PostgreSQL is allowed')
+assert.match(auditUrl.pathname,/^\/(?:dhcb_codex|dhcb_audit_[A-Za-z0-9_]+)$/,'Use a named disposable audit database')
+shared.pool=new pg.Pool({connectionString:process.env.DATABASE_URL})
+const fixtures:string[]=[]
+afterAll(async()=>{if(fixtures.length)await shared.pool.query('DELETE FROM public.users WHERE id=ANY($1::uuid[])',[fixtures]);await shared.pool.end()})
+async function makeUser(){const r=await shared.pool.query('INSERT INTO public.users(email) VALUES($1) RETURNING id',[`verify-sync-${randomUUID()}@example.test`]);shared.uid=r.rows[0].id;fixtures.push(shared.uid)}
+async function push(word:string,base=0){
+ const handler=(await import('__AUDIT_REPO_ROOT__/apps/server/src/api/core/progress.ts')).default
+ const response=await handler(new Request('http://local.test/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({learned:word?[word]:[],sync:{attemptId:randomUUID(),baseVersion:base,clientUpdatedAt:new Date().toISOString()}})}))
+ return {status:response.status,body:await response.json()}
+}
+async function stored(){return (await shared.pool.query('SELECT learned,version FROM english.learning_progress WHERE user_id=$1',[shared.uid])).rows[0]}
+test('serial first sync preserves union (negative control)',async()=>{
+ await makeUser();shared.emptyBarrier=false
+ expect((await push('cat')).status).toBe(200)
+ expect((await push('dog',1)).status).toBe(200)
+ expect((await stored()).learned.sort()).toEqual(['cat','dog'])
+})
+test('existing row concurrent updates preserve union (negative control)',async()=>{
+ await makeUser();shared.emptyBarrier=false
+ expect((await push('')).status).toBe(200)
+ const results=await Promise.all([push('cat',1),push('dog',1)])
+ expect(results.map(r=>r.status)).toEqual([200,200])
+ const actual=await stored()
+ expect(actual.learned.sort()).toEqual(['cat','dog'])
+ expect(actual.version).toBe(3)
+})
+test('new row concurrent first sync must preserve both devices (regression)',async()=>{
+ await makeUser();shared.emptyBarrier=true;shared.emptyCount=0;shared.wait=null
+ const results=await Promise.all([push('cat'),push('dog')])
+ shared.emptyBarrier=false
+ expect(results.map(r=>r.status)).toEqual([200,200])
+ const actual=await stored()
+ console.log('VERIFIED_FIRST_SYNC_RACE',JSON.stringify({responses:results,emptySelectCount:shared.emptyCount,stored:actual}))
+ expect(actual.learned.sort()).toEqual(['cat','dog'])
+})
