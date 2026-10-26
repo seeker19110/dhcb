@@ -34,6 +34,7 @@ import {
   setStreakFreezeDatesFromSync,
 } from './storage'
 import { readLocalArray } from './localJson'
+import { mergeSrsMap } from '@dhcb/core-learner/srsMerge'
 
 const LEARNED = (uid: string) => `et_learned_${uid}`
 const HARD = (uid: string) => `et_hard_${uid}`
@@ -506,12 +507,10 @@ function applyCloudProgress(userId: string, cloud: CloudProgressDoc): void {
   ])
   changed = changed || hasExtra(localStreakFreezeDates, cloud.streakFreezeDates)
 
-  // SRS: merge theo từ-khoá, giữ thẻ có nhiều lần ôn hơn (tiến bộ hơn)
-  const merged: Record<string, SRSLike> = { ...(cloud.srs ?? {}) }
-  for (const [k, v] of Object.entries(readObj(SRS(userId)))) {
-    const c = merged[k]
-    if (!c || (v.reps ?? 0) >= (c.reps ?? 0)) merged[k] = v
-  }
+  // SRS: CÙNG hàm gộp với server (cloud = bản đang lưu, local = bản sắp gửi lên) — reps cao hơn
+  // thắng, hoà reps thì `due` xa hơn thắng. Luật riêng cũ cho local thắng khi hoà nên hai phía
+  // không hội tụ và sinh đồng bộ thừa mãi (AUD-XFEAT-001).
+  const merged = mergeSrsMap(cloud.srs ?? {}, readObj(SRS(userId))) as Record<string, SRSLike>
   changed = changed || JSON.stringify(merged) !== JSON.stringify(cloud.srs ?? {})
 
   try {
