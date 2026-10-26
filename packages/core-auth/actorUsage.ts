@@ -10,7 +10,12 @@
 // Bất biến: người ĐÃ đăng nhập đi qua đây không khác gì trước — vẫn đúng
 // checkAndConsumeUsage()/refundUsage() của `@dhcb/core-billing/usage`, cùng tham số, cùng thứ tự.
 
-import { checkAndConsumeUsage, refundUsage, type UsageMode } from '@dhcb/core-billing/usage'
+import {
+  checkAiCircuitBreaker,
+  checkAndConsumeUsage,
+  refundUsage,
+  type UsageMode,
+} from '@dhcb/core-billing/usage'
 import type { Actor } from './guest.js'
 import { checkAndConsumeGuestTrial, refundGuestTrial } from './guestTrial.js'
 
@@ -34,6 +39,12 @@ export async function checkAndConsumeActorUsage(
     const gate = await checkAndConsumeUsage(actor.userId, mode)
     return gate.ok ? gate : { ok: false, message: gate.message, guestTrialExhausted: false }
   }
+  // Khách cũng phải tôn trọng cầu dao AI — kiểm TRƯỚC khi trừ lượt thử để không đốt lượt oan.
+  // (Nhánh tài khoản đã kiểm trong checkAndConsumeUsage.) Bị chặn vì bảo trì ≠ hết lượt: không
+  // mời đăng ký.
+  const breaker = await checkAiCircuitBreaker()
+  if (!breaker.ok) return { ok: false, message: breaker.message, guestTrialExhausted: false }
+
   const gate = await checkAndConsumeGuestTrial(actor.guestKey, ip)
   return gate.ok
     ? { ok: true, day: '' }
