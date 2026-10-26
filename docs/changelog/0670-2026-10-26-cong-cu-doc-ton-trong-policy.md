@@ -1,6 +1,6 @@
 # 0670 — 2026-10-26 — Công cụ đọc của Bạn Đồng Hành tôn trọng policy DENY inject_context
 
-PR (điền khi mở). Đợt sửa audit thứ ba: đóng `AUD-SEC-001` (🔴) trong `docs/ops/AUDIT-STATUS.md`.
+PR #1449. Đợt sửa audit thứ ba: đóng `AUD-SEC-001` (🔴) trong `docs/ops/AUDIT-STATUS.md`.
 
 ## Vấn đề
 
