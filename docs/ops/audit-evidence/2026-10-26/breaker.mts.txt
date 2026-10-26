@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
+import { getPgPool } from '__AUDIT_REPO_ROOT__/packages/core-db/pgPool.ts'
+import { getAppSettings, invalidateSettingsCache } from '__AUDIT_REPO_ROOT__/packages/core-db/settings.ts'
+import stt from '__AUDIT_REPO_ROOT__/packages/core-ai/stt.ts'
+import ai from '__AUDIT_REPO_ROOT__/packages/core-ai/ai.ts'
+// Boundary fakes only: no database or provider I/O, no actual API credentials.
+process.env.NODE_ENV='test'
+delete process.env.VERCEL_ENV
+delete process.env.SKIP_AUTH
+delete process.env.REDIS_URL
+delete process.env.ANTHROPIC_API_KEY
+delete process.env.GEMINI_API_KEY
+process.env.GROQ_API_KEY='synthetic-placeholder-never-networked'
+process.env.DATABASE_URL??='postgresql://postgres@127.0.0.1:1/dhcb_audit_mock'
+let breaker=true
+let settingsReads=0
+const pool=getPgPool()
+pool.query=async (query:unknown)=>{
+ const sql=String(query)
+ if(sql.includes('select * from public.app_settings where id = 1')) {
+  settingsReads++
+  return {rows:[{pro_daily_limit:30,vip_daily_limit:300,promo_until:null,ai_circuit_breaker:breaker,leaderboard_enabled:false,updated_at:new Date()}]}
+ }
+ if(sql.includes('select user_id, expires from public.sessions')) return {rows:[{user_id:'synthetic-user',expires:new Date(Date.now()+60_000)}]}
+ throw new Error('Unexpected SQL: no network I/O permitted in this proof')
+}
+const providerUrls:string[]=[]
+globalThis.fetch=async (url:unknown)=>{
+ const value=String(url)
+ providerUrls.push(value)
+ if(value==='https://api.groq.com/openai/v1/audio/transcriptions') return new Response(JSON.stringify({text:'SYNTHETIC_STT_OK'}),{headers:{'content-type':'application/json'}})
+ if(value==='https://api.groq.com/openai/v1/chat/completions') return new Response(JSON.stringify({choices:[{message:{content:'SYNTHETIC_CHAT_OK'},finish_reason:'stop'}]}),{headers:{'content-type':'application/json'}})
+ throw new Error('No external request permitted')
+}
+const audio={audio_b64:Buffer.from('synthetic-audio').toString('base64'),lang:'en'}
+function req(body:unknown,headers:Record<string,string>={}) {
+ return new Request('http://localhost/api/stt',{method:'POST',headers:{'content-type':'application/json','x-real-ip':'198.51.100.20',...headers},body:JSON.stringify(body)})
+}
+try {
+ invalidateSettingsCache()
+ assert.equal((await getAppSettings({requireAvailable:true})).aiCircuitBreaker,true)
+ const missing=await stt(req(audio))
+ assert.equal(missing.status,401,'negative control: missing identity')
+ const beforeUser=providerUrls.length
+ const authenticated=await stt(req(audio,{cookie:'session_token=synthetic-token'}))
+ assert.equal(authenticated.status,429,'control: account respects breaker')
+ assert.equal(providerUrls.length,beforeUser,'control: account cannot reach provider')
+ const beforeGuest=providerUrls.length
+ const guest=await stt(req(audio,{'x-guest-id':`guest_${randomUUID()}`}))
+ const guestProviderCalls=providerUrls.length-beforeGuest
+ const beforeChat=providerUrls.length
+ const chat=await ai(req({messages:[{role:'user',content:'synthetic audit message'}],mode:'chat',max_tokens:20},{'x-guest-id':`guest_${randomUUID()}`}))
+ const chatProviderCalls=providerUrls.length-beforeChat
+ breaker=false;invalidateSettingsCache()
+ const beforeOff=providerUrls.length
+ const off=await stt(req(audio,{'x-guest-id':`guest_${randomUUID()}`}))
+ assert.equal(off.status,200,'positive control: guest works with breaker off')
+ assert.equal(providerUrls.length,beforeOff+1,'positive control reaches fake provider')
+ console.log(JSON.stringify({noExternalRequests:true,controlsPassed:true,missingIdentity:missing.status,authenticatedBreakerOn:authenticated.status,guestSttBreakerOn:guest.status,guestChatBreakerOn:chat.status,guestSttBreakerOff:off.status,guestProviderCalls,chatProviderCalls,settingsReads}))
+ assert.equal(guest.status,429,'regression: breaker must also block anonymous STT')
+ assert.equal(chat.status,429,'regression: breaker must also block anonymous chat')
+ assert.equal(guestProviderCalls+chatProviderCalls,0,'regression: breaker blocks all provider calls')
+} finally {
+ await pool.end()
+}
