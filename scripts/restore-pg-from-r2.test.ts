@@ -6,7 +6,12 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { gzipSync } from 'node:zlib'
-import { assertGzipIntact, runRestorePipeline, verifyRestoredDatabase } from './restore-pg-from-r2'
+import {
+  assertGzipIntact,
+  assertSafeDatabaseName,
+  runRestorePipeline,
+  verifyRestoredDatabase,
+} from './restore-pg-from-r2'
 import { redactConnectionUrl, writePrivateFile } from './lib/restoreSafety'
 
 let dir: string
@@ -35,7 +40,13 @@ beforeEach(() => {
 
 afterEach(() => {
   process.env.PATH = originalPath
-  for (const key of ['FAKE_PSQL_ARGS', 'FAKE_PSQL_STDIN', 'FAKE_PSQL_EXIT', 'FAKE_PSQL_STDOUT'])
+  for (const key of [
+    'FAKE_PSQL_ARGS',
+    'FAKE_PSQL_STDIN',
+    'FAKE_PSQL_EXIT',
+    'FAKE_PSQL_STDOUT',
+    'PWN_MARKER',
+  ])
     delete process.env[key]
   fs.rmSync(dir, { recursive: true, force: true })
 })
@@ -83,6 +94,31 @@ describe('runRestorePipeline — không báo thành công giả', () => {
   })
 })
 
+describe('assertSafeDatabaseName — tên database ghép vào DROP/CREATE', () => {
+  it.each(['dhcb', 'dhcb_restore', '_tmp1'])('nhận "%s"', (name) => {
+    expect(() => assertSafeDatabaseName(name)).not.toThrow()
+  })
+  it.each(['', 'DhCb', 'x; drop database dhcb', 'a-b', '1db', 'a'.repeat(64)])(
+    'từ chối "%s"',
+    (name) => {
+      expect(() => assertSafeDatabaseName(name)).toThrow()
+    },
+  )
+})
+
+describe('runRestorePipeline — đường dẫn có ký tự shell không chạy được lệnh', () => {
+  it('đường dẫn chứa $(...) và dấu nháy được coi là tên file thuần', () => {
+    // Tên file không chứa `/`; nếu shell diễn giải `$(...)` thì file đánh dấu sẽ được tạo ra.
+    const marker = path.join(dir, 'pwned')
+    process.env.PWN_MARKER = marker
+    const evil = path.join(dir, 'x"$(touch "$PWN_MARKER")".sql.gz')
+    fs.writeFileSync(evil, gzipSync(Buffer.from('select 1;\n')))
+    runRestorePipeline(evil, TARGET)
+    expect(fs.existsSync(marker)).toBe(false)
+    expect(fs.readFileSync(process.env.FAKE_PSQL_STDIN!, 'utf8')).toBe('select 1;\n')
+  })
+})
+
 describe('verifyRestoredDatabase — kiểm dữ liệu trước khi báo xong', () => {
   it('đọc được số người dùng → trả về số đó', () => {
     process.env.FAKE_PSQL_STDOUT = '17\n'
@@ -114,6 +150,17 @@ describe('redactConnectionUrl — không in mật khẩu ra log', () => {
   })
 })
 
+/** Kiểm quyền + nội dung qua CÙNG một file descriptor (không stat-rồi-đọc theo đường dẫn). */
+function expectPrivateFile(file: string, content: string): void {
+  const fd = fs.openSync(file, 'r')
+  try {
+    expect(fs.fstatSync(fd).mode & 0o777).toBe(0o600)
+    expect(fs.readFileSync(fd, 'utf8')).toBe(content)
+  } finally {
+    fs.closeSync(fd)
+  }
+}
+
 describe('writePrivateFile — file giải mã chỉ chủ sở hữu đọc được', () => {
   it('file mới tạo dưới umask 022 vẫn là 0600', () => {
     const file = path.join(dir, '.env.restored')
@@ -123,14 +170,12 @@ describe('writePrivateFile — file giải mã chỉ chủ sở hữu đọc đ�
     } finally {
       process.umask(old)
     }
-    expect(fs.statSync(file).mode & 0o777).toBe(0o600)
-    expect(fs.readFileSync(file, 'utf8')).toBe('SECRET=1\n')
+    expectPrivateFile(file, 'SECRET=1\n')
   })
   it('file đã tồn tại với 0644 → bị siết về 0600', () => {
     const file = path.join(dir, 'system-restored.tar.gz')
     fs.writeFileSync(file, 'old', { mode: 0o644 })
     writePrivateFile(file, Buffer.from('new'))
-    expect(fs.statSync(file).mode & 0o777).toBe(0o600)
-    expect(fs.readFileSync(file, 'utf8')).toBe('new')
+    expectPrivateFile(file, 'new')
   })
 })

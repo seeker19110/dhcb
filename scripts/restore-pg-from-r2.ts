@@ -163,6 +163,7 @@ async function cmdDownload(): Promise<void> {
 }
 
 async function cmdRestoreInto(targetDb: string): Promise<void> {
+  assertSafeDatabaseName(targetDb)
   if (!hasFlag('yes')) {
     fail(
       'Thiếu --yes. Lệnh này sẽ XOÁ VÀ TẠO LẠI database đích trước khi khôi phục — bắt buộc ' +
@@ -229,6 +230,20 @@ async function cmdRestoreInto(targetDb: string): Promise<void> {
   console.log(`  Kiểm lại: psql "${redactConnectionUrl(targetUrl)}"`)
 }
 
+/** `$0` = nhãn tiến trình; `$1` = file dump; `$2` = connection string đích. `--` chặn tên file bắt đầu bằng `-`. */
+const RESTORE_PIPELINE_SCRIPT = 'gunzip -c -- "$1" | psql -v ON_ERROR_STOP=1 "$2"'
+
+/** Tên database đích được ghép vào DROP/CREATE và URL → chỉ nhận định danh Postgres thường. */
+const SAFE_DB_NAME = /^[a-z_][a-z0-9_]{0,62}$/
+
+export function assertSafeDatabaseName(name: string): void {
+  if (!SAFE_DB_NAME.test(name)) {
+    throw new Error(
+      `Tên database "${name}" không hợp lệ — chỉ chữ thường, số, gạch dưới, bắt đầu bằng chữ/gạch dưới.`,
+    )
+  }
+}
+
 /**
  * Lỗi của execFileSync chứa NGUYÊN dòng lệnh — tức cả connection string có mật khẩu — và
  * `main().catch` sẽ in nó ra. Ném lại lỗi chỉ mang tên bước + mã thoát (AUD-SEC-003).
@@ -258,9 +273,11 @@ export function assertGzipIntact(localPath: string): void {
  */
 export function runRestorePipeline(localPath: string, targetUrl: string): void {
   try {
+    // Script shell là HẰNG; đường dẫn + URL đi vào dưới dạng tham số vị trí $1/$2 nên không bao
+    // giờ bị shell diễn giải (đường dẫn chứa `"` hay `$(...)` không chạy được lệnh — CodeQL).
     execFileSync(
       'bash',
-      ['-o', 'pipefail', '-c', `gunzip -c "${localPath}" | psql -v ON_ERROR_STOP=1 "${targetUrl}"`],
+      ['-o', 'pipefail', '-c', RESTORE_PIPELINE_SCRIPT, 'restore', localPath, targetUrl],
       {
         stdio: 'inherit',
       },
