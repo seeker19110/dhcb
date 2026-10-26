@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict'
+import {randomUUID} from 'node:crypto'
+import pg from '__AUDIT_REPO_ROOT__/node_modules/pg/lib/index.js'
+import {getOrCreatePerson} from '__AUDIT_REPO_ROOT__/packages/core-personal/personService.ts'
+import {createWorkDocument} from '__AUDIT_REPO_ROOT__/packages/core-domains/workService.ts'
+import {setPolicy,resolveAuthority} from '__AUDIT_REPO_ROOT__/packages/core-personal/policyService.ts'
+import {buildContextPackage} from '__AUDIT_REPO_ROOT__/packages/core-personal/contextEngine.ts'
+import {createCompanionToolSession} from '__AUDIT_REPO_ROOT__/packages/core-personal/companionTools.ts'
+const auditUrl=new URL(process.env.DATABASE_URL??'')
+assert.ok(['localhost','127.0.0.1','[::1]'].includes(auditUrl.hostname),'Only loopback disposable PostgreSQL is allowed')
+assert.match(auditUrl.pathname,/^\/(?:dhcb_codex|dhcb_audit_[A-Za-z0-9_]+)$/,'Use a named disposable audit database')
+const pool=new pg.Pool({connectionString:process.env.DATABASE_URL})
+const ids:string[]=[]
+try {
+ async function user(){const {rows}=await pool.query('insert into public.users(email)values($1)returning id',[`independent-policy-${randomUUID()}@example.test`]);ids.push(rows[0].id);const person=await getOrCreatePerson(pool,rows[0].id);return {uid:rows[0].id,pid:person.id}}
+ const a=await user(),b=await user()
+ const marker='INDEPENDENT_DENIED_NOTE_'+randomUUID()
+ await createWorkDocument(pool,a.pid,{title:'Synthetic marker note',documentType:'note',summary:marker})
+ const context=()=>buildContextPackage(pool,{personId:a.pid,requestId:randomUUID(),requestText:'Hi',domain:'work',purpose:'companion_conversation',includePersonalContext:false,domainState:{sourceId:a.pid,content:marker,provenance:'work:read_model'}})
+ const tools=(p:typeof a)=>createCompanionToolSession({pool,personId:p.pid,userId:p.uid,ephemeral:false,memoryConsent:false,toolkit:{lookupDictionary:()=>[]}})
+ assert((await context()).items.some(i=>i.content.includes(marker)),'control: same context contains note absent DENY')
+ assert((await tools(a).execute('search_notes',{query:''})).content.includes(marker),'control: own notes searchable')
+ assert(!(await tools(b).execute('search_notes',{query:''})).content.includes(marker),'ownership control: other user cannot read marker')
+ await setPolicy(pool,{personId:a.pid,subject:'authoritative_domain_state',action:'inject_context',resourceScope:'work',authority:'DENY',purpose:'companion_conversation'})
+ assert.equal(await resolveAuthority(pool,a.pid,'authoritative_domain_state','inject_context','work'),'DENY')
+ assert.equal((await context()).items.some(i=>i.content.includes(marker)),false,'DENY blocks direct injection')
+ const session=tools(a),result=await session.execute('search_notes',{query:''})
+ console.log(JSON.stringify({noPolicyControl:true,otherUserBlocked:true,denyConfirmed:true,contextBlocked:true,searchOffered:session.definitions.some(x=>x.name==='search_notes'),toolReturnedDeniedContent:result.content.includes(marker),isError:result.isError??false}))
+ assert.equal(result.content.includes(marker),false,'privacy regression: tool path reintroduces denied context')
+} finally {
+ if(ids.length)await pool.query('delete from public.users where id=any($1::uuid[])',[ids])
+ await pool.end()
+}

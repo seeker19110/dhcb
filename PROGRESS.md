@@ -930,6 +930,40 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
+- 🔴 **[2026-10-26 — audit sâu] Còn mở 4 phát hiện mức Cao và 12 mức Trung; chưa sửa, chưa chấp nhận rủi ro.**
+  Theo dõi từng ID tại [sổ audit](docs/ops/AUDIT-STATUS.md); bằng chứng tái hiện, giới hạn và kế hoạch
+  chia đợt nằm trong [báo cáo audit](docs/ops/AUDIT-REPORT-2026-10-26.md). Chủ xử lý: kỹ thuật qua PR;
+  riêng thu hồi credential cần chủ dự án xác minh trên provider. **Bốn mục Cao cần xử lý trước phát hành:**
+
+  - `AUD-CFG-001`: khách vẫn gọi chat/STT khi cầu dao AI đã bật; cần kiểm breaker chung trước mọi
+    nhánh gọi provider (quota khách hiện vẫn có hiệu lực).
+  - `AUD-SEC-001`: tool `search_notes` đưa lại ghi chú bị policy `DENY` cấm `inject_context`;
+    cần áp cùng kiểm tra quyền riêng tư cho đường context và tool result, không phải lỗi đọc chéo user.
+  - `AUD-DATA-001`: hai lần sync đầu khi chưa có dòng tiến độ có thể ghi đè nhau; cần khóa theo user
+    hoặc tạo/khóa hàng ổn định trước merge, kèm test đồng thời trên DB rỗng.
+  - `AUD-DATA-002`: restore có thể báo thành công sau SQL lỗi hoặc gzip hỏng; cần kiểm archive trước
+    bước phá hủy, `pipefail`, `ON_ERROR_STOP` và kiểm dữ liệu trước báo thành công.
+
+  **Mười hai mục Trung còn mở:**
+
+  - `AUD-CODE-001`, `AUD-XFEAT-001`: sửa hợp đồng đọc JSON ở Ambient/Neuro/A2A và luật merge SRS
+    để client/server hội tụ khi `reps` bằng nhau.
+  - `AUD-XFEAT-002`, `AUD-XFEAT-003`: Vite làm mất cookie đăng nhập và thiếu route JSON danh mục
+    môn học; cần smoke dev/Express thật, không chỉ mock API trong E2E.
+  - `AUD-CI-001`, `AUD-SEC-002`: deploy phải dừng khi `npm ci` lỗi và xác minh fingerprint SSH của VPS.
+  - `AUD-SEC-003`, `AUD-SEC-004`: bỏ URL có mật khẩu khỏi log restore; bảo vệ file backup đã giải mã
+    bằng quyền riêng tư và ignore phù hợp.
+  - `AUD-HAR-001`, `AUD-HAR-002`, `AUD-DOC-001`: cập nhật guard, bổ sung template PLAN từ nguồn
+    framework được hỗ trợ và sửa hướng dẫn cloud đang gọi script không tồn tại.
+  - `AUD-SEC-005`: chủ dự án đối soát việc thu hồi VAPID/Supabase service-role lịch sử; nối với việc
+    xoay VAPID đã có trong mục "Cần làm tay" A. Chưa biết credential cũ còn hiệu lực hay đã thu hồi;
+    không coi việc xóa file là bằng chứng thu hồi và không gửi giá trị secret trong chat.
+
+  **Điều kiện đóng:** từng ID có bằng chứng sửa và gate tương ứng đạt, cập nhật trạng thái kèm PR/SHA
+  trong sổ audit; credential cần bằng chứng thu hồi/rotation. Build/unit/coverage xanh riêng chưa đóng
+  các lỗi đã tái hiện. _Xem lại khi:_ trước phát hành hoặc khi thay đổi sync, AI/policy, restore,
+  dev adapter, deploy hay harness.
+
 - 🟡 **[2026-10-26 — changelog `0665`] `@anthropic-ai/sdk` 1.x CHƯA nâng (Dependabot chặn bản major).**
   SDK 1.0 đổi API version `2023-06-01` → `2026-10-21` và gửi khoá qua `Authorization: Bearer` thay
   `x-api-key` (PR #1439 đỏ). **Gỡ theo thứ tự:** (1) đọc ghi chú API version `2026-10-21` của Anthropic, rà
