@@ -934,7 +934,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟠 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`, `0670`, `0671`, `0672`, `0673`, `0674`, `0675`] HẾT mục Cao; còn mở 4 mức Trung.**
+- 🟠 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`, `0670`, `0671`, `0672`, `0673`, `0674`, `0675`, `0676`] HẾT mục Cao; còn mở 3 mức Trung.**
   ✅ `0668` (PR #1447): đã sửa `AUD-DATA-002`, `AUD-SEC-003`, `AUD-SEC-004` (restore an toàn).
   ✅ `0669` (PR #1448): đã sửa `AUD-CFG-001` (cầu dao AI chặn cả khách).
   ✅ `0670` (PR #1449): đã sửa `AUD-SEC-001` (công cụ đọc tôn trọng policy DENY).
@@ -943,14 +943,16 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   ✅ `0673` (PR #1452): đã sửa `AUD-XFEAT-001` (client/server dùng chung hàm gộp SRS).
   ✅ `0674` (PR #1453): đã sửa `AUD-XFEAT-002`, `AUD-XFEAT-003` (dev Vite giữ cookie/Origin, có `/api/subjects`).
   ✅ `0675` (PR #1455): đã sửa `AUD-CI-001`, `AUD-SEC-002` (deploy dừng khi `npm ci` lỗi, bắt buộc fingerprint SSH).
+  ✅ `0676` (PR #1456): đã sửa `AUD-DOC-001` (script cloud về đúng `scripts/`).
   Theo dõi từng ID tại [sổ audit](docs/ops/AUDIT-STATUS.md); bằng chứng tái hiện, giới hạn và kế hoạch
   chia đợt nằm trong [báo cáo audit](docs/ops/AUDIT-REPORT-2026-10-26.md). Chủ xử lý: kỹ thuật qua PR;
   riêng thu hồi credential cần chủ dự án xác minh trên provider.
 
-  **Bốn mục Trung còn mở:**
+  **Ba mục Trung còn mở:**
 
-  - `AUD-HAR-001`, `AUD-HAR-002`, `AUD-DOC-001`: cập nhật guard, bổ sung template PLAN từ nguồn
-    framework được hỗ trợ và sửa hướng dẫn cloud đang gọi script không tồn tại.
+  - `AUD-HAR-001`, `AUD-HAR-002`: cập nhật guard + bổ sung template PLAN bằng cách cài lại
+    X-Templates từ bản gốc (`seeker19110/X-Templates` 3.27.0 đã có cả hai; repo đang 3.15.3) — chờ
+    chủ dự án chọn cách chạy installer (không vá tay `.xtemplates/`).
   - `AUD-SEC-005`: chủ dự án đối soát việc thu hồi VAPID/Supabase service-role lịch sử; nối với việc
     xoay VAPID đã có trong mục "Cần làm tay" A. Chưa biết credential cũ còn hiệu lực hay đã thu hồi;
     không coi việc xóa file là bằng chứng thu hồi và không gửi giá trị secret trong chat.

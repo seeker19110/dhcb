@@ -8,7 +8,7 @@ deploy production hiện tại qua GitHub Actions → VPS.
 
 ## 1. Cloud environment hiện tại
 
-Environment `english-tutor` đã được tạo cho repository `seeker19110/english-tutor` bằng universal
+Environment `english-tutor` đã được tạo cho repository `seeker19110/dhcb` (tên cũ `english-tutor`) bằng universal
 image. Post-setup caching đang **On** và agent internet access đang **Off**.
 
 Setup script kiểm tra Node.js 22+ để khớp `package.json` và CI. Nếu universal image đổi runtime và
