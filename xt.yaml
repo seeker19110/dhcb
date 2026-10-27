@@ -41,3 +41,8 @@ coverage: npm run test:coverage
 # claude_min_version: ""   # doctor cảnh báo khi Claude Code thấp hơn (LOOP-HARNESS-026)
 # ai_attribution: ""    # forbid = guard chặn commit/PR ghi tên model hay URL phiên AI (LOOP-HARNESS-027)
 # pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 72 ký tự
+
+# Khoá mới của khung (bản 3.27.0 (99f8b52)) — bật bằng cách bỏ "# "; vắng khoá = hành vi cũ
+# own = install.py giữ quyền + dạng lệnh hook của dự án (không thêm allow/deny khung). dhcb có luật quyền
+# riêng (.claude/settings.json): bản 3.27.0 từng định thêm `allow: Bash` (cho mọi lệnh shell) — changelog 0679.
+harness_permissions: own
