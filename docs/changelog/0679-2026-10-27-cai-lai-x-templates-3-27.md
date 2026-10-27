@@ -43,3 +43,10 @@ Báo cáo audit yêu cầu sửa bằng installer chính chủ, không vá tay `
 ## Rủi ro và đường lùi
 
 Hook là hàng rào của chính tác tử: guard mới chặt hơn (ví dụ chặn ghi `.claude/` qua Bash). Đường lùi: revert PR.
+
+## Đổi luật merge (chủ dự án chọn phương án (a), 2026-10-27)
+
+Guard mới chặn lệnh bật auto-merge (ADR-0036 của khung: máy chỉ merge ghim head sau `xt.py merge-check`), trái với
+`CLAUDE.md` mục 11 cũ ("bật auto-merge ngay khi tạo PR"). Chủ dự án chọn theo khung: sửa `CLAUDE.md` mục 3, 9, 11,
+11.1 và câu nhắc trong `.claude/hooks/usage-guard.sh` sang "CI xanh → `merge-check` → merge squash kèm
+`expectedHeadSha`". Lợi thêm: hết lỗi auto-merge gộp PR khi commit tài liệu chưa kịp lên (#1453 → #1454).
