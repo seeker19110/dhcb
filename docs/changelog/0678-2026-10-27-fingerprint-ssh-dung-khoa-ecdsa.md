@@ -1,6 +1,6 @@
 # 0678 — 2026-10-27 — Hướng dẫn fingerprint SSH dùng khoá ECDSA (sửa hướng dẫn của `0675`)
 
-PR (điền khi mở). Sửa sai sót trong hướng dẫn của changelog `0675` (AUD-SEC-002).
+PR #1460. Sửa sai sót trong hướng dẫn của changelog `0675` (AUD-SEC-002).
 
 ## Vấn đề
 
