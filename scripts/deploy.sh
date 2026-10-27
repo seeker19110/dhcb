@@ -67,7 +67,11 @@ echo "── [3/7] Dọn dữ liệu CŨ (tránh sót, vd lessons 1000 bài cũ)
 git clean -fd apps/dhcb/public/data || true  # bỏ file rác không-theo-dõi (public/ đã dời vào apps/dhcb ở PR-S2)
 
 echo "── [4/7] Cài dependencies (npm ci) ─────────────"
-npm ci || npm install                    # npm ci: cài đúng lockfile; lỗi → fallback install
+# CHỈ `npm ci` — cài đúng lockfile đã qua CI. Lỗi thì DỪNG deploy (set -e), KHÔNG rơi sang
+# `npm install`: bản đó resolve lại dependency có thể khác lockfile mà CI đã kiểm, production
+# chạy mã chưa ai test (audit 2026-10-26, AUD-CI-001). `npm ci` lỗi ⇒ đọc log, sửa nguyên nhân
+# (lockfile lệch package.json, hết đĩa, mạng) rồi deploy lại.
+npm ci
 
 echo "── [5/7] Chạy migration Postgres tự host còn thiếu ─────"
 # Tự áp mọi file postgres/migrations/*.sql chưa chạy (cần DATABASE_URL trong .env —

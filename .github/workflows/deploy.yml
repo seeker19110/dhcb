@@ -30,6 +30,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Không có fingerprint thì ssh-action BỎ QUA kiểm host key (InsecureIgnoreHostKey): giả mạo
+      # VPS trên đường mạng/DNS nhận được GITHUB_TOKEN và lệnh deploy (audit 2026-10-26,
+      # AUD-SEC-002). Dừng hẳn thay vì âm thầm deploy không xác minh. Cách lấy giá trị (chạy TRÊN
+      # VPS, qua kênh tin cậy): ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2
+      - name: Require VPS host key fingerprint
+        env:
+          VPS_SSH_FINGERPRINT: ${{ secrets.VPS_SSH_FINGERPRINT }}
+        run: |
+          if [ -z "${VPS_SSH_FINGERPRINT}" ]; then
+            echo "::error::VPS_SSH_FINGERPRINT chưa cấu hình — không deploy khi chưa xác minh được host key của VPS."
+            exit 1
+          fi
       - name: Deploy to VPS via SSH
         # Ghim theo commit SHA, không theo tag: action này cầm SSH key VPS, tag có thể bị chủ
         # action dời sang commit khác (changelog 0521). Dependabot vẫn cập nhật SHA + chú thích.
@@ -38,6 +50,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          # Host key SHA256 của VPS — sai/khác là từ chối kết nối trước khi gửi env/lệnh.
+          fingerprint: ${{ secrets.VPS_SSH_FINGERPRINT }}
           envs: GITHUB_TOKEN,GITHUB_REPOSITORY
           command_timeout: 30m
           script: |

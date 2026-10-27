@@ -23,7 +23,11 @@
 - Khi PR được merge vào nhánh `main`:
   1. Workflow `.github/workflows/ci.yml` chạy kiểm tra cổng chất lượng (lint, typecheck, format, unit test, build).
   2. Nếu CI xanh, workflow `.github/workflows/deploy.yml` tự động SSH vào VPS và thực thi `bash scripts/deploy.sh`.
-- Yêu cầu secrets cấu hình trong GitHub Repository: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`.
+- Yêu cầu secrets cấu hình trong GitHub Repository: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`,
+  `VPS_SSH_FINGERPRINT` (host key SHA256 của VPS — thiếu thì workflow DỪNG, không deploy mà không
+  xác minh host). Lấy giá trị bằng lệnh chạy TRÊN VPS:
+  `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2` (dạng `SHA256:…`). Đổi VPS
+  hoặc cài lại SSH server ⇒ cập nhật secret này.
 
 ### Cách 2 — Triển Khai Thủ Công Trực Tiếp Trên VPS
 
