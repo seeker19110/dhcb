@@ -930,21 +930,20 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟠 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`, `0670`, `0671`, `0672`, `0673`] HẾT mục Cao; còn mở 8 mức Trung.**
+- 🟠 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`, `0670`, `0671`, `0672`, `0673`, `0674`] HẾT mục Cao; còn mở 6 mức Trung.**
   ✅ `0668` (PR #1447): đã sửa `AUD-DATA-002`, `AUD-SEC-003`, `AUD-SEC-004` (restore an toàn).
   ✅ `0669` (PR #1448): đã sửa `AUD-CFG-001` (cầu dao AI chặn cả khách).
   ✅ `0670` (PR #1449): đã sửa `AUD-SEC-001` (công cụ đọc tôn trọng policy DENY).
   ✅ `0671` (PR #1450): đã sửa `AUD-DATA-001` (khoá theo user cho lần đồng bộ tiến độ đầu).
   ✅ `0672` (PR #1451): đã sửa `AUD-CODE-001` (Ambient/Neuro/A2A đọc body đúng hợp đồng).
   ✅ `0673` (PR #1452): đã sửa `AUD-XFEAT-001` (client/server dùng chung hàm gộp SRS).
+  ✅ `0674` (PR #1453): đã sửa `AUD-XFEAT-002`, `AUD-XFEAT-003` (dev Vite giữ cookie/Origin, có `/api/subjects`).
   Theo dõi từng ID tại [sổ audit](docs/ops/AUDIT-STATUS.md); bằng chứng tái hiện, giới hạn và kế hoạch
   chia đợt nằm trong [báo cáo audit](docs/ops/AUDIT-REPORT-2026-10-26.md). Chủ xử lý: kỹ thuật qua PR;
   riêng thu hồi credential cần chủ dự án xác minh trên provider.
 
-  **Tám mục Trung còn mở:**
+  **Sáu mục Trung còn mở:**
 
-  - `AUD-XFEAT-002`, `AUD-XFEAT-003`: Vite làm mất cookie đăng nhập và thiếu route JSON danh mục
-    môn học; cần smoke dev/Express thật, không chỉ mock API trong E2E.
   - `AUD-CI-001`, `AUD-SEC-002`: deploy phải dừng khi `npm ci` lỗi và xác minh fingerprint SSH của VPS.
   - `AUD-HAR-001`, `AUD-HAR-002`, `AUD-DOC-001`: cập nhật guard, bổ sung template PLAN từ nguồn
     framework được hỗ trợ và sửa hướng dẫn cloud đang gọi script không tồn tại.
