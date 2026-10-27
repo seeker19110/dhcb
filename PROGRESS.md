@@ -92,7 +92,9 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — chạy lại trên
   VPS 2026-10-27 (production, SDK 1.3.0): **10/10, sạch bất biến** (gồm 3 ca prompt injection). **🔴 F-011 MỞ:** gia sư
   bịa lỗi ở câu đúng — đo lại 2026-10-27 (`0677`): FP-rate 44,4 % ± 5,6 trên 62 câu × 3 lượt, 60 % trên 180
-  câu (5,6 % hồi Groq 2026-08-26); cần sửa prompt chấm rồi chạy lại `eval:tutor` với key thật.
+  câu (5,6 % hồi Groq 2026-08-26). **Đã sửa prompt** (PR #1462, `0680`): 32/36 ca FP là lời khen/chào/mẹo
+  đặt vào dòng ✅ — nay dòng sửa lỗi chỉ cho lỗi thật, khen nằm trong lời thoại. **Còn chờ chủ dự án chạy lại
+  `eval:tutor` với key thật** (FP-rate phải giảm, recall không tụt) mới đóng F-011.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền
