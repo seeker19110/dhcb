@@ -194,3 +194,78 @@ describe('Middleware dev qua HTTP thật', () => {
     }
   })
 })
+
+// AUD-XFEAT-002: dev phải chuyển ĐỦ header như Express (`wrapEdge` đưa nguyên `req.headers`) —
+// đăng nhập chỉ đọc cookie `session_token`, nên bỏ cookie là mọi API cần đăng nhập trả 401 ở dev.
+function send(url: string, method: string, headers: Record<string, string>, body?: string) {
+  return new Promise<{ status: number | undefined; text: string }>((resolve, reject) => {
+    const request = httpRequest(url, { method, headers }, (response) => {
+      let text = ''
+      response.setEncoding('utf8')
+      response.on('data', (chunk: string) => (text += chunk))
+      response.on('end', () => resolve({ status: response.statusCode, text }))
+    })
+    request.on('error', reject)
+    request.end(body)
+  })
+}
+
+describe('Middleware dev giữ parity header/Origin với Express (AUD-XFEAT-002)', () => {
+  it('chuyển cookie, origin và host thật tới handler', async () => {
+    const seen: Record<string, string | null> = {}
+    await withDev(
+      async () => ({
+        default: async (request: Request) => {
+          seen.cookie = request.headers.get('cookie')
+          seen.origin = request.headers.get('origin')
+          seen.custom = request.headers.get('x-requested-with')
+          seen.url = request.url
+          return new Response('{}')
+        },
+      }),
+      async (url) => {
+        const response = await send(url + '/api/companion', 'GET', {
+          cookie: 'session_token=abc; other=1',
+          origin: url,
+          'x-requested-with': 'fetch',
+        })
+        expect(response.status).toBe(200)
+      },
+    )
+    expect(seen.cookie).toBe('session_token=abc; other=1')
+    expect(seen.custom).toBe('fetch')
+    expect(seen.origin).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/)
+    expect(seen.url).toBe(`${seen.origin}/api/companion`)
+  })
+
+  it('request ghi dữ liệu bị cổng Origin từ chối → 403 như Express, không gọi handler', async () => {
+    const handler = vi.fn(async () => new Response('{}'))
+    const middleware = createApiEdgeDevMiddleware({
+      resolveModule: (url) => (url === '/api/companion' ? '/@fs/fake.ts' : undefined),
+      loadModule: async () => ({ default: handler }),
+      isTrustedMutation: (request) => request.headers.get('origin') !== 'https://evil.example',
+    })
+    const server = createServer((req, res) => void middleware(req, res, () => res.end('next')))
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    if (!address || typeof address === 'string') throw new Error('TEST_NO_ADDRESS')
+    try {
+      const response = await send(
+        `http://127.0.0.1:${address.port}/api/companion`,
+        'POST',
+        {
+          origin: 'https://evil.example',
+          cookie: 'session_token=abc',
+          'content-type': 'application/json',
+        },
+        '{}',
+      )
+      expect(response.status).toBe(403)
+      expect(JSON.parse(response.text)).toMatchObject({ code: 'UNTRUSTED_ORIGIN' })
+      expect(handler).not.toHaveBeenCalled()
+    } finally {
+      server.closeAllConnections()
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+    }
+  })
+})

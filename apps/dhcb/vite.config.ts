@@ -408,6 +408,8 @@ const API_ROUTES: { prefix: string; module: string }[] = [
     module: '/apps/server/src/api/subjects/english/avatar-visemes.ts',
   },
   { prefix: '/api/companion', module: '/apps/server/src/api/personal/companion.ts' },
+  // Danh mục môn học cho Góc học tập — thiếu route này dev trả HTML SPA (AUD-XFEAT-003).
+  { prefix: '/api/subjects', module: '/apps/server/src/api/learning/subjects.ts' },
 ]
 
 /**
@@ -471,6 +473,13 @@ function apiEdgeDevMiddleware(): Plugin {
             return route ? toViteFsModuleId(resolveApiModulePath(route.module)) : undefined
           },
           loadModule: (moduleId) => server.ssrLoadModule(moduleId),
+          // Cùng cổng Origin/CSRF với Express — nạp qua Vite như handler để dùng đúng mã nguồn.
+          async isTrustedMutation(request) {
+            const security = (await server.ssrLoadModule(
+              toViteFsModuleId(resolveApiModulePath('/packages/core-auth/security.ts')),
+            )) as { isTrustedMutation(request: Request): boolean }
+            return security.isTrustedMutation(request)
+          },
         }),
       )
     },

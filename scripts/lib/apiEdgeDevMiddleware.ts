@@ -8,6 +8,34 @@ import {
 interface DevApiDependencies {
   resolveModule(url: string): string | undefined
   loadModule(moduleId: string): Promise<unknown>
+  /** Cổng Origin/CSRF giống `wrapEdge` của Express; bỏ trống thì không kiểm (chỉ dùng trong test). */
+  isTrustedMutation?(request: Request): boolean | Promise<boolean>
+}
+
+// Header hop-by-hop chỉ thuộc kết nối Node → Vite, không thuộc request gửi handler; `content-length`
+// bỏ vì body được đọc lại thành chuỗi và `Request` tự tính.
+const HOP_BY_HOP = new Set([
+  'connection',
+  'keep-alive',
+  'transfer-encoding',
+  'upgrade',
+  'te',
+  'trailer',
+  'proxy-connection',
+  'content-length',
+])
+
+// Parity với Express (`apps/server/src/routes.ts#wrapEdge` đưa nguyên `req.headers`): bản cũ chỉ
+// chuyển content-type + authorization nên mất cookie `session_token` — dev luôn 401 dù đã đăng nhập
+// (audit 2026-10-26, AUD-XFEAT-002).
+function forwardHeaders(request: IncomingMessage): Headers {
+  const headers = new Headers()
+  for (const [name, value] of Object.entries(request.headers)) {
+    if (value === undefined || HOP_BY_HOP.has(name)) continue
+    headers.set(name, Array.isArray(value) ? value.join(', ') : value)
+  }
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json')
+  return headers
 }
 function readRequestBody(request: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -45,20 +73,26 @@ export function createApiEdgeDevMiddleware(dependencies: DevApiDependencies) {
       }
       const body = await readRequestBody(request)
       const handler = moduleHandler(await dependencies.loadModule(moduleId))
-      const webRequest = new Request(new URL(request.url!, 'http://localhost'), {
-        method: request.method,
-        // Giữ nguyên request header parity hiện hữu; sửa auth/request là scope riêng.
-        headers: {
-          'content-type': request.headers['content-type'] ?? 'application/json',
-          ...(request.headers.authorization
-            ? { authorization: request.headers.authorization }
-            : {}),
+      const webRequest = new Request(
+        new URL(request.url!, `http://${request.headers.host ?? 'localhost'}`),
+        {
+          method: request.method,
+          headers: forwardHeaders(request),
+          body:
+            request.method && request.method !== 'GET' && request.method !== 'HEAD'
+              ? body
+              : undefined,
         },
-        body:
-          request.method && request.method !== 'GET' && request.method !== 'HEAD'
-            ? body
-            : undefined,
-      })
+      )
+      if (dependencies.isTrustedMutation && !(await dependencies.isTrustedMutation(webRequest))) {
+        target.statusCode = 403
+        target.setHeader('content-type', 'application/json')
+        target.setHeader('cache-control', 'no-store')
+        target.end(
+          JSON.stringify({ error: 'Nguồn yêu cầu không được phép', code: 'UNTRUSTED_ORIGIN' }),
+        )
+        return
+      }
       const response = await handler(webRequest)
       target.statusCode = response.status
       copyWebResponseHeaders(response, target)
