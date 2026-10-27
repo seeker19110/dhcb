@@ -89,8 +89,8 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0.
   **Eval AI thật 2026-10-25** (chủ dự án chạy trên VPS, changelog `0664`): **F-008 ĐÃ ĐÓNG** — baseline
   `eval:tutor` 180 câu đã ghi (`docs/research/eval-tutor-baseline.md`); companion 16/16, code-feedback 8/8,
-  routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — cần chạy lại
-  `npm run eval:action-canvas` trên VPS sau deploy để xác nhận các bất biến khác. **🔴 F-011 MỞ:** gia sư
+  routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — chạy lại trên
+  VPS 2026-10-27 (production, SDK 1.3.0): **10/10, sạch bất biến** (gồm 3 ca prompt injection). **🔴 F-011 MỞ:** gia sư
   bịa lỗi ở câu đúng — đo lại 2026-10-27 (`0677`): FP-rate 44,4 % ± 5,6 trên 62 câu × 3 lượt, 60 % trên 180
   câu (5,6 % hồi Groq 2026-08-26); cần sửa prompt chấm rồi chạy lại `eval:tutor` với key thật.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
@@ -930,7 +930,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
 
 ## Nợ kỹ thuật còn mở
 
-- 🟠 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`, `0670`, `0671`, `0672`, `0673`, `0674`, `0675`, `0676`] HẾT mục Cao; còn mở 3 mức Trung.**
+- 🟠 **[2026-10-26 — audit sâu; THU HẸP ở `0668`, `0669`, `0670`, `0671`, `0672`, `0673`, `0674`, `0675`, `0676`, `0679`] HẾT mục Cao; còn mở 1 mức Trung (việc tay chủ dự án).**
   ✅ `0668` (PR #1447): đã sửa `AUD-DATA-002`, `AUD-SEC-003`, `AUD-SEC-004` (restore an toàn).
   ✅ `0669` (PR #1448): đã sửa `AUD-CFG-001` (cầu dao AI chặn cả khách).
   ✅ `0670` (PR #1449): đã sửa `AUD-SEC-001` (công cụ đọc tôn trọng policy DENY).
@@ -940,15 +940,13 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   ✅ `0674` (PR #1453): đã sửa `AUD-XFEAT-002`, `AUD-XFEAT-003` (dev Vite giữ cookie/Origin, có `/api/subjects`).
   ✅ `0675` (PR #1455): đã sửa `AUD-CI-001`, `AUD-SEC-002` (deploy dừng khi `npm ci` lỗi, bắt buộc fingerprint SSH).
   ✅ `0676` (PR #1456): đã sửa `AUD-DOC-001` (script cloud về đúng `scripts/`).
+  ✅ `0679` (PR #1461): đã sửa `AUD-HAR-001`, `AUD-HAR-002` (cài lại X-Templates 3.15.3 → 3.27.0).
   Theo dõi từng ID tại [sổ audit](docs/ops/AUDIT-STATUS.md); bằng chứng tái hiện, giới hạn và kế hoạch
   chia đợt nằm trong [báo cáo audit](docs/ops/AUDIT-REPORT-2026-10-26.md). Chủ xử lý: kỹ thuật qua PR;
   riêng thu hồi credential cần chủ dự án xác minh trên provider.
 
-  **Ba mục Trung còn mở:**
+  **Một mục Trung còn mở:**
 
-  - `AUD-HAR-001`, `AUD-HAR-002`: cập nhật guard + bổ sung template PLAN bằng cách cài lại
-    X-Templates từ bản gốc (`seeker19110/X-Templates` 3.27.0 đã có cả hai; repo đang 3.15.3) — chờ
-    chủ dự án chọn cách chạy installer (không vá tay `.xtemplates/`).
   - `AUD-SEC-005`: chủ dự án đối soát việc thu hồi VAPID/Supabase service-role lịch sử; nối với việc
     xoay VAPID đã có trong mục "Cần làm tay" A. Chưa biết credential cũ còn hiệu lực hay đã thu hồi;
     không coi việc xóa file là bằng chứng thu hồi và không gửi giá trị secret trong chat.
@@ -958,10 +956,9 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   các lỗi đã tái hiện. _Xem lại khi:_ trước phát hành hoặc khi thay đổi sync, AI/policy, restore,
   dev adapter, deploy hay harness.
 
-- 🟢 **[2026-10-26 — changelog `0665`; GẦN XONG ở `0677`, PR #1457] `@anthropic-ai/sdk` ĐÃ nâng lên 1.3.0.**
-  Eval thật trên VPS với SDK mới: companion 16/16, code-feedback 8/8, tutor 20 câu chấm đủ; bộ replay sửa
-  theo hành vi đo được (Bearer, version `2026-10-21`, `/v1/messages`). **Còn:** chạy `npm run
-eval:action-canvas` trên VPS sau khi deploy (chưa chạy với SDK mới). `linkedom` 0.18.14 vẫn bị chặn (vỡ
+- 🟢 **[2026-10-26 — changelog `0665`; XONG ở `0677`, PR #1457] `@anthropic-ai/sdk` ĐÃ nâng lên 1.3.0.**
+  Eval thật với SDK mới: companion 16/16, code-feedback 8/8, tutor 20 câu chấm đủ, action-canvas 10/10 (trên
+  production sau deploy, 2026-10-27); chủ dự án chat thử trên app — ổn. `linkedom` 0.18.14 vẫn bị chặn (vỡ
   build worker do `@acemir/cssom`) — chỉ đúng bản đó.
 
 - 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`, `0627`, `0628`] Red-team AI: phần Companion V2 ĐÃ KIỂM

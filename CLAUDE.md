@@ -66,8 +66,8 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
 - **TẠO PR = COI NHƯ ĐÃ XONG (2026-08-09, làm rõ 2026-08-26).** Ba việc làm **liền một mạch**, không tách ra hỏi lại:
   1. **Nhật ký đợt việc = MỘT FILE MỚI trong `docs/changelog/`** theo khuôn `NNNN-YYYY-MM-DD-slug.md` (`npm run changelog` in số kế tiếp). Ghi số PR, ngày, việc đã làm, quyết định, bằng chứng kiểm chứng. KHÔNG chồng mục vào `PROGRESS.md` (test `scripts/changelog.test.ts` canh).
   2. **Cập nhật `PROGRESS.md`** chỉ khi trạng thái đổi (mục "Tiếp theo" / nợ / việc tay), kèm số PR. Sửa `CLAUDE.md`/`PROJECT.md`/`docs/*` nếu thay đổi chạm tới. **Quy ước chung (2026-09-19): bước đồng bộ `PROGRESS.md` LUÔN gộp vào PR đang mở gần nhất của đợt việc đó — KHÔNG tách thành PR/commit riêng**, kể cả khi phát hiện lệch trạng thái đến từ nguồn khác (vd `scripts/maintenance-sweep.sh`, `check-progress-freshness.sh`) trong lúc PR đó còn đang mở.
-  3. **Bật auto-merge (squash) trong cùng nhịp tạo PR; không bật được thì theo dõi và tự merge khi CI xanh** — xem mục 11.
-- **PR KHÔNG ĐỂ Ở DẠNG NHÁP** — GitHub từ chối auto-merge trên PR nháp (đã dính PR #693). Công cụ tạo nháp thì bỏ nháp ngay.
+  3. **Theo dõi CI; xanh thì `xt.py merge-check` rồi merge (squash) GHIM HEAD** — KHÔNG bật auto-merge (guard chặn, ADR-0036 của khung) — xem mục 11.
+- **PR KHÔNG ĐỂ Ở DẠNG NHÁP** — PR nháp không merge được (đã dính PR #693). Công cụ tạo nháp thì bỏ nháp ngay.
 - **Chia nhỏ.** Mỗi lần một phần nhỏ, hoàn chỉnh, kiểm tra được. Việc lớn → đề xuất kế hoạch chia nhỏ trước.
 - **Chủ động góp ý (BẮT BUỘC).** Thấy cách tốt hơn / rủi ro / thiếu sót / phạm vi phình → **nêu kèm đề xuất cụ thể**. Im lặng làm theo khi biết có vấn đề là vi phạm.
 - **Nhịp theo giới hạn giờ (usage limit):** ≥ 70% → hoàn tất việc đang làm, tạo PR rồi DỪNG chờ người dùng. < 70% → sau khi PR merge, tự tiếp mục kế tiếp trong `PROGRESS.md`. Hook Stop `.claude/hooks/usage-guard.sh` tự nhắc luật này (cách bật: `docs/claude-md-chi-tiet.md` §3).
@@ -215,7 +215,7 @@ CÙNG LÚC (`gradingSchemas.contract.test.ts` canh).
 
 Đạt toàn bộ cổng commit · chạy TOÀN BỘ test (xanh) · nhánh đã cập nhật với nhánh chính, không xung đột · đối chiếu đủ tiêu chí chấp nhận (`PROJECT.md`) + Definition of Done · tự chạy smoke test luồng chính (thật) · rà bảo mật (quyền server, không lộ dữ liệu) · không phá tính năng khác (ghi rõ nếu có breaking change) · nếu đổi schema: có migration có phiên bản, rollback được.
 
-"Không phá tính năng khác" phải **kiểm bằng công cụ, không bằng trí nhớ**: `npm run codemap -- impact <file>` cho từng file đã sửa → soát lại danh sách bị ảnh hưởng (mục 7). Nếu merge cục bộ: chạy lại test **trên kết quả đã merge**, không chỉ trên nhánh feature. Tích hợp theo mục 11 (PR + tự merge khi CI xanh); chỉ xoá nhánh khi người dùng xác nhận rõ ràng. Chi tiết: KHUNG 2 mục "Hoàn tất một nhánh phát triển".
+"Không phá tính năng khác" phải **kiểm bằng công cụ, không bằng trí nhớ**: `npm run codemap -- impact <file>` cho từng file đã sửa → soát lại danh sách bị ảnh hưởng (mục 7). Nếu merge cục bộ: chạy lại test **trên kết quả đã merge**, không chỉ trên nhánh feature. Tích hợp theo mục 11 (PR + merge ghim head sau `merge-check` khi CI xanh); chỉ xoá nhánh khi người dùng xác nhận rõ ràng. Chi tiết: KHUNG 2 mục "Hoàn tất một nhánh phát triển".
 
 ## 10. Báo cáo xác thực (xuất trước mỗi commit/merge)
 
@@ -233,7 +233,7 @@ Bất kỳ mục ❌ → sửa trước, chạy lại toàn bộ, KHÔNG commit/
 
 Mỗi tính năng/sửa lỗi một nhánh · commit nhỏ, một thay đổi logic · **conventional commits** (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`) · mọi merge vào `main` qua PR · **không push thẳng `main`**.
 
-**Mục tiêu duy nhất: CI xanh là PR vào `main`, không cần người dùng bấm.** Nhánh `main` có branch protection với 3 required check `quality` · `e2e` · `metadata`, nên auto-merge/merge tay khi xanh là an toàn. **Cấm: merge tay để đi tắt khi CI CHƯA xanh.**
+**Mục tiêu duy nhất: CI xanh là PR vào `main`, không cần người dùng bấm.** Nhánh `main` có branch protection với 3 required check `quality` · `e2e` · `metadata`, nên merge khi xanh là an toàn. **Cấm: merge để đi tắt khi CI CHƯA xanh.**
 
 **BỐN BƯỚC BẮT BUỘC KHI TẠO PR — làm liền một mạch, không hỏi giữa chừng:**
 
@@ -248,7 +248,11 @@ Mỗi tính năng/sửa lỗi một nhánh · commit nhỏ, một thay đổi lo
    - Tiêu đề `feat(`/`feat:` còn cần mô tả chứa đường dẫn `docs/specs/YYYY-MM-DD-slug.md` hoặc `docs/research/<slug>.md` **tồn tại thật trong nhánh** + cụm "Approved for implementation". Việc không có đặc tả trước (tái cấu trúc UI theo yêu cầu trong phiên…) thì dùng `refactor`/`style`/`chore` cho đúng bản chất.
 
 2. **Tạo PR ở trạng thái READY**, không bao giờ nháp.
-3. **Gọi bật auto-merge (squash) ĐÚNG MỘT LẦN, NGAY trong vài giây sau lệnh tạo PR** — cửa sổ chỉ vài giây; trượt thì GitHub từ chối ("unstable status…" KHÔNG có nghĩa là có check đỏ). **Đừng chẩn đoán, đừng gọi lại.** Thất bại thì theo dõi CI; **xanh cả 3 check + không xung đột → tự merge (squash) NGAY**.
+3. **Merge GHIM HEAD, không auto-merge (chủ dự án chốt 2026-10-27, theo ADR-0036 của X-Templates 3.27).** Theo dõi
+   CI; khi xanh chạy `python3 .xtemplates/scripts/xt.py merge-check --pr <số>` — `verdict` cho phép thì merge
+   (squash) kèm `expectedHeadSha` = đúng `head` mà merge-check vừa kiểm; `wait` thì chờ rồi chạy lại. Lý do: auto-merge
+   bật sớm từng gộp PR khi commit tài liệu chưa kịp lên (#1453 → phải mở #1454), và guard của khung chặn hẳn lệnh bật
+   auto-merge. Changelog + PROGRESS phải nằm trên nhánh TRƯỚC khi merge.
 4. **Chỉ gộp `main` khi THẬT SỰ CẦN:** GitHub báo xung đột (`mergeable_state: dirty`), hoặc `main` vừa đổi đúng file/luồng PR này đụng. Repo đã TẮT "require branches up to date" (2026-08-27) nên nhánh tụt sau `main` không chặn merge. Merge SẠCH thì không chạy lại cổng ở máy (CI đã chạy trên kết quả gộp); merge CÓ xung đột / chạm file chung → chạy lại đủ cổng (mục 9) trước khi push.
 
 **PR mình tạo là PR của mình:** CI đỏ → đọc log, tái hiện ở máy, sửa, push tới khi xanh. Không để PR nằm đỏ chờ người dùng.
@@ -263,8 +267,8 @@ Lịch sử vì sao có từng luật trên (PR #693/#709/#724/#726/#727): `docs
 1. **Song song, không nối đuôi** — mỗi bước cổng một job con (`static` · `unit` · `build` ·
    `audit`); bước mới gắn vào job con hợp lý nhất, hoặc job riêng nếu nặng và độc lập.
 2. **Tên `quality` và `e2e` là BẤT BIẾN** (required check cùng `metadata`): chỉ là job tổng hợp
-   `needs:` các job con. Job con mới **phải** nối vào `needs` của một trong hai. Đổi id = auto-merge
-   kẹt vĩnh viễn và **hỏng im lặng** trên mọi PR.
+   `needs:` các job con. Job con mới **phải** nối vào `needs` của một trong hai. Đổi id = required check
+   không bao giờ báo, merge kẹt vĩnh viễn và **hỏng im lặng** trên mọi PR.
 3. **E2E luôn chia mảnh** (`--shard=N/M` + `fail-fast: false`); số mảnh chọn theo ĐO THẬT.
 4. **Chỉ upload artifact khi ĐỎ** (`if: failure()`).
 

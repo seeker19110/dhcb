@@ -13,7 +13,7 @@ ctx=""
 if [ -f "$XT_ROOT/PROGRESS.md" ]; then
   # Chỉ lấy các mục "Đang làm / Tiếp theo / Quyết định / Bàn giao" (và tiêu đề), cắt 8 KB.
   # Chuẩn hoá NFC trước awk: PROGRESS.md dạng NFD (soạn trên macOS) không khớp tên mục → mất cả 4 mục.
-  prog="$(python3 -c 'import sys, unicodedata; sys.stdout.write(unicodedata.normalize("NFC", sys.stdin.read()))' \
+  prog="$(python3 -I -c 'import sys, unicodedata; sys.stdout.write(unicodedata.normalize("NFC", sys.stdin.read()))' \
     < "$XT_ROOT/PROGRESS.md" 2>/dev/null | awk '
     /^## /{keep = ($0 ~ /Đang làm|Tiếp theo|Quyết định|Bàn giao|Kế hoạch/)}
     NR==1 || keep {print}
@@ -28,7 +28,7 @@ fi
 XT="$(xt_py)" || true
 if [ -n "${XT:-}" ] && [ -f "$XT_ROOT/.autopilot/state.json" ]; then
   ctx+="===== Autopilot =====
-$(python3 "$XT" loop status 2>/dev/null || echo 'không đọc được trạng thái')
+$(py_run "$XT" loop status 2>/dev/null || echo 'không đọc được trạng thái')
 
 "
 fi

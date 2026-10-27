@@ -33,7 +33,7 @@ MARK="$ROOT/.claude/.winddown-nudged"
 touch "$MARK" 2>/dev/null || true
 
 detail="$(printf '%s' "$out" | grep -E '^(opus|sonnet|haiku|fable)=' | tr '\n' ' ')"
-reason="⚠️ Ước tính đã dùng ~${overall}% quota 5h (ngưỡng ${thr}%). Chi tiết: ${detail}. WIND-DOWN NGAY theo CLAUDE.md mục 3: hoàn tất gọn đơn vị đang làm, chạy đủ cổng (mục 8), tạo PR (nhật ký docs/changelog/ + cập nhật PROGRESS.md nếu đổi trạng thái), bật auto-merge, rồi DỪNG phiên sạch sẽ chờ người dùng. KHÔNG khởi động đơn vị/merge mới."
+reason="⚠️ Ước tính đã dùng ~${overall}% quota 5h (ngưỡng ${thr}%). Chi tiết: ${detail}. WIND-DOWN NGAY theo CLAUDE.md mục 3: hoàn tất gọn đơn vị đang làm, chạy đủ cổng (mục 8), tạo PR (nhật ký docs/changelog/ + cập nhật PROGRESS.md nếu đổi trạng thái), CI xanh thì merge-check + merge ghim head (mục 11), rồi DỪNG phiên sạch sẽ chờ người dùng. KHÔNG khởi động đơn vị/merge mới."
 
 jq -n --arg r "$reason" '{hookSpecificOutput:{hookEventName:"Stop",additionalContext:$r}}'
 exit 0
