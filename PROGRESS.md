@@ -89,8 +89,8 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0.
   **Eval AI thật 2026-10-25** (chủ dự án chạy trên VPS, changelog `0664`): **F-008 ĐÃ ĐÓNG** — baseline
   `eval:tutor` 180 câu đã ghi (`docs/research/eval-tutor-baseline.md`); companion 16/16, code-feedback 8/8,
-  routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — cần chạy lại
-  `npm run eval:action-canvas` trên VPS sau deploy để xác nhận các bất biến khác. **🔴 F-011 MỞ:** gia sư
+  routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — chạy lại trên
+  VPS 2026-10-27 (production, SDK 1.3.0): **10/10, sạch bất biến** (gồm 3 ca prompt injection). **🔴 F-011 MỞ:** gia sư
   bịa lỗi ở câu đúng — đo lại 2026-10-27 (`0677`): FP-rate 44,4 % ± 5,6 trên 62 câu × 3 lượt, 60 % trên 180
   câu (5,6 % hồi Groq 2026-08-26); cần sửa prompt chấm rồi chạy lại `eval:tutor` với key thật.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
@@ -956,10 +956,9 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   các lỗi đã tái hiện. _Xem lại khi:_ trước phát hành hoặc khi thay đổi sync, AI/policy, restore,
   dev adapter, deploy hay harness.
 
-- 🟢 **[2026-10-26 — changelog `0665`; GẦN XONG ở `0677`, PR #1457] `@anthropic-ai/sdk` ĐÃ nâng lên 1.3.0.**
-  Eval thật trên VPS với SDK mới: companion 16/16, code-feedback 8/8, tutor 20 câu chấm đủ; bộ replay sửa
-  theo hành vi đo được (Bearer, version `2026-10-21`, `/v1/messages`). **Còn:** chạy `npm run
-eval:action-canvas` trên VPS sau khi deploy (chưa chạy với SDK mới). `linkedom` 0.18.14 vẫn bị chặn (vỡ
+- 🟢 **[2026-10-26 — changelog `0665`; XONG ở `0677`, PR #1457] `@anthropic-ai/sdk` ĐÃ nâng lên 1.3.0.**
+  Eval thật với SDK mới: companion 16/16, code-feedback 8/8, tutor 20 câu chấm đủ, action-canvas 10/10 (trên
+  production sau deploy, 2026-10-27); chủ dự án chat thử trên app — ổn. `linkedom` 0.18.14 vẫn bị chặn (vỡ
   build worker do `@acemir/cssom`) — chỉ đúng bản đó.
 
 - 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`, `0627`, `0628`] Red-team AI: phần Companion V2 ĐÃ KIỂM
