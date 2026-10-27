@@ -2,13 +2,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createProviderReplay, requestFingerprint, type ReplayExchange } from './providerReplay'
 
-const url = 'https://api.anthropic.com/v1/messages?beta=true'
+const url = 'https://api.anthropic.com/v1/messages'
 const body = { messages: [{ role: 'user', content: 'Dữ liệu tổng hợp' }], model: 'synthetic' }
 const exchange = (): ReplayExchange => ({
   method: 'POST',
-  path: '/v1/messages?beta=true',
+  path: '/v1/messages',
   requestHeaders: { 'anthropic-version': '2023-06-01', 'anthropic-beta': null },
-  requestFingerprint: requestFingerprint('POST', '/v1/messages?beta=true', body, {
+  requestFingerprint: requestFingerprint('POST', '/v1/messages', body, {
     'anthropic-version': '2023-06-01',
     'anthropic-beta': null,
   }),
@@ -46,7 +46,7 @@ describe('fetch replay từ chối mismatch và không gọi mạng', () => {
     [url, { ...init(), method: 'PUT' }],
     [url, { ...init(), body: '{"model":"changed"}' }],
     [url, { ...init(), body: '{' }],
-    ['https://khac.invalid/v1/messages?beta=true', init()],
+    ['https://khac.invalid/v1/messages', init()],
     ['https://api.anthropic.com/v1/khac', init()],
   ])('request lệch phải làm ledger đỏ dù caller bắt lỗi', async (target, options) => {
     const replay = createProviderReplay([exchange()])

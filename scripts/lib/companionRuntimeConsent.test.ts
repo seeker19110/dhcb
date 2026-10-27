@@ -388,12 +388,12 @@ describe('actual prepare → consent query → actual session → actual proposa
 })
 
 function exactRequest(body: unknown = EXPECTED_CLASSIFIER_BODY) {
-  return new Request('https://api.anthropic.com/v1/messages?beta=true', {
+  return new Request('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'anthropic-version': '2023-06-01',
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+      'anthropic-version': '2026-10-21',
+      authorization: `Bearer ${process.env.ANTHROPIC_API_KEY ?? ''}`,
     },
     body: JSON.stringify(body),
   })

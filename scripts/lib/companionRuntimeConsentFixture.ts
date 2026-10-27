@@ -46,12 +46,12 @@ export const EXPECTED_CLASSIFIER_BODY = {
 }
 export const CLASSIFIER_EXCHANGE = {
   method: 'POST',
-  path: '/v1/messages?beta=true',
+  path: '/v1/messages',
   requestHeaders: {
-    'anthropic-version': '2023-06-01',
+    'anthropic-version': '2026-10-21',
     'anthropic-beta': null,
   },
-  requestFingerprint: 'f683a0c2802be25122797fec84351f99f79d2cbd9428cb56e0ab57ec36292d4b',
+  requestFingerprint: '55f8c15116cf71c856b2631e495b41bae8a3745b7ce8adce732c223f0e48bf79',
   response: {
     kind: 'http',
     status: 200,

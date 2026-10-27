@@ -302,7 +302,9 @@ describe('callAnthropicText — lỗi & thử lại', () => {
   it('gửi đúng header khoá + body (model, messages đã chuẩn hoá, system)', async () => {
     const fetchImpl = fakeFetch(jsonResponse(message()))
     await callAnthropicText({ ...BASE, messages: [], fetchImpl })
-    expect(sentHeaders(fetchImpl).get('x-api-key')).toBe('sk-test')
+    // SDK 1.x gửi khoá qua `Authorization: Bearer`, không còn `x-api-key`.
+    expect(sentHeaders(fetchImpl).get('authorization')).toBe('Bearer sk-test')
+    expect(sentHeaders(fetchImpl).has('x-api-key')).toBe(false)
     const body = sentBody(fetchImpl)
     expect(body.model).toBe('claude-haiku-5-5')
     expect(body.system).toBe('sys')
