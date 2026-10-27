@@ -570,6 +570,21 @@ báo lỗi**; hễ xác minh pass thì dừng, không cần chạy tiếp các b
    - Dán vào secret `VPS_SSH_KEY` trên GitHub (cùng chỗ ở bước 2).
    - Quay lại bước 6 (rerun) để xác minh.
 
+3b. Nếu bước `Require VPS host key fingerprint` báo `VPS_SSH_FINGERPRINT chưa cấu hình`, hoặc
+bước SSH báo lỗi khớp fingerprint/host key (thường sau khi **dựng lại VPS / cài lại SSH
+server** — host key đổi) → cập nhật secret `VPS_SSH_FINGERPRINT` (audit 2026-10-26,
+AUD-SEC-002):
+
+- Lấy giá trị **trên chính VPS** (console nhà cung cấp hoặc SSH đã tin cậy), KHÔNG lấy qua
+  `ssh-keyscan` từ máy lạ — đó chính là kênh kẻ giả mạo có thể chen vào:
+  ```bash
+  ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2
+  ```
+- Dán kết quả (dạng `SHA256:…`) vào secret `VPS_SSH_FINGERPRINT` (cùng chỗ ở bước 2).
+- Host key đổi mà bạn KHÔNG hề dựng lại VPS ⇒ coi là dấu hiệu bị giả mạo, đừng cập nhật
+  secret cho qua — kiểm tra DNS/`VPS_HOST` trước.
+- Quay lại bước 6 (rerun) để xác minh.
+
 4. Nếu dòng lỗi là `permission denied for schema public` (mã `42501`) khi chạy
    `migrate:pg` → database thiếu quyền GRANT trên schema `public` (Postgres 15+ không tự
    cấp quyền CREATE cho owner database nữa — xem `docs/setup-postgresql-vps.md` mục 3):
