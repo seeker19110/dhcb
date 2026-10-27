@@ -578,8 +578,12 @@ AUD-SEC-002):
 - Lấy giá trị **trên chính VPS** (console nhà cung cấp hoặc SSH đã tin cậy), KHÔNG lấy qua
   `ssh-keyscan` từ máy lạ — đó chính là kênh kẻ giả mạo có thể chen vào:
   ```bash
-  ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2
+  ssh-keygen -l -f /etc/ssh/ssh_host_ecdsa_key.pub | cut -d ' ' -f2
   ```
+- Dùng khoá **ECDSA**: ssh-action (viết bằng Go) chọn ECDSA trước ed25519 khi VPS có cả hai — dán
+  fingerprint ed25519 sẽ báo `host key fingerprint mismatch` (đo thật 2026-10-27). VPS mới không có
+  khoá ECDSA ⇒ liệt kê mọi khoá bằng
+  `for f in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -l -f "$f"; done` rồi thử lần lượt.
 - Dán kết quả (dạng `SHA256:…`) vào secret `VPS_SSH_FINGERPRINT` (cùng chỗ ở bước 2).
 - Host key đổi mà bạn KHÔNG hề dựng lại VPS ⇒ coi là dấu hiệu bị giả mạo, đừng cập nhật
   secret cho qua — kiểm tra DNS/`VPS_HOST` trước.

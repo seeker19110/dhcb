@@ -33,7 +33,8 @@ jobs:
       # Không có fingerprint thì ssh-action BỎ QUA kiểm host key (InsecureIgnoreHostKey): giả mạo
       # VPS trên đường mạng/DNS nhận được GITHUB_TOKEN và lệnh deploy (audit 2026-10-26,
       # AUD-SEC-002). Dừng hẳn thay vì âm thầm deploy không xác minh. Cách lấy giá trị (chạy TRÊN
-      # VPS, qua kênh tin cậy): ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2
+      # VPS, qua kênh tin cậy): ssh-keygen -l -f /etc/ssh/ssh_host_ecdsa_key.pub | cut -d ' ' -f2
+      # — khoá ECDSA, không phải ed25519: action (Go) chọn ECDSA khi VPS có cả hai (đo 2026-10-27).
       - name: Require VPS host key fingerprint
         env:
           VPS_SSH_FINGERPRINT: ${{ secrets.VPS_SSH_FINGERPRINT }}

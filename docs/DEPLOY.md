@@ -26,7 +26,9 @@
 - Yêu cầu secrets cấu hình trong GitHub Repository: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`,
   `VPS_SSH_FINGERPRINT` (host key SHA256 của VPS — thiếu thì workflow DỪNG, không deploy mà không
   xác minh host). Lấy giá trị bằng lệnh chạy TRÊN VPS:
-  `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2` (dạng `SHA256:…`). Đổi VPS
+  `ssh-keygen -l -f /etc/ssh/ssh_host_ecdsa_key.pub | cut -d ' ' -f2` (dạng `SHA256:…`). Dùng khoá
+  **ECDSA**, không phải ed25519: ssh-action (Go) chọn ECDSA khi VPS có cả hai — đo thật 2026-10-27, dán
+  fingerprint ed25519 thì báo `host key fingerprint mismatch`. Đổi VPS
   hoặc cài lại SSH server ⇒ cập nhật secret này.
 
 ### Cách 2 — Triển Khai Thủ Công Trực Tiếp Trên VPS

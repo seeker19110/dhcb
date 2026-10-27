@@ -544,10 +544,6 @@ không có cột nguồn, cùng các lỗi gate toàn repo đã ghi ở changelo
 
 ### A. CÒN PHẢI LÀM
 
-- **[2026-10-27 · changelog `0675`, PR #1455] Thêm secret `VPS_SSH_FINGERPRINT` — DEPLOY DỪNG
-  cho tới khi có.** Chạy TRÊN VPS: `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2`,
-  dán kết quả (`SHA256:…`) vào GitHub → Settings → Secrets and variables → Actions. Chi tiết:
-  `docs/ke-hoach-khoi-phuc-su-co-server.md` mục 3b.
 - **[2026-10-10 · rà cảnh báo header/TLS của máy quét, changelog `0588`] Siết TLS ở dashboard
   Cloudflare** (code không sửa được — máy quét đo ở biên Cloudflare): **SSL/TLS → Edge
   Certificates** → Minimum TLS Version **TLS 1.2** · TLS 1.3 **On** · Cipher suites **Modern** (nếu
