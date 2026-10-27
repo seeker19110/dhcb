@@ -91,8 +91,8 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   `eval:tutor` 180 câu đã ghi (`docs/research/eval-tutor-baseline.md`); companion 16/16, code-feedback 8/8,
   routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — cần chạy lại
   `npm run eval:action-canvas` trên VPS sau deploy để xác nhận các bất biến khác. **🔴 F-011 MỞ:** gia sư
-  bịa lỗi ở câu đúng — FP-rate ≈ 50 % trên cùng 62 câu cũ (5,6 % hồi Groq 2026-08-26); cần sửa prompt
-  chấm rồi chạy lại `eval:tutor` với key thật.
+  bịa lỗi ở câu đúng — đo lại 2026-10-27 (`0677`): FP-rate 44,4 % ± 5,6 trên 62 câu × 3 lượt, 60 % trên 180
+  câu (5,6 % hồi Groq 2026-08-26); cần sửa prompt chấm rồi chạy lại `eval:tutor` với key thật.
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền
@@ -962,15 +962,11 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   các lỗi đã tái hiện. _Xem lại khi:_ trước phát hành hoặc khi thay đổi sync, AI/policy, restore,
   dev adapter, deploy hay harness.
 
-- 🟡 **[2026-10-26 — changelog `0665`] `@anthropic-ai/sdk` 1.x CHƯA nâng (Dependabot chặn bản major).**
-  SDK 1.0 đổi API version `2023-06-01` → `2026-10-21` và gửi khoá qua `Authorization: Bearer` thay
-  `x-api-key` (PR #1439 đỏ). **Gỡ theo thứ tự:** (1) đọc ghi chú API version `2026-10-21` của Anthropic, rà
-  `packages/core-ai/anthropicClient.ts` + `anthropicToolLoop.ts` (đọc `stop_reason`/`usage`/beta header);
-  (2) harness replay (`scripts/lib/providerReplay.ts`, `companionRuntimeConsent.ts`) nhận Bearer khoá giả,
-  ghi lại fingerprint fixture (`scripts/eval-companion-replay-fixtures.json`,
-  `companionRuntimeConsentFixture.ts`); (3) chủ dự án chạy `eval:tutor`/`eval:companion`/`eval:action-canvas`
-  với key thật trước khi merge; (4) gỡ mục `ignore` ở `.github/dependabot.yml`. `linkedom` 0.18.14 cũng bị
-  chặn (vỡ build worker do `@acemir/cssom`) — chỉ đúng bản đó, không cần làm gì thêm.
+- 🟢 **[2026-10-26 — changelog `0665`; GẦN XONG ở `0677`, PR #1457] `@anthropic-ai/sdk` ĐÃ nâng lên 1.3.0.**
+  Eval thật trên VPS với SDK mới: companion 16/16, code-feedback 8/8, tutor 20 câu chấm đủ; bộ replay sửa
+  theo hành vi đo được (Bearer, version `2026-10-21`, `/v1/messages`). **Còn:** chạy `npm run
+eval:action-canvas` trên VPS sau khi deploy (chưa chạy với SDK mới). `linkedom` 0.18.14 vẫn bị chặn (vỡ
+  build worker do `@acemir/cssom`) — chỉ đúng bản đó.
 
 - 🟡 **[2026-10-12 — changelog `0622`; THU HẸP ở `0623`, `0624`, `0625`, `0626`, `0627`, `0628`] Red-team AI: phần Companion V2 ĐÃ KIỂM
   THẬT, còn các mặt khác.** ✅ `eval:v2:red-team` viết lại chạy trên Postgres thật, chặn CI (job
