@@ -72,9 +72,11 @@ export function createConsentClassifierLedger() {
     calls += 1
     try {
       const request = new Request(input, init)
+      // SDK 1.x gửi khoá qua `Authorization: Bearer` (không còn `x-api-key`): đòi ĐÚNG một kênh
+      // mang ĐÚNG khoá tổng hợp — lẫn khoá thật hay gửi cả hai kênh đều là lỗi.
       if (
-        request.headers.get('x-api-key') !== process.env.ANTHROPIC_API_KEY ||
-        request.headers.has('authorization')
+        request.headers.get('authorization') !== `Bearer ${process.env.ANTHROPIC_API_KEY}` ||
+        request.headers.has('x-api-key')
       )
         fail('CLASSIFIER_SYNTHETIC_AUTH_MISMATCH')
       const response = await replay.fetchImpl(request)

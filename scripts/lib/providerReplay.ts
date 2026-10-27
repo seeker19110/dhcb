@@ -21,7 +21,7 @@ export const ReplayResponseSchema = z.discriminatedUnion('kind', [
 export const ReplayExchangeSchema = z
   .object({
     method: z.literal('POST'),
-    path: z.literal('/v1/messages?beta=true'),
+    path: z.literal('/v1/messages'),
     requestHeaders: z
       .object({
         'anthropic-version': z.string().min(1).nullable(),

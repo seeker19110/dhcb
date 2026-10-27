@@ -29,12 +29,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "32399b4ab1cc4c36167e91a7ff1ac9038a8c2209bb7656362dbcf711abc633ae",
+          "requestFingerprint": "db5708f54c003d787a702f0f86b8c2eb873d22af1c76dd6af6bf8a487b7731e7",
           "response": {
             "kind": "http",
             "status": 200,
@@ -66,12 +66,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "29a21ff2bd4a85ce3f4c26b96c97887d4f72e8535c7ddc3cf704b285f1081683",
+          "requestFingerprint": "21c1d7c48ce8418019375a6f3c8d22b320b9b291f994f030dc203b12bd7aa4de",
           "response": {
             "kind": "http",
             "status": 200,
@@ -81,12 +81,12 @@
         },
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "c84be89b651cbd3e0cb3cc6d1c1dabd32b166624ecfc0cc603f3dc5f78b1e7b0",
+          "requestFingerprint": "9a32508d14bb4f5659e3bc5392ac6c252d2ae02925e474d4254893a0810c182d",
           "response": {
             "kind": "http",
             "status": 200,
@@ -118,12 +118,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "f17bf55e753aca2e6a9fcbcb68359b39b971a2bc2af80d73198b50088c964b54",
+          "requestFingerprint": "7b11872d2c4e639a99b66998c1bfa9159e991078260480a80c5e048a9e05dae0",
           "response": {
             "kind": "http",
             "status": 200,
@@ -133,12 +133,12 @@
         },
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "96b3a5cfa8057c583ab5be33c95d845b8d8c84fef4f425d8c9d575815edddf32",
+          "requestFingerprint": "303762223a99f331bcb3c4a36403b97b5cae61d4180b4f87e989caa31cc8054b",
           "response": {
             "kind": "http",
             "status": 200,
@@ -166,12 +166,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "305d1c8fbed2482c68d2f245fdcd7cfa2d5286bdb4edadfa82fa0045d327587a",
+          "requestFingerprint": "bf4a5efb098d00ee7d2fde30edf0dfe9862fe2e728518ffe76105af1c8a84d97",
           "response": {
             "kind": "http",
             "status": 200,
@@ -198,12 +198,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "0d81b4082a5687bac1dedcf2fea373a140c2787683c79952e92ab4ac5d028ab2",
+          "requestFingerprint": "dfea5e8b1fe460332051859c7374ce7b7107d8c416233ab53b0a855ec2bbae1f",
           "response": {
             "kind": "http",
             "status": 200,
@@ -231,12 +231,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "d570dfe52ecfc1ab242f39d8c8dfbeda66a19637f4bc2b1fc1930eb31a513c2f",
+          "requestFingerprint": "8ba62d69251ebcef577eff507af142507b3754ef9a8dc3d903c1fa518dc1deb8",
           "response": {
             "kind": "timeout"
           }
@@ -260,12 +260,12 @@
       "exchanges": [
         {
           "method": "POST",
-          "path": "/v1/messages?beta=true",
+          "path": "/v1/messages",
           "requestHeaders": {
-            "anthropic-version": "2023-06-01",
+            "anthropic-version": "2026-10-21",
             "anthropic-beta": "server-side-fallback-2026-07-01"
           },
-          "requestFingerprint": "7f02d3025480c2002882182970c0cec91f909dff9b4947905fad8fb9d1806e53",
+          "requestFingerprint": "8dee1676e56a0ac6f33b49a6c347108a8cd7b1cf31f7b5521eff4ae6efe0c7e1",
           "response": {
             "kind": "stream_error",
             "chunks": [
