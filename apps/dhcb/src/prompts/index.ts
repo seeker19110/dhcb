@@ -15,11 +15,25 @@ Khi giải thích, nói ngắn gọn bằng tiếng Việt và chỉ rõ vì sao
 // trong khung "Sửa lỗi & giải thích" — đặt lời khen/chào/mẹo vào đó khiến câu đúng trông như câu sai.
 // Đo 2026-10-27 (F-011, changelog 0680): 32/36 ca "bịa lỗi" của Haiku 5.5 là khen/chào/mẹo đặt nhầm vào
 // ✅, chỉ 4 ca sửa oan thật (văn nói thân mật, tin nhắn không dấu, liên từ hợp lệ).
+// Luật 7 (đo 2026-10-28, changelog 0682): sau luật 5–6, Haiku 5.5 hết bịa lỗi (FP 0 %) nhưng chiều B
+// bỏ sót 13/68 lỗi — khen câu sai là "rất tự nhiên", hoặc lặng lẽ nói lại dạng đúng trong lời thoại mà
+// không chỉ lỗi. Luật 7 buộc soát câu trước, và coi "tự nói lại dạng đúng" là dấu hiệu câu có lỗi.
 const FEEDBACK_ONLY_FOR_ERRORS_A = `5. Phần sửa lỗi CHỈ dành cho lỗi THẬT (sai ngữ pháp, dùng sai từ, sai nghĩa). Câu đã đúng thì phần sửa lỗi phải TRỐNG — tuyệt đối không ghi lời khen, lời chào, mẹo hay "cách nói khác" vào đó: app hiển thị phần này trong khung "Sửa lỗi", ghi khen vào đó làm học viên tưởng mình sai.
 6. Những trường hợp sau là ĐÚNG, KHÔNG sửa: câu thân mật/văn nói tự nhiên mà người bản xứ vẫn dùng (kể cả dạng rút gọn); câu ngắn hoặc chỉ một từ hợp lệ; câu đúng nhưng có thể nói theo cách khác. Học viên trả lời bằng tiếng Việt, emoji hay lời chào: động viên họ trả lời bằng tiếng Anh ngay trong lời thoại, không coi là lỗi.
+7. Luật 6 KHÔNG che lỗi ngữ pháp: trước khi trả lời, soát câu của học viên theo danh sách lỗi hay gặp ở trên. Chỉ khen "đúng/tự nhiên" khi đã soát và không thấy lỗi. Nếu chính bạn định nói lại câu đó theo dạng khác cho đúng (thêm trợ động từ, đổi đại từ…), nghĩa là câu có lỗi — phải viết phần sửa lỗi, không được chỉ lặng lẽ nói lại.
 `
 const FEEDBACK_ONLY_FOR_ERRORS_B = `5. The correction part is ONLY for a REAL error (wrong grammar, wrong word, wrong meaning). If the learner was correct, the correction part must be EMPTY — never put praise, greetings, tips or "another way to say it" there: the app shows it in a "Corrections" panel, so praise there makes a correct sentence look wrong.
-6. These are CORRECT, do NOT correct them: casual/spoken Vietnamese a native speaker would use (slang-free colloquial forms, sentence-final particles, informal pronouns among friends); messages typed without diacritics (common when texting — you may model the accented version naturally in your own reply, but it is not an error); proverbs and polite forms used appropriately; a correct sentence that could also be phrased differently.
+6. These are CORRECT, do NOT correct them: casual/spoken Vietnamese a native speaker would use (slang-free colloquial forms, sentence-final particles, informal pronouns among friends); messages typed entirely without diacritics (common when texting — you may model the accented version naturally in your own reply, but it is not an error); proverbs and polite forms used appropriately; a correct sentence that could also be phrased differently.
+7. Rule 6 never excuses a grammar error. Before replying, check the learner's sentence against this list of common learner errors:
+- Wrong tone mark or diacritic that turns a word into a DIFFERENT word (unlike text typed with no diacritics at all, this IS an error).
+- Classifier that does not fit the noun (each noun category takes its own classifier; uncountable nouns are counted with a container or unit).
+- Word order: position of adverbs of frequency and degree, quantity words, modifiers (after the noun), tense markers (before the verb) and question words.
+- Negation and question frames: the right choice among không / chưa / đừng and their matching question patterns.
+- Tense/aspect markers that clash with the time expression.
+- Missing "là" between two nouns, or an extra "là" before an adjective or verb.
+- Pronouns/forms of address that do not fit the age or relationship.
+- Word-by-word translation from English that a native speaker would not say (wrong verb choice).
+Only praise a sentence as correct/natural after this check finds nothing. If you would naturally restate the sentence differently in your reply (a different classifier, word order, tone mark, "là"…), the sentence HAS an error — write the correction part; never just silently recast it.
 `
 
 // Mô tả trình độ theo chiều học

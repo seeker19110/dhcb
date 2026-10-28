@@ -93,8 +93,10 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   VPS 2026-10-27 (production, SDK 1.3.0): **10/10, sạch bất biến** (gồm 3 ca prompt injection). **🔴 F-011 MỞ:** gia sư
   bịa lỗi ở câu đúng — đo lại 2026-10-27 (`0677`): FP-rate 44,4 % ± 5,6 trên 62 câu × 3 lượt, 60 % trên 180
   câu (5,6 % hồi Groq 2026-08-26). **Đã sửa prompt** (PR #1462, `0680`): 32/36 ca FP là lời khen/chào/mẹo
-  đặt vào dòng ✅ — nay dòng sửa lỗi chỉ cho lỗi thật, khen nằm trong lời thoại. **Còn chờ chủ dự án chạy lại
-  `eval:tutor` với key thật** (FP-rate phải giảm, recall không tụt) mới đóng F-011.
+  đặt vào dòng ✅ — nay dòng sửa lỗi chỉ cho lỗi thật, khen nằm trong lời thoại. Eval 2026-10-28: FP-rate **0 %** (cả
+  hai bộ) nhưng recall bộ 180 câu tụt 99,2 → 87,5 % (chiều B khen câu sai). **Đã sửa tiếp** (#1464, `0682`: luật 7 soát lỗi
+  trước khi khen + danh sách lỗi chiều B): eval thật 62×3 recall 97,7 % · FP 0 %; 180 câu recall 95,8 % · FP 5 %.
+  **F-011 ĐÃ ĐÓNG.** Nợ nhỏ: ≈ 3 % câu sai bị nói lại ngầm; chưa ghi baseline mới (`--write-baseline` trên `main`).
 - **[2026-10-16] Nâng cấp từ stored:** [goal](docs/goals/2026-10-16-stored-upgrades.md).
   S01 đã merge [PR #1399](https://github.com/seeker19110/dhcb/pull/1399) và deploy thành công:
   cổng eval ký ức chặn ca sai; đủ quality/e2e/metadata. Owner duyệt S02–S06 và quyền
