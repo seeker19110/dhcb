@@ -122,7 +122,7 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   changelog `0630`). **Mục 2 + 3 ĐÃ LÀM** (PR #1396, `docs/changelog/0632-*.md`): ghim cả 21
   `uses:` theo SHA (test canh siết cho cả `actions/*`), thêm `permissions.deny` hẹp. **Mục 5 ĐÃ LÀM** (PR #1397,
   `docs/changelog/0633-*.md`): `CLAUDE.md` 33.940 → ~24.300 ký tự, trần hạ còn 26.000. Mục 1 (`opusplan`) là quyết định
-  chi phí của chủ dự án; mục 6 (TypeScript 6) để đợt nâng phụ thuộc; mục 4 không làm (trùng
+  chi phí của chủ dự án; **mục 6 (TypeScript 6) ĐÃ LÀM** (`docs/changelog/0684-*.md`: 5.9.3 → 6.0.3, ghim `~6.0.3`, bỏ `baseUrl`); mục 4 không làm (trùng
   `pre-commit-gate.sh`).
 - **[2026-10-11] Nâng cấp "Bạn Đồng Hành" 4 giai đoạn** (nghiên cứu
   `docs/research/nang-cap-ban-dong-hanh-2026-10-11.md`, chủ dự án chốt làm lần lượt cả 4, mỗi GĐ

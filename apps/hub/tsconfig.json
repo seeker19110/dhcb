@@ -17,7 +17,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "baseUrl": ".",
     "paths": {
       "@core/*": ["../../packages/core-ui/*"],
       // Hub không import gói `@dhcb/*` nào, nhưng nó QUÉT cả `packages/core-ui` (xem

@@ -232,7 +232,7 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
 
 ### Dời nguyên văn từ CLAUDE.md (changelog 0633)
 
-- **Frontend:** React 19 + Vite 8 + TypeScript 5.x (`strict`) + Tailwind CSS 4 (mã gốc do Lovable sinh ra).
+- **Frontend:** React 19 + Vite 8 + TypeScript 6.0 (`strict`) + Tailwind CSS 4 (mã gốc do Lovable sinh ra).
 - **Backend & dữ liệu:** Express (`server.ts`) + **PostgreSQL tự host trên VPS** (thư viện `pg`, `packages/core-db/pgPool.ts`) — đã rời hẳn Supabase (xem `docs/migration-thoat-ly-supabase.md`). Auth tự viết (Bearer token, `packages/core-auth/auth.ts` + `packages/core-auth/authService.ts`, email/password + Google Identity Services). Handler API trong `api/`.
 - **AI:** gọi qua biến môi trường, ưu tiên model rẻ. Chat qua `/api/agent`. **Claude (Anthropic) là AI chính, model chọn theo NHIỆM VỤ** (2026-10-09): Haiku 5.5 cho trò chuyện/luyện nói, Sonnet 5.5 cho chấm bài/Companion/góp ý code — bảng ở `packages/core-ai/aiConfig.ts#getAnthropicRoute`, lớp gọi `packages/core-ai/anthropicClient.ts` (SDK chính thức); Groq → Gemini chỉ là dự phòng. **STT** Whisper qua **Groq hoặc OpenAI** (`/api/stt`, tự chọn theo key). **TTS** Google Cloud qua `/api/tts` (audio cache **mã hóa AES-256-GCM**, lưu Cloudflare R2 qua `STORAGE_DRIVER=r2` trên production — `packages/core-ai/fileStorage.ts`; Web Speech API chỉ là fallback). **Chính sách cache TTS (chốt 2026-08-06): KHÔNG bao giờ tự xoá theo "lâu không dùng" (LRU) — cache `tts_cache`/`pronunciations` giữ vĩnh viễn, chỉ xoá bản ghi orphan (không còn nằm trong dữ liệu app) qua `npm run seed:all -- --verify --clean-orphans --yes`. Gần hết dung lượng R2 thì trả phí thêm, không xoá cache đang dùng. Xem `docs/migration-thoat-ly-supabase.md` mục 3.3.**
 - **Gói dịch vụ (chốt GĐ1, 2026-09-12 — `docs/specs/2026-09-12-gd1-xoa-goi-pro.md`):** ĐÚNG **HAI** gói — `free` và `vip`. Gói `plus`/`pro` đã bị XOÁ (migration `0076`): người đang trả tiền còn hạn được nâng VIP giữ nguyên `plan_expires_at`, hết hạn thì về free. **Free hưởng hạn mức Plus cũ: 30 lượt AI/ngày** tính TỔNG mọi tính năng, cấu hình được ở `/admin` (lưu ở cột DB `app_settings.pro_daily_limit` — cột giữ TÊN cũ, ý nghĩa mới là "hạn mức Free"). VIP là gói trả phí duy nhất, bán qua SePay. Kiểu dữ liệu nguồn sự thật: `packages/core-billing/plan.ts`.
@@ -249,7 +249,8 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   - `postgres/`, `scripts/`, `docs/`.
 
 - **PHIÊN BẢN STACK (2026-09-22, changelog 0416):** React 19 · Tailwind 4 (qua `@config`) ·
-  ESLint 9 flat config · Express 5 · Vite 8 (rolldown) · Node 22 · TypeScript 5.x. **Ba thứ CHƯA
+  ESLint 9 flat config · Express 5 · Vite 8 (rolldown) · Node 22 · **TypeScript 6.0** (nâng 2026-10-28,
+  changelog 0684 — ghim `~6.0.3` vì parser chỉ nhận `<6.1.0`; bỏ `baseUrl`, `paths` tương đối từng tsconfig). **Ba thứ CHƯA
   nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
   (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y`, cổng
   a11y mục 4.5, chỉ khai peer tới ESLint 9) · Node 26 (chờ sau 2026-10-28). Hai điều phải biết:
