@@ -6,6 +6,28 @@ bỏ). Thứ tự: như thứ tự cũ trong `PROGRESS.md`, mới hơn ở trên
 
 Khi đóng thêm một món nợ: cắt khối đó khỏi `PROGRESS.md`, dán vào ĐẦU danh sách dưới đây.
 
+- ✅ **[2026-10-26 — changelog `0665`; XONG ở `0677`, PR #1457] `@anthropic-ai/sdk` ĐÃ nâng lên 1.3.0.**
+  Eval thật với SDK mới: companion 16/16, code-feedback 8/8, tutor 20 câu chấm đủ, action-canvas 10/10 (trên
+  production sau deploy, 2026-10-27); chủ dự án chat thử trên app — ổn. `linkedom` 0.18.14 vẫn bị chặn (vỡ
+  build worker do `@acemir/cssom`) — chỉ đúng bản đó.
+
+- ✅ **[GỘP 2026-10-28, `0685`: phần còn mở (Node 26, ESLint 10) trùng mục "đợt React 19 + Tailwind 4" vẫn ở PROGRESS] [2026-09-22 — đợt nâng cấp major stack, `docs/changelog/0414-*.md`, ADR 0011] Ba nợ nâng
+  cấp còn lại sau đợt này.** (1) ✅ **Vite 7 → 8 ĐÃ XONG ở đợt 0416** (`docs/changelog/0416-*.md`).
+  Ba lo ngại ghi ở đây **đều sai**, ghi lại vì cả ba đều là bài học về "đọc log rồi đoán":
+  nguyên nhân gãy KHÔNG ở rolldown mà là **một bare import `@dhcb/core-grading` vi phạm quy ước
+  import của chính dự án** (rolldown kiểm `exports` nghiêm, Rollup thì dễ tính) — sửa một dòng ở
+  `apps/dhcb/src/pages/learning/StemLessonView.tsx`; đường dẫn `.gz` "sai" chỉ là **lỗi in log**
+  của plugin, file thật nằm đúng `dist/assets/*.gz`; và `manualChunks` **hoạt động đúng** dưới
+  rolldown (chunk `vendor-sentry` "mất" chỉ vì container không có `VITE_SENTRY_DSN` nên nhánh chết
+  bị xoá — đúng, không phải hồi quy). Thứ thật sự đổi: **không còn sinh file `.br`**, vô hại vì
+  nginx chưa từng có `brotli_static`.
+  (2) **Node 22 → 26 LTS: hoãn tới sau 2026-10-28** (v22 còn hỗ trợ đến 2027-04-30 nên không gấp;
+  v24 rời Active LTS 2026-10-20 nên nâng lên 24 là nâng vào dòng sắp hạ cấp). Cần việc tay VPS.
+  (3) ✅ **`.cjs` nay được lint thật (2026-09-26, `docs/changelog/0455-*.md`):** bỏ `**/*.cjs` khỏi
+  `ignores`, khai `sourceType: 'commonjs'` (trước đó flat config parse `.cjs` như ES module).
+  Hai file `commitlint.config.cjs`/`ecosystem.config.cjs` qua 127 luật; file thử có biến thừa bị bắt.
+  (4) **ESLint 10:** chờ `eslint-plugin-jsx-a11y` mở peer (nay chỉ tới `^9`).
+
 - ✅ **[2026-10-02 — phát hiện ở changelog `0485`, ĐÃ XỬ LÝ ở `0549`] Action Canvas "tạo sơ đồ
   từ mục tiêu" từng chỉ là KHUNG MẪU cố định.** Nay AI ĐỀ XUẤT phân rã thật (đặc tả
   `docs/specs/2026-10-09-action-canvas-phan-ra-muc-tieu-ai.md`): 1 lời gọi/lần, đếm chung lượt AI/ngày,
@@ -885,3 +907,184 @@ apps/dhcb/src/lib/sttServer.test.ts apps/dhcb/src/components/programming/AiHelpP
 - 🟢 **[ĐÃ TRẢ 2026-08-24 — xem mục "Giai đoạn hiện tại"]** Nâng lại plugin lên `7.1.1` + sửa
   đúng bản chất 95 lỗi (danh sách 73 lỗi cũ đã phình theo code mới), 0 eslint-disable mới.
   Ghi chú gốc giữ lại bên dưới để tra cứu:
+
+## Lịch sử đo coverage/bundle
+
+- 📜 **[Lịch sử đo coverage/bundle — dời 2026-10-28, `0685`; mục vẫn mở ở PROGRESS với số đo mới] [ĐO LẠI 2026-09-14 — mô tả "ngân sách BUNDLE nay rộng" ĐÃ LỖI THỜI] Cả COVERAGE lẫn
+  BUNDLE nay đều mỏng.**
+  **Cập nhật 2026-10-10 (`docs/changelog/0580-*.md`, audit toàn diện):** Initial JS 93,3% →
+  **84,0%** (149,29 → 134,39/160 kB; JS khởi động THẬT gồm mọi modulepreload 154,3 → 138,4 kB)
+  nhờ đưa zod bản đầy đủ ra khỏi đường khởi động (`zod/mini` ở `clientAuth`/`appSettings`/
+  `cloud`, chunk `vendor-zod` lười, test canh `startupBundle.test.ts`). CSS vẫn 24,57/26 kB (**94,5% — sát ngưỡng cảnh báo**;
+  30% CSS thô là khối `@supports color-mix` của Tailwind 4 nhưng bỏ chỉ được ~0,7 kB nén). **Cập nhật 2026-10-10 (`0584`/`0585`):** Initial JS nay đếm ĐỦ chunk `modulepreload` — 135,68/160 kB (84,8%); `npm run size` đỏ nếu chunk khởi động mới không có glob.
+  **Cập nhật 2026-10-08 (`docs/changelog/0522-*.md`):** Initial JS 96,6% → **93,1%** (148,93/160 kB, tách
+  `ts-fsrs` ra chunk `vendor-fsrs` không preload); CSS không đổi 23,95/26 kB (92,1%, toàn class đang
+  dùng). Coverage 95,74/91,79/96,41/96,36 sau test ca biên 6 file — lộ và sửa 3 bug
+  thật (`selfGrade.ts` đọc sai số mũ `¹²³` và số ≥1e21; Ôn thi "Đã nắm 0/0"). **Sàn đã nâng
+  93/89/93/93 → 94/90/94/94** (chủ dự án duyệt, `docs/changelog/0537-*.md`; số CI sau #1281
+  95,75/91,79/96,46/96,36 — biên độ còn 1,75/1,79/2,46/2,36).
+
+  **[2026-09-22 — nới đệm, `docs/changelog/0411-*.md`]** JS **136,73 → 131,99 / 150 kB (88,0%)**
+  nhờ sửa phép đo: chunk lười `src/prompts` mang tên `index-*.js` bị glob `.size-limit.json` đếm
+  nhầm 4,8 kB (đã đặt tên `prompts-*`). Branches **90,07 → 90,48%** (đệm 1,07 → 1,48 điểm) nhờ
+  test mới cho `security.ts` (đường Redis), `chatFallback.ts`, `subjectProgressBoard.ts`. Vẫn
+  🟡: CSS 17,80 / 20 kB (89%) chưa đụng; branches dư 1,48 điểm là đủ cho PR cỡ vừa, chưa phải
+  thoải mái. Số bên dưới là đo CŨ, giữ để so xu hướng.
+
+  Đo 2026-09-14 (build sạch): **JS 135,09 / 140 kB = 96,5%** — vượt ngưỡng cảnh báo 95% mà
+  `docs/framework/QUY-TRINH-AUDIT.md` Tầng 1 đặt ra, chỉ còn 4,9 kB nên tính năng nhỏ kế tiếp
+  sẽ làm CI đỏ. CSS 18,11 / 20 kB (90,6%; ngưỡng đã nới từ 18 lên 20). Phần mô tả bên dưới là
+  số đo CŨ, giữ lại để so sánh xu hướng — đừng đọc nó như trạng thái hiện tại.
+
+  **[Đo lại 2026-09-14, docs/changelog/0304 — phần JS của nợ này ĐÃ ĐÓNG.]** Sửa lỗi cấu hình
+  `manualChunks` (`apps/dhcb/vite.config.ts`): `@marijn/find-cluster-break` rơi nhầm vào
+  `vendor-misc` thay vì `vendor-codemirror`; tách `qrcode`+`dijkstrajs` (chỉ dùng sau route
+  lazy-load) ra chunk riêng không bị preload eager. Kết quả `npx size-limit --json` sau `npm run
+build`: **JS 126,07 / 140 kB = 90,06%** (dư 13,93 kB, gấp gần 3 lần biên độ cũ). CSS không đổi
+  (ngoài phạm vi đợt này, vẫn 90,6%). Coverage vẫn mỏng như mô tả cũ bên dưới — CHƯA đóng.
+
+  **[Đo lại 2026-09-01, đợt tối ưu dự án]** Trước đợt: JS 127,36 / 140 kB · CSS **17,00 / 18 kB
+  (còn đúng 1 kB — PR #797 thêm keyframes/utility)** · branches **90,19%** (còn 0,19 điểm).
+  Sau đợt: JS 127,26 kB (chunk `lessons` 3 MB của môn Lập trình đã tách thành 153 chunk theo
+  unit, nạp lười; `programmingRoutes` 48 kB gzip → 0,5 kB) · branches **90,67%** (còn 0,67 điểm) nhờ test
+  `progressSync.ts` (74 → 92%) + `co-learning-audio.ts`. CSS KHÔNG đổi — vẫn là biên độ mỏng nhất, thêm animation/theme
+  mới là phải rà `tailwind.config.js` trước. Chạy `npm run budget` để xem số hiện tại. Số đo thật hôm nay trên `main` (chạy `npm ci` sạch rồi
+  `npm run build`):
+
+  | Ngân sách            | Số thật   | Ngưỡng | Biên độ          |
+  | -------------------- | --------- | ------ | ---------------- |
+  | Initial JS (brotli)  | 124,83 kB | 140 kB | dư **~10,8%**    |
+  | Initial CSS (brotli) | 16,23 kB  | 18 kB  | dư **~9,8%**     |
+  | Coverage branches    | 90,54%    | 90%    | dư **0,54 điểm** |
+
+  **[Đo lại 2026-09-02] CSS đã hết mỏng — NỚI ngưỡng 18→20 kB, phần bundle của nợ này ĐÓNG.**
+  Rà lại: `dist/assets/index-*.css` đã qua Tailwind v3 JIT purge đúng (không safelist thừa,
+  không class chết) — không có "rác" thật để cắt mà không đụng nhiều file UI (đổi số class dùng
+  trong component, rủi ro phá giao diện). Ngưỡng 18 kB là tự đặt, không phải giới hạn kỹ thuật,
+  nên chọn nới thay vì cắt CSS đang dùng. Sửa `.size-limit.json` (CSS 18→20 kB). Số đo lại trên
+  `main` sau khi sửa (`npm ci && npm run build && npm run budget`):
+
+  | Ngân sách            | Số thật   | Ngưỡng | Biên độ      |
+  | -------------------- | --------- | ------ | ------------ |
+  | Initial JS (brotli)  | 127,26 kB | 140 kB | dư **~9,1%** |
+  | Initial CSS (brotli) | 17,00 kB  | 20 kB  | dư **~15%**  |
+
+  **[Đo lại 2026-09-05, audit toàn diện F10] CSS lại mỏng đi: 18,03 / 20 kB — chỉ còn ~1,97 kB
+  (dư ~9,9%), tức đã ăn hết một nửa phần vừa nới ngày 02/09.** JS 128,44 / 140 kB (dư ~8,3%).
+  Không nới thêm lần nữa: nới hai lần liên tiếp là biến ngân sách thành thứ chạy theo số đo. Thêm
+  animation/theme mới thì rà `tailwind.config.js` TRƯỚC, và chạy `npm run budget` để xem số hiện tại.
+
+  Coverage branches vẫn mỏng — **nhưng biên độ đó nay là CHẤP NHẬN ĐƯỢC theo quyết định người
+  dùng (2026-09-03: "cover 90%")**. Số hiện tại 90,70% trên sàn 90 = dư 0,70 điểm. **KHÔNG nâng
+  ngưỡng, và KHÔNG chạy đợt viết test chỉ để đẩy con số.** Phiên sau đọc cảnh báo của
+  `npm run budget` ("biên độ hẹp") thì đừng tự ý "sửa" — đó là trạng thái đã chốt, không phải
+  việc bỏ sót. Điều VẪN đúng: tính năng mới phải tự mang test cho nhánh logic của nó, nếu không
+  cổng coverage sẽ đỏ.
+
+  **[Đo lại 2026-08-27, sau PR-M7]** Ba con số trên là bản mới nhất. Đợt PR-M7 là ca thực tế
+  đầu tiên nợ này bật ra: bộ chạy Kotlin (~4.000 dòng nguồn) làm branches tụt xuống **88,75%**
+  — CI sẽ đỏ. Đã trả bằng cách **viết thêm test chứ không nâng ngưỡng** (hai file mới phủ bề
+  mặt thư viện và đường lỗi), kéo lên 90,29%. Bài học: PR nào thêm một khối mã lớn thì phải
+  **đo coverage TRƯỚC khi mở PR**, đừng đợi CI báo.
+
+  **Phần bundle của nợ này coi như đóng.** Con số "99,7%" ghi ngày 2026-08-25 đã lạc hậu: ngưỡng
+  JS được nới 123 → 140 kB và CSS 16 → 18 kB ở các PR sau đó, mà mục nợ không ai cập nhật. Đây
+  đúng loại lệch mà Tầng 6b của quy trình audit sinh ra để bắt — tài liệu điều hành nói một
+  đằng, số thật một nẻo — nên ghi lại để lần sau đo trước khi tin.
+
+  **[Đo lại 2026-08-28] Phần coverage đã NỚI GẤP ĐÔI, chưa đóng.** Biên độ branches từ 0,27 lên
+  **0,54 điểm** (90,27 → 90,54%) nhờ 90 test bù cho `kotlinSim`/`swiftSim`/`mistakes.ts` —
+  xem `docs/changelog/0187-2026-08-28-super-kotlin-va-bien-do-coverage.md`. Đợt đó cũng bắt ra
+  một lỗi thật nhờ đi tìm nhánh thiếu test (`super.f()` gọi vòng vô tận làm sập bộ chạy Kotlin),
+  tức bản thân việc vá coverage có giá trị chứ không chỉ là làm đẹp con số. Vẫn còn mỏng: nửa
+  điểm là đủ để một PR thêm khối mã lớn mà quên test làm CI đỏ.
+
+  **[Đo lại 2026-09-05, PR #856 — phần coverage của nợ này coi như ĐÓNG.]** Sau đợt bổ sung
+  test cho 33 file logic thuần, GỘP với PR #855 (542 test nhắm 18 file phủ thấp nhất) chạy
+  song song: stmts **98,32%** · branches **94,53%** · funcs **97,69%** · lines **98,32%**
+  (573/573 file test xanh). Sàn siết lên 97/93/96/97, biên độ branches nay **1,53 điểm** —
+  gần gấp ba mức 0,54 ghi ở trên, đủ chỗ cho một PR thêm khối mã lớn. Đợt này cũng bắt ra một lỗi thật nữa (id trùng do `Date.now()` ở
+  `memoryPalaceService.ts` làm API trả 404 sai) — lần thứ hai liên tiếp việc vá coverage lòi
+  ra bug thật chứ không chỉ làm đẹp con số. Đợt này còn bắt thêm một cái bẫy đáng nhớ: một
+  test của chính đợt đã **khoá hành vi LỖI làm chuẩn** (`find /` chỉ trả về `/`), chỉ lộ ra
+  khi gộp với PR #855 vốn đã vá đúng lỗi đó. Bài học ghi lại trong changelog 0269: "nhánh
+  không chạm tới được" KHÔNG đồng nghĩa "nhánh đúng".
+
+  **Không đóng hẳn được ở mức 100%, và đây là kết luận có chủ đích, không phải việc bỏ dở.**
+  Phần chưa phủ còn lại là (a) nhánh phòng thủ chết do `noUncheckedIndexedAccess` bắt viết,
+  (b) vỏ bọc WebSocket/mạng sống thuộc phạm vi E2E. Danh sách mã chết cụ thể theo từng
+  file:dòng nằm ở `docs/changelog/0269-2026-09-05-nang-coverage-33-file-logic-thuan.md`.
+
+  **[ĐÃ QUYẾT 2026-09-05 — đợt mã chết, changelog 0270] Xong, không còn treo.** Đo lại thì
+  danh sách cũ đã lỗi thời (một số mục nay đã được phủ sau PR #855); còn đúng 31 nhánh, soát
+  từng dòng: **xoá 3** (nhánh "đường dẫn tương đối" của `bashSim.chuanHoa` + cặp tham số
+  `tachDuoc`/`globDuoc` luôn bằng nhau của `noTu.them` — cả hai vừa chết vừa gây hiểu nhầm),
+  **giữ 28** vì chúng hoặc là giá trị mặc định do `noUncheckedIndexedAccess` bắt viết (xoá
+  thì phải thay bằng `!`, đi lùi), hoặc là chốt chặn trạng thái hỏng chống vòng lặp vô hạn.
+
+  **[Đo lại 2026-08-31, sau loạt "thiết kế lại web cho desktop" PR #743/#750/#756] Bundle ăn
+  bớt biên độ, coverage chưa đo lại.** `npm run build && npm run budget` trên `main` sau khi cả
+  3 PR merge:
+
+  | Ngân sách            | Số thật   | Ngưỡng | Biên độ      |
+  | -------------------- | --------- | ------ | ------------ |
+  | Initial JS (brotli)  | 126,60 kB | 140 kB | dư **~9,6%** |
+  | Initial CSS (brotli) | 16,53 kB  | 18 kB  | dư **~8,2%** |
+
+  So với lượt đo 2026-08-28 (JS dư ~10,8%, CSS dư ~9,8%), cả hai đều hẹp lại — sidebar desktop
+  thu gọn được + cột "Sửa lỗi & giải thích" ở Chat + `useIsDesktopViewport` là phần thêm mới ăn
+  vào biên độ. Vẫn còn dư, không chặn CI, nhưng CSS chỉ còn dư dưới 10% — PR sau thêm CSS diện
+  rộng (nhiều `lg:`/`xl:` mới) nên đo `npm run budget` TRƯỚC khi mở PR, đừng đợi CI báo. Chưa
+  chạy lại `npm run test:coverage` trong đợt này (đổi UI, không đổi nhánh logic mới).
+
+  **Đo lại bất cứ lúc nào:** `npm run build && npm run test:coverage && npm run budget`
+  (`scripts/check-budget-margin.ts`, thêm ở PR #664 — in biên độ còn lại thành số, cảnh báo khi
+  bundle ≥95% ngân sách hoặc coverage dư <1 điểm).
+
+  **Điều kiện gỡ nợ — chọn một, KHÔNG lặng lẽ nâng ngưỡng:** (a) giảm bundle thật
+  (code-splitting thêm, bỏ dependency eager) và bổ sung test cho các file nhánh phủ thấp
+  (`geminiLiveService.ts` 14 nhánh thiếu · `co-learning-audio.ts` 12 · `neuroAffectiveService.ts`
+  8 · `redisChat.ts` 8); hoặc (b) nâng ngưỡng CÓ CHỦ ĐÍCH kèm lý do ghi vào chính mục này.
+
+  **[2026-09-04] (b) đã chọn — người dùng yêu cầu rõ "nâng coverage lên 100%", ghi đè quyết
+  định "KHÔNG nâng ngưỡng" ở trên (2026-09-03).** Phương án chọn: nâng sàn CI dần dần (không
+  viết test bổ sung ồ ạt cho toàn repo — khối lượng quá lớn một đợt). Trước khi đo được số
+  thật, `npm run test:coverage` không chạy trọn trên Windows vì 3 lỗi cùng lớp nguyên nhân với
+  PR #794 (so đường dẫn `\` vs `/`, encoding console) — đã vá cả ba (xem
+  `docs/changelog/0267-2026-09-04-siet-san-coverage-va-va-3-loi-windows.md`). Số đo thật sau vá:
+  stmts 96,36% · branches 90,71% · funcs 95,19% · lines 96,36%. Ngưỡng `vitest.config.ts` nâng
+  thành statements 95 · branches 90 (giữ nguyên, biên độ mỏng nhất) · functions 94 · lines 95.
+  Branches vẫn là chỉ số cần vá tiếp — file nhánh phủ thấp liệt kê ở trên chưa đổi.
+
+  **[2026-09-05] ĐỢT 2 — trả đúng chỗ mỏng bằng TEST, không phải bằng cách nâng ngưỡng suông.**
+  Đo `coverage-final.json` để biết chính xác nhánh nào chưa đi, xếp hạng ra 18 file gom 586/1.461
+  nhánh chưa đi của cả repo (40%), giao 8 subagent song song viết **542 test mới** (11.160 →
+  11.702). Không sửa một dòng mã nguồn nào. Số đo thật sau đợt: **stmts 97,00 · branches 94,06 ·
+  funcs 95,95 · lines 97,00**; sàn nâng thành **96 / 93 / 95 / 96** (vẫn chừa ~1 điểm biên độ).
+  Chi tiết từng file + giải trình nhánh còn trống:
+  `docs/changelog/0268-2026-09-05-coverage-dot-2-nhanh-chua-phu.md`.
+
+  **Điều quan trọng nhất rút ra: 100% branch KHÔNG đạt được bằng test hợp lệ.** Gần như toàn bộ
+  nhánh còn trống sau đợt này là fallback `?? ''`/`?? null`/`?? 0` sinh ra do
+  `noUncheckedIndexedAccess` mà vế phải không thể chạy (bất biến nơi gọi bảo đảm vế trái luôn có
+  giá trị), cộng vài `throw e` lưới an toàn cho lỗi lập trình. Muốn chạm 100% phải viết test giả
+  tạo hoặc dọn mã phòng thủ — cả hai đắt hơn giá trị thu được. **Phiên sau đừng đặt mục tiêu
+  100%**; muốn siết tiếp thì nhắm nhóm phủ thấp kế tiếp (`core-personal/*`, `core-domains/*`,
+  `api/domains/*`), và biết trước rằng chỗ dễ đã hết.
+
+  **Ba nghi bug phát hiện khi viết test — ĐÃ SỬA XONG 2026-09-05 (nhánh
+  `fix/ba-loi-bo-chay-bash-kotlin`, xem `docs/changelog/0269-2026-09-05-sua-ba-loi-bo-chay-bash-kotlin.md`),
+  mỗi lỗi có test canh riêng:**
+  (1) `packages/subject-programming/bashSim.ts` — `find /` **bỏ sót TOÀN BỘ nội dung**: bộ lọc
+  `k.startsWith(pGoc + '/')` với `pGoc === '/'` ghép ra tiền tố `'//'`, không khoá nào khớp nên
+  lệnh im lặng trả về đúng một dòng `/`. Chẩn đoán ban đầu ghi ở đây ("cắt lệch 1 ký tự") CHƯA
+  ĐÚNG HẲN — lỗi cắt có thật nhưng nằm SAU bộ lọc nên chưa bao giờ kịp lộ ra. Sửa bằng một biến
+  `tienTo` dùng chung cho cả bước lọc lẫn bước cắt;
+  (2) `kotlinSim` `associateWith` không khử trùng khoá → gộp theo khoá, giá trị lần cuối thắng;
+  (3) `kotlinSim` `println` bỏ qua `override fun toString()` → thêm `chuoiHoa()` (chuỗi hoá để in,
+  đệ quy qua List/Map/Pair), dùng cho cả `println`/`print` lẫn nội suy `"$x"`. Xác nhận đây là
+  LỖI chứ không phải khác biệt cố ý: không mục nào trong `KHAC_BIET` nói tới nó.
+
+  **Bài học ghi lại để đừng lặp:** nghi bug suy ra từ ĐỌC MÃ phải chạy thử trước khi tin. Lỗi (1)
+  bị mô tả sai ở trên vì suy từ công thức `slice()` mà không chạy `find /` một lần — chạy thử mất
+  mười giây và cho ra triệu chứng khác hẳn, nặng hơn, ở một dòng khác.
