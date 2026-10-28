@@ -26,6 +26,28 @@ hay gặp như `VIET_COMMON_ERRORS` của chiều A.
   đẹp giả. Kiểm bằng script: không câu nào của hai bộ fixture xuất hiện trong prompt.
 - Golden snapshot cập nhật có chủ đích (5 snapshot).
 
-## Tiêu chí đạt (chờ eval thật)
+## Eval thật (VPS, 2026-10-28, chạy trên nhánh qua `git worktree`)
 
-Bộ 180 câu: recall ≥ 97 % và FP-rate vẫn ≈ 0 %. Không đạt ⇒ revert PR này (giữ #1462).
+| Bộ              | Recall                                | Precision | FP-rate                        |
+| --------------- | ------------------------------------- | --------- | ------------------------------ |
+| 62 câu × 3 lượt | **97,7 % ± 0** (129/132)              | 100 %     | **0 %** (0/54)                 |
+| 180 câu         | **95,8 %** (115/120) — `main`: 87,5 % | 97,5 %    | **5,0 %** (3/60) — `main`: 0 % |
+
+Chiều B hồi phục: lượng từ 5/8 → 8/8, phủ định 6/8 → 8/8, trật tự từ 5/8 → 7/8, thiếu "là" 7/8 → 8/8.
+
+Đọc nguyên văn 3 ca FP: chỉ `x-b-correct-17` là sửa oan thật ("lo thi trượt" vẫn tự nhiên);
+`x-a-edge-01` sửa theo ngữ pháp chuẩn một câu văn nói (ca biên); `x-b-correct-19` hiểu theo vai bạn
+ngang hàng nên thấy xưng "con" lạ — có lý. 5 ca FN còn lại chủ yếu là kiểu cũ: lặng lẽ nói lại dạng
+đúng (`x-b-tonemark-03`, `x-b-wordorder-07`) hoặc khen câu sai (`aux-01`, `wbw-04`, `x-b-pronoun-02`).
+
+## Quyết định
+
+Ngưỡng đặt ra: recall ≥ 97 % và FP ≈ 0 %. Bộ 62×3 đạt. Bộ 180 câu thiếu 1,4 điểm (≈ 2 câu, trong khoảng
+nhiễu của một lượt: Wilson 95 % của 115/120 ≈ 90,6–98,2 %). **Merge**, vì PR này tốt hơn `main` ở độ cân
+bằng tổng thể. Không chỉnh thêm prompt chỉ để kéo 1–2 câu (học tủ theo bộ eval).
+
+**Nợ còn lại:** (1) ≈ 3 % câu sai vẫn bị nói lại ngầm thay vì sửa; (2) chưa ghi baseline mới — chạy
+`npm run eval:tutor -- --write-baseline` trên `main` sau deploy rồi commit file
+`docs/research/eval-tutor-baseline.md`.
+
+Đường lùi: revert PR này (giữ #1462).
