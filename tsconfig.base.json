@@ -19,10 +19,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "baseUrl": ".",
     "paths": {
-      "@core/*": ["packages/core-ui/*"],
-      "@dhcb/*": ["packages/*"]
+      "@core/*": ["./packages/core-ui/*"],
+      "@dhcb/*": ["./packages/*"]
     }
   }
 }

@@ -19,9 +19,8 @@
     "strict": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "baseUrl": ".",
     "paths": {
-      "@dhcb/*": ["packages/*"]
+      "@dhcb/*": ["./packages/*"]
     }
   },
   "include": ["apps/server/src", "scripts", "packages"],

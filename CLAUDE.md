@@ -106,7 +106,7 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
 
 ## 6. Công nghệ (stack) & lệnh
 
-- **Stack:** React 19 + Vite 8 + TypeScript 5.x (`strict`) + Tailwind 4 · Express + **PostgreSQL
+- **Stack:** React 19 + Vite 8 + TypeScript 6.0 (`strict`) + Tailwind 4 · Express + **PostgreSQL
   tự host** (`pg`, đã rời hẳn Supabase) · auth tự viết (Bearer token, `packages/core-auth/`).
   Deploy VPS (PM2 + Nginx) tại https://en-vi.donghanhcungban.org. Chi tiết: `docs/claude-md-chi-tiet.md` §6.
 - **AI: Claude là AI chính, model chọn theo NHIỆM VỤ** — bảng ở
