@@ -1,27 +1,21 @@
 # Eval gia sư AI — baseline (⑤ T1)
 
-> ## Hiệu lực — cập nhật 2026-10-25 (changelog 0664, đóng F-008)
+> ## Hiệu lực — cập nhật 2026-10-28 (changelog 0683, sau F-011)
 >
-> Baseline dưới đây là **lần đầu** của bộ 180 câu, chạy trên VPS với cấu hình production
-> (chủ dự án chạy tay, dán nguyên văn kết quả vào phiên; số liệu chép đúng nguyên văn). Chạy **MỘT lượt**
-> (không `--runs 3`), nên chưa có khoảng Wilson — so sánh PR sau chỉ coi là khác khi chênh vượt
-> "Dải nhiễu" cuối file. Baseline cũ (2026-08-26, 62 câu, Groq) giữ ở mục "Lịch sử" để đối chiếu với
-> `npm run eval:tutor -- --limit 62`.
+> Baseline dưới đây chạy trên VPS với cấu hình production sau #1462 + #1464 (sửa prompt chấm, F-011).
+> Chủ dự án chạy tay, dán nguyên văn kết quả vào phiên; số liệu chép đúng nguyên văn. Chạy **MỘT lượt**.
+> Trong cùng ngày, hai lượt khác trên cùng prompt cho 95,8 % / 5,0 % (bộ 180 câu) và 97,7 % / 0 %
+> (bộ 62 câu × 3 lượt) — xem changelog `0682`.
 >
-> **Điểm cần theo dõi:** FP-rate 53,3 % — bịa lỗi ở 32/60 câu đúng/ca biên, nặng nhất ở câu đúng
-> chiều B (`x-b-correct-*` 14/21). Với người mới, sửa SAI hại hơn bỏ sót: đây là việc nên làm tiếp
-> (sửa prompt chấm ⇒ bắt buộc chạy lại `eval:tutor` theo CLAUDE.md §8).
->
-> **Tụt so với baseline cũ trên CÙNG 62 câu** (đếm từng dòng trong log lượt chạy này): 44/44 câu lỗi
-> bắt được (recall 100 %), nhưng 9/18 câu đúng/ca biên bị bịa lỗi (ok-01/03/05/06/08,
-> edge-01/03/04/05) ⇒ FP-rate ≈ 50 % so với 5,6 % ngày 2026-08-26 (Groq · gpt-oss-120b). Khác biệt
-> vượt xa "Dải nhiễu" cuối file — đây là tụt chất lượng thật kể từ khi Claude làm AI chính (#1315),
-> ghi thành phát hiện F-011 (changelog 0664).
+> **So với baseline 2026-10-25** (mục "Lịch sử" bên dưới): recall 99,2 → 96,7 %, FP-rate
+> 53,3 → 3,3 %, precision 78,8 → 98,3 %. Đổi có chủ đích: bỏ bịa lỗi ở câu đúng, đổi lấy vài câu sai
+> bị bỏ sót. Các ca bỏ sót còn lại chủ yếu là gia sư lặng lẽ nói lại dạng đúng trong lời thoại thay vì
+> chỉ lỗi (`x-b-tonemark-03`, `x-b-wordorder-07`).
 
 > Sinh tự động bởi `npm run eval:tutor -- --write-baseline`. KHÔNG sửa tay phần số liệu.
 > Phương pháp + cách đọc chỉ số: xem cuối file.
 
-- **Ngày chạy:** 2026-10-25
+- **Ngày chạy:** 2026-10-28
 - **Provider · model:** Anthropic · claude-haiku-5-5 (effort low)
 - **Golden set:** 180 câu (120 lỗi · 43 đúng · 17 ca biên)
 - **Chế độ chạy:** chat
@@ -30,7 +24,7 @@
 
 | Chế độ | Chấm được | Recall | Precision | FP-rate | Specificity | Feedback VI | JSON hợp lệ | Type-hit* |
 | ------ | --------- | ------ | --------- | ------- | ----------- | ----------- | ----------- | --------- |
-| chat   | 180       | 99.2%  | 78.8%     | 53.3%   | 46.7%       | 100.0%      | —           | 58.0%     |
+| chat   | 180       | 96.7%  | 98.3%     | 3.3%    | 96.7%       | 100.0%      | —           | 68.1%     |
 
 ## Recall theo loại lỗi — chế độ chat
 
@@ -40,21 +34,21 @@
 | plural_s        | 8/8             |
 | article         | 8/8             |
 | tense           | 11/11           |
-| aux_verb        | 9/9             |
+| aux_verb        | 8/9             |
 | missing_be      | 8/8             |
 | extra_be        | 8/8             |
 | preposition     | 8/8             |
 | adjective_order | 8/8             |
-| pronoun         | 8/8             |
+| pronoun         | 7/8             |
 | word_by_word    | 8/8             |
-| tone_mark       | 8/8             |
+| tone_mark       | 7/8             |
 | classifier      | 8/8             |
-| word_order      | 8/8             |
-| negation        | 7/8             |
+| word_order      | 7/8             |
+| negation        | 8/8             |
 
-**Bỏ sót lỗi (FN):** x-b-negation-07
+**Bỏ sót lỗi (FN):** aux-01, x-b-tonemark-03, x-b-wordorder-07, x-b-pronoun-02
 
-**Bịa lỗi ở câu đúng/ca biên (FP):** ok-01, ok-03, ok-05, ok-06, ok-08, edge-01, edge-03, edge-04, edge-05, x-a-correct-01, x-a-correct-08, x-a-correct-09, x-a-edge-01, x-a-edge-05, x-b-correct-01, x-b-correct-03, x-b-correct-05, x-b-correct-06, x-b-correct-07, x-b-correct-08, x-b-correct-09, x-b-correct-10, x-b-edge-03, x-b-edge-04, x-b-edge-05, x-b-correct-11, x-b-correct-12, x-b-correct-15, x-b-correct-17, x-b-correct-19, x-b-correct-20, x-b-correct-21
+**Bịa lỗi ở câu đúng/ca biên (FP):** x-a-edge-01, x-b-correct-17
 
 ## Cách đọc
 
@@ -105,6 +99,64 @@ Muốn thu hẹp dải nhiễu thì phải mở rộng golden set (nhất là nh
 > KHÔNG đổi số liệu) để hết tham chiếu gãy — xem `docs/changelog/0384-*.md`. **Số liệu vẫn
 > là bản chạy 2026-08-26, ĐÃ CŨ** — PR nào cần so sánh mới phải tự chạy lại
 > `npm run eval:tutor -- --write-baseline` (cần key AI thật) trước khi dựa vào file này.
+
+## Lịch sử — baseline 2026-10-25 (bộ 180 câu, Anthropic, trước khi sửa F-011)
+
+> **Ghi chú lúc ghi baseline này (2026-10-25, changelog 0664, đóng F-008):**
+>
+> Baseline dưới đây là **lần đầu** của bộ 180 câu, chạy trên VPS với cấu hình production
+> (chủ dự án chạy tay, dán nguyên văn kết quả vào phiên; số liệu chép đúng nguyên văn). Chạy **MỘT lượt**
+> (không `--runs 3`), nên chưa có khoảng Wilson — so sánh PR sau chỉ coi là khác khi chênh vượt
+> "Dải nhiễu" cuối file. Baseline cũ (2026-08-26, 62 câu, Groq) giữ ở mục "Lịch sử" để đối chiếu với
+> `npm run eval:tutor -- --limit 62`.
+>
+> **Điểm cần theo dõi:** FP-rate 53,3 % — bịa lỗi ở 32/60 câu đúng/ca biên, nặng nhất ở câu đúng
+> chiều B (`x-b-correct-*` 14/21). Với người mới, sửa SAI hại hơn bỏ sót: đây là việc nên làm tiếp
+> (sửa prompt chấm ⇒ bắt buộc chạy lại `eval:tutor` theo CLAUDE.md §8).
+>
+> **Tụt so với baseline cũ trên CÙNG 62 câu** (đếm từng dòng trong log lượt chạy này): 44/44 câu lỗi
+> bắt được (recall 100 %), nhưng 9/18 câu đúng/ca biên bị bịa lỗi (ok-01/03/05/06/08,
+> edge-01/03/04/05) ⇒ FP-rate ≈ 50 % so với 5,6 % ngày 2026-08-26 (Groq · gpt-oss-120b). Khác biệt
+> vượt xa "Dải nhiễu" cuối file — đây là tụt chất lượng thật kể từ khi Claude làm AI chính (#1315),
+> ghi thành phát hiện F-011 (changelog 0664).
+
+> Sinh tự động bởi `npm run eval:tutor -- --write-baseline`. KHÔNG sửa tay phần số liệu.
+> Phương pháp + cách đọc chỉ số: xem cuối file.
+
+- **Ngày chạy:** 2026-10-25
+- **Provider · model:** Anthropic · claude-haiku-5-5 (effort low)
+- **Golden set:** 180 câu (120 lỗi · 43 đúng · 17 ca biên)
+- **Chế độ chạy:** chat
+
+#### Tổng hợp
+
+| Chế độ | Chấm được | Recall | Precision | FP-rate | Specificity | Feedback VI | JSON hợp lệ | Type-hit* |
+| ------ | --------- | ------ | --------- | ------- | ----------- | ----------- | ----------- | --------- |
+| chat   | 180       | 99.2%  | 78.8%     | 53.3%   | 46.7%       | 100.0%      | —           | 58.0%     |
+
+#### Recall theo loại lỗi — chế độ chat
+
+| Loại lỗi        | Bắt được / Tổng |
+| --------------- | --------------- |
+| third_person_s  | 8/8             |
+| plural_s        | 8/8             |
+| article         | 8/8             |
+| tense           | 11/11           |
+| aux_verb        | 9/9             |
+| missing_be      | 8/8             |
+| extra_be        | 8/8             |
+| preposition     | 8/8             |
+| adjective_order | 8/8             |
+| pronoun         | 8/8             |
+| word_by_word    | 8/8             |
+| tone_mark       | 8/8             |
+| classifier      | 8/8             |
+| word_order      | 8/8             |
+| negation        | 7/8             |
+
+**Bỏ sót lỗi (FN):** x-b-negation-07
+
+**Bịa lỗi ở câu đúng/ca biên (FP):** ok-01, ok-03, ok-05, ok-06, ok-08, edge-01, edge-03, edge-04, edge-05, x-a-correct-01, x-a-correct-08, x-a-correct-09, x-a-edge-01, x-a-edge-05, x-b-correct-01, x-b-correct-03, x-b-correct-05, x-b-correct-06, x-b-correct-07, x-b-correct-08, x-b-correct-09, x-b-correct-10, x-b-edge-03, x-b-edge-04, x-b-edge-05, x-b-correct-11, x-b-correct-12, x-b-correct-15, x-b-correct-17, x-b-correct-19, x-b-correct-20, x-b-correct-21
 
 ## Lịch sử — baseline cũ 2026-08-26 (bộ 62 câu, Groq)
 
