@@ -10,10 +10,19 @@ import { expect, it } from 'vitest'
 import { z } from 'zod'
 import { boundaryChildEnvironment } from './lib/companionBoundaryCli.js'
 
+// Bản Node mà repo nhắm tới lấy từ `.nvmrc` (một nguồn duy nhất, khớp CI `node-version`): nâng Node
+// thì sửa `.nvmrc`, không phải sửa test này (changelog 0689).
+const EXPECTED_NODE_MAJOR = Number(
+  readFileSync(new URL('../.nvmrc', import.meta.url), 'utf8')
+    .trim()
+    .replace(/^v/, '')
+    .split('.')[0],
+)
+
 const Hash = z.string().regex(/^[a-f0-9]{64}$/)
 const Observation = z
   .object({
-    nodeMajor: z.literal(22),
+    nodeMajor: z.literal(EXPECTED_NODE_MAJOR),
     nativeEnvPrototypeDiffers: z.literal(true),
     accepted: z.boolean(),
     extraOwnKeys: z.number().int().nonnegative(),
@@ -56,7 +65,7 @@ for (const bootstrap of ['native', 'tsx'] as const) {
   it.each(['clean', 'extra_key', 'wrong_fixed_value'] as const)(
     `native process.env ${bootstrap}: %s`,
     (variant) => {
-      expect(Number(process.versions.node.split('.')[0])).toBe(22)
+      expect(Number(process.versions.node.split('.')[0])).toBe(EXPECTED_NODE_MAJOR)
       const scratch = mkdtempSync(resolve(tmpdir(), 'dhcb-retrieval-env-'))
       try {
         const environment = boundaryChildEnvironment({

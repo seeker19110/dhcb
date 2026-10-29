@@ -120,7 +120,7 @@ thì sửa cả hai bản. Danh sách 10 skill bản cũ: `docs/claude-md-chi-ti
   `packages/core-billing/plan.ts`.
 - **Ba thứ CHƯA nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
   (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y` chỉ khai
-  peer tới ESLint 9) · Node 26 (chờ sau 2026-10-28). **rolldown kiểm `exports` NGHIÊM:** viết đủ
+  peer tới ESLint 9) · Node 26 (repo đã chạy xanh trên 26.13 — chỉ chờ nâng VPS, changelog 0689). **rolldown kiểm `exports` NGHIÊM:** viết đủ
   `@dhcb/<gói>/<file>`, không bare import. **`parseCssColor` (`scripts/lib/contrast.ts`) ném lỗi
   khi gặp màu lạ — đừng đổi thành bỏ qua.** Phiên bản đang dùng + lý do: `docs/claude-md-chi-tiet.md` §6.
 
