@@ -10,7 +10,8 @@ thật (bảng giá, huy hiệu, Kanban)" — trước đây chỉ có ảnh b�
   `shots:learning-ux`). Mock dùng lại `e2e/helpers/realDataMocks.ts`; việc/dự án mẫu PARSE qua
   `WorkTaskSchema`/`WorkProjectSchema` thật; huy hiệu nạp qua khoá localStorage thật. Script báo lỗi nếu ảnh trắng,
   quá thấp hoặc rơi về màn đăng nhập. `PW_CHROMIUM_PATH` (tuỳ chọn) cho máy có Chromium cài sẵn khác bản
-  Playwright của repo.
+  Playwright của repo. Mặc định ghi vào thư mục tạm riêng tạo bằng `mkdtempSync` (CodeQL "insecure temporary
+  file" bắt bản đầu dùng đường dẫn cố định `/tmp/shots/real-data`).
 - **Lỗi tìm ra khi NHÌN ảnh và đã sửa:**
   1. Kanban in hạn dạng ISO thô "Hạn: 2026-11-05T10:00:00.000Z" → `formatDateVN` (dd/mm/yyyy theo giờ Việt Nam,
      hàm dùng chung sẵn có).

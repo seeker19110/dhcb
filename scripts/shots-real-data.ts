@@ -10,11 +10,12 @@
  * Mock dùng lại `e2e/helpers/realDataMocks.ts` (đúng hình dạng API thật) + dữ liệu Kanban/huy hiệu
  * dựng theo hợp đồng Zod thật ở dưới.
  *
- * Ảnh ghi RA NGOÀI REPO (mặc định `/tmp/shots/real-data/`) — repo giữ kỷ luật 0 file PNG (cùng quy
+ * Ảnh ghi RA NGOÀI REPO (mặc định một thư mục tạm riêng `dhcb-shots-real-data-*`, in ra cuối lượt) — repo giữ kỷ luật 0 file PNG (cùng quy
  * ước `scripts/shots-learning-ux.ts`). Script báo lỗi nếu ảnh trắng/quá thấp/rơi về màn đăng nhập.
  */
 import { chromium, type Page } from '@playwright/test'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { WorkProjectSchema, WorkTaskSchema } from '@dhcb/core-contracts/work'
 import { mockLogin, USER_ID, type ThemeName } from '../e2e/helpers/auth.js'
@@ -32,7 +33,9 @@ const arg = (name: string, def: string) => {
 }
 
 const BASE = process.env.BASE_URL ?? `http://localhost:${process.env.PORT ?? 5179}`
-const OUT = arg('--out', '/tmp/shots/real-data')
+// Mặc định: thư mục tạm RIÊNG tạo bằng mkdtemp (tên ngẫu nhiên, quyền 0700) — không ghi vào một đường
+// dẫn cố định trong /tmp mà người dùng khác trên máy có thể tạo trước/đặt symlink (CodeQL, changelog 0690).
+const OUT_ARG = arg('--out', '')
 const THEMES = arg('--themes', 'blue-sky,dark-blue,kid').split(',') as ThemeName[]
 const WIDTHS = arg('--widths', '390,1440').split(',').map(Number)
 const HEIGHT: Record<number, number> = { 390: 844, 1440: 900 }
@@ -142,7 +145,8 @@ function pngHeight(buf: Buffer): number {
 async function main(): Promise<void> {
   const only = arg('--pages', '')
   const pages = only ? PAGES.filter((p) => only.split(',').includes(p.id)) : PAGES
-  mkdirSync(OUT, { recursive: true })
+  const OUT = OUT_ARG || mkdtempSync(join(tmpdir(), 'dhcb-shots-real-data-'))
+  if (OUT_ARG) mkdirSync(OUT, { recursive: true })
   // `PW_CHROMIUM_PATH`: máy có Chromium cài sẵn khác bản Playwright của repo (vd container cloud) thì
   // trỏ thẳng tới nó; để trống = Chromium mặc định của Playwright.
   const browser = await chromium.launch({
