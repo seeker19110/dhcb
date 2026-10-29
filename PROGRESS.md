@@ -967,8 +967,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `readJsonBody` (mọi handler) + schema Companion; `DOMAIN_KEYWORDS` không còn trả domain ma
   `career`/`startup`/`life`. **Còn mở:** (1) ✅ `0626`: chế độ tác tử đã có họ ca AG (14 ca, kịch bản gọi
   công cụ đóng vai Claude, tầng công cụ trên Postgres thật) — còn lại: Claude THẬT có bị dụ gọi công cụ
-  không (cần key AI); (2) `eval:tutor` + `eval:companion` có **0** ca injection, chấm bài viết chưa có
-  eval (`docs/ops/ai-eval-red-team.md` §5); (3) ✅ `0625`: `eval:v2:permissions` nay chạy Postgres thật (21 ca,
+  không (cần key AI); (2) `eval:tutor` ĐÃ CÓ 8 ca injection (`0686`, `--injection`, chạy thật cần key);
+  `eval:companion` còn **0** ca injection, chấm bài viết chưa có eval (`docs/ops/ai-eval-red-team.md` §5); (3) ✅ `0625`: `eval:v2:permissions` nay chạy Postgres thật (21 ca,
   chặn CI) — lộ và sửa lỗi đặt policy đồng thời → 500; (3b) ✅ `0627`: policy `AUTOMATE` đã quá
   `review_at` nay được `resolveAuthority` hạ về `EXECUTE_WITH_CONFIRMATION` (chờ xác nhận), dòng policy
   giữ nguyên — chủ dự án chốt "theo khuyến nghị"; (4) ✅ `0628`: domain `career`/`startup`/`life` đã gỡ
