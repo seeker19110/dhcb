@@ -1082,7 +1082,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `apps/dhcb/src/index.css` (đặt ngoài mọi `@layer` để thắng cascade vô điều kiện), xác nhận lệch
   về đúng 0px trên 3 route thật, cổng a11y 289/289. Xem `docs/changelog/0416-*.md`.
   (2) ~~Vite 8 vẫn chặn~~ →
-  **ĐÃ ĐÓNG ở đợt 0416**, xem bên dưới. (3) **Node 22 → 26 LTS:** Node 26 thành LTS ngày 2026-10-28 (v26.13.0) — ràng buộc "chờ sau 2026-10-28" đã hết; phần repo (CI, `.nvmrc`) làm ở PR kế, VPS là việc tay. Nợ này gộp luôn mục "đợt nâng cấp major stack" (0414) cũ — trùng Node 26/ESLint 10, đã dời sang kho lưu. (4) **TypeScript 7
+  **ĐÃ ĐÓNG ở đợt 0416**, xem bên dưới. (3) **Node 22 → 26 LTS:** Node 26 thành LTS ngày 2026-10-28 (v26.13.0) — ràng buộc "chờ sau 2026-10-28" đã hết; **repo ĐÃ tương thích** (`0689`, đo 2026-10-29 trên v26.13.0: typecheck, build, 22.630 unit test xanh); test ghim phiên bản nay đọc `.nvmrc`. Chuyển hẳn = nâng VPS (việc tay) rồi đổi `.nvmrc` + 6 chỗ `node-version` trong `ci.yml` + `engines` + `docs/deploy-vps-ubuntu.md` trong CÙNG một PR. Nợ này gộp luôn mục "đợt nâng cấp major stack" (0414) cũ — trùng Node 26/ESLint 10, đã dời sang kho lưu. (4) **TypeScript 7
   KHÔNG THỂ nâng**: `@typescript-eslint/parser@8.70.1` khai `typescript: ">=4.8.4 <6.1.0"`, chờ
   typescript-eslint mở dải. (5) **ESLint 10** chờ `eslint-plugin-jsx-a11y` mở peer (nay `^9`).
   (6) **Đệm ngân sách mỏng hơn**: Initial JS nới 150 → 160 kB (React 19 +19,46 kB brotli, đã loại

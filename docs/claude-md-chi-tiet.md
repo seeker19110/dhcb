@@ -174,8 +174,9 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
     Cài TS 7 là đẩy cổng lint ra ngoài vùng hỗ trợ.
   - **ESLint 10**: `eslint-plugin-jsx-a11y` (bản mới nhất) chỉ khai peer `eslint: ^…^9`, mà đó là
     cổng a11y bắt buộc ở mục 4.5. **Đích ESLint là 9.x.** Nền: `docs/adr/0011-nang-eslint-9-flat-config.md`.
-  - **Node 26**: chờ tới sau 2026-10-28 (v22 hỗ trợ đến 2027-04-30 nên không gấp; v24 rời Active
-    LTS 2026-10-20 nên nâng lên 24 là nâng vào dòng sắp hạ cấp).
+  - **Node 26**: LTS từ 2026-10-28; repo đã chạy xanh trên v26.13.0 (changelog 0689). Còn chờ nâng VPS
+    (v22 hỗ trợ đến 2027-04-30 nên không gấp; bỏ qua 24 vì rời Active LTS 2026-10-20). Khi nâng: đổi
+    `.nvmrc`, 6 chỗ `node-version` trong `ci.yml`, `engines`, `docs/deploy-vps-ubuntu.md` trong cùng một PR.
 
   **Vite 8 (rolldown) — hai điều phải biết** (nền: `docs/changelog/0416-*.md`):
   - **Rolldown kiểm `exports` NGHIÊM.** Không gói `@dhcb/*` nào khai entry `"."`, chỉ khai `"./*"`,
@@ -253,7 +254,7 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   changelog 0684 — ghim `~6.0.3` vì parser chỉ nhận `<6.1.0`; bỏ `baseUrl`, `paths` tương đối từng tsconfig). **Ba thứ CHƯA
   nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
   (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y`, cổng
-  a11y mục 4.5, chỉ khai peer tới ESLint 9) · Node 26 (chờ sau 2026-10-28). Hai điều phải biết:
+  a11y mục 4.5, chỉ khai peer tới ESLint 9) · Node 26 (repo đã chạy xanh trên 26.13 — chỉ chờ nâng VPS, changelog 0689). Hai điều phải biết:
   **rolldown kiểm `exports` NGHIÊM** — bare import `@dhcb/<gói>` gãy build, viết đủ
   `@dhcb/<gói>/<file>`; **`parseCssColor` (`scripts/lib/contrast.ts`) ném lỗi khi gặp định dạng
   màu lạ — đừng đổi thành bỏ qua** (lỗ hổng xanh-giả đã vá ở changelog 0415). Lý do chi tiết:
