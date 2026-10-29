@@ -50,6 +50,7 @@
     "audit:prose": "tsx scripts/audit-prose.ts",
     "changelog": "tsx scripts/changelog.ts",
     "eval:tutor": "npx tsx scripts/eval-tutor.ts",
+    "eval:writing": "npx tsx scripts/eval-writing.ts",
     "eval:code-feedback": "npx tsx scripts/eval-code-feedback.ts",
     "eval:action-canvas": "npx tsx scripts/eval-action-canvas.ts",
     "eval:companion": "npx tsx scripts/eval-companion.ts",
