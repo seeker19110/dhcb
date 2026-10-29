@@ -80,3 +80,24 @@ describe('NotesKanban — lỗi tải', () => {
     expect(container.textContent).toContain('Viết báo cáo')
   })
 })
+
+// [changelog 0690] Ảnh Tầng 8b có dữ liệu (`npm run shots:real-data`) lộ thẻ việc in hạn dạng ISO thô
+// "Hạn: 2026-11-05T10:00:00.000Z". Hạn phải hiện dd/mm/yyyy theo GIỜ VIỆT NAM (cùng `formatDateVN`).
+describe('NotesKanban — hiển thị hạn', () => {
+  it('hạn hiện dd/mm/yyyy theo giờ Việt Nam, không lộ chuỗi ISO', async () => {
+    listWorkTasks.mockResolvedValueOnce([
+      {
+        id: 't1',
+        title: 'Làm đề Reading',
+        status: 'todo',
+        priority: 'high',
+        // 18:00 UTC ngày 05/11 = 01:00 ngày 06/11 giờ Việt Nam.
+        dueAt: '2026-11-05T18:00:00.000Z',
+      } as WorkTask,
+    ])
+    listWorkProjects.mockResolvedValueOnce([])
+    await render()
+    expect(container.textContent).toContain('Hạn: 06/11/2026')
+    expect(container.textContent).not.toContain('T18:00:00')
+  })
+})

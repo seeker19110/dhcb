@@ -19,6 +19,8 @@ import type { WorkTask, WorkProject } from '@dhcb/core-contracts/work'
 import { buttonClass } from '@core/buttonStyles'
 import LoadError from '../../../components/LoadError'
 import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
+import { formatDateVN } from '../../../lib/promoEndingBanner'
+import { WORK_TASK_PRIORITY_LABEL } from '../../../lib/workTaskLabels'
 
 // Nền cố định trang này LUÔN tối (bg-zinc-950, không đổi theo theme — xem thẻ gốc bên
 // dưới), nên `theme-light:` ở đây KHÔNG được chỉ đổi màu chữ sang sắc tối (chữ tối trên
@@ -26,19 +28,19 @@ import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 // sang màu sáng (`theme-light:bg-*-50`) cùng lúc, đúng pattern đã dùng ở Notes.tsx.
 const PRIORITY_COLORS: Record<string, { label: string; cls: string }> = {
   urgent: {
-    label: 'Khẩn cấp',
+    label: WORK_TASK_PRIORITY_LABEL.urgent,
     cls: 'bg-red-500/15 theme-light:bg-red-50 text-red-400 theme-light:text-red-900 border-red-500/30',
   },
   high: {
-    label: 'Cao',
+    label: WORK_TASK_PRIORITY_LABEL.high,
     cls: 'bg-orange-500/15 theme-light:bg-orange-50 text-orange-400 theme-light:text-orange-900 border-orange-500/30',
   },
   medium: {
-    label: 'Vừa',
+    label: WORK_TASK_PRIORITY_LABEL.medium,
     cls: 'bg-amber-500/15 theme-light:bg-amber-50 text-amber-400 theme-light:text-amber-900 border-amber-500/30',
   },
   low: {
-    label: 'Thấp',
+    label: WORK_TASK_PRIORITY_LABEL.low,
     cls: 'bg-blue-500/15 theme-light:bg-blue-50 text-blue-400 theme-light:text-blue-800 border-blue-500/30',
   },
 }
@@ -151,7 +153,7 @@ export default function NotesKanban() {
               aria-label="Lọc theo dự án"
               className="tap-44-y bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none"
             >
-              <option value="all">Tất cả dự án ({tasks.length})</option>
+              <option value="all">Tất cả dự án</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -247,7 +249,7 @@ export default function NotesKanban() {
 
                         <div className="flex items-center justify-between pt-2 border-t border-zinc-900 text-xs">
                           <span className="text-[0.6875rem] text-zinc-500">
-                            {task.dueAt ? `Hạn: ${task.dueAt}` : 'Chưa có hạn'}
+                            {task.dueAt ? `Hạn: ${formatDateVN(task.dueAt)}` : 'Chưa có hạn'}
                           </span>
                           <button
                             onClick={() => handleStatusChange(task, 'done')}

@@ -1099,7 +1099,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   `/luyen-tap`, trang không có ôn thẻ); (3) ~~ảnh
   Hồ sơ 1440px chụp `fullPage` luôn mờ~~ **ĐÃ ĐÓNG 2026-09-24 (`docs/changelog/0433-*.md`)**: lỗi của
   công cụ chụp chứ không phải của trang. `fullPage` cho trang thấy khung nhìn 1×1, `TwoPane` bị dựng
-  lại và `fade-in` chạy lại giữa lúc chụp. Đã thay bằng `e2e/helpers/fullPageShot.ts`; (4) chưa chụp theme `kid` và các trang cần dữ liệu thật (bảng giá, huy hiệu, Kanban).
+  lại và `fade-in` chạy lại giữa lúc chụp. Đã thay bằng `e2e/helpers/fullPageShot.ts`; (4) ✅ trang cần dữ liệu thật ĐÃ CHỤP (`0690`, `npm run shots:real-data`: bảng giá, nhiệm vụ, huy hiệu, Kanban, Ghi chú × 3 theme × 1440/390) — lộ và sửa hạn ISO thô + nhãn enum tiếng Anh ở trụ Ghi chú.
   **Kiểm lại 2026-09-22 (audit lần 2, `docs/audit/2026-09-22-danh-gia-toan-dien-ui-ux-lan-2.md`,
   `docs/changelog/0417-*.md`): 5/6 đợt có hiệu lực; (4) đã chụp `kid` (chỉ đổi màu). Nợ mới xếp
   P0: Luyện nghe 74.309px ở mobile (1.000 thẻ phẳng) và trang VIP mô tả bằng thuật ngữ + hứa
