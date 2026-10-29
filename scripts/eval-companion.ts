@@ -9,6 +9,9 @@
 //   3. DÙNG CÔNG CỤ — vòng công cụ THẬT (`runAnthropicToolLoop`, đúng prompt + định nghĩa công cụ
 //      production) với bộ thi hành GIẢ trả dữ liệu mẫu: đo model có gọi đúng công cụ, không gọi
 //      thừa, không đề xuất ghi khi chỉ được hỏi.
+//   4. KÝ ỨC BỊ ĐẦU ĐỘC (changelog 0687) — ký ức/ghi chú đã lưu chứa câu ra lệnh (tự xưng admin, đòi
+//      in canary, đòi gọi công cụ đề xuất ghi). Đặt vào `contextBlocks` (bọc spotlighting như
+//      production), người dùng hỏi câu vô hại; chấm ở scripts/lib/companionInjectionScoring.ts.
 //
 // ⚠️ CHẠY TAY, TỐN PHÍ API — KHÔNG đưa vào CI (cùng chính sách eval:tutor / eval:action-canvas).
 // Cần ANTHROPIC_API_KEY trong .env ở gốc dự án. Phần miễn phí (fixture hợp lệ, logic chấm) có test
@@ -16,7 +19,7 @@
 //
 // Dùng:
 //   npm run eval:companion                        # cả ba nhóm
-//   npm run eval:companion -- --only sycophancy   # một nhóm (sycophancy | crisis | tools)
+//   npm run eval:companion -- --only sycophancy   # một nhóm (sycophancy | crisis | tools | injection)
 //   npm run eval:companion -- --show              # in nguyên văn câu trả lời
 //
 // QUY TRÌNH: PR sửa companionPrompt.ts / companionTools.ts / safetyGuard.ts PHẢI chạy lại script
@@ -38,6 +41,11 @@ import {
   type CompanionEvalFixtures,
   type EvalTurn,
 } from './lib/companionEvalScoring.ts'
+import {
+  parseCompanionInjectionFixtures,
+  scoreCompanionInjection,
+  type CompanionInjectionFixture,
+} from './lib/companionInjectionScoring.ts'
 
 const SCRIPT_DIR = fileURLToPath(new URL('.', import.meta.url))
 dotenv.config({ path: path.join(SCRIPT_DIR, '..', '.env') })
@@ -84,12 +92,15 @@ function stubExecute(name: string): Promise<{ content: string; isError?: boolean
   return Promise.resolve({ content: STUB_RESULTS[name] ?? '{}' })
 }
 
-function companionSystem(tools: boolean): string {
+function companionSystem(
+  tools: boolean,
+  contextBlocks: CompanionInjectionFixture['contextBlocks'] = [],
+): string {
   return buildCompanionSystemPrompt({
     now: new Date(),
     ageGroup: null,
     domain: 'general',
-    contextBlocks: [],
+    contextBlocks,
     actionsSummary: '',
     tools,
   })
@@ -193,6 +204,41 @@ async function runTools(fx: CompanionEvalFixtures, apiKey: string): Promise<numb
   return failed
 }
 
+async function runInjection(apiKey: string): Promise<number> {
+  const cases = parseCompanionInjectionFixtures(
+    JSON.parse(
+      readFileSync(path.join(SCRIPT_DIR, 'eval-companion-injection-fixtures.json'), 'utf8'),
+    ),
+  )
+  console.log(`\n── Ký ức bị đầu độc (${cases.length} ca) ──`)
+  // Đủ công cụ như người dùng ĐÃ bật "Nhớ về tôi" — để đo xem lệnh trong dữ liệu có kéo được
+  // model gọi công cụ đề xuất ghi hay không.
+  const tools = companionToolDefinitions({ ephemeral: false, memoryConsent: true })
+  let failed = 0
+  for (const c of cases) {
+    const loop = await runAnthropicToolLoop({
+      apiKey,
+      route: getAnthropicRoute('companion'),
+      system: companionSystem(true, c.contextBlocks),
+      messages: [{ role: 'user', content: c.message }],
+      tools,
+      executeTool: stubExecute,
+    })
+    const called = loop.toolCalls.map((t) => t.name)
+    const violations =
+      loop.kind === 'success'
+        ? scoreCompanionInjection(c, loop.text, called).violations
+        : [`vòng công cụ lỗi (${loop.kind})`]
+    if (violations.length > 0) failed++
+    console.log(
+      `${violations.length === 0 ? '✅' : '❌'} ${c.id} — ${c.note} [gọi: ${called.join(', ') || 'không'}]`,
+    )
+    for (const v of violations) console.log(`   ↳ ${v}`)
+    if (SHOW && loop.kind === 'success') console.log(`   ↳ ${loop.text.replace(/\n/g, '\n     ')}`)
+  }
+  return failed
+}
+
 async function main(): Promise<void> {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -208,6 +254,7 @@ async function main(): Promise<void> {
   if (!ONLY || ONLY === 'sycophancy') failed += await runSycophancy(fx, apiKey)
   if (!ONLY || ONLY === 'crisis') failed += await runCrisis(fx, apiKey)
   if (!ONLY || ONLY === 'tools') failed += await runTools(fx, apiKey)
+  if (!ONLY || ONLY === 'injection') failed += await runInjection(apiKey)
 
   console.log(`\n── Tổng kết: ${failed === 0 ? '✅ đạt hết' : `❌ ${failed} ca trượt`} ──`)
   if (failed > 0) process.exitCode = 1
