@@ -6,6 +6,8 @@
 // độc lập tại `/ghi-chu` — không còn chế độ `embedded`, không còn tab nào để chọn.
 // Bố cục, kiểu dữ liệu và API (`/api/work`) giữ NGUYÊN, chỉ đổi tên hiển thị.
 import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
+import { formatDateVN } from '../../../lib/promoEndingBanner'
+import { WORK_PROJECT_STATUS_LABEL, WORK_TASK_PRIORITY_LABEL } from '../../../lib/workTaskLabels'
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { duongDanGhiChuKanban } from '../../../lib/domainRoutes'
@@ -410,12 +412,12 @@ export default function Notes() {
                                       : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50'
                                 }`}
                               >
-                                {task.priority}
+                                {WORK_TASK_PRIORITY_LABEL[task.priority]}
                               </span>
                               {task.dueAt && (
                                 <span className="flex items-center gap-1 text-zinc-400">
                                   <Clock className="w-3 h-3" />
-                                  {new Date(task.dueAt).toLocaleDateString()}
+                                  {formatDateVN(task.dueAt)}
                                 </span>
                               )}
                             </div>
@@ -463,7 +465,7 @@ export default function Notes() {
                               : 'bg-blue-950/80 theme-light:bg-blue-50 text-blue-400 theme-light:text-blue-800 border-blue-800/40'
                           }`}
                         >
-                          {proj.status}
+                          {WORK_PROJECT_STATUS_LABEL[proj.status]}
                         </span>
                       </div>
                       {proj.description && (

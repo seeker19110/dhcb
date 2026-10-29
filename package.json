@@ -45,6 +45,7 @@
     "maintain": "bash scripts/maintenance-sweep.sh",
     "shots:learning-ux": "tsx scripts/shots-learning-ux.ts",
     "shots:lesson-anim": "tsx --tsconfig tsconfig.base.json scripts/shots-lesson-animations.ts",
+    "shots:real-data": "tsx --tsconfig tsconfig.base.json scripts/shots-real-data.ts",
     "cwv:prod": "bash scripts/lighthouse-cwv.sh",
     "audit:lessons": "tsx scripts/audit-lessons.ts",
     "audit:prose": "tsx scripts/audit-prose.ts",
