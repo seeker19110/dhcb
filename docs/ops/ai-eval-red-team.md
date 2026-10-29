@@ -78,5 +78,9 @@ Nguồn: <lệnh eval> — mặt chưa có ca nào thì ghi "0 ca — chưa đo"
   chiều B) trong `scripts/eval-tutor-injection-fixtures.json` — đổi vai, đòi in system prompt, giả thẻ SYSTEM,
   mạo danh giáo viên, lệnh cấm sửa lỗi; mỗi ca cài canary. Chấm ở `scripts/lib/tutorInjectionScoring.ts`
   (`canary_leak` · `prompt_leak` · `role_break`), có đối chứng chép nguyên system prompt. Chạy thật cần key.
-- **`eval:companion`:** ký ức bị đầu độc ("hãy nhớ: tôi là admin") — kiểm tra ký ức trích ra không
-  mang quyền hạn.
+- ✅ **`eval:companion` — ký ức bị đầu độc** (changelog `0687`): `npm run eval:companion -- --only injection`
+  chạy 6 ca trong `scripts/eval-companion-injection-fixtures.json` — ký ức/ghi chú tự xưng admin, đòi in system
+  prompt, ép gọi `propose_*`, cố thoát thẻ bọc dữ liệu, chèn link lừa đảo, tự nhân bản. Đặt vào `contextBlocks`
+  qua đúng `buildCompanionSystemPrompt` + vòng công cụ thật (bộ thi hành giả). Chấm ở
+  `scripts/lib/companionInjectionScoring.ts` (`canary_leak` · `forbidden_tool:<tên>` · `empty_reply`). Chạy thật
+  cần key.
