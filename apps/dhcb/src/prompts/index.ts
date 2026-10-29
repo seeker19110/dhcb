@@ -228,6 +228,14 @@ Return JSON only (no markdown):
 }`
 }
 
+// Tin nhắn người dùng của lượt chấm bài viết — dùng chung cho Writing.tsx và `npm run eval:writing`
+// để eval chấm đúng định dạng production (changelog 0688).
+export function writingUserMessage(dir: Direction, essayPrompt: string, essay: string): string {
+  return dir === 'A'
+    ? `De bai: ${essayPrompt}\n\nBai viet cua hoc vien:\n${essay}`
+    : `Essay prompt: ${essayPrompt}\n\nLearner's Vietnamese essay:\n${essay}`
+}
+
 // ─── Pronunciation Scoring (từ đơn lẻ) ─────────────────────────────
 // Chấm phát âm từ đơn (IPA score + gợi ý, chiều A: English, chiều B: Vietnamese)
 export function pronunciationScoringPrompt(word: string, direction: Direction = 'A'): string {

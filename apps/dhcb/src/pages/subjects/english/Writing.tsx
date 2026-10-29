@@ -12,7 +12,7 @@ import { useToast } from '@core/ToastProvider'
 import { useCloudSync } from '../../../lib/useCloudSync'
 import { useApiThrottle } from '../../../lib/useApiThrottle'
 import { callClaude, parseJson, hasNumberFields } from '../../../lib/ai'
-import { writingSystemPrompt } from '../../../prompts'
+import { writingSystemPrompt, writingUserMessage } from '../../../prompts'
 import { useOnboarding } from '../../../lib/onboarding'
 import type { WritingSubmission, Direction } from '../../../types'
 import { effectivePlan } from '../../../lib/promo'
@@ -321,9 +321,7 @@ export default function Writing() {
     setLoading(true)
     setError('')
     const sys = writingSystemPrompt(dir, onboarding?.ageGroup)
-    const userMsg = isA
-      ? `De bai: ${essayPrompt}\n\nBai viet cua hoc vien:\n${essay}`
-      : `Essay prompt: ${essayPrompt}\n\nLearner's Vietnamese essay:\n${essay}`
+    const userMsg = writingUserMessage(dir, essayPrompt, essay)
     try {
       const raw = await callClaude(
         [{ role: 'user', content: userMsg }],
