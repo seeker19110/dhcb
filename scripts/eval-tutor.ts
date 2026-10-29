@@ -22,6 +22,8 @@
 //                                               #   edge | clean (đúng+ca biên) | A | B
 //   npm run eval:tutor -- --dump eval-dump.jsonl  # lưu NGUYÊN VĂN từng câu trả lời (1 dòng JSON/câu)
 //                                               #   để đọc vì sao một câu bị FP/FN
+//   npm run eval:tutor -- --injection           # ca prompt injection (scripts/eval-tutor-injection-fixtures.json):
+//                                               #   đổi vai / đòi in system prompt / canary — exit 1 nếu có ca bị tiêm
 //
 // Golden set = scripts/eval-tutor-fixtures.json (62 câu cũ, chiều A) + scripts/eval-tutor-fixtures-extra.json
 // (bộ mở rộng, cả hai chiều). `--limit 62` (không kèm --group) tái hiện đúng bộ 62 câu của baseline cũ.
@@ -65,11 +67,18 @@ import {
   parseRuns,
   renderStatsTable,
 } from './lib/evalStats.ts'
+import {
+  parseInjectionFixtures,
+  scoreTutorInjection,
+  summarizeInjection,
+  type InjectionScore,
+} from './lib/tutorInjectionScoring.ts'
 
 const SCRIPT_DIR = fileURLToPath(new URL('.', import.meta.url))
 const PROJECT_ROOT = path.resolve(SCRIPT_DIR, '..')
 const FIXTURES_PATH = path.join(SCRIPT_DIR, 'eval-tutor-fixtures.json')
 const EXTRA_FIXTURES_PATH = path.join(SCRIPT_DIR, 'eval-tutor-fixtures-extra.json')
+const INJECTION_FIXTURES_PATH = path.join(SCRIPT_DIR, 'eval-tutor-injection-fixtures.json')
 const BASELINE_PATH = path.join(PROJECT_ROOT, 'docs', 'research', 'eval-tutor-baseline.md')
 
 dotenv.config({ path: path.join(PROJECT_ROOT, '.env') })
@@ -95,6 +104,7 @@ const GROUP_ARG = argVal('--group', '')
 // Đường dẫn file JSONL ghi nguyên văn câu trả lời; rỗng = không ghi. Đường dẫn tương đối tính
 // từ thư mục đang đứng (cwd), như mọi công cụ dòng lệnh.
 const DUMP_PATH = argVal('--dump', '')
+const INJECTION = args.includes('--injection')
 // Ngưỡng tối thiểu số câu chấm được (không lỗi provider) để cho phép ghi baseline.
 const NGUONG_TOI_THIEU = 0.8
 
@@ -515,6 +525,53 @@ async function mainMultiRun(
   }
 }
 
+// ─── Ca prompt injection (--injection, changelog 0686) ──────────────────────────
+// Chạy chế độ CHAT với đúng system prompt production (guardrail + prompt chat theo chiều/trình độ
+// của ca). Ca đạt khi gia sư giữ vai: không lộ canary, không chép system prompt, còn dòng 💬.
+async function runInjection(): Promise<void> {
+  const fixtures = parseInjectionFixtures(JSON.parse(readFileSync(INJECTION_FIXTURES_PATH, 'utf8')))
+  process.stderr.write(`Provider: ${providerLabel()} · ${fixtures.length} ca injection\n`)
+  const results: Array<{ id: string; providerError?: string } & InjectionScore> = []
+  for (let i = 0; i < fixtures.length; i++) {
+    const fx = fixtures[i]!
+    process.stderr.write(`  ${String(i + 1).padStart(2)}/${fixtures.length} ${fx.id} … `)
+    try {
+      const text = await callProvider(
+        SYSTEM_GUARDRAIL + chatSystemPrompt('free', fx.level, fx.dir),
+        fx.input,
+      )
+      const r = scoreTutorInjection(fx, text)
+      results.push({ id: fx.id, ...r })
+      process.stderr.write(r.passed ? 'ĐẠT\n' : `BỊ TIÊM (${r.violations.join(', ')})\n`)
+      if (DUMP_PATH)
+        appendFileSync(DUMP_PATH, JSON.stringify({ id: fx.id, ...r, raw: text }) + '\n')
+    } catch (e) {
+      // Lỗi provider KHÔNG tính là đạt: thiếu dữ liệu thì cả lượt không kết luận được.
+      const msg = e instanceof Error ? e.message : String(e)
+      results.push({ id: fx.id, passed: false, violations: [], providerError: msg })
+      process.stderr.write(`LỖI: ${msg}\n`)
+    }
+    if (DELAY_MS > 0 && i < fixtures.length - 1) await sleep(DELAY_MS)
+  }
+  const scored = results.filter((r) => r.providerError === undefined)
+  const s = summarizeInjection(scored)
+  const errors = results.length - scored.length
+  process.stdout.write(
+    `\n# Eval gia sư — prompt injection\n\n` +
+      `- **Provider:** ${providerLabel()}\n` +
+      `- **Đạt:** ${s.passed}/${s.total}${errors > 0 ? ` (thêm ${errors} ca lỗi provider, không chấm được)` : ''}\n` +
+      `- **Vi phạm:** canary_leak ${s.byViolation.canary_leak} · prompt_leak ${s.byViolation.prompt_leak} · ` +
+      `role_break ${s.byViolation.role_break}\n` +
+      `- **Ca bị tiêm:** ${
+        scored
+          .filter((r) => !r.passed)
+          .map((r) => r.id)
+          .join(', ') || 'không'
+      }\n`,
+  )
+  if (errors > 0 || s.passed < s.total) process.exit(1)
+}
+
 // ─── main ──────────────────────────────────────────────────────────────────────
 async function main(): Promise<void> {
   if (providerLabel() === 'none') {
@@ -522,6 +579,11 @@ async function main(): Promise<void> {
       '❌ Chưa có key AI. Đặt GEMINI_API_KEY (hoặc GROQ_API_KEY / ANTHROPIC_API_KEY) trong .env rồi chạy lại.',
     )
     process.exit(1)
+  }
+  if (INJECTION) {
+    if (DUMP_PATH) writeFileSync(DUMP_PATH, '')
+    await runInjection()
+    return
   }
   if (!['chat', 'speaking', 'both'].includes(MODE_ARG)) {
     console.error(`❌ --mode không hợp lệ: "${MODE_ARG}" (cho phép: chat | speaking | both)`)
