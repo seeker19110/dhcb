@@ -1,4 +1,4 @@
-# 0691 — 2026-10-31 — Tách icon lucide khỏi chunk khởi động: Initial JS −9,6 kB, tổng JS thật −4,5 %
+# 0691 — 2026-10-31 — Tách icon lucide khỏi chunk khởi động: Initial JS −9,6 kB, tổng JS thật −4,5 % (PR #1473)
 
 Yêu cầu trong phiên: "tối ưu hiệu năng dự án". Đo trước, chọn chỗ có số liệu, một thay đổi nhỏ.
 
