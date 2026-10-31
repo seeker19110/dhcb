@@ -86,7 +86,7 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   XONG**; còn mở: F-007 (biên CSS, chỉ ghi nhận) và F-008 (`eval:tutor` baseline mới với key thật —
   việc tay chủ dự án, AI không làm được).
   **Audit delta 2026-10-24** (`docs/audit/2026-10-24-audit-delta.md`, changelog `0662`–`0663`): 19 commit
-  sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0.
+  sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0 lúc đó. **2026-10-31 (`0691`, PR #1473):** advisory mới `glob`/`minimatch` làm đỏ job audit trên cả `main` — vá production bằng override hẹp `@sentry/bundler-plugins` → `glob ^14.0.3` (production = 0); còn 14 moderate CHỈ ở dev (`minimatch` 3/10 của ESLint 9 + typescript-estree, không ép được vì đổi API) — _xem lại khi:_ nâng ESLint 10 / typescript-eslint có bản dùng minimatch ≥ 11.
   **Eval AI thật 2026-10-25** (chủ dự án chạy trên VPS, changelog `0664`): **F-008 ĐÃ ĐÓNG** — baseline
   `eval:tutor` 180 câu đã ghi (`docs/research/eval-tutor-baseline.md`); companion 16/16, code-feedback 8/8,
   routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — chạy lại trên
@@ -1257,8 +1257,8 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   (`warmUpRedis`), và ở trạng thái `connecting`/`reconnecting` chờ tối đa 1 s sự kiện `ready` trước
   khi từ chối. Gốc rễ (vì sao rớt ~7 lần/ngày) VẪN mở — đọc lại `pm2 logs dhcb --err` như trên.
 
-- 🟡 **[ĐO LẠI 2026-10-28 — `docs/changelog/0685-*.md`] Đệm COVERAGE và BUNDLE: CSS là chỗ mỏng nhất.**
-  Số đo trên `main` (sau #1466, TypeScript 6.0.3), `npm run test:coverage` + `npm run budget`:
+- 🟡 **[ĐO LẠI 2026-10-28 — `docs/changelog/0685-*.md`; JS đo lại 2026-10-31 ở `0691`] Đệm COVERAGE và BUNDLE: CSS là chỗ mỏng nhất.**
+  Số đo trên `main` (sau #1466, TypeScript 6.0.3), `npm run test:coverage` + `npm run budget`; Initial JS sau `0691` (tách icon lucide khỏi `vendor-ui`):
 
   | Cổng                                       | Đo        | Sàn/trần | Đệm                       |
   | ------------------------------------------ | --------- | -------- | ------------------------- |
@@ -1266,7 +1266,7 @@ scripts/load-test/k6-baseline.js`) nhắm staging/production — tăng dần VU_
   | Branches                                   | 92,16 %   | ≥ 90 %   | 2,16 điểm                 |
   | Functions                                  | 97,01 %   | ≥ 94 %   | 3,01 điểm                 |
   | Lines                                      | 96,95 %   | ≥ 94 %   | 2,95 điểm                 |
-  | Initial JS (brotli, gồm mọi modulepreload) | 136,83 kB | ≤ 160 kB | 23,17 kB (dùng 85,5 %)    |
+  | Initial JS (brotli, gồm mọi modulepreload) | 127,24 kB | ≤ 160 kB | 32,76 kB (dùng 79,5 %)    |
   | Initial CSS (brotli)                       | 23,76 kB  | ≤ 26 kB  | **2,24 kB (dùng 91,4 %)** |
 
   CSS là chỗ dễ đỏ nhất: khoảng 30 % CSS thô là khối `@supports color-mix` của Tailwind 4, bỏ chỉ lời
