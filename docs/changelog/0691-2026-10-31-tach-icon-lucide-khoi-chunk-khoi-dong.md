@@ -55,6 +55,24 @@ và Vite `modulepreload` dependency của chunk lười SONG SONG với chunk tr
 - E2E (`npm run test:e2e`) chạy trên dev server nên KHÔNG chạm thay đổi này (chỉ ảnh hưởng `vite build`); CI
   vẫn chạy đủ.
 
+## Vá thêm: CI `npm audit` đỏ do advisory mới (không do thay đổi icon)
+
+Job "npm audit + chu trình import" đỏ trên PR này **và trên cả `main`** (tái hiện ở `origin/main`): advisory mới
+GHSA-3g3m-2fjr-6pw4 (`glob` 3.0.0–14.0.1) + GHSA-g3hv-75wg-m249 (`minimatch` < 11.0.1) chạm chuỗi production
+`@sentry/node@11.9.0 → @sentry/bundler-plugins → glob@13.0.6`. Bản `@sentry` mới nhất (11.10.0) vẫn khai `glob ^13.0.6`;
+`npm audit fix --force` thì đề xuất HẠ `@sentry/node` về 10.78 — không nhận.
+
+- Vá: `package.json` `overrides` hẹp `"@sentry/bundler-plugins": { "glob": "^14.0.3" }`. Sentry chỉ gọi
+  `glob(patterns, { absolute, nodir, ignore, root })` — API giữ nguyên ở glob 14; engines không đổi.
+- Lockfile tái tạo bằng npm 11 (npm 10.9.9 xoá nhầm 8 trường `libc` của `@oxc-parser/binding-linux-*`) — diff
+  chỉ còn glob 14.0.3, path-scurry 3.0.0, minimatch 11.0.3 lồng + `@isaacs/nonrecursive-glob-match`.
+- Kiểm: `npm audit --omit=dev` → 0 · `npm ci` ✅ · gọi thật `globFiles` của Sentry (CJS + ESM) với glob 14 trả đúng
+  file. Server chỉ nạp `@sentry/node` (entry chính KHÔNG nạp `bundler-plugins`), repo không dùng plugin bundler
+  Sentry → không có đường chạy production nào đi qua glob. Hai tác tử kiểm độc lập (API + đồ thị phụ thuộc)
+  không bác được.
+- Còn lại 14 moderate CHỈ ở dev: `minimatch` 3.1.5 (ESLint 9) và 10.2.6 (typescript-estree). Không ép override vì
+  minimatch 11 đổi API so với 3 (bản 3 export hàm mặc định) — chờ ESLint 10 (đã là ràng buộc ở CLAUDE.md §6).
+
 ## Còn mở
 
 - CSS vẫn là ngân sách mỏng nhất (91,4 %) — không có chỗ giảm rẻ (xem trên).

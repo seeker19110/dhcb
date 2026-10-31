@@ -86,7 +86,7 @@ tồn tại trên remote và chưa gắn nhãn giải quyết. Chi tiết: `docs
   XONG**; còn mở: F-007 (biên CSS, chỉ ghi nhận) và F-008 (`eval:tutor` baseline mới với key thật —
   việc tay chủ dự án, AI không làm được).
   **Audit delta 2026-10-24** (`docs/audit/2026-10-24-audit-delta.md`, changelog `0662`–`0663`): 19 commit
-  sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0.
+  sau đó kiểm lại tầng 1–2–5 xanh; vá `body-parser` (#1435) + nâng `happy-dom` 21 — `npm audit` cả dev = 0 lúc đó. **2026-10-31 (`0691`, PR #1473):** advisory mới `glob`/`minimatch` làm đỏ job audit trên cả `main` — vá production bằng override hẹp `@sentry/bundler-plugins` → `glob ^14.0.3` (production = 0); còn 14 moderate CHỈ ở dev (`minimatch` 3/10 của ESLint 9 + typescript-estree, không ép được vì đổi API) — _xem lại khi:_ nâng ESLint 10 / typescript-eslint có bản dùng minimatch ≥ 11.
   **Eval AI thật 2026-10-25** (chủ dự án chạy trên VPS, changelog `0664`): **F-008 ĐÃ ĐÓNG** — baseline
   `eval:tutor` 180 câu đã ghi (`docs/research/eval-tutor-baseline.md`); companion 16/16, code-feedback 8/8,
   routing 87,1 % (≥ 85 %). **action-canvas 0/10 (`too_deep`) ĐÃ SỬA** ở bộ kiểm — chạy lại trên
