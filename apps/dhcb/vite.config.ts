@@ -320,7 +320,18 @@ export default defineConfig(({ mode }) => {
             if (VENDOR_CORE_PACKAGES.some((pkg) => id.includes(`/node_modules/${pkg}/`))) {
               return 'vendor-core'
             }
-            // Nhóm 3: UI library
+            // Nhóm 3: UI library — CHỈ lõi runtime của lucide (createLucideIcon, Icon…). Từng file
+            // icon để rolldown tự chia theo nơi dùng: icon của đường khởi động vào chunk entry, icon
+            // chỉ trang lười dùng đi theo trang đó. Trước đây cả 190 icon nằm trong vendor-ui (tải
+            // eager cho mọi khách). Đo 2026-10-31 (changelog 0691): Initial JS 136,9 → 127,2 kB
+            // brotli; tổng JS thật tải ở 7 trang −4,5 %. Đổi lại thêm ~80 chunk icon 1–2 kB — chấp
+            // nhận vì nginx chạy HTTP/2 và Vite modulepreload chúng SONG SONG với chunk trang (không
+            // thêm vòng chờ). ĐÃ THỬ gom icon lười vào MỘT chunk: tổng byte tải TĂNG 0,6 % (trang nào
+            // cũng cần vài icon lười nên cả chunk luôn bị tải) — chỉ làm đẹp số size-limit, đừng
+            // quay lại cách đó.
+            if (id.includes('node_modules/lucide-react/dist/esm/icons/')) {
+              return undefined
+            }
             if (id.includes('node_modules/lucide-react')) {
               return 'vendor-ui'
             }
