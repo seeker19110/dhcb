@@ -1,7 +1,7 @@
 ---
 title: Vòng lặp tự động (autopilot)
 kind: index
-updated: 2026-10-25
+updated: 2026-11-01
 ---
 
 # 11 — Vòng lặp tự động (autopilot)
@@ -16,9 +16,9 @@ updated: 2026-10-25
 | [`loop-design.md`](loop-design.md) | Thiết kế vòng lặp: 4 con số, tiêu chí dừng máy kiểm, bằng chứng; vòng bảo trì kích hoạt theo ngưỡng | Trước khi bật autopilot lần đầu; khi chọn tầng vòng lặp (hook/`/loop`/headless/ngưỡng) |
 | [`harness-files.md`](harness-files.md) | File harness: PLAN · PROGRESS · BLUEPRINT · evidence · state | Khi viết PLAN.md, PROGRESS.md; khi hỏi "file nào commit, file nào không" |
 | [`stop-points-and-escalation.md`](stop-points-and-escalation.md) | Điểm quyết định tự duyệt (tiêu chí chất lượng cuối), điểm dừng bắt buộc, mức tin cậy T0–T4, leo thang | Khi cần quyết định; khi quyết hành động nào agent được tự làm; khi cấu hình allow/ask/deny |
-| [`orchestration-and-subagents.md`](orchestration-and-subagents.md) | Điều phối: subagent, worktree, song song, không lồng | Khi quyết tách hay tự làm (ba lý do context, hàng "Làm trực tiếp", `LOOP-ORCH-020`); khi muốn chạy song song |
+| [`orchestration-and-subagents.md`](orchestration-and-subagents.md) | Điều phối: subagent, worktree, song song, không lồng | Khi quyết tách hay tự làm (ba lý do context, `LOOP-ORCH-024`, `LOOP-ORCH-020`); khi muốn chạy song song |
 | [`self-healing-ci.md`](self-healing-ci.md) | Agent tự sửa CI/review: giới hạn, cấm (kể cả làm yếu test, tự gắn `@flaky`), bằng chứng | Khi CI đỏ trong autopilot; khi cấu hình workflow có agent là tác giả |
-| [`optimization-loop.md`](optimization-loop.md) | Vòng tối ưu hiệu năng: bộ đo khoá, profile, một thay đổi, máy quyết giữ/hoàn tác, chống gian lận số đo; `xt.py perf` | Khi PLAN có task tối ưu hiệu năng; trước G7 |
+| [`optimization-loop.md`](optimization-loop.md) | Vòng tối ưu hiệu năng: bộ đo khoá, profile, một thay đổi, máy quyết giữ/hoàn tác, chống gian lận số đo; `xt.py perf trial` | Khi PLAN có task tối ưu hiệu năng; trước G7 |
 | [`context-and-token-budget.md`](context-and-token-budget.md) | Ngân sách context/token, compaction, bàn giao phiên | Khi phiên dài, gần hết ngân sách; khi viết bàn giao |
 | [`framework-feedback.md`](framework-feedback.md) | Phản hồi lỗi do khung + cách khắc phục từ dự án đích (`xt.py feedback`), khung kéo về và gộp | Khi sửa xong một lỗi do khung; trước bàn giao/phát hành; khi bảo trì repo khung |
 
@@ -63,11 +63,11 @@ template và `AGENTS.md` chỉ tóm tắt và liên kết, không chép bảng/n
 **Pha 2 — vòng lặp có bằng chứng**
 
 9. `<XT> loop init --plan docs/autopilot/PLAN.md [--blueprint B] --single-session [--hours H]` → `.autopilot/state.json`
-   (gitignore; trần vòng tự tính, `max_same_failure: 3`; gắn `session_id` của phiên, `loop resume` gắn lại phiên mới).
+   (gitignore; trần vòng tự tính, `max_same_failure: 3`; gắn `session_id` của phiên, `loop attach` gắn lại phiên mới).
    **Một phiên đến khi xong** (ADR-0009). Lệnh `loop` gõ trong một git worktree khác của cùng repo dùng gốc worktree đó
    (Gate, tick PLAN, `.autopilot/` riêng); `hook-stop`/`checkpoint` luôn theo `CLAUDE_PROJECT_DIR` — vòng ở worktree thì mở phiên
    Claude với thư mục dự án là worktree đó (`loop init` cảnh báo khi khác).
-10. **Mỗi vòng**: `<XT> loop status --json` → `continue` kèm `task`, `executor` (tầng giao việc, ADR-0029; `escalated` =
+10. **Mỗi vòng**: `<XT> loop status --json` → `continue` kèm `task`, `executor` (ADR-0029/0061; `null` = tự làm; `escalated` =
     chuyển cấp kèm diff + evidence lỗi + giả thuyết đã loại), `milestone_done` + `milestone_audit` (`now` → audit delta theo
     [`../00-method/audit.md`](../00-method/audit.md) §1 trước task kế, 🔴/🟠 thành task mới; `g7` ở pha build → làm tiếp —
     ADR-0033) → làm task → Gate **y nguyên** qua `<XT> loop record --task T-NNN [--executor <agent>] -- '<Gate>'` (Gate là MỘT đối số
@@ -76,8 +76,8 @@ template và `AGENTS.md` chỉ tóm tắt và liên kết, không chép bảng/n
     Exit ≠ 0 → sửa; cùng chữ ký lỗi lần 2 → đổi cách tiếp cận (ghi D-NNN); lần 3 → máy đặt `blocked`
     ([`LOOP-DESIGN-005`](loop-design.md)). Không skip test, không nới cổng ([`LOOP-CI-001`](self-healing-ci.md)).
 12. **Lát xong → một PR** ([`LOOP-DESIGN-020`](loop-design.md), ADR-0014; nhánh riêng từ nhánh đích mới nhất, chồng lên PR
-    chưa merge nếu phụ thuộc): `PROGRESS.md` (≤ 8 KB) vào commit cuối của lát → cổng đầy đủ `dev-task.sh gate` **một lần**
-    (pha build bỏ — ADR-0041) → đẩy **một lần**, mở PR → `<XT> pr next --pr <N>`, làm đúng `do`; `<XT> merge-watch --pr <N>`
+    chưa merge nếu phụ thuộc): `PROGRESS.md` (≤ 8 KB) vào commit cuối của lát → cổng commit `gate-fast`; CI là cổng đầy đủ
+    (ADR-0041, ADR-0056) → đẩy **một lần**, mở PR → `<XT> pr next --pr <N>`, làm đúng `do`; `<XT> merge-watch --pr <N>`
     chạy nền và khi thoát in sẵn kết quả `pr next`; mỗi khi PR đổi (push, CI, review) lại `pr next`. Reviewer **chỉ khi** `pr next` trả
     `review` — năng lực cao hơn người viết ([`LOOP-ORCH-005`](orchestration-and-subagents.md); không kết luận được →
     `<XT> pr reviewed --inconclusive` rồi giao reviewer khác); ghi `<XT> pr reviewed` theo lệnh máy in (đăng lên PR để
@@ -87,10 +87,10 @@ template và `AGENTS.md` chỉ tóm tắt và liên kết, không chép bảng/n
     tiếp (`verify` = task tick mà thiếu/khác bằng chứng, hoặc chưa chạy `<XT> loop verify --all` trên cây cuối —
     [`LOOP-DESIGN-022`](loop-design.md)); `done`/`blocked`/`budget` → cho dừng. Lượt Stop của phiên khác phiên đã gắn
     hoặc stdin không phải JSON object → cho dừng, không tăng `iterations`, ghi một dòng `.autopilot/hook-stop.log`.
-    `/clear` đổi session id: `loop status` (SessionStart in lại) báo vòng gắn phiên khác → `<XT> loop resume` gắn lại.
+    `/clear` đổi session id: `loop status` (SessionStart in lại) báo vòng gắn phiên khác → `<XT> loop attach`.
 14. **Việc cần người không chặn cả vòng**: `<XT> loop defer --task <ID> --reason "..."` rồi làm việc khác; mọi việc còn lại
-    phụ thuộc → `<XT> loop block --reason "..."`. Nhóm máy chặn / cho chạy / cần người, điểm dừng bắt buộc:
-    [`stop-points-and-escalation.md`](stop-points-and-escalation.md). Người xử lý rồi `<XT> loop resume`.
+    phụ thuộc → `<XT> loop block --reason "..."`. Điểm dừng bắt buộc:
+    [`stop-points-and-escalation.md`](stop-points-and-escalation.md). Người: `<XT> loop resolve --task <ID> --reason …`; vòng dừng → `loop unblock --reason …`.
 15. **Context đầy** → compaction tự nén (PreCompact ghi checkpoint, SessionStart in lại `loop status`); gần trần máy
     (≥ 80 % vòng/giờ/tiền) → Bàn giao vào PROGRESS, commit + push ([`context-and-token-budget.md`](context-and-token-budget.md)).
 16. **Kết thúc đợt → đợt kế (ADR-0047)**: `done` = mọi task xanh + `verify --all` khớp cây (build: MUST blueprint mở không

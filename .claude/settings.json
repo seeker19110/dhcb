@@ -62,7 +62,12 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/pre-bash-guard.sh", "timeout": 600 }
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-bash-guard.sh",
+            "timeout": 600,
+            "onFailure": "block"
+          }
         ]
       },
       {
@@ -73,15 +78,25 @@
         ]
       },
       {
-        "matcher": "Edit|Write|MultiEdit",
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/pre-edit-guard.sh", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-edit-guard.sh",
+            "timeout": 10,
+            "onFailure": "block"
+          }
         ]
       },
       {
-        "matcher": "mcp__.*(merge_pull_request|auto_merge).*",
+        "matcher": "mcp__.*(merge_pull_request|auto_merge|create_pull_request|update_pull_request|create_or_update_file|push_files|delete_file|issue_comment|issue_write|pull_request_review_write|comment_to_pending_review|reply_to_pull_request_comment|create_branch|create_repository|fork_repository|actions_run_trigger).*",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/pre-mcp-guard.sh", "timeout": 120 }
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-mcp-guard.sh",
+            "timeout": 120,
+            "onFailure": "block"
+          }
         ]
       }
     ],
@@ -110,6 +125,40 @@
       {
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/stop-guard.sh", "timeout": 30 }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/permission-request.sh",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/post-tool-failure.sh", "timeout": 30 }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/task-completed.sh", "timeout": 30 }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/subagent-stop.sh", "timeout": 10 }
         ]
       }
     ]

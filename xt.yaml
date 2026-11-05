@@ -40,9 +40,17 @@ coverage: npm run test:coverage
 # perf: ""              # kiểm tải có ngưỡng, đỏ khi vượt ngân sách (vd k6 run với thresholds)
 # claude_min_version: ""   # doctor cảnh báo khi Claude Code thấp hơn (LOOP-HARNESS-026)
 # ai_attribution: ""    # forbid = guard chặn commit/PR ghi tên model hay URL phiên AI (LOOP-HARNESS-027)
-# pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 72 ký tự
+# pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 100 ký tự
 
 # Khoá mới của khung (bản 3.27.0 (99f8b52)) — bật bằng cách bỏ "# "; vắng khoá = hành vi cũ
 # own = install.py giữ quyền + dạng lệnh hook của dự án (không thêm allow/deny khung). dhcb có luật quyền
 # riêng (.claude/settings.json): bản 3.27.0 từng định thêm `allow: Bash` (cho mọi lệnh shell) — changelog 0679.
 harness_permissions: own
+
+# Khoá mới của khung (bản 3.30.0 (454d146)) — bật bằng cách bỏ "# "; vắng khoá = hành vi cũ
+# max_rethink: 1        # trần `pr rethink` mỗi PR (ADR-0061): hết → `pr next` trả `split-or-close`; 0 = không trần
+# migration_check: ""   # cổng production (ADR-0062): migration tiến + lùi trên bản sao dữ liệu/staging
+# rollback: ""          # cổng production: diễn tập quay về bản trước (tag/artifact cũ + migration lùi)
+# acceptance: ""        # cổng production: kiểm thử nghiệm thu theo tiêu chí chấp nhận (UAT tự động)
+# preview: ""           # cách chạy thử bản trình người duyệt (`xt.py stage submit` ghi lại — ADR-0058); vd npm run preview
+# preview_smoke: ""     # Gate bản trình: `stage submit` chạy (qua guard), exit ≠ 0 → không trình (D-247); vd npm run build && npx playwright test smoke

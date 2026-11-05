@@ -29,8 +29,9 @@ merge_risk_paths: ""          # glob thêm vào đường dẫn nhạy cảm (ng
 # human = người merge ngoại lệ cứng (ADR-0016). Dự án có tiền thật/dữ liệu người dùng thật: đặt human, hoặc ghi D-NNN/ADR
 # của dự án chấp nhận rủi ro khi giữ auto (LOOP-STOP-005). Thiếu khoá = human; PR đổi khoá luôn người merge
 merge_hard_exceptions: auto
-# delivery_phase: build = CI xanh là merge, không reviewer, review ghi nợ · harden (chỉ khi lên production) = review sạch ở head (ADR-0031/0037)
+# delivery_phase: build = CI xanh là merge, review ghi nợ (trừ rủi ro cao: auth/thanh toán/bí mật/migration — ADR-0062) · harden (chỉ khi lên production) = review sạch ở head (ADR-0031/0037)
 delivery_phase: build
+# max_rethink: 1              # trần `pr rethink` mỗi PR (ADR-0061): hết → `pr next` trả `split-or-close`; 0 = không trần; PR cắt bản miễn; lấy mức chặt hơn với nhánh đích
 # review_identity: ""         # chỉ dấu review của tài khoản này mở được merge (T-1508)
 # author_model_family: ""     # reviewer năng lực cao hơn tác giả: bậc model cao hơn, cùng họ thì effort cao hơn (ci-check kiểm)
 # reviewer_model_family: ""
@@ -44,7 +45,12 @@ audit: ""             # audit phụ thuộc (npm audit · pip-audit …)
 # Trước phát hành (pha harden, `release-check` chạy — ADR-0042): đỏ = NO-GO; trống ở M/L = người ký lý do không áp.
 attack: ""            # tấn công thử: DAST (ZAP baseline/API scan) · fuzz API (schemathesis run …) trên bản chạy cục bộ/staging
 perf: ""              # kiểm tải có ngưỡng, đỏ khi vượt ngân sách (vd k6 run với thresholds)
+migration_check: ""   # cổng production (ADR-0062): migration tiến + lùi trên bản sao dữ liệu/staging
+rollback: ""          # cổng production: diễn tập quay về bản trước (tag/artifact cũ + migration lùi)
+acceptance: ""        # cổng production: kiểm thử nghiệm thu theo tiêu chí chấp nhận (UAT tự động)
+preview: ""           # cách chạy thử bản trình người duyệt (`xt.py stage submit` ghi lại — ADR-0058); vd npm run preview
+preview_smoke: ""     # Gate bản trình: `stage submit` chạy (qua guard), exit ≠ 0 → không trình (D-247); vd npm run build && npx playwright test smoke
 claude_min_version: ""   # doctor cảnh báo khi Claude Code thấp hơn (LOOP-HARNESS-026)
 ai_attribution: ""    # forbid = guard chặn commit/PR ghi tên model hay URL phiên AI (LOOP-HARNESS-027)
-pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 72 ký tự
+pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 100 ký tự
 harness_permissions: ""   # own = install.py giữ quyền + dạng lệnh hook của dự án (không thêm allow/deny khung)
