@@ -30,8 +30,12 @@ migrate: npm run migrate:pg
 # setup: ""             # cài phụ thuộc trước mỗi job CI (npm ci · pip install …); trống = bỏ qua
 format_check: npm run format:check
 coverage: npm run test:coverage
-# commit_gate: fast
-# test_fast: ""         # test liên quan file đổi (XT_CHANGED_FILES, mỗi dòng một file); trống → test
+# commit_gate: fast — BẬT 2026-11-05 (changelog 0693): guard 3.30 chạy cổng ở MỖI `git commit` trong hook trần 600 s
+# với `onFailure: block`; cổng đầy đủ (build + typecheck + lint + ~22.700 test) vượt trần → mọi commit bị chặn.
+# Cổng nhanh = format_check → lint → typecheck → test liên quan file đổi; cổng đầy đủ + coverage vẫn là CI (`quality`).
+commit_gate: fast
+# test liên quan file đổi (XT_CHANGED_FILES, mỗi dòng một file); vitest tự dò test import file đổi
+test_fast: '[ -z "$XT_CHANGED_FILES" ] || npx vitest related --run --passWithNoTests $XT_CHANGED_FILES'
 # merge_hard_exceptions: human
 # delivery_phase: build
 # e2e_setup: ""         # trước e2e: cài trình duyệt (vd npx playwright install --with-deps chromium)
