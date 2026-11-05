@@ -1,7 +1,7 @@
 ---
 title: Quy ước viết module của khung
 kind: method
-updated: 2026-10-24
+updated: 2026-11-03
 ---
 
 # Quy ước viết module của khung
@@ -97,6 +97,7 @@ Gói ngành thêm: **Khung pháp lý** (Việt Nam + quốc tế, số hiệu v�
 ## 7. Liên kết
 
 - Liên kết nội bộ dùng **đường dẫn tương đối** tới file `.md` có thật 🔒.
+- ID mục checklist được nhắc (ngoài code fence) phải có mục định nghĩa trong khung 🔒.
 - Không trùng lặp nội dung giữa các module: một chủ đề có **một nhà**; nơi khác chỉ trỏ tới.
 - Mục bị gộp vào nhà khác: giữ ID, đổi mức thành `MAY`, ghi `Ngừng dùng <ngày> — gộp vào <ID-nhà kèm liên kết tương đối>`.
   MAY không vào blueprint mặc định nên dự án không thấy trùng; ID không bao giờ cấp lại.
@@ -137,4 +138,4 @@ Gói ngành thêm: **Khung pháp lý** (Việt Nam + quốc tế, số hiệu v�
 
 - Thêm/sửa mục: giữ ID cũ ổn định; cập nhật `updated`; ghi `CHANGELOG.md`.
 - Đổi quyết định lớn về cấu trúc khung: ghi ADR ở `docs/adr/`.
-- Cổng commit do hook chạy (`scripts/dev-task.sh gate-fast` theo `commit_gate` trong `xt.yaml`); trước khi đẩy/mở PR chạy `scripts/dev-task.sh gate` một lần — lệnh thật ở `xt.yaml`.
+- Cổng commit do hook chạy (`scripts/dev-task.sh gate-fast` theo `commit_gate` trong `xt.yaml`); cổng đầy đủ `scripts/dev-task.sh gate` là CI (cục bộ trước cắt bản — ADR-0056) — lệnh thật ở `xt.yaml`.

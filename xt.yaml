@@ -30,8 +30,12 @@ migrate: npm run migrate:pg
 # setup: ""             # cài phụ thuộc trước mỗi job CI (npm ci · pip install …); trống = bỏ qua
 format_check: npm run format:check
 coverage: npm run test:coverage
-# commit_gate: fast
-# test_fast: ""         # test liên quan file đổi (XT_CHANGED_FILES, mỗi dòng một file); trống → test
+# commit_gate: fast — BẬT 2026-11-05 (changelog 0693): guard 3.30 chạy cổng ở MỖI `git commit` trong hook trần 600 s
+# với `onFailure: block`; cổng đầy đủ (build + typecheck + lint + ~22.700 test) vượt trần → mọi commit bị chặn.
+# Cổng nhanh = format_check → lint → typecheck → test liên quan file đổi; cổng đầy đủ + coverage vẫn là CI (`quality`).
+commit_gate: fast
+# test liên quan file đổi (XT_CHANGED_FILES, mỗi dòng một file); vitest tự dò test import file đổi
+test_fast: '[ -z "$XT_CHANGED_FILES" ] || npx vitest related --run --passWithNoTests $XT_CHANGED_FILES'
 # merge_hard_exceptions: human
 # delivery_phase: build
 # e2e_setup: ""         # trước e2e: cài trình duyệt (vd npx playwright install --with-deps chromium)
@@ -40,9 +44,17 @@ coverage: npm run test:coverage
 # perf: ""              # kiểm tải có ngưỡng, đỏ khi vượt ngân sách (vd k6 run với thresholds)
 # claude_min_version: ""   # doctor cảnh báo khi Claude Code thấp hơn (LOOP-HARNESS-026)
 # ai_attribution: ""    # forbid = guard chặn commit/PR ghi tên model hay URL phiên AI (LOOP-HARNESS-027)
-# pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 72 ký tự
+# pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 100 ký tự
 
 # Khoá mới của khung (bản 3.27.0 (99f8b52)) — bật bằng cách bỏ "# "; vắng khoá = hành vi cũ
 # own = install.py giữ quyền + dạng lệnh hook của dự án (không thêm allow/deny khung). dhcb có luật quyền
 # riêng (.claude/settings.json): bản 3.27.0 từng định thêm `allow: Bash` (cho mọi lệnh shell) — changelog 0679.
 harness_permissions: own
+
+# Khoá mới của khung (bản 3.30.0 (454d146)) — bật bằng cách bỏ "# "; vắng khoá = hành vi cũ
+# max_rethink: 1        # trần `pr rethink` mỗi PR (ADR-0061): hết → `pr next` trả `split-or-close`; 0 = không trần
+# migration_check: ""   # cổng production (ADR-0062): migration tiến + lùi trên bản sao dữ liệu/staging
+# rollback: ""          # cổng production: diễn tập quay về bản trước (tag/artifact cũ + migration lùi)
+# acceptance: ""        # cổng production: kiểm thử nghiệm thu theo tiêu chí chấp nhận (UAT tự động)
+# preview: ""           # cách chạy thử bản trình người duyệt (`xt.py stage submit` ghi lại — ADR-0058); vd npm run preview
+# preview_smoke: ""     # Gate bản trình: `stage submit` chạy (qua guard), exit ≠ 0 → không trình (D-247); vd npm run build && npx playwright test smoke
