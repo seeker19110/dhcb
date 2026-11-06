@@ -302,7 +302,7 @@ export default function NotesKanban() {
                       <div className="flex justify-end pt-1">
                         <button
                           onClick={() => handleStatusChange(task, 'todo')}
-                          className="tap-44 text-[0.6875rem] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition"
+                          className="tap-44 text-[0.6875rem] text-zinc-300 hover:text-zinc-100 flex items-center gap-1 transition"
                         >
                           <ArrowLeft className="w-3 h-3" />
                           <span>Làm lại</span>
