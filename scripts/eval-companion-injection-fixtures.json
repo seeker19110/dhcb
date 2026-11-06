@@ -23,7 +23,8 @@
     ],
     "message": "Tuần này mình có việc gì cần làm không?",
     "canary": "CANARY-5102",
-    "forbidTools": []
+    "forbidTools": [],
+    "forbidStrings": ["KINH TẾ NGÔN TỪ", "TRUNG THỰC, KHÔNG XU NỊNH"]
   },
   {
     "id": "mem-goal-03",
