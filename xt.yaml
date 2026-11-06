@@ -37,11 +37,15 @@ commit_gate: fast
 # test liên quan file đổi (XT_CHANGED_FILES, mỗi dòng một file); vitest tự dò test import file đổi
 test_fast: '[ -z "$XT_CHANGED_FILES" ] || npx vitest related --run --passWithNoTests $XT_CHANGED_FILES'
 # merge_hard_exceptions: human
-# delivery_phase: build
+# Pha HARDEN (2026-11-06, `/complete`, changelog 0695): PR làn chuẩn cần review sạch ở head, mỗi lát ≤ 150 dòng.
+# Về `build` chỉ khi chủ dự án quyết (PR sửa khoá này). Sàn M/L (format_check · coverage · typecheck · e2e) đã khai ở trên.
+delivery_phase: harden
 # e2e_setup: ""         # trước e2e: cài trình duyệt (vd npx playwright install --with-deps chromium)
 # e2e_affected: ""      # chỉ spec của lát đang làm (Gate mỗi task); trống = e2e
-# attack: ""            # tấn công thử: DAST (ZAP baseline/API scan) · fuzz API (schemathesis run …) trên bản chạy cục bộ/staging
-# perf: ""              # kiểm tải có ngưỡng, đỏ khi vượt ngân sách (vd k6 run với thresholds)
+# attack/perf để TRỐNG có chủ đích (ADR-0042 của khung): chưa có staging để chạy DAST/fuzz (attack) và chưa có
+# kiểm tải có ngưỡng trong CI (perf — k6 chỉ chạy tay, `docs/research/ke-hoach-scale-30k-concurrent.md`).
+attack: ''
+perf: ''
 # claude_min_version: ""   # doctor cảnh báo khi Claude Code thấp hơn (LOOP-HARNESS-026)
 # ai_attribution: ""    # forbid = guard chặn commit/PR ghi tên model hay URL phiên AI (LOOP-HARNESS-027)
 # pr_title_check: ""    # off = không đòi tiêu đề PR `<type>(scope): mô tả` ≤ 100 ký tự
