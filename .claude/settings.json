@@ -65,7 +65,7 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/pre-bash-guard.sh",
-            "timeout": 600,
+            "timeout": 1200,
             "onFailure": "block"
           }
         ]
