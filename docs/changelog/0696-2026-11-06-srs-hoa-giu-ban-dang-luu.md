@@ -1,4 +1,4 @@
-# 0696 — 2026-11-06 — SRS hoà hoàn toàn giữ bản đang lưu, hết đồng bộ thừa (AUD-XFEAT-004)
+# 0696 — 2026-11-06 — SRS hoà hoàn toàn giữ bản đang lưu, hết đồng bộ thừa (AUD-XFEAT-004, PR #1483)
 
 ## Vấn đề
 
