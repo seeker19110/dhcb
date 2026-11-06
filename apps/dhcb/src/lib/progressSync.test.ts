@@ -624,6 +624,22 @@ describe('progressSync — ca biên hợp nhất khi kéo về', () => {
     expect(pending('u2')).toBe(0)
   })
 
+  it('SRS giống hệt nhưng cloud trả thứ tự khoá kiểu jsonb → không đẩy thừa (AUD-XFEAT-004)', async () => {
+    // Postgres jsonb sắp khoá theo độ dài rồi theo byte, KHÁC thứ tự `toStored` ghi ở máy.
+    // Trước đây hoà hoàn toàn thì bản ở máy thắng → stringify khác cloud → đẩy lên mỗi lần pull.
+    localStorage.setItem(
+      'srs_u2',
+      JSON.stringify({ book: { due: 200, stability: 3, difficulty: 5, reps: 3, state: 2 } }),
+    )
+    const calls = mockFetchPull({
+      srs: { book: { due: 200, reps: 3, state: 2, stability: 3, difficulty: 5 } },
+    })
+    await pullProgress('u2')
+    await flush()
+    expect(calls.filter((c) => c.method !== 'GET')).toHaveLength(0)
+    expect(pending('u2')).toBe(0)
+  })
+
   it('SRS hoà reps, local có due xa hơn → local thắng và được đẩy lên', async () => {
     localStorage.setItem(
       'srs_u2',
