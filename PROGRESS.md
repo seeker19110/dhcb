@@ -11,7 +11,7 @@ Nhật ký: `docs/changelog/` (`npm run changelog`); nợ đã đóng: `docs/leg
 
 ## Tiếp theo
 
-- **[2026-10-20] Audit toàn diện 11 tầng** — W-001…W-004 xong, F-008/F-011 đóng (baseline `0683`); còn F-007 (ghi nhận) + 14 moderate chỉ ở dev (`0691`). L83
+- **[2026-11-07] Pha HARDEN** — 4 lát 🟠 đã merge (#1483–#1486); `release-check` NO-GO chờ chủ dự án: `BLUEPRINT.md`, AUD-SEC-005, quyền sửa hook, chữ ký (`0700`).
 - **[2026-10-16] Nâng cấp từ stored** — S01–S06 đã merge/deploy; WAITING chủ dự án: nhãn tay + floor S05, benchmark vector thật, đo acoustic S06 (`docs/goals/2026-10-16-stored-upgrades.md`). L107
 - **[2026-10-13] Gợi ý rà soát chéo** — mục 2/3/5/6 xong; mục 1 (`opusplan`) chờ chủ dự án quyết chi phí (`0630`). L128
 - **[2026-10-11] Bạn Đồng Hành 4 GĐ** — code xong; còn việc tay sau deploy: `migrate:pg`, key Gemini, bật 3 công tắc, eval companion/routing, theo dõi chi phí. L134

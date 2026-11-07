@@ -1,4 +1,4 @@
-# 0698 — 2026-11-06 — Vá bộ chấm `eval:tutor --injection` và `eval:companion` (AUD-TEST-001b)
+# 0698 — 2026-11-06 — Vá bộ chấm `eval:tutor --injection` và `eval:companion` (AUD-TEST-001b, PR #1485)
 
 ## Vấn đề
 

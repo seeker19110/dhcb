@@ -1,4 +1,4 @@
-# 0699 — 2026-11-06 — Cổng a11y quét Ghi chú khi có dữ liệu; sửa 3 lỗi a11y thật (AUD-A11Y-001)
+# 0699 — 2026-11-06 — Cổng a11y quét Ghi chú khi có dữ liệu; sửa 3 lỗi a11y thật (AUD-A11Y-001, PR #1486)
 
 ## Vấn đề
 
