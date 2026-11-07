@@ -10,7 +10,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 /**
  * SRS: giữ thẻ có số lần ôn (reps) cao hơn — coi là tiến bộ hơn. `a` = bản đang lưu (server/cloud),
- * `b` = bản client gửi lên/đang có ở máy; hoà hoàn toàn thì `b` thắng.
+ * `b` = bản client gửi lên/đang có ở máy; hoà hoàn toàn (cùng reps, cùng due) thì giữ `a`.
  *
  * Sửa 2026-09-19 (F7, ghi nợ ở `docs/changelog/0334-*.md`): khi HOÀ reps, bản cũ luôn cho
  * client (`b`) thắng vô điều kiện — kể cả khi `due` của client CŨ HƠN (lùi về quá khứ) so với
@@ -38,7 +38,10 @@ export function mergeSrsMap(
     if (bReps === aReps) {
       const aDue = isRecord(aVal) && typeof aVal.due === 'number' ? aVal.due : -Infinity
       const bDue = isRecord(bVal) && typeof bVal.due === 'number' ? bVal.due : -Infinity
-      if (bDue >= aDue) out[key] = bVal
+      // Hoà HOÀN TOÀN (cùng reps, cùng due) → giữ bản đang lưu `a`: hai bản là cùng một lần ôn.
+      // Cho `b` thắng thì client giữ thứ tự khoá của máy, khác thứ tự jsonb của Postgres →
+      // `JSON.stringify` luôn khác → đẩy lên thừa mỗi lần kéo về (AUD-XFEAT-004).
+      if (bDue > aDue) out[key] = bVal
     }
   }
   return out

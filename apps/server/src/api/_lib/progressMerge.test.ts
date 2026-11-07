@@ -48,13 +48,16 @@ describe('mergeSrsMap', () => {
     expect(mergeSrsMap(a, b)).toEqual({ book: { reps: 3, due: 10_000 } })
   })
 
-  it('F7: hoà reps, due bên b mới hơn (hoặc bằng) → b vẫn thắng như cũ', () => {
+  it('F7: hoà reps, due bên b mới hơn → b thắng', () => {
     const a = { book: { reps: 3, due: 1_000 } }
     const b = { book: { reps: 3, due: 10_000 } }
     expect(mergeSrsMap(a, b)).toEqual({ book: { reps: 3, due: 10_000 } })
-    expect(mergeSrsMap(a, { book: { reps: 3, due: 1_000 } })).toEqual({
-      book: { reps: 3, due: 1_000 },
-    })
+  })
+
+  it('AUD-XFEAT-004: hoà HOÀN TOÀN (cùng reps, cùng due) → giữ đúng object đang lưu `a`', () => {
+    const stored = { due: 1_000, reps: 3, state: 2 }
+    const merged = mergeSrsMap({ book: stored }, { book: { state: 2, reps: 3, due: 1_000 } })
+    expect(merged.book).toBe(stored)
   })
 
   it('F7: hoà reps nhưng thiếu `due` số hợp lệ ở một/cả hai bên → không throw, coi như thua', () => {
