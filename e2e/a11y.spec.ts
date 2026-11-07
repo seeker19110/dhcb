@@ -11,6 +11,7 @@ import {
   mockQuestsStatus,
   mockReferralStats,
   mockStemSubjectDetail,
+  mockWorkData,
   STEM_DETAIL_SUBJECTS,
 } from './helpers/realDataMocks'
 
@@ -242,6 +243,20 @@ const REAL_DATA_CASES: RealDataCase[] = [
     route: '/nang-cap',
     mock: mockPlanPrices,
     ready: (page) => page.getByRole('button', { name: /Nâng cấp VIP/ }),
+  },
+  // Ghi chú có việc + dự án (AUD-A11Y-001): badge ưu tiên, dòng "Hạn: …" 11px và nhãn trạng thái chỉ
+  // vẽ ra khi /api/work có dữ liệu — trước đây trang được quét lúc RỖNG.
+  {
+    route: '/ghi-chu',
+    mock: mockWorkData,
+    // Chờ nút "Hoàn thành" của một việc ĐÃ XONG (gắn với dữ liệu /api/work, không khớp nhầm ngày của
+    // banner khuyến mãi) — đồng thời canh nhãn cố định + aria-pressed của nút bật tắt.
+    ready: (page) => page.getByRole('button', { name: /^Hoàn thành: /, pressed: true }),
+  },
+  {
+    route: '/ghi-chu/kanban',
+    mock: mockWorkData,
+    ready: (page) => page.getByRole('main').getByText(/Hạn: \d{2}\/\d{2}\/\d{4}/),
   },
   {
     route: '/lap-trinh/chay-thu',

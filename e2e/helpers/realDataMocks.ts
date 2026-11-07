@@ -3,6 +3,7 @@ import {
   SubjectManifestSchema,
   SUBJECT_MANIFEST_SCHEMA_VERSION,
 } from '../../packages/core-contracts/subjectManifest'
+import { WorkProjectSchema, WorkTaskSchema } from '../../packages/core-contracts/work'
 
 // Mock API ĐÚNG HÌNH DẠNG DỮ LIỆU THẬT cho cổng a11y (đợt U3, audit UI/UX 2026-09-30 mục C4 + 11).
 //
@@ -166,4 +167,54 @@ const STEM_MANIFESTS: Record<StemDetailSubject, unknown> = {
 export async function mockStemSubjectDetail(page: Page, subjectId: StemDetailSubject) {
   const subject = SubjectManifestSchema.parse(STEM_MANIFESTS[subjectId])
   await page.route('**/api/subjects?id=*', (route) => route.fulfill(json({ subject })))
+}
+
+// ── Ghi chú (`/ghi-chu`, `/ghi-chu/kanban`) — dùng chung cho cổng a11y và `scripts/shots-real-data.ts`
+// (AUD-A11Y-001: trước đây chỉ script chụp ảnh có dữ liệu, axe quét trang RỖNG).
+const NOW = '2026-10-29T08:00:00.000Z'
+const PERSON = '00000000-0000-4000-8000-000000000001'
+const PROJECT = '00000000-0000-4000-8000-0000000000a1'
+
+// Dữ liệu Kanban PARSE qua đúng schema hợp đồng — sửa hợp đồng mà quên sửa ở đây thì script ném lỗi.
+const PROJECTS = [
+  WorkProjectSchema.parse({
+    schemaVersion: 1,
+    id: PROJECT,
+    personId: PERSON,
+    name: 'Ôn thi IELTS tháng 12',
+    status: 'active',
+    createdAt: NOW,
+    updatedAt: NOW,
+  }),
+]
+const TASK_ROWS: Array<[string, 'low' | 'medium' | 'high' | 'urgent', 'todo' | 'done']> = [
+  ['Làm đề Reading Cambridge 18 — Test 2', 'high', 'todo'],
+  ['Viết lại bài Task 2 về giao thông công cộng, sửa theo nhận xét', 'urgent', 'todo'],
+  ['Ôn 30 từ vựng chủ đề môi trường', 'medium', 'todo'],
+  ['Nghe podcast 6 Minute English', 'low', 'done'],
+  ['Đăng ký lịch thi chính thức', 'high', 'done'],
+]
+const TASKS = TASK_ROWS.map(([title, priority, status], i) =>
+  WorkTaskSchema.parse({
+    schemaVersion: 1,
+    id: `00000000-0000-4000-8000-00000000010${i}`,
+    personId: PERSON,
+    projectId: PROJECT,
+    title,
+    priority,
+    status,
+    dueAt: '2026-11-05T10:00:00.000Z',
+    createdAt: NOW,
+    updatedAt: NOW,
+  }),
+)
+
+/** `/api/work` — việc + dự án mẫu ở trên; loại khác (cuộc họp, tài liệu) trả rỗng. */
+export async function mockWorkData(page: Page): Promise<void> {
+  await page.route('**/api/work**', (route) => {
+    const kind = new URL(route.request().url()).searchParams.get('kind') ?? 'projects'
+    if (kind === 'tasks') return route.fulfill(json({ tasks: TASKS }))
+    if (kind === 'projects') return route.fulfill(json({ projects: PROJECTS }))
+    return route.fulfill(json({ [kind]: [] }))
+  })
 }

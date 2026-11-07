@@ -379,13 +379,17 @@ export default function Notes() {
                         key={task.id}
                         className={`p-4 rounded-xl border transition flex items-start justify-between gap-3 ${
                           isDone
-                            ? 'bg-zinc-950/60 border-zinc-800/60 opacity-60'
+                            ? 'bg-zinc-950/60 border-zinc-800/60'
                             : 'bg-zinc-900/80 border-zinc-800 hover:border-zinc-700'
                         }`}
                       >
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <button
                             onClick={() => handleToggleTaskStatus(task)}
+                            // Nút bật tắt: nhãn CỐ ĐỊNH, trạng thái do aria-pressed nói (WAI-ARIA APG
+                            // mẫu Button) — đổi nhãn theo trạng thái thì đọc thành "chưa xong… đã nhấn".
+                            aria-label={`Hoàn thành: ${task.title}`}
+                            aria-pressed={isDone}
                             className="tap-44 mt-0.5 text-zinc-400 hover:text-emerald-400 transition"
                           >
                             {isDone ? (
@@ -397,7 +401,7 @@ export default function Notes() {
                           <div className="min-w-0 flex-1">
                             <h4
                               className={`text-sm font-semibold truncate ${
-                                isDone ? 'line-through text-zinc-500' : 'text-zinc-200'
+                                isDone ? 'line-through text-zinc-300' : 'text-zinc-200'
                               }`}
                             >
                               {task.title}

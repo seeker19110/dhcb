@@ -7,8 +7,8 @@
  *
  * VÌ SAO: audit UI/UX 2026-09-22 (nợ (4)) chỉ chụp được bản RỖNG của các trang này — không có dữ
  * liệu thì thẻ giá, huy hiệu, cột Kanban không bao giờ hiện, nên lỗi bố cục của chúng không lộ.
- * Mock dùng lại `e2e/helpers/realDataMocks.ts` (đúng hình dạng API thật) + dữ liệu Kanban/huy hiệu
- * dựng theo hợp đồng Zod thật ở dưới.
+ * Mock dùng lại `e2e/helpers/realDataMocks.ts` (đúng hình dạng API thật, gồm dữ liệu Kanban dựng
+ * theo hợp đồng Zod — `mockWorkData`, dùng chung với cổng a11y) + huy hiệu ở dưới.
  *
  * Ảnh ghi RA NGOÀI REPO (mặc định một thư mục tạm riêng `dhcb-shots-real-data-*`, in ra cuối lượt) — repo giữ kỷ luật 0 file PNG (cùng quy
  * ước `scripts/shots-learning-ux.ts`). Script báo lỗi nếu ảnh trắng/quá thấp/rơi về màn đăng nhập.
@@ -17,13 +17,13 @@ import { chromium, type Page } from '@playwright/test'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { WorkProjectSchema, WorkTaskSchema } from '@dhcb/core-contracts/work'
 import { mockLogin, USER_ID, type ThemeName } from '../e2e/helpers/auth.js'
 import { screenshotFullPage, waitForShotReady } from '../e2e/helpers/fullPageShot.js'
 import {
   mockPlanPrices,
   mockQuestsStatus,
   mockReferralStats,
+  mockWorkData,
 } from '../e2e/helpers/realDataMocks.js'
 
 const args = process.argv.slice(2)
@@ -40,59 +40,11 @@ const THEMES = arg('--themes', 'blue-sky,dark-blue,kid').split(',') as ThemeName
 const WIDTHS = arg('--widths', '390,1440').split(',').map(Number)
 const HEIGHT: Record<number, number> = { 390: 844, 1440: 900 }
 
-const NOW = '2026-10-29T08:00:00.000Z'
-const PERSON = '00000000-0000-4000-8000-000000000001'
-const PROJECT = '00000000-0000-4000-8000-0000000000a1'
-
-// Dữ liệu Kanban PARSE qua đúng schema hợp đồng — sửa hợp đồng mà quên sửa ở đây thì script ném lỗi.
-const PROJECTS = [
-  WorkProjectSchema.parse({
-    schemaVersion: 1,
-    id: PROJECT,
-    personId: PERSON,
-    name: 'Ôn thi IELTS tháng 12',
-    status: 'active',
-    createdAt: NOW,
-    updatedAt: NOW,
-  }),
-]
-const TASK_ROWS: Array<[string, 'low' | 'medium' | 'high' | 'urgent', 'todo' | 'done']> = [
-  ['Làm đề Reading Cambridge 18 — Test 2', 'high', 'todo'],
-  ['Viết lại bài Task 2 về giao thông công cộng, sửa theo nhận xét', 'urgent', 'todo'],
-  ['Ôn 30 từ vựng chủ đề môi trường', 'medium', 'todo'],
-  ['Nghe podcast 6 Minute English', 'low', 'done'],
-  ['Đăng ký lịch thi chính thức', 'high', 'done'],
-]
-const TASKS = TASK_ROWS.map(([title, priority, status], i) =>
-  WorkTaskSchema.parse({
-    schemaVersion: 1,
-    id: `00000000-0000-4000-8000-00000000010${i}`,
-    personId: PERSON,
-    projectId: PROJECT,
-    title,
-    priority,
-    status,
-    dueAt: '2026-11-05T10:00:00.000Z',
-    createdAt: NOW,
-    updatedAt: NOW,
-  }),
-)
-
 const json = (body: unknown) => ({
   status: 200,
   contentType: 'application/json',
   body: JSON.stringify(body),
 })
-
-/** `/api/work` — việc + dự án mẫu ở trên; loại khác (cuộc họp, tài liệu) trả rỗng. */
-async function mockWorkData(page: Page): Promise<void> {
-  await page.route('**/api/work**', (route) => {
-    const kind = new URL(route.request().url()).searchParams.get('kind') ?? 'projects'
-    if (kind === 'tasks') return route.fulfill(json({ tasks: TASKS }))
-    if (kind === 'projects') return route.fulfill(json({ projects: PROJECTS }))
-    return route.fulfill(json({ [kind]: [] }))
-  })
-}
 
 interface ShotPage {
   id: string
