@@ -22,10 +22,23 @@ Chỉ `scripts/shots-real-data.ts` có dữ liệu, mà script đó chỉ chụp
 - Bài học: dải `zinc` là token ĐẢO theo theme (`--z-*`); `theme-light:text-zinc-800` ở theme sáng là
   màu NHẠT — lần sửa đầu dùng cách này và vẫn đỏ. Dùng thẳng `text-zinc-300`.
 
+## Sửa theo review độc lập (`reviewer-alt`, effort max, ở `63efe64`: CẦN SỬA, 🟠 2)
+
+- 🟠 Nút bật tắt đổi NHÃN theo trạng thái mà vẫn có `aria-pressed` → đọc thành "Đánh dấu chưa xong…,
+  đã nhấn" (ngược nghĩa). Nay nhãn cố định `Hoàn thành: <tên việc>` + `aria-pressed` (WAI-ARIA APG).
+- 🟠 Thẻ việc đã xong ở Kanban vẫn `opacity-80`: tiêu đề `<p>` (chữ nội dung, cần AAA 7:1) chỉ đạt
+  5,5 (blue-sky) / 4,8 (kid) — AA vẫn qua nên cổng A/AA không bắt. Bỏ `opacity-80`.
+- 🟢 Điều kiện `ready` của `/ghi-chu` từng khớp được ngày của banner khuyến mãi → nay chờ nút
+  `Hoàn thành:` đang bật; Kanban giới hạn trong `main`. Sửa comment cũ trong `NotesKanban.tsx`
+  ("nền luôn tối" — sai) và đầu `scripts/shots-real-data.ts`.
+- Nợ 🟢 ghi sổ: placeholder ô tìm Kanban `text-zinc-600`; nút "Hủy" thiếu `tap-44`; tab Dự án chưa
+  được quét; `/ghi-chu*` chưa có trong cổng AAA.
+
 ## Kiểm chứng
 
-- Trước sửa: 5/6 ca mới đỏ (blue-sky/kid cả hai trang + dark-blue `/ghi-chu`). Sau sửa:
-  `playwright a11y -g "ghi-chu"` 12/12 xanh (cả ca rỗng cũ); `e2e/v2-hubs.spec.ts` 4/4; vitest notes 2/2.
+- Trước sửa: 5/6 ca mới đỏ (blue-sky/kid cả hai trang + dark-blue `/ghi-chu`). Sau sửa theo review:
+  `playwright test e2e/a11y.spec.ts e2e/v2-hubs.spec.ts -g "ghi-chu|hub|Ghi"` 23/23 xanh (gồm ca rỗng
+  cũ); vitest notes 2/2.
 - Tầng 8b: chụp `kanban` + `ghi-chu` × blue-sky/dark-blue × 390/1440 trước/sau
   (`npm run shots:real-data`); bố cục không đổi, việc đã xong đọc được mà vẫn phân biệt rõ.
 - `tsc -p tsconfig.e2e.json`, `tsc -p tsconfig.api.json`, eslint 3 file: đạt.

@@ -249,13 +249,14 @@ const REAL_DATA_CASES: RealDataCase[] = [
   {
     route: '/ghi-chu',
     mock: mockWorkData,
-    // Danh sách việc ở /ghi-chu in ngày không kèm chữ "Hạn:" (khác Kanban).
-    ready: (page) => page.getByText(/^\d{2}\/\d{2}\/\d{4}$/),
+    // Chờ nút "Hoàn thành" của một việc ĐÃ XONG (gắn với dữ liệu /api/work, không khớp nhầm ngày của
+    // banner khuyến mãi) — đồng thời canh nhãn cố định + aria-pressed của nút bật tắt.
+    ready: (page) => page.getByRole('button', { name: /^Hoàn thành: /, pressed: true }),
   },
   {
     route: '/ghi-chu/kanban',
     mock: mockWorkData,
-    ready: (page) => page.getByText(/Hạn: \d{2}\/\d{2}\/\d{4}/),
+    ready: (page) => page.getByRole('main').getByText(/Hạn: \d{2}\/\d{2}\/\d{4}/),
   },
   {
     route: '/lap-trinh/chay-thu',

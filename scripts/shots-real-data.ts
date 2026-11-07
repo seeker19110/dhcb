@@ -7,8 +7,8 @@
  *
  * VÌ SAO: audit UI/UX 2026-09-22 (nợ (4)) chỉ chụp được bản RỖNG của các trang này — không có dữ
  * liệu thì thẻ giá, huy hiệu, cột Kanban không bao giờ hiện, nên lỗi bố cục của chúng không lộ.
- * Mock dùng lại `e2e/helpers/realDataMocks.ts` (đúng hình dạng API thật) + dữ liệu Kanban/huy hiệu
- * dựng theo hợp đồng Zod thật ở dưới.
+ * Mock dùng lại `e2e/helpers/realDataMocks.ts` (đúng hình dạng API thật, gồm dữ liệu Kanban dựng
+ * theo hợp đồng Zod — `mockWorkData`, dùng chung với cổng a11y) + huy hiệu ở dưới.
  *
  * Ảnh ghi RA NGOÀI REPO (mặc định một thư mục tạm riêng `dhcb-shots-real-data-*`, in ra cuối lượt) — repo giữ kỷ luật 0 file PNG (cùng quy
  * ước `scripts/shots-learning-ux.ts`). Script báo lỗi nếu ảnh trắng/quá thấp/rơi về màn đăng nhập.

@@ -22,10 +22,10 @@ import { thongDiepLoiThanThien } from '../../../lib/friendlyError'
 import { formatDateVN } from '../../../lib/promoEndingBanner'
 import { WORK_TASK_PRIORITY_LABEL } from '../../../lib/workTaskLabels'
 
-// Nền cố định trang này LUÔN tối (bg-zinc-950, không đổi theo theme — xem thẻ gốc bên
-// dưới), nên `theme-light:` ở đây KHÔNG được chỉ đổi màu chữ sang sắc tối (chữ tối trên
-// nền tối vẫn tối = rớt contrast ở theme sáng, bắt bởi e2e/a11y.spec.ts). Phải đổi CẢ nền
-// sang màu sáng (`theme-light:bg-*-50`) cùng lúc, đúng pattern đã dùng ở Notes.tsx.
+// Lưu ý màu: dải `zinc` là token ĐẢO theo theme (`--z-*`, packages/core-ui/theme.css) — `bg-zinc-950`
+// là nền SÁNG ở blue-sky/kid. Màu nhấn cố định (red/amber…) thì không đảo, nên badge phải đổi CẢ nền
+// sang màu sáng (`theme-light:bg-*-50`) cùng chữ tối, đúng pattern đã dùng ở Notes.tsx. Chữ xám dùng
+// thẳng `text-zinc-300` (AAA mọi theme), không `theme-light:text-zinc-*` (changelog 0699).
 const PRIORITY_COLORS: Record<string, { label: string; cls: string }> = {
   urgent: {
     label: WORK_TASK_PRIORITY_LABEL.urgent,
@@ -288,7 +288,7 @@ export default function NotesKanban() {
                   doneTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="bg-zinc-950/60 border border-zinc-800/60 rounded-xl p-3.5 space-y-2 opacity-80 hover:opacity-100 transition-opacity"
+                      className="bg-zinc-950/60 border border-zinc-800/60 rounded-xl p-3.5 space-y-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium text-zinc-300 line-through leading-relaxed">

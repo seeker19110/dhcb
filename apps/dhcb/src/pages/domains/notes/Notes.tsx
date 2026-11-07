@@ -386,11 +386,9 @@ export default function Notes() {
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <button
                             onClick={() => handleToggleTaskStatus(task)}
-                            aria-label={
-                              isDone
-                                ? `Đánh dấu chưa xong: ${task.title}`
-                                : `Đánh dấu đã xong: ${task.title}`
-                            }
+                            // Nút bật tắt: nhãn CỐ ĐỊNH, trạng thái do aria-pressed nói (WAI-ARIA APG
+                            // mẫu Button) — đổi nhãn theo trạng thái thì đọc thành "chưa xong… đã nhấn".
+                            aria-label={`Hoàn thành: ${task.title}`}
                             aria-pressed={isDone}
                             className="tap-44 mt-0.5 text-zinc-400 hover:text-emerald-400 transition"
                           >
