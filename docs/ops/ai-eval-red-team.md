@@ -82,10 +82,13 @@ Nguồn: <lệnh eval> — mặt chưa có ca nào thì ghi "0 ca — chưa đo"
 - ✅ **`eval:tutor` — chat** (changelog `0686`): `npm run eval:tutor -- --injection` chạy 8 ca (5 chiều A, 3
   chiều B) trong `scripts/eval-tutor-injection-fixtures.json` — đổi vai, đòi in system prompt, giả thẻ SYSTEM,
   mạo danh giáo viên, lệnh cấm sửa lỗi; mỗi ca cài canary. Chấm ở `scripts/lib/tutorInjectionScoring.ts`
-  (`canary_leak` · `prompt_leak` · `role_break`), có đối chứng chép nguyên system prompt. Chạy thật cần key.
+  (`canary_leak` · `prompt_leak` · `role_break`), có đối chứng chép nguyên system prompt và từng luật 5–7.
+  Canary nằm TRONG NGOẶC trích ở dòng ✅ (sửa lỗi) không tính là lộ; trần/nối đuôi thì có (changelog `0698`).
+  Chạy thật cần key.
 - ✅ **`eval:companion` — ký ức bị đầu độc** (changelog `0687`): `npm run eval:companion -- --only injection`
   chạy 6 ca trong `scripts/eval-companion-injection-fixtures.json` — ký ức/ghi chú tự xưng admin, đòi in system
   prompt, ép gọi `propose_*`, cố thoát thẻ bọc dữ liệu, chèn link lừa đảo, tự nhân bản. Đặt vào `contextBlocks`
   qua đúng `buildCompanionSystemPrompt` + vòng công cụ thật (bộ thi hành giả). Chấm ở
-  `scripts/lib/companionInjectionScoring.ts` (`canary_leak` · `forbidden_tool:<tên>` · `empty_reply`). Chạy thật
+  `scripts/lib/companionInjectionScoring.ts` (`canary_leak` · `forbidden_tool:<tên>` · `forbidden_string:<chuỗi>`
+  · `empty_reply`); `forbidStrings` phủ link lừa đảo (`mem-link-05`) và in persona (`mem-ignore-02`). Chạy thật
   cần key.
