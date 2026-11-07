@@ -11,11 +11,11 @@ production) → HAR-003 (cổng commit trùng) → TEST-001 (bằng chứng red-
 
 ### Lát 1 — 🟠
 
-- [ ] `T-001` AUD-XFEAT-004: `mergeSrsMap` hoà reps+due giữ bản đang lưu (`a`), test với thứ tự khoá jsonb — Gate: `npx vitest run packages/core-learner apps/dhcb/src/lib/progressSync.test.ts apps/server/src/api/_lib` (files: packages/core-learner/srsMerge.ts, apps/dhcb/src/lib/progressSync.test.ts)
-- [ ] `T-002` AUD-HAR-003: `pre-commit-gate.sh` chỉ chạy test liên quan file staged, bỏ typecheck/lint trùng với guard — Gate: `npx vitest run scripts/claude-hooks.test.ts` (files: .claude/hooks/pre-commit-gate.sh)
-- [ ] `T-003` AUD-TEST-001a: bộ chấm writing — canary trích lại không tính lộ, thêm `errors_suppressed`, `injectEssay` giữ đoạn cuối — Gate: `npx vitest run scripts/lib/writingEvalScoring.test.ts` (files: scripts/lib/writingEvalScoring.ts, scripts/lib/writingEvalScoring.test.ts)
-- [ ] `T-004` AUD-TEST-001b: bộ chấm tutor/companion — canary trích để từ chối, `forbidStrings` cho link độc — Gate: `npx vitest run scripts/lib/tutorInjectionScoring.test.ts scripts/lib/companionInjectionScoring.test.ts` (sau: T-003; files: scripts/lib/tutorInjectionScoring.ts, scripts/lib/companionInjectionScoring.ts, scripts/eval-companion-injection-fixtures.json)
-- [ ] `T-005` AUD-A11Y-001: ca dữ liệu thật cho `/ghi-chu` + `/ghi-chu/kanban` trong `e2e/a11y.spec.ts` — Gate: `npx playwright test e2e/a11y.spec.ts -g "ghi-chu"` (files: e2e/a11y.spec.ts)
+- [x] `T-001` AUD-XFEAT-004: `mergeSrsMap` hoà reps+due giữ bản đang lưu (`a`), test với thứ tự khoá jsonb — Gate: `npx vitest run packages/core-learner apps/dhcb/src/lib/progressSync.test.ts apps/server/src/api/_lib` (files: packages/core-learner/srsMerge.ts, apps/dhcb/src/lib/progressSync.test.ts) — Bằng chứng: #1483 (0696), review SẠCH
+- [ ] `T-002` AUD-HAR-003: `pre-commit-gate.sh` chỉ chạy test liên quan file staged, bỏ typecheck/lint trùng với guard — Gate: `npx vitest run scripts/claude-hooks.test.ts` (files: .claude/hooks/pre-commit-gate.sh) (cần: chủ dự án — bộ phân loại quyền chặn tác tử tự sửa hook, 2026-11-06)
+- [x] `T-003` AUD-TEST-001a: bộ chấm writing — canary trích lại không tính lộ, thêm `errors_suppressed`, `injectEssay` giữ đoạn cuối — Gate: `npx vitest run scripts/lib/writingEvalScoring.test.ts` (files: scripts/lib/writingEvalScoring.ts, scripts/lib/writingEvalScoring.test.ts) — Bằng chứng: #1484 (0697), review SẠCH
+- [x] `T-004` AUD-TEST-001b: bộ chấm tutor/companion — canary trích để từ chối, `forbidStrings` cho link độc — Gate: `npx vitest run scripts/lib/tutorInjectionScoring.test.ts scripts/lib/companionInjectionScoring.test.ts` (sau: T-003; files: scripts/lib/tutorInjectionScoring.ts, scripts/lib/companionInjectionScoring.ts, scripts/eval-companion-injection-fixtures.json) — Bằng chứng: #1485 (0698), review SẠCH sau 1 vòng sửa
+- [x] `T-005` AUD-A11Y-001: ca dữ liệu thật cho `/ghi-chu` + `/ghi-chu/kanban` trong `e2e/a11y.spec.ts` — Gate: `npx playwright test e2e/a11y.spec.ts -g "ghi-chu"` (files: e2e/a11y.spec.ts) — Bằng chứng: #1486 (0699), review SẠCH sau 1 vòng sửa
 
 ### Lát 2 — 🟢 (nếu còn thời gian, mỗi mục một PR nhỏ)
 
