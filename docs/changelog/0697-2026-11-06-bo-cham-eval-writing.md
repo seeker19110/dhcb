@@ -1,4 +1,4 @@
-# 0697 — 2026-11-06 — Vá ba lỗ của bộ chấm `eval:writing` (AUD-TEST-001a)
+# 0697 — 2026-11-06 — Vá ba lỗ của bộ chấm `eval:writing` (AUD-TEST-001a, PR #1484)
 
 ## Vấn đề
 
