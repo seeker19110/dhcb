@@ -7,7 +7,7 @@ authentication, payments, entitlements, usage accounting and AI-provider costs a
 
 ## Environment
 
-- Required runtime: Node.js 22 and npm from `package-lock.json`.
+- Required runtime: Node.js 24 and npm from `package-lock.json`.
 - In Codex Cloud, run `bash scripts/codex-cloud-setup.sh` as the setup script and
   `bash scripts/codex-cloud-maintenance.sh` as the maintenance script.
 - Cloud uses a disposable local PostgreSQL database. Never connect cloud tasks or tests to the
