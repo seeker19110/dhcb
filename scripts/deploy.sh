@@ -37,6 +37,12 @@ echo "════════════════════════�
 echo "── [1/6] Vào thư mục app ───────────────────────"
 cd "$APP_DIR"
 
+# Chặn trước fetch/reset, cài gói hoặc restart; không tự nâng runtime trên VPS.
+if ! command -v node >/dev/null 2>&1 || [ "$(node -p "Number(process.versions.node.split('.')[0]) >= 24")" != "true" ]; then
+  echo "❌ Deploy cần Node.js >=24 (ts-fsrs 6). Nâng và kiểm tra runtime PM2 trước khi chạy lại."
+  exit 1
+fi
+
 echo "── [2/6] Ép code KHỚP origin/$BRANCH (gồm mọi PR đã merge) ──"
 if [ -n "${GITHUB_TOKEN:-}" ]; then
   REPO_NAME="${GITHUB_REPOSITORY:-seeker19110/dhcb}"

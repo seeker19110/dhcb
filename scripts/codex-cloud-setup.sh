@@ -8,13 +8,13 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "[codex-cloud] Node.js is missing. Select Node.js 22 in the environment package settings."
+  echo "[codex-cloud] Node.js is missing. Select Node.js 24 in the environment package settings."
   exit 1
 fi
 
 NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]")"
-if [ "$NODE_MAJOR" -lt 22 ]; then
-  echo "[codex-cloud] Node.js 22+ is required; found $(node --version)."
+if [ "$NODE_MAJOR" -lt 24 ]; then
+  echo "[codex-cloud] Node.js 24+ is required; found $(node --version)."
   exit 1
 fi
 

@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Native Node22 regression cho predicate thật; không import worker/Pool hoặc gọi DB/provider.
+// Native Node24 regression cho predicate thật; không import worker/Pool hoặc gọi DB/provider.
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
