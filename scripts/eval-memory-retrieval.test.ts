@@ -16,7 +16,7 @@ beforeEach(() => {
   mocks.spawn.mockReturnValue(child)
   fakeProcess = {
     ...nativeProcess,
-    versions: { ...nativeProcess.versions, node: '22.23.2' },
+    versions: { ...nativeProcess.versions, node: '24.0.0' },
     argv: ['node', 'launcher', '--profile', 'stored-local', '--artifacts', '/tmp/unit-artifacts'],
     env: {
       PATH: '/unit/path',
@@ -74,8 +74,8 @@ it.each(['--ids', '--skip-cleanup', '--skip-context', '--quality-floor'])(
     expect(fakeProcess.exitCode).toBe(2)
   },
 )
-it('không hỗ trợ Node20', async () => {
-  Object.defineProperty(fakeProcess.versions, 'node', { value: '20.0.0' })
+it.each(['20.0.0', '22.23.2', '26.0.0'])('không hỗ trợ Node %s', async (version) => {
+  Object.defineProperty(fakeProcess.versions, 'node', { value: version })
   await load()
   expect(mocks.spawn).not.toHaveBeenCalled()
   expect(fakeProcess.exitCode).toBe(2)

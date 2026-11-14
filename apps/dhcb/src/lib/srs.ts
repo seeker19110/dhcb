@@ -112,7 +112,6 @@ function toStored(card: FsrsCard): SRSCard {
     due: card.due.getTime(),
     stability: card.stability,
     difficulty: card.difficulty,
-    elapsed_days: card.elapsed_days,
     scheduled_days: card.scheduled_days,
     learning_steps: card.learning_steps,
     reps: card.reps,

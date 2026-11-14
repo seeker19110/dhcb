@@ -4,6 +4,7 @@
     "path": [
       "dist/js/index-*.js",
       "dist/js/vendor-core-*.js",
+      "dist/js/vendor-fsrs-*.js",
       "dist/js/vendor-misc-*.js",
       "dist/js/vendor-ui-*.js",
       "dist/js/rolldown-runtime-*.js",

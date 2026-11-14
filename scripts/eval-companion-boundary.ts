@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { boundaryChildEnvironment, parseBoundaryOptions } from './lib/companionBoundaryCli'
 
 try {
-  if (Number(process.versions.node.split('.')[0]) !== 22) throw new Error('NODE22_REQUIRED')
+  if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('NODE24_REQUIRED')
   const options = parseBoundaryOptions(
     process.argv.slice(2),
     resolve(import.meta.dirname, 'companion-boundary-corpus.json'),
@@ -39,7 +39,7 @@ try {
   })
 } catch {
   console.error(
-    'FAIL: cần Node22, --profile stored-local|github-ci và --artifacts; chỉ dùng STORED_EVAL_DATABASE_URL cho DB disposable',
+    'FAIL: cần Node24, --profile stored-local|github-ci và --artifacts; chỉ dùng STORED_EVAL_DATABASE_URL cho DB disposable',
   )
   process.exitCode = 2
 }

@@ -455,7 +455,7 @@ function launcher(extra: { version?: string; args?: string[] } = {}) {
   const child = new EventEmitter()
   let spawnOptions: Record<string, unknown> | undefined
   const proc = {
-    versions: { node: extra.version ?? '22.23.2' },
+    versions: { node: extra.version ?? '24.0.0' },
     argv: [
       'node',
       'launcher',
@@ -524,9 +524,11 @@ describe('launcher actual source, no actual child boot', () => {
     const bad = launcher({ args: [] })
     expect(bad.proc.exitCode).toBe(2)
     expect(bad.spawnOptions).toBeUndefined()
-    const version = launcher({ version: '20.0.0' })
-    expect(version.proc.exitCode).toBe(2)
-    expect(version.spawnOptions).toBeUndefined()
+    for (const node of ['20.0.0', '22.23.2', '26.0.0']) {
+      const version = launcher({ version: node })
+      expect(version.proc.exitCode).toBe(2)
+      expect(version.spawnOptions).toBeUndefined()
+    }
   })
 })
 type Writer = { folder: string; write(name: string, value: unknown): Promise<void> }

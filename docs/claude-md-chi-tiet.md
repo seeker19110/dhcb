@@ -166,7 +166,7 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
 
 - **Frontend:** React 18 + Vite 7 + TypeScript 5.2 (`strict`) + Tailwind CSS 3 (mã gốc do Lovable sinh ra).
 
-- **PHIÊN BẢN STACK (cập nhật 2026-09-22, đợt changelog 0416).** Đã nâng: **React 19** · **Tailwind 4** (qua `@config`, dùng lại cấu hình JS cũ) · **ESLint 9 flat config** · **Express 5** · **Vite 8** (rolldown thay Rollup). Giữ **Node 22** và **TypeScript 5.x**.
+- **PHIÊN BẢN STACK (cập nhật 2026-09-22, đợt changelog 0416).** Đã nâng: **React 19** · **Tailwind 4** (qua `@config`, dùng lại cấu hình JS cũ) · **ESLint 9 flat config** · **Express 5** · **Vite 8** (rolldown thay Rollup). Node nâng lên **24** (2026-11-12, ts-fsrs 6) — xem changelog 0702; giữ **TypeScript 5.x**.
 
   **Ba thứ CHƯA nâng được, và lý do là RÀNG BUỘC THẬT chứ không phải sở thích** — đừng thử lại
   trước khi ràng buộc mất:
@@ -250,7 +250,7 @@ Hệ thống được chuẩn hóa theo 10 bộ quy chuẩn SOTA chuyên biệt 
   - `postgres/`, `scripts/`, `docs/`.
 
 - **PHIÊN BẢN STACK (2026-09-22, changelog 0416):** React 19 · Tailwind 4 (qua `@config`) ·
-  ESLint 9 flat config · Express 5 · Vite 8 (rolldown) · Node 22 · **TypeScript 6.0** (nâng 2026-10-28,
+  ESLint 9 flat config · Express 5 · Vite 8 (rolldown) · Node 24 · **TypeScript 6.0** (nâng 2026-10-28,
   changelog 0684 — ghim `~6.0.3` vì parser chỉ nhận `<6.1.0`; bỏ `baseUrl`, `paths` tương đối từng tsconfig). **Ba thứ CHƯA
   nâng vì RÀNG BUỘC THẬT — đừng thử lại trước khi ràng buộc mất:** TypeScript 7
   (`@typescript-eslint/parser` chỉ hỗ trợ `<6.1.0`) · ESLint 10 (`eslint-plugin-jsx-a11y`, cổng

@@ -21,8 +21,8 @@ export interface SRSCard {
   due: number
   stability: number
   difficulty: number
-  /** @deprecated Field cũ của FSRS (sẽ bỏ ở ts-fsrs 6.0.0) — vẫn cần điền vì kiểu CardInput hiện còn bắt buộc, KHÔNG dùng làm input tính toán (thuật toán tự suy elapsed từ due/last_review + now). */
-  elapsed_days: number
+  /** @deprecated ts-fsrs 6 đã bỏ field này. Chỉ còn trong dữ liệu CŨ đã lưu (localStorage/IndexedDB/server) nên để tuỳ chọn; code mới KHÔNG ghi và KHÔNG đọc. */
+  elapsed_days?: number
   scheduled_days: number
   learning_steps: number
   reps: number

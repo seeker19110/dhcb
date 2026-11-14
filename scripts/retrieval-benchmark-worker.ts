@@ -81,7 +81,7 @@ const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest(
 let mutationPossible = false
 
 async function main() {
-  if (Number(process.versions.node.split('.')[0]) !== 22) throw new Error('NODE22_REQUIRED')
+  if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('NODE24_REQUIRED')
   // Không chấp nhận worker bị gọi trực tiếp với extra env hoặc bootstrap preloads.
   if (!isDeepStrictEqual({ ...process.env }, boundaryChildEnvironment(process.env)))
     throw new Error('UNSCRUBBED_ENV')
